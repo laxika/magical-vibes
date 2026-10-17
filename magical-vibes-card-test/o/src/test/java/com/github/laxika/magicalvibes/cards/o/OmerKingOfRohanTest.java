@@ -29,7 +29,9 @@ class OmerKingOfRohanTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);

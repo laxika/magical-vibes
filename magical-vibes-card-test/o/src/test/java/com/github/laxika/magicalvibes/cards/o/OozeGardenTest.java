@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NecroticOoze;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -35,10 +34,9 @@ class OozeGardenTest extends BaseCardTest {
     @DisplayName("Sacrificing a 2/2 creature creates an Ooze token whose power and toughness are 2")
     void sacrificingCreatesXXOoze() {
         harness.addToBattlefield(player1, new OozeGarden());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        addCreatureReady(player1, new GrizzlyBears()); // 2/2
 
-        activateAsSorcery();
-        harness.handlePermanentChosen(player1, bears.getId());
+        activateAsSorcery(); // the only legal creature is sacrificed without a prompt
         harness.passBothPriorities(); // resolve ability
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -54,10 +52,9 @@ class OozeGardenTest extends BaseCardTest {
     @DisplayName("Sacrificing a 0-power creature makes a 0/0 Ooze that dies immediately")
     void zeroPowerTokenDies() {
         harness.addToBattlefield(player1, new OozeGarden());
-        Permanent ornithopter = addCreatureReady(player1, new Ornithopter()); // 0/2
+        addCreatureReady(player1, new Ornithopter()); // 0/2
 
-        activateAsSorcery();
-        harness.handlePermanentChosen(player1, ornithopter.getId());
+        activateAsSorcery(); // the only legal creature is sacrificed without a prompt
         harness.passBothPriorities(); // resolve ability; the 0/0 dies to state-based actions
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
@@ -68,14 +65,13 @@ class OozeGardenTest extends BaseCardTest {
     @DisplayName("The creature is sacrificed as a cost and the token is created when the ability resolves")
     void sacrificeIsPaidBeforeResolution() {
         harness.addToBattlefield(player1, new OozeGarden());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

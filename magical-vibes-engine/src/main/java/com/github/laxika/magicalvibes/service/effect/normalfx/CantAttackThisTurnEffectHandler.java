@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -69,11 +71,17 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
 
         String playerName = gameData.playerIdToName.get(targetId);
         int count = 0;
+        if (e.duration() == com.github.laxika.magicalvibes.model.effect.GrantDuration.END_OF_TURN) {
+            gameData.playerCreaturesCantAttackThisTurn.computeIfAbsent(targetId, ignored -> new ArrayList<>())
+                    .add(e.filter() == null ? new PermanentIsCreaturePredicate() : e.filter());
+        }
         for (Permanent p : battlefield) {
             if (gameQueryService.isCreature(gameData, p)
                     && (e.filter() == null
                     || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
-                applyRestriction(gameData, entry, p, e);
+                if (e.duration() != com.github.laxika.magicalvibes.model.effect.GrantDuration.END_OF_TURN) {
+                    applyRestriction(gameData, entry, p, e);
+                }
                 count++;
             }
         }

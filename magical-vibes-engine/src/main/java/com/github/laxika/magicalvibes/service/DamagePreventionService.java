@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
@@ -58,6 +59,12 @@ import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndA
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamagePerSourceToControllerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToControllerAndTheirPermanentsEffect;
@@ -822,29 +829,28 @@ public class DamagePreventionService {
                 : shield.protectedPlayerId().equals(controllerId) && shield.coversControlledPermanents());
     }
 
+    /**
+     * Outfitted Jouster: "When damage is prevented this way, sacrifice an Equipment attached to Outfitted
+     * Jouster." The sacrifice is a reflexive trigger put on the stack after the prevention, and its
+     * controller chooses which attached Equipment they control is sacrificed.
+     */
     private boolean preventDamageAndSacrificeAttachedEquipment(GameData gameData, Permanent creature) {
+        if (!hasAttachedEquipment(gameData, creature)) return false;
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
 
-        List<Permanent> attachedEquipment = new ArrayList<>();
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (creature.getId().equals(permanent.getAttachedTo())
-                    && GameQueryService.permanentHasSubtype(permanent, CardSubtype.EQUIPMENT)) {
-                attachedEquipment.add(permanent);
-            }
-        });
-        if (attachedEquipment.isEmpty()) return false;
-
-        Permanent sacrificedEquipment = attachedEquipment.stream()
-                .filter(permanent -> controllerId.equals(gameQueryService.findPermanentController(
-                        gameData, permanent.getId())))
-                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
-                .findFirst()
-                .orElse(null);
-        if (sacrificedEquipment != null) {
-            destructionSupportProvider.getObject().sacrificeAndLog(gameData, sacrificedEquipment, controllerId);
-        }
-
+        var attachedEquipment = new PermanentAllOfPredicate(List.of(
+                new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
+                new PermanentAttachedToSourcePermanentPredicate(),
+                new PermanentControlledBySourceControllerPredicate()));
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), controllerId,
+                creature.getCard().getName() + "'s triggered ability",
+                new ArrayList<>(List.of(new SacrificePermanentsEffect(1, attachedEquipment,
+                        SacrificeRecipient.CONTROLLER))),
+                null, creature.getId());
+        trigger.setNonTargeting(true);
+        gameData.enqueueTrigger(trigger);
+        gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s ability triggers."));
         return true;
     }
 
@@ -2017,7 +2023,7 @@ public class DamagePreventionService {
      * {@code processSourceRedirectDamage}. This is a redirection (replacement) effect, not prevention,
      * so it applies even when damage can't be prevented. The shield is left in place while the
      * destination is no longer a creature on the battlefield, and damage dealt to the destination
-     * itself is left alone — redirecting to itself is a no-op that would skip its own damage triggers.
+     * itself is dealt normally, but still uses up the shield.
      *
      * @param damagedPermanentId the permanent being damaged, or {@code null} when the damage is to a player
      * @return the remaining damage after redirection (0 if redirected)
@@ -2025,20 +2031,24 @@ public class DamagePreventionService {
     public int applySourceNextDamageRedirectToPermanent(GameData gameData, UUID sourcePermanentId,
                                                         UUID damagedPermanentId, int damage) {
         // No isDamagePreventable check — this is redirection (replacement), not prevention.
-        if (damage <= 0 || sourcePermanentId == null
-                || gameData.sourceNextDamageRedirectToPermanentShields.isEmpty()) {
+        if (damage <= 0 || sourcePermanentId == null) {
             return damage;
         }
-        var it = gameData.sourceNextDamageRedirectToPermanentShields.iterator();
-        while (it.hasNext()) {
-            var shield = it.next();
+        List<SourceNextDamageRedirectToPermanentShield> candidates = new ArrayList<>();
+        candidates.addAll(gameData.sourceRedirectShieldsUsedInOpenEvent);
+        candidates.addAll(gameData.sourceNextDamageRedirectToPermanentShields);
+        for (SourceNextDamageRedirectToPermanentShield shield : candidates) {
             if (!shield.sourceId().equals(sourcePermanentId)) continue;
             UUID destinationId = shield.destinationPermanentId();
-            // Redirecting damage to the destination itself is a no-op; deal it normally.
-            if (destinationId.equals(damagedPermanentId)) continue;
             Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
             if (destination == null || !gameQueryService.isCreature(gameData, destination)) continue;
-            it.remove();
+            if (gameData.sourceNextDamageRedirectToPermanentShields.remove(shield)
+                    && !gameData.pendingSimultaneousDamage.isEmpty()) {
+                gameData.sourceRedirectShieldsUsedInOpenEvent.add(shield);
+            }
+            // Redirecting damage to the destination itself changes nothing (it is dealt normally),
+            // but the one-shot replacement effect has still been used up (CR 614.5).
+            if (destinationId.equals(damagedPermanentId)) return damage;
             gameData.pendingSourceRedirectDamage.add(
                     new SourceDamageRedirectShield(null, sourcePermanentId, damage, destinationId));
             return 0;
@@ -2166,6 +2176,8 @@ public class DamagePreventionService {
         while (it.hasNext() && remaining > 0) {
             CreatureDamageRedirectShield shield = it.next();
             if (!shield.protectedPermanentId().equals(protectedPermanentId)) continue;
+            // Redirecting to the protected creature itself is a no-op; the damage is dealt normally.
+            if (protectedPermanentId.equals(shield.redirectTargetId())) continue;
             if (isAnySourceNextEvent(shield) != anySourceNextEvent) continue;
             if (shield.combatOnly() && !combatDamage) continue;
             // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
@@ -2936,6 +2948,7 @@ public class DamagePreventionService {
 
         int reduction = 0;
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PreventFixedDamagePerSourceToControllerEffect prevention) {
                     if (prevention.combatOnly() && !combatDamage) continue;
@@ -3347,9 +3360,10 @@ public class DamagePreventionService {
     /** Whether Opal-Eye-style shields redirect the next damage from {@code sourcePermanentId}. */
     public boolean hasSourceNextDamageRedirectToPermanent(GameData gameData, UUID sourcePermanentId,
                                                           UUID damagedPermanentId) {
-        return sourcePermanentId != null && gameData.sourceNextDamageRedirectToPermanentShields.stream()
+        return sourcePermanentId != null && java.util.stream.Stream.concat(
+                        gameData.sourceNextDamageRedirectToPermanentShields.stream(),
+                        gameData.sourceRedirectShieldsUsedInOpenEvent.stream())
                 .anyMatch(shield -> shield.sourceId().equals(sourcePermanentId)
-                        && !shield.destinationPermanentId().equals(damagedPermanentId)
                         && isCreatureOnBattlefield(gameData, shield.destinationPermanentId()));
     }
 
@@ -3549,6 +3563,7 @@ public class DamagePreventionService {
         if (permanentId == null) return false;
         return gameData.creatureDamageRedirectShields.stream()
                 .anyMatch(shield -> shield.protectedPermanentId().equals(permanentId)
+                        && !permanentId.equals(shield.redirectTargetId())
                         && isAnySourceNextEvent(shield) == anySourceNextEvent
                         && (!shield.combatOnly() || combatDamage)
                         && (shield.damageSourceId() == null || shield.damageSourceId().equals(sourceId))

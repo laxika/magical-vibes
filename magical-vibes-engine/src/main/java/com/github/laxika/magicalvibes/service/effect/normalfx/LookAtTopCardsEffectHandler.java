@@ -579,7 +579,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String description = CardPredicateUtils.describeFilter(e.choosePredicate());
-        if (chooseCount > 1 || randomBottom) {
+        if (chooseCount > 1 || randomBottom || e.orderedBottomViaRevealChoice()) {
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
             int max = Math.min(chooseCount, matchingCards.size());
             if (e.payLifePerSelectedCard() > 0) {

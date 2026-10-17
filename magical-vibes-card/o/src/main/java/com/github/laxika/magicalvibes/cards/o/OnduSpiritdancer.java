@@ -14,10 +14,10 @@ public class OnduSpiritdancer extends Card {
 
     public OnduSpiritdancer() {
         // Whenever an enchantment you control enters, you may create a token that's a copy of it.
-        // Do this only once each turn.
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        // Do this only once each turn; only accepting the copy uses up the turn (ruling 2023-07-28).
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new OncePerTurnTriggerEffect(new MayEffect(
                         new CreateTokenCopyOfEnteringPermanentEffect(),
-                        "Create a token that's a copy of that enchantment?")));
+                        "Create a token that's a copy of that enchantment?"), true));
     }
 }

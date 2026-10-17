@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.amount.TargetToughness;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetAndAttachedMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -43,12 +45,11 @@ public class OrzhovCharm extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.AURA),
                                         new PermanentControlledBySourceControllerPredicate()))),
                         TargetFilters.creatureYouControl()),
-                // Life loss is listed first so TargetToughness reads the creature while it is still on
-                // the battlefield; the amount is its toughness as it last existed there.
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature and you lose life equal to its toughness",
-                        List.of(new LoseLifeEffect(new TargetToughness(), LoseLifeRecipient.CONTROLLER),
-                                new DestroyTargetPermanentEffect()),
+                        new DestroyTargetPermanentThenEffect(EventStat.TOUGHNESS,
+                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER),
+                                ThenEffectRecipient.CONTROLLER),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature.")),

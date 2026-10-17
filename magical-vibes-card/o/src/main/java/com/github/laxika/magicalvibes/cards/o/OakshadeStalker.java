@@ -14,7 +14,8 @@ public class OakshadeStalker extends Card {
 
     public OakshadeStalker() {
         setBackFaceCard(new MoonlitAmbusher());
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{G}")), null, true));
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{G}")), null, true)
+                .withFlashAdditionalGenericCost(2));
     }
 
     @java.lang.Override

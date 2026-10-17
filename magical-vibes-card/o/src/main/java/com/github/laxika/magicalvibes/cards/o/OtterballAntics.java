@@ -5,15 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,12 +27,13 @@ import java.util.Set;
 public class OtterballAntics extends Card {
 
     public OtterballAntics() {
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastFromZone(Zone.HAND), otterToken(0)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastNotFromHand(), otterToken(1)));
+        addEffect(EffectSlot.SPELL, otterToken());
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastNotFromHand(),
+                new PutCountersOnCreatedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addCastingOption(new FlashbackCast("{3}{U}"));
     }
 
-    private CreateTokenEffect otterToken(int initialCounters) {
+    private CreateTokenEffect otterToken() {
         Map<EffectSlot, CardEffect> tokenEffects = Map.of(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
@@ -41,6 +43,6 @@ public class OtterballAntics extends Card {
                 CardType.CREATURE, 1, "Otter", 1, 1,
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.OTTER),
                 Set.of(), Set.of(), false, false, tokenEffects, List.of(),
-                false, false, false, initialCounters, Set.of());
+                false, false, false, 0, Set.of());
     }
 }

@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
+import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -223,9 +226,18 @@ public class EtbEffectResolver {
                                 ? conditional.wrapped() : null);
                 // Intervening-if gates (CR 603.4) — Metalcraft, Morbid, Raid, ControlsAnother: keep
                 // the conditional effect when met (re-checked at stack resolution), drop it when not.
-                case Condition gate when gate.isEtbTriggerGate() ->
+                case Condition gate when gate.isEtbTriggerGate() && conditional.interveningIf() ->
                         conditionEvaluationService.isMet(ctx.gameData(), gate, conditionContext)
                                 ? effect : null;
+                // "if you revealed a Dragon card or controlled a Dragon as you cast this spell" (CR 603.4):
+                // both halves are cast-time facts recorded on the entering permanent, so the trigger is
+                // never put on the stack when neither was true.
+                case AnyOf anyOf when conditional.interveningIf()
+                        && ctx.sourcePermanent() != null
+                        && anyOf.conditions().stream().allMatch(inner ->
+                        inner instanceof RevealCardFromHandCostPaid || inner instanceof ControlledDragonAsCast) ->
+                        ctx.sourcePermanent().isRevealCardFromHandCostPaid()
+                                || ctx.sourcePermanent().isControlledDragonAsCast() ? effect : null;
                 default -> effect;
             };
         });

@@ -2101,12 +2101,20 @@ public class LibraryChoiceHandlerService {
         }
 
         if (librarySearch.remainingCount() > 1) {
+            List<Card> accumulated = new ArrayList<>(librarySearch.accumulatedCards() == null
+                    ? List.of() : librarySearch.accumulatedCards());
+            accumulated.add(chosenCard);
+            LibrarySearchParams advanced = librarySearch.withAccumulatedCards(accumulated);
+            List<Card> stillSearchable = librarySearch.cards().stream()
+                    .filter(card -> !card.getId().equals(chosenCard.getId()))
+                    .filter(deck::contains)
+                    .toList();
             List<Card> remainingMatches = findOppositionAgentSearchMatches(
-                    gameData, deck, librarySearch, deckOwnerId, excludedCardNames);
+                    gameData, stillSearchable, advanced, deckOwnerId, excludedCardNames);
             if (!remainingMatches.isEmpty()) {
                 int newRemaining = librarySearch.remainingCount() - 1;
                 beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
-                        librarySearch.withCards(new ArrayList<>(remainingMatches))
+                        advanced.withCards(new ArrayList<>(remainingMatches))
                                 .withRemainingCount(newRemaining)
                                 .withExcludedCardNames(excludedCardNames),
                         activeSearch.messagePrompt(), activeSearch.messageCanFailToFind()));
@@ -2903,6 +2911,7 @@ public class LibraryChoiceHandlerService {
                         ? predicateEvaluationService.matchesCardPredicate(
                                 card, pick.filter(), null, gameData, playerId)
                         : !pick.basicOnly()
+                                || card.hasAllCardNames()
                                 || (card.hasType(CardType.LAND)
                                 && gameQueryService.cardHasSupertype(
                                 card, CardSupertype.BASIC, gameData, playerId)))

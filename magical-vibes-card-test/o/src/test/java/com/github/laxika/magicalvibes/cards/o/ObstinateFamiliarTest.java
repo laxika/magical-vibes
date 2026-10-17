@@ -155,6 +155,11 @@ class ObstinateFamiliarTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Forest");
+        PendingInteraction.ColorChoice replacementOrder =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(replacementOrder).isNotNull();
+        assertThat(replacementOrder.options()).containsExactlyInAnyOrder("Shared Fate", "Obstinate Familiar");
+        harness.handleListChoice(player1, "Obstinate Familiar");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 

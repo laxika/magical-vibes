@@ -239,6 +239,7 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCommanderColorC
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect;
@@ -6234,26 +6235,35 @@ public class TriggerCollectionService {
             GameData gameData, Permanent source, UUID controllerId, UUID spellControllerId) {
         if (controllerId.equals(spellControllerId)) return;
 
-        List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
+        List<CardEffect> printed = new ArrayList<>(source.getCard().getEffects(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY));
-        if (effects.isEmpty()) return;
+        List<CardEffect> granted = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY);
+        if (printed.isEmpty() && granted.isEmpty()) return;
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(),
-                controllerId,
-                source.getCard().getName() + "'s triggered ability",
-                new ArrayList<>(effects),
-                null,
-                source.getId()
-        );
-        gameData.stack.add(entry);
+        List<List<CardEffect>> abilities = new ArrayList<>();
+        if (!printed.isEmpty()) {
+            abilities.add(printed);
+        }
+        for (CardEffect grantedEffect : granted) {
+            abilities.add(List.of(grantedEffect));
+        }
+        for (List<CardEffect> ability : abilities) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    controllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(ability),
+                    null,
+                    source.getId()
+            );
+            gameData.stack.add(entry);
 
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
-        log.info("Game {} - {} becomes-target-of-opponent-spell-only trigger queued",
-                gameData.id, source.getCard().getName());
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+            log.info("Game {} - {} becomes-target-of-opponent-spell-only trigger queued",
+                    gameData.id, source.getCard().getName());
+        }
     }
 
     /**
@@ -7242,6 +7252,9 @@ public class TriggerCollectionService {
     private void fireAllyDealtDamageToCreatureTrigger(GameData gameData, Permanent watcher, Permanent damageSource,
             UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId,
             Permanent damagedCreature, int damage, boolean combatDamage, boolean equipmentScopedOnly) {
+        if (watcher.isLosesAllAbilitiesUntilEndOfTurn() || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
+            return;
+        }
         List<CardEffect> effects = new ArrayList<>(
                 watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
         // Abilities granted until end of turn (Cruel Deceiver) live on the permanent, not the card.
@@ -11446,7 +11459,13 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, lastKnownConditionalCard,
+                // "if it's a Samurai card" (Oathkeeper) checks the printed card, not subtypes granted to the creature.
+                Card conditionalCardForEffect = effect instanceof TriggeringCardConditionalEffect conditional
+                        && conditional.wrapped() instanceof ReturnDyingCreatureToBattlefieldEffect
+                        && dyingCard != null
+                        ? dyingCard
+                        : lastKnownConditionalCard;
+                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, conditionalCardForEffect,
                         gameData, equipmentControllerId);
                 if (resolvedEffect == null) continue;
                 var match = new TriggerMatchContext(gameData, perm, equipmentControllerId, resolvedEffect);
@@ -12752,6 +12771,8 @@ public class TriggerCollectionService {
     private void dispatchAnyCreatureDeathTriggersForWatcher(GameData gameData, UUID playerId, Permanent perm,
             Permanent dyingPermanent, UUID dyingCreatureControllerId, TriggerContext.CreatureDeath ctx,
             boolean lastKnownWatcher) {
+        if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
+        if (!lastKnownWatcher && gameData.lostPrintedAbilityWatcherIdsBeforeLeave.contains(perm.getId())) return;
         List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES));
         effects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_ANY_CREATURE_DIES));
         effects.addAll(lastKnownWatcher
@@ -15606,14 +15627,21 @@ public class TriggerCollectionService {
 
                     if (resolved instanceof MayEffect may) {
                         gameData.queueMayAbility(card, controllerId, may);
+                        StackEntry artifactEntry = gameData.stack.getLast();
+                        artifactEntry.setTriggeringCardId(card.getId());
+                        artifactEntry.setTriggeringCardGraveyardEntryVersion(
+                                gameData.graveyardEntryVersion(card.getId()));
                     } else {
-                        gameData.stack.add(new StackEntry(
+                        StackEntry artifactEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
                                 controllerId,
                                 card.getName() + "'s ability",
                                 new ArrayList<>(List.of(resolved))
-                        ));
+                        );
+                        artifactEntry.setTriggeringCardGraveyardEntryVersion(
+                                gameData.graveyardEntryVersion(card.getId()));
+                        gameData.stack.add(artifactEntry);
                     }
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
                     log.info("Game {} - {} graveyard artifact trigger queued", gameData.id, card.getName());
@@ -16186,12 +16214,15 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
         for (Permanent perm : battlefield) {
-            if (perm.getCard() == enteringCard) continue;
             if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) continue;
 
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) continue;
+            List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(
+                    EffectSlot.ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD));
+            if (perm.getCard() != enteringCard) {
+                effects.addAll(perm.getCard().getEffects(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD));
+            }
+            if (effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
@@ -16252,6 +16283,11 @@ public class TriggerCollectionService {
                     }
                     if (capturesTriggeringAuraManaValue(dispatchEffect)) {
                         triggered.setEventValue(enteringCard.getManaValue());
+                    }
+                    triggered.setMarkSourceOncePerTurnOnAcceptance(resolved instanceof OncePerTurnTriggerEffect once
+                            && once.markOnAcceptance());
+                    if (enteringPermanent != null) {
+                        triggered.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
                     }
                     gameData.stack.add(triggered);
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));

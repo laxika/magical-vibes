@@ -72,6 +72,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
                         ? predicateEvaluationService.matchesCardPredicate(
                                 card, effect.filter(), null, gameData, controllerId)
                         : !effect.basicOnly()
+                                || card.hasAllCardNames()
                                 || (card.hasType(CardType.LAND)
                                 && gameQueryService.cardHasSupertype(
                                 card, CardSupertype.BASIC, gameData, controllerId)))

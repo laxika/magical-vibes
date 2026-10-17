@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
@@ -243,7 +244,9 @@ public class TargetValidationService {
         if (controllerId != null && graveyardOwnerId != null
                 && !restriction.scope().graveyardOwners(
                         ctx.gameData().orderedPlayerIds, controllerId).contains(graveyardOwnerId)) {
-            throw new IllegalStateException("Target card is not in an allowed graveyard");
+            throw new IllegalStateException("Target card is not in an allowed graveyard"
+                    + (restriction.scope() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                    ? " (your graveyard only)" : ""));
         }
         UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
         if (ctx.sourceCard() != null && ctx.sourceCard().getSpellTargets().size() == 1

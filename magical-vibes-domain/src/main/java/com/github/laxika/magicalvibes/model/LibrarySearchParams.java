@@ -185,6 +185,22 @@ public record LibrarySearchParams(
                 withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType);
     }
 
+    /** Returns a copy recording the cards already chosen in this search (used for total mana value bounds). */
+    public LibrarySearchParams withAccumulatedCards(List<Card> newAccumulatedCards) {
+        return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
+                remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
+                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                newAccumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
+                battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
+                manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, sacrificeAtEndStep, exileAtEndStep,
+                returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
+                sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
+                battlefieldIfChosenPredicate, battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
+                placeBattlefieldCardsSimultaneously,
+                finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType,
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType);
+    }
+
     public static class Builder {
         private final UUID playerId;
         private final List<Card> cards;

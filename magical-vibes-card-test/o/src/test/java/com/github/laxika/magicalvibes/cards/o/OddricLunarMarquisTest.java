@@ -171,9 +171,8 @@ class OddricLunarMarquisTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(first, second, third, remaining));
 
         advanceToCombatAndResolve(player1);
-        bears.setAttacking(true);
-        intruder.setAttacking(true);
-        resolveCombat();
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        declareAttackers(List.of(battlefield.indexOf(bears), battlefield.indexOf(intruder)));
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(first.getId())).isNotNull();

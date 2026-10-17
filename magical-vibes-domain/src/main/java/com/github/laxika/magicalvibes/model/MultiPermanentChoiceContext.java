@@ -865,7 +865,8 @@ public sealed interface MultiPermanentChoiceContext {
      * player's next turn begins — the chosen creatures attack if able, every other creature can't
      * attack, and each chosen creature that didn't attack is destroyed at that turn's end step.
      */
-    record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId) implements MultiPermanentChoiceContext {
+    record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId, UUID controllerId, Card sourceCard)
+            implements MultiPermanentChoiceContext {
     }
 
     /**

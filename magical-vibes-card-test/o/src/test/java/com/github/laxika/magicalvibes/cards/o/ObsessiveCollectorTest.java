@@ -104,7 +104,7 @@ class ObsessiveCollectorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(different, sought));
         Permanent collector = addAttackingCollector();
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, collector.getId());

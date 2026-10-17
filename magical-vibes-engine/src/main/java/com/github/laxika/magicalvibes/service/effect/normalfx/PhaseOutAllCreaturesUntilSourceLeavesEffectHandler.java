@@ -51,7 +51,8 @@ public class PhaseOutAllCreaturesUntilSourceLeavesEffectHandler implements Norma
             }
         }
 
-        if (phasedOutCount > 0) {
+        boolean sourceStillPhasedIn = gameQueryService.findPermanentById(gameData, source.getId()) != null;
+        if (phasedOutCount > 0 && sourceStillPhasedIn) {
             permanentCounterSupport.placeCounterOnPermanent(
                     gameData, entry, source, CounterType.TIME, phasedOutCount);
             entry.setSourcePermanentSnapshot(new Permanent(source));

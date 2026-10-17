@@ -3821,7 +3821,9 @@ public class GameQueryService {
             return bonus.grantedColors();
         }
         Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
-        colors.addAll(permanent.getEffectiveColors());
+        if (!hasKeyword(permanent, bonus, Keyword.DEVOID)) {
+            colors.addAll(permanent.getEffectiveColors());
+        }
         colors.addAll(permanent.getGrantedColors());
         colors.addAll(bonus.grantedColors());
         return colors;
@@ -8541,6 +8543,23 @@ public class GameQueryService {
      * Returns whether opponents' spells and abilities from a source with {@code sourceColorCount} colors
      * can't target this permanent under a hexproof-from-monocolored or hexproof-from-multicolored effect.
      */
+    public boolean hasAnyHexproofVariant(GameData gameData, Permanent permanent) {
+        if (hasKeyword(gameData, permanent, Keyword.HEXPROOF)) {
+            return true;
+        }
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return false;
+        }
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (bonus.losesAllAbilities()) {
+            return false;
+        }
+        boolean printedVariant = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof TargetingRestrictionEffect r && r.hexproofLike());
+        return printedVariant || bonus.grantedEffects().stream()
+                .anyMatch(effect -> effect instanceof TargetingRestrictionEffect r && r.hexproofLike());
+    }
+
     public boolean hasHexproofFromColorCount(GameData gameData, Permanent target, int sourceColorCount) {
         if (sourceColorCount == 1) {
             return hasHexproofFromMonocolored(gameData, target);
@@ -9178,6 +9197,13 @@ public class GameQueryService {
                 return;
             }
             for (Permanent permanent : battlefield) {
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                    continue;
+                }
+                StaticBonus bonus = computeStaticBonus(gameData, permanent);
+                if (bonus.losesAllAbilities() || bonus.losesAllNonManaAbilities()) {
+                    continue;
+                }
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof OjerAxonilDamageReplacementEffect
                             && !permanent.isStaticEffectSuppressed(effect.getClass())) {

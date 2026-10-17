@@ -33,9 +33,10 @@ class OrthionHeroOfLavabrinkTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null, player1.getId()));
     }
 
     @Test
@@ -51,7 +52,7 @@ class OrthionHeroOfLavabrinkTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(6);
         assertThat(findPermanents(player1, "Grizzly Bears")).filteredOn(permanent ->
                 permanent.getCard().isToken()).hasSize(5)
-                .allMatch(permanent -> permanent.getCard().getKeywords().contains(Keyword.HASTE));
+                .allMatch(permanent -> gqs.hasKeyword(gd, permanent, Keyword.HASTE));
     }
 
     @Test

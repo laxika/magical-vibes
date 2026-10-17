@@ -113,6 +113,7 @@ class OtterPenguinTest extends BaseCardTest {
     @DisplayName("Both effects expire and the ability can trigger again on the next turn")
     void expiresAndTriggersAgainNextTurn() {
         Permanent otter = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new OtterPenguin(), new OtterPenguin(),
                 new OtterPenguin(), new OtterPenguin()));
         drawAndResolveTrigger(player1);

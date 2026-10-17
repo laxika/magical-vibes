@@ -38,13 +38,14 @@ public final class LibrarySearchTriggerHelper {
         gameData.playersWhoSearchedLibraryThisTurn.add(searchingPlayerId);
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (var perm : List.copyOf(battlefield)) {
+                if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
                 boolean controllerSearch = controllerId.equals(searchingPlayerId);
                 List<CardEffect> effects = perm.getCard().getEffects(controllerSearch
                         ? EffectSlot.ON_CONTROLLER_SEARCHES_LIBRARY
                         : EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY);
                 if (effects.isEmpty()) continue;
 
-                gameData.enqueueTrigger(new StackEntry(
+                StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         controllerId,
@@ -52,7 +53,11 @@ public final class LibrarySearchTriggerHelper {
                         new ArrayList<>(effects),
                         controllerSearch ? null : searchingPlayerId,
                         perm.getId()
-                ));
+                );
+                // The searching player is the trigger's subject, not a chosen target, so hexproof on
+                // that player must not make the trigger fizzle on resolution.
+                trigger.setNonTargeting(true);
+                gameData.enqueueTrigger(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             }
         });

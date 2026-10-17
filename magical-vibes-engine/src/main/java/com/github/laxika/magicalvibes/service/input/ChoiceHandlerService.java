@@ -5080,7 +5080,7 @@ public class ChoiceHandlerService {
         for (int i = 0; i < toExile; i++) {
             Card card = library.removeFirst();
             gameData.addToExile(targetPlayerId, card);
-            if (!card.hasType(CardType.LAND) && card.getColors().contains(color)) {
+            if (card.getColors().contains(color)) {
                 matches++;
             }
         }

@@ -22,13 +22,13 @@ class OupheVandalsTest extends BaseCardTest {
     @DisplayName("Can counter its controller's equip ability and destroy the Equipment")
     void countersOwnEquipAbility() {
         harness.addToBattlefield(player1, new OupheVandals());
-        var mantle = harness.addToBattlefieldAndReturn(player1, new ParadiseMantle());
+        harness.addToBattlefield(player1, new ParadiseMantle());
         var creature = harness.addToBattlefieldAndReturn(player1, new CompositeGolem());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 1, null, creature.getId());
-        harness.activateAbility(player1, 0, null, mantle.getId());
+        harness.activateAbility(player1, 0, null, gd.stack.getLast().getTargetableId());
 
         harness.assertInGraveyard(player1, "Ouphe Vandals");
         harness.assertOnBattlefield(player1, "Paradise Mantle");

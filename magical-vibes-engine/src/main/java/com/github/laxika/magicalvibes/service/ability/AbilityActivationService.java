@@ -376,6 +376,13 @@ public class AbilityActivationService {
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
 
+        // The printed mana ability is still an activated ability, so activation taxes (Oppressive Rays) apply.
+        int manaAbilityTax = castingCostService.getActivatedAbilityActivationTax(
+                gameData, playerId, permanent, null, true);
+        if (manaAbilityTax > 0) {
+            payManaCostForSourceCard(gameData, playerId, permanent.getCard(), "{0}", 0, false, false,
+                    manaAbilityTax);
+        }
         payAdditionalTapAbilityCosts(gameData, playerId, permanent);
         permanent.tap();
 

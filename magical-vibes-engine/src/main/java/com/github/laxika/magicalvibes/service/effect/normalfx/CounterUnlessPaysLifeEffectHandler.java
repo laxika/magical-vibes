@@ -61,6 +61,6 @@ public class CounterUnlessPaysLifeEffectHandler implements NormalEffectHandlerBe
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId,
                 List.of(new CounterUnlessPaysEffect(0, false, false, null, List.of(), lifeCost)),
-                prompt, targetCardId));
+                prompt, targetCardId).withSourceControllerId(entry.getControllerId()));
     }
 }

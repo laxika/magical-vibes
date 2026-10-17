@@ -39,8 +39,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 
 @ExtendWith(MockitoExtension.class)
 class OmenMachineDrawStepEffectHandlerTest {
@@ -55,6 +58,9 @@ class OmenMachineDrawStepEffectHandlerTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
+    @Mock private CastingPermissionService castingPermissionService;
+    @Mock private CastingCostService castingCostService;
+    @Mock private ExileCastTargetSupport exileCastTargetSupport;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -82,7 +88,10 @@ class OmenMachineDrawStepEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameLogService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService);
+        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameLogService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService,
+                castingPermissionService, castingCostService, exileCastTargetSupport);
+        lenient().when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+        lenient().when(castingCostService.canPayAdditionalSpellCosts(any(), any(), any())).thenReturn(true);
 
     }
 

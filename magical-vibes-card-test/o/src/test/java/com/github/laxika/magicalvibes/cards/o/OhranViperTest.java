@@ -119,6 +119,7 @@ class OhranViperTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BorealCentaur());
         attacker.setAttacking(true);
         addCreatureReady(player2, new OhranViper());
+        harness.setHand(player2, new ArrayList<>());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

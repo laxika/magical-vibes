@@ -86,7 +86,7 @@ class OgreErrantTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gqs.hasKeyword(gd, ogre, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, idleKnight, Keyword.MENACE)).isFalse();
     }

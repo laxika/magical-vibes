@@ -65,7 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect;
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -907,12 +907,11 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect.class,
+    @CollectsTrigger(value = RemoveCounterFromSourceEffect.class,
             slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRemoveCounter(TriggerMatchContext match,
-            RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect e, TriggerContext ctx) {
-        // The effect re-derives the enchanted permanent from the source Aura at resolution, so the
-        // trigger only needs to carry the Aura as its source permanent (like the destroy variant).
+            RemoveCounterFromSourceEffect e, TriggerContext ctx) {
+        // The removal acts on the source Aura, so the trigger only needs to carry the Aura as its source permanent.
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -3379,6 +3378,20 @@ public class MiscTriggerCollectorService {
         log.info("Game {} - {} triggers on a crime (once per turn)",
                 gameData.id, source.getCard().getName());
         return true;
+    }
+
+    @CollectsTriggers({
+        @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_COMMITS_CRIME),
+        @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_COMMITS_CRIME)
+    })
+    private boolean handleCrimeConditional(TriggerMatchContext match, ConditionalEffect conditional,
+                                           TriggerContext ctx) {
+        if (conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+        return handleCrimeDefault(match, conditional, ctx);
     }
 
     @CollectsTriggers({

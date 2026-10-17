@@ -66,7 +66,7 @@ class OneEyedScarecrowTest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("defender");
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test

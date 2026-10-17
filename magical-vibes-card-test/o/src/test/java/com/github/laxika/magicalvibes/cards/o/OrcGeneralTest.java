@@ -84,7 +84,6 @@ class OrcGeneralTest extends BaseCardTest {
         Permanent otherOrc = addCreatureReady(player2, new OrcGeneral());
 
         harness.activateAbility(player1, battlefieldIndex(general), null, null);
-        harness.handlePermanentChosen(player1, goblin.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
@@ -102,7 +101,6 @@ class OrcGeneralTest extends BaseCardTest {
         Permanent otherOrc = addCreatureReady(player2, new OrcGeneral());
 
         harness.activateAbility(player1, battlefieldIndex(general), null, null);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
         assertThat(otherOrc.getPowerModifier()).isZero();

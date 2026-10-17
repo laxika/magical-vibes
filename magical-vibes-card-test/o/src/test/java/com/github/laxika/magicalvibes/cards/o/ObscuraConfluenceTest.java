@@ -69,7 +69,7 @@ class ObscuraConfluenceTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(creature));
         harness.setHand(player1, List.of(new ObscuraConfluence()));
 
-        cast(new int[]{2, 0, 0}, List.of(player2.getId(), battlefieldCreature.getId(), battlefieldCreature.getId()));
+        cast(new int[]{0, 0, 2}, List.of(battlefieldCreature.getId(), battlefieldCreature.getId(), player2.getId()));
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -147,6 +147,7 @@ class ObscuraConfluenceTest extends BaseCardTest {
     void repeatedReturnLetsTargetPlayerChooseAndIgnoresNoncreatureCards() {
         Card noncreature = new ObscuraConfluence();
         harness.setGraveyard(player2, List.of(noncreature, new GrizzlyBears(), new SerraAngel()));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new ObscuraConfluence()));
 
         cast(new int[]{2, 2, 2}, List.of(player2.getId(), player2.getId(), player2.getId()));

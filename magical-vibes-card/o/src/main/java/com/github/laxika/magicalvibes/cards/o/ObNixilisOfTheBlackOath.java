@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -51,7 +51,10 @@ public class ObNixilisOfTheBlackOath extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemActivatedAbilityEffect(new ActivatedAbility(
+                        List.of(),
+                        EMBLEM_TEXT,
+                        EmblemRecipient.CONTROLLER,
+                        List.of(new ActivatedAbility(
                                 false,
                                 "{1}{B}",
                                 List.of(
@@ -60,8 +63,7 @@ public class ObNixilisOfTheBlackOath extends Card {
                                         new DrawCardEffect(new XValue())
                                 ),
                                 EMBLEM_TEXT
-                        ))),
-                        EMBLEM_TEXT)),
+                        )))),
                 "−8: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));
     }

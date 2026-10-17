@@ -78,7 +78,7 @@ class OglorDevotedAssistantTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 1);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);

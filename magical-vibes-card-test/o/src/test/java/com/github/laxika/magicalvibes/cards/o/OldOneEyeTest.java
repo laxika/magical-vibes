@@ -42,6 +42,7 @@ class OldOneEyeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SicarianInfiltrator(), new Forest()));
 
         advanceToPrecombatMain(player1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
             harness.handleMayAbilityChosen(player1, true);
@@ -67,6 +68,7 @@ class OldOneEyeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SicarianInfiltrator(), new Forest()));
 
         advanceToPrecombatMain(player1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(oldOneEye);

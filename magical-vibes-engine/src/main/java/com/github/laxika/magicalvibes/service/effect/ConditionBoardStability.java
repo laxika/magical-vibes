@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
@@ -49,6 +50,9 @@ public final class ConditionBoardStability {
             case Metalcraft ignored -> true;
             // Counter quantities are part of the structural board fingerprint.
             case SourceCounterThreshold ignored -> true;
+            // Impending and other alternate-cost statics read the source permanent's alternate-cost
+            // flag, which is part of the permanent's fingerprint flags.
+            case CastForAlternateCost ignored -> true;
             // Persistent card intensity is included in the board fingerprint below.
             case SourceIntensityThreshold ignored -> true;
             // Each permanent's tapped flag is part of the board fingerprint.

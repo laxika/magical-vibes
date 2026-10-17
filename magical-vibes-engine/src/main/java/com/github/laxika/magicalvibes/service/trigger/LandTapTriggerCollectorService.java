@@ -126,7 +126,7 @@ public class LandTapTriggerCollectorService {
         }
         TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
         StackEntry entry = createLandTapDamageEntry(
-                match, damage, landTap.tappingPlayerId(), landTap.tappedLandId(), true);
+                match, damage, landTap.tappingPlayerId(), landTap.tappedLandId(), damage.tappedLandDeals());
         if (entry == null) {
             handleAddOneOfEachManaType(match, mana, ctx);
             return true;

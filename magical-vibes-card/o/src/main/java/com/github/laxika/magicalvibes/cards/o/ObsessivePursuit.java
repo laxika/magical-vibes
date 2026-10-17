@@ -27,9 +27,9 @@ public class ObsessivePursuit extends Card {
 
     public ObsessivePursuit() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                SequenceEffect.of(new LoseLifeEffect(1), CreateTokenEffect.ofClueToken(1)));
+                SequenceEffect.of(new LoseLifeEffect(1), CreateTokenEffect.ofClueToken(1).withInvestigate(false)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                SequenceEffect.of(new LoseLifeEffect(1), CreateTokenEffect.ofClueToken(1)));
+                SequenceEffect.of(new LoseLifeEffect(1), CreateTokenEffect.ofClueToken(1).withInvestigate(false)));
 
         PermanentPredicate attackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

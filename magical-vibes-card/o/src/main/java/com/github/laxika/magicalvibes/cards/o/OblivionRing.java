@@ -35,6 +35,7 @@ public class OblivionRing extends Card {
                 )),
                 "Target must be another nonland permanent"
         ))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect());
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true, true));
     }
 }

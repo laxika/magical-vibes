@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,7 +52,7 @@ public class CreateTokenForTargetPlayerEffectHandler implements NormalEffectHand
         if (amount <= 0) {
             return;
         }
-        if (e.tokenEffect().subtypes().contains(CardSubtype.CLUE)) {
+        if (e.tokenEffect().investigate()) {
             triggerCollectionService.checkInvestigateTriggers(gameData, targetPlayerId);
         }
         int power = amountEvaluationService.evaluate(gameData, e.tokenEffect().power(), context);

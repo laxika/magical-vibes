@@ -177,16 +177,16 @@ class ObsessiveAstronomerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ObsessiveAstronomer());
         harness.setHand(player1, List.of(new Island()));
         harness.setHand(player2, List.of(new Forest()));
-        harness.setLibrary(player2, List.of(new Mountain(), new Forest()));
+        harness.setLibrary(player2, List.of(new Mountain(), new Forest(), new Island()));
 
         advanceToNextUpkeep();
         harness.handleXValueChosen(player2, 1);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Island");
-        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName).containsExactly("Mountain");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName).containsExactly("Mountain", "Forest");
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName).containsExactly("Forest");
-        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName).containsExactly("Forest");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName).containsExactly("Island");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

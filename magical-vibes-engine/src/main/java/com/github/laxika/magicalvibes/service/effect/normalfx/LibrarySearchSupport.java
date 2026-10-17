@@ -112,7 +112,7 @@ public class LibrarySearchSupport {
                                     .followUp(nextFollowUp)
                                     .declineSkipsShuffle(true)
                                     .build(),
-                            prompt, true);
+                            prompt, true, gameData.playerIdToName.get(nextPlayerId) + " may search their library.");
                     return true;
                 }
             }
@@ -1022,7 +1022,8 @@ public class LibrarySearchSupport {
             }
             for (Permanent permanent : battlefield) {
                 boolean isOppositionAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(OppositionAgentEffect.class::isInstance);
+                        .anyMatch(OppositionAgentEffect.class::isInstance)
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent);
                 if (isOppositionAgent && permanent.getTimestamp() >= newestTimestamp) {
                     newestTimestamp = permanent.getTimestamp();
                     controllerId = battlefieldControllerId;

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OboroPalaceInTheClouds.class})
@@ -56,6 +58,7 @@ class OboroPalaceInTheCloudsTest extends BaseCardTest {
     @DisplayName("Oboro can use its own blue mana to pay for returning itself")
     void ownManaPaysForReturn() {
         harness.addToBattlefield(player1, new OboroPalaceInTheClouds());
+        harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.activateAbility(player1, 0, 1, null, null);
@@ -75,6 +78,7 @@ class OboroPalaceInTheCloudsTest extends BaseCardTest {
     @DisplayName("Multiple return activations return Oboro only once")
     void multipleReturnActivationsReturnOnlyOnce() {
         harness.addToBattlefield(player1, new OboroPalaceInTheClouds());
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);

@@ -55,7 +55,7 @@ public class LookAtTopCardMayRevealForManaAndPutIntoHandEffectHandler implements
         int coloredSymbols = topCard.getParsedManaCost() == null
                 ? 0
                 : topCard.getParsedManaCost().countSymbolsOfAnyColor(Set.copyOf(ManaColor.COLORS));
-        if (coloredSymbols < 3 || colors.isEmpty()) {
+        if (coloredSymbols < 3) {
             putTopCardIntoHand(gameData, controllerId, entry.getCard().getName());
             return;
         }
@@ -70,11 +70,9 @@ public class LookAtTopCardMayRevealForManaAndPutIntoHandEffectHandler implements
     }
 
     static List<ManaColor> coloredManaColors(Card card) {
-        if (card.getParsedManaCost() == null) {
-            return List.of();
-        }
         return ManaColor.COLORS.stream()
-                .filter(color -> card.getParsedManaCost().countColorSymbols(color) > 0)
+                .filter(color -> card.getColors().stream()
+                        .anyMatch(cardColor -> cardColor.name().equals(color.name())))
                 .toList();
     }
 

@@ -187,6 +187,7 @@ class OsteomancerAdeptTest extends BaseCardTest {
     void permissionExpiresAtEndOfTurn() {
         Permanent adept = addReadyAdept();
         grantPermission(adept);
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(

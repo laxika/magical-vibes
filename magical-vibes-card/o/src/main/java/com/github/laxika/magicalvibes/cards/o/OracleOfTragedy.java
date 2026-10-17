@@ -23,7 +23,7 @@ public class OracleOfTragedy extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library",
                         new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
-                                new CardMinManaValuePredicate(3), 4))
+                                new CardMinManaValuePredicate(3), 4, false, true))
         ));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggeredAbility);

@@ -20,7 +20,7 @@ public class OkoyeDoraMilajeLeader extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.whiteSoldier(2));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.FIRST_STRIKE,
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsTokenPredicate(),
                         new PermanentIsAttackingPredicate()))));

@@ -285,9 +285,7 @@ class OathOfTeferiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        setOwnerAndController(creature, player1, player2);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Baloth Gorger");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();

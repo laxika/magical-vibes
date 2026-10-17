@@ -82,7 +82,7 @@ class ObekaSplitterOfSecondsTest extends BaseCardTest {
         obeka.setAttacking(true);
         obeka.tap();
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveCombat);
         harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         assertThat(clock.getCounterCount(CounterType.DOOM)).isZero();
 
@@ -123,7 +123,7 @@ class ObekaSplitterOfSecondsTest extends BaseCardTest {
         obeka.setAttacking(true);
         razer.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveCombat);
         harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         harness.withAutoStop(TurnStep.UPKEEP, () ->
                 harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities));

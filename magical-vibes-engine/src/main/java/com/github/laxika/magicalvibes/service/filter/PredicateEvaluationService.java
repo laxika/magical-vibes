@@ -211,7 +211,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAl
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastToughnessAmongOpponentCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasActivatedAbilityWithEffectsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasStaticEffectPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNoNonKeywordAbilitiesPredicate;
@@ -1417,6 +1419,15 @@ public class PredicateEvaluationService {
                     hasTapActivatedAbility(gameData, permanent);
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
+            case PermanentHasStaticEffectPredicate hasStatic ->
+                    gameData == null
+                            ? permanent.getCard().getEffects(EffectSlot.STATIC).contains(hasStatic.effect())
+                            : gameQueryService.getActiveStaticEffects(gameData, permanent).contains(hasStatic.effect())
+                            || gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects()
+                            .contains(hasStatic.effect());
+            case PermanentHasActivatedAbilityWithEffectsPredicate withEffects ->
+                    effectiveActivatedAbilities(gameData, permanent).stream()
+                            .anyMatch(ability -> ability.getEffects().equals(withEffects.effects()));
             case PermanentCouldProduceManaPredicate couldProduceMana ->
                     gameData != null
                             && landManaTypeSupport.manaTypesCouldProduce(gameData, permanent)
@@ -3863,23 +3874,8 @@ public class PredicateEvaluationService {
         if (gameData == null) {
             return false;
         }
-        if (gameQueryService.isEquipped(gameData, permanent)) {
-            return true;
-        }
-
-        UUID controllerId = gameData.findControllerOf(permanent);
-        if (controllerId == null && filterContext != null) {
-            controllerId = filterContext.sourceControllerId();
-        }
-        if (controllerId == null) {
-            return false;
-        }
-        UUID effectiveControllerId = controllerId;
-        return gameData.anyPermanentMatches(aura ->
-                aura.getCard().isAura()
-                        && aura.isAttached()
-                        && aura.getAttachedTo().equals(permanent.getId())
-                        && effectiveControllerId.equals(gameData.findControllerOf(aura)));
+        return gameQueryService.isModified(gameData, permanent,
+                filterContext == null ? null : filterContext.sourceControllerId());
     }
 
     private boolean isAdjacentToSource(Permanent target, FilterContext context) {

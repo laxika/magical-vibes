@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
+import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
@@ -507,6 +508,8 @@ public class GameData {
     public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
     /** Directly phased-out permanent ids that remain phased out until their source leaves. */
     public final Map<UUID, Set<UUID>> phasedOutUntilSourceLeaves = new ConcurrentHashMap<>();
+    /** Ids from {@link #phasedOutUntilSourceLeaves} that become tapped when they phase back in (Oubliette). */
+    public final Set<UUID> tappedWhenSourceLeavesPhasesIn = ConcurrentHashMap.newKeySet();
     /** Directly phased-out permanent ids that remain phased out until a player planeswalks. */
     public final Set<UUID> phasedOutUntilPlaneswalk = ConcurrentHashMap.newKeySet();
     /** Directly phased-out permanent ids that remain phased out while their source stays controlled. */
@@ -1020,6 +1023,12 @@ public class GameData {
     public final List<UUID> pendingAnyNumberHandPutCardIds = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
+    /**
+     * "If you don't" effect of the hand-card choice currently open for a "you may put a card from your hand
+     * onto the battlefield; if you don't, ..." effect (Origin of the Avengers). It resolves when the player
+     * declines the choice and is dropped once the choice is answered.
+     */
+    public StackEntry handCardChoiceDeclineEntry;
     /** Votes collected while a voting spell or ability is resolving, keyed by its controller. */
     public final Map<UUID, Map<UUID, Set<String>>> votingChoicesByController = new ConcurrentHashMap<>();
     public PendingReverseMiracleSearch pendingReverseMiracleSearch;
@@ -1405,6 +1414,10 @@ public class GameData {
      *  would deal to any recipient this turn is dealt to a fixed permanent instead. */
     public final List<SourceNextDamageRedirectToPermanentShield> sourceNextDamageRedirectToPermanentShields =
             Collections.synchronizedList(new ArrayList<>());
+    /** Opal-Eye shields already consumed by the open simultaneous damage event; they keep redirecting the
+     *  rest of that event's damage from the same source and are dropped once the event is dealt. */
+    public final List<SourceNextDamageRedirectToPermanentShield> sourceRedirectShieldsUsedInOpenEvent =
+            Collections.synchronizedList(new ArrayList<>());
     /** Pending Eye for an Eye reflected damage to deal after a shield matches (populated by
      *  DamagePreventionService, consumed by the damage-dealing services). */
     public final List<EyeForAnEyeReflection> pendingEyeForAnEyeReflections = Collections.synchronizedList(new ArrayList<>());
@@ -1554,6 +1567,14 @@ public class GameData {
     public boolean playersCantSearchLibrariesThisTurn = false;
     /** When true, no creature can attack this turn. Cleared at turn cleanup. */
     public boolean creaturesCantAttackThisTurn = false;
+    /**
+     * Turn-scoped rule restrictions on the creatures a player controls (CR 611.2c: a "can't attack"
+     * effect modifies the rules, so it covers creatures that come under that player's control later and
+     * stops covering creatures that leave it). Keyed by the player; each filter selects the creatures
+     * affected. Cleared at turn cleanup.
+     */
+    public final Map<UUID, List<com.github.laxika.magicalvibes.model.filter.PermanentPredicate>>
+            playerCreaturesCantAttackThisTurn = new ConcurrentHashMap<>();
     /**
      * Set for the duration of a single unpreventable damage event ("the damage can't be prevented",
      * e.g. Flames of the Blood Hand), so the shared prevention gate {@code isDamagePreventable}
@@ -2679,6 +2700,9 @@ public class GameData {
     /** Whether the engine is processing an inserted beginning phase's untap step. */
     public boolean additionalBeginningPhaseUntapInProgress;
     public int additionalUpkeepStepsAfterCombat;
+    /** True when the pending extra combat phase was created after the pending additional upkeep steps, so it
+     *  occurs first (CR 500.8, 500.9). */
+    public boolean additionalCombatCreatedAfterUpkeepSteps;
     public TurnStep additionalUpkeepReturnStep;
     public final Set<UUID> cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn =
             ConcurrentHashMap.newKeySet();
@@ -3193,6 +3217,13 @@ public class GameData {
      * populated for the duration of that collection.
      */
     public final Set<UUID> graveyardLookBackExcludedCardIds = ConcurrentHashMap.newKeySet();
+    /**
+     * Battlefield permanents whose printed abilities were already removed by continuous effects just
+     * before the most recent creature left the battlefield. Creature-death watchers in this set do not
+     * trigger for that death, since leaves-the-battlefield abilities look back in time (CR 603.10a).
+     * Recomputed on every departure from the battlefield.
+     */
+    public final Set<UUID> lostPrintedAbilityWatcherIdsBeforeLeave = ConcurrentHashMap.newKeySet();
     public final Map<UUID, UUID> simultaneousDyingControllers = new ConcurrentHashMap<>();
     public final Map<UUID, Permanent> simultaneousDyingPermanents = new ConcurrentHashMap<>();
     /** Last departure snapshots by card identity, retained for sacrifice-event collection this turn. */
@@ -3335,16 +3366,19 @@ public class GameData {
     // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
     /** Delayed: affectedPlayerId -> the creature IDs that player chose, consumed when their turn begins. */
     public final Map<UUID, Set<UUID>> chosenAttackersNextTurn = new ConcurrentHashMap<>();
-    public final Map<UUID, Set<UUID>> chosenAttackersToDestroyNextTurn = new ConcurrentHashMap<>();
+    public final Map<UUID, List<DestroyChosenCreaturesIfDidNotAttackAtEndStep>> chosenAttackersToDestroyNextTurn =
+            new ConcurrentHashMap<>();
 
-    public void restrictAttackersNextTurn(UUID playerId, Set<UUID> chosen) {
+    public void restrictAttackersNextTurn(UUID playerId, Set<UUID> chosen, UUID controllerId, Card sourceCard) {
         chosenAttackersNextTurn.merge(playerId, Set.copyOf(chosen), (previous, current) -> {
             Set<UUID> allowed = new java.util.HashSet<>(previous);
             allowed.retainAll(current);
             return Set.copyOf(allowed);
         });
-        chosenAttackersToDestroyNextTurn.computeIfAbsent(playerId, ignored -> new java.util.HashSet<>())
-                .addAll(chosen);
+        if (!chosen.isEmpty()) {
+            chosenAttackersToDestroyNextTurn.computeIfAbsent(playerId, ignored -> new ArrayList<>())
+                    .add(new DestroyChosenCreaturesIfDidNotAttackAtEndStep(List.copyOf(chosen), controllerId, sourceCard));
+        }
     }
     /** Active this turn: affectedPlayerId -> the only creatures allowed to attack (all others can't). */
     public final Map<UUID, Set<UUID>> chosenAttackersThisTurn = new ConcurrentHashMap<>();
@@ -7309,6 +7343,8 @@ public class GameData {
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
+        copy.handCardChoiceDeclineEntry = this.handCardChoiceDeclineEntry != null
+                ? new StackEntry(this.handCardChoiceDeclineEntry) : null;
         this.votingChoicesByController.forEach((controllerId, choicesByPlayer) -> {
             Map<UUID, Set<String>> choicesCopy = new LinkedHashMap<>();
             choicesByPlayer.forEach((playerId, choices) ->
@@ -7735,6 +7771,8 @@ public class GameData {
         copy.playersCantLoseLifeThisTurn = this.playersCantLoseLifeThisTurn;
         copy.playersCantSearchLibrariesThisTurn = this.playersCantSearchLibrariesThisTurn;
         copy.creaturesCantAttackThisTurn = this.creaturesCantAttackThisTurn;
+        this.playerCreaturesCantAttackThisTurn.forEach((playerId, filters) ->
+                copy.playerCreaturesCantAttackThisTurn.put(playerId, new ArrayList<>(filters)));
         copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
         copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
         copy.permanentDamageDoublingsThisTurn.putAll(this.permanentDamageDoublingsThisTurn);
@@ -7770,6 +7808,7 @@ public class GameData {
         copy.reflectDamageToSourceControllerShields.addAll(this.reflectDamageToSourceControllerShields);
         copy.sourceNextCombatDamageToControllerShields.addAll(this.sourceNextCombatDamageToControllerShields);
         copy.sourceNextDamageRedirectToPermanentShields.addAll(this.sourceNextDamageRedirectToPermanentShields);
+        copy.sourceRedirectShieldsUsedInOpenEvent.addAll(this.sourceRedirectShieldsUsedInOpenEvent);
         copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
         this.pendingSourceDamageForReflection.forEach((sourceId, pending) ->
                 copy.pendingSourceDamageForReflection.put(sourceId, pending.copy()));
@@ -8263,6 +8302,7 @@ public class GameData {
             targetIds.addAll(v);
             copy.phasedOutUntilSourceLeaves.put(k, targetIds);
         });
+        copy.tappedWhenSourceLeavesPhasesIn.addAll(this.tappedWhenSourceLeavesPhasesIn);
         copy.phasedOutUntilPlaneswalk.addAll(this.phasedOutUntilPlaneswalk);
         this.phasedOutWhileSourceControlled.forEach((sourceId, targetSequences) -> {
             Map<UUID, Integer> targetSequenceCopy = new ConcurrentHashMap<>();
@@ -8949,7 +8989,7 @@ public class GameData {
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);
         this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
         this.chosenAttackersToDestroyNextTurn.forEach((playerId, ids) ->
-                copy.chosenAttackersToDestroyNextTurn.put(playerId, new java.util.HashSet<>(ids)));
+                copy.chosenAttackersToDestroyNextTurn.put(playerId, new ArrayList<>(ids)));
         this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         this.attackableCreaturesThisTurn.forEach((playerId, ids) -> copy.attackableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
         this.creaturesAbleToAttackAtDeclareAttackersThisTurn.forEach((playerId, ids) ->
@@ -9183,6 +9223,7 @@ public class GameData {
         copy.additionalBeginningPhaseReturnStep = this.additionalBeginningPhaseReturnStep;
         copy.additionalBeginningPhaseUntapInProgress = this.additionalBeginningPhaseUntapInProgress;
         copy.additionalUpkeepStepsAfterCombat = this.additionalUpkeepStepsAfterCombat;
+        copy.additionalCombatCreatedAfterUpkeepSteps = this.additionalCombatCreatedAfterUpkeepSteps;
         copy.additionalUpkeepReturnStep = this.additionalUpkeepReturnStep;
         copy.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.addAll(
                 this.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn);

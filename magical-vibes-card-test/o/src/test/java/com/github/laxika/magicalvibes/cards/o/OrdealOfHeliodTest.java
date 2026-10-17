@@ -137,7 +137,8 @@ class OrdealOfHeliodTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Ordeal of Heliod");
         harness.assertLife(player1, 20);
-        harness.assertLife(player2, 23);
+        // Unblocked 5/5 Traveling Philosopher (2/2 with three counters) deals 5 combat damage: 20 - 5 + 3.
+        harness.assertLife(player2, 18);
     }
 
     @Test

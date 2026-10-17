@@ -49,6 +49,7 @@ class OculusWhelpTest extends BaseCardTest {
         ranger.setCard(ranger.getOriginalCard().getBackFaceCard());
         ranger.setTransformed(true);
         harness.setLibrary(player1, List.of(new OculusWhelp()));
+        harness.setHand(player2, List.of());
 
         killWithShock(whelp.getId());
 

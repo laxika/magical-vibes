@@ -94,8 +94,8 @@ class OverwhelmingStampedeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A negative greatest power reduces power and toughness")
-    void negativeGreatestPowerIsNotClampedToZero() {
+    @DisplayName("A negative greatest power gives +0/+0 but still grants trample")
+    void negativeGreatestPowerGivesZeroBoost() {
         Permanent wall = addCreatureReady(player1, new WallOfFrost());
         harness.setHand(player1, List.of(new StabbingPain(), new OverwhelmingStampede()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -107,8 +107,9 @@ class OverwhelmingStampedeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(-2);
-        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
+        // CR 107.1b: X is the greatest power (-1), which is floored to 0 for the +X/+X boost
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(6);
         assertThat(wall.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 

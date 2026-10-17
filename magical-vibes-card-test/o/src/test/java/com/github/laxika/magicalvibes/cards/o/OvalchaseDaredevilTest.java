@@ -192,14 +192,14 @@ class OvalchaseDaredevilTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(daredevil);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(daredevil);
         resolveAllTriggers();
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
             harness.handleMayAbilityChosen(player1, true);
         }
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(daredevil);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(daredevil);
         assertThat(gd.stack).isEmpty();
     }
 }

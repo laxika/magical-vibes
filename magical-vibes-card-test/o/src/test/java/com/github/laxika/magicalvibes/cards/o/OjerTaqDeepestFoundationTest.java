@@ -12,7 +12,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -60,7 +63,7 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
     void transformsBackAfterAttackingWithThreeCreatures() {
         Permanent temple = returnOjerAsTemple();
         temple.untap();
-        gd.creaturesAttackedCountThisTurn.put(player1.getId(), 3);
+        recordAttackingCreatures(3);
         addTransformMana();
 
         harness.forceActivePlayer(player1);
@@ -133,7 +136,7 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
     void cannotTransformAfterOnlyTwoAttackers() {
         Permanent temple = returnOjerAsTemple();
         temple.untap();
-        gd.creaturesAttackedCountThisTurn.put(player1.getId(), 2);
+        recordAttackingCreatures(2);
         addTransformMana();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -149,7 +152,7 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
     void cannotTransformDuringCombatEvenAfterThreeAttackers() {
         Permanent temple = returnOjerAsTemple();
         temple.untap();
-        gd.creaturesAttackedCountThisTurn.put(player1.getId(), 3);
+        recordAttackingCreatures(3);
         addTransformMana();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_OF_COMBAT);
@@ -191,6 +194,14 @@ class OjerTaqDeepestFoundationTest extends BaseCardTest {
         Permanent ojer = harness.addToBattlefieldAndReturn(player1, new OjerTaqDeepestFoundation());
         destroyOjer(ojer);
         return findPermanents(player1, "Temple of Civilization").getFirst();
+    }
+
+    private void recordAttackingCreatures(int count) {
+        Set<UUID> attackers = new HashSet<>();
+        for (int i = 0; i < count; i++) {
+            attackers.add(UUID.randomUUID());
+        }
+        gd.creaturesAttackedWithThisTurn.put(player1.getId(), attackers);
     }
 
     private void addTransformMana() {

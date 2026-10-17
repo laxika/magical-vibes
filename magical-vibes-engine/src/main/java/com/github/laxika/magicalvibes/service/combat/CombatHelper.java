@@ -36,7 +36,9 @@ public final class CombatHelper {
                                                           List<Permanent> defenderBattlefield) {
         boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData)
                 || isLandwalkIgnoredForBlocking(gameData, attacker.getId());
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+        List<CardEffect> declaredStaticEffects = new java.util.ArrayList<>(attacker.getCard().getEffects(EffectSlot.STATIC));
+        declaredStaticEffects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        for (CardEffect effect : declaredStaticEffects) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
                     return true;

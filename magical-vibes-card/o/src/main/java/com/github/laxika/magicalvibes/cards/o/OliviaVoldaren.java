@@ -48,9 +48,7 @@ public class OliviaVoldaren extends Card {
                 List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)),
                 "{3}{B}{B}: Gain control of target Vampire for as long as you control Olivia Voldaren.",
                 new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE))),
-                        "Target must be a Vampire creature")));
+                        new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
+                        "Target must be a Vampire")));
     }
 }

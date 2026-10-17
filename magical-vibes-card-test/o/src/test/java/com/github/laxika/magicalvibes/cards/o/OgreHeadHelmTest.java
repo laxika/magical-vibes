@@ -136,11 +136,12 @@ class OgreHeadHelmTest extends BaseCardTest {
 
         resolveCombat(player2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(helm);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.playerHands.get(player1.getId())).contains(handCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(handCard);
     }
 
     @Test

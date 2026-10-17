@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -51,7 +53,7 @@ class OldHobAlleycatBluesTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int lifeBefore = gd.getLife(player1.getId());
         advanceToEndStep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Mutant")).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -111,20 +113,21 @@ class OldHobAlleycatBluesTest extends BaseCardTest {
     void indestructibleTokenSurvivesDestructionAndLosesTemporaryKeywords() {
         Permanent oldHob = addOldHobReady(player1);
         Permanent token = addAttackingToken(player1);
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, battlefieldIndex(player1, oldHob), null, token.getId());
         resolveAllTriggers();
 
         advanceToEndStep(player1);
-        resolveAllTriggers();
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+        harness.setHand(player2, List.of());
         advanceToEndStep(player2);
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);

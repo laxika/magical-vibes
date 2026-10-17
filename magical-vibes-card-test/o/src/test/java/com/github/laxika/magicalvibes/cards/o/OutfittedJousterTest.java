@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BrawlersPlate;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SteelclawLance;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -90,7 +91,9 @@ class OutfittedJousterTest extends BaseCardTest {
     private void resolveEquipmentSacrifice(String equipmentName) {
         Permanent equipment = findPermanent(player1, equipmentName);
         harness.passBothPriorities();
-        if (gd.interaction.isAwaitingInput()) {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MultiPermanentChoice) {
+            harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
+        } else if (gd.interaction.isAwaitingInput()) {
             harness.handlePermanentChosen(player1, equipment.getId());
         }
     }

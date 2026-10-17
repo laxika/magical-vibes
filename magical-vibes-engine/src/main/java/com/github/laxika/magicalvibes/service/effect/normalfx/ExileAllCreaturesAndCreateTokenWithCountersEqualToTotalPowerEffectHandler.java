@@ -30,7 +30,6 @@ public class ExileAllCreaturesAndCreateTokenWithCountersEqualToTotalPowerEffectH
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
     private final PermanentControlSupport permanentControlSupport;
-    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,19 +67,11 @@ public class ExileAllCreaturesAndCreateTokenWithCountersEqualToTotalPowerEffectH
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
-            List<UUID> createdIds = permanentControlSupport.applyCreateToken(
-                    gameData, playerId, e.tokenTemplate().withAmount(1), entry.getCard().getSetCode());
-            entry.getCreatedPermanentIds().addAll(createdIds);
             int counterAmount = Math.max(0, totalPowerByController.getOrDefault(playerId, 0));
-            if (counterAmount == 0 || createdIds.isEmpty()) {
-                continue;
-            }
-
-            Permanent token = gameQueryService.findPermanentById(gameData, createdIds.getLast());
-            if (token != null && !gameQueryService.cantHaveCounters(gameData, token)) {
-                permanentCounterSupport.placeCounterOnPermanent(
-                        gameData, entry, token, e.counterType(), counterAmount);
-            }
+            List<UUID> createdIds = permanentControlSupport.applyCreateToken(
+                    gameData, playerId, e.tokenTemplate().withAmount(1).withInitialPlusOnePlusOneCounters(counterAmount),
+                    entry.getCard().getSetCode());
+            entry.getCreatedPermanentIds().addAll(createdIds);
         }
     }
 }

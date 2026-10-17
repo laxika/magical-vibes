@@ -169,7 +169,7 @@ class OjiTheExquisiteBladeTest extends BaseCardTest {
     void borrowedCreatureReturnsToOwner() {
         harness.addToBattlefield(player1, new OjiTheExquisiteBlade());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
 
         harness.castFromHand(player1, new DarkRitual(), "{B}");
         harness.passBothPriorities();
@@ -220,9 +220,7 @@ class OjiTheExquisiteBladeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.castFromHand(player1, new DarkRitual(), "{B}");
         harness.handlePermanentChosen(player1, creature.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        setOwnerAndController(creature, player1, player2);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

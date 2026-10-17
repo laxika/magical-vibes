@@ -35,7 +35,7 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
                 (CreateTokenCopyOfTargetedSpellPermanentEffect) effect;
         if (copyEffect.spellSnapshot() == null) return;
 
-        List<UUID> validTargetIds = validTargetIds(gameData, entry, copyEffect.spellSnapshot());
+        List<UUID> validTargetIds = validTargetIds(gameData, entry, currentSpellEntry(gameData, copyEffect.spellSnapshot()));
         if (validTargetIds.isEmpty()) return;
 
         UUID chosenId = entry.getTargetId();
@@ -55,6 +55,16 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
         StackEntry copyEntry = new StackEntry(entry.getCard(), entry.getControllerId());
         copyEntry.setTargetId(chosenId);
         tokenCopyHandler.resolve(gameData, copyEntry, copyEffect.copyEffect());
+    }
+
+    /**
+     * The spell as it is now while it is still on the stack, so a retargeted spell is judged by its
+     * current targets (intervening "if", CR 603.4); otherwise the snapshot taken when the trigger was
+     * collected stands in for the spell's last known information.
+     */
+    private StackEntry currentSpellEntry(GameData gameData, StackEntry spellSnapshot) {
+        StackEntry live = gameQueryService.findStackEntryByCardId(gameData, spellSnapshot.getCard().getId());
+        return live != null ? live : spellSnapshot;
     }
 
     private List<UUID> validTargetIds(GameData gameData, StackEntry entry, StackEntry spellSnapshot) {

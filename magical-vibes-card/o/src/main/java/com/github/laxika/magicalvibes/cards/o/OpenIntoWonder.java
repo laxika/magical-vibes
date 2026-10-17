@@ -18,7 +18,7 @@ public class OpenIntoWonder extends Card {
         // "Whenever this creature deals combat damage to a player, draw a card."
         // Single X-scaled creature target group: each targeted creature is made unblockable and
         // granted the temporary combat-damage-to-player draw trigger until end of turn.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100)

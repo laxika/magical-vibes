@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtN
 import com.github.laxika.magicalvibes.model.action.RemoveCountersFromPermanentAtNextCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
@@ -963,29 +964,6 @@ public class StepTriggerService {
                     .count();
         });
 
-        List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
-        if (commandZone != null) {
-            for (Card card : new ArrayList<>(commandZone)) {
-                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED)) {
-                    if (effect instanceof MayPayManaEffect mayPay) {
-                        gameData.queueMayAbility(card, activePlayerId, mayPay, null);
-                    } else if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(card, activePlayerId, may, null);
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                activePlayerId,
-                                card.getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(effect))));
-                        gameLogService.append(gameData, GameLog.cardThen(card, "'s upkeep ability triggers."));
-                        log.info("Game {} - {} command-zone upkeep trigger pushed onto stack",
-                                gameData.id, card.getName());
-                    }
-                }
-            }
-        }
-
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return;
 
@@ -1571,6 +1549,7 @@ public class StepTriggerService {
             }
         }
 
+        List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
         if (commandZone != null) {
             for (Card card : new ArrayList<>(commandZone)) {
                 List<CardEffect> commandZoneUpkeepEffects = new ArrayList<>(card.getEffects(
@@ -2653,10 +2632,10 @@ public class StepTriggerService {
         // offered as a valid target. A null filter (e.g. "target player") leaves all players eligible.
         TargetFilter playerTargetFilter = trigger.targetFilter() != null
                 ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
-        List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargets(
+        List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargetsChosenBy(
                 gameData, playerTargetFilter,
                 new ArrayList<>(gameData.orderedPlayerIds), trigger.choosingPlayerId(),
-                trigger.sourcePermanentId());
+                trigger.controllerId(), trigger.sourcePermanentId());
 
         if (trigger.anyNumberTargets()) {
             if (trigger.excludedPlayerId() != null) {
@@ -3499,6 +3478,9 @@ public class StepTriggerService {
                     + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                     gameData, activePlayerId, perm));
             try {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                continue;
+            }
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
             if (effects == null || effects.isEmpty()) {
                 continue;
@@ -5163,6 +5145,31 @@ public class StepTriggerService {
             }
         }
 
+        // Oracle en-Vec: one trigger per resolved ability destroys each chosen creature that didn't attack.
+        if (gameData.hasDelayedAction(DestroyChosenCreaturesIfDidNotAttackAtEndStep.class)) {
+            List<DestroyChosenCreaturesIfDidNotAttackAtEndStep> pending =
+                    gameData.drainDelayedActions(DestroyChosenCreaturesIfDidNotAttackAtEndStep.class);
+            for (DestroyChosenCreaturesIfDidNotAttackAtEndStep action : pending) {
+                List<UUID> stillDestructible = action.permanentIds().stream()
+                        .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                        .filter(perm -> perm != null && !perm.isAttackedThisTurn())
+                        .map(Permanent::getId)
+                        .toList();
+                if (stillDestructible.isEmpty()) {
+                    continue;
+                }
+                Permanent first = gameQueryService.findPermanentById(gameData, stillDestructible.getFirst());
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard() == null ? first.getCard() : action.sourceCard(),
+                        action.controllerId() == null ? gameQueryService.findPermanentController(gameData, first.getId()) : action.controllerId(),
+                        "Destroy chosen creatures that didn't attack",
+                        new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect())),
+                        null, stillDestructible);
+                trigger.setNonTargeting(true);
+                gameData.enqueueTrigger(trigger);
+            }
+        }
+
         // Perform the scheduled end-step returns to hand (e.g. Dragon Mask)
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
@@ -6362,6 +6369,12 @@ public class StepTriggerService {
                             String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
                             gameLogService.append(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} controller end-step targeting may-trigger queued", gameData.id, perm.getCard().getName());
+                        } else if ((may.wrapped() instanceof SequenceEffect optionalSequence
+                                && !optionalSequence.steps().isEmpty()
+                                ? optionalSequence.steps().getFirst() : may.wrapped()) instanceof DrawCardEffect
+                                && drawService.isDrawPrevented(gameData, activePlayerId)) {
+                            log.info("Game {} - {} controller end-step optional draw skipped (draw prevented)",
+                                    gameData.id, perm.getCard().getName());
                         } else {
                             // Source permanent context is required by self-affecting may-effects
                             // (Obzedat, Ghost Council's "you may exile Obzedat").

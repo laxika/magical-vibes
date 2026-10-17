@@ -11,7 +11,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/** Queues destruction for permanents created by the current stack-entry resolution. */
+/**
+ * Queues destruction for permanents created by the current stack-entry resolution. The delayed trigger
+ * belongs to the ability that created the permanents, so it is controlled by that ability's controller
+ * as it resolved, even if the created permanents change control (CR 603.7e).
+ */
 @Component
 @Slf4j
 public class DestroyCreatedPermanentsAtEndStepEffectHandler implements NormalEffectHandlerBean {
@@ -25,7 +29,9 @@ public class DestroyCreatedPermanentsAtEndStepEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         for (UUID createdId : entry.getCreatedPermanentIds()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
-                    createdId, DelayedPermanentActionKind.DESTROY_AT_END_STEP));
+                    createdId, DelayedPermanentActionKind.DESTROY_AT_END_STEP,
+                    false, null, null, null, false, entry.getCard(),
+                    entry.getControllerId(), entry.getSourcePermanentId()));
         }
         log.info("Game {} - {} permanent(s) scheduled for destruction at end step by {}",
                 gameData.id, entry.getCreatedPermanentIds().size(), entry.getCard().getName());

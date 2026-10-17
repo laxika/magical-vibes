@@ -546,7 +546,7 @@ public class CombatBlockService {
         validateGreaterPowerAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
 
         // Orcish Conscripts: "can't block unless at least N other creatures also block"
-        validateCountAlsoBlocks(defenderBattlefield, blockerAssignments);
+        validateCountAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
 
         validateMaximumBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
@@ -3422,7 +3422,7 @@ public class CombatBlockService {
      * also block" may only be declared as a blocker if at least N other creatures are declared as
      * blockers in the same combat. Checked only at declaration time.
      */
-    private void validateCountAlsoBlocks(List<Permanent> defenderBattlefield,
+    private void validateCountAlsoBlocks(GameData gameData, List<Permanent> defenderBattlefield,
                                          List<BlockerAssignment> blockerAssignments) {
         Set<Integer> uniqueBlockerIndices = new HashSet<>();
         for (BlockerAssignment assignment : blockerAssignments) {
@@ -3430,6 +3430,7 @@ public class CombatBlockService {
         }
         for (int idx : uniqueBlockerIndices) {
             Permanent restricted = defenderBattlefield.get(idx);
+            if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
             restricted.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
                     .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)

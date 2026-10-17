@@ -127,6 +127,8 @@ class ObNixilisReignitedTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 20);
     }

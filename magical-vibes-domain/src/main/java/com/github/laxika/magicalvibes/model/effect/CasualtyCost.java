@@ -8,13 +8,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 /** Optional additional cost to sacrifice a creature with at least the specified power. */
-public record CasualtyCost(int minimumPower, boolean powerMustEqualChosenX) implements CostEffect {
+public record CasualtyCost(int minimumPower, boolean powerAtLeastChosenX) implements CostEffect {
 
     public CasualtyCost(int minimumPower) {
         this(minimumPower, false);
     }
 
-    /** Casualty cost whose required creature power is the chosen X value. */
+    /** Casualty X cost whose required creature power is at least the chosen X value (CR 702.153a). */
     public static CasualtyCost matchingChosenX() {
         return new CasualtyCost(0, true);
     }

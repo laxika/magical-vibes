@@ -46,10 +46,13 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
                         + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
 
-        if (wonFlip && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-        } else if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+        // Heads-or-tails flips are neither won nor lost (CR 705.2), so no coin-flip triggers fire.
+        if (e.countsAsWinOrLoss() && result.isActualCoinFlip()) {
+            if (wonFlip) {
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            } else {
+                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+            }
         }
 
         CardEffect branch = wonFlip ? e.wrapped() : e.lost();

@@ -56,7 +56,7 @@ public class TargetPlayerChoosesCreaturesToAttackNextTurnEffectHandler implement
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         if (creatureIds.isEmpty()) {
-            gameData.restrictAttackersNextTurn(targetPlayerId, Set.of());
+            gameData.restrictAttackersNextTurn(targetPlayerId, Set.of(), entry.getControllerId(), entry.getCard());
             gameLogService.append(gameData, GameLog.text(
                     playerName + " has no creatures to choose; no creature can attack during their next turn."));
             log.info("Game {} - {} chose no creatures (none available) for the next-turn attack requirement",
@@ -65,7 +65,8 @@ public class TargetPlayerChoosesCreaturesToAttackNextTurnEffectHandler implement
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, targetPlayerId, creatureIds, creatureIds.size(),
-                new MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn(targetPlayerId),
+                new MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn(targetPlayerId,
+                        entry.getControllerId(), entry.getCard()),
                 "Choose any number of creatures you control. During your next turn they attack if able, "
                         + "other creatures can't attack, and each chosen creature that didn't attack is destroyed.");
     }

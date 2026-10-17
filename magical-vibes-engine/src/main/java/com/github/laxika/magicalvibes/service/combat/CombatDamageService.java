@@ -678,6 +678,11 @@ public class CombatDamageService {
         List<StackEntry> selfAllyDamageReflectionTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeSelfAllyDamageReflections, gameData.stack.size()));
         gameData.stack.subList(beforeSelfAllyDamageReflections, gameData.stack.size()).clear();
+        int beforeWatcherAllyDamageReflections = gameData.stack.size();
+        processWatchersDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
+        List<StackEntry> watcherAllyDamageReflectionTriggers = new ArrayList<>(
+                gameData.stack.subList(beforeWatcherAllyDamageReflections, gameData.stack.size()));
+        gameData.stack.subList(beforeWatcherAllyDamageReflections, gameData.stack.size()).clear();
         boolean damageEventTriggersQueued = gameData.stack.size() > stackSizeBeforeDamageEvents;
         stateBasedActionService.performStateBasedActions(gameData);
 
@@ -746,6 +751,7 @@ public class CombatDamageService {
         processDelayedNamedCreatureCombatDamageTriggers(gameData, state);
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
+        gameData.stack.addAll(watcherAllyDamageReflectionTriggers);
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
         gameData.stack.addAll(selfAllyDamageReflectionTriggers);
 
@@ -1938,11 +1944,17 @@ public class CombatDamageService {
                     gameData, creature, EffectSlot.ON_DAMAGE_TO_PLAYER));
             TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
-            int previousCopies = gameData.beginTriggeredAbilityCopies(1
+            int creatureTriggerCopies = 1
                     + gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                    gameData, attackerId, creature, false, combatDamageContext));
+                    gameData, attackerId, creature, false, combatDamageContext);
+            int previousCopies = gameData.beginTriggeredAbilityCopies(creatureTriggerCopies);
             try {
             for (CardEffect candidateEffect : allDamageEffects) {
+                // A delayed trigger another permanent created for this creature is not an ability
+                // of the creature, so abilities that add triggers for the creature never copy it.
+                gameData.beginTriggeredAbilityCopies(
+                        candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.TransformGrantingPermanentEffect
+                                ? 1 : creatureTriggerCopies);
                 if (candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
                         && !defenderId.equals(onlyDamagedPlayer.playerId())) continue;
                 CardEffect rawEffect = candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
@@ -2379,7 +2391,8 @@ public class CombatDamageService {
                                                            UUID defenderId, int damageDealt,
                                                            Map<Permanent, UUID> attachedDamageSources) {
         attachedDamageSources.forEach((perm, ownerId) -> {
-            if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
+            if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())
+                    && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                 List<CardEffect> rawEffects = new ArrayList<>();
                 if (perm.getCard().getEffects(
                         EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER).isEmpty()) {
@@ -3478,18 +3491,29 @@ public class CombatDamageService {
     }
 
     /**
-     * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen) for
-     * each source/target combat-damage pair. Each source creature that dealt damage to a creature
-     * this step reflects that damage to the damaged creature's controller if a watcher listens.
+     * Collects the ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE triggers that other permanents watch
+     * (e.g. Greatbow Doyen, Ohabi Caleria) for each source/target combat-damage pair. Runs before
+     * state-based actions so a watcher that dies to the same damage still triggers.
+     */
+    private void processWatchersDealtDamageToCreatureReflectionTriggers(GameData gameData, CombatDamageState state,
+                                                                         Map<UUID, Permanent> damagedCreatureSnapshots) {
+        forEachCombatDamageToCreaturePair(gameData, state, damagedCreatureSnapshots,
+                (source, sourceControllerId, damagedCreatureControllerId, damagedCreatureId,
+                 damagedCreatureSnapshot, damage) ->
+                        triggerCollectionService.checkWatchersDealtDamageToCreatureTriggers(
+                                gameData, source, sourceControllerId, damagedCreatureControllerId,
+                                damagedCreatureId, damagedCreatureSnapshot, damage, true));
+    }
+
+    /**
+     * Fires the creature-damaged-by-source triggers that depend on the damaged creature's snapshot
+     * for each source/target combat-damage pair.
      */
     private void processAllyDealtDamageToCreatureReflectionTriggers(GameData gameData, CombatDamageState state,
                                                                      Map<UUID, Permanent> damagedCreatureSnapshots) {
         forEachCombatDamageToCreaturePair(gameData, state, damagedCreatureSnapshots,
                 (source, sourceControllerId, damagedCreatureControllerId, damagedCreatureId,
                  damagedCreatureSnapshot, damage) -> {
-                    triggerCollectionService.checkWatchersDealtDamageToCreatureTriggers(
-                            gameData, source, sourceControllerId, damagedCreatureControllerId,
-                            damagedCreatureId, damagedCreatureSnapshot, damage, true);
                     if (damagedCreatureSnapshot != null) {
                         triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
                                 gameData, damagedCreatureControllerId, damagedCreatureSnapshot, source, damage);

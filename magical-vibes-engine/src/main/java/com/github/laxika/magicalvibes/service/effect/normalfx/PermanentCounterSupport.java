@@ -467,7 +467,8 @@ public class PermanentCounterSupport {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            if (source.getId().equals(target.getId())) {
+            if (source.getId().equals(target.getId()) || source.isFaceDown()) {
+                // A face-down permanent has no abilities (CR 708.2).
                 continue;
             }
             List<CardEffect> effects = source.getCard().getEffects(

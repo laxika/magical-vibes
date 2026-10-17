@@ -61,6 +61,7 @@ class OrthodoxyEnforcerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, enforcer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, enforcer)).isEqualTo(4);
     }
+
     @Test
     @DisplayName("Vigilance keeps the creature untapped when attacking without artifacts")
     void attacksWithoutTappingWithoutArtifacts() {
@@ -68,6 +69,7 @@ class OrthodoxyEnforcerTest extends BaseCardTest {
         enforcer.setSummoningSick(false);
 
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(enforcer.isTapped()).isFalse();
         resolveCombat();
@@ -83,6 +85,7 @@ class OrthodoxyEnforcerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
 
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(enforcer.isTapped()).isFalse();
         resolveCombat();

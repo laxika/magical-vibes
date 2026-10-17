@@ -45,6 +45,7 @@ public class ObscuraCharm extends Card {
                                         new CardIsPermanentPredicate(),
                                         new CardMaxManaValuePredicate(3))))
                                 .targetGraveyard(true)
+                                .chooseAuraAttachment(true)
                                 .enterTapped(true)
                                 .build()),
                 new ChooseOneEffect.ChooseOneOption(

@@ -16,8 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,9 +29,8 @@ public class OkoTheRingleader extends Card {
     public OkoTheRingleader() {
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                        new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect())
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
+                        new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(null, Set.of(), null, null,
+                                Set.of(), Set.of(), Set.of(Keyword.HEXPROOF)));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

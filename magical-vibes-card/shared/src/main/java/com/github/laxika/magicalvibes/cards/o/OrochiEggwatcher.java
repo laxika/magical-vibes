@@ -32,7 +32,7 @@ public class OrochiEggwatcher extends Card {
                                 Set.of(), Set.of()),
                         new ConditionalEffect(
                                 new ControlsPermanentCount(10, new PermanentIsCreaturePredicate()),
-                                new TransformToBackFaceEffect()
+                                new TransformToBackFaceEffect(true)
                         )
                 ),
                 "{2}{G}, {T}: Create a 1/1 green Snake creature token. If you control ten or more "

@@ -33,10 +33,12 @@ public class OriginOfTheHulk extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_II,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
 
         // Chapter III: Target creature you control gets +3/+3 and gains trample until end of turn.
         addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostTargetCreatureEffect(3, 3));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
     }
 }

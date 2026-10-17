@@ -59,14 +59,16 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                 continue;
             }
 
-            if (e.replacing() && e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
-                // A timestamped layer-4 floating effect, so a later "becomes" effect (Blood Moon)
-                // overrides it by timestamp rather than the transient override always winning.
+            if (e.replacing() && (e.duration() == EffectDuration.UNTIL_END_OF_TURN
+                    || e.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP)) {
+                // A timestamped layer-4 floating effect, so a later "becomes" effect (Blood Moon,
+                // Phantasmal Terrain) overrides it by timestamp rather than the transient override
+                // always winning. The next-untap-step form is removed by the untap step itself.
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                         entry.getControllerId(),
                         new GrantSubtypeEffect(e.fixedSubtype(), GrantScope.TARGET, true),
-                        target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                        target.getId(), null, null, e.duration(), 0));
             } else {
                 applyBasicLandType(target, e.fixedSubtype(), e.duration(), e.replacing());
             }

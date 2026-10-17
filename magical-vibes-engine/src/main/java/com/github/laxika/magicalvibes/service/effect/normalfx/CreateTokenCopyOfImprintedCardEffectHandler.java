@@ -53,6 +53,12 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                 Card imprintedCard = sourcePermanent != null
                         ? gameData.getImprintedCard(sourcePermanent.getCard())
                         : gameData.getImprintedCard(entry.getCard());
+                // The source re-entering the battlefield (blink) drops its imprint, but an activated ability
+                // that exiled a card as a cost still knows that card.
+                if (imprintedCard == null && entry.getExiledCostCardId() != null) {
+                    var exiledAsCost = gameData.findExiledCard(entry.getExiledCostCardId());
+                    imprintedCard = exiledAsCost != null ? exiledAsCost.card() : null;
+                }
                 if (imprintedCard == null) {
                     log.info("Game {} - No card imprinted on {}, no token created", gameData.id, entry.getCard().getName());
                     return;

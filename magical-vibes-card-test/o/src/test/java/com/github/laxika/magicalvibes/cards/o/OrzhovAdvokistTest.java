@@ -125,6 +125,7 @@ class OrzhovAdvokistTest extends BaseCardTest {
     void restrictionProtectsPlaneswalkersAndNewCreaturesRemainRestrictedAfterSourceAndRecipientLeave() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new OrzhovAdvokist());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new GideonChampionOfJustice());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         Permanent recipient = addCreatureReady(player2, new OrzhovAdvokist());
         addCreatureReady(player2, new OrzhovAdvokist());
 

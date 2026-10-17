@@ -75,7 +75,8 @@ class OathOfLilianaTest extends BaseCardTest {
     @Test
     void doesNotSacrificeControllersCreatureWhenOpponentHasNone() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LilianaTheLastHope());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaTheLastHope());
+        liliana.setCounterCount(CounterType.LOYALTY, 2);
         harness.setHand(player1, List.of(new OathOfLiliana()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

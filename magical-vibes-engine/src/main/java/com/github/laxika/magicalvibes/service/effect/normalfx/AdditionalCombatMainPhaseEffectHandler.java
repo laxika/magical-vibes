@@ -36,7 +36,7 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         }
         boolean mainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-        if (e.onlyDuringMainPhase() && !mainPhase) {
+        if (e.onlyDuringMainPhase() && (!mainPhase || !entry.getControllerId().equals(gameData.activePlayerId))) {
             return;
         }
         if (mainPhase && gameData.additionalCombatMainPhasePairsReturnStep == null) {

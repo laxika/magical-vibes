@@ -112,6 +112,7 @@ public class AttackLegalityService {
         }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
+        if (isCantAttackByPlayerCreaturesRestriction(gameData, creature)) return false;
         if (!gameData.permanentsCantAttackUntilNextTurn.getOrDefault(creature.getId(), java.util.Set.of()).isEmpty()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
@@ -656,6 +657,19 @@ public class AttackLegalityService {
             }
         }
         return false;
+    }
+
+    /**
+     * "Creatures target player controls can't attack this turn" (CR 611.2c): the restriction follows the
+     * player's current creatures, so it covers creatures that came under that player's control after it
+     * resolved and no longer covers creatures that left.
+     */
+    private boolean isCantAttackByPlayerCreaturesRestriction(GameData gameData, Permanent creature) {
+        UUID creatureController = gameData.findControllerOf(creature);
+        List<PermanentPredicate> filters = creatureController == null
+                ? null : gameData.playerCreaturesCantAttackThisTurn.get(creatureController);
+        return filters != null && filters.stream().anyMatch(filter ->
+                predicateEvaluationService.matchesPermanentPredicate(gameData, creature, filter));
     }
 
     private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {

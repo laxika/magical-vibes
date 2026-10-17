@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -19,11 +20,10 @@ public class OversoldCemetery extends Card {
     public OversoldCemetery() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardTypePredicate(CardType.CREATURE)),
-                ReturnCardFromGraveyardEffect.builder()
+                new MayEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
-                        .upTo(true)
-                        .build()));
+                        .build(), "Return the targeted creature card to your hand?")));
     }
 }

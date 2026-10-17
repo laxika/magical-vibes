@@ -18,7 +18,8 @@ public class OloroAgelessAscetic extends Card {
 
     public OloroAgelessAscetic() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(2));
-        addEffect(EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED, new GainLifeEffect(2));
+        addEffect(EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED,
+                new ConditionalEffect(new SourceCardInCommandZone(), new GainLifeEffect(2)));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new MayPayManaEffect(
                 "{1}",
                 SequenceEffect.of(

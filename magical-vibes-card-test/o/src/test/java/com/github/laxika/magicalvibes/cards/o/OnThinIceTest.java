@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -157,7 +156,7 @@ class OnThinIceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0, land.getId());
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Snow-Covered Plains");

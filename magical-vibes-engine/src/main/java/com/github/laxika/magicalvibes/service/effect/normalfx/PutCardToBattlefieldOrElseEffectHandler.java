@@ -51,17 +51,24 @@ public class PutCardToBattlefieldOrElseEffectHandler implements NormalEffectHand
 
         playerInteractionSupport.applyPutCardToBattlefield(gameData, entry.getControllerId(),
                 new PutCardToBattlefieldEffect(e.predicate(), e.label()), entry.getXValue(), null, sourceCardId);
+        if (e.elseEffect() != null && gameData.interaction.isAwaitingInput()) {
+            gameData.handCardChoiceDeclineEntry = fallbackEntry(entry, e.elseEffect());
+        }
     }
 
     private void resolveFallback(GameData gameData, StackEntry entry, CardEffect fallback) {
         if (fallback == null) {
             return;
         }
+        effectResolutionService.resolveEffects(gameData, fallbackEntry(entry, fallback));
+    }
+
+    private StackEntry fallbackEntry(StackEntry entry, CardEffect fallback) {
         StackEntry fallbackEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(fallback), entry.getTargetId(), entry.getSourcePermanentId());
         fallbackEntry.setActivePlayerId(entry.getActivePlayerId());
         fallbackEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         fallbackEntry.setAttackedTargetId(entry.getAttackedTargetId());
-        effectResolutionService.resolveEffects(gameData, fallbackEntry);
+        return fallbackEntry;
     }
 }

@@ -106,8 +106,8 @@ class OriginOfThorTest extends BaseCardTest {
         addSaga(0);
 
         triggerChapter();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
     }

@@ -1820,14 +1820,14 @@ public class AdditionalSpellCostService {
         }
         validateCanSacrificeCreatureForCost(gameData, card);
         int chosenXValue = announcedXValue != null ? announcedXValue : 0;
-        String description = cost.powerMustEqualChosenX()
-                ? "a creature with power exactly " + chosenXValue
+        String description = cost.powerAtLeastChosenX()
+                ? "a creature with power " + chosenXValue + " or greater"
                 : "a creature with power " + cost.minimumPower() + " or greater";
         validateSingleSacrificeCost(gameData, player, card, sacrificePermanentId,
                 description,
-                p -> cost.powerMustEqualChosenX()
+                p -> cost.powerAtLeastChosenX()
                         ? gameQueryService.isCreature(gameData, p)
-                                && gameQueryService.getEffectivePower(gameData, p) == chosenXValue
+                                && gameQueryService.getEffectivePower(gameData, p) >= chosenXValue
                         : predicateEvaluationService.matchesPermanentPredicate(
                                 gameData, p, cost.consumedPermanentFilter()));
     }

@@ -101,7 +101,7 @@ class OrphansOfTheWheatTest extends BaseCardTest {
         declareAttack(orphans);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gqs.getEffectivePower(gd, orphans)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, orphans)).isEqualTo(1);
     }

@@ -139,6 +139,7 @@ class OutcasterTrailblazerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, trailblazer.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of());

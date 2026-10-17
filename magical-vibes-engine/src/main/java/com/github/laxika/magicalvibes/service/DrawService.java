@@ -356,7 +356,11 @@ public class DrawService {
             return;
         }
 
-        if (resolveEmptyLibraryDrawReplacement(gameData, playerId)) {
+        // The mandatory empty-library replacement is deferred while an undeclined optional Abundance
+        // is available: the affected player picks the order, and declining Abundance comes back
+        // here with it recorded as declined so the mandatory replacement then applies.
+        if (findAbundanceSourceCard(gameData, playerId) == null
+                && resolveEmptyLibraryDrawReplacement(gameData, playerId)) {
             gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
         }
@@ -431,9 +435,14 @@ public class DrawService {
                         winOnEmptyLibrarySource.getCard().getName(), winOnEmptyLibrarySource);
             }
         }
-        if (exileReplacementSources.size() > 1) {
+        MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
+        if (exileReplacementSources.size() > 1
+                || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)) {
             Map<String, UUID> sourceIds = new LinkedHashMap<>();
             exileReplacementSources.forEach((name, source) -> sourceIds.put(name, source.getId()));
+            if (maySkipDrawSource != null) {
+                sourceIds.putIfAbsent(maySkipDrawSource.card().getName(), maySkipDrawSource.sourcePermanentId());
+            }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null,
                     new com.github.laxika.magicalvibes.model.ChoiceContext.DrawReplacementSourceChoice(
@@ -447,19 +456,8 @@ public class DrawService {
             return;
         }
 
-        MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (maySkipDrawSource != null) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    maySkipDrawSource.card(),
-                    playerId,
-                    List.of(new ReplaceSingleDrawEffect(playerId, maySkipDrawSource.kind())),
-                    maySkipDrawSource.kind() == DrawReplacementKind.PARALLEL_THOUGHTS
-                            ? "Replace this draw with " + maySkipDrawSource.card().getName() + "?"
-                            : "Skip this draw with " + maySkipDrawSource.card().getName() + "?",
-                    null,
-                    null,
-                    maySkipDrawSource.sourcePermanentId()
-            ));
+            queueMaySkipDrawReplacement(gameData, playerId, maySkipDrawSource);
             return;
         }
 
@@ -1204,6 +1202,7 @@ public class DrawService {
 
         for (Permanent permanent : battlefield) {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
+            if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MaySkipDrawReplacementEffect replacement) {
                     return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
@@ -1600,6 +1599,8 @@ public class DrawService {
                 ? List.of()
                 : IntStream.range(0, graveyard.size())
                         .filter(index -> graveyard.get(index).hasType(CardType.CREATURE))
+                        .filter(index -> !gameQueryService.isCardBlockedFromEnteringFromZone(
+                                gameData, graveyard.get(index), Zone.GRAVEYARD))
                         .boxed()
                         .toList();
         if (creatureIndices.isEmpty()) {
@@ -1630,6 +1631,9 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(EmptyLibraryDrawReplacementEffect.class::isInstance);
             if (hasEffect) {
@@ -1951,7 +1955,26 @@ public class DrawService {
         if (source == null) {
             throw new IllegalStateException("That draw replacement is no longer available");
         }
+        MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
+        if (maySkipDrawSource != null && maySkipDrawSource.sourcePermanentId().equals(sourcePermanentId)) {
+            queueMaySkipDrawReplacement(gameData, playerId, maySkipDrawSource);
+            return;
+        }
         applyExileDrawReplacement(gameData, playerId, source);
+    }
+
+    private void queueMaySkipDrawReplacement(GameData gameData, UUID playerId, MaySkipDrawSource maySkipDrawSource) {
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                maySkipDrawSource.card(),
+                playerId,
+                List.of(new ReplaceSingleDrawEffect(playerId, maySkipDrawSource.kind())),
+                maySkipDrawSource.kind() == DrawReplacementKind.PARALLEL_THOUGHTS
+                        ? "Replace this draw with " + maySkipDrawSource.card().getName() + "?"
+                        : "Skip this draw with " + maySkipDrawSource.card().getName() + "?",
+                null,
+                null,
+                maySkipDrawSource.sourcePermanentId()
+        ));
     }
 
     private void applyExileDrawReplacement(GameData gameData, UUID playerId, Permanent source) {

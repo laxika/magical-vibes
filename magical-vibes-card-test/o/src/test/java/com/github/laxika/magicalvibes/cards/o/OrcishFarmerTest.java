@@ -88,9 +88,7 @@ class OrcishFarmerTest extends BaseCardTest {
         Permanent forest = becomeSwamp(player1);
 
         advanceToNextTurn(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        advanceToNextTurn(player2);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
@@ -118,16 +116,11 @@ class OrcishFarmerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        advanceToNextTurn(player2);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        advanceToNextTurn(player1);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
@@ -150,11 +143,15 @@ class OrcishFarmerTest extends BaseCardTest {
     void overrideSurvivesSkippedUntapStep() {
         Permanent forest = becomeSwamp(player1);
         harness.addToBattlefield(player2, new Stasis());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
-        advanceToNextTurn(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.forceActivePlayer(player1);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
     }
@@ -236,8 +233,8 @@ class OrcishFarmerTest extends BaseCardTest {
     private void advanceToNextTurn(Player currentActivePlayer) {
         Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.forceActivePlayer(currentActivePlayer);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(nextActivePlayer, TurnStep.UPKEEP);
     }
 }

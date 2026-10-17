@@ -7,6 +7,8 @@ import java.util.Set;
 /**
  * The number of distinct keyword abilities from {@code abilities} found among the controller's
  * creatures. Each matching ability contributes once, regardless of how many creatures have it.
+ * {@link Keyword#HEXPROOF} matches every hexproof variant (plain or "hexproof from" a quality),
+ * since variants of the same keyword ability count once (Odric, Blood-Cursed).
  */
 public record DistinctKeywordAbilitiesAmongControlledCreatures(Set<Keyword> abilities)
         implements DynamicAmount {

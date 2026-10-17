@@ -111,6 +111,10 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         if (e.toughnessOverride() != null) {
             copyCard.setToughness(e.toughnessOverride());
         }
+        if (e.startingLoyaltyFromX()) {
+            // The copy's starting loyalty is part of its copiable values; set it before the stack entry freezes the card.
+            copyCard.setLoyalty(spellSnapshot.isXValueSetByCastTrigger() ? 0 : spellSnapshot.getXValue());
+        }
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
         if (e.startingLoyaltyFromX()) {
             copyEntry.setStartingLoyalty(copyEntry.getXValue());

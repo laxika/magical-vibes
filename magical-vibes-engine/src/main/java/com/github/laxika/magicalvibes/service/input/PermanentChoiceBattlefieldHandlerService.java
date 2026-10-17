@@ -2353,7 +2353,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
         StackEntry chosenSpell = chosenPermanent == null
                 ? gameQueryService.findStackEntryByCardId(gameData, permanentId) : null;
-        if (chosenPermanent == null && chosenSpell == null) {
+        StackEntry chosenAbility = chosenPermanent == null && chosenSpell == null
+                ? gameData.stack.stream()
+                        .filter(entry -> permanentId.equals(entry.getSourcePermanentId()))
+                        .findFirst().orElse(null)
+                : null;
+        if (chosenPermanent == null && chosenSpell == null && chosenAbility == null) {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
@@ -2380,7 +2385,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
         StackEntry chosenSpell = chosenPermanent == null
                 ? gameQueryService.findStackEntryByCardId(gameData, permanentId) : null;
-        if (chosenPermanent == null && chosenSpell == null) {
+        StackEntry chosenAbility = chosenPermanent == null && chosenSpell == null
+                ? gameData.stack.stream()
+                        .filter(entry -> permanentId.equals(entry.getSourcePermanentId()))
+                        .findFirst().orElse(null)
+                : null;
+        if (chosenPermanent == null && chosenSpell == null && chosenAbility == null) {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
@@ -2389,8 +2399,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                         permanentId, ctx.destinationPermanentId()));
 
         Permanent destination = gameQueryService.findPermanentById(gameData, ctx.destinationPermanentId());
-        String sourceName = chosenPermanent != null
-                ? chosenPermanent.getCard().getName() : chosenSpell.getCard().getName();
+        String sourceName = chosenPermanent != null ? chosenPermanent.getCard().getName()
+                : chosenSpell != null ? chosenSpell.getCard().getName() : chosenAbility.getCard().getName();
         String destinationName = destination != null ? destination.getCard().getName() : "it";
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
                 + "that damage is dealt to " + destinationName + " instead."));
@@ -3522,6 +3532,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             Permanent auraPerm = new Permanent(auraOriginalCard != null ? auraOriginalCard : auraCard);
             auraPerm.setCard(auraCard);
             auraPerm.setAttachedTo(permanentId);
+            if (auraGraveyardReturn != null && auraGraveyardReturn.enterTapped()) {
+                auraPerm.tap();
+            }
             if (auraEntryReplacement != null) {
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm,
                         battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), auraEntryReplacement);

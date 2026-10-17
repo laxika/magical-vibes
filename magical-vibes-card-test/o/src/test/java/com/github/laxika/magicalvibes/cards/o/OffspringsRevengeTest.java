@@ -65,6 +65,7 @@ class OffspringsRevengeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(red);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
@@ -121,6 +122,7 @@ class OffspringsRevengeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dragon);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();

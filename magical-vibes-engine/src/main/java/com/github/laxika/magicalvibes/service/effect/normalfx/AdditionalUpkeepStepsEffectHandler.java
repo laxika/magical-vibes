@@ -35,6 +35,7 @@ public class AdditionalUpkeepStepsEffectHandler implements NormalEffectHandlerBe
         }
 
         gameData.additionalUpkeepStepsAfterCombat += count;
+        gameData.additionalCombatCreatedAfterUpkeepSteps = false;
 
         String logEntry = count == 1
                 ? "After this combat phase, there is an additional upkeep step."

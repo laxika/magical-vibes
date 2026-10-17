@@ -19,6 +19,6 @@ public class BarbflareGremlin extends Card {
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                 new ConditionalEffect(new SourceIsTapped(), SequenceEffect.of(
                         new AddOneOfEachManaTypeProducedByLandEffect(false),
-                        new DealDamageOnLandTapEffect(1))));
+                        new DealDamageOnLandTapEffect(1, null, true))));
     }
 }

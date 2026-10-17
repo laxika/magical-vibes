@@ -232,6 +232,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> creatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast creature spells with no abilities. */
     private final EnumMap<ManaColor, Integer> creatureSpellWithoutAbilitiesOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana that can only be spent to cast blue creature spells. */
+    private final EnumMap<ManaColor, Integer> blueCreatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast noncreature spells. */
     private final EnumMap<ManaColor, Integer> noncreatureSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with exactly three colors. */
@@ -357,6 +359,7 @@ public class ManaPool {
             instantSorceryOrClassLevelOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
             creatureSpellWithoutAbilitiesOnlyMana.put(color, 0);
+            blueCreatureSpellOnlyMana.put(color, 0);
             noncreatureSpellOnlyMana.put(color, 0);
             exactlyThreeColorSpellOnlyMana.put(color, 0);
             multicoloredSpellOnlyMana.put(color, 0);
@@ -445,6 +448,7 @@ public class ManaPool {
         mergeMana(partySpellOrAbilityMana, source.partySpellOrAbilityMana);
         mergeMana(creatureSpellOnlyMana, source.creatureSpellOnlyMana);
         mergeMana(creatureSpellWithoutAbilitiesOnlyMana, source.creatureSpellWithoutAbilitiesOnlyMana);
+        mergeMana(blueCreatureSpellOnlyMana, source.blueCreatureSpellOnlyMana);
         mergeMana(noncreatureSpellOnlyMana, source.noncreatureSpellOnlyMana);
         mergeMana(exactlyThreeColorSpellOnlyMana, source.exactlyThreeColorSpellOnlyMana);
         mergeMana(multicoloredSpellOnlyMana, source.multicoloredSpellOnlyMana);
@@ -631,6 +635,7 @@ public class ManaPool {
         partySpellOrAbilityMana.putAll(source.partySpellOrAbilityMana);
         creatureSpellOnlyMana.putAll(source.creatureSpellOnlyMana);
         creatureSpellWithoutAbilitiesOnlyMana.putAll(source.creatureSpellWithoutAbilitiesOnlyMana);
+        blueCreatureSpellOnlyMana.putAll(source.blueCreatureSpellOnlyMana);
         noncreatureSpellOnlyMana.putAll(source.noncreatureSpellOnlyMana);
         exactlyThreeColorSpellOnlyMana.putAll(source.exactlyThreeColorSpellOnlyMana);
         multicoloredSpellOnlyMana.putAll(source.multicoloredSpellOnlyMana);
@@ -1204,6 +1209,7 @@ public class ManaPool {
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
             creatureSpellWithoutAbilitiesOnlyMana.put(color, 0);
+            blueCreatureSpellOnlyMana.put(color, 0);
             noncreatureSpellOnlyMana.put(color, 0);
             exactlyThreeColorSpellOnlyMana.put(color, 0);
             multicoloredSpellOnlyMana.put(color, 0);
@@ -1400,6 +1406,7 @@ public class ManaPool {
         }
         total += getCreatureSpellOnlyManaTotal();
         total += getCreatureSpellWithoutAbilitiesOnlyManaTotal();
+        total += getBlueCreatureSpellOnlyManaTotal();
         total += getNoncreatureSpellOnlyManaTotal();
         total += getExactlyThreeColorSpellOnlyManaTotal();
         total += getMulticoloredSpellOnlyManaTotal();
@@ -4045,6 +4052,53 @@ public class ManaPool {
                                                          Map<ManaColor, Integer> promoted) {
     }
 
+    /** Adds mana restricted to blue creature spells (Oyaminartok, Polar Werebear). */
+    public void addBlueCreatureSpellOnlyMana(ManaColor color, int amount) {
+        blueCreatureSpellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getBlueCreatureSpellOnlyMana(ManaColor color) {
+        return blueCreatureSpellOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getBlueCreatureSpellOnlyManaTotal() {
+        return blueCreatureSpellOnlyMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Temporarily exposes blue-creature-spell-only mana to a qualifying blue creature spell. */
+    public BlueCreatureSpellManaState promoteBlueCreatureSpellOnlyMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, pool.getOrDefault(color, 0));
+            int amount = getBlueCreatureSpellOnlyMana(color);
+            promoted.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                blueCreatureSpellOnlyMana.put(color, 0);
+            }
+        }
+        return new BlueCreatureSpellManaState(regularBefore, promoted);
+    }
+
+    /** Restores unspent blue-creature-spell-only mana after a spell payment. */
+    public void restorePromotedBlueCreatureSpellOnlyMana(BlueCreatureSpellManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promoted = state.promoted().getOrDefault(color, 0);
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promoted - pool.getOrDefault(color, 0));
+            int remaining = Math.max(0, promoted - spent);
+            if (remaining > 0) {
+                pool.merge(color, -remaining, Integer::sum);
+                blueCreatureSpellOnlyMana.merge(color, remaining, Integer::sum);
+            }
+        }
+    }
+
+    public record BlueCreatureSpellManaState(Map<ManaColor, Integer> regularBefore,
+                                             Map<ManaColor, Integer> promoted) {
+    }
+
     public void addCreatureSourceCreatureSpellOnlyMana(ManaColor color, int amount) {
         addCreatureSpellOnlyMana(color, amount);
         creatureSourceCreatureSpellOnlyMana.merge(color, amount, Integer::sum);
@@ -5036,6 +5090,7 @@ public class ManaPool {
         moveColoredManaToColorless(partySpellOrAbilityMana);
         moveColoredManaToColorless(creatureSpellOnlyMana);
         moveColoredManaToColorless(creatureSpellWithoutAbilitiesOnlyMana);
+        moveColoredManaToColorless(blueCreatureSpellOnlyMana);
         moveColoredManaToColorless(noncreatureSpellOnlyMana);
         moveColoredManaToColorless(exactlyThreeColorSpellOnlyMana);
         moveColoredManaToColorless(multicoloredSpellOnlyMana);
@@ -5188,6 +5243,7 @@ public class ManaPool {
         moveManaTo(replacementColor, partySpellOrAbilityMana);
         moveManaTo(replacementColor, creatureSpellOnlyMana);
         moveManaTo(replacementColor, creatureSpellWithoutAbilitiesOnlyMana);
+        moveManaTo(replacementColor, blueCreatureSpellOnlyMana);
         moveManaTo(replacementColor, noncreatureSpellOnlyMana);
         moveManaTo(replacementColor, exactlyThreeColorSpellOnlyMana);
         moveManaTo(replacementColor, multicoloredSpellOnlyMana);
@@ -5417,6 +5473,7 @@ public class ManaPool {
         drainColorBucket(partySpellOrAbilityMana, protectedColors);
         drainColorBucket(creatureSpellOnlyMana, protectedColors);
         drainColorBucket(creatureSpellWithoutAbilitiesOnlyMana, protectedColors);
+        drainColorBucket(blueCreatureSpellOnlyMana, protectedColors);
         drainColorBucket(noncreatureSpellOnlyMana, protectedColors);
         drainColorBucket(exactlyThreeColorSpellOnlyMana, protectedColors);
         drainColorBucket(multicoloredSpellOnlyMana, protectedColors);
@@ -5605,6 +5662,7 @@ public class ManaPool {
             amount += partySpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellWithoutAbilitiesOnlyMana.getOrDefault(color, 0);
+            amount += blueCreatureSpellOnlyMana.getOrDefault(color, 0);
             amount += noncreatureSpellOnlyMana.getOrDefault(color, 0);
             amount += exactlyThreeColorSpellOnlyMana.getOrDefault(color, 0);
             amount += multicoloredSpellOnlyMana.getOrDefault(color, 0);
@@ -5690,6 +5748,7 @@ public class ManaPool {
             amount += partySpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellWithoutAbilitiesOnlyMana.getOrDefault(color, 0);
+            amount += blueCreatureSpellOnlyMana.getOrDefault(color, 0);
             amount += noncreatureSpellOnlyMana.getOrDefault(color, 0);
             amount += exactlyThreeColorSpellOnlyMana.getOrDefault(color, 0);
             amount += multicoloredSpellOnlyMana.getOrDefault(color, 0);

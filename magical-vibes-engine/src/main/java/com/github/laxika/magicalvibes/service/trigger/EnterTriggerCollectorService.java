@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
+import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
@@ -340,11 +341,42 @@ public class EnterTriggerCollectorService {
                                                              TriggeringCardConditionalEffect conditional,
                                                              TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        if (!predicateEvaluationService.matchesCardPredicate(pe.enteringCard(), conditional.predicate(), null,
+        Card enteringCharacteristics = effectiveEnteringCard(match.gameData(), pe);
+        if (!predicateEvaluationService.matchesCardPredicate(enteringCharacteristics, conditional.predicate(), null,
                 match.gameData(), match.controllerId())) {
             return false;
         }
         return enqueueAnyPermanentEnter(match, conditional.wrapped(), pe);
+    }
+
+    /**
+     * The entering card as it exists on the battlefield: a continuous effect such as Opalescence can
+     * make an entering Enchantment a creature, so type-based conditions read the permanent's
+     * effective card types and subtypes rather than the printed ones.
+     */
+    private Card effectiveEnteringCard(com.github.laxika.magicalvibes.model.GameData gameData,
+                                       TriggerContext.PermanentEnters pe) {
+        Permanent permanent = findEnteringPermanent(gameData, pe);
+        if (permanent == null) return pe.enteringCard();
+        Card card = pe.enteringCard();
+        Card characteristics = card.createRuntimeCopy();
+        Set<CardType> types = new HashSet<>();
+        for (CardType type : CardType.values()) {
+            boolean hasType = switch (type) {
+                case CREATURE -> gameQueryService.isCreature(gameData, permanent);
+                case ARTIFACT -> gameQueryService.isArtifact(gameData, permanent);
+                case ENCHANTMENT -> gameQueryService.isEnchantment(gameData, permanent);
+                case LAND -> gameQueryService.isLand(gameData, permanent);
+                case PLANESWALKER -> gameQueryService.isPlaneswalker(gameData, permanent);
+                case BATTLE -> gameQueryService.isBattle(gameData, permanent);
+                default -> card.hasType(type);
+            };
+            if (hasType) types.add(type);
+        }
+        characteristics.setType(types.stream().findFirst().orElse(card.getType()));
+        characteristics.setAdditionalTypes(types);
+        characteristics.setSubtypes(new ArrayList<>(gameQueryService.getEffectiveSubtypes(gameData, permanent)));
+        return characteristics;
     }
 
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
@@ -1149,10 +1181,11 @@ public class EnterTriggerCollectorService {
         boolean gainLifeEqualToEnteringPower = may.wrapped() instanceof GainLifeEqualToPowerEffect;
         int eventValue = may.usesTriggeringPermanentManaValue()
                 ? pe.enteringCard().getManaValue() : 0;
-        // "You may gain life equal to that creature's toughness" (e.g. Orchard Warden): read the
-        // entering creature's toughness now, since the wrapped effect loses that context once queued.
-        if (may.wrapped() instanceof GainLifeEqualToToughnessEffect) {
-            may = new MayEffect(new GainLifeEffect(pe.enteringCard().getToughness()), may.prompt());
+        // "You may gain life equal to that creature's toughness" (e.g. Orchard Warden): the toughness is
+        // read when the ability resolves (CR 608.2h) from the entering creature, as its power is below.
+        boolean gainLifeEqualToEnteringToughness = may.wrapped() instanceof GainLifeEqualToToughnessEffect;
+        if (gainLifeEqualToEnteringToughness) {
+            may = new MayEffect(new GainLifeEffect(new TargetToughness()), may.prompt());
         }
         if (gainLifeEqualToEnteringPower) {
             may = new MayEffect(new GainLifeEffect(new TargetPower()), may.prompt());
@@ -1202,12 +1235,10 @@ public class EnterTriggerCollectorService {
         }
         boolean usesEnteringTarget = may.wrapped() instanceof DiscardCardThenEffect discard
                 && discard.useEntryTarget();
-        enteringPermanentId = (gainLifeEqualToEnteringPower
-                || may.wrapped().usesEnteringPermanentReference() || usesEnteringTarget)
-                ? findEnteringPermanentId(match, pe.enteringCard()) : null;
-        UUID mayTargetId = gainLifeEqualToEnteringPower
-                || may.wrapped().usesEnteringPermanentReference() || usesEnteringTarget
-                ? enteringPermanentId : pe.defaultTargetPlayerId();
+        boolean targetsEnteringPermanent = gainLifeEqualToEnteringPower || gainLifeEqualToEnteringToughness
+                || may.wrapped().usesEnteringPermanentReference() || usesEnteringTarget;
+        enteringPermanentId = targetsEnteringPermanent ? findEnteringPermanentId(match, pe.enteringCard()) : null;
+        UUID mayTargetId = targetsEnteringPermanent ? enteringPermanentId : pe.defaultTargetPlayerId();
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {

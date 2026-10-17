@@ -138,6 +138,10 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
         // Abilities granted earlier have an older timestamp than this effect and are removed by it;
         // abilities granted afterwards are kept (CR 613.7).
         target.clearTemporaryTriggeredEffects();
+        if (target.isCantBeBlockedGrantedAbility()) {
+            target.setCantBeBlocked(false);
+            target.setCantBeBlockedGrantedAbility(false);
+        }
         if (target.isCantBlockGrantedAbilityThisTurn()) {
             target.setCantBlockThisTurn(false);
             target.setCantBlockGrantedAbilityThisTurn(false);

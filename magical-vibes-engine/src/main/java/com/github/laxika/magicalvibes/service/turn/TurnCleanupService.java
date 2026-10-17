@@ -366,6 +366,7 @@ public class TurnCleanupService {
         gameData.reflectDamageToSourceControllerShields.clear();
         gameData.sourceNextCombatDamageToControllerShields.clear();
         gameData.sourceNextDamageRedirectToPermanentShields.clear();
+        gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
         gameData.playerSourceNextDamageRedirectShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
@@ -425,6 +426,7 @@ public class TurnCleanupService {
         gameData.playersCantLoseLifeThisTurn = false;
         gameData.playersCantSearchLibrariesThisTurn = false;
         gameData.creaturesCantAttackThisTurn = false;
+        gameData.playerCreaturesCantAttackThisTurn.clear();
         gameData.creaturesCantAttackThisCombat = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
         gameData.playersWhoGainNoLifeThisTurn.clear();

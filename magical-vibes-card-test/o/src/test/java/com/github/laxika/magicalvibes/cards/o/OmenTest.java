@@ -149,7 +149,6 @@ class OmenTest extends BaseCardTest {
 
         harness.castFromHand(player1, new Omen(), "{1}{U}");
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);

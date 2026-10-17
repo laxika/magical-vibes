@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUntapDuringEachPlayersUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
@@ -447,6 +448,11 @@ public class UntapStepService {
     public void finishUntapStep(GameData gameData, UUID activePlayerId) {
         if (activePlayerId.equals(gameData.untapStepPlayerId)) {
             expireControllerStepUntapRestrictions(gameData, activePlayerId);
+            gameData.expireFloatingEffects(floating ->
+                    floating.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP
+                            && floating.affectedPermanentId() != null
+                            && activePlayerId.equals(gameQueryService.findPermanentController(
+                            gameData, floating.affectedPermanentId())));
             triggerCollectionService.checkControllerUntapsDuringUntapStepTriggers(
                     gameData, activePlayerId, gameData.untapStepUntappedPermanentCount);
         }

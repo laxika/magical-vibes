@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -53,8 +54,9 @@ public class OyaminartokPolarWerebear extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                                 "Sacrifice a Food"),
-                        new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new AwardRestrictedManaEffect(
-                                ManaColor.BLUE, 3, new ManaRestriction.CreatureSpells())))),
+                        new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new QueueReflexiveAbilityEffect(
+                                new AwardRestrictedManaEffect(
+                                        ManaColor.BLUE, 3, new ManaRestriction.BlueCreatureSpells()))))),
                 "{U}, Sacrifice a Food: Draft a card from Oyaminartok's spellbook. When you do, add {U}{U}{U}. Spend this mana only to cast blue creature spells."
         ));
     }

@@ -164,6 +164,7 @@ class OutlawsFuryTest extends BaseCardTest {
         castOutlawsFury();
         gd.playerBattlefields.get(player1.getId()).remove(outlaw);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
@@ -189,6 +190,7 @@ class OutlawsFuryTest extends BaseCardTest {
         castOutlawsFury();
         gd.playerBattlefields.get(player1.getId()).remove(outlaw);
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

@@ -15,6 +15,6 @@ public class Oubliette extends Card {
     public Oubliette() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new PhaseOutTargetCreatureUntilSourceLeavesEffect());
+                        new PhaseOutTargetCreatureUntilSourceLeavesEffect(true));
     }
 }

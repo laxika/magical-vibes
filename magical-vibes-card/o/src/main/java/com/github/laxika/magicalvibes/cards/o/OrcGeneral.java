@@ -32,10 +32,7 @@ public class OrcGeneral extends Card {
                 null,
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ORC, CardSubtype.GOBLIN))
-                                )),
+                                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ORC, CardSubtype.GOBLIN)),
                                 "another Orc or Goblin"
                         ),
                         new BoostAllCreaturesEffect(1, 1, otherOrc)

@@ -22,8 +22,8 @@ import java.util.UUID;
 /**
  * Resolves {@link ExileSelfReturnAtNextUpkeepWithHasteEffect} by exiling the source permanent and
  * queueing a {@link PendingExileReturn} that brings it back under its owner's control at the
- * beginning of that owner's next upkeep, with haste. No-op when the source already left the
- * battlefield.
+ * beginning of the next upkeep of the ability's controller ("your next upkeep"), with haste. No-op
+ * when the source already left the battlefield.
  */
 @Component
 @RequiredArgsConstructor
@@ -58,13 +58,16 @@ public class ExileSelfReturnAtNextUpkeepWithHasteEffectHandler implements Normal
         // never stamped on the card.
         UUID returnControllerId = card.getOwnerId() != null ? card.getOwnerId() : entry.getControllerId();
 
+        // The return is timed by the ability's controller's upkeep, not the owner's (a stolen card returns
+        // at the upkeep of the player who exiled it).
         gameData.queueDelayedAction(new PendingExileReturn(
                 card, returnControllerId, false, false, TurnStep.UPKEEP, 0,
-                cards.size() == 1 ? List.of() : cards.subList(1, cards.size()), true, true));
+                cards.size() == 1 ? List.of() : cards.subList(1, cards.size()), true, true, false, false,
+                entry.getControllerId(), null, false));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameLogService.append(gameData, GameLog.cardThen(card,
-                " is exiled. It returns at the beginning of its owner's next upkeep with haste."));
-        log.info("Game {} - {} exiles itself until its owner's next upkeep", gameData.id, card.getName());
+                " is exiled. It returns at the beginning of your next upkeep with haste."));
+        log.info("Game {} - {} exiles itself until its controller's next upkeep", gameData.id, card.getName());
     }
 }

@@ -19,10 +19,10 @@ public class OrbOfDragonkind extends Card {
     public OrbOfDragonkind() {
         addActivatedAbility(new ActivatedAbility(
                 true,
-                null,
+                "{1}",
                 List.of(new AwardAnyColorManaEffect(
                         2, ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY, CardSubtype.DRAGON)),
-                "{T}: Add two mana in any combination of colors. Spend this mana only to cast Dragon spells or activate abilities of Dragons."
+                "{1}, {T}: Add two mana in any combination of colors. Spend this mana only to cast Dragon spells or activate abilities of Dragons."
         ));
 
         addActivatedAbility(new ActivatedAbility(

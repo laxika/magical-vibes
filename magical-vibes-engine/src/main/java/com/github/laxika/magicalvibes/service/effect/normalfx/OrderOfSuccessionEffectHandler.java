@@ -49,8 +49,10 @@ public class OrderOfSuccessionEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<UUID> chooserIds = new ArrayList<>();
+        UUID chooserId = entry.getControllerId();
         for (int i = 0; i < orderedPlayerIds.size(); i++) {
-            chooserIds.add(orderedPlayerIds.get((controllerIndex + i) % orderedPlayerIds.size()));
+            chooserIds.add(chooserId);
+            chooserId = nextPlayer(orderedPlayerIds, chooserId, order.direction());
         }
         beginNextChoice(gameData, order.direction(), orderedPlayerIds, chooserIds, List.of(), entry.getCard().getName());
     }

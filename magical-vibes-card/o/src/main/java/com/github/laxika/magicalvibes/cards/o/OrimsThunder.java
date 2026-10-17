@@ -23,6 +23,8 @@ import java.util.List;
 public class OrimsThunder extends Card {
 
     public OrimsThunder() {
+        // The two "target" instances are independent (CR 115.3), so the artifact may also be the creature.
+        setAllowSharedTargets(true);
         addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
         addEffect(EffectSlot.SPELL,
                 new DestroyTargetPermanentThenDealManaValueDamageToTargetCreatureEffect(1));

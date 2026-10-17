@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryMatchesPredicate;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -19,9 +21,11 @@ public class OuraTheImitator extends Card {
 
     public OuraTheImitator() {
         CardSubtypePredicate faerie = new CardSubtypePredicate(CardSubtype.FAERIE);
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(
-                new CardAnyOfPredicate(List.of(faerie, new CardTypePredicate(CardType.INSTANT)))));
+        CardAnyOfPredicate faerieOrInstant = new CardAnyOfPredicate(List.of(faerie, new CardTypePredicate(CardType.INSTANT)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new TopCardOfLibraryMatchesPredicate(faerieOrInstant),
+                new LookAtTopCardOfOwnLibraryEffect()));
+        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(faerieOrInstant));
         addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(faerie));
     }
 }

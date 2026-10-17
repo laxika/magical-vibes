@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.FaceDownPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -28,7 +29,7 @@ public class ObliviousBookworm extends Card {
                                         new NotCondition(new AnyOf(List.of(
                                                 new FaceDownPermanentEnteredThisTurn(),
                                                 new PermanentTurnedFaceUpThisTurn()))),
-                                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
+                                        new DiscardEffect(new CardsDrawnThisResolution(), DiscardRecipient.CONTROLLER))),
                         "Draw a card?"));
     }
 }

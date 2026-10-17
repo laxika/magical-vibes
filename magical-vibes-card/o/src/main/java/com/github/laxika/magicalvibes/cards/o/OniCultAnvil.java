@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -29,9 +30,10 @@ public class OniCultAnvil extends Card {
                 "Construct", 1, 1, null, List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT));
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
-                new OncePerTurnTriggerEffect(createConstruct));
+                new OncePerTurnTriggerEffect(new TriggeringPermanentConditionalEffect(
+                        new PermanentIsArtifactPredicate(), createConstruct)));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new ConditionalEffect(new ControllerTurn(), createConstruct));
+                new OncePerTurnTriggerEffect(new ConditionalEffect(new ControllerTurn(), createConstruct)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

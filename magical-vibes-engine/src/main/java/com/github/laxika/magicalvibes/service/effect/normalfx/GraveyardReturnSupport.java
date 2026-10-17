@@ -311,18 +311,22 @@ public class GraveyardReturnSupport {
                 }
             }
 
-            if (attachTargetIds.isEmpty()) {
+            if (attachTargetIds.isEmpty() && equipment == null) {
                 String fizzleLog = entry.getDescription() + " fizzles (no legal creatures to attach to).";
                 gameLogService.append(gameData, GameLog.text(fizzleLog));
                 return;
             }
 
-            permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
-            gameData.interaction.setPendingAuraCard(targetCard);
+            if (!attachTargetIds.isEmpty()) {
+                permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+                gameData.interaction.setPendingAuraCard(targetCard);
 
-            playerInputService.beginPermanentChoice(gameData, controllerId, attachTargetIds,
-                    "Choose a creature you control to attach " + targetCard.getName() + " to.");
-            return;
+                playerInputService.beginPermanentChoice(gameData, controllerId, attachTargetIds,
+                        "Choose a creature you control to attach " + targetCard.getName() + " to.");
+                return;
+            }
+            // An Equipment with no creature to attach to still returns, unattached (One Last Job ruling,
+            // 2024-04-12); an Aura has nothing to enchant and stays in the graveyard.
         }
 
         // A card returned to HAND or to the top of a library always goes to its owner's zone

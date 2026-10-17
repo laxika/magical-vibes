@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -25,7 +25,6 @@ public class OvergrowthElemental extends Card {
     public OvergrowthElemental() {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
@@ -33,9 +32,12 @@ public class OvergrowthElemental extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new GainLifeEffect(1));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.ELEMENTAL),
-                new PutCountersOnSourceEffect(1, 1, 1)));
+        // One triggered ability: the Elemental check on the dying creature is a conditional inside its
+        // effect, not a separate trigger, so both parts share one stack entry.
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, SequenceEffect.of(
+                new GainLifeEffect(1),
+                new TriggeringCardConditionalEffect(
+                        new CardSubtypePredicate(CardSubtype.ELEMENTAL),
+                        new PutCountersOnSourceEffect(1, 1, 1))));
     }
 }

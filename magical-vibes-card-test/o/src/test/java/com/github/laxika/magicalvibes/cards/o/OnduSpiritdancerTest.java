@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OnduSpiritdancer.class, GloriousAnthem.class, Disenchant.class,
-        EnchantedEvening.class, Pacifism.class})
+        EnchantedEvening.class, Pacifism.class, GrizzlyBears.class})
 class OnduSpiritdancerTest extends BaseCardTest {
 
     @Test
@@ -140,6 +141,7 @@ class OnduSpiritdancerTest extends BaseCardTest {
     @DisplayName("A copied Aura enters attached to a legal creature chosen by its controller")
     void copiedAuraAllowsAttachmentChoice() {
         var dancer = harness.addToBattlefieldAndReturn(player1, new OnduSpiritdancer());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Pacifism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castEnchantment(player1, 0, dancer.getId());
@@ -193,6 +195,7 @@ class OnduSpiritdancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(countPermanents(player1, "Glorious Anthem")).isEqualTo(3);

@@ -31,6 +31,7 @@ public class AdditionalCombatPhaseEffectHandler implements NormalEffectHandlerBe
         }
 
         gameData.additionalCombatPhasesOnly += e.count();
+        gameData.additionalCombatCreatedAfterUpkeepSteps = gameData.additionalUpkeepStepsAfterCombat > 0;
         if (e.additionalCombatBeginningEffect() != null) {
             for (int i = 0; i < e.count(); i++) {
                 gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(

@@ -106,8 +106,8 @@ class OustTest extends BaseCardTest {
     void returnsStolenCreatureToOwnerAndGivesLifeToController() {
         Card card = new GlorySeeker();
         card.setOwnerId(player1.getId());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, card);
+        setOwnerAndController(creature, player1, player2);
         Card ownerTopCard = new Island();
         Card controllerTopCard = new Island();
         harness.setLibrary(player1, List.of(ownerTopCard));

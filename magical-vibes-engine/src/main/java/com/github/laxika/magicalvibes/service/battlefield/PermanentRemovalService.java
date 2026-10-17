@@ -1693,6 +1693,16 @@ public class PermanentRemovalService {
                 : !snapshot.isFaceDown() && !snapshot.isLosesAllAbilitiesUntilEndOfTurn();
     }
 
+    private void recordLostPrintedAbilityWatchersBeforeLeave(GameData gameData, Permanent target) {
+        gameData.lostPrintedAbilityWatcherIdsBeforeLeave.clear();
+        if (!gameQueryService.isCreature(gameData, target)) return;
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!perm.getId().equals(target.getId()) && gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                gameData.lostPrintedAbilityWatcherIdsBeforeLeave.add(perm.getId());
+            }
+        });
+    }
+
     /**
      * Finds and removes the given permanent from whatever battlefield it's on, cleans up
      * stolen-creature and permanent-exiled-cards tracking, and returns controller/owner info.
@@ -1734,6 +1744,7 @@ public class PermanentRemovalService {
             if (battlefield != null && battlefield.contains(target)) {
                 Permanent removalSnapshot = gameData.simultaneousDyingPermanents.get(target.getId());
                 boolean hadPrintedAbilities = hadPrintedAbilitiesBeforeRemoval(gameData, target);
+                recordLostPrintedAbilityWatchersBeforeLeave(gameData, target);
                 target.setLastKnownToughness(removalSnapshot != null && removalSnapshot.getLastKnownToughness() != null
                         ? removalSnapshot.getLastKnownToughness() : gameQueryService.getEffectiveToughness(gameData, target));
                 target.setLastKnownColors(removalSnapshot != null

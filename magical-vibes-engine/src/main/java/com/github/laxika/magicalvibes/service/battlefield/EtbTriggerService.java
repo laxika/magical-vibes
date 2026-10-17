@@ -389,9 +389,14 @@ public class EtbTriggerService {
 
             // A modal ETB on a permanent that was not cast has no cast-time mode; its mode is chosen
             // when the trigger is put on the stack (CR 603.3c), so it takes the trigger-time path.
-            if (!wasCastFromHand && enteringPermanent != null && !enteringPermanent.isCast()) {
+            // A mandatory exact choose-one ETB on a cast creature whose spell declared no mode
+            // (negative mode; multi-mode selections are negative bitmasks) takes the same path.
+            boolean modeNotDeclaredAtCast = wasCastFromHand && etbMode < 0;
+            if ((!wasCastFromHand && enteringPermanent != null && !enteringPermanent.isCast())
+                    || modeNotDeclaredAtCast) {
                 triggeredEffects = triggeredEffects.stream()
                         .map(e -> e instanceof ChooseOneEffect coe && coe.choicesRequired() <= 1
+                                && (!modeNotDeclaredAtCast || (!coe.optional() && coe.choicesMax() <= 1))
                                 ? new ChooseOneAtTriggerTimeEffect(coe) : e)
                         .toList();
             }

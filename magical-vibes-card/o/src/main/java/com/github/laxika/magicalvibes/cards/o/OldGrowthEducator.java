@@ -15,6 +15,6 @@ public class OldGrowthEducator extends Card {
         // Infusion — When this creature enters, put two +1/+1 counters on it if you gained life this turn.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new GainedLifeThisTurn(),
-                new PutCountersOnSourceEffect(1, 1, 2)));
+                new PutCountersOnSourceEffect(1, 1, 2), false));
     }
 }

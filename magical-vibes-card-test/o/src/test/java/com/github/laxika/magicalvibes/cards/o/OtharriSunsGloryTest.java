@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.f.FrontlineRebel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,13 +24,13 @@ class OtharriSunsGloryTest extends BaseCardTest {
         gd.playerExperienceCounters.put(player1.getId(), 2);
 
         declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         List<Permanent> rebels = findPermanents(player1, "Rebel");
         assertThat(rebels).hasSize(3);
         assertThat(rebels).allSatisfy(rebel -> {
             assertThat(rebel.isTapped()).isTrue();
-            assertThat(rebel.isAttackedThisTurn()).isTrue();
+            assertThat(rebel.isAttacking()).isTrue();
         });
     }
 

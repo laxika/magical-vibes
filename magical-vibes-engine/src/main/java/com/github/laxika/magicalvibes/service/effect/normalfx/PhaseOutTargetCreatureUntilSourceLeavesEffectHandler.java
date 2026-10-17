@@ -27,12 +27,22 @@ public class PhaseOutTargetCreatureUntilSourceLeavesEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
+        var e = (PhaseOutTargetCreatureUntilSourceLeavesEffect) effect;
+        Permanent source = findSource(gameData, entry.getSourcePermanentId());
         UUID targetId = entry.targetsForEffect(effect).stream().findFirst().orElse(entry.getTargetId());
         Permanent target = findPermanent(gameData, targetId);
         if (source != null && target != null) {
-            phasingService.phaseOutUntilSourceLeaves(gameData, source, target);
+            phasingService.phaseOutUntilSourceLeaves(gameData, source, target, e.tapsOnPhaseIn());
         }
+    }
+
+    /** A phased-out source has not left the battlefield, so the trigger still links to it (CR 113.7a). */
+    private Permanent findSource(GameData gameData, UUID sourceId) {
+        Permanent source = findPermanent(gameData, sourceId);
+        if (source == null && sourceId != null) {
+            source = phasingService.findPhasedOutPermanent(gameData, sourceId);
+        }
+        return source;
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

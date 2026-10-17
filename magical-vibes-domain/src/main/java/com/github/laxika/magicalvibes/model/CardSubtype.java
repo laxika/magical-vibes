@@ -369,6 +369,13 @@ SYNTH("Synth"),
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, CLOUD, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
             URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, SPHERE, PLANET, OMEN);
 
+    /** Land types that appear only on playtest cards and are absent from the Comprehensive Rules list (CR 205.3i). */
+    private static final Set<CardSubtype> PLAYTEST_ONLY_LAND_TYPES = EnumSet.of(CLOUD, ULAMOGS, OMEN);
+
+    private static final List<CardSubtype> RULES_LAND_TYPES = LAND_TYPES.stream()
+            .filter(subtype -> !PLAYTEST_ONLY_LAND_TYPES.contains(subtype))
+            .toList();
+
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, BASRI, GARRUK, KOTH, HUATLI, ASHIOK, KARN, GIDEON, LILIANA, JACE, NISSA,
             OKO, SARKHAN, CHANDRA, BOLAS, DOMRI, DOVIN, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, ROWAN, YANGGU, YANLING, WRENN, ELSPETH);
@@ -439,6 +446,14 @@ SYNTH("Synth"),
 
     public static List<CardSubtype> landTypes() {
         return LAND_TYPES;
+    }
+
+    /**
+     * The land types listed in CR 205.3i, i.e. {@link #landTypes()} without the playtest-only
+     * ones. What "every land type" grants (Omo, Queen of Vesuva).
+     */
+    public static List<CardSubtype> rulesLandTypes() {
+        return RULES_LAND_TYPES;
     }
 
     public static List<CardSubtype> planeswalkerTypes() {

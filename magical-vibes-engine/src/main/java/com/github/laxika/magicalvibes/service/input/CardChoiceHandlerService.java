@@ -562,7 +562,9 @@ public class CardChoiceHandlerService {
         CardPredicate entryCounterCondition = null;
         CardEffect thenEffect = null;
         CardPredicate thenCondition = null;
+        StackEntry declineEntry = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
+            declineEntry = gameData.handCardChoiceDeclineEntry;
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
             targetId = null;
@@ -630,6 +632,7 @@ public class CardChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
+        gameData.handCardChoiceDeclineEntry = null;
 
         // "Put any number of … cards from your hand onto the battlefield" is one event (CR 603.6a):
         // every pick waits in hand until the player stops, then all of them enter together.
@@ -644,6 +647,11 @@ public class CardChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to put a card onto the battlefield", gameData.id, player.getUsername());
+
+            // "If you don't, ..." (Origin of the Avengers): declining the choice resolves the else effect.
+            if (declineEntry != null) {
+                effectResolutionService.resolveEffects(gameData, declineEntry);
+            }
 
             // "If you don't, exile this creature." (Evershrike) — declining exiles the source permanent.
             if (exileSourceIfDeclinedId != null) {

@@ -107,6 +107,7 @@ class OmenOfTheSeaTest extends BaseCardTest {
     void activatedScryWithOneCardDoesNotDraw() {
         Card card = new NyxbornCourser();
         harness.setLibrary(player1, List.of(card));
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new OmenOfTheSea());
         addOmenMana();
 

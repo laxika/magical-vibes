@@ -19,9 +19,15 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasActivatedAbilityWithEffectsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasStaticEffectPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -49,11 +55,20 @@ public class OddricLunarMarquis extends Card {
             Keyword.WITHER
     );
 
+    private static final CardEffect NONBASIC_LANDWALK = new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
+            new PermanentAllOfPredicate(List.of(
+                    new PermanentIsLandPredicate(),
+                    new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC)))),
+            true);
+
+    private static final List<CardEffect> COLORLESS_MANA_SACRIFICE_EFFECTS =
+            List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.COLORLESS));
+
     public OddricLunarMarquis() {
         ActivatedAbility colorlessManaAbility = new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.COLORLESS)),
+                COLORLESS_MANA_SACRIFICE_EFFECTS,
                 "Sacrifice this creature: Add {C}."
         );
         List<CardEffect> sharedEffects = Stream.concat(
@@ -65,6 +80,10 @@ public class OddricLunarMarquis extends Card {
                                 new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                                         new ExileTopCardsOfDefendingPlayerLibraryEffect(1))),
+                        new ConditionalEffect(
+                                sharesNonbasicLandwalk(),
+                                new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+                                        EffectSlot.STATIC, NONBASIC_LANDWALK)),
                         new ConditionalEffect(
                                 sharesManaAbility(),
                                 new GrantActivatedAbilityEffect(
@@ -91,10 +110,17 @@ public class OddricLunarMarquis extends Card {
         )));
     }
 
+    private static ControlsPermanent sharesNonbasicLandwalk() {
+        return new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentHasStaticEffectPredicate(NONBASIC_LANDWALK)
+        )));
+    }
+
     private static ControlsPermanent sharesManaAbility() {
         return new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentHasManaAbilityPredicate()
+                new PermanentHasActivatedAbilityWithEffectsPredicate(COLORLESS_MANA_SACRIFICE_EFFECTS)
         )));
     }
 }

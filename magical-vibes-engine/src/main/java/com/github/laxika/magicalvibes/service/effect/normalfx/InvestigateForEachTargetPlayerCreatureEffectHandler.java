@@ -52,9 +52,12 @@ public class InvestigateForEachTargetPlayerCreatureEffectHandler implements Norm
             }
         }
 
-        if (creatureCount > 0) {
+        for (int investigation = 0; investigation < creatureCount; investigation++) {
             createTokenEffectHandler.resolveForController(
-                    gameData, entry, CreateTokenEffect.ofClueToken(creatureCount), entry.getControllerId());
+                    gameData, entry, CreateTokenEffect.ofClueToken(1), entry.getControllerId());
+            if (gameData.pendingTokenCreationReplacement != null) {
+                return;
+            }
         }
     }
 }

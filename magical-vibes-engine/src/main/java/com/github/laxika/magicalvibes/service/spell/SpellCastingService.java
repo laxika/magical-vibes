@@ -5023,9 +5023,32 @@ public class SpellCastingService {
                         gameData, card, targetIds, playerId, effectiveXValue, kicked,
                         targetingSpellEffects, dividedDamageTargetGroupSizes);
             } else if (mixedSpellAndPermanentTargets) {
-                targetLegalityService.validateMixedSpellAndPermanentTargets(
-                        gameData, card, targetIds, playerId, effectiveXValue, giftPromised,
-                        targetingSpellEffects);
+                List<UUID> permanentTargetIds = targetIds;
+                if (needsSingleGraveyardTargeting) {
+                    // A chosen mode's graveyard card is not a declared target group, so it is checked
+                    // against that effect and kept out of the permanent group validation.
+                    permanentTargetIds = new ArrayList<>();
+                    for (UUID candidateId : targetIds) {
+                        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, candidateId);
+                        if (graveyardOwnerId == null) {
+                            permanentTargetIds.add(candidateId);
+                            continue;
+                        }
+                        if (graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                                && !playerId.equals(graveyardOwnerId)) {
+                            throw new IllegalStateException("Target must be a "
+                                    + CardPredicateUtils.describeFilter(graveyardReturnEffect.filter())
+                                    + " in your graveyard");
+                        }
+                        targetLegalityService.validateGraveyardEffectTargetOnly(
+                                gameData, card, graveyardTargetingSource, candidateId, effectiveXValue, playerId);
+                    }
+                }
+                if (!permanentTargetIds.isEmpty()) {
+                    targetLegalityService.validateMixedSpellAndPermanentTargets(
+                            gameData, card, permanentTargetIds, playerId, effectiveXValue, giftPromised,
+                            targetingSpellEffects);
+                }
             } else {
                 targetLegalityService.validateMultiSpellTargets(
                         gameData, card, targetIds, playerId, effectiveXValue, kicked, giftPromised,
@@ -6880,11 +6903,14 @@ public class SpellCastingService {
                             null, Map.of(), Zone.STACK, List.of(), targetIds
                     ));
                 } else if (unwrappedNeedsTarget && !targetIds.isEmpty()) {
-                    // Spell targets both a spell on the stack and permanent(s) (e.g. Lost in the Mist)
+                    // Spell targets both a spell on the stack and permanent(s) (e.g. Lost in the Mist);
+                    // a chosen mode's graveyard card also rides in targetCardIds so it is rechecked as a card
                     StackEntry entry = new StackEntry(
                             entryType, card, playerId, card.getName(),
                             filteredSpellEffects, resolvedXValue, targetId,
-                            null, Map.of(), Zone.STACK, List.of(), targetIds
+                            null, Map.of(), Zone.STACK,
+                            needsSingleGraveyardTargeting ? graveyardTargetIds(gameData, null, targetIds) : List.of(),
+                            targetIds
                     );
                     entry.setPrimaryTargetStoredSeparately(
                             firstDeclaredGroupTargetsSpell || allSpellTargetsAlsoAllowPermanents);
@@ -7953,15 +7979,15 @@ public class SpellCastingService {
         int sacrificedToughness = 0;
         if (costs.casualtyCost() != null && sacrificePermanentId != null) {
             CasualtyCost casualtyCost = costs.casualtyCost();
-            int chosenXValue = casualtyCost.powerMustEqualChosenX() ? announcedXValue : casualtyCost.minimumPower();
+            int chosenXValue = casualtyCost.powerAtLeastChosenX() ? announcedXValue : casualtyCost.minimumPower();
             SacrificedCreatureStats stats = paySingleSacrificeCost(gameData, player, card,
                     sacrificePermanentId,
-                    casualtyCost.powerMustEqualChosenX()
-                            ? "a creature with power exactly " + chosenXValue
+                    casualtyCost.powerAtLeastChosenX()
+                            ? "a creature with power " + chosenXValue + " or greater"
                             : "a creature with power " + casualtyCost.minimumPower() + " or greater",
-                    p -> casualtyCost.powerMustEqualChosenX()
+                    p -> casualtyCost.powerAtLeastChosenX()
                             ? gameQueryService.isCreature(gameData, p)
-                                    && gameQueryService.getEffectivePower(gameData, p) == chosenXValue
+                                    && gameQueryService.getEffectivePower(gameData, p) >= chosenXValue
                             : predicateEvaluationService.matchesPermanentPredicate(
                                     gameData, p, casualtyCost.consumedPermanentFilter()));
             sacrificedCardId = stats.cardId();
@@ -9384,9 +9410,9 @@ public class SpellCastingService {
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
                                     List<UUID> tapPermanentIds) {
-        GraveyardCardLocation location = findGraveyardCardLocation(gameData, graveyardCardId);
+        GraveyardCardLocation location = findGraveyardCardLocation(gameData, player.getId(), graveyardCardId);
         if (location == null) {
-            throw new IllegalArgumentException("Invalid graveyard card id");
+            throw new IllegalStateException("Card is not in your graveyard");
         }
         playFlashbackSpellFromLocation(gameData, player, location.graveyard(), location.index(), xValue, targetId,
                 targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, null, null, List.of(),
@@ -13488,6 +13514,11 @@ public class SpellCastingService {
                         card, new CardHasNoAbilitiesPredicate(), null)
                         && pool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0
                         ? pool.promoteCreatureSpellWithoutAbilitiesOnlyMana() : null;
+        ManaPool.BlueCreatureSpellManaState blueCreatureSpellMana =
+                card.hasType(CardType.CREATURE)
+                        && gameQueryService.getEffectiveCardColors(gameData, card).contains(CardColor.BLUE)
+                        && pool.getBlueCreatureSpellOnlyManaTotal() > 0
+                        ? pool.promoteBlueCreatureSpellOnlyMana() : null;
         try {
             if (!card.hasType(CardType.CREATURE)) {
                 ManaPool.DevoidSpellManaState devoidMana = card.hasKeyword(Keyword.DEVOID)
@@ -13595,6 +13626,9 @@ public class SpellCastingService {
             }
             if (creatureSpellWithoutAbilitiesMana != null) {
                 pool.restorePromotedCreatureSpellWithoutAbilitiesOnlyMana(creatureSpellWithoutAbilitiesMana);
+            }
+            if (blueCreatureSpellMana != null) {
+                pool.restorePromotedBlueCreatureSpellOnlyMana(blueCreatureSpellMana);
             }
         }
     }
@@ -14919,19 +14953,17 @@ public class SpellCastingService {
         return permission;
     }
 
-    private GraveyardCardLocation findGraveyardCardLocation(GameData gameData, UUID cardId) {
+    private GraveyardCardLocation findGraveyardCardLocation(GameData gameData, UUID playerId, UUID cardId) {
         if (cardId == null) {
             return null;
         }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) {
-                continue;
-            }
-            for (int i = 0; i < graveyard.size(); i++) {
-                if (cardId.equals(graveyard.get(i).getId())) {
-                    return new GraveyardCardLocation(graveyard, i);
-                }
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) {
+            return null;
+        }
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (cardId.equals(graveyard.get(i).getId())) {
+                return new GraveyardCardLocation(graveyard, i);
             }
         }
         return null;
@@ -15035,16 +15067,19 @@ public class SpellCastingService {
     /** Opal Palace: mana spent to cast a commander grants counters based on its command-zone cast count. */
     private void applyCommanderCounterGrantingMana(GameData gameData, UUID playerId, Card card,
                                                    int commanderCounterGrantingBefore) {
-        if (!playerId.equals(gameData.commandCastPlayerId)
-                || !card.getId().equals(gameData.commandCastCardId)) {
+        boolean ownCommander = gameData.playerCommanders.getOrDefault(playerId, List.of()).stream()
+                .anyMatch(commander -> commander.getId().equals(card.getId()));
+        if (!ownCommander) {
             return;
         }
         int spent = commanderCounterGrantingBefore
                 - commanderCounterGrantingManaAvailable(gameData, playerId);
         if (spent > 0) {
             int previousCommandZoneCasts = gameData.commanderTaxByCardId.getOrDefault(card.getId(), 0) / 2;
-            gameData.spellAdditionalEnterCounters.merge(
-                    card.getId(), spent * (previousCommandZoneCasts + 1), Integer::sum);
+            boolean castFromCommandZone = playerId.equals(gameData.commandCastPlayerId)
+                    && card.getId().equals(gameData.commandCastCardId);
+            int commandZoneCasts = previousCommandZoneCasts + (castFromCommandZone ? 1 : 0);
+            gameData.spellAdditionalEnterCounters.merge(card.getId(), spent * commandZoneCasts, Integer::sum);
         }
     }
 

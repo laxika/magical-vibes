@@ -78,7 +78,7 @@ class OsseousExhaleTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(attacker.getMarkedDamage()).isEqualTo(5);
-        harness.assertLife(player1, 20);
+        harness.assertLife(player1, 14);
     }
 
     @Test

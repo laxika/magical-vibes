@@ -31,7 +31,7 @@ class OccultEpiphanyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Spirit"))
                 .hasSize(2);
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

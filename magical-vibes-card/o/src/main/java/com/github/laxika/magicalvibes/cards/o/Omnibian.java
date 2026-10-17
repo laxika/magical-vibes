@@ -17,7 +17,7 @@ public class Omnibian extends Card {
     public Omnibian() {
         addActivatedAbility(new ActivatedAbility(
                 true,
-                "{1}{G}{G}{U}",
+                null,
                 List.of(
                         new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.FROG),
                         new SetBasePowerToughnessEffect(3, 3)),

@@ -835,7 +835,7 @@ public class TriggeredAbilityQueueService {
         gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
 
         String filterLabel = CardPredicateUtils.describeFilter(filter);
-        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
+        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1, 1,
                 pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from a graveyard to exile.");
 
         gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
@@ -1476,16 +1476,30 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
 
-            List<UUID> validPermanentTargets =
-                    anyTargetPermanents(gameData, pending.controllerId(), pending.discardedCard());
-            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+            boolean canTargetPermanents = pending.effects().stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+            boolean canTargetPlayers = pending.effects().stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            List<UUID> validPermanentTargets = canTargetPermanents
+                    ? permanentTargetsForEffects(gameData, pending.controllerId(), pending.discardedCard(),
+                    pending.effects())
+                    : List.of();
+            List<UUID> validPlayerTargets = canTargetPlayers
+                    ? new ArrayList<>(gameData.orderedPlayerIds) : List.of();
 
-            // There are always valid targets (at least the players)
             gameData.pollPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
+            if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                gameLogService.append(gameData, GameLog.cardThen(pending.discardedCard(),
+                        "'s discard trigger has no valid targets."));
+                log.info("Game {} - {} discard trigger skipped (no valid targets)",
+                        gameData.id, pending.discardedCard().getName());
+                continue;
+            }
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
-                    pending.discardedCard().getName() + "'s ability - Choose any target.");
+                    pending.discardedCard().getName() + (canTargetPlayers
+                            ? "'s ability - Choose any target." : "'s ability - Choose target permanent."));
 
             gameLogService.append(gameData, GameLog.cardThen(pending.discardedCard(),
                     "'s discard trigger - choose a target."));
@@ -3398,7 +3412,9 @@ public class TriggeredAbilityQueueService {
                 for (Permanent permanent : battlefield) {
                     if (!pending.chosenTargetsSoFar().contains(permanent.getId())
                             && predicateEvaluationService.matchesPermanentPredicate(
-                            permanent, anyFilter.permanentPredicate(), filterContext)) {
+                            permanent, anyFilter.permanentPredicate(), filterContext)
+                            && !validTargetService.isBlockedByHexproofOrGrantedEffect(
+                            gameData, permanent, pending.controllerId())) {
                         validTargets.add(permanent.getId());
                     }
                 }
@@ -3430,6 +3446,9 @@ public class TriggeredAbilityQueueService {
                 }
                 if (group.filter() != null
                         && !predicateEvaluationService.matchesFilters(permanent, Set.of(group.filter()), filterContext)) {
+                    continue;
+                }
+                if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent, pending.controllerId())) {
                     continue;
                 }
                 if (group.maxTotalManaValue() < Integer.MAX_VALUE

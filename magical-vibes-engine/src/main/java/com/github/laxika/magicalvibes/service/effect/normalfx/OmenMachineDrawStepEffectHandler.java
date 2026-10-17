@@ -11,20 +11,19 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OmenMachineDrawStepEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +42,9 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
     private final ExileService exileService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final CastingPermissionService castingPermissionService;
+    private final CastingCostService castingCostService;
+    private final ExileCastTargetSupport exileCastTargetSupport;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private SplitCardCastSupport splitCardCastSupport;
@@ -93,6 +95,13 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
             }
         } else {
             // Non-land — cast without paying mana cost if able
+            if (!castingPermissionService.isSpellCastingAllowed(gameData, targetPlayerId, topCard)
+                    || castingCostService.getCastCostModifier(gameData, targetPlayerId, topCard) > 0
+                    || !castingCostService.canPayAdditionalSpellCosts(gameData, targetPlayerId, topCard)) {
+                gameLogService.append(gameData, GameLog.cardThen(topCard, " can't be cast and remains in exile."));
+                log.info("Game {} - {} can't be cast (Omen Machine), stays in exile", gameData.id, topCard.getName());
+                return;
+            }
             gameData.removeFromExile(topCard.getId());
 
             StackEntryType spellType = exileSupport.mapCardTypeToSpellType(topCard);
@@ -100,29 +109,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
 
             if (EffectResolution.needsTarget(topCard)) {
                 // Targeted spell — need to choose a target
-                Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(topCard);
-                List<UUID> validTargets = new ArrayList<>();
-
-                // Only add permanents if the spell can actually target them
-                if (allowedTargets.contains(TargetType.PERMANENT)) {
-                    for (UUID pid : gameData.orderedPlayerIds) {
-                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                        if (battlefield == null) continue;
-                        for (Permanent p : battlefield) {
-                            if (topCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                                if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                                    validTargets.add(p.getId());
-                                }
-                            } else if (gameQueryService.isCreature(gameData, p)) {
-                                validTargets.add(p.getId());
-                            }
-                        }
-                    }
-                }
-
-                if (allowedTargets.contains(TargetType.PLAYER)) {
-                    validTargets.addAll(gameData.orderedPlayerIds);
-                }
+                List<UUID> validTargets = exileCastTargetSupport.firstSlotCandidates(gameData, topCard, spellEffects, targetPlayerId);
 
                 if (validTargets.isEmpty()) {
                     // Can't cast — card stays in exile

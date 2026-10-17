@@ -14,7 +14,7 @@ public class OmnathLocusOfAll extends Card {
 
     public OmnathLocusOfAll() {
         addEffect(EffectSlot.STATIC, new ReplaceManaDrainWithColorlessEffect(ManaColor.BLACK));
-        addEffect(EffectSlot.EACH_PRECOMBAT_MAIN_TRIGGERED,
+        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new LookAtTopCardMayRevealForManaAndPutIntoHandEffect());
     }
 }

@@ -133,13 +133,18 @@ public class SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffectHandler
         advance(gameData, entry, sourceName, controllerId, sourcePermanentId);
     }
 
+    /**
+     * With a card in hand, both modes are offered: when no other permanent exists the sacrifice
+     * part is impossible and is ignored (CR 101.3), so the player may decline without discarding.
+     */
     private List<String> availableOptions(GameData gameData, UUID controllerId, UUID sourcePermanentId) {
         List<String> options = new ArrayList<>();
-        if (!otherPermanentIds(gameData, controllerId, sourcePermanentId).isEmpty()) {
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean hasCardInHand = hand != null && !hand.isEmpty();
+        if (hasCardInHand || !otherPermanentIds(gameData, controllerId, sourcePermanentId).isEmpty()) {
             options.add(ChoiceContext.OathOfLimDulPenaltyChoice.SACRIFICE);
         }
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        if (hand != null && !hand.isEmpty()) {
+        if (hasCardInHand) {
             options.add(ChoiceContext.OathOfLimDulPenaltyChoice.DISCARD);
         }
         return options;

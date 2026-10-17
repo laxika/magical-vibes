@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
@@ -29,7 +31,9 @@ public class ObsidianFireheart extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.BLAZE, 1),
                         new GrantEffectToTargetEffect(
                                 EffectSlot.UPKEEP_TRIGGERED,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))
+                                ConditionalEffect.atTriggerTime(
+                                        new SourceCounterThreshold(1, CounterType.BLAZE),
+                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)))
                 ),
                 "{1}{R}{R}: Put a blaze counter on target land without a blaze counter on it. For as long as that land has a blaze counter on it, it has \"At the beginning of your upkeep, this land deals 1 damage to you.\"",
                 new PermanentPredicateTargetFilter(

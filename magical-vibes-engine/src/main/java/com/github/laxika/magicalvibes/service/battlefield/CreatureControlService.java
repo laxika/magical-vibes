@@ -563,9 +563,12 @@ public class CreatureControlService {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
                 FilterContext context = source == null ? null : new FilterContext(
                         gameData, source.getCard().getId(), fe.controllerId(), null, source, source.getId());
+                // A permanent that stops being a creature has power 0, so Old Man of the Sea's
+                // "power remains less than or equal" condition still holds and control continues.
                 stale = affected == null || source == null || predicateEvaluationService == null
-                        || !predicateEvaluationService.matchesPermanentPredicate(
-                        affected, control.targetPredicate(), context);
+                        || (gameQueryService.isCreature(gameData, affected)
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        affected, control.targetPredicate(), context));
             }
             if (!stale && fe.effect() instanceof CounterConditionedControlEffect counterConditioned) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());

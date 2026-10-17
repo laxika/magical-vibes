@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerRevealsTopCardsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -24,7 +25,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -35,6 +35,8 @@ public class EachPlayerRevealsTopCardsToBattlefieldRestToGraveyardEffectHandler
         implements NormalEffectHandlerBean {
 
     private final AmountEvaluationService amountEvaluationService;
+    private final AuraAttachmentService auraAttachmentService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
@@ -52,10 +54,7 @@ public class EachPlayerRevealsTopCardsToBattlefieldRestToGraveyardEffectHandler
         var e = (EachPlayerRevealsTopCardsToBattlefieldRestToGraveyardEffect) effect;
         AmountContext baseContext = AmountContext.forStackEntry(entry, null);
         CardIsPermanentPredicate permanentPredicate = new CardIsPermanentPredicate();
-        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> simultaneouslyEntered = new ArrayList<>();
         Map<UUID, List<Card>> permanentCardsByPlayer = new LinkedHashMap<>();
-        Map<UUID, List<Permanent>> enteredByController = new LinkedHashMap<>();
         Map<UUID, Boolean> shuffledLibraries = new LinkedHashMap<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -89,53 +88,49 @@ public class EachPlayerRevealsTopCardsToBattlefieldRestToGraveyardEffectHandler
             }
         }
 
+        List<BattlefieldEntryCard> entering = new ArrayList<>();
         for (Map.Entry<UUID, List<Card>> playerCards : permanentCardsByPlayer.entrySet()) {
             UUID playerId = playerCards.getKey();
             List<Card> library = gameData.playerDecks.get(playerId);
+            List<Card> enteringCards = new ArrayList<>();
             for (Card card : playerCards.getValue()) {
+                if (card.isAura() && !card.isEnchantZone() && !hasLegalAuraHost(gameData, playerId, card)) {
+                    library.add(0, card);
+                    gameLogService.append(gameData, GameLog.cardThen(card,
+                            " has no legal object to enchant; it stays on top of the library."));
+                    continue;
+                }
                 if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
                     library.add(card);
                     shuffledLibraries.put(playerId, true);
                     continue;
                 }
-
-                Permanent permanent = new Permanent(card);
-                initializeStartingCounters(permanent, card);
-                UUID controllerId = battlefieldEntryService.resolveEnteringController(
-                        gameData, playerId, permanent);
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
-
-                if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
-                    simultaneouslyEntered.add(permanent);
-                    enteredByController.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(permanent);
-                }
+                enteringCards.add(card);
+                entering.add(new BattlefieldEntryCard(
+                        battlefieldEntryService.resolveEnteringController(gameData, playerId, new Permanent(card)),
+                        playerId, card, Zone.LIBRARY, null));
             }
+            library.addAll(0, enteringCards);
         }
 
         shuffledLibraries.forEach((playerId, ignored) ->
                 Collections.shuffle(gameData.playerDecks.get(playerId)));
 
-        enteredByController.forEach((controllerId, permanents) -> {
-            for (Permanent permanent : permanents) {
-                battlefieldEntryService.processCreatureETBEffects(
-                        gameData, controllerId, permanent.getCard(), null, false);
-            }
-        });
+        battlefieldEntryBatchSupport.begin(gameData, entering);
 
         if (!gameData.interaction.isAwaitingInput()) {
             gameData.orderedPlayerIds.forEach(playerId -> legendRuleService.checkLegendRule(gameData, playerId));
         }
     }
 
-    private void initializeStartingCounters(Permanent permanent, Card card) {
-        if (card.hasType(CardType.PLANESWALKER)) {
-            permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty() != null ? card.getLoyalty() : 0);
-            permanent.setSummoningSick(false);
-        } else if (card.hasType(CardType.BATTLE)) {
-            permanent.setCounterCount(CounterType.DEFENSE, card.getDefense() != null ? card.getDefense() : 0);
-            permanent.setSummoningSick(false);
+    private boolean hasLegalAuraHost(GameData gameData, UUID controllerId, Card aura) {
+        if (!aura.isEnchantPlayer() && gameData.anyPermanentMatches(permanent ->
+                !gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && auraAttachmentService.canEnchant(gameData, aura, controllerId, permanent))) {
+            return true;
         }
+        return gameData.orderedPlayerIds.stream()
+                .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
     }
 
     private void logReveal(GameData gameData, StackEntry entry, UUID playerId, List<Card> revealedCards) {

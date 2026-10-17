@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -371,6 +372,9 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
+        if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup graveyardGroup) {
+            validateAtMostOneCardPerGraveyard(gameData, graveyardGroup.pending().sourceCard(), permanentIds);
+        }
         if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
@@ -1333,6 +1337,21 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
+        }
+    }
+
+    private void validateAtMostOneCardPerGraveyard(GameData gameData, Card sourceCard, List<UUID> cardIds) {
+        if (sourceCard == null
+                || (sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                && sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE)) {
+            return;
+        }
+        Set<UUID> graveyardOwners = new HashSet<>();
+        for (UUID cardId : cardIds) {
+            UUID graveyardOwner = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwner != null && !graveyardOwners.add(graveyardOwner)) {
+                throw new IllegalStateException("May target at most one card per graveyard");
+            }
         }
     }
 
@@ -2566,7 +2585,8 @@ public class MultiPermanentChoiceHandlerService {
     private void handleChooseCreaturesToAttackNextTurn(GameData gameData, List<UUID> permanentIds,
                                                        MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn context) {
         UUID targetPlayerId = context.targetPlayerId();
-        gameData.restrictAttackersNextTurn(targetPlayerId, Set.copyOf(permanentIds));
+        gameData.restrictAttackersNextTurn(targetPlayerId, Set.copyOf(permanentIds),
+                context.controllerId(), context.sourceCard());
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.text(playerName + " chooses " + permanentIds.size()

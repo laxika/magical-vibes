@@ -35,7 +35,7 @@ public class OddsEnds extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Odds - Flip a coin. If it comes up heads, counter target instant or sorcery spell. "
                                 + "If it comes up tails, copy that spell and you may choose new targets for the copy.",
-                        new FlipCoinWinEffect(new CounterSpellEffect(), new CopySpellEffect()),
+                        FlipCoinWinEffect.headsOrTails(new CounterSpellEffect(), new CopySpellEffect()),
                         instantOrSorcery
                 ).withManaCost("{U}{R}"),
                 new ChooseOneEffect.ChooseOneOption(

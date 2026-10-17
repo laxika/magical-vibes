@@ -174,6 +174,7 @@ class OkaunEyeOfChaosTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, okaun)).isEqualTo(expected);
         assertThat(gqs.getEffectiveToughness(gd, okaun)).isEqualTo(expected);
 
+        declareAttackers(List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

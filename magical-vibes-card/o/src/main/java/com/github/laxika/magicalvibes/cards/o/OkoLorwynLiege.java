@@ -4,11 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -28,7 +26,7 @@ public class OkoLorwynLiege extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.TARGET, GrantDuration.INDEFINITE)),
+                List.of(new GrantAllCreatureTypesToTargetCreatureEffect()),
                 "+2: Up to one target creature gains all creature types. (This effect doesn't end.)",
                 TargetFilters.creature(),
                 +2,

@@ -28,11 +28,11 @@ public class Overencumbered extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofClueToken(1)))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofFoodToken(1)))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new CreateTokenForTargetPlayerEffect(junkToken()));
+                        new CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofClueToken(1)
+                                .withInvestigate(false)
+                                .withSimultaneousTokens(List.of(
+                                        CreateTokenEffect.ofFoodToken(1),
+                                        junkToken()))));
         addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED,
                 new MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect());
     }

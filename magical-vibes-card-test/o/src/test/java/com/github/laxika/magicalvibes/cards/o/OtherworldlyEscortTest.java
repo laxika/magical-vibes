@@ -99,6 +99,7 @@ class OtherworldlyEscortTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, source.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanent(player2, "Otherworldly Escort").getId()).isNotEqualTo(source.getId());
         assertThat(escort.getCounterCount(CounterType.CHARGE)).isZero();

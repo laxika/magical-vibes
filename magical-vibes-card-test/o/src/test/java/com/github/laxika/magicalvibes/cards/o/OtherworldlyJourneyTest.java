@@ -87,9 +87,10 @@ class OtherworldlyJourneyTest extends BaseCardTest {
     @Test
     @DisplayName("A stolen creature returns to its owner rather than its previous controller")
     void returnsStolenCreatureToOwner() {
-        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        IsamaruHoundOfKonda isamaru = new IsamaruHoundOfKonda();
+        isamaru.setOwnerId(player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, isamaru);
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
-        stolen.getCard().setOwnerId(player2.getId());
         harness.setHand(player1, List.of(new OtherworldlyJourney()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

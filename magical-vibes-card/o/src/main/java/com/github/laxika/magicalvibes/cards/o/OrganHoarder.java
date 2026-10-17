@@ -11,6 +11,6 @@ public class OrganHoarder extends Card {
 
     public OrganHoarder() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1));
+                LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1).withExactChooseCount());
     }
 }

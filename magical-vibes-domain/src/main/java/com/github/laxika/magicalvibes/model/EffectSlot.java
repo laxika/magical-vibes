@@ -654,6 +654,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  subtype with a {@code TriggeringCardConditionalEffect}. Checked in
      *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. Used by Trial of Solidarity. */
     ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+    /** "Whenever an enchantment you control enters" without "another": like
+     *  {@link #ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD} but the source sees its own entry when it enters as an
+     *  enchantment (Ondu Spiritdancer with Enchanted Evening). Checked in
+     *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. */
+    ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
     /** Triggers whenever the controller fully unlocks a Room. */
     ON_ALLY_ROOM_FULLY_UNLOCKED,
     /** Triggers whenever the controller fully unlocks a Room while this card is in the controller's

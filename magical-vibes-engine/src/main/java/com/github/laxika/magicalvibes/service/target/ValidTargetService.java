@@ -1399,6 +1399,25 @@ public class ValidTargetService {
         return result;
     }
 
+    /**
+     * Filters player candidates for a choice made by {@code chooserId} on behalf of an ability controlled
+     * by {@code abilityControllerId}. Player predicates are read from the chooser's side, while hexproof
+     * is read from the ability's controller, since only abilities an opponent controls are blocked by it
+     * (CR 702.11b).
+     */
+    public List<UUID> filterValidPlayerTargetsChosenBy(GameData gameData, TargetFilter targetFilter,
+                                                       List<UUID> candidates, UUID chooserId,
+                                                       UUID abilityControllerId, UUID sourcePermanentId) {
+        List<UUID> result = new ArrayList<>();
+        for (UUID playerId : candidates) {
+            if (isValidPlayerTarget(gameData, targetFilter, playerId, chooserId, sourcePermanentId, null,
+                    abilityControllerId)) {
+                result.add(playerId);
+            }
+        }
+        return result;
+    }
+
     private boolean isAnotherPermanentOfAuraHostType(GameData gameData, Permanent aura, Permanent candidate) {
         if (aura == null || candidate == null || !aura.isAttached()) {
             return false;
@@ -1440,6 +1459,12 @@ public class ValidTargetService {
 
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
                                         UUID sourcePermanentId, Card sourceCard) {
+        return isValidPlayerTarget(gameData, targetFilter, playerId, controllerId, sourcePermanentId, sourceCard,
+                controllerId);
+    }
+
+    private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
+                                        UUID sourcePermanentId, Card sourceCard, UUID abilityControllerId) {
         if (targetFilter != null && !targetFilterAllowsPlayer(targetFilter)) {
             return false;
         }
@@ -1449,15 +1474,15 @@ public class ValidTargetService {
             return false;
         }
 
-        // Player hexproof (only blocks opponents)
-        if (!controllerId.equals(playerId)
+        // Player hexproof (only blocks opponents of the ability's controller)
+        if (!abilityControllerId.equals(playerId)
                 && gameQueryService.playerHasHexproof(gameData, playerId)
-                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, controllerId)) {
+                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, abilityControllerId)) {
             return false;
         }
 
         var effectiveSourceColor = gameQueryService.getEffectiveCardColor(gameData, sourceCard);
-        if (!controllerId.equals(playerId) && effectiveSourceColor != null
+        if (!abilityControllerId.equals(playerId) && effectiveSourceColor != null
                 && gameQueryService.playerHasHexproofFromColor(gameData, playerId, effectiveSourceColor)) {
             return false;
         }

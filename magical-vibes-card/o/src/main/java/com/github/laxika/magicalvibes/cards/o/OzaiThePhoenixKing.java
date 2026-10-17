@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControllerUnspentManaAtLeast;
+import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
@@ -17,6 +18,7 @@ import java.util.Set;
 public class OzaiThePhoenixKing extends Card {
 
     public OzaiThePhoenixKing() {
+        addEffect(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 4));
         addEffect(EffectSlot.STATIC, new ReplaceManaDrainWithColorlessEffect(ManaColor.RED));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControllerUnspentManaAtLeast(6),

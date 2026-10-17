@@ -49,6 +49,7 @@ public class ReturnTargetPermanentAndAllWithSameNameToHandEffectHandler implemen
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
                 boolean sharesName = permanent == target
+                        || hasAllCardNames(target) || hasAllCardNames(permanent)
                         || (targetName != null && targetName.equals(gameQueryService.getEffectiveName(gameData, permanent)));
                 if (sharesName
                         && predicateEvaluationService.matchesPermanentPredicate(
@@ -67,5 +68,10 @@ public class ReturnTargetPermanentAndAllWithSameNameToHandEffectHandler implemen
         if (!toReturn.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
+    }
+
+    /** A face-down permanent has no name, so the all-names characteristic of its card doesn't apply (CR 201.2a). */
+    private static boolean hasAllCardNames(Permanent permanent) {
+        return !permanent.isFaceDown() && permanent.getCard().hasAllCardNames();
     }
 }

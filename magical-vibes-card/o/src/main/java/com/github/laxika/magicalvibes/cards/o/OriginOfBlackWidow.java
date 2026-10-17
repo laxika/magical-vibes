@@ -20,7 +20,7 @@ public class OriginOfBlackWidow extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.SAGA_CHAPTER_II,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect(
                         new CardTypePredicate(CardType.CREATURE)));

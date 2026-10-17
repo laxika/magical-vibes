@@ -426,6 +426,13 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
         }
+        if (card.hasType(CardType.CREATURE)
+                && gameQueryService.getEffectiveCardColors(gameData, card).contains(CardColor.BLUE)
+                && pool.getBlueCreatureSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteBlueCreatureSpellOnlyMana();
+        }
         boolean instantOrSorcery = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
         if (instantOrSorcery
                 && (!pool.isInstantSorceryOrClassLevelManaUsableForInstantSorcery()
@@ -1542,7 +1549,17 @@ public class GameActionAvailabilityService {
             return false;
         }
         boolean hasPermission = castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card);
-        return hasPermission || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
+        return hasPermission
+                || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
+                || hasOwnMayhemLandPermission(gameData, playerId, card);
+    }
+
+    /** Whether the land's own mayhem casting option (discarded this turn) allows playing it from the graveyard. */
+    private boolean hasOwnMayhemLandPermission(GameData gameData, UUID playerId, Card card) {
+        return !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)
+                && card.getCastingOption(GraveyardCast.class)
+                .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
+                .orElse(false);
     }
 
     public List<Integer> getPlayableFlashbackIndices(GameData gameData, UUID playerId) {

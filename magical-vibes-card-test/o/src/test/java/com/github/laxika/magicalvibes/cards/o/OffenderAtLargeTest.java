@@ -37,6 +37,8 @@ class OffenderAtLargeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Offender at Large");

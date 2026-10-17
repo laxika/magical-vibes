@@ -87,7 +87,10 @@ class OltecArchaeologistsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact));
         harness.setLibrary(player1, List.of(top));
 
-        harness.castFromHand(player1, new OltecArchaeologists(), "{4}{W}");
+        harness.setHand(player1, List.of(new OltecArchaeologists()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, -1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Scry 3");
         harness.passBothPriorities();

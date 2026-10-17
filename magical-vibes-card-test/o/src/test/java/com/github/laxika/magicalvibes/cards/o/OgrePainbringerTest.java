@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ class OgrePainbringerTest extends BaseCardTest {
         OgrePainbringer painbringer = new OgrePainbringer();
         // This tutorial-only card has no provider-backed printing; exercise its effect directly.
         painbringer.setName("Ogre Painbringer");
+        painbringer.setType(CardType.CREATURE);
         harness.enterBattlefieldAndReturn(player1, painbringer);
 
         harness.passBothPriorities();

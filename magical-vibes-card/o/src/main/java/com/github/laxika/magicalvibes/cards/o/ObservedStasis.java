@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.RemoveReferencedPermanentFromCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -23,7 +24,7 @@ public class ObservedStasis extends Card {
 
     public ObservedStasis() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RemoveTargetFromCombatEffect())
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RemoveReferencedPermanentFromCombatEffect(PermanentReference.ATTACHED))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

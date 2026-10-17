@@ -150,12 +150,12 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
             }
 
             Permanent permanent = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
-            simultaneouslyEntered.add(permanent);
             if (enterTapped) {
                 permanent.tap();
             }
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+            simultaneouslyEntered.add(permanent);
             placedCards.add(card);
             placedPermanents.add(permanent);
             gameLogService.append(gameData, enterTapped

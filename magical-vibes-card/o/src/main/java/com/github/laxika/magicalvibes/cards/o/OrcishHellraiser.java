@@ -22,6 +22,6 @@ public class OrcishHellraiser extends Card {
         )).addEffect(EffectSlot.ON_DEATH, new DealDamageToTargetPlayerOrPlaneswalkerEffect(2));
 
         // Echo {R}.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{R}"));
     }
 }

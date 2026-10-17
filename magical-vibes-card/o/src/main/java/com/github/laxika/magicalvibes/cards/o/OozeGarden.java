@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCreateSizedTokenEqualToPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
@@ -21,11 +24,18 @@ public class OozeGarden extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(new SacrificeCreatureCreateSizedTokenEqualToPowerEffect(
-                        new CreateTokenEffect("Ooze", 0, 0, CardColor.GREEN, List.of(CardSubtype.OOZE),
-                                Set.of(), Set.of()),
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.OOZE))
-                )),
+                List.of(
+                        new SacrificePermanentCost(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.OOZE))
+                                )),
+                                "a non-Ooze creature",
+                                false,
+                                true),
+                        new CreateTokenEffect("Ooze", new XValue(), new XValue(), CardColor.GREEN,
+                                List.of(CardSubtype.OOZE), Set.of(), Set.of())
+                ),
                 "{1}{G}, Sacrifice a non-Ooze creature: Create an X/X green Ooze creature token, "
                         + "where X is the sacrificed creature's power. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED

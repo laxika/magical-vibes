@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.CanyonLurkers;
 import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -174,7 +175,7 @@ class ObliviousBookwormTest extends BaseCardTest {
     @CardUsed(NarsetParterOfVeils.class)
     void preventedOptionalDrawDoesNotForceDiscard() {
         harness.addToBattlefield(player1, new ObliviousBookworm());
-        harness.addToBattlefield(player2, new NarsetParterOfVeils());
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils()).setCounterCount(CounterType.LOYALTY, 5);
         Card drawn = new CanyonLurkers();
         Card retained = new CanyonLurkers();
         harness.setLibrary(player1, List.of(drawn));

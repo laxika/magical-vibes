@@ -143,8 +143,10 @@ class OpenIntoWonderTest extends BaseCardTest {
         assertThat(bears.isCantBeBlocked()).isTrue();
         int casterHandSize = gd.playerHands.get(player1.getId()).size();
         bears.setAttacking(true);
-        resolveCombat(player2);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            resolveCombat(player2);
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

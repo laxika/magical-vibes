@@ -837,6 +837,7 @@ public class LayerSystemService {
         // Combat assignments feed static scopes ("creatures blocking or blocked by this creature
         // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
         // memoized board.
+        flags = flags << 1 | (p.isAlternateCost() ? 1 : 0);
         flags = flags << 1 | (p.isAttacking() ? 1 : 0);
         flags = flags << 1 | (p.isBlocking() ? 1 : 0);
         h = mix(h, flags);
@@ -2195,12 +2196,13 @@ public class LayerSystemService {
                 }
             }
             case AnimateNonAuraEnchantmentsEffect ignored -> {
+                // A one-shot animation's base P/T is a timestamped floating effect, so Opalescence
+                // competes with it by timestamp (CR 613.7) instead of being skipped.
                 for (PermanentSlot target : slots) {
                     if (isSource(instance, target)) continue;
                     Permanent permanent = target.permanent();
                     CharacteristicState state = states.get(permanent.getId());
-                    if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)
-                            && !isOneShotAnimated(permanent)) {
+                    if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)) {
                         state.addCardType(CardType.CREATURE);
                         board.opalescenceAnimatedIds().add(permanent.getId());
                     }

@@ -198,6 +198,14 @@ public record PendingMayAbility(
                 sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion);
     }
 
+    public PendingMayAbility withSourceControllerId(UUID updatedSourceControllerId) {
+        return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
+                sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
+                activePlayerId, choicePlayerId, sourcePermanentSnapshot, updatedSourceControllerId, triggeringCardId,
+                eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
+                triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion);
+    }
+
     public PendingMayAbility withEventValue(int updatedEventValue) {
         return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,

@@ -177,12 +177,12 @@ class OverpoweringAttackTest extends BaseCardTest {
         harness.castFromHand(player1, new OverpoweringAttack(), "{3}{R}{R}");
         harness.passBothPriorities();
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
     }
 

@@ -552,6 +552,7 @@ public class DamageSupport {
     /** Ends the last damage event when the outermost resolution finishes, gaining its lifelink. */
     public void endDamageEvent(GameData gameData) {
         flushLifelinkGains(gameData);
+        gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
         gameData.openDamageEvent = null;
     }
 
@@ -584,6 +585,7 @@ public class DamageSupport {
         }
         if (gameData.damageJournal != null) return false;
         gameData.pendingSimultaneousDamage.removeAll(held);
+        gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
         return true;
     }
 
@@ -730,6 +732,10 @@ public class DamageSupport {
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
         if (!gameQueryService.isDamagePreventable(gameData) || entry.getSourcePermanentId() == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            // Damage from a source that has since left uses its last known information (CR 608.2h).
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source != null && (gameQueryService.isPreventedFromDealingDamage(gameData, source)
                 || gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
                 || gameQueryService.isDamageByCreaturePrevented(gameData, source)
@@ -1753,7 +1759,9 @@ public class DamageSupport {
                                                              UUID sourcePermanentId) {
         if (sourcePermanentId == null) return null;
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (sourcePermanent == null) return null;
+        // A source that already left the battlefield when it dealt the damage has no "whenever this
+        // creature deals damage" abilities to trigger, so the empty snapshot suppresses the card fallback.
+        if (sourcePermanent == null) return List.of();
 
         List<CardEffect> effects = new ArrayList<>();
         if (!sourcePermanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {

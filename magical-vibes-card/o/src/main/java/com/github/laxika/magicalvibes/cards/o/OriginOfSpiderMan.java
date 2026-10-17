@@ -41,9 +41,11 @@ public class OriginOfSpiderMan extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_II,
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.HERO));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
 
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
     }
 }

@@ -114,7 +114,7 @@ class OgreMarauderTest extends BaseCardTest {
     @DisplayName("Removing abilities after the attack trigger resolves makes the Ogre blockable")
     void losingAbilitiesRemovesGrantedUnblockableAbility() {
         Permanent ogre = addCreatureReady(player1, new OgreMarauder());
-        addCreatureReady(player2, new OgreMarauder());
+        Permanent blocker = addCreatureReady(player2, new OgreMarauder());
         harness.setHand(player2, List.of(new TurnToFrog()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
@@ -129,7 +129,7 @@ class OgreMarauderTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(ogre.isBlockedThisTurn()).isTrue();
+        assertThat(blocker.isBlockedThisTurn()).isTrue();
     }
 
     @Test

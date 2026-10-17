@@ -86,7 +86,7 @@ class ObNixilisTheFallenTest extends BaseCardTest {
     void landEnteringWithoutBeingPlayedTriggers() {
         Permanent obNixilis = addObNixilis();
 
-        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterLandBattlefieldAndReturn(player1, new Forest());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

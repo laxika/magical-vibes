@@ -96,9 +96,9 @@ class OutlawsMerrimentTest extends BaseCardTest {
     void triggerResolvesAfterEnchantmentIsDestroyed() {
         harness.addToBattlefield(player1, new OutlawsMerriment());
         harness.setHand(player2, List.of(new ReturnToNature()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
         assertThat(gd.stack).hasSize(1);
         assertThat(tokens(player1)).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

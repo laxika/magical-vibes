@@ -53,7 +53,7 @@ public class OmoQueenOfVesuva extends Card {
 
         addEffect(EffectSlot.STATIC, new GrantAllCreatureTypesToOwnCreaturesEffect(
                 GrantScope.ALL_CREATURES_INCLUDING_SELF, NONLAND_CREATURE));
-        CardSubtype.landTypes().forEach(subtype -> addEffect(EffectSlot.STATIC,
+        CardSubtype.rulesLandTypes().forEach(subtype -> addEffect(EffectSlot.STATIC,
                 new GrantSubtypeEffect(subtype, GrantScope.ALL_PERMANENTS, false, LAND)));
     }
 }

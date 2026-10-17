@@ -17,7 +17,7 @@ public class OrazcaPuzzleDoor extends Card {
                 "{1}",
                 List.of(
                         new SacrificeSelfCost(),
-                        LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1)
+                        LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1)
                 ),
                 "{1}, {T}, Sacrifice this artifact: Look at the top two cards of your library. Put one of those cards into your hand and the other into your graveyard."
         ));

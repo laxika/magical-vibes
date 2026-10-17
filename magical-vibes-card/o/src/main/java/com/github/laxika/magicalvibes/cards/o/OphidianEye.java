@@ -12,6 +12,6 @@ public class OphidianEye extends Card {
 
     public OphidianEye() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+                .addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

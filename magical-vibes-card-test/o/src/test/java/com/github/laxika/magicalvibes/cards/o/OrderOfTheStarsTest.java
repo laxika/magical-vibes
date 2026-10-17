@@ -141,11 +141,11 @@ class OrderOfTheStarsTest extends BaseCardTest {
 
     @Test
     void separatePermanentsChooseIndependentlyWhenEnteringWithoutBeingCast() {
-        Permanent first = harness.enterBattlefieldAndReturn(player1, new OrderOfTheStars());
+        Permanent first = enterWithoutBeingCast(new OrderOfTheStars());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "BLACK");
 
-        Permanent second = harness.enterBattlefieldAndReturn(player1, new OrderOfTheStars());
+        Permanent second = enterWithoutBeingCast(new OrderOfTheStars());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "GREEN");
 
@@ -162,5 +162,15 @@ class OrderOfTheStarsTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, second.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+    }
+
+    private Permanent enterWithoutBeingCast(OrderOfTheStars card) {
+        Permanent permanent = new Permanent(card);
+        harness.inMutationScope(() -> {
+            harness.getBattlefieldEntryService().putPermanentOntoBattlefield(gd, player1.getId(), permanent);
+            harness.getBattlefieldEntryService().handleCreatureEnteredBattlefield(
+                    gd, player1.getId(), card, null, false);
+        });
+        return permanent;
     }
 }

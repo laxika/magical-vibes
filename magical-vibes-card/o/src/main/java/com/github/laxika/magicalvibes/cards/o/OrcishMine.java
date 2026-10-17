@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -24,15 +27,15 @@ public class OrcishMine extends Card {
         // This Aura enters with three ore counters on it.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.ORE, new Fixed(3)));
         // At the beginning of your upkeep and whenever enchanted land becomes tapped, remove an ore
-        // counter from this Aura. When the last ore counter is removed, destroy enchanted land and this
-        // Aura deals 2 damage to that land's controller.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect(CounterType.ORE, 2));
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
-                new RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect(CounterType.ORE, 2));
+        // counter from this Aura.
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
+        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
+        // When the last ore counter is removed, destroy enchanted land and this Aura deals 2 damage to
+        // that land's controller. A state trigger, so it fires however the last counter was removed.
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ORE)),
-                List.of(new RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffect(CounterType.ORE, 2)),
+                List.of(new DealDamageToEnchantedPermanentControllerEffect(2),
+                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED)),
                 "Orcish Mine's last ore counter ability"));
     }
 }

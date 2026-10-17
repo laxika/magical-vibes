@@ -222,8 +222,8 @@ class OrimsChantTest extends BaseCardTest {
     }
 
     private void advanceTurn() {
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
     }
 
     private int indexOf(Player player, Permanent permanent) {

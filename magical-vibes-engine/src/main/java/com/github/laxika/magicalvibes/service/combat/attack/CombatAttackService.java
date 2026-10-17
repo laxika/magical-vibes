@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -716,7 +717,7 @@ public class CombatAttackService {
         validateGreaterPowerAlsoAttacks(gameData, battlefield, attackerIndices);
 
         // Orcish Conscripts: "can't attack unless at least N other creatures also attack"
-        validateCountAlsoAttacks(battlefield, attackerIndices);
+        validateCountAlsoAttacks(gameData, battlefield, attackerIndices);
 
         validateMatchingCreatureAlsoAttacks(gameData, battlefield, attackerIndices);
 
@@ -1511,6 +1512,34 @@ public class CombatAttackService {
 
             // Check for aura-based "when enchanted creature attacks" triggers
             combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_ATTACK);
+
+            // Delayed triggers watching this specific creature (Okoye, Mighty and Adored): the
+            // registering card is the source and its controller controls the trigger (CR 603.7).
+            for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+                if (watcher.slot() != EffectSlot.ON_ATTACK || !attacker.getId().equals(watcher.watchedPermanentId())) {
+                    continue;
+                }
+                CardEffect watcherEffect = watcher.effect();
+                if (watcherEffect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, attacker, conditional.predicate())) {
+                        continue;
+                    }
+                    watcherEffect = conditional.wrapped();
+                }
+                StackEntry delayedTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.sourceCard(),
+                        watcher.controllerId(),
+                        watcher.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(List.of(watcherEffect)),
+                        null,
+                        attacker.getId());
+                delayedTrigger.setNonTargeting(true);
+                delayedTrigger.setTriggeringPermanentId(attacker.getId());
+                gameData.stack.add(delayedTrigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+            }
         }
 
         // Engine-level melee triggers: each attacking creature with melee gets +1/+1 until end
@@ -2699,9 +2728,9 @@ public class CombatAttackService {
         }
 
         // Check for "whenever an opponent attacks a planeswalker you control with one or more
-        // creatures" triggers. These fire once per combat for each defending player's permanents
-        // when at least one attacker is aimed at one of that player's planeswalkers.
-        Set<UUID> planeswalkerAttackedPlayerIds = new LinkedHashSet<>();
+        // creatures" triggers. These fire once per attacked planeswalker, no matter how many
+        // creatures attack it, for each permanent of the defending player that has the ability.
+        Set<UUID> attackedPlaneswalkerIds = new LinkedHashSet<>();
         for (int idx : attackerIndices) {
             UUID attackedTargetId = resolvedTargets.get(idx);
             if (gameData.playerIds.contains(attackedTargetId)) continue;
@@ -2711,10 +2740,12 @@ public class CombatAttackService {
             if (defenderBattlefield != null && defenderBattlefield.stream()
                     .anyMatch(permanent -> permanent.getId().equals(attackedTargetId)
                             && gameQueryService.isPlaneswalker(gameData, permanent))) {
-                planeswalkerAttackedPlayerIds.add(attackedPlayerId);
+                attackedPlaneswalkerIds.add(attackedTargetId);
             }
         }
-        for (UUID attackedPlayerId : planeswalkerAttackedPlayerIds) {
+        for (UUID attackedPlaneswalkerId : attackedPlaneswalkerIds) {
+            UUID attackedPlayerId = gameQueryService.findPermanentController(gameData, attackedPlaneswalkerId);
+            if (attackedPlayerId == null) continue;
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
@@ -4000,9 +4031,11 @@ public class CombatAttackService {
      * creatures also attack" may only be declared as an attacker if at least N other creatures
      * are declared as attackers in the same combat. Checked only at declaration time.
      */
-    private void validateCountAlsoAttacks(List<Permanent> battlefield, List<Integer> attackerIndices) {
+    private void validateCountAlsoAttacks(GameData gameData, List<Permanent> battlefield,
+                                          List<Integer> attackerIndices) {
         for (int idx : attackerIndices) {
             Permanent restricted = battlefield.get(idx);
+            if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
             restricted.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
                     .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)

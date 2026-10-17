@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -34,19 +34,17 @@ public class OmnathLocusOfTheRoil extends Card {
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate()
+                        new PermanentIsPlaneswalkerPredicate(),
+                        new PermanentIsBattlePredicate()
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be a creature, planeswalker, or player"
+                "Target must be a creature, planeswalker, battle, or player"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL), CountScope.CONTROLLER)));
 
         target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL)
-                )),
-                "Target must be an Elemental creature you control"
+                new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
+                "Target must be an Elemental you control"
         )).addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 ConditionalEffect.unless(

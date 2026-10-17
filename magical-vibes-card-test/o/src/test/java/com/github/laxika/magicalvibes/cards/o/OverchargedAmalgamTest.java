@@ -106,6 +106,7 @@ class OverchargedAmalgamTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player2,
                 gd.playerBattlefields.get(player2.getId()).indexOf(icy), null, bearsId);
+        UUID icyAbilityId = gd.stack.getLast().getTargetableId();
 
         // Player1 flashes Amalgam in response (same priority window as GlyphKeeper tests)
         harness.setHand(player1, List.of(new OverchargedAmalgam()));
@@ -115,7 +116,7 @@ class OverchargedAmalgamTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bearsId);
-        harness.handlePermanentChosen(player1, icy.getCard().getId());
+        harness.handlePermanentChosen(player1, icyAbilityId);
         harness.passBothPriorities();
 
         assertThat(gd.stack).noneMatch(se ->

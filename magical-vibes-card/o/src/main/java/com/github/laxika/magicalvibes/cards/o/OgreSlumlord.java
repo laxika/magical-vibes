@@ -34,7 +34,7 @@ public class OgreSlumlord extends Card {
                         "Create a 1/1 black Rat creature token?"));
 
         // Rats you control have deathtouch.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.RAT)));
     }
 }

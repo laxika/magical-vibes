@@ -1744,7 +1744,11 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
         if (trigger.triggerCondition() == null) {
-            boolean targetsOtherControlledPermanent = spellEntry.getDeclaredTargetIds().stream()
+            List<UUID> spellTargetIds = new ArrayList<>(spellEntry.getDeclaredTargetIds());
+            if (spellEntry.getTargetId() != null) {
+                spellTargetIds.add(spellEntry.getTargetId());
+            }
+            boolean targetsOtherControlledPermanent = spellTargetIds.stream()
                     .filter(targetId -> !targetId.equals(match.permanent().getId()))
                     .map(targetId -> gameQueryService.findPermanentById(match.gameData(), targetId))
                     .filter(java.util.Objects::nonNull)
@@ -3509,7 +3513,7 @@ public class SpellCastTriggerCollectorService {
                     castingPlayerId);
         }
         if (effect instanceof FlipCoinWinEffect flip && flip.triggeringSpellController()) {
-            return new FlipCoinWinEffect(flip.wrapped(), flip.lost(), true, castingPlayerId);
+            return new FlipCoinWinEffect(flip.wrapped(), flip.lost(), true, castingPlayerId, flip.countsAsWinOrLoss());
         }
         if (effect instanceof FlipCoinCopyTriggeringSpellOrDealDamageEffect breechesEffect
                 && breechesEffect.spellSnapshot() == null) {

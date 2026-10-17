@@ -227,6 +227,7 @@ class OraclesVaultTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.activateAbility(player1, vaultIndex(player1, vault), 1, null, null);
         harness.passBothPriorities();
+        harness.forceStep(TurnStep.UPKEEP);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);

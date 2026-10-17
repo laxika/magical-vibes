@@ -133,7 +133,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
 
     @Test
     void opponentsDragonDoesNotTriggerOjutai() {
-        addCreatureReady(player1, new OjutaiSoulOfWinter());
+        addCreatureReady(player1, new OjutaiSoulOfWinter()).tap();
         addCreatureReady(player2, new WardscaleDragon());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HerosBlade());
 

@@ -229,7 +229,7 @@ class OliviaVoldarenTest extends BaseCardTest {
 
             assertThatThrownBy(() -> harness.activateAbility(player1, oliviaIdx, 1, null, bears.getId()))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Target must be a Vampire creature");
+                    .hasMessageContaining("Target must be a Vampire");
         }
 
         @Test

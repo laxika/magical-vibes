@@ -201,6 +201,15 @@ public class PhasingService {
 
     /** Phases a creature out and prevents its normal untap-step phase-in until the source leaves. */
     public void phaseOutUntilSourceLeaves(GameData gameData, Permanent source, Permanent target) {
+        phaseOutUntilSourceLeaves(gameData, source, target, false);
+    }
+
+    /**
+     * As {@link #phaseOutUntilSourceLeaves(GameData, Permanent, Permanent)}; when {@code tapsOnPhaseIn}
+     * is {@code true} the target is tapped as it phases back in once the source leaves.
+     */
+    public void phaseOutUntilSourceLeaves(GameData gameData, Permanent source, Permanent target,
+                                          boolean tapsOnPhaseIn) {
         if (source == null || target == null || source.getId() == null || target.getId() == null) {
             return;
         }
@@ -210,6 +219,9 @@ public class PhasingService {
             gameData.phasedOutUntilSourceLeaves
                     .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
                     .add(target.getId());
+            if (tapsOnPhaseIn) {
+                gameData.tappedWhenSourceLeavesPhasesIn.add(target.getId());
+            }
         }
     }
 
@@ -289,7 +301,7 @@ public class PhasingService {
         }
     }
 
-    /** Phases in every creature held by a source-leave phase-out and taps each creature. */
+    /** Phases in every creature held by a source-leave phase-out, tapping those flagged to tap on phase-in. */
     public void phaseInWhenSourceLeaves(GameData gameData, UUID sourcePermanentId) {
         Set<UUID> targetIds = gameData.phasedOutUntilSourceLeaves.remove(sourcePermanentId);
         gameData.phasedOutWhileSourceControlled.remove(sourcePermanentId);
@@ -305,7 +317,7 @@ public class PhasingService {
             gameData.playerBattlefields
                     .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
                     .add(permanent);
-            if (targetIds.contains(permanent.getId())) {
+            if (gameData.tappedWhenSourceLeavesPhasesIn.remove(permanent.getId())) {
                 permanent.tap();
             }
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
@@ -438,6 +450,7 @@ public class PhasingService {
     private void clearSourceLeavePhaseOuts(GameData gameData, Collection<Permanent> permanents) {
         Set<UUID> phasedInIds = permanents.stream().map(Permanent::getId)
                 .collect(java.util.stream.Collectors.toSet());
+        gameData.tappedWhenSourceLeavesPhasesIn.removeAll(phasedInIds);
         gameData.phasedOutUntilSourceLeaves.values()
                 .forEach(targetIds -> targetIds.removeAll(phasedInIds));
         gameData.phasedOutUntilSourceLeaves.entrySet()
@@ -454,7 +467,7 @@ public class PhasingService {
                 action -> phasedInIds.contains(action.permanentId()));
     }
 
-    private Permanent findPhasedOutPermanent(GameData gameData, UUID permanentId) {
+    public Permanent findPhasedOutPermanent(GameData gameData, UUID permanentId) {
         return gameData.phasedOutPermanents.values().stream()
                 .flatMap(Collection::stream)
                 .filter(permanent -> permanent.getId().equals(permanentId))

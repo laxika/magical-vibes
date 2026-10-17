@@ -47,7 +47,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerGainL
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
+import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
 import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalCombatEffect;
@@ -298,7 +298,11 @@ public class TurnProgressionService {
             gameData.additionalEndStepsPending--;
         }
 
-        if (gameData.currentStep == TurnStep.END_OF_COMBAT
+        boolean extraCombatFirst = gameData.currentStep == TurnStep.END_OF_COMBAT
+                && additionalCombatPhase && gameData.additionalCombatCreatedAfterUpkeepSteps;
+        if (extraCombatFirst) {
+            gameData.additionalCombatCreatedAfterUpkeepSteps = false;
+        } else if (gameData.currentStep == TurnStep.END_OF_COMBAT
                 && gameData.additionalUpkeepStepsAfterCombat > 0) {
             gameData.additionalUpkeepReturnStep = next;
             if (stepTriggerService.playersSkipUpkeepStepApplies(gameData)) {
@@ -391,6 +395,9 @@ public class TurnProgressionService {
 
             if (gameData.status == GameStatus.FINISHED) return;
 
+            if (next == TurnStep.DRAW) {
+                gameData.drawStepFirstDrawTaken.clear();
+            }
             if (next == TurnStep.UNTAP) {
                 beginAdditionalBeginningPhase(gameData);
                 return;
@@ -958,9 +965,13 @@ public class TurnProgressionService {
         Set<UUID> chosenAttackers = gameData.chosenAttackersNextTurn.remove(nextActive);
         if (chosenAttackers != null) {
             gameData.chosenAttackersThisTurn.put(nextActive, chosenAttackers);
-            Set<UUID> markedForDestruction = gameData.chosenAttackersToDestroyNextTurn.remove(nextActive);
-            for (UUID chosenId : markedForDestruction != null ? markedForDestruction : chosenAttackers) {
-                gameData.queueDelayedAction(new DestroyPermanentIfDidNotAttackAtEndStep(chosenId));
+            List<DestroyChosenCreaturesIfDidNotAttackAtEndStep> markedForDestruction =
+                    gameData.chosenAttackersToDestroyNextTurn.remove(nextActive);
+            if (markedForDestruction != null) {
+                markedForDestruction.forEach(gameData::queueDelayedAction);
+            } else if (!chosenAttackers.isEmpty()) {
+                gameData.queueDelayedAction(new DestroyChosenCreaturesIfDidNotAttackAtEndStep(
+                        List.copyOf(chosenAttackers), null, null));
             }
             gameLogService.append(gameData, GameLog.text("Only the " + chosenAttackers.size()
                     + " creature(s) " + nextActiveName + " chose can attack this turn, and they attack if able."));
@@ -1300,6 +1311,7 @@ public class TurnProgressionService {
         gameData.paidSearchTaxPermanentIds.clear();
         gameData.otherCreaturesCantAttackExemptCreatureIds.clear();
         gameData.creaturesCantAttackThisTurn = false;
+        gameData.playerCreaturesCantAttackThisTurn.clear();
         if (gameData.peaceTalksTurnsRemaining > 0) {
             gameData.peaceTalksTurnsRemaining--;
         }

@@ -132,6 +132,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast blue creature spells (Oyaminartok, Polar Werebear). */
+    record BlueCreatureSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addBlueCreatureSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "blue creature spells only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override

@@ -239,10 +239,16 @@ final class DeclaredEtbTargets {
         if (declaration == null) {
             return false;
         }
-        UUID next = declaration.targetIds.stream()
+        List<UUID> candidates = declaration.targetIds.stream()
                 .filter(id -> !chosenEarlier(multi, id))
                 .filter(choice.validIds()::contains)
-                .findFirst().orElse(null);
+                .toList();
+        // A card whose groups may share targets still gets distinct targets when the declaration
+        // lists enough of them; a shared target is only reused when nothing else is left.
+        UUID next = candidates.stream()
+                .filter(id -> !multi.chosenTargetsSoFar().contains(id))
+                .findFirst()
+                .orElse(candidates.isEmpty() ? null : candidates.getFirst());
         if (next != null) {
             answer(choice.playerId(), new InteractionAnswer.PermanentChosen(next), declaration, multi.sourceCard());
             return true;

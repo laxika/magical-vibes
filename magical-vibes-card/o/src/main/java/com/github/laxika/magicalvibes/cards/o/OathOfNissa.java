@@ -18,7 +18,7 @@ public class OathOfNissa extends Card {
 
     public OathOfNissa() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(3,
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomInAnyOrder(3,
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardTypePredicate(CardType.LAND),

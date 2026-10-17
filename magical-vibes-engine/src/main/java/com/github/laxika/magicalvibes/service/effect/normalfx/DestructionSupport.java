@@ -790,6 +790,11 @@ public class DestructionSupport {
                 // "it gains 'this creature can't be blocked' until end of turn unless defending
                 // player sacrifices a creature" (Ogre Marauder) — the attacking source.
                 makeCreatureUnblockableHandler.resolve(gameData, entry, unblockable);
+                Permanent grantedTo = entry.getSourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                if (grantedTo != null && grantedTo.isCantBeBlocked()) {
+                    grantedTo.setCantBeBlockedGrantedAbility(true);
+                }
             } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
                 exileSelfEffectHandler.resolve(gameData, entry, exileSelf);

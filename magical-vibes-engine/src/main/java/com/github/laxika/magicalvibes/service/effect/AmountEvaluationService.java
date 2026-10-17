@@ -971,6 +971,11 @@ public class AmountEvaluationService {
                     int base = bonus.basePTOverridden() ? bonus.basePowerOverride() : source.getBasePower();
                     yield power.allowNegative() ? base : Math.max(0, base);
                 }
+                // A noncreature permanent has no power (CR 208.3), even with a printed power.
+                if (gameQueryService.findPermanentById(gameData, source.getId()) != null
+                        && !gameQueryService.isCreature(gameData, source)) {
+                    yield 0;
+                }
                 int value = gameQueryService.findPermanentById(gameData, source.getId()) == null
                         && source.getLastKnownPower() != null
                         ? source.getLastKnownPower()
@@ -1192,7 +1197,12 @@ public class AmountEvaluationService {
     private int targetEffectiveToughness(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
-        return target == null ? 0 : Math.max(0, gameQueryService.getEffectiveToughness(gameData, target));
+        if (target != null) {
+            return Math.max(0, gameQueryService.getEffectiveToughness(gameData, target));
+        }
+        Integer lastKnownToughness = ctx.stackEntry() == null ? null
+                : ctx.stackEntry().getLastKnownPermanentToughnesses().get(ctx.targetPermanentId());
+        return lastKnownToughness == null ? 0 : Math.max(0, lastKnownToughness);
     }
 
     private int triggeringPermanentToughness(GameData gameData, AmountContext ctx) {
@@ -1912,7 +1922,10 @@ public class AmountEvaluationService {
         for (Permanent permanent : battlefield) {
             if (!gameQueryService.isCreature(gameData, permanent)) continue;
             for (Keyword ability : amount.abilities()) {
-                if (gameQueryService.hasKeyword(gameData, permanent, ability)) {
+                boolean has = ability == Keyword.HEXPROOF
+                        ? gameQueryService.hasAnyHexproofVariant(gameData, permanent)
+                        : gameQueryService.hasKeyword(gameData, permanent, ability);
+                if (has) {
                     found.add(ability);
                 }
             }
@@ -3718,7 +3731,14 @@ public class AmountEvaluationService {
         if (source == null || !source.isAttached()) {
             return null;
         }
-        return gameQueryService.findPermanentController(gameData, source.getAttachedTo());
+        UUID controllerId = gameQueryService.findPermanentController(gameData, source.getAttachedTo());
+        if (controllerId == null && ctx.stackEntry() != null
+                && source.getAttachedTo().equals(ctx.stackEntry().getTriggeringPermanentId())) {
+            // The attached permanent left the battlefield: use its controller as last known when the
+            // trigger was put on the stack (CR 608.2h).
+            return ctx.stackEntry().getTriggeringPermanentControllerId();
+        }
+        return controllerId;
     }
 
     /**

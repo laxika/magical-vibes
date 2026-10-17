@@ -169,6 +169,7 @@ class OperaLoveSongTest extends BaseCardTest {
     void permissionCreatedDuringEndStepLastsUntilFollowingControllersEndStep() {
         Card exiled = new OperaLoveSong();
         harness.setLibrary(player1, List.of(exiled, new Mountain(), new Mountain()));
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
 
         cast(0, List.of());
@@ -185,6 +186,7 @@ class OperaLoveSongTest extends BaseCardTest {
     void opponentsExtraTurnDoesNotExpirePermissionBeforeControllersNextEndStep() {
         Card exiled = new OperaLoveSong();
         harness.setLibrary(player1, List.of(exiled, new Mountain(), new Mountain()));
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gd.queueExtraTurnFirst(player2.getId(), false);

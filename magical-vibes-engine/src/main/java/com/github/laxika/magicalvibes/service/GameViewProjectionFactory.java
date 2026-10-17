@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -548,6 +549,11 @@ public class GameViewProjectionFactory {
                         } else {
                             revealedPlayerIds.add(pid);
                         }
+                    } else if (pid.equals(viewerId) && effect instanceof AllowCastFromTopOfLibraryEffect allow
+                            && allow.filter() != null && deck != null && !deck.isEmpty()
+                            && !castingPermissionService.canCastFromTopOfLibrary(data, pid, deck.getFirst())) {
+                        // A filtered permission only exposes a top card it lets the player cast.
+                        continue;
                     } else if (pid.equals(viewerId) &&
                             (effect instanceof LookAtTopCardOfOwnLibraryEffect
                                     || effect instanceof AllowCastFromTopOfLibraryEffect
@@ -715,6 +721,12 @@ public class GameViewProjectionFactory {
                     && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+            }
+            if (card.hasType(CardType.CREATURE)
+                    && gameQueryService.getEffectiveCardColors(gameData, card).contains(CardColor.BLUE)
+                    && cardPool.getBlueCreatureSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteBlueCreatureSpellOnlyMana();
             }
             if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
@@ -1063,6 +1075,12 @@ public class GameViewProjectionFactory {
                     && cardPool.getCreatureSpellWithoutAbilitiesOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteCreatureSpellWithoutAbilitiesOnlyMana();
+            }
+            if (topCard.hasType(CardType.CREATURE)
+                    && gameQueryService.getEffectiveCardColors(gameData, topCard).contains(CardColor.BLUE)
+                    && cardPool.getBlueCreatureSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteBlueCreatureSpellOnlyMana();
             }
             if (gameQueryService.getEffectiveCardColors(gameData, topCard).size() == 3
                     && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {

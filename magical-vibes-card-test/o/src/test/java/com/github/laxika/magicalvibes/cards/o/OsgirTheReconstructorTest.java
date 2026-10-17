@@ -192,7 +192,7 @@ class OsgirTheReconstructorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, osgir.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
         assertThat(gqs.getEffectivePower(gd, osgir)).isEqualTo(4);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gqs.getEffectivePower(gd, osgir)).isEqualTo(6);
         assertThat(osgir.isTapped()).isTrue();
