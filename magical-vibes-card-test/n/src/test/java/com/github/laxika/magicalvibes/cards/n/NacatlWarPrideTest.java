@@ -55,8 +55,10 @@ class NacatlWarPrideTest extends BaseCardTest {
         defenderOne.tap();
         defenderTwo.tap();
 
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> copies = findPermanents(player1, "Nacatl War-Pride").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -141,7 +143,8 @@ class NacatlWarPrideTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Nacatl War-Pride").stream()
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();

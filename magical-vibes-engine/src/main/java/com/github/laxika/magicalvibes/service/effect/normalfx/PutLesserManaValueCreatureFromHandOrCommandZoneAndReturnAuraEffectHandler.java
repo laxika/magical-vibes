@@ -35,15 +35,13 @@ public class PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffectH
             return;
         }
 
-        UUID auraOwnerId = entry.getCard().getOwnerId() == null
-                ? entry.getControllerId()
-                : entry.getCard().getOwnerId();
+        UUID auraReturnControllerId = entry.getControllerId();
         support.beginChoice(gameData, entry.getControllerId(),
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardMaxManaValuePredicate(dyingManaValue - 1))),
                 "creature", entry.getCard().getId(), entry.getCard().getName(),
                 null, 0, false, false,
-                false, true, entry.getCard().getId(), auraOwnerId, true);
+                false, true, entry.getCard().getId(), auraReturnControllerId, true);
     }
 }

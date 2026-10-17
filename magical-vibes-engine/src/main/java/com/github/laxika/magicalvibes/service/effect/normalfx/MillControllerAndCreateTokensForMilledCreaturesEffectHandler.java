@@ -37,7 +37,7 @@ public class MillControllerAndCreateTokensForMilledCreaturesEffectHandler
                 gameData, e.count(), AmountContext.forStackEntry(entry, null)));
 
         UUID controllerId = entry.getControllerId();
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, count);
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, controllerId, count);
         int creatureCount = (int) milled.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))
                 .count();

@@ -22,6 +22,7 @@ public class HideousFleshwheeler extends Card {
                         new CardMaxManaValuePredicate(2)
                 )))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

@@ -670,7 +670,11 @@ public class StateBasedActionService {
 
         for (Permanent saga : sagasToSacrifice) {
             processedIds.add(saga.getId());
-            permanentRemovalService.removePermanentToGraveyard(gameData, saga);
+            UUID sagaControllerId = gameQueryService.findPermanentController(gameData, saga.getId());
+            boolean sacrificed = permanentRemovalService.removePermanentToGraveyard(gameData, saga);
+            if (sacrificed && sagaControllerId != null) {
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, sagaControllerId, saga.getCard());
+            }
             gameLogService.append(gameData, GameLog.cardThen(saga.getCard(), " is sacrificed (final chapter reached)."));
             log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
         }

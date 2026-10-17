@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -148,6 +149,7 @@ class NajeelaTheBladeBlossomTest extends BaseCardTest {
         addCreatureReady(player1, new NajeelaTheBladeBlossom());
         addCreatureReady(player1, new ElvishWarrior());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();

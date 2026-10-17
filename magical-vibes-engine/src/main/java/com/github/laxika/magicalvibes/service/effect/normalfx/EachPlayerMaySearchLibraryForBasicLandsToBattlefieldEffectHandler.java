@@ -35,19 +35,17 @@ public class EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffectHandler i
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect search =
                 (EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect) effect;
-        int count = amountEvaluationService.evaluate(gameData, search.count(),
+        int evaluatedCount = amountEvaluationService.evaluate(gameData, search.count(),
                 AmountContext.forStackEntry(entry, null));
-        if (count <= 0) {
-            return;
-        }
+        int count = Math.max(evaluatedCount, 0);
 
         List<LibrarySearchFollowUp.BasicLandsPick> picks = basicLandSearchQueueSupport.apnapOrder(gameData).stream()
                 .map(playerId -> new LibrarySearchFollowUp.BasicLandsPick(playerId, count, search.enterTapped()))
                 .toList();
 
-        LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of());
+        LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of(), true);
         followUp = followUp.withBasicLandSearchQueue(
-                followUp.basicLandSearchQueue().withOptionalSearch(search.optionalSearch()));
+                followUp.basicLandSearchQueue().withOptionalSearch(search.optionalSearch()).deferBattlefieldEntry());
         basicLandSearchQueueSupport.advance(gameData, followUp);
     }
 }

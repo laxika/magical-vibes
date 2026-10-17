@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -53,7 +56,11 @@ public class NicolBolasGodPharaoh extends Card {
                 "−4: Nicol Bolas, God-Pharaoh deals 7 damage to target opponent, creature an "
                         + "opponent controls, or planeswalker an opponent controls.",
                 new AnyTargetPredicateTargetFilter(
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentIsPlaneswalkerPredicate())))),
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent or a permanent an opponent controls"
                 )

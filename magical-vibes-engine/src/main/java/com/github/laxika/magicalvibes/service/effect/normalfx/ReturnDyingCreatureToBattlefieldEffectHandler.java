@@ -80,6 +80,9 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
         Permanent equipment = e.attachSource() && equipmentId != null
                 ? gameQueryService.findPermanentById(gameData, equipmentId)
                 : null;
+        if (equipment != null && !equipSupport.canAttachEquipment(gameData, equipment, creature)) {
+            equipment = null;
+        }
         if (equipment != null) {
             UUID oldAttachedTo = equipment.getAttachedTo();
             gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());

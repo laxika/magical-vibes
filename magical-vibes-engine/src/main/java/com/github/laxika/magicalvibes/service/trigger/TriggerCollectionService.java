@@ -2504,6 +2504,7 @@ public class TriggerCollectionService {
             if (playerId.equals(discardingPlayerId)) return;
 
             for (Permanent perm : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DISCARDS)) {
                     // "Whenever an opponent discards a creature/land/noncreature-nonland card, …"
                     // (Waste Not) — the discarded card gates the trigger.
@@ -2630,8 +2631,15 @@ public class TriggerCollectionService {
         List<CardEffect> selfEffects = cycledCard.getEffects(EffectSlot.ON_SELF_CYCLED);
         if (!selfEffects.isEmpty()) {
             if (selfEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL))) {
+                com.github.laxika.magicalvibes.model.filter.StackEntryPredicate cycleSpellFilter = null;
+                boolean cycleIncludesAbilities = false;
+                if (cycledCard.getTargetFilter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter cycleFilter) {
+                    cycleSpellFilter = cycleFilter.predicate();
+                    cycleIncludesAbilities = predicateContainsHasTarget(cycleFilter.predicate());
+                }
                 gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                        cycledCard, cyclingPlayerId, new ArrayList<>(selfEffects), null, false, null));
+                        cycledCard, cyclingPlayerId, new ArrayList<>(selfEffects), cycleSpellFilter,
+                        cycleIncludesAbilities, null));
             } else if (selfEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
                 gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
@@ -3328,6 +3336,11 @@ public class TriggerCollectionService {
             effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, source, EffectSlot.ON_DAMAGE_TO_OPPONENT));
+        }
+        // An effect that removes all abilities removes the source's own triggered abilities,
+        // so damage dealt after that loss does not trigger them.
+        if (gameQueryService.hasLostAllAbilities(gameData, source)) {
+            effects.clear();
         }
         for (CardEffect effect : effects) {
             queueNoncombatDamageToPlayerEffect(gameData, source, controllerId, damagedPlayerId, damageDealt, effect);
@@ -4273,6 +4286,7 @@ public class TriggerCollectionService {
         // Snapshot each battlefield so trigger collection remains stable if a collector mutates it.
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
                     if (dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
@@ -4693,7 +4707,8 @@ public class TriggerCollectionService {
             }
 
             for (Permanent perm : watchers) {
-                if (perm.isLosesAllAbilitiesUntilEndOfTurn() || perm.isFaceDown()) continue;
+                if (perm.isLosesAllAbilitiesUntilEndOfTurn() || perm.isFaceDown()
+                        || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED);
                 if (effects == null || effects.isEmpty()) continue;
 
@@ -5968,17 +5983,19 @@ public class TriggerCollectionService {
         }
         effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
         effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
-        if (wardSuppressed) {
-            effects.removeIf(this::isCounterUnlessTrigger);
-        }
         // Granted ward ("each legendary permanent you control has ward {2}") is a "this permanent becomes
         // the target" trigger, so an attached permanent only gets it when it is itself the target.
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+        List<CardEffect> grantedEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                 gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
                 .filter(effect -> sourceIsTarget || !isCounterUnlessTrigger(effect))
-                .toList());
+                .toList();
+        effects.addAll(grantedEffects);
         if (wardSuppressed) {
-            effects.removeIf(this::isCounterUnlessTrigger);
+            // Ward suppression only removes ward: a printed ward keyword's counter-unless goes, and so
+            // does a granted ward, but a creature's own non-ward "counter unless" trigger stays (CR 702.21).
+            boolean printedWard = gameQueryService.hasKeyword(gameData, source, Keyword.WARD);
+            effects.removeIf(effect -> isCounterUnlessTrigger(effect)
+                    && (printedWard || grantedEffects.contains(effect)));
         }
         if (effects.isEmpty()) return;
 
@@ -7243,6 +7260,7 @@ public class TriggerCollectionService {
             // An attached permanent controlled by the damaged creature's opponent only contributes its
             // equipped-creature triggers; its ally-scoped listeners watch only their own controller's creatures.
             if (equipmentScopedOnly && !(effect instanceof EquipmentDamagesOtherDefendingCreaturesEffect)
+                    && !(effect instanceof EquipmentTapsAndLocksDamagedCreatureEffect)
                     && !(effect instanceof DamagedCreatureTriggerEffect equipped && equipped.equipmentScoped())) {
                 continue;
             }
@@ -13337,7 +13355,7 @@ public class TriggerCollectionService {
                 gameData.playerBattlefields.getOrDefault(controllerId, List.of()));
         sources.add(leavingPermanent);
         for (Permanent source : sources) {
-            if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 continue;
             }
             enqueueAllyPermanentsLeaveBattlefieldTriggers(gameData, source, controllerId);
@@ -13358,7 +13376,7 @@ public class TriggerCollectionService {
                 continue;
             }
             Permanent source = watcherEntry.getValue();
-            if (!source.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (!gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 enqueueAllyPermanentsLeaveBattlefieldTriggers(gameData, source, controllerId);
             }
         }
@@ -15118,16 +15136,24 @@ public class TriggerCollectionService {
      */
     public void checkAnyPermanentEntersTriggers(GameData gameData, UUID enteringControllerId, Card enteringCard) {
         UUID enteringPermanentId = null;
+        // The player who put the permanent onto the battlefield is the caster of the spell it resolved
+        // from, even when a replacement such as Gather Specimens makes it enter under another
+        // player's control (Nature's Wrath ruling: it matters who puts it there, not who controls it).
+        UUID puttingPlayerId = enteringControllerId;
         List<Permanent> enteringBattlefield = gameData.playerBattlefields.get(enteringControllerId);
         if (enteringBattlefield != null) {
             for (Permanent p : enteringBattlefield) {
                 if (p.getCard() == enteringCard) {
                     enteringPermanentId = p.getId();
+                    if (p.getCastControllerId() != null) {
+                        puttingPlayerId = p.getCastControllerId();
+                    }
                     break;
                 }
             }
         }
         final UUID resolvedEnteringPermanentId = enteringPermanentId;
+        final UUID resolvedPuttingPlayerId = puttingPlayerId;
 
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = new ArrayList<>(perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)
@@ -15142,7 +15168,7 @@ public class TriggerCollectionService {
                 int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
                         gameData, playerId, enteringControllerId, enteringCard);
                 var effectContext = new TriggerContext.PermanentEnters(
-                        enteringCard, enteringControllerId, enteringControllerId,
+                        enteringCard, enteringControllerId, resolvedPuttingPlayerId,
                         triggerCount, resolvedEnteringPermanentId);
                 dispatchEnter(gameData, perm, playerId,
                         EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, effect, effectContext);

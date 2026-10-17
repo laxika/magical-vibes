@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
@@ -95,11 +97,10 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
 
         Card sourceCard = sourcePermanent != null
                 ? sourcePermanent.getCard() : entry.getTargetingCard();
-        List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard
+        List<PersistentPermission> persistentPermissions = sourceCard
                 .getEffects(EffectSlot.STATIC).stream()
-                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
-                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
-                .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)
+                .map(ExileTopCardsToSourceEffectHandler::persistentPermission)
+                .filter(java.util.Objects::nonNull)
                 .toList();
         if (e.toGraveyardOnControlLoss() && sourcePermanent != null) {
             UUID currentControllerId = gameData.findControllerOf(sourcePermanent);
@@ -163,9 +164,31 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                 .findFirst().orElse(null);
     }
 
+    /**
+     * A static play permission that survives its source leaving the battlefield, together with the
+     * condition (for example "during any turn you attacked with a commander") that must hold
+     * whenever the exiled card is played, or {@code null} when the permission is unconditional.
+     */
+    private record PersistentPermission(AllowCastFromCardsExiledWithSourceEffect effect, Condition condition) {
+    }
+
+    private static PersistentPermission persistentPermission(CardEffect staticEffect) {
+        Condition condition = null;
+        CardEffect inner = staticEffect;
+        if (staticEffect instanceof ConditionalEffect conditional) {
+            condition = conditional.condition();
+            inner = conditional.wrapped();
+        }
+        if (inner instanceof AllowCastFromCardsExiledWithSourceEffect permission
+                && permission.persistsAfterSourceLeaves()) {
+            return new PersistentPermission(permission, condition);
+        }
+        return null;
+    }
+
     private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,
                                Card sourceCard, UUID sourcePermanentId, int count,
-                               List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions,
+                               List<PersistentPermission> persistentPermissions,
                                UUID sourceControllerId) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null) {
@@ -189,12 +212,16 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             if (e.markWithIntelCounters()) {
                 gameData.exiledCardsWithIntelCounters.add(card.getId());
             }
-            for (AllowCastFromCardsExiledWithSourceEffect permission : persistentPermissions) {
+            for (PersistentPermission persistent : persistentPermissions) {
+                AllowCastFromCardsExiledWithSourceEffect permission = persistent.effect();
                 if (permission.filter() == null || (predicateEvaluationService != null
                         && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))) {
                     UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
                             ? playerId : sourceControllerId;
                     gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+                    if (persistent.condition() != null) {
+                        gameData.exilePlayPermissionConditions.put(card.getId(), persistent.condition());
+                    }
                     if (permission.thisTurnOnly()) {
                         gameData.exilePlayPermissionsExpireAtTurnEnd.put(card.getId(), gameData.turnNumber);
                     }

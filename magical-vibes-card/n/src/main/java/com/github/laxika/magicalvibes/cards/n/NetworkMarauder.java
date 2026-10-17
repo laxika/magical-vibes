@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOwnedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -30,6 +32,7 @@ public class NetworkMarauder extends Card {
             new PerpetuallyBoostOwnedCardsEffect(BOOSTED_CARDS, 1, 1);
 
     public NetworkMarauder() {
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{U}"))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, BOOST);
         addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

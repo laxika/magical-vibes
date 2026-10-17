@@ -2581,6 +2581,10 @@ public class MiscTriggerCollectorService {
         if (source == null || lifeGain.lifeGainedAmount() <= 0) {
             return false;
         }
+        if (match.rawEffect() instanceof OncePerTurnTriggerEffect once
+                && OncePerTurnTriggerSupport.isFired(gameData, source, once)) {
+            return false;
+        }
 
         MayEffect may = new MayEffect(
                 new PutCounterOnEachControlledPermanentEffect(

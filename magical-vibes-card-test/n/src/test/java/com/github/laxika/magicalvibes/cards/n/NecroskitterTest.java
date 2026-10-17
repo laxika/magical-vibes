@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Necroskitter.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Necroskitter.class, GrizzlyBears.class, Shock.class, ControlMagic.class})
 class NecroskitterTest extends BaseCardTest {
 
     @Test
@@ -127,16 +128,27 @@ class NecroskitterTest extends BaseCardTest {
     void returnsOwnCardControlledByOpponent() {
         harness.addToBattlefield(player1, new Necroskitter());
         Permanent dying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).remove(dying);
-        gd.playerBattlefields.get(player2.getId()).add(dying);
-        gd.stolenCreatures.put(dying.getId(), player1.getId());
         dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        harness.setHand(player2, List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castEnchantment(player2, 0, dying.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castAndResolveInstant(player1, 0, dying.getId());
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        resolveAllTriggers();
+        harness.passBothPriorities(); // the queued may ability is only offered once priority is passed
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);

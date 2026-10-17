@@ -29,7 +29,6 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castShock();
-        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -38,6 +37,7 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, ownForest.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownForest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.isCreature(gd, ownForest)).isTrue();
@@ -54,6 +54,8 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         castShock();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -63,9 +65,11 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
     @Test
     void onlyInstantAndSorcerySpellsTrigger() {
         harness.addToBattlefield(player1, new NoyanDarRoilShaper());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.castFromHand(player1, new Divination(), "{2}{U}");
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -104,9 +108,9 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
 
         for (int i = 0; i < 2; i++) {
             castShock();
-            harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, forest.getId());
             harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
             harness.passBothPriorities();
         }
 

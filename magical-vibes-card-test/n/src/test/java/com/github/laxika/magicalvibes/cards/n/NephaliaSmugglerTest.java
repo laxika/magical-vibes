@@ -133,7 +133,7 @@ class NephaliaSmugglerTest extends BaseCardTest {
         FarbogExplorer card = new FarbogExplorer();
         card.setOwnerId(player2.getId());
         Permanent target = harness.addToBattlefieldAndReturn(player1, card);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -151,9 +151,7 @@ class NephaliaSmugglerTest extends BaseCardTest {
         target.tap();
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.activateAbility(player1, 0, null, target.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
 
         harness.passBothPriorities();
 

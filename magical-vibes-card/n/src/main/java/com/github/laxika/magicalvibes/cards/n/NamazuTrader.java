@@ -34,7 +34,7 @@ public class NamazuTrader extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )),
                         new SurveilEffect(2),
-                        "another creature or artifact"),
+                        "another creature or artifact", false, false),
                 "Sacrifice another creature or artifact?"));
     }
 }

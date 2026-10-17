@@ -207,9 +207,7 @@ class NiblisOfTheBreathTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMayAbilityChosen(player1, true);
-        if (gd.interaction.isAwaitingInput()) {
-            harness.handleListChoice(player1, "1");
-        }
+        harness.handleListChoice(player1, "Untap");
 
         assertThat(niblis.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();

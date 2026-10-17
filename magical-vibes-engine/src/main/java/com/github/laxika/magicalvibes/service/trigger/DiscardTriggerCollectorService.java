@@ -448,14 +448,8 @@ public class DiscardTriggerCollectorService {
         Card discarded = dc.discardedCard();
         if (discarded == null) return false;
 
-        UUID ownerId = dc.discardingPlayerId();
-        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
-        // "exile that card from your graveyard" — only if it's actually there (a replacement effect may
-        // have sent it elsewhere).
-        if (graveyard == null || graveyard.stream().noneMatch(c -> c.getId().equals(discarded.getId()))) {
-            return false;
-        }
-
+        // The discard event triggers even when a replacement (Library of Leng) keeps the card out of the
+        // graveyard; the resolution step exiles only if the card is actually there.
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

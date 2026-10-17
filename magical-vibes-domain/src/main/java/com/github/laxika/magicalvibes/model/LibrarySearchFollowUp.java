@@ -118,15 +118,20 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * a single search and retains the library restriction established when that search began.
      */
     public record ToHandPick(CardColor color, CardSubtype subtype, String cardName,
-                             java.util.Set<UUID> searchableCardIds) {
+                             java.util.Set<UUID> searchableCardIds, boolean includeGraveyard) {
+
+        public ToHandPick(CardColor color, CardSubtype subtype, String cardName,
+                          java.util.Set<UUID> searchableCardIds) {
+            this(color, subtype, cardName, searchableCardIds, false);
+        }
 
         public ToHandPick(CardColor color, CardSubtype subtype, String cardName) {
-            this(color, subtype, cardName, null);
+            this(color, subtype, cardName, null, false);
         }
 
         /** Carries the initial search restriction across subsequent choices of the same search. */
         public ToHandPick withinSingleSearch(java.util.Set<UUID> cardIds) {
-            return new ToHandPick(color, subtype, cardName, java.util.Set.copyOf(cardIds));
+            return new ToHandPick(color, subtype, cardName, java.util.Set.copyOf(cardIds), includeGraveyard);
         }
 
         public static ToHandPick ofColor(CardColor color) {
@@ -139,6 +144,11 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public static ToHandPick ofName(String cardName) {
             return new ToHandPick(null, null, cardName);
+        }
+
+        /** A named pick that also offers matching cards in the searching player's graveyard. */
+        public static ToHandPick ofNameInLibraryOrGraveyard(String cardName) {
+            return new ToHandPick(null, null, cardName, null, true);
         }
 
         /**
@@ -847,6 +857,14 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      */
     public static LibrarySearchFollowUp namedToHandPicks(List<String> names) {
         return toHandPicks(names.stream().map(ToHandPick::ofName).toList());
+    }
+
+    /**
+     * The queue of exact card names still to search for in the library or the graveyard, one card per
+     * name to hand (Nissa's Encouragement when a name is in both zones).
+     */
+    public static LibrarySearchFollowUp namedToHandPicksFromLibraryOrGraveyard(List<String> names) {
+        return toHandPicks(names.stream().map(ToHandPick::ofNameInLibraryOrGraveyard).toList());
     }
 
     private static LibrarySearchFollowUp toHandPicks(List<ToHandPick> picks) {

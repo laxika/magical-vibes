@@ -45,7 +45,7 @@ class NewNewYorkTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveCardTypes(gd, ownArtifact))
                 .containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE);
-        assertThat(gqs.effectiveCreatureSubtypes(gd, ownArtifact)).contains(CardSubtype.VEHICLE);
+        assertThat(gqs.getEffectiveSubtypes(gd, ownArtifact)).contains(CardSubtype.VEHICLE);
         assertThat(gqs.getEffectivePower(gd, ownArtifact)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ownArtifact)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownArtifact, Keyword.FLYING)).isTrue();

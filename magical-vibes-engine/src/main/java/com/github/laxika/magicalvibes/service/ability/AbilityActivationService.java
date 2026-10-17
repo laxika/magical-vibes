@@ -2284,12 +2284,16 @@ public class AbilityActivationService {
             abilityCost = null;
             cyclingCostReplaced = true;
         }
-        if (abilityCost != null && cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
+        if (cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
             abilityCost = null;
             cyclingCostReplaced = true;
         }
         if (cyclingCostReplaced && effectiveXValue > 0) {
             throw new IllegalStateException("A cycling cost replaced with {0} can't be paid with X");
+        }
+        if (cyclingCostReplaced) {
+            // {0} replaces the whole cycling cost, so a cycling life payment (Street Wraith) is not paid either.
+            payLifeCost = null;
         }
         int cyclingReduction = abilityCost != null && ability.isCyclingAbility()
                     ? Math.min(castingCostService.getCyclingAbilityCostReduction(gameData, playerId),
@@ -2552,6 +2556,9 @@ public class AbilityActivationService {
             if (ability.isCyclingAbility()) {
                 triggerCollectionService.checkCycleTriggers(gameData, playerId, card);
                 triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
+                }
             }
         }
 
@@ -4084,6 +4091,9 @@ public class AbilityActivationService {
 
         if (targetId != null && targetId.equals(permanent.getId())
                 && abilityEffects.stream().anyMatch(EquipEffect.class::isInstance)) {
+            if (!gameQueryService.isCreature(gameData, permanent)) {
+                throw new IllegalStateException("Target must be a creature you control");
+            }
             throw new IllegalStateException("An Equipment can't equip itself");
         }
 
@@ -4283,6 +4293,9 @@ public class AbilityActivationService {
         } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
             targetLegalityService.validateMultiTargetGraveyardAbility(
                     gameData, playerId, activationEffects, targetIds, permanent.getCard().getId(), targetValidationXValue);
+        } else if (targetsGraveyard && targetId == null && (targetIds == null || targetIds.isEmpty())) {
+            targetLegalityService.validateMultiTargetGraveyardAbility(
+                    gameData, playerId, activationEffects, List.of(), permanent.getCard().getId(), targetValidationXValue);
         } else {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, activationEffects, targetId, targetZone, permanent.getCard(), targetValidationXValue);

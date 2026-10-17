@@ -36,7 +36,7 @@ public class TheSpearOfLeonidas extends Card {
                         phobos),
                 new ChooseOneEffect.ChooseOneOption(
                         "Revelation — Discard two cards, then draw two cards",
-                        new DiscardAndDrawCardEffect(2, 2))
+                        DiscardAndDrawCardEffect.thenDraw(2, 2))
         )));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

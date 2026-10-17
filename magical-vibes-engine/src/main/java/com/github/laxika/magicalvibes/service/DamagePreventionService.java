@@ -87,7 +87,9 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1716,6 +1718,10 @@ public class DamagePreventionService {
                                               int damage, Card sourceCard) {
         gainLifeForNextSourceShield(gameData, shield, damage, sourceCard);
         exileFromLibraryForNextSourceShield(gameData, shield, damage);
+        if (shield.drawCards() && shield.damageSourceControllerCard() != null) {
+            queuePreventedDamageReflexiveTrigger(gameData, shield, damage);
+            return;
+        }
         if (shield.drawCards()) {
             for (int i = 0; i < damage; i++) {
                 drawService.resolveDrawCard(gameData, shield.playerId());
@@ -1731,6 +1737,32 @@ public class DamagePreventionService {
                         sourceControllerId, damage, shield.damageSourceControllerCard(), shield.playerId()));
             }
         }
+    }
+
+    /**
+     * New Way Forward's "When damage is prevented this way, this spell deals that much damage to
+     * that source's controller and you draw that many cards": a reflexive triggered ability
+     * (CR 603.12) that goes on the stack after the damage has been prevented.
+     */
+    private void queuePreventedDamageReflexiveTrigger(GameData gameData, PlayerSourceNextDamageShield shield,
+                                                      int damage) {
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, shield.sourceId());
+        if (sourceControllerId == null) {
+            sourceControllerId = shield.sourceControllerId();
+        }
+        if (sourceControllerId == null) {
+            return;
+        }
+        Card card = shield.damageSourceControllerCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                shield.playerId(),
+                card.getName() + "'s triggered ability",
+                List.of(new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, -1, null, false, false, false),
+                        new DrawCardEffect(new Fixed(damage))),
+                sourceControllerId,
+                (UUID) null));
     }
 
     /**

@@ -104,7 +104,8 @@ class CopySpellEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         copySpellHandler = new CopySpellEffectHandler(gameLogService, copySupport,
-                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class));
+                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
+                mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class));
 
     }
 

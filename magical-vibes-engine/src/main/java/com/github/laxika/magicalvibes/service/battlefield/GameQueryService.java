@@ -176,6 +176,7 @@ import com.github.laxika.magicalvibes.model.effect.EchoCostAlternativeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
@@ -2238,6 +2239,7 @@ public class GameQueryService {
         if (bf == null) return 1;
         int multiplier = 1;
         for (Permanent perm : bf) {
+            if (hasLostAllAbilities(gameData, perm)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ManaReflectionEffect reflection
                         && (tappedPermanent == null
@@ -3848,6 +3850,7 @@ public class GameQueryService {
         }
         int symbols = 0;
         for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown()) continue;
             var manaCost = permanent.getCard().getParsedManaCost();
             if (manaCost != null) {
                 symbols += manaCost.countColorSymbols(color);
@@ -3867,6 +3870,7 @@ public class GameQueryService {
         }
         int devotion = 0;
         for (Permanent permanent : battlefield) {
+            if (permanent.isFaceDown()) continue;
             var manaCost = permanent.getCard().getParsedManaCost();
             if (manaCost != null) {
                 devotion += manaCost.countSymbolsOfAnyColor(colors);
@@ -8525,32 +8529,50 @@ public class GameQueryService {
 
     /** Returns whether opponents' monocolored spells and abilities can't target this permanent. */
     public boolean hasHexproofFromMonocolored(GameData gameData, Permanent target) {
-        return hasMonocoloredSourceRestriction(gameData, target, true);
+        return hasColorModeSourceRestriction(gameData, target, true, TargetColorMode.MONOCOLORED);
+    }
+
+    /** Returns whether opponents' multicolored spells and abilities can't target this permanent. */
+    public boolean hasHexproofFromMulticolored(GameData gameData, Permanent target) {
+        return hasColorModeSourceRestriction(gameData, target, true, TargetColorMode.MULTICOLORED);
+    }
+
+    /**
+     * Returns whether opponents' spells and abilities from a source with {@code sourceColorCount} colors
+     * can't target this permanent under a hexproof-from-monocolored or hexproof-from-multicolored effect.
+     */
+    public boolean hasHexproofFromColorCount(GameData gameData, Permanent target, int sourceColorCount) {
+        if (sourceColorCount == 1) {
+            return hasHexproofFromMonocolored(gameData, target);
+        }
+        return sourceColorCount >= 2 && hasHexproofFromMulticolored(gameData, target);
     }
 
     /** Returns whether monocolored spells and abilities can't target this permanent. */
     public boolean cantBeTargetedByMonocoloredSources(GameData gameData, Permanent target) {
-        return hasMonocoloredSourceRestriction(gameData, target, false);
+        return hasColorModeSourceRestriction(gameData, target, false, TargetColorMode.MONOCOLORED);
     }
 
-    private boolean hasMonocoloredSourceRestriction(GameData gameData, Permanent target, boolean opponentOnly) {
+    private boolean hasColorModeSourceRestriction(GameData gameData, Permanent target, boolean opponentOnly,
+                                                  TargetColorMode mode) {
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (isMonocoloredSourceRestriction(effect, opponentOnly)) {
+            if (isColorModeSourceRestriction(effect, opponentOnly, mode)) {
                 return true;
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
-            if (isMonocoloredSourceRestriction(effect, opponentOnly)) {
+            if (isColorModeSourceRestriction(effect, opponentOnly, mode)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isMonocoloredSourceRestriction(CardEffect effect, boolean opponentOnly) {
+    private static boolean isColorModeSourceRestriction(CardEffect effect, boolean opponentOnly,
+                                                        TargetColorMode mode) {
         return effect instanceof TargetingRestrictionEffect restriction
                 && restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
-                && restriction.mode() == TargetColorMode.MONOCOLORED
+                && restriction.mode() == mode
                 && restriction.opponentOnly() == opponentOnly;
     }
 
@@ -12685,6 +12707,10 @@ public class GameQueryService {
 
         // Check aura-based locks (Arrest, Ice Cage)
         if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            return false;
+        }
+        if (hasAuraWithEffect(gameData, permanent,
+                effect -> effect instanceof EnchantedPermanentAbilityLockEffect lock && lock.blocksManaAbilities())) {
             return false;
         }
         if (isLockedFromActivatingTapAbilities(gameData, permanent)) {

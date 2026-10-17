@@ -141,6 +141,7 @@ class NevThePracticalDeanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveSorcery(player1, 0, 2);
         harness.passBothPriorities();
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

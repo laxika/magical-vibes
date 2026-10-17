@@ -57,6 +57,11 @@ public class LookAtTopCardPutLandOrCreatureWithinLoyaltyEffectHandler implements
 
         int loyalty = 0;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            // The source left the battlefield after the ability was activated: use its last known
+            // information (CR 113.7a), the snapshot taken as the ability went onto the stack.
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source != null) {
             loyalty = source.getCounterCount(CounterType.LOYALTY);
         }

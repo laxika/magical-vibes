@@ -1575,8 +1575,17 @@ public class StackResolutionService {
                 || !entry.getDescription().equals(card.getName() + "'s chapter " + finalChapter + " ability")) {
             return;
         }
+        // "A Saga you control" is checked as the ability resolves, so a Saga that changed hands while
+        // its chapter ability was on the stack counts for its new controller.
+        UUID sagaControllerId = entry.getControllerId();
+        if (entry.getSourcePermanentId() != null) {
+            UUID currentController = gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+            if (currentController != null) {
+                sagaControllerId = currentController;
+            }
+        }
         triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
-                gameData, entry.getControllerId(), card.getManaValue());
+                gameData, sagaControllerId, card.getManaValue());
     }
 
     /**

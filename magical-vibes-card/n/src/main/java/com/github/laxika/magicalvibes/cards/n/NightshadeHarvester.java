@@ -15,7 +15,7 @@ public class NightshadeHarvester extends Card {
         // Whenever a land an opponent controls enters, that player loses 1 life.
         // Put a +1/+1 counter on this creature.
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, SequenceEffect.of(
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER),
                 new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

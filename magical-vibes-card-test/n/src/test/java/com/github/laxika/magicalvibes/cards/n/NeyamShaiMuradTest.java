@@ -78,6 +78,8 @@ class NeyamShaiMuradTest extends BaseCardTest {
                 .isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(opponentForest.getId()));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         PendingInteraction.GraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);

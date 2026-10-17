@@ -339,7 +339,30 @@ public class AmountEvaluationService {
         }
         int value = evaluate(gameData, amount.amount(), ctx);
         ctx.stackEntry().getAmountsDeterminedOnce().put(amount, value);
+        shareDeterminedOnceWithSiblingTriggers(gameData, ctx.stackEntry(), amount, value);
         return value;
+    }
+
+    /**
+     * One triggered ability the engine splits into one stack entry per effect (e.g. Niv-Mizzet,
+     * Guildpact's damage, draw and life gain) still has a single "where X is ..." definition, so the
+     * value is determined once for all of its parts (CR 608.2h). The entries still on the stack for
+     * the same source permanent inherit the value instead of recounting after an earlier part
+     * changed the game state.
+     */
+    private void shareDeterminedOnceWithSiblingTriggers(GameData gameData, StackEntry resolving,
+                                                         DeterminedOnce amount, int value) {
+        UUID sourcePermanentId = resolving.getSourcePermanentId();
+        if (sourcePermanentId == null || resolving.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+            return;
+        }
+        for (StackEntry sibling : gameData.stack) {
+            if (sibling != resolving
+                    && sibling.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                    && sourcePermanentId.equals(sibling.getSourcePermanentId())) {
+                sibling.getAmountsDeterminedOnce().putIfAbsent(amount, value);
+            }
+        }
     }
 
     /**

@@ -20,9 +20,9 @@ public class NewBlood extends Card {
         addEffect(EffectSlot.SPELL,
                 new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)));
 
-        // Gain control of target creature. Change its text by replacing one creature type with Vampire.
+        // Gain control of target creature. Change its text by replacing all instances of one creature type with Vampire.
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.PERMANENT))
-                .addEffect(EffectSlot.SPELL, ChangeColorTextEffect.creatureTypes(false));
+                .addEffect(EffectSlot.SPELL, ChangeColorTextEffect.creatureTypesReplacedWith(CardSubtype.VAMPIRE));
     }
 }

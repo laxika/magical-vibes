@@ -43,6 +43,7 @@ public class NullChampion extends Card {
                 "{B}",
                 List.of(new RegenerateEffect()),
                 "{B}: Regenerate this creature."
-        ));
+        ).withActivationCondition(new SourceCounterThreshold(4, CounterType.LEVEL),
+                "Null Champion needs level 4 or more"));
     }
 }

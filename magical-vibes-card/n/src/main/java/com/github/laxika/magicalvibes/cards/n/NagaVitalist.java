@@ -18,7 +18,7 @@ public class NagaVitalist extends Card {
                 true,
                 null,
                 List.of(new AwardManaOfColorsLandsCouldProduceEffect(
-                        ManaColorLandScope.CONTROLLER, new PermanentIsLandPredicate())),
+                        ManaColorLandScope.CONTROLLER, new PermanentIsLandPredicate(), true)),
                 "{T}: Add one mana of any type that a land you control could produce."
         ));
     }

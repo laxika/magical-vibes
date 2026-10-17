@@ -1051,8 +1051,18 @@ public class EtbTriggerService {
                 queueTriggeredAbilityCounters(gameData, etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
-                // Naban: extra triggers for Wizard ETB
-                for (int i = 0; i < extraTriggerCopies; i++) {
+                // Naban: extra triggers for Wizard ETB. A copy of a single-target ETB chooses its own
+                // target as it goes on the stack (CR 603.3d), so it does not reuse the cast-time target.
+                boolean extraCopiesChooseTargets = extraTriggerCopies > 0 && etbNeedsTarget && targetId != null
+                        && !card.isAura() && !hasDynamicTargetCount && card.getSpellTargets().size() <= 1;
+                if (extraCopiesChooseTargets) {
+                    TargetFilter copyTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
+                    for (int i = 0; i < extraTriggerCopies; i++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, copyTargetFilter, xValue));
+                    }
+                }
+                for (int i = 0; i < (extraCopiesChooseTargets ? 0 : extraTriggerCopies); i++) {
                     StackEntry extraEtbEntry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,

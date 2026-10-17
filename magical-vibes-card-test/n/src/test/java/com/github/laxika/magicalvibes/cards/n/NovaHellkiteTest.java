@@ -72,6 +72,7 @@ class NovaHellkiteTest extends BaseCardTest {
         card.setOwnerId(player1.getId());
         harness.setLibrary(player1, List.of(new NovaHellkite(), new NovaHellkite()));
         harness.setLibrary(player2, List.of(new NovaHellkite(), new NovaHellkite()));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);

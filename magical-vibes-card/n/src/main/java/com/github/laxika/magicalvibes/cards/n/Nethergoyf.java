@@ -23,7 +23,7 @@ public class Nethergoyf extends Card {
                 cardTypes, new Sum(cardTypes, new Fixed(1))));
 
         addCastingOption(new GraveyardCast(null, "{2}{B}", List.of(
-                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4)),
+                ExileNCardsFromGraveyardCastingCost.anyNumberWithCardTypes(4)),
                 null, false, false, true));
     }
 }

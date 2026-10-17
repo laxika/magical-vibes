@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostTrackedPermanentPowerPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -46,18 +46,12 @@ public class NihiloorTapAndStealEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        GainControlOfTargetEffect controlEffect = GainControlOfTargetEffect.withTargetPredicate(
-                ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentControlledByPlayerPredicate(tapEffect.opponentId()),
-                        new PermanentPowerAtMostXPredicate())));
         playerInputService.beginMultiPermanentChoice(
                 gameData,
                 entry.getControllerId(),
                 eligibleIds,
                 1,
-                new MultiPermanentChoiceContext.NihiloorTapChoice(entry, controlEffect),
+                new MultiPermanentChoiceContext.NihiloorTapChoice(entry, tapEffect.opponentId()),
                 "Nihiloor — choose up to one untapped creature you control to tap.");
     }
 
@@ -74,10 +68,16 @@ public class NihiloorTapAndStealEffectHandler implements NormalEffectHandlerBean
                 int power = gameQueryService.getEffectivePower(gameData, tappedCreature);
                 context.resolvingEntry().setEventValue(power);
                 context.resolvingEntry().setXValue(power);
+                GainControlOfTargetEffect controlEffect = GainControlOfTargetEffect.withTargetPredicate(
+                        ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentControlledByPlayerPredicate(context.opponentId()),
+                                new PermanentPowerAtMostTrackedPermanentPowerPredicate(tappedCreature.getId()))));
                 queueReflexiveAbilityEffectHandler.resolve(
                         gameData,
                         context.resolvingEntry(),
-                        new QueueReflexiveAbilityEffect(context.reflexiveEffect(), false, true));
+                        new QueueReflexiveAbilityEffect(controlEffect, false, true));
             }
         }
 

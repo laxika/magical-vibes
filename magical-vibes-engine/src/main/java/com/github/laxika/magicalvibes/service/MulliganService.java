@@ -147,7 +147,7 @@ public class MulliganService {
             throw new IllegalStateException("You have already kept your hand");
         }
 
-        if (queueMulliganActionChoice(gameData, player)) {
+        if (queueMulliganActionChoice(gameData, player, null)) {
             return;
         }
 
@@ -159,7 +159,9 @@ public class MulliganService {
         if (!accepted) {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to use ", ability.sourceCard(), "."));
-            performMulligan(gameData, player);
+            if (!queueMulliganActionChoice(gameData, player, ability.sourceCard().getId())) {
+                performMulligan(gameData, player);
+            }
             return;
         }
 
@@ -202,14 +204,14 @@ public class MulliganService {
         }
     }
 
-    private boolean queueMulliganActionChoice(GameData gameData, Player player) {
+    private boolean queueMulliganActionChoice(GameData gameData, Player player, UUID declinedCardId) {
         List<Card> hand = gameData.playerHands.get(player.getId());
         if (hand == null) {
             return false;
         }
         for (Card card : hand) {
             List<CardEffect> effects = card.getEffects(EffectSlot.MULLIGAN_ACTION);
-            if (effects.isEmpty()) {
+            if (effects.isEmpty() || card.getId().equals(declinedCardId)) {
                 continue;
             }
             CardEffect effect = effects.getFirst();

@@ -98,6 +98,7 @@ public class PerpetualBoostOwnCreatureCardsEffectHandler implements NormalEffect
     private boolean matches(GameData gameData, Card card, UUID ownerId,
                             PerpetualBoostOwnCreatureCardsEffect boost) {
         return card != null
+                && !card.isToken()
                 && card.getManaValue() <= boost.maxManaValue()
                 && gameQueryService.cardHasType(card, CardType.CREATURE, gameData, ownerId);
     }

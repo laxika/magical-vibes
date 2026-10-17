@@ -27,7 +27,7 @@ public class NezumiShortfang extends Card {
                 true, "{1}{B}",
                 List.of(
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false),
-                        new ConditionalEffect(new TargetPlayerHandEmpty(), new TransformToBackFaceEffect())
+                        new ConditionalEffect(new TargetPlayerHandEmpty(), new TransformToBackFaceEffect(true))
                 ),
                 "{1}{B}, {T}: Target opponent discards a card. Then if that player has no cards in "
                         + "hand, flip this creature.",

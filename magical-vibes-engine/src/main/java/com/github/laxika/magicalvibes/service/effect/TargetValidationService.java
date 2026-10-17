@@ -425,8 +425,7 @@ public class TargetValidationService {
         if (gameQueryService.hasProtectionFromSourceCardTypes(ctx.gameData(), target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");
         }
-        if (gameQueryService.hasProtectionFromSourceSubtypes(target, ctx.sourceCard())
-                || gameQueryService.hasProtectionFromSourceSubtypes(ctx.gameData(), target, ctx.sourceCard())) {
+        if (gameQueryService.hasProtectionFromSourceSubtypes(ctx.gameData(), target, ctx.sourceCard())) {
             throw new IllegalStateException(target.getCard().getName() + " has protection from source's subtype");
         }
     }

@@ -73,6 +73,7 @@ class NeurokFamiliarTest extends BaseCardTest {
         Ornithopter remainingCard = new Ornithopter();
         harness.setLibrary(player1, List.of(originalTop, remainingCard));
         harness.setLibrary(player2, List.of(new AetherSpellbomb()));
+        harness.setHand(player2, List.of());
 
         harness.castFromHand(player1, new NeurokFamiliar(), "{1}{U}");
         harness.passBothPriorities();

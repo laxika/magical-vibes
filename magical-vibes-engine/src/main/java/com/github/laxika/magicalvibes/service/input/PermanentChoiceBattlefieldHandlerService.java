@@ -663,18 +663,20 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         // Sacrifice the enchanted permanent, then move the Aura onto the chosen creature or land.
-        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, ctx.permanentToSacrificeId());
-        UUID controllerId = gameQueryService.findPermanentController(gameData, ctx.permanentToSacrificeId());
-        if (toSacrifice == null || gameQueryService.cantBeSacrificed(gameData, toSacrifice)
-                || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice)) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
+        if (ctx.permanentToSacrificeId() != null) {
+            Permanent toSacrifice = gameQueryService.findPermanentById(gameData, ctx.permanentToSacrificeId());
+            UUID controllerId = gameQueryService.findPermanentController(gameData, ctx.permanentToSacrificeId());
+            if (toSacrifice == null || gameQueryService.cantBeSacrificed(gameData, toSacrifice)
+                    || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setSacrificedCard(toSacrifice.getCard());
+            }
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
         }
-        if (gameData.pendingEffectResolutionEntry != null) {
-            gameData.pendingEffectResolutionEntry.setSacrificedCard(toSacrifice.getCard());
-        }
-        String playerName = gameData.playerIdToName.get(controllerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
 
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(permanentId);

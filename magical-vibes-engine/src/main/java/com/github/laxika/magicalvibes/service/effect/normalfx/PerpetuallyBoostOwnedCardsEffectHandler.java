@@ -48,6 +48,7 @@ public class PerpetuallyBoostOwnedCardsEffectHandler implements NormalEffectHand
 
         gameData.playerBattlefields.forEach((controllerId, permanents) -> {
             for (Permanent permanent : permanents) {
+                if (permanent.getCard().isToken()) continue;
                 applyToCard(gameData, entry, e, ownerId, controllerId, permanent.getCard(), modifiedCardIds);
             }
         });

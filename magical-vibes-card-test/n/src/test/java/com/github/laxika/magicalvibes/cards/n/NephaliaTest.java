@@ -105,7 +105,9 @@ class NephaliaTest extends BaseCardTest {
                 .handleEndStepTriggers(gd));
         harness.passBothPriorities();
 
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unaffectedCard);
+        // Resolving the trigger lets the turn pass to player1, who draws the unmilled card.
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(unaffectedCard);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(returnedCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

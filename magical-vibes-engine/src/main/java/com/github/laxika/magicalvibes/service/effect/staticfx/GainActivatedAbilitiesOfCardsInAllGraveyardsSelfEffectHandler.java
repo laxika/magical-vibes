@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class GainActivatedAbilitiesOfCardsInAllGraveyardsSelfEffectHandler implements StaticEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,6 +36,9 @@ public class GainActivatedAbilitiesOfCardsInAllGraveyardsSelfEffectHandler imple
         GainActivatedAbilitiesOfCardsInAllGraveyardsEffect gainEffect =
                 (GainActivatedAbilitiesOfCardsInAllGraveyardsEffect) effect;
         GameData gameData = context.gameData();
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+            return;
+        }
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;

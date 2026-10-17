@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
-import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -126,6 +126,11 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ChoiceHandlerService {
+    private static final Set<String> BASIC_LAND_CARD_NAMES = Set.of(
+            "Plains", "Island", "Swamp", "Mountain", "Forest", "Wastes",
+            "Snow-Covered Plains", "Snow-Covered Island", "Snow-Covered Swamp",
+            "Snow-Covered Mountain", "Snow-Covered Forest", "Snow-Covered Wastes");
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     @Autowired @Lazy
@@ -1707,7 +1712,7 @@ public class ChoiceHandlerService {
         int amount = source == null && !ctx.sourcePlanar()
                 ? 0
                 : amountEvaluationService.evaluate(gameData,
-                        new ColorManaSymbolsAmongControlledPermanents(manaColor),
+                        new DevotionToColor(manaColor),
                         source == null
                                 ? AmountContext.forCasting(ctx.playerId())
                                 : AmountContext.forManaAbility(source, ctx.playerId())) * ctx.manaMultiplier();
@@ -2309,6 +2314,9 @@ public class ChoiceHandlerService {
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
                 return;
+            }
+            if (!ctx.planeswalkerSpellOnly()) {
+                resolveProducedManaTriggers(gameData, manaColor);
             }
         } else if (ctx.creatureSpellManaValueAtLeastFourOrXOnly()) {
             manaPool.addCreatureSpellManaValueAtLeastFourOrXOnlyMana(manaColor, amount);
@@ -3017,6 +3025,12 @@ public class ChoiceHandlerService {
         if (!isColor && !isLandType && !isCreatureType) {
             throw new IllegalArgumentException("Invalid choice: " + chosenWord);
         }
+        if (ctx.fixedReplacementCreatureType() != null && isCreatureType) {
+            handleTextChangeToWordChosen(gameData, player, ctx.fixedReplacementCreatureType().name(),
+                    new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, false, ctx.untilEndOfTurn(),
+                            true, ctx.excludedReplacementCreatureType()));
+            return;
+        }
 
         ChoiceContext.TextChangeToWord choiceContext =
                 new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor, ctx.untilEndOfTurn(),
@@ -3331,10 +3345,14 @@ public class ChoiceHandlerService {
     /**
      * Null Chamber: the controller names a card, then their opponent names one, and only then does
      * the enchantment enter carrying both names (CR 614.1c). If the opponent has left the game there
-     * is nobody to make the second choice, so the permanent enters with the one name.
+     * is nobody to make the second choice, so the permanent enters with the one name. The name may
+     * not be a basic land card name.
      */
     private void handleDualCardNameChosen(GameData gameData, Player player, String cardName,
                                           ChoiceContext.DualCardNameChoice ctx) {
+        if (BASIC_LAND_CARD_NAMES.contains(cardName)) {
+            throw new IllegalArgumentException("Cannot choose a basic land card name: " + cardName);
+        }
         gameData.interaction.clearAwaitingInput();
 
         Card card = ctx.card();

@@ -102,7 +102,14 @@ public class ExileAndReturnTransformedService {
 
         Card originalCard = perm.getOriginalCard();
         Card transformedFace = originalCard.getBackFaceCard();
-        if (transformedFace == null) return false;
+        if (transformedFace == null) {
+            if (transformed) {
+                // A single-faced card that copies a double-faced one (Mirror Image copying Nicol Bolas)
+                // is still exiled, but it has no back face to return transformed, so it stays in exile.
+                permanentRemovalService.removePermanentToExile(gameData, perm);
+            }
+            return false;
+        }
         Card returnedCard = transformed ? originalCard.getBackFaceCard() : originalCard;
         if (returnedCard == null) return false;
         UUID returnControllerId = underControllerControl

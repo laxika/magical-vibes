@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "PIP", collectorNumber = "35")
 @CardRegistration(set = "PIP", collectorNumber = "378")
@@ -19,7 +20,8 @@ public class NickValentinePrivateEye extends Card {
 
     public NickValentinePrivateEye() {
         addEffect(EffectSlot.STATIC,
-                new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentIsArtifactPredicate()));
+                new CantBeBlockedByCreaturesMatchingPredicateEffect(
+                        new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
 
         MayEffect investigate = new MayEffect(CreateTokenEffect.ofClueToken(1), "Investigate?");
         addEffect(EffectSlot.ON_DEATH, investigate);

@@ -488,8 +488,8 @@ class DiscardTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("no-op when the discarded card is not in the graveyard")
-        void noOpWhenNotInGraveyard() {
+        @DisplayName("still triggers when the discarded card is not in the graveyard, exiling nothing")
+        void triggersEvenWhenNotInGraveyard() {
             Permanent necro = createPermanent("Necropotence");
             var effect = new ExileDiscardedCardFromGraveyardEffect();
             Card discarded = createCard("Grizzly Bears");
@@ -499,7 +499,8 @@ class DiscardTriggerCollectorServiceTest {
                     match(necro, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
 
-            assertThat(result).isFalse();
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
         }
     }

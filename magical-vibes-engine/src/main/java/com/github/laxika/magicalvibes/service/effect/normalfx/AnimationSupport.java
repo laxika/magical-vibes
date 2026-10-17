@@ -501,12 +501,17 @@ public class AnimationSupport {
                 perm.setAnimatedUntilEndOfTurn(true);
                 perm.setAnimatedPower(power);
                 perm.setAnimatedToughness(toughness);
-                perm.setAnimatedColor(effect.animatedColor());
-                perm.getTransientSubtypes().clear();
+                if (effect.animatedColor() != null) {
+                    perm.setAnimatedColor(effect.animatedColor());
+                }
                 perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
                 perm.getGrantedKeywords().addAll(effect.grantedKeywords());
                 perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
                 addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+                // Layer 4 creature type as a timestamped floating effect, so it still applies to a land whose
+                // card types were overridden by an earlier effect (e.g. Imprisoned in the Moon, CR 613.1d/613.7).
+                addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE,
+                        EffectDuration.UNTIL_END_OF_TURN);
 
                 log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
             }
@@ -1012,7 +1017,7 @@ public class AnimationSupport {
                 return;
             }
 
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     equipmentCard,
                     controllerId,
@@ -1020,7 +1025,9 @@ public class AnimationSupport {
                     effects,
                     null,
                     equipment.getId()
-            ));
+            );
+            entry.setSourcePermanentSnapshot(new Permanent(equipment));
+            gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.cardThen(equipmentCard, "'s transform ability triggers."));
             log.info("Game {} - {} transform trigger pushed onto stack (equipped creature transformed)",
                     gameData.id, equipmentCard.getName());

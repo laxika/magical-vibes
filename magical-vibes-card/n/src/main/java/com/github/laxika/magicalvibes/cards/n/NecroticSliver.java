@@ -33,7 +33,7 @@ public class NecroticSliver extends Card {
 
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 destroyAbility,
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_PERMANENTS,
                 sliver
         ));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

@@ -79,7 +79,10 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             copyCard.setToken(true);
         }
         if (e.sacrificeAtEndStep() && (e.tokenCopy() || (e.permanentSpellToken() && permanentSpell))) {
-            copyCard.setSacrificeAtEndStep(true);
+            // "At the beginning of the end step, sacrifice this permanent" is a gained triggered ability,
+            // so it triggers at every end step until the token is gone (a countered trigger fires again).
+            copyCard.addEffect(com.github.laxika.magicalvibes.model.EffectSlot.END_STEP_TRIGGERED,
+                    new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect());
         }
         if (!e.additionalTypes().isEmpty()) {
             EnumSet<CardType> additionalTypes = EnumSet.noneOf(CardType.class);

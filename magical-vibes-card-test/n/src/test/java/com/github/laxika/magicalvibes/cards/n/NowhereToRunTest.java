@@ -95,11 +95,15 @@ class NowhereToRunTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NowhereToRun()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castEnchantment(player1, 0, tyrant.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castEnchantment(player1, 0);
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, tyrant.getId());
+            resolveAllTriggers();
 
-        assertThat(gqs.getEffectivePower(gd, tyrant)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, tyrant)).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, tyrant)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, tyrant)).isEqualTo(3);
+        });
         harness.passUntil(TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, tyrant)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, tyrant)).isEqualTo(6);
@@ -125,7 +129,9 @@ class NowhereToRunTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NowhereToRun()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castEnchantment(player1, 0, knight.getId());
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, knight.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Knight of Grace");

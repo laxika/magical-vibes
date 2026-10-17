@@ -34,6 +34,6 @@ public class NerivCracklingVanguard extends Card {
                         new AttackedWithCommanderThisTurn(),
                         new AllowCastFromCardsExiledWithSourceEffect(
                                 false, null, false, false, 0, null,
-                                false, true, false)));
+                                false, false, false, true)));
     }
 }

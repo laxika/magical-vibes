@@ -25,12 +25,14 @@ public class Nucklavee extends Card {
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.SORCERY),
                         new CardColorPredicate(CardColor.RED))))
+                .targetGraveyard(true)
                 .build(), "Return a red sorcery card from your graveyard to your hand?"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardColorPredicate(CardColor.BLUE))))
+                .targetGraveyard(true)
                 .build(), "Return a blue instant card from your graveyard to your hand?"));
     }
 }

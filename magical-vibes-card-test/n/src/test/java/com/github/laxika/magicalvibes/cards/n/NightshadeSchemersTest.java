@@ -124,9 +124,10 @@ class NightshadeSchemersTest extends BaseCardTest {
         StonybrookBanneret topCard = new StonybrookBanneret();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player2, List.of(new Disperse()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
         harness.castInstant(player2, 0, source.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Nightshade Schemers");

@@ -61,6 +61,7 @@ public class EachPlayerRevealsTopCardAndSetsTriggeringSpellXValueEffectHandler
                 gameData, entry.getTriggeringCardId());
         if (triggeringSpell != null) {
             triggeringSpell.setXValue(totalManaValue);
+            triggeringSpell.setXValueSetByCastTrigger(true);
             log.info("Game {} - {} sets {}'s X value to {} from revealed top cards",
                     gameData.id, sourceName, triggeringSpell.getCard().getName(), totalManaValue);
         }

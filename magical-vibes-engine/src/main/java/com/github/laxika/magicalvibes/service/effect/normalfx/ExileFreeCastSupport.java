@@ -107,6 +107,20 @@ public class ExileFreeCastSupport {
     public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId,
                                            boolean grantHaste, boolean returnToHandIfUnable, boolean suspendHaste,
                                            boolean completeInput) {
+        ExiledCardEntry exiled = gameData.findExiledCard(exileCardId);
+        if (exiled != null && exiled.card().getBackFaceCard() != null
+                && exiled.card().getCastingOption(AdventureCast.class).isPresent()) {
+            // An Adventure card may be cast as either face (CR 715.3), so the caster picks the creature or the Adventure.
+            java.util.Map<String, Integer> faces = new java.util.LinkedHashMap<>();
+            faces.put("Cast " + exiled.card().getName(), 0);
+            faces.put("Cast " + exiled.card().getBackFaceCard().getName(), 1);
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    player.getId(), null, null,
+                    new ChoiceContext.ExileFreeCastFaceChoice(exileCardId, faces, grantHaste,
+                            returnToHandIfUnable, suspendHaste, completeInput),
+                    new ArrayList<>(faces.keySet()), "Choose which spell to cast."));
+            return;
+        }
         castSelectedFace(gameData, player, exileCardId, grantHaste, returnToHandIfUnable,
                 suspendHaste, completeInput, 0);
     }

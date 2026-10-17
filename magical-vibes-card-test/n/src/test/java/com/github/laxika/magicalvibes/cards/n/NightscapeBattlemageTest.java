@@ -89,7 +89,7 @@ class NightscapeBattlemageTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Forsaken City");
         harness.assertNotOnBattlefield(player2, "Arctic Merfolk");
@@ -162,7 +162,6 @@ class NightscapeBattlemageTest extends BaseCardTest {
         castWithAdditionalCosts(List.of("{2}{U}"), land.getId(), List.of(), true);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
 
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
@@ -199,7 +198,6 @@ class NightscapeBattlemageTest extends BaseCardTest {
         harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{2}{U}"));
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Arctic Merfolk");

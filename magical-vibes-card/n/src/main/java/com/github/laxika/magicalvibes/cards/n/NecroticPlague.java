@@ -13,7 +13,7 @@ public class NecroticPlague extends Card {
     public NecroticPlague() {
         target(TargetFilters.creature())
                 // Enchanted creature has "At the beginning of your upkeep, sacrifice this creature."
-                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new SacrificeEnchantedCreatureEffect())
+                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new SacrificeEnchantedCreatureEffect(true))
 
                 // When enchanted creature dies, its controller chooses target creature one of their
                 // opponents controls. Return Necrotic Plague from its owner's graveyard to the battlefield

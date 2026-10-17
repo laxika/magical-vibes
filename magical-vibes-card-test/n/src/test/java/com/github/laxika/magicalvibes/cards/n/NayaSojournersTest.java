@@ -61,7 +61,8 @@ class NayaSojournersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -108,7 +109,8 @@ class NayaSojournersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -126,7 +128,8 @@ class NayaSojournersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -143,7 +146,8 @@ class NayaSojournersTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.activateHandAbility(player1, 0, target.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, target.getId());
 
         harness.setHand(player2, List.of(new FlameJavelin()));
         harness.addMana(player2, ManaColor.RED, 6);

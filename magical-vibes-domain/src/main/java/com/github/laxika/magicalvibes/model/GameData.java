@@ -8439,6 +8439,8 @@ public class GameData {
         copy.graveyardTargetOperation.cumulativeUpkeepPayment = this.graveyardTargetOperation.cumulativeUpkeepPayment;
         copy.graveyardTargetOperation.controllerGraveyardPayment =
                 this.graveyardTargetOperation.controllerGraveyardPayment;
+        copy.graveyardTargetOperation.replacementGraveyardExile =
+                this.graveyardTargetOperation.replacementGraveyardExile;
         copy.graveyardTargetOperation.targetPlayerId = this.graveyardTargetOperation.targetPlayerId;
         copy.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects =
                 this.graveyardTargetOperation.pendingSpellGraveyardChoiceEffects == null

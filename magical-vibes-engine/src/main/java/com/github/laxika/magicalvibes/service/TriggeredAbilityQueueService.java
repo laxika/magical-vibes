@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -251,6 +252,35 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
+            // The dying creature's controller (not the trigger's controller) chooses the target of the
+            // Aura it carried (Necrotic Plague); a single legal creature is chosen without a prompt.
+            UUID targetChooserId = pending.effects().stream()
+                    .filter(ReturnSourceAuraToOpponentCreatureOnDeathEffect.class::isInstance)
+                    .map(effect -> ((ReturnSourceAuraToOpponentCreatureOnDeathEffect) effect)
+                            .enchantedCreatureControllerId())
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+            if (targetChooserId != null && result.validTargets().size() == 1) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.dyingCard(),
+                        pending.controllerId(),
+                        pending.dyingCard().getName() + "'s ability",
+                        new ArrayList<>(pending.effects()),
+                        result.validTargets().getFirst(),
+                        pending.sourcePermanentSnapshot() == null
+                                ? null : pending.sourcePermanentSnapshot().getId()
+                );
+                entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
+                        "'s death trigger targets " + gameQueryService.findPermanentById(
+                                gameData, result.validTargets().getFirst()).getCard().getName() + "."));
+                continue;
+            }
+
             if (pending.effects().stream().anyMatch(CardEffect::targetChosenAtRandom)) {
                 UUID targetId = result.validTargets().get(
                         ThreadLocalRandom.current().nextInt(result.validTargets().size()));
@@ -318,7 +348,8 @@ public class TriggeredAbilityQueueService {
                         List.of(pending.controllerId()),
                         pending.dyingCard().getName() + "'s ability - Choose " + targetDescription + ".");
             } else {
-                playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                playerInputService.beginPermanentChoice(gameData,
+                        targetChooserId != null ? targetChooserId : pending.controllerId(), result.validTargets(),
                         pending.dyingCard().getName() + "'s ability - Choose " + targetDescription + ".");
             }
 

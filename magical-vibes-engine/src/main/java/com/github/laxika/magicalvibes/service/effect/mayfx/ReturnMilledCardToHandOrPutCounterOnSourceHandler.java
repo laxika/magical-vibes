@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /** Handles grouped offers created by mill abilities that return cards or put a counter on the source. */
@@ -60,9 +62,13 @@ public class ReturnMilledCardToHandOrPutCounterOnSourceHandler implements MayEff
             }
             Card card = gameQueryService.findCardInGraveyardById(gameData, ability.targetCardId());
             UUID ownerId = card == null ? null : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+            ExiledCardEntry exiled = card == null ? gameData.findExiledCard(ability.targetCardId()) : null;
             if (card != null && ownerId != null) {
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
+            } else if (exiled != null && gameData.removeFromExile(exiled.card().getId())) {
+                gameData.playerHands.computeIfAbsent(exiled.ownerId(), ignored -> new ArrayList<>())
+                        .add(exiled.card());
             } else if (acceptedCount == 1 && gameData.pendingMayAbilities.stream().noneMatch(pending ->
                     pending.effects().stream()
                             .filter(ReturnMilledCardToHandOrPutCounterOnSourceEffect.class::isInstance)

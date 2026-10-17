@@ -15,10 +15,18 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * @param thenEffect the effect of the reflexive triggered ability
  * @param onlyIfLastCounterRemoved whether the reflexive ability is created only when the removed
  *                                 counter was the last counter of the requested type
+ * @param reflexive {@code true} to put {@code thenEffect} on the stack as a reflexive triggered
+ *                  ability ("When you do"); {@code false} to resolve it in the same resolution when
+ *                  counters were removed ("If you do", CR 608.2c)
  */
 public record RemoveCounterFromSourceThenEffect(CounterType counterType, int count, CardEffect thenEffect,
-                                                boolean onlyIfLastCounterRemoved)
+                                                boolean onlyIfLastCounterRemoved, boolean reflexive)
         implements CombatDamageTriggerContextEffect {
+
+    public RemoveCounterFromSourceThenEffect(CounterType counterType, int count, CardEffect thenEffect,
+                                             boolean onlyIfLastCounterRemoved) {
+        this(counterType, count, thenEffect, onlyIfLastCounterRemoved, true);
+    }
 
     public RemoveCounterFromSourceThenEffect(CounterType counterType, CardEffect thenEffect) {
         this(counterType, 1, thenEffect, false);

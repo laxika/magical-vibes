@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -147,14 +149,14 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
         Permanent permanent = "command zone".equals(zone)
                 ? new Permanent(chosen, Zone.COMMAND)
                 : new Permanent(chosen);
-        if (enterWithCounter != null && enterWithCounterCount > 0) {
-            permanent.setCounterCount(enterWithCounter, enterWithCounterCount);
-        }
         if (grantHaste) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
+        EnterWithCountersEffect enterWithCounters = enterWithCounter != null && enterWithCounterCount > 0
+                ? new EnterWithCountersEffect(enterWithCounter, new Fixed(enterWithCounterCount))
+                : null;
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent,
-                battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
+                battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
         if (handleCreatureEtbAndLegendRule) {
             graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, playerId, permanent, chosen);
         }

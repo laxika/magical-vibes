@@ -150,7 +150,10 @@ public class BasicLandSearchQueueSupport {
         boolean shuffleAfterQueue = followUp.basicLandSearchQueue().shuffleAfterQueue();
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> deck = gameData.playerDecks.get(playerId);
-        if (deck == null || deck.isEmpty()) {
+        boolean offersOptionalSearchOnEmptyLibrary = deck != null && deck.isEmpty()
+                && markSearchedOnPick(followUp.basicLandSearchQueue())
+                && LibrarySearchTriggerHelper.anyPermanentReactsToLibrarySearches(gameData);
+        if ((deck == null || deck.isEmpty()) && !offersOptionalSearchOnEmptyLibrary) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
             if (!shuffleAfterQueue && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData,
@@ -159,7 +162,7 @@ public class BasicLandSearchQueueSupport {
             return false;
         }
 
-        List<Card> basicLands = deck.stream()
+        List<Card> basicLands = deck == null ? List.of() : deck.stream()
                 .filter(card -> card.hasAllCardNames()
                         || (card.hasType(CardType.LAND)
                         && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, playerId)))
@@ -175,7 +178,7 @@ public class BasicLandSearchQueueSupport {
         }
 
         int count = pick.count();
-        if (count <= 0) {
+        if (count <= 0 && !choosesWhetherToSearch) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
             if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
@@ -197,7 +200,7 @@ public class BasicLandSearchQueueSupport {
                 + (destinationToHand ? " to reveal and put them" : " and put them")
                 + destinationText + " (" + count + " remaining).";
 
-        LibrarySearchParams searchParams = LibrarySearchParams.builder(playerId, new ArrayList<>(basicLands))
+        LibrarySearchParams searchParams = LibrarySearchParams.builder(playerId, count <= 0 ? new ArrayList<>() : new ArrayList<>(basicLands))
                         .remainingCount(count)
                         .canFailToFind(true)
                         .reveals(destinationToHand)

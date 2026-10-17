@@ -81,6 +81,12 @@ public class StackEntry {
     @Getter(AccessLevel.NONE)
     private int nextSimultaneousGroup;
     @Setter private int xValue;
+    /**
+     * Whether {@link #xValue} was written by the spell's own resolved cast trigger (Naya Soulbeast's
+     * revealed cards) rather than chosen as X while casting. A copy of the spell was never cast, so it
+     * does not inherit a value derived from that trigger.
+     */
+    @Setter private boolean xValueSetByCastTrigger;
     /** X chosen for a spell on the stack that a resolving token-copy effect copies (CR 707.2); 0 otherwise. */
     @Setter private int tokenCopyXValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
@@ -879,6 +885,7 @@ public class StackEntry {
         this.simultaneousStepGroups.putAll(source.simultaneousStepGroups);
         this.nextSimultaneousGroup = source.nextSimultaneousGroup;
         this.xValue = source.xValue;
+        this.xValueSetByCastTrigger = source.xValueSetByCastTrigger;
         this.modalModeCount = source.modalModeCount;
         this.castModeManaCost = source.castModeManaCost;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;

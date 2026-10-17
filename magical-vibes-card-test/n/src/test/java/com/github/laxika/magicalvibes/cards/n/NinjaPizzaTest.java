@@ -50,6 +50,7 @@ class NinjaPizzaTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
+        harness.inMutationScope(() -> gd.mainPhasesBegunThisTurn = 0);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 

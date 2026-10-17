@@ -1581,11 +1581,11 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds " + availableColors.stream() .sorted().map(c -> "{" + c.getCode() + "}").reduce("", String::concat) + " from ").card(permanent.getCard()).text(".").build());
                 }
             } else if (effect instanceof AwardManaOfColorsLandsCouldProduceEffect landColors) {
-                Set<CardColor> availableColors = collectColorsLandsCouldProduce(gameData, playerId, landColors);
+                Set<ManaColor> availableColors = collectColorsLandsCouldProduce(gameData, playerId, landColors);
                 if (availableColors.size() == 1) {
-                    CardColor onlyColor = availableColors.iterator().next();
+                    ManaColor onlyColor = availableColors.iterator().next();
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
-                            permanent, ManaColor.valueOf(onlyColor.name()));
+                            permanent, onlyColor);
                     gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
                     if (isCreatureSource) {
                         gameData.playerManaPools.get(playerId).addCreatureMana(manaColor, manaMultiplier);
@@ -2032,9 +2032,9 @@ public class ActivatedAbilityExecutionService {
      * could produce (CR: a land's mana abilities). Colorless is not a color and is excluded.
      * Used by Fellwar Stone (opponent lands) and Star Compass (basic lands you control).
      */
-    private Set<CardColor> collectColorsLandsCouldProduce(GameData gameData, UUID playerId,
+    private Set<ManaColor> collectColorsLandsCouldProduce(GameData gameData, UUID playerId,
                                                           AwardManaOfColorsLandsCouldProduceEffect effect) {
-        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
         for (UUID ownerId : gameData.orderedPlayerIds) {
             boolean isSelf = ownerId.equals(playerId);
             if (effect.scope() == ManaColorLandScope.CONTROLLER ? !isSelf : isSelf) {
@@ -2052,8 +2052,7 @@ public class ActivatedAbilityExecutionService {
                     continue;
                 }
                 landManaTypeSupport.manaTypesCouldProduce(gameData, p).stream()
-                        .filter(color -> color != ManaColor.COLORLESS)
-                        .map(color -> CardColor.valueOf(color.name()))
+                        .filter(color -> effect.includeColorless() || color != ManaColor.COLORLESS)
                         .forEach(colors::add);
             }
         }

@@ -178,6 +178,7 @@ class NovaPentacleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainLightning(), new ChainLightning()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, indexOf(player1, pentacle), null, null);
@@ -185,7 +186,9 @@ class NovaPentacleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
         harness.assertInGraveyard(player1, "Wall of Earth");
         harness.activateAbility(player1, indexOf(player1, source), null, player1.getId());
         harness.passBothPriorities();

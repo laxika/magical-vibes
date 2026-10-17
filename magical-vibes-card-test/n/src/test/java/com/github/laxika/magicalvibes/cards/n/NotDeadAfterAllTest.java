@@ -8,8 +8,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -120,8 +125,14 @@ class NotDeadAfterAllTest extends BaseCardTest {
 
     @Test
     void stolenCreatureReturnsToOwnerButRoleBelongsToTriggerController() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MinecartDaredevil());
+        MinecartDaredevil stolenCard = new MinecartDaredevil();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, stolenCard);
         gd.stolenCreatures.put(creature.getId(), player2.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), creature,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
 
         castOn(creature);
         destroy(player2, creature);

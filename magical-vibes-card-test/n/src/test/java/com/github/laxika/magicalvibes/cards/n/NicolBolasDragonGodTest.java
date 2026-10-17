@@ -148,6 +148,7 @@ class NicolBolasDragonGodTest extends BaseCardTest {
         Card handCard = new PrimordialWurm();
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(handCard));
 
         harness.activateAbility(player1, battlefieldIndex(player1, nicol), 0, null, null);
@@ -166,6 +167,7 @@ class NicolBolasDragonGodTest extends BaseCardTest {
         Permanent nicol = addReadyNicol(player1, 4);
         Card drawn = new PrimordialWurm();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, battlefieldIndex(player1, nicol), 0, null, null);

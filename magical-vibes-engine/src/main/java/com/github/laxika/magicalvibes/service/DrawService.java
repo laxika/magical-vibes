@@ -684,18 +684,31 @@ public class DrawService {
 
         // Notion Thief — if an opponent of the source's controller would draw a card except the first
         // one they draw in each of their draw steps, that player skips the draw and the controller
-        // draws a card instead.
+        // draws a card instead. The replacement draw is itself such a draw, so an opposing Notion Thief
+        // may redirect it back once; each Thief applies only once to the original draw (CR 614.5).
         if (!firstDrawStepDraw) {
             Card notionThief = findOpponentExtraDrawsRedirectedSourceCard(gameData, playerId);
             if (notionThief != null) {
                 UUID thiefController = gameQueryService.getOpponentId(gameData, playerId);
+                UUID extraDrawer = thiefController;
+                Card returningThief = findOpponentExtraDrawsRedirectedSourceCard(gameData, thiefController);
+                if (returningThief != null) {
+                    extraDrawer = playerId;
+                }
                 gameLogService.append(gameData, GameLog.builder()
                         .text(gameData.playerIdToName.get(playerId) + " skips a draw — ")
                         .card(notionThief)
                         .text(" makes " + gameData.playerIdToName.get(thiefController) + " draw a card instead.")
                         .build());
-                if (!performEmptyHandReplacementDraw(gameData, thiefController)) {
-                    performDrawCard(gameData, thiefController);
+                if (returningThief != null) {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(gameData.playerIdToName.get(thiefController) + " skips the extra draw — ")
+                            .card(returningThief)
+                            .text(" makes " + gameData.playerIdToName.get(playerId) + " draw a card instead.")
+                            .build());
+                }
+                if (!performEmptyHandReplacementDraw(gameData, extraDrawer)) {
+                    performDrawCard(gameData, extraDrawer);
                 }
                 return;
             }

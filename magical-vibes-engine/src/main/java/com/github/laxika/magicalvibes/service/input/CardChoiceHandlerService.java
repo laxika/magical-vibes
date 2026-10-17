@@ -1142,6 +1142,18 @@ public class CardChoiceHandlerService {
      */
     public void completeRandomDiscardToLibraryChoice(GameData gameData, Player player, boolean accepted,
                                                      UUID cardId) {
+        completeDiscardToLibraryChoice(gameData, player, accepted, cardId, true);
+    }
+
+    /**
+     * Completes a discard whose card stayed in hand while its owner decided whether to put it on
+     * top of their library instead of into their graveyard.
+     *
+     * @param atRandom whether the card was chosen at random (the log then doesn't name a card put
+     *                 on top of the library)
+     */
+    public void completeDiscardToLibraryChoice(GameData gameData, Player player, boolean accepted,
+                                               UUID cardId, boolean atRandom) {
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand == null ? null : hand.stream()
@@ -1151,11 +1163,12 @@ public class CardChoiceHandlerService {
         if (card != null) {
             hand.remove(card);
             graveyardService.discardCard(gameData, playerId, card, accepted);
+            String suffix = atRandom ? " at random." : ".";
             if (accepted) {
-                gameLogService.append(gameData, GameLog.text(player.getUsername() + " discards a card at random."));
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " discards a card" + suffix));
             } else {
                 gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " discards ", card, " at random."));
+                        player.getUsername() + " discards ", card, suffix));
             }
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
         }
@@ -1534,6 +1547,10 @@ public class CardChoiceHandlerService {
                 && discardedCard.hasType(followUp.thenEffectAlternateCardType())) {
             selectedThenEffect = followUp.thenEffectAlternate();
         }
+        if (discardedCard != null && gameData.pendingEffectResolutionEntry != null
+                && gameData.pendingEffectResolutionEntry.getDiscardedCardSnapshot() == null) {
+            gameData.pendingEffectResolutionEntry.setDiscardedCardSnapshot(discardedCard.createCardCopy());
+        }
         boolean thenEffectConditionMet = followUp.thenEffectCondition() == null
                 || discardedCard != null && predicateEvaluationService.matchesCardPredicate(
                         discardedCard, followUp.thenEffectCondition(), followUp.thenEffectSourceCard().getId());
@@ -1550,6 +1567,15 @@ public class CardChoiceHandlerService {
                 discardedTypes.addAll(discardedCard.getAdditionalTypes());
                 thenEffect = typeCountDamage.withDamage(
                         new com.github.laxika.magicalvibes.model.amount.Fixed(discardedTypes.size()));
+            }
+            if (discardedCard != null
+                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect manaValueDamage
+                    && manaValueDamage.damage() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue) {
+                // The reflexive trigger's damage is that card's mana value as it was discarded; a card
+                // discarded later (in response) must not change it.
+                thenEffect = new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect(
+                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
+                        manaValueDamage.targetRestriction(), manaValueDamage.exileInsteadOfDie());
             }
             Card sourceCard = followUp.thenEffectSourceCard();
 
@@ -2192,6 +2218,8 @@ public class CardChoiceHandlerService {
 
             // Discard chosen cards to graveyard (or battlefield if replacement effect applies)
             List<Card> replacedCards = new ArrayList<>();
+            List<Card> awaitingReplacementChoice = new ArrayList<>();
+            Card replacementSource;
             for (Card discarded : chosenCards) {
                 if (hasEnterBattlefieldOnDiscardEffect(discarded) && gameData.discardCausedByOpponent) {
                     Permanent permanent = new Permanent(discarded);
@@ -2202,12 +2230,28 @@ public class CardChoiceHandlerService {
                             targetName + " discards ", discarded, " — it enters the battlefield instead."));
                     log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
                             gameData.id, targetName, discarded.getName());
+                } else if (!discarded.isToken()
+                        && (replacementSource = graveyardService.findDiscardToLibraryReplacementSource(
+                        gameData, targetPlayerId)) != null) {
+                    // The discarding player decides whether the card goes on top of their library
+                    // instead; it waits in hand until then and discard triggers fire afterwards.
+                    gameData.playerHands.get(targetPlayerId).add(discarded);
+                    awaitingReplacementChoice.add(discarded);
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            replacementSource, targetPlayerId,
+                            List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                            "Put " + discarded.getName() + " on top of your library instead of into your graveyard?",
+                            discarded.getId(), (String) null, (UUID) null, null, 0, 0, null, null, null, null,
+                            null, null, 1));
                 } else {
                     graveyardService.discardCard(gameData, targetPlayerId, discarded);
                 }
             }
+            List<Card> discardedCards = chosenCards.stream()
+                    .filter(c -> !awaitingReplacementChoice.contains(c))
+                    .toList();
 
-            List<Card> normallyDiscarded = chosenCards.stream()
+            List<Card> normallyDiscarded = discardedCards.stream()
                     .filter(c -> !replacedCards.contains(c))
                     .toList();
             if (!normallyDiscarded.isEmpty()) {
@@ -2219,7 +2263,7 @@ public class CardChoiceHandlerService {
             }
 
             triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
-            for (Card discarded : chosenCards) {
+            for (Card discarded : discardedCards) {
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, discarded);
             }
             triggerCollectionService.finishDiscardEvent(gameData);
@@ -2594,68 +2638,40 @@ public class CardChoiceHandlerService {
             return;
         }
 
-        // Discard stage: cardIndex is into the revealed set; map it back to the hand.
+        // Discard stage: cardIndex is into the revealed set. A multi-pick choice (Noggin Whack) keeps
+        // the earlier picks in hand until the last pick, then they all leave together.
         UUID chosenId = choice.revealedCardIds().get(cardIndex);
-        int handIndex = -1;
-        for (int i = 0; i < targetHand.size(); i++) {
-            if (targetHand.get(i).getId().equals(chosenId)) {
-                handIndex = i;
-                break;
-            }
-        }
-        gameData.interaction.clearAwaitingInput();
-        if (handIndex >= 0) {
-            Card card = targetHand.get(handIndex);
-            if (choice.destination() == HandChoiceDestination.KEEP_IN_HAND) {
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        card,
-                        choice.controllerId(),
-                        List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
-                        "Cast " + card.getName() + " without paying its mana cost?"));
-            } else {
-                targetHand.remove(handIndex);
-                String controllerName = player.getUsername();
-
-                if (choice.destination() == HandChoiceDestination.EXILE) {
-                    if (choice.sourcePermanentId() != null) {
-                        exileService.exileCard(gameData, targetPlayerId, card, choice.sourcePermanentId());
-                    } else {
-                        exileService.exileCard(gameData, targetPlayerId, card);
-                    }
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            controllerName + " chooses ", card, " and exiles it from " + targetName + "'s hand."));
-                    log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, controllerName, card.getName(), targetName);
-                } else if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
-                    Permanent permanent = new Permanent(card);
-                    battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
-                            gameData, targetPlayerId, permanent);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                        targetName + " discards ", card, " — it enters the battlefield instead."));
-                log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
-                        gameData.id, targetName, card.getName());
-                    triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
-                    if (card.hasType(CardType.CREATURE)) {
-                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
-                    }
-                } else {
-                    graveyardService.discardCard(gameData, targetPlayerId, card);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            controllerName + " chooses ", card, "; " + targetName + " discards it."));
-                    log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
-                    triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
-                }
-            }
-        }
-
-        // More cards left to discard (e.g. Noggin Whack chooses two)? Prompt for the next one over
-        // the remaining revealed cards before resolving any triggers or the rest of the spell.
         int remainingDiscards = choice.remainingCount() - 1;
+        List<UUID> remainingRevealed = new ArrayList<>(choice.revealedCardIds());
+        remainingRevealed.remove(chosenId);
+        gameData.interaction.clearAwaitingInput();
+
+        if (choice.destination() != HandChoiceDestination.KEEP_IN_HAND
+                && remainingDiscards > 0 && !remainingRevealed.isEmpty()) {
+            List<UUID> chosenIds = new ArrayList<>(choice.chosenCardIds());
+            chosenIds.add(chosenId);
+            List<Integer> validIndices = new ArrayList<>();
+            for (int i = 0; i < remainingRevealed.size(); i++) {
+                validIndices.add(i);
+            }
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
+                    choice.controllerId(), targetPlayerId, choice.controllerId(), false, validIndices,
+                    remainingDiscards, remainingRevealed, choice.discardCount(), choice.destination(),
+                    choice.sourcePermanentId(), chosenIds));
+            return;
+        }
+
+        List<UUID> toDiscard = new ArrayList<>(choice.chosenCardIds());
+        toDiscard.add(chosenId);
+        for (UUID id : toDiscard) {
+            applyRevealedDiscardChoice(gameData, player, choice, id);
+        }
+
         if (choice.destination() == HandChoiceDestination.EXILE
                 && (remainingDiscards <= 0 || targetHand.isEmpty())) {
             triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, targetPlayerId, 1);
         }
-        List<UUID> remainingRevealed = new ArrayList<>(choice.revealedCardIds());
-        remainingRevealed.remove(chosenId);
+
         if (remainingDiscards > 0 && !remainingRevealed.isEmpty()) {
             playerInteractionSupport.beginRevealCardsDiscardStageContinuation(gameData, targetPlayerId,
                     choice.controllerId(), remainingRevealed, remainingDiscards, choice.discardCount(),
@@ -2677,6 +2693,70 @@ public class CardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * Applies one card the controller picked in the discard stage of a reveal-and-discard choice.
+     * A KEEP_IN_HAND pick offers a free cast and leaves the card in hand; otherwise the card is
+     * removed from the target's hand, exiled or discarded.
+     */
+    private void applyRevealedDiscardChoice(GameData gameData, Player player,
+                                            PendingInteraction.RevealCardsDiscardChoice choice, UUID cardId) {
+        UUID targetPlayerId = choice.targetPlayerId();
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        int handIndex = -1;
+        for (int i = 0; i < targetHand.size(); i++) {
+            if (targetHand.get(i).getId().equals(cardId)) {
+                handIndex = i;
+                break;
+            }
+        }
+        if (handIndex < 0) {
+            return;
+        }
+        Card card = targetHand.get(handIndex);
+        if (choice.destination() == HandChoiceDestination.KEEP_IN_HAND) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    card,
+                    choice.controllerId(),
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
+                    "Cast " + card.getName() + " without paying its mana cost?"));
+            return;
+        }
+
+        targetHand.remove(handIndex);
+        String controllerName = player.getUsername();
+
+        if (choice.destination() == HandChoiceDestination.EXILE) {
+            if (choice.sourcePermanentId() != null) {
+                exileService.exileCard(gameData, targetPlayerId, card, choice.sourcePermanentId());
+            } else {
+                exileService.exileCard(gameData, targetPlayerId, card);
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    controllerName + " chooses ", card, " and exiles it from " + targetName + "'s hand."));
+            log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, controllerName, card.getName(), targetName);
+        } else if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                    gameData, targetPlayerId, permanent);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    targetName + " discards ", card, " — it enters the battlefield instead."));
+            log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
+                    gameData.id, targetName, card.getName());
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            if (card.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
+            }
+        } else {
+            graveyardService.discardCard(gameData, targetPlayerId, card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    controllerName + " chooses ", card, "; " + targetName + " discards it."));
+            log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+        }
     }
 
     /**

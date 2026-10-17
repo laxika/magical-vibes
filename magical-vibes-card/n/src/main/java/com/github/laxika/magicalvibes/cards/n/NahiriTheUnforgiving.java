@@ -39,7 +39,7 @@ public class NahiriTheUnforgiving extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DiscardAndDrawCardEffect()),
+                List.of(DiscardAndDrawCardEffect.thenDraw(1, 1)),
                 "+1: Discard a card, then draw a card."));
 
         addActivatedAbility(new ActivatedAbility(

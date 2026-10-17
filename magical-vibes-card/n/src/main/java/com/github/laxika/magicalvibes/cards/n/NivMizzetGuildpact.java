@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
 import com.github.laxika.magicalvibes.model.amount.DistinctColorPairsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -25,7 +28,11 @@ import java.util.List;
 public class NivMizzetGuildpact extends Card {
 
     public NivMizzetGuildpact() {
-        DistinctColorPairsAmongControlledPermanents colorPairs = new DistinctColorPairsAmongControlledPermanents();
+        removeKeyword(Keyword.HEXPROOF);
+        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromMulticolored());
+        // X is determined once as the trigger resolves, so the damage dealt to a color-pair permanent
+        // cannot reduce the draw or life gain (CR 608.2h).
+        DeterminedOnce colorPairs = new DeterminedOnce(new DistinctColorPairsAmongControlledPermanents());
         TargetFilter anyTarget = new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

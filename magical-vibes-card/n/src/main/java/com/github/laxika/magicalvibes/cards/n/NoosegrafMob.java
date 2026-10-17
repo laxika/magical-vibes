@@ -22,6 +22,7 @@ public class NoosegrafMob extends Card {
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null, List.of(
                         new RemoveCounterFromSourceThenEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, CreateTokenEffect.blackZombie(1)))));
+                                CounterType.PLUS_ONE_PLUS_ONE, 1, CreateTokenEffect.blackZombie(1),
+                                false, false))));
     }
 }

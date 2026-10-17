@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -22,6 +23,6 @@ public class NashiSearcherInTheDark extends Card {
                 new CardTypePredicate(CardType.ENCHANTMENT)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect(
-                        new EventValue(), legendaryOrEnchantment, new EventValue()));
+                        new EventValue(), legendaryOrEnchantment, new Fixed(Integer.MAX_VALUE)));
     }
 }

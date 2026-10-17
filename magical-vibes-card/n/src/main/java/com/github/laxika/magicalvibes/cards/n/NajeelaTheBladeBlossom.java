@@ -34,7 +34,7 @@ public class NajeelaTheBladeBlossom extends Card {
         MayEffect createToken = new MayEffect(
                 new CreateTokenForTriggeringPlayerEffect(
                         new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.WHITE,
-                                List.of(CardSubtype.WARRIOR), true)),
+                                List.of(CardSubtype.WARRIOR), true), false, true),
                 "Have its controller create a 1/1 white Warrior creature token that's tapped and attacking?");
         addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(

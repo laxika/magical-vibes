@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -29,7 +30,8 @@ public class NoggleHedgeMage extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                         new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET),
-                                "Tap two target permanents?")));
+                                "Tap two target permanents?")),
+                        TriggerMode.INDEPENDENT);
 
         // When this creature enters, if you control two or more Mountains, you may have this creature
         // deal 2 damage to target player or planeswalker. Independent intervening-if gate; targets a
@@ -40,6 +42,7 @@ public class NoggleHedgeMage extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
                         new MayEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),
-                                "Deal 2 damage to target player or planeswalker?")));
+                                "Deal 2 damage to target player or planeswalker?")),
+                        TriggerMode.INDEPENDENT);
     }
 }

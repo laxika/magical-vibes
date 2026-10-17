@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +25,7 @@ public class NemataPrimevalWarden extends Card {
 
     public NemataPrimevalWarden() {
         addEffect(EffectSlot.STATIC, new ExileOpponentCreaturesInsteadOfDyingEffect(
-                false, saprolingToken()));
+                false, new QueueReflexiveAbilityEffect(saprolingToken())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateTokenCopyEffect;
@@ -48,7 +49,12 @@ public class ExileDyingCreatureAndCreateTokenCopyEffectHandler implements Normal
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCardId);
         exileService.exileCard(gameData, ownerId, dyingCard);
-        tokenCopySupport.createTokenCopies(gameData, entry, List.of(dyingCard), null,
+        // The token copies the creature as it last existed on the battlefield, so a creature that was
+        // copying another one is copied as that copy, not as the card in the graveyard (CR 707.2).
+        Permanent departed = gameData.departedPermanentSnapshots.get(dyingCardId);
+        Card cardToCopy = departed != null && departed.getCard() != departed.getOriginalCard()
+                ? departed.getCard() : dyingCard;
+        tokenCopySupport.createTokenCopies(gameData, entry, List.of(cardToCopy), null,
                 entry.getControllerId(), e.tokenCopyEffect());
     }
 }

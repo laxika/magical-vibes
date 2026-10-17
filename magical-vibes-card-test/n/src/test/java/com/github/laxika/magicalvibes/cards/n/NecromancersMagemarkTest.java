@@ -5,6 +5,10 @@ import com.github.laxika.magicalvibes.cards.m.Mortify;
 import com.github.laxika.magicalvibes.cards.o.OstiaryThrull;
 import com.github.laxika.magicalvibes.cards.p.PilloryOfTheSleepless;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -155,6 +160,10 @@ class NecromancersMagemarkTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new OstiaryThrull());
         Card creatureCard = creature.getCard();
         gd.stolenCreatures.put(creature.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, player1.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), creature.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         attach(new NecromancersMagemark(), creature, player1);
 
         destroyWithMortify(creature);

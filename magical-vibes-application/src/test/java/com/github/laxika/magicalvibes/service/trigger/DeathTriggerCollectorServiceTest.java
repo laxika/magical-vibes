@@ -926,7 +926,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleReturnSourceAura(match(perm, PLAYER2_ID, effect), effect, ctx);
 
-            var resolved = (ReturnSourceAuraToOpponentCreatureOnDeathEffect) gd.stack.get(0).getEffectsToResolve().get(0);
+            var resolved = (ReturnSourceAuraToOpponentCreatureOnDeathEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.enchantedCreatureControllerId()).isEqualTo(PLAYER1_ID);
         }
 
@@ -1700,8 +1700,9 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
             assertThat(svc.handleReturnDyingCreatureMayPay(match(perm, PLAYER1_ID, rawMayPay), returnEffect, ctx)).isTrue();
-            assertThat(gd.pendingMayAbilities).hasSize(1);
-            assertThat(gd.pendingMayAbilities.get(0).manaCost()).isEqualTo("{4}");
+            assertThat(gd.stack).hasSize(1);
+            var onStack = (MayPayManaEffect) gd.stack.get(0).getEffectsToResolve().get(0);
+            assertThat(onStack.manaCost()).isEqualTo("{4}");
         }
 
         @Test

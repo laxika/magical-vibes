@@ -6,8 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "604")
 public class NighthawkDarkDefender extends Card {
@@ -17,7 +21,8 @@ public class NighthawkDarkDefender extends Card {
         // until end of turn.
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.HERO),
+                        new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(),
+                                new CardSubtypePredicate(CardSubtype.HERO))),
                         new BoostTargetCreatureEffect(1, 1)));
     }
 }

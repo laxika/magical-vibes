@@ -31,7 +31,7 @@ public class NinjaPizza extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD)
         ));
 
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, foodToken());
+        addEffect(EffectSlot.SECOND_MAIN_PHASE_TRIGGERED, foodToken());
     }
 
     private static CreateTokenEffect foodToken() {

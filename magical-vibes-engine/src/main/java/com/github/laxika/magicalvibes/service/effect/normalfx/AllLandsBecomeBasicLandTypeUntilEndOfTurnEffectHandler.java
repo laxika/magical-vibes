@@ -4,16 +4,19 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsBecomeBasicLandTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -36,8 +39,10 @@ public class AllLandsBecomeBasicLandTypeUntilEndOfTurnEffectHandler implements N
                 if (!gameQueryService.isLand(gameData, permanent)) {
                     continue;
                 }
-                GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
-                        permanent, e.subtype(), EffectDuration.UNTIL_END_OF_TURN, true);
+                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                        entry.getControllerId(), new GrantSubtypeEffect(e.subtype(), GrantScope.TARGET, true),
+                        permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
                 count++;
             }
         }

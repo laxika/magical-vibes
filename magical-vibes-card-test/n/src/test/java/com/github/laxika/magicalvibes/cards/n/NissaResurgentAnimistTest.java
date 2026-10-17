@@ -166,6 +166,7 @@ class NissaResurgentAnimistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new NissaResurgentAnimist());
         harness.setLibrary(player1, List.of(new LlanowarElves(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of());
         resolveLandfall(new Forest());
         resolveLandfall(new Forest());

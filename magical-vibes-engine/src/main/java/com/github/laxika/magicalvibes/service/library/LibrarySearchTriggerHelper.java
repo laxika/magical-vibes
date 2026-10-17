@@ -57,4 +57,22 @@ public final class LibrarySearchTriggerHelper {
             }
         });
     }
+
+    /**
+     * Whether any permanent on the battlefield cares about library searches at all. An optional
+     * search of an empty library is only worth offering when this is true, since nothing else about
+     * the search is observable.
+     */
+    public static boolean anyPermanentReactsToLibrarySearches(GameData gameData) {
+        boolean[] found = {false};
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            for (var perm : battlefield) {
+                if (!perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_SEARCHES_LIBRARY).isEmpty()
+                        || !perm.getCard().getEffects(EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY).isEmpty()) {
+                    found[0] = true;
+                }
+            }
+        });
+        return found[0];
+    }
 }

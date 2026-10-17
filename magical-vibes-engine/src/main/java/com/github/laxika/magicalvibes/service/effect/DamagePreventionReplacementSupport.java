@@ -32,7 +32,8 @@ public class DamagePreventionReplacementSupport {
         if (damage <= 0 || !gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
 
         List<Permanent> sources = damageToControllerCounterOnSelfSources(gameData, playerId);
-        return sources.isEmpty() ? 0 : preventDamageToControllerAndPutCounterOnSelf(gameData, sources.getFirst(), damage);
+        return sources.isEmpty() ? 0
+                : preventDamageToControllerAndPutCounterOnSelf(gameData, sources.getFirst(), damage, true);
     }
 
     /** The permanents {@code playerId} controls that prevent damage to them and take counters for it. */
@@ -42,27 +43,37 @@ public class DamagePreventionReplacementSupport {
                 .toList();
     }
 
-    /** Prevents {@code damage} to {@code source}'s controller and puts its counters on it. */
-    public int preventDamageToControllerAndPutCounterOnSelf(GameData gameData, Permanent source, int damage) {
+    /**
+     * Applies {@code source}'s prevention to {@code damage} and puts its counters on it. Unpreventable
+     * damage still gets the counters, but nothing is prevented (CR 615.12).
+     *
+     * @param preventable whether the damage can be prevented
+     * @return the damage prevented
+     */
+    public int preventDamageToControllerAndPutCounterOnSelf(GameData gameData, Permanent source, int damage,
+                                                             boolean preventable) {
         PreventDamageToControllerAndPutCounterOnSelfEffect effect = findDamagePreventionEffect(gameData, source);
         if (damage <= 0 || effect == null) return 0;
 
         int counterCount = effect.putThatManyCounters() ? damage : 1;
         permanentCounterSupport.placeCounterOnPermanent(
                 gameData, null, source, effect.counterType(), counterCount);
-        return damage;
+        return preventable ? damage : 0;
     }
 
     private PreventDamageToControllerAndPutCounterOnSelfEffect findDamagePreventionEffect(
             GameData gameData, Permanent permanent) {
-        PreventDamageToControllerAndPutCounterOnSelfEffect printedEffect = permanent.getCard()
-                .getEffects(EffectSlot.STATIC).stream()
-                .filter(PreventDamageToControllerAndPutCounterOnSelfEffect.class::isInstance)
-                .map(PreventDamageToControllerAndPutCounterOnSelfEffect.class::cast)
-                .findFirst()
-                .orElse(null);
-        if (printedEffect != null) {
-            return printedEffect;
+        if (gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                PreventDamageToControllerAndPutCounterOnSelfEffect.class)) {
+            PreventDamageToControllerAndPutCounterOnSelfEffect printedEffect = permanent.getCard()
+                    .getEffects(EffectSlot.STATIC).stream()
+                    .filter(PreventDamageToControllerAndPutCounterOnSelfEffect.class::isInstance)
+                    .map(PreventDamageToControllerAndPutCounterOnSelfEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (printedEffect != null) {
+                return printedEffect;
+            }
         }
 
         return gameQueryService.getGrantedEffects(gameData, permanent).stream()

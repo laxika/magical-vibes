@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,7 +20,7 @@ public class NissasZendikon extends Card {
     public NissasZendikon() {
         target(TargetFilters.land())
                 .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
-                        4, 4, CardColor.GREEN, List.of(CardSubtype.ELEMENTAL)))
+                        4, 4, null, List.of(CardSubtype.ELEMENTAL)))
                 .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                         Set.of(Keyword.REACH, Keyword.HASTE), GrantScope.ENCHANTED_PERMANENT));
 

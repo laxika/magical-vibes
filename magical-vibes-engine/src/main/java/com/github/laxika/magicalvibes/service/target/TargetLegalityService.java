@@ -152,8 +152,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -205,6 +207,9 @@ public class TargetLegalityService {
                 ? findAnyEntryOnStack(gameData, targetId)
                 : findSpellOnStack(gameData, targetId);
         if (targetSpell == null) {
+            if (!includeAbilities && targetFilter instanceof StackEntryPredicateTargetFilter predicateFilter) {
+                return Optional.of(predicateFilter.errorMessage());
+            }
             return Optional.of(includeAbilities
                     ? "Target must be a spell or ability on the stack"
                     : "Target must be a spell on the stack");
@@ -3017,21 +3022,33 @@ public class TargetLegalityService {
         int pureCreatures = 0;
         int pureLands = 0;
         int duals = 0;
+        Map<UUID, Integer> occurrences = new HashMap<>();
         for (UUID id : targetIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            occurrences.merge(id, 1, Integer::sum);
+        }
+        for (Map.Entry<UUID, Integer> entry : occurrences.entrySet()) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, entry.getKey());
             if (permanent == null) {
                 continue;
             }
             boolean creature = gameQueryService.isCreature(gameData, permanent);
             boolean land = gameQueryService.isLand(gameData, permanent);
-            if (creature && land) {
+            if (!creature && !land) {
+                return false;
+            }
+            int chosenCount = entry.getValue();
+            if (chosenCount > 2 || (chosenCount == 2 && !(creature && land))) {
+                return false;
+            }
+            if (chosenCount == 2) {
+                pureCreatures++;
+                pureLands++;
+            } else if (creature && land) {
                 duals++;
             } else if (creature) {
                 pureCreatures++;
-            } else if (land) {
-                pureLands++;
             } else {
-                return false;
+                pureLands++;
             }
         }
         if (pureCreatures > 2 || pureLands > 2) {
@@ -4294,8 +4311,7 @@ public class TargetLegalityService {
         if (entryType == StackEntryType.TRIGGERED_ABILITY || entryType == StackEntryType.ACTIVATED_ABILITY) {
             return false;
         }
-        if (gameQueryService.hasProtectionFromSourceSubtypes(targetPerm, entry.getCard())
-                || gameQueryService.hasProtectionFromSourceSubtypes(gameData, targetPerm, entry.getCard())) {
+        if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, targetPerm, entry.getCard())) {
             return true;
         }
         Set<CardColor> spellColors = effectiveSpellColors(gameData, entry);
@@ -4372,7 +4388,7 @@ public class TargetLegalityService {
     private boolean isHexproofFromColorBlocked(GameData gameData, Permanent targetPerm, StackEntry entry) {
         if (entry.getCard() == null) return false;
         Set<CardColor> sourceColors = effectiveSourceColors(gameData, entry);
-        if (sourceColors.size() == 1 && gameQueryService.hasHexproofFromMonocolored(gameData, targetPerm)
+        if (gameQueryService.hasHexproofFromColorCount(gameData, targetPerm, sourceColors.size())
                 && !(gameQueryService.isCreature(gameData, targetPerm)
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, entry.getControllerId()))) {
             UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
@@ -4390,16 +4406,20 @@ public class TargetLegalityService {
         return false;
     }
 
+    private static String colorCountWord(int sourceColorCount) {
+        return sourceColorCount == 1 ? "monocolored" : "multicolored";
+    }
+
     private void validateHexproofFromColor(GameData gameData, Permanent target, Card sourceCard, UUID sourcePlayerId) {
         if (sourceCard == null) return;
-        if (effectiveSourceColors(gameData, sourceCard).size() == 1
-                && gameQueryService.hasHexproofFromMonocolored(gameData, target)
+        int sourceColorCount = effectiveSourceColors(gameData, sourceCard).size();
+        if (gameQueryService.hasHexproofFromColorCount(gameData, target, sourceColorCount)
                 && !(gameQueryService.isCreature(gameData, target)
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId))) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {
                 throw new IllegalStateException(target.getCard().getName()
-                        + " has hexproof from monocolored");
+                        + " has hexproof from " + colorCountWord(sourceColorCount));
             }
         }
         for (CardColor sourceColor : effectiveSourceColors(gameData, sourceCard)) {
@@ -4421,13 +4441,13 @@ public class TargetLegalityService {
 
     private String hexproofFromColorReason(GameData gameData, Permanent target, Card sourceCard, UUID sourcePlayerId) {
         if (sourceCard == null) return null;
-        if (effectiveSourceColors(gameData, sourceCard).size() == 1
-                && gameQueryService.hasHexproofFromMonocolored(gameData, target)
+        int sourceColorCount = effectiveSourceColors(gameData, sourceCard).size();
+        if (gameQueryService.hasHexproofFromColorCount(gameData, target, sourceColorCount)
                 && !(gameQueryService.isCreature(gameData, target)
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId))) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                return target.getCard().getName() + " has hexproof from monocolored";
+                return target.getCard().getName() + " has hexproof from " + colorCountWord(sourceColorCount);
             }
         }
         for (CardColor sourceColor : effectiveSourceColors(gameData, sourceCard)) {
@@ -4746,8 +4766,7 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, card)) {
             return target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
         }
-        if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)
-                || gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, card)) {
+        if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
         }
         if (gameQueryService.hasProtectionFromSource(gameData, target, card, sourcePlayerId)) {
@@ -4820,6 +4839,7 @@ public class TargetLegalityService {
         if (allowSharedTargets && spellTargets != null && spellTargets.size() > 1) {
             // Shared targets are legal across groups; enforce uniqueness within each target group.
             int consumed = 0;
+            java.util.Map<Integer, Set<UUID>> targetsByScope = new java.util.HashMap<>();
             for (SpellTarget group : spellTargets) {
                 int groupSize = targetGroupSizes != null && group.getIndex() < targetGroupSizes.size()
                         ? targetGroupSizes.get(group.getIndex())
@@ -4830,6 +4850,15 @@ public class TargetLegalityService {
                 List<UUID> groupTargets = targetIds.subList(consumed, consumed + groupSize);
                 if (new HashSet<>(groupTargets).size() != groupTargets.size()) {
                     throw new IllegalStateException("All targets must be different");
+                }
+                if (group.getDistinctScope() >= 0) {
+                    Set<UUID> scopeTargets = targetsByScope.computeIfAbsent(group.getDistinctScope(),
+                            ignored -> new HashSet<>());
+                    for (UUID groupTarget : groupTargets) {
+                        if (!scopeTargets.add(groupTarget)) {
+                            throw new IllegalStateException("All targets must be different");
+                        }
+                    }
                 }
                 consumed += groupSize;
             }
@@ -5337,8 +5366,10 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryCastWithWarpCostPredicate) {
             return stackEntry.isCastWithWarp();
         }
-        if (predicate instanceof StackEntryIsCopyPredicate) {
-            return stackEntry.isCopy() && !stackEntry.isCastCopy();
+        if (predicate instanceof StackEntryIsCopyPredicate copyPredicate) {
+            return copyPredicate.castCopy()
+                    ? stackEntry.isCopy() && stackEntry.isCastCopy()
+                    : stackEntry.isCopy() && !stackEntry.isCastCopy();
         }
         if (predicate instanceof StackEntryKickedPredicate) {
             return stackEntry.wasKicked();

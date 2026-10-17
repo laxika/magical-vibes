@@ -80,7 +80,7 @@ class NyleasHuntmasterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.getGameService().playCard(
                 gd, player1, 0, 0, opponentCreature.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature you control");
+                .hasMessageContaining("has no targets as it is cast");
     }
 
     @Test

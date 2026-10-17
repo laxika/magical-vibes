@@ -20,7 +20,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link SearchLibraryAndGraveyardForNamedCardsToHandEffect}: auto-takes each listed name
- * from the graveyard when present, then queues the remainder as named library-to-hand picks via
+ * from the graveyard when it is not also in the library (otherwise the player picks the zone's copy
+ * in the named pick, which offers both), then queues the remainder as named library-to-hand picks via
  * {@link LibrarySearchSupport#startNextToHandPick} (single shuffle when the queue empties). If every
  * name was found in the graveyard, the library is still shuffled once — the instruction searches
  * both zones.
@@ -51,10 +52,16 @@ public class SearchLibraryAndGraveyardForNamedCardsToHandEffectHandler implement
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         List<String> remainingForLibrary = new ArrayList<>();
 
+        List<Card> deckForNames = gameData.playerDecks.get(controllerId);
         for (String cardName : effect.cardNames()) {
             Optional<Card> graveyardMatch = graveyard == null ? Optional.empty()
                     : graveyard.stream().filter(card -> cardName.equals(card.getName())).findFirst();
-            if (graveyardMatch.isPresent()) {
+            boolean inLibrary = deckForNames != null
+                    && deckForNames.stream().anyMatch(card -> cardName.equals(card.getName()));
+            if (graveyardMatch.isPresent() && inLibrary
+                    && !librarySearchSupport.isSearchPrevented(gameData, controllerId)) {
+                remainingForLibrary.add(cardName);
+            } else if (graveyardMatch.isPresent()) {
                 Card found = graveyardMatch.get();
                 graveyard.remove(found);
                 graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, found);
@@ -86,6 +93,6 @@ public class SearchLibraryAndGraveyardForNamedCardsToHandEffectHandler implement
         }
 
         librarySearchSupport.startNextToHandPick(gameData, controllerId,
-                LibrarySearchFollowUp.namedToHandPicks(remainingForLibrary));
+                LibrarySearchFollowUp.namedToHandPicksFromLibraryOrGraveyard(remainingForLibrary));
     }
 }

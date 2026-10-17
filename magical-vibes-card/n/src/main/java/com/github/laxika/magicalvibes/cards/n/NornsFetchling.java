@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -18,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class NornsFetchling extends Card {
 
     public NornsFetchling() {
+        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+
         ConjureCardNamedIntoHandEffect conjurePlains =
                 new ConjureCardNamedIntoHandEffect("Plains", false);
         SeekLibraryToHandEffect seekNonland = new SeekLibraryToHandEffect(

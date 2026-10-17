@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealUpToFiveNonlandCardsFro
 public class Vault21HouseGambit extends Card {
 
     public Vault21HouseGambit() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DiscardAndDrawCardEffect(1, 1));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardAndDrawCardEffect(1, 1));
+        addEffect(EffectSlot.SAGA_CHAPTER_I, DiscardAndDrawCardEffect.thenDraw(1, 1));
+        addEffect(EffectSlot.SAGA_CHAPTER_II, DiscardAndDrawCardEffect.thenDraw(1, 1));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffect());
     }

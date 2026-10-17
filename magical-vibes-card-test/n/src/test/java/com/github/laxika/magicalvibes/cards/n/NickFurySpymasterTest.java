@@ -29,17 +29,20 @@ class NickFurySpymasterTest extends BaseCardTest {
         harness.setHand(player1, List.of(creature));
         harness.setLibrary(player1, List.of(drawn));
 
-        declareAttackers(player1, List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
-        harness.handleCardChosen(player1, 0);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
+            harness.handleCardChosen(player1, 0);
+        });
 
         Permanent entered = findPermanent(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(entered.isTapped()).isTrue();
-        assertThat(entered.isAttackedThisTurn()).isTrue();
+        assertThat(entered.isAttacking()).isTrue();
+        assertThat(entered.isAttackedThisTurn()).isFalse();
         assertThat(gqs.hasKeyword(gd, entered, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 

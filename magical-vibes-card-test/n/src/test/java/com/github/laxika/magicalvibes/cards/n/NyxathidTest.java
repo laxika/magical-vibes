@@ -98,7 +98,7 @@ class NyxathidTest extends BaseCardTest {
     }
 
     private Permanent addNyxathid(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Nyxathid());
+        return harness.enterBattlefieldAndReturn(player, new Nyxathid());
     }
 
     private List<Card> handOf(int count) {

@@ -310,11 +310,14 @@ public class MayPenaltyChoiceHandlerService {
         boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
         if (!targetEntry.isCopy() && !isAbility) {
-            if (exileIfCountered) {
-                exileService.exileCard(gameData, counteredControllerId, targetEntry.getPhysicalCard());
-            } else {
-                graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
-                        targetEntry.getPhysicalCard(), targetEntry.getControllerId());
+            // Guile replaces the countering itself: the spell is exiled by its owner instead.
+            if (!counterSupport.applyControlledCounterExileReplacement(gameData, sourceControllerId, targetEntry)) {
+                if (exileIfCountered) {
+                    exileService.exileCard(gameData, targetEntry.getOwnerId(), targetEntry.getPhysicalCard());
+                } else {
+                    graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
+                            targetEntry.getPhysicalCard(), targetEntry.getControllerId());
+                }
             }
         }
 

@@ -65,7 +65,9 @@ class NighthawkDarkDefenderTest extends BaseCardTest {
 
     @Test
     void ownEntryCanTargetItself() {
-        Permanent source = harness.enterBattlefieldAndReturn(player1, new NighthawkDarkDefender());
+        harness.castFromHand(player1, new NighthawkDarkDefender(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.handlePermanentChosen(player1, source.getId());
         harness.passBothPriorities();
 

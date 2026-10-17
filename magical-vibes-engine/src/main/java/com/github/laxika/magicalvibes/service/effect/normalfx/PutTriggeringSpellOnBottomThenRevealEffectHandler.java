@@ -51,10 +51,21 @@ public class PutTriggeringSpellOnBottomThenRevealEffectHandler implements Normal
                 .filter(candidate -> candidate != entry)
                 .filter(candidate -> candidate.getCard() != null)
                 .filter(candidate -> triggeringCardId.equals(candidate.getCard().getId()))
-                .filter(candidate -> !candidate.isCopy())
                 .findFirst()
                 .orElse(null);
         if (spell == null) {
+            return;
+        }
+
+        if (spell.isCopy()) {
+            // A copy of a spell put into a library ceases to exist (CR 704.5e), so nothing is added to the
+            // library, but "if you do" still lets the reveal happen.
+            gameData.stack.remove(spell);
+            stateTriggerService.cleanupResolvedStateTrigger(gameData, spell);
+            gameLogService.append(gameData, GameLog.text("A copy of a spell is put on the bottom of its owner's library and ceases to exist."));
+            revealHandler.resolve(gameData, entry,
+                    new RevealUntilCardPredicateMayCastWithoutPayingManaEffect(
+                            ((PutTriggeringSpellOnBottomThenRevealEffect) effect).predicate()));
             return;
         }
 

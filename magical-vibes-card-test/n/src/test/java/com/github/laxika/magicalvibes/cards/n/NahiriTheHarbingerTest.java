@@ -143,7 +143,6 @@ class NahiriTheHarbingerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(nahiri.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

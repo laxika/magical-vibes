@@ -11,9 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link MillDefendingPlayerEffect} (Nemesis of Reason): the attacked player — the value
- * captured as the {@code ON_ATTACK} trigger's {@code attackedTargetId}, or the controller of the
- * attacked planeswalker — mills {@code count} cards. Reuses {@code GraveyardService.resolveMillPlayer}.
+ * Resolves {@link MillDefendingPlayerEffect} (Nemesis of Reason): the defending player captured when
+ * the attack was declared (the attacked player, the controller of the attacked planeswalker, or the
+ * protector of the attacked battle) mills {@code count} cards. The captured player is used so the
+ * mill still happens if the attacked permanent has left the battlefield. Reuses
+ * {@code GraveyardService.resolveMillPlayer}.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,9 +37,11 @@ public class MillDefendingPlayerEffectHandler implements NormalEffectHandlerBean
         if (attackedTargetId == null) {
             return;
         }
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : gameData.playerIds.contains(attackedTargetId)
+                        ? attackedTargetId
+                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (defendingPlayerId != null) {
             graveyardService.resolveMillPlayer(gameData, defendingPlayerId, mill.count());
         }

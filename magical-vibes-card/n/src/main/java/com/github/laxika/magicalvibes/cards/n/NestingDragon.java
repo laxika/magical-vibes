@@ -35,7 +35,7 @@ public class NestingDragon extends Card {
                 2,
                 CardColor.RED,
                 null,
-                List.of(CardSubtype.EGG),
+                List.of(CardSubtype.DRAGON, CardSubtype.EGG),
                 Set.of(Keyword.DEFENDER),
                 Set.of(),
                 false,

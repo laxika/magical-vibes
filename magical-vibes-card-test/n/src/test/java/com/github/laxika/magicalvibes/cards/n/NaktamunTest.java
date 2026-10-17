@@ -171,8 +171,8 @@ class NaktamunTest extends BaseCardTest {
 
         harness.inMutationScope(() -> planar.chaos(gd));
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onTop);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

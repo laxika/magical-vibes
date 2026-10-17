@@ -32,6 +32,7 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), revealedCreature));
 
         harness.castFromHand(player1, spell, "{1}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -57,6 +58,7 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest));
 
         harness.castFromHand(player1, spell, "{1}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
@@ -94,6 +96,7 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(revealedLand, revealedCreature, unrevealedLand));
 
         harness.castFromHand(player1, spell, "{1}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, -1);
@@ -117,6 +120,7 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(firstLand, secondLand));
 
         harness.castFromHand(player1, spell, "{1}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -142,6 +146,7 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.castSorcery(player1, 0);
@@ -160,6 +165,7 @@ class NeeraWildMageTest extends BaseCardTest {
         var neera = harness.addToBattlefieldAndReturn(player1, new NeeraWildMage());
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
         harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -167,6 +173,7 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, neera.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -188,10 +195,10 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castFromHand(player1, spell, "{1}{R}");
-        harness.handleMayAbilityChosen(player1, true);
         harness.castInstant(player2, 0, spell.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -220,6 +227,7 @@ class NeeraWildMageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, neera.getId());
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

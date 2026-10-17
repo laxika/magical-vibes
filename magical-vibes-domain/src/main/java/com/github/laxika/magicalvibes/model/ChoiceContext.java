@@ -321,9 +321,14 @@ public sealed interface ChoiceContext {
     }
 
     record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn,
-                             CardSubtype excludedReplacementCreatureType) implements ChoiceContext {
+                             CardSubtype excludedReplacementCreatureType,
+                             CardSubtype fixedReplacementCreatureType) implements ChoiceContext {
         public TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) {
-            this(targetId, untilEndOfTurn, CardSubtype.WALL);
+            this(targetId, untilEndOfTurn, CardSubtype.WALL, null);
+        }
+
+        public TextChangeFromWord(UUID targetId, boolean untilEndOfTurn, CardSubtype excludedReplacementCreatureType) {
+            this(targetId, untilEndOfTurn, excludedReplacementCreatureType, null);
         }
     }
 

@@ -192,7 +192,8 @@ class NezahalPrimalTideTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Nezahal, Primal Tide");
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(findPermanent(player1, "Nezahal, Primal Tide").isTapped()).isTrue();
     }
 
@@ -213,9 +214,10 @@ class NezahalPrimalTideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertNotOnBattlefield(player1, "Nezahal, Primal Tide");
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(findPermanent(player2, "Nezahal, Primal Tide").isTapped()).isTrue();
     }
 
@@ -249,8 +251,7 @@ class NezahalPrimalTideTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Nezahal, Primal Tide");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
-
-        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
     }

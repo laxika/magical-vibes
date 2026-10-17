@@ -161,9 +161,11 @@ class NascentMetamorphTest extends BaseCardTest {
         metamorph.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
-        declareAttackers(List.of(0));
-        chooseOpponentTarget(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            chooseOpponentTarget(player1);
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.getEffectivePower(gd, metamorph)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, metamorph)).isEqualTo(4);

@@ -73,8 +73,7 @@ public class EachPlayerChoosesOneCardOfEachColorThenDiscardsRestEffectHandler
         }
 
         Card selected = hand.get(cardIndex);
-        if (selected.hasType(CardType.LAND)
-                || !gameQueryService.getEffectiveCardColors(gameData, selected)
+        if (!gameQueryService.getEffectiveCardColors(gameData, selected)
                 .contains(COLORS.get(choice.colorIndex()))) {
             throw new IllegalStateException("Selected card is not a valid card of the chosen color");
         }
@@ -133,8 +132,7 @@ public class EachPlayerChoosesOneCardOfEachColorThenDiscardsRestEffectHandler
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (!card.hasType(CardType.LAND)
-                    && gameQueryService.getEffectiveCardColors(gameData, card).contains(color)) {
+            if (gameQueryService.getEffectiveCardColors(gameData, card).contains(color)) {
                 indices.add(i);
             }
         }

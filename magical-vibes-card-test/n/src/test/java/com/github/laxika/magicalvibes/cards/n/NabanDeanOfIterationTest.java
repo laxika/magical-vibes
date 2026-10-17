@@ -201,9 +201,11 @@ class NabanDeanOfIterationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MerfolkTrickster()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0, firstCreature.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, firstCreature.getId());
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handlePermanentChosen(player1, secondCreature.getId());
         assertThat(gd.stack).hasSize(2);

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class NylaShirshuSleuth extends Card {
 
     public NylaShirshuSleuth() {
-        TotalManaValueOfCardsExiledWithSource manaValue = new TotalManaValueOfCardsExiledWithSource();
+        EventValue manaValue = new EventValue();
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

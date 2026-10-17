@@ -24,7 +24,7 @@ class NerivCracklingVanguardTest extends BaseCardTest {
         Permanent neriv = harness.enterBattlefieldAndReturn(player1, new NerivCracklingVanguard());
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Goblin Token")).hasSize(2);
+        assertThat(findPermanents(player1, "Goblin")).hasSize(2);
         assertThat(neriv).isIn(gd.playerBattlefields.get(player1.getId()));
     }
 
@@ -98,6 +98,7 @@ class NerivCracklingVanguardTest extends BaseCardTest {
         Card exiledCard = new Forest();
         harness.setLibrary(player1, List.of(exiledCard, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(neriv)));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
@@ -132,7 +133,7 @@ class NerivCracklingVanguardTest extends BaseCardTest {
     @Test
     void anotherGoblinTokenDoesNotIncreaseTheDistinctNameCount() {
         Permanent neriv = enterNerivWithTokens();
-        addToken("Goblin Token");
+        addToken("Goblin");
         Card first = new Forest();
         Card second = new Forest();
         harness.setLibrary(player1, List.of(first, second));

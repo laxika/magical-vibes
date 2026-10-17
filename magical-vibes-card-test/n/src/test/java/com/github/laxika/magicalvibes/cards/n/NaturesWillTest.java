@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -140,6 +143,8 @@ class NaturesWillTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger affects lands present at resolution")
     void affectsLandsEnteringAfterCombatDamage() {
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
         harness.addToBattlefield(player1, new NaturesWill());
         addAttackingBears();
 
@@ -147,7 +152,7 @@ class NaturesWillTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         Permanent myLand = addTappedLand(player1);
         Permanent theirLand = addUntappedLand(player2);
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(myLand.isTapped()).isFalse();
         assertThat(theirLand.isTapped()).isTrue();

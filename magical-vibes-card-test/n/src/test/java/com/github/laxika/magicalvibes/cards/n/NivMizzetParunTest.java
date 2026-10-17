@@ -112,7 +112,7 @@ class NivMizzetParunTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PasswallAdept());
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
-        resolveAllTriggers();
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextDrawTriggerTarget(gd));
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
@@ -143,7 +143,7 @@ class NivMizzetParunTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
-        resolveAllTriggers();
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextDrawTriggerTarget(gd));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();

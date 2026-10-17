@@ -71,7 +71,7 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
         int eventValue = 0;
         for (Permanent target : toReturn) {
             int statValue = snapshotStat(gameData, target, e.stat());
-            if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+            if (permanentRemovalService.removePermanentToHand(gameData, target, true)) {
                 returned.add(target);
                 eventValue += statValue;
                 gameLogService.append(gameData,

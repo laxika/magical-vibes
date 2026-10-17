@@ -167,7 +167,7 @@ class NamorScourgeOfTheSeasTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).containsExactly("Grizzly Bears");
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {

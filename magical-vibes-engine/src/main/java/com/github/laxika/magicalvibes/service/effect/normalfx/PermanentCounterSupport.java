@@ -1183,10 +1183,10 @@ public class PermanentCounterSupport {
      * {@code count} -1/-1 counters just placed on {@code creature}. Every permanent on any battlefield
      * carrying {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE} (the global watcher,
      * Flourishing Defenses) triggers under its own controller. Permanents carrying
-     * {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE} (Nest of Scarabs) trigger
+     * {@link EffectSlot#ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE} trigger
      * only when their controller equals {@code placingPlayerId} — i.e. only when that player is the one
-     * putting the counters. Per the Gatherer ruling that ability triggers once for each individual
-     * counter, so a separate trigger is pushed per counter.
+     * putting the counters. Wording that triggers once for each individual counter gets a separate
+     * trigger pushed per counter.
      *
      * <p>Permanents carrying {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE}
      * (Auntie Ool, Cursewretch) are the global "one or more counters, do it once" variant: they
@@ -1258,20 +1258,22 @@ public class PermanentCounterSupport {
                             gameData.id, card.getName());
                 }
 
-                // Once-per-creature you-put watcher (Hapatra): fires a single trigger regardless of count.
+                // Once-per-creature you-put watcher (Hapatra, Nest of Scarabs): fires a single trigger
+                // regardless of count; the count is carried as the event value for "that many" effects.
                 List<CardEffect> youPutOnceEffects = placedByThisController
                         ? card.getEffects(EffectSlot.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE)
                         : List.of();
                 if (!youPutOnceEffects.isEmpty()) {
-                    gameData.stack.add(new StackEntry(
+                    StackEntry youPutOnceTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             controllerId,
                             card.getName() + "'s triggered ability",
                             new ArrayList<>(youPutOnceEffects),
                             null,
-                            source.getId()
-                    ));
+                            source.getId());
+                    youPutOnceTrigger.setEventValue(count);
+                    gameData.stack.add(youPutOnceTrigger);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                     log.info("Game {} - {} once-per-creature -1/-1-counter watcher fires", gameData.id, card.getName());
                 }

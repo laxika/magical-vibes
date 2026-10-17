@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class NaggingThoughts extends Card {
 
     public NaggingThoughts() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
         addCastingOption(new MadnessCast("{1}{U}"));
     }
 }

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
@@ -97,6 +98,7 @@ public class DamageSupport {
     private final ReplacementOrderService replacementOrderService;
     private final DamageJournalService damageJournalService;
     private final ObjectProvider<com.github.laxika.magicalvibes.service.combat.CombatDamageService> combatDamageService;
+    private final ObjectProvider<com.github.laxika.magicalvibes.service.input.PlayerInputService> playerInputService;
 
     /** Colours of a non-permanent damage source (spell/ability card), for colour-based prevention. */
     private static Set<CardColor> sourceCardColors(Card card) {
@@ -1362,8 +1364,13 @@ public class DamageSupport {
             if (entry.getSourcePermanentId() != null) {
                 Permanent triggerSourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 if (triggerSourcePermanent != null) {
+                    // "you may draw" belongs to the source's controller at damage time, which can differ
+                    // from the ability's controller if the source changed control while the ping was pending.
+                    UUID sourceControllerAtDamage = gameQueryService.findPermanentController(
+                            gameData, triggerSourcePermanent.getId());
                     triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(gameData, triggerSourcePermanent,
-                            entry.getControllerId(), playerId, effectiveDamage);
+                            sourceControllerAtDamage != null ? sourceControllerAtDamage : entry.getControllerId(),
+                            playerId, effectiveDamage);
                 }
             }
             triggerCollectionService.checkNoncombatDamageToOpponentTriggers(
@@ -1892,6 +1899,20 @@ public class DamageSupport {
                 p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(NefariousLichDamageReplacementEffect.class::isInstance));
         if (!hasEffect) return 0;
+
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Card> exilableCards = graveyard == null ? List.of() : graveyard.stream()
+                .filter(card -> !card.isToken() && !gameData.dynamicTokenCardIds.contains(card.getId()))
+                .toList();
+        if (exilableCards.size() > damage && !gameData.interaction.isAwaitingInput()
+                && gameData.graveyardTargetOperation.replacementGraveyardExile == null) {
+            gameData.graveyardTargetOperation.replacementGraveyardExile =
+                    new GraveyardTargetOperationState.ReplacementGraveyardExileContext(playerId, damage);
+            playerInputService.getObject().beginMultiGraveyardChoice(gameData, playerId, exilableCards,
+                    damage, damage, "Choose " + damage + " card" + (damage == 1 ? "" : "s")
+                            + " from your graveyard to exile instead of being dealt damage.");
+            return damage;
+        }
 
         if (!graveyardService.exileExactlyCardsFromGraveyard(gameData, playerId, damage)) {
             if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EFFECT) == LossOutcome.LOSES) {

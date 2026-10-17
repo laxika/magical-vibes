@@ -570,6 +570,8 @@ public class DestructionSupport {
                 .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                 .toList();
         beginSimultaneousCreatureDeaths(gameData, permanents);
+        // Sacrificed at the same time, so "another creature leaves" watchers that are also sacrificed still see the others leave.
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
             for (Permanent perm : permanents) {
                 UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(perm.getId());
@@ -578,6 +580,7 @@ public class DestructionSupport {
             triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
             endSimultaneousCreatureDeaths(gameData);
         }
     }

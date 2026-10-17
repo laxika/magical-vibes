@@ -453,7 +453,7 @@ public class EnterTriggerCollectorService {
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
                     new ArrayList<>(List.of(effect)),
-                    pe.enteringControllerId(),
+                    pe.defaultTargetPlayerId() != null ? pe.defaultTargetPlayerId() : pe.enteringControllerId(),
                     match.permanent().getId());
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(pe.mayPayTargetCardId());

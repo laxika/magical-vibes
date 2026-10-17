@@ -67,6 +67,7 @@ class NathanDrakeTreasureHunterTest extends BaseCardTest {
     void attackTriggerRequiresManaPayment() {
         addCreatureReady(player1, new NathanDrakeTreasureHunter());
         Card opposingSpell = new ZofShade();
+        opposingSpell.setOwnerId(player2.getId());
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of(opposingSpell));
         harness.addMana(player1, ManaColor.WHITE, 4);

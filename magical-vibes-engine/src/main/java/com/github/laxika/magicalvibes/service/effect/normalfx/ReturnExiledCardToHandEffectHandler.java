@@ -41,8 +41,12 @@ public class ReturnExiledCardToHandEffectHandler implements NormalEffectHandlerB
                 ? returnEffect.handPlayerId() : exiled.ownerId();
         gameData.addCardToHand(handPlayerId, card);
         String playerName = gameData.playerIdToName.get(handPlayerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", card,
-                " from exile into their hand."));
+        if (exiled.faceDown()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " puts a face-down card from exile into their hand."));
+        } else {
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", card,
+                    " from exile into their hand."));
+        }
         log.info("Game {} - {} returns {} from exile to hand", gameData.id, playerName, card.getName());
     }
 }

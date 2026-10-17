@@ -128,6 +128,12 @@ public record TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS_AND_ABILITIES, true, Set.of(), TargetColorMode.MONOCOLORED, true);
     }
 
+    /** Hexproof from multicolored sources — opponents' multicolored spells and abilities can't target. Niv-Mizzet, Guildpact. */
+    public static TargetingRestrictionEffect hexproofFromMulticolored() {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS_AND_ABILITIES, true, Set.of(), TargetColorMode.MULTICOLORED, true);
+    }
+
     /**
      * Can't be the target of spells of the given colors or abilities from sources of those colors,
      * regardless of who controls them — unlike {@link #hexproofFromColors(Set)}, the permanent's own

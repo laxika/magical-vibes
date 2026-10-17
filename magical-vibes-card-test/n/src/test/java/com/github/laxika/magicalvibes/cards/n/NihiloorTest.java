@@ -100,7 +100,7 @@ class NihiloorTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(nihiloor.getId()));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        nihiloor.setPowerModifier(-2);
+        nihiloor.setPowerModifier(-3);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);

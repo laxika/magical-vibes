@@ -269,7 +269,7 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.hasProtectionFromSourceSubtypes(perm, spell)).thenReturn(true);
+            when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, perm, spell)).thenReturn(true);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
 
@@ -1161,7 +1161,7 @@ class ValidTargetServiceTest {
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
-            when(gameQueryService.hasProtectionFromSourceSubtypes(creature, sourceCard)).thenReturn(true);
+            when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, creature, sourceCard)).thenReturn(true);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);

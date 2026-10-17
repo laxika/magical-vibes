@@ -33,6 +33,9 @@ public class NirkanaCutthroat extends Card {
 
         addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                new RemoveKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(3, CounterType.LEVEL)))),

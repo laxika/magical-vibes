@@ -51,9 +51,19 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
         }
 
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
-        Card targetCard = targetPermanent != null
-                ? targetPermanent.getCard()
-                : entry.lastKnownPermanentCard(targetId);
+        Card targetCard;
+        if (targetPermanent != null) {
+            targetCard = permanentCopierService.copiableCard(targetPermanent);
+        } else {
+            // The target already left the battlefield (Niko exiles it first): copy it as it last existed
+            // there, so a face-down creature is copied as a face-down 2/2 (CR 707.2).
+            Permanent departed = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(targetId))
+                    .findFirst().orElse(null);
+            targetCard = departed != null
+                    ? permanentCopierService.copiableCard(departed)
+                    : entry.lastKnownPermanentCard(targetId);
+        }
         if (targetPermanent == null && targetCard == null) {
             log.info("Game {} - temporary permanent copy target no longer exists", gameData.id);
             return;

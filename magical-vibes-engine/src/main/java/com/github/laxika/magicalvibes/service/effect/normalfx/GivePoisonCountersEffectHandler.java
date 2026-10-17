@@ -61,6 +61,12 @@ public class GivePoisonCountersEffectHandler implements NormalEffectHandlerBean 
                 UUID targetPermanentId = entry.getTargetId();
                 if (targetPermanentId == null) return;
                 UUID playerId = gameQueryService.findPermanentController(gameData, targetPermanentId);
+                if (playerId == null) {
+                    playerId = entry.getRemovedPermanentControllers().get(targetPermanentId);
+                }
+                if (playerId == null && targetPermanentId.equals(entry.getTriggeringPermanentId())) {
+                    playerId = entry.getTriggeringPermanentControllerId();
+                }
                 if (playerId == null) return;
                 lifeSupport.applyPoisonCounters(gameData, playerId, amount, sourceName, entry.getControllerId());
             }

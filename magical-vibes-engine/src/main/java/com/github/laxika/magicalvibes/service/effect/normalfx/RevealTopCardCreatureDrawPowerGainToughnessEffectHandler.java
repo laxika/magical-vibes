@@ -2,13 +2,18 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureDrawPowerGainToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +34,7 @@ public class RevealTopCardCreatureDrawPowerGainToughnessEffectHandler implements
     private final DrawService drawService;
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,6 +64,16 @@ public class RevealTopCardCreatureDrawPowerGainToughnessEffectHandler implements
 
         int power = topCard.getPower() != null ? Math.max(0, topCard.getPower()) : 0;
         int toughness = topCard.getToughness() != null ? Math.max(0, topCard.getToughness()) : 0;
+        for (CardEffect staticEffect : topCard.getEffects(EffectSlot.STATIC)) {
+            if (staticEffect instanceof SetPowerToughnessToAmountEffect characteristicDefining) {
+                AmountContext context = AmountContext.forStaticEffect(new Permanent(topCard), controllerId);
+                power = Math.max(0, amountEvaluationService.evaluate(
+                        gameData, characteristicDefining.power(), context));
+                toughness = Math.max(0, amountEvaluationService.evaluate(
+                        gameData, characteristicDefining.toughness(), context));
+                break;
+            }
+        }
 
         for (int i = 0; i < power; i++) {
             drawService.resolveDrawCard(gameData, controllerId);

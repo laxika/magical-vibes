@@ -25,6 +25,7 @@ class NoRestForTheWickedTest extends BaseCardTest {
     @DisplayName("Can activate with no creature cards in the graveyard")
     void resolvesWithNoEligibleCards() {
         harness.addToBattlefield(player1, new NoRestForTheWicked());
+        harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -212,7 +212,7 @@ class NecroplasmTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard).doesNotContain(necroplasm);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(necroplasm);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.GraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent castFaceDownWillbender() {

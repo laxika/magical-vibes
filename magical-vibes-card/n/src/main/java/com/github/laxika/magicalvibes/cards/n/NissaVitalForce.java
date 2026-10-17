@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -34,7 +33,7 @@ public class NissaVitalForce extends Card {
                 List.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new AnimatePermanentsEffect(
-                                5, 5, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), CardColor.GREEN,
+                                5, 5, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
                                 Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_YOUR_NEXT_TURN)
                 ),
                 "+1: Untap target land you control. Until your next turn, it becomes a 5/5 green "

@@ -30,6 +30,6 @@ public class NashiMoonsLegacy extends Card {
         target(new GraveyardCardPredicateTargetFilter(LEGENDARY_OR_RAT, ownGraveyard), 0, 1);
         addEffect(EffectSlot.ON_ATTACK,
                 new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                        LEGENDARY_OR_RAT, ownGraveyard, 0));
+                        LEGENDARY_OR_RAT, ownGraveyard, false));
     }
 }

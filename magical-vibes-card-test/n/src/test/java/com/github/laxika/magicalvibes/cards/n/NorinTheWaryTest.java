@@ -149,11 +149,14 @@ class NorinTheWaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Sprout()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0);
-        resolveAllTriggers();
-        assertExiled(norin);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castInstant(player1, 0);
+            resolveAllTriggers();
+            assertExiled(norin);
+        });
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertExiled(norin);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardOfTargetCardOwnerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class ExileGraveyardOfTargetCardOwnerEffectHandler implements NormalEffec
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final GraveyardService graveyardService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +57,17 @@ public class ExileGraveyardOfTargetCardOwnerEffectHandler implements NormalEffec
             if (graveyardOwnerId != null) {
                 break;
             }
+        }
+        if (graveyardOwnerId == null) {
+            graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
+        }
+        if (graveyardOwnerId == null) {
+            UUID exiledCardId = targetCardId;
+            graveyardOwnerId = gameData.exiledCards.stream()
+                    .filter(exiled -> exiled.card().getId().equals(exiledCardId))
+                    .map(ExiledCardEntry::ownerId)
+                    .findFirst()
+                    .orElse(null);
         }
         if (graveyardOwnerId == null) {
             return;

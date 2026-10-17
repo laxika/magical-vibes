@@ -148,13 +148,13 @@ class NarciFableSingerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Narcissism()));
         harness.setLife(player1, 20);
         harness.setLife(player2, 10);
-        harness.addMana(player2, ManaColor.RED, 5);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.stack).hasSize(1);
 
+        harness.addMana(player2, ManaColor.RED, 5);
         harness.castInstant(player2, 0, saga.getId());
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "The First Eruption");

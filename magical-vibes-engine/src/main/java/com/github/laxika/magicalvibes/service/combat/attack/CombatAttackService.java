@@ -828,6 +828,14 @@ public class CombatAttackService {
         }
         totalTax += selfTaxTotal;
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
+        // Phyrexian attack taxes (e.g. Norn's Annex) cover attacks on the defender and their planeswalkers,
+        // never on a battle, so only attackers aimed at a non-battle target count toward them.
+        int phyrexianTaxedAttackerCount = (int) attackerIndices.stream()
+                .filter(idx -> {
+                    Permanent attacked = gameQueryService.findPermanentById(gameData, resolvedTargets.get(idx));
+                    return attacked == null || !gameQueryService.isBattle(gameData, attacked);
+                })
+                .count();
         if (totalTax > 0) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             if (pool.getTotal() < totalTax) {
@@ -843,9 +851,9 @@ public class CombatAttackService {
             ManaPool simulatedPool = new ManaPool(gameData.playerManaPools.get(playerId));
             if (totalTax > 0) {
                 payGenericManaPreservingPhyrexianColors(
-                        simulatedPool, totalTax, phyrexianPayments, attackerIndices.size());
+                        simulatedPool, totalTax, phyrexianPayments, phyrexianTaxedAttackerCount);
             }
-            phyrexianLifeCost = payPhyrexianAttackTax(simulatedPool, phyrexianPayments, attackerIndices.size());
+            phyrexianLifeCost = payPhyrexianAttackTax(simulatedPool, phyrexianPayments, phyrexianTaxedAttackerCount);
             if (phyrexianLifeCost > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
                 throw new IllegalStateException("Life total can't change to pay Phyrexian attack tax");
             }
@@ -880,7 +888,7 @@ public class CombatAttackService {
         // Pay attack tax (uniform per-attacker + per-creature aura taxes)
         if (totalTax > 0) {
             payGenericManaPreservingPhyrexianColors(
-                    gameData.playerManaPools.get(playerId), totalTax, phyrexianPayments, attackerIndices.size());
+                    gameData.playerManaPools.get(playerId), totalTax, phyrexianPayments, phyrexianTaxedAttackerCount);
         }
         if (defenderTaxTotal > 0) {
             triggerCollectionService.checkTaxPaymentTriggers(
@@ -890,7 +898,7 @@ public class CombatAttackService {
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
         if (!phyrexianPayments.isEmpty()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int lifeCost = payPhyrexianAttackTax(pool, phyrexianPayments, attackerIndices.size());
+            int lifeCost = payPhyrexianAttackTax(pool, phyrexianPayments, phyrexianTaxedAttackerCount);
             if (lifeCost > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, lifeCost, "Phyrexian attack tax");
             }

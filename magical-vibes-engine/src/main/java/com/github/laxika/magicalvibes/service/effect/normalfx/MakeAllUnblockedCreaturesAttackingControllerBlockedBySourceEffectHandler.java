@@ -33,6 +33,11 @@ public class MakeAllUnblockedCreaturesAttackingControllerBlockedBySourceEffectHa
         if (source == null) {
             return;
         }
+        // CR 509.1h: an attacking creature becomes unblocked only when blockers are declared, so
+        // before the declare blockers step no attacker is unblocked yet and nothing is blocked.
+        if (gameData.currentStep != null && gameData.currentStep.isBeforeBlockersDeclared()) {
+            return;
+        }
 
         UUID controllerId = entry.getControllerId();
         List<Permanent> attackers = gameData.orderedPlayerIds.stream()

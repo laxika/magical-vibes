@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 
@@ -35,9 +35,9 @@ public class Necravolver extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{W}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{W}"),
-                new GrantEffectToSourceEffect(EffectSlot.ON_SELF_DEALS_DAMAGE,
-                        new GainLifeEffect(new EventValue()))));
+                new GrantTriggeredAbilityEffect(EffectSlot.ON_SELF_DEALS_DAMAGE,
+                        new GainLifeEffect(new EventValue()), GrantScope.SELF)));
     }
 }

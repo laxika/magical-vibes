@@ -32,12 +32,17 @@ public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        boolean granted = ((SacrificeEnchantedCreatureEffect) effect).grantedToCreature();
+
         // Find the Aura permanent via sourcePermanentId. The attachment captured when the trigger
         // fired remains authoritative if the Aura has since left or become attached elsewhere.
+        // A granted ability belongs to the creature itself, which is then the source.
         Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent auraSnapshot = entry.getSourcePermanentSnapshot();
 
-        UUID enchantedId = auraSnapshot != null && auraSnapshot.getAttachedTo() != null
+        UUID enchantedId = granted
+                ? entry.getSourcePermanentId()
+                : auraSnapshot != null && auraSnapshot.getAttachedTo() != null
                 ? auraSnapshot.getAttachedTo()
                 : auraPerm == null ? null : auraPerm.getAttachedTo();
         if (enchantedId == null) {
@@ -53,7 +58,7 @@ public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHand
             return;
         }
 
-        UUID sacrificingPlayerId = entry.getTriggeringPermanentControllerId();
+        UUID sacrificingPlayerId = granted ? entry.getControllerId() : entry.getTriggeringPermanentControllerId();
         UUID currentControllerId = gameQueryService.findPermanentController(gameData, enchantedId);
         if (sacrificingPlayerId == null) {
             sacrificingPlayerId = currentControllerId;

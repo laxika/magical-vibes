@@ -102,7 +102,7 @@ class NihilithTest extends BaseCardTest {
         harness.withAutoStop(gd.currentStep, () -> harness.passBothPriorities());
 
         assertThat(findPermanent(player1, "Nihilith").getCard()).isSameAs(card);
-        assertThat(findPermanent(player1, "Nihilith").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Nihilith"), Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
     }
 

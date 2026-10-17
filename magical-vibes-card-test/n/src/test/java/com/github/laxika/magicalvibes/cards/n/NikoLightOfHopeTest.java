@@ -144,15 +144,16 @@ class NikoLightOfHopeTest extends BaseCardTest {
         List<Permanent> shards = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList();
         harness.setLibrary(player2, List.of(new DaggermawMegalodon(), new GrowingDread()));
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(niko),
                 0, null, creature.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        harness.assertNotOnBattlefield(player1, "Daggermaw Megalodon");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(creature.getId()));
         assertThat(shards).allSatisfy(shard -> {
             assertThat(gqs.isCreature(gd, shard)).isTrue();
             assertThat(gqs.getEffectivePower(gd, shard)).isEqualTo(5);

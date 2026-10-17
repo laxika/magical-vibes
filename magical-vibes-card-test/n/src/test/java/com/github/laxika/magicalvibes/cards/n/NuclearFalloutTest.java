@@ -85,7 +85,7 @@ class NuclearFalloutTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);

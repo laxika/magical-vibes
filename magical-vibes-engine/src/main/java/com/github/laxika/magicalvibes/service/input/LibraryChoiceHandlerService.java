@@ -285,7 +285,10 @@ public class LibraryChoiceHandlerService {
         if (cardIndex >= 0
                 && followUp.basicLandSearchQueue() != null
                 && followUp.basicLandSearchQueue().optionalSearch()
-                && accumulatedCards.isEmpty()) {
+                && (com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport
+                        .markSearchedOnPick(followUp.basicLandSearchQueue())
+                        ? !followUp.basicLandSearchQueue().searchedPlayerIds().contains(librarySearch.playerId())
+                        : accumulatedCards.isEmpty())) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
             if (com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.markSearchedOnPick(followUp.basicLandSearchQueue())) {
                 followUp = followUp.withBasicLandSearchQueue(
@@ -360,7 +363,7 @@ public class LibraryChoiceHandlerService {
                 && followUp.basicLandSearchQueue().enterAfterAllSearches()
                 && (librarySearch.decisionPlayerId() == null
                 || librarySearch.decisionPlayerId().equals(playerId))) {
-            handleDeferredBasicLandSearchChoice(gameData, activeSearch, cardIndex);
+            handleDeferredBasicLandSearchChoice(gameData, activeSearch, followUp, cardIndex);
             return;
         }
 
@@ -601,10 +604,24 @@ public class LibraryChoiceHandlerService {
                             perm.addPersistentTriggeredEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                                     com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self());
                         } else {
+                            // The delayed trigger belongs to the ability that searched (e.g. Nahiri, the
+                            // Harbinger's -8), not to the fetched permanent, even after control changes.
+                            Permanent searchSource = librarySearch.sourcePermanentId() == null ? null
+                                    : gameQueryService.findPermanentById(gameData, librarySearch.sourcePermanentId());
+                            Card searchSourceCard = searchSource != null ? searchSource.getCard() : null;
+                            if (searchSourceCard == null && librarySearch.sourcePermanentId() != null
+                                    && gameData.pendingEffectResolutionEntry != null) {
+                                // The source already left the battlefield (Nahiri's -8 at 8 loyalty): the
+                                // delayed trigger still belongs to its ability.
+                                searchSourceCard = gameData.pendingEffectResolutionEntry.getCard();
+                            }
                             gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
                                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
                                 false, null, librarySearch.returnToHandAtControllerEndStepId(), null,
-                                librarySearch.returnToHandAtControllerEndStepId() != null));
+                                librarySearch.returnToHandAtControllerEndStepId() != null,
+                                searchSourceCard,
+                                searchSourceCard != null ? playerId : null,
+                                searchSourceCard != null ? librarySearch.sourcePermanentId() : null));
                         }
                     } else if (exileAtEndStep) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
@@ -1024,7 +1041,8 @@ public class LibraryChoiceHandlerService {
         Card chosenCard = searchCards.get(cardIndex);
 
         boolean selectedFromGraveyard = (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT
-                || destination == LibrarySearchDestination.BATTLEFIELD)
+                || destination == LibrarySearchDestination.BATTLEFIELD
+                || destination == LibrarySearchDestination.HAND)
                 && gameData.playerGraveyards.getOrDefault(deckOwnerId, List.of()).contains(chosenCard);
         boolean selectedFromHand = destination == LibrarySearchDestination.BATTLEFIELD
                 && !selectedFromGraveyard
@@ -2184,12 +2202,12 @@ public class LibraryChoiceHandlerService {
     }
 
     private void handleDeferredBasicLandSearchChoice(GameData gameData,
-            PendingInteraction.LibrarySearch activeSearch, int cardIndex) {
+            PendingInteraction.LibrarySearch activeSearch, LibrarySearchFollowUp currentFollowUp, int cardIndex) {
         LibrarySearchParams params = activeSearch.params();
         UUID ownerId = params.targetPlayerId() != null ? params.targetPlayerId() : params.playerId();
         UUID controllerId = params.battlefieldControllerId() != null
                 ? params.battlefieldControllerId() : ownerId;
-        LibrarySearchFollowUp.BasicLandSearchQueue queue = params.followUp().basicLandSearchQueue();
+        LibrarySearchFollowUp.BasicLandSearchQueue queue = currentFollowUp.basicLandSearchQueue();
         if (cardIndex >= 0) {
             Card chosen = params.cards().get(cardIndex);
             if (!gameData.playerDecks.getOrDefault(ownerId, List.of()).contains(chosen)) {
@@ -2200,7 +2218,7 @@ public class LibraryChoiceHandlerService {
             queue = queue.withSelectedLand(new LibrarySearchFollowUp.DeferredBasicLand(
                     chosen, ownerId, controllerId, tapped));
         }
-        LibrarySearchFollowUp followUp = params.followUp().withBasicLandSearchQueue(queue);
+        LibrarySearchFollowUp followUp = currentFollowUp.withBasicLandSearchQueue(queue);
         if (cardIndex >= 0 && params.remainingCount() > 1) {
             Set<UUID> selectedIds = queue.selectedLands().stream()
                     .map(selected -> selected.card().getId()).collect(java.util.stream.Collectors.toSet());
@@ -2787,7 +2805,14 @@ public class LibraryChoiceHandlerService {
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
             if (returnToHandAtEndStep) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+                // The delayed return belongs to the ability that searched (Nahiri, the Harbinger's -8),
+                // not to the fetched permanent, even after control changes or the source has left.
+                StackEntry creatingEntry = gameData.pendingEffectResolutionEntry;
+                gameData.queueDelayedAction(creatingEntry == null || creatingEntry.getSourcePermanentId() == null
+                        ? new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
+                        : new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
+                                false, null, null, null, false, creatingEntry.getCard(),
+                                creatingEntry.getControllerId(), creatingEntry.getSourcePermanentId()));
             } else if (exileAtEndStep) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
             }
@@ -3533,7 +3558,8 @@ public class LibraryChoiceHandlerService {
 
                 if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
                     battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, card);
-                } else if (card.hasType(CardType.CREATURE)) {
+                } else if (card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT)) {
+                    // Artifacts such as vehicles (uncrewed, non-creature) still have enter-the-battlefield abilities.
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
                 }
                 if (!libraryRevealChoice.selectedToBattlefieldCloaked()

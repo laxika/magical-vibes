@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -22,21 +21,18 @@ public class NimbleObstructionist extends Card {
 
     public NimbleObstructionist() {
         // Flash and Flying come from Scryfall.
-        // Cycling {2}{U} ({2}{U}, Discard this card: Draw a card.) — discard cost is intrinsic.
         // "When you cycle this card, counter target activated or triggered ability you don't control."
-        // The reflexive cycle trigger rides on the cycling ability: the counter resolves first, then
-        // the cycling draw. minTargets 0 lets cycling proceed (and still draw) when there is no legal
-        // ability to counter (CR 603.3c) — you can't counter a mana ability, which never uses the stack.
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}{U}",
-                List.of(new CounterSpellEffect(), new DrawCardEffect(1)),
-                "Cycling {2}{U} ({2}{U}, Discard this card: Draw a card.)",
-                new StackEntryPredicateTargetFilter(
-                        new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
-                                new StackEntryNotPredicate(new StackEntryControlledByPredicate()))),
-                        "Target must be an activated or triggered ability you don't control."),
-                null, null, null, List.of(), 0, 1));
+        // A separate trigger from the cycling draw: it goes on the stack above the cycling ability and
+        // resolves first. With no legal target it is simply removed from the stack (CR 603.3d), so the
+        // cycling draw still happens.
+        addCycling("{2}{U}");
+        target(new StackEntryPredicateTargetFilter(
+                new StackEntryAllOfPredicate(List.of(
+                        new StackEntryTypeInPredicate(Set.of(
+                                StackEntryType.ACTIVATED_ABILITY,
+                                StackEntryType.TRIGGERED_ABILITY)),
+                        new StackEntryNotPredicate(new StackEntryControlledByPredicate()))),
+                "Target must be an activated or triggered ability you don't control."))
+                .addEffect(EffectSlot.ON_SELF_CYCLED, new CounterSpellEffect());
     }
 }

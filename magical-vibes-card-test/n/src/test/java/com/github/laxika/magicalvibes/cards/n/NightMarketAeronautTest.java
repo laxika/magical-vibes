@@ -95,6 +95,8 @@ class NightMarketAeronautTest extends BaseCardTest {
     void previousTurnDepartureDoesNotSatisfyRevolt() {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, permanent));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new NightMarketAeronaut()));

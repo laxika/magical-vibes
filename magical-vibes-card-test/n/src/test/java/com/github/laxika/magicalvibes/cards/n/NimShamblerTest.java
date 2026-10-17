@@ -68,7 +68,6 @@ class NimShamblerTest extends BaseCardTest {
         Permanent nim = addCreatureReady(player1, new NimShambler());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, nim.getId());
 
         harness.assertInGraveyard(player1, "Nim Shambler");
         harness.assertNotOnBattlefield(player1, "Nim Shambler");

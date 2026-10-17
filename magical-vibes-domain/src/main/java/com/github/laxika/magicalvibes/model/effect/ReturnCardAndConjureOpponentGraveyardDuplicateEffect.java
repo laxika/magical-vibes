@@ -27,7 +27,7 @@ public record ReturnCardAndConjureOpponentGraveyardDuplicateEffect()
 
     @Override
     public List<Integer> minimumTargetCounts() {
-        return List.of(1, 0);
+        return List.of(1, 1);
     }
 
     @Override

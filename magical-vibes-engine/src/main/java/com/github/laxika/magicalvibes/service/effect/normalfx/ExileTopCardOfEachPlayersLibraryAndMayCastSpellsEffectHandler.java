@@ -63,8 +63,9 @@ public class ExileTopCardOfEachPlayersLibraryAndMayCastSpellsEffectHandler
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ImprovisationCapstoneCastChoice(
-                        controllerId, castableSpellIds, castableSpellIds.size()));
-        log.info("Game {} - {} awaiting cast choices for {} exiled spells",
+                        controllerId, castableSpellIds, 1,
+                        "You may cast a spell from among the exiled cards.", false, null, true));
+        log.info("Game {} - {} awaiting a cast choice among {} exiled spells",
                 gameData.id, sourceName, castableSpellIds.size());
     }
 

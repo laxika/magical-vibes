@@ -150,6 +150,7 @@ class NivMizzetDracogeniusTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
+        jace.setCounterCount(CounterType.LOYALTY, 4);
         harness.activateAbility(player1, 0, null, jace.getId());
         resolveAllTriggers();
 

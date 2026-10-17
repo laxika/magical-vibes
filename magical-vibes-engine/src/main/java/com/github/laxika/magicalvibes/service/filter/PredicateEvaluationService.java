@@ -312,6 +312,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostTrackedPermanentPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerDifferentFromBasePowerPredicate;
@@ -719,7 +720,8 @@ public class PredicateEvaluationService {
                         .noneMatch(creatureColors -> creatureColors.stream().anyMatch(cardColors::contains));
             }
             case CardHasExactlyTwoColorsPredicate ignored ->
-                    card.getColors().size() == 2;
+                    (gameData != null ? gameQueryService.getEffectiveCardColors(gameData, card)
+                            : card.getColors()).size() == 2;
             case CardIdSetPredicate p -> p.cardIds().contains(card.getId())
                     && (p.graveyardVersions().isEmpty() || (gameData != null
                     && p.graveyardVersions().getOrDefault(card.getId(), -1L)
@@ -912,6 +914,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null) {
+                    sourcePermanent = sourcePermanentSnapshot;
+                }
                 yield sourcePermanent != null
                         && card.getManaValue() < sourcePermanent.getCounterCount(CounterType.LOYALTY);
             }
@@ -1812,6 +1817,20 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= xVal;
             }
+            case PermanentPowerAtMostTrackedPermanentPowerPredicate tracked -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                Permanent trackedPermanent = gameQueryService.findPermanentById(gameData, tracked.trackedPermanentId());
+                if (trackedPermanent == null) {
+                    trackedPermanent = gameData.departedPermanentSnapshots.values().stream()
+                            .filter(snapshot -> snapshot.getId().equals(tracked.trackedPermanentId()))
+                            .findFirst().orElse(null);
+                }
+                yield trackedPermanent != null
+                        && gameQueryService.getEffectivePower(gameData, permanent)
+                        <= gameQueryService.getEffectivePower(gameData, trackedPermanent);
+            }
             case PermanentPowerLessThanXPredicate ignored -> {
                 int xVal = filterContext != null && filterContext.xValue() != null ? filterContext.xValue() : 0;
                 if (gameData == null) {
@@ -2114,14 +2133,16 @@ public class PredicateEvaluationService {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
                 }
-                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
-                if (sourcePermanent == null && filterContext != null) {
+                Permanent sourcePermanent = filterContext.sourcePermanentId() == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, filterContext.sourcePermanentId());
+                if (sourcePermanent == null) {
                     sourcePermanent = filterContext.sourcePermanentSnapshot();
                 }
                 if (sourcePermanent == null) {
                     yield false;
                 }
-                yield permanent.getCard().getManaValue()
+                yield gameQueryService.getPermanentManaValue(permanent)
                         == sourcePermanent.getCounterCount(equalsSourceCounters.counterType());
             }
             case PermanentManaValueEqualsTriggeringPermanentPredicate ignored -> {
@@ -5020,7 +5041,9 @@ public class PredicateEvaluationService {
             case StackEntryCardIdPredicate cardId ->
                     entry.getCard() != null && cardId.cardId().equals(entry.getCard().getId());
             case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
-            case StackEntryIsCopyPredicate ignored -> entry.isCopy() && !entry.isCastCopy();
+            case StackEntryIsCopyPredicate copyPredicate -> copyPredicate.castCopy()
+                    ? entry.isCopy() && entry.isCastCopy()
+                    : entry.isCopy() && !entry.isCastCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
             case StackEntryIsSingleTargetPredicate ignored -> false;

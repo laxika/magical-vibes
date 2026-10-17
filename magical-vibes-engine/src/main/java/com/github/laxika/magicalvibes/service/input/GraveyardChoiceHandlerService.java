@@ -813,6 +813,11 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        if (gameData.graveyardTargetOperation.replacementGraveyardExile != null) {
+            handleReplacementGraveyardExile(gameData, cardIds);
+            return;
+        }
+
         validateCardTypeAssignedSelection(gameData, cardIds);
         validateGraveyardMultiTargetConstraint(gameData, cardIds);
 
@@ -2311,6 +2316,15 @@ public class GraveyardChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", card, " on the bottom of its owner's library."));
         }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleReplacementGraveyardExile(GameData gameData, List<UUID> cardIds) {
+        GraveyardTargetOperationState.ReplacementGraveyardExileContext context =
+                gameData.graveyardTargetOperation.replacementGraveyardExile;
+        gameData.interaction.clearAwaitingInput();
+        gameData.graveyardTargetOperation.replacementGraveyardExile = null;
+        graveyardService.exileChosenCardsFromGraveyard(gameData, context.playerId(), cardIds);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

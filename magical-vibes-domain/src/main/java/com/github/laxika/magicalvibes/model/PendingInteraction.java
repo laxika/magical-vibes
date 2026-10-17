@@ -1026,29 +1026,37 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /**
      * Improvisation Capstone: choose any number of exiled spells to cast without paying their mana costs.
+     * When {@code payManaCost} is set, the chosen spells are cast paying their normal mana costs instead.
      */
     record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                           String prompt, boolean castAsCopies, Integer maxTotalManaValue)
+                                           String prompt, boolean castAsCopies, Integer maxTotalManaValue,
+                                           boolean payManaCost)
             implements PendingInteraction {
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount) {
-            this(playerId, validCardIds, maxCount, null, false, null);
+            this(playerId, validCardIds, maxCount, null, false, null, false);
+        }
+
+        public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               int maxCount, String prompt, boolean castAsCopies,
+                                               Integer maxTotalManaValue) {
+            this(playerId, validCardIds, maxCount, prompt, castAsCopies, maxTotalManaValue, false);
         }
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount, String prompt) {
-            this(playerId, validCardIds, maxCount, prompt, false, null);
+            this(playerId, validCardIds, maxCount, prompt, false, null, false);
         }
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount, String prompt, boolean castAsCopies) {
-            this(playerId, validCardIds, maxCount, prompt, castAsCopies, null);
+            this(playerId, validCardIds, maxCount, prompt, castAsCopies, null, false);
         }
 
         public ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                int maxCount, String prompt, Integer maxTotalManaValue) {
-            this(playerId, validCardIds, maxCount, prompt, false, maxTotalManaValue);
+            this(playerId, validCardIds, maxCount, prompt, false, maxTotalManaValue, false);
         }
 
         public ImprovisationCapstoneCastChoice {
@@ -3521,15 +3529,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * {@code DISCARD} for the discard cards, or {@code EXILE} when the controller's pick is exiled
      * from the target's hand instead (Vizkopa Confessor). {@code sourcePermanentId} tracks an exile
      * with the permanent that caused the interaction when the effect needs source-linked behavior.
+     * {@code chosenCardIds} holds the cards already picked by a multi-pick discard stage (Noggin
+     * Whack): they stay in the target's hand until the last pick, then all leave together.
      */
     record RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
                                     boolean revealStage, java.util.List<Integer> validIndices,
                                     int remainingCount, java.util.List<UUID> revealedCardIds,
                                     int discardCount,
                                     com.github.laxika.magicalvibes.model.effect.HandChoiceDestination destination,
-                                    UUID sourcePermanentId)
+                                    UUID sourcePermanentId,
+                                    java.util.List<UUID> chosenCardIds)
             implements PendingInteraction {
         // The decidingPlayerId component accessor doubles as the interface override.
+
+        public RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
+                                        boolean revealStage, java.util.List<Integer> validIndices,
+                                        int remainingCount, java.util.List<UUID> revealedCardIds,
+                                        int discardCount,
+                                        com.github.laxika.magicalvibes.model.effect.HandChoiceDestination destination,
+                                        UUID sourcePermanentId) {
+            this(decidingPlayerId, targetPlayerId, controllerId, revealStage, validIndices,
+                    remainingCount, revealedCardIds, discardCount, destination, sourcePermanentId, java.util.List.of());
+        }
 
         public RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
                                         boolean revealStage, java.util.List<Integer> validIndices,
@@ -3543,6 +3564,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public RevealCardsDiscardChoice {
             validIndices = java.util.List.copyOf(validIndices);
             revealedCardIds = java.util.List.copyOf(revealedCardIds);
+            chosenCardIds = java.util.List.copyOf(chosenCardIds);
         }
 
         @Override

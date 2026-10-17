@@ -509,7 +509,13 @@ public class CombatBlockService {
                         + " can't be blocked by more than " + teamMaxBlockers
                         + " creature" + (teamMaxBlockers == 1 ? "" : "s"));
             }
-            int maxBlockers = gameQueryService.getMaxBlockersAllowed(gameData, attacker);
+            // CR 509.1c: a "blocks/is blocked by exactly one if able" requirement is not obeyed by blocking
+            // with one creature when menace forbids it, so the cap it implies does not apply.
+            boolean exactlyOneRequirementUnobeyable =
+                    gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE)
+                    && gameQueryService.hasActiveStaticEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
+            int maxBlockers = exactlyOneRequirementUnobeyable
+                    ? Integer.MAX_VALUE : gameQueryService.getMaxBlockersAllowed(gameData, attacker);
             if (blockerCount > maxBlockers) {
                 throw new IllegalStateException(attacker.getCard().getName()
                         + " can't be blocked by more than " + maxBlockers

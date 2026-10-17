@@ -17,9 +17,15 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param discardAmount number of cards to discard
  * @param drawAmount    number of cards to draw
  * @param random        whether the discarded cards are chosen at random
+ * @param drawRegardless true for "discard N, then draw N" (no "if you do"): the draw still happens
+ *                       when the hand is empty and nothing could be discarded
  */
-public record DiscardAndDrawCardEffect(int discardAmount, int drawAmount, boolean random)
+public record DiscardAndDrawCardEffect(int discardAmount, int drawAmount, boolean random, boolean drawRegardless)
         implements CardDrawingEffect {
+
+    public DiscardAndDrawCardEffect(int discardAmount, int drawAmount, boolean random) {
+        this(discardAmount, drawAmount, random, false);
+    }
 
     public DiscardAndDrawCardEffect(int discardAmount, int drawAmount) {
         this(discardAmount, drawAmount, false);
@@ -27,6 +33,11 @@ public record DiscardAndDrawCardEffect(int discardAmount, int drawAmount, boolea
 
     public DiscardAndDrawCardEffect() {
         this(1, 1, false);
+    }
+
+    /** "Discard N cards, then draw N cards." — the draw is not contingent on the discard. */
+    public static DiscardAndDrawCardEffect thenDraw(int discardAmount, int drawAmount) {
+        return new DiscardAndDrawCardEffect(discardAmount, drawAmount, false, true);
     }
 
     @Override

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCommanderIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class NetherbornAltar extends Card {
                 true,
                 null,
                 List.of(
-                        new PutCountersOnSelfEffect(CounterType.SOUL),
+                        new PutTypedCounterOnSourceCost(CounterType.SOUL),
                         new PutCommanderIntoHandEffect(),
                         new LoseLifeEffect(new Scaled(new CountersOnSource(CounterType.SOUL), 3),
                                 LoseLifeRecipient.CONTROLLER)

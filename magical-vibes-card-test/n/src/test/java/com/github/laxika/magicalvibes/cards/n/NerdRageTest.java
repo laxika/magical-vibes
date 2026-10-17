@@ -172,8 +172,7 @@ class NerdRageTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(12);
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -204,8 +203,7 @@ class NerdRageTest extends BaseCardTest {
         harness.setHand(player1, rageCards(8));
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();

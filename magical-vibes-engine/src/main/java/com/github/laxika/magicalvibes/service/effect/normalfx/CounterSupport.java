@@ -386,6 +386,17 @@ public class CounterSupport {
      * when the replacement applied (the caller must not run its normal counter disposition).
      */
     private boolean applyControlledCounterExileReplacement(GameData gameData, StackEntry source, StackEntry target) {
+        return applyControlledCounterExileReplacement(gameData, source.getControllerId(), target);
+    }
+
+    /**
+     * Applies Guile's replacement to a countering effect controlled by {@code counterControllerId}
+     * (the counter's controller, not necessarily a stack entry's). Returns true when the replacement
+     * applied, in which case the countered spell has been exiled by its owner and the counter's
+     * controller is offered a free play.
+     */
+    public boolean applyControlledCounterExileReplacement(GameData gameData, UUID counterControllerId,
+                                                          StackEntry target) {
         // Only replaces the countering of spells (CR: "would counter a spell"), never abilities.
         boolean isAbility = target.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || target.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
@@ -393,7 +404,6 @@ public class CounterSupport {
             return false;
         }
 
-        UUID counterControllerId = source.getControllerId();
         if (!controlsCounterExileReplacement(gameData, counterControllerId)) {
             return false;
         }
@@ -410,8 +420,7 @@ public class CounterSupport {
         ));
 
         gameLogService.append(gameData, GameLog.cardThen(spell, " is exiled instead of countered (Guile)."));
-        log.info("Game {} - {} exiled {} instead of countering (Guile)", gameData.id,
-                source.getDescription(), spell.getName());
+        log.info("Game {} - exiled {} instead of countering (Guile)", gameData.id, spell.getName());
         return true;
     }
 

@@ -142,6 +142,7 @@ import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraf
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -620,14 +621,17 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sd.dyingCard(),
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new RegisterDelayedSelfReturnFromGraveyardEffect(
                         effect.counterType(), counters - 1)))
-        ));
+        );
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -1787,6 +1791,10 @@ public class DeathTriggerCollectorService {
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         if (dyingCardId != null) {
             entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(dyingCardId));
+        } else if (returnsSourceCardFromGraveyard(effect)) {
+            // The aura is still on the battlefield while this is queued and enters the graveyard in the
+            // same state-based pass; GameData.markGraveyardEntry binds that stay's identity to this entry.
+            entry.setTriggeringCardId(match.permanent().getCard().getId());
         }
         if (effect instanceof ReturnEnchantedCreatureToBattlefieldOnDeathEffect returning) {
             for (UUID cardId : returning.dyingCreatureCardIds()) {
@@ -1812,6 +1820,13 @@ public class DeathTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));
         log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", match.gameData().id, match.permanent().getCard().getName());
+    }
+
+    private static boolean returnsSourceCardFromGraveyard(CardEffect effect) {
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(ReturnSourceCardFromGraveyardToOwnerHandEffect.class::isInstance);
+        }
+        return effect instanceof ReturnSourceCardFromGraveyardToOwnerHandEffect;
     }
 
     private boolean effectReferencesEventValue(CardEffect effect) {
@@ -3671,7 +3686,9 @@ public class DeathTriggerCollectorService {
             resolvedMay = new MayEffect(aware.boundToDyingCreatureName(cd.dyingCard().getName()),
                     may.prompt(), may.elseEffect());
         } else if (may.wrapped() instanceof DyingCreatureCardAwareEffect aware && cd.dyingCard() != null) {
-            resolvedMay = new MayEffect(aware.boundToDyingCard(cd.dyingCard().getId()), may.prompt());
+            UUID dyingCardId = cd.dyingPermanent() == null ? cd.dyingCard().getId()
+                    : cd.dyingPermanent().getOriginalCard().getId();
+            resolvedMay = new MayEffect(aware.boundToDyingCard(dyingCardId), may.prompt());
         }
         match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), resolvedMay);
         logAllyNontokenCreatureDeath(match);
@@ -3899,13 +3916,18 @@ public class DeathTriggerCollectorService {
         }
         MayPayManaEffect rawMayPay = (MayPayManaEffect) match.rawEffect();
         var returnEffect = new ReturnDyingCreatureToBattlefieldEffect(cd.dyingCard().getId(), effect.attachSource());
-        gameData.pendingMayAbilities.add(new PendingMayAbility(
+        // The trigger goes on the stack; the payment is offered when it resolves (CR 603.5).
+        MayPayManaEffect mayPay = new MayPayManaEffect(rawMayPay.manaCost(), rawMayPay.dynamicManaCost(),
+                returnEffect, rawMayPay.prompt(), rawMayPay.payer(), rawMayPay.elseEffect(), rawMayPay.lifeCost(),
+                rawMayPay.sourceIsTriggeringPermanent());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
-                List.of(returnEffect),
-                match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost() + " to return " + cd.dyingCard().getName() + " to the battlefield?",
-                cd.dyingCard().getId(),
-                rawMayPay.manaCost()
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(mayPay)),
+                null,
+                match.permanent().getId()
         ));
         gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", cd.dyingCard(), " died)."));
@@ -4409,9 +4431,11 @@ public class DeathTriggerCollectorService {
     boolean handleSacrificeEnchantedCreatureOnLeave(TriggerMatchContext match,
             SacrificeEnchantedCreatureOnLeaveEffect effect, TriggerContext ctx) {
         TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
-        // Capture the enchanted creature's permanent id before the Aura is gone; if the Aura wasn't
-        // attached (never resolved onto a creature) the trigger simply does nothing (CR 603.4 no-op).
-        UUID enchantedId = match.permanent().getAttachedTo();
+        // Capture the enchanted creature's permanent id before the Aura is gone. An Aura that could not
+        // attach keeps the reanimated creature as its chosen permanent, so that creature is still sacrificed.
+        UUID enchantedId = match.permanent().getAttachedTo() != null
+                ? match.permanent().getAttachedTo()
+                : match.permanent().getChosenPermanentId();
         if (enchantedId == null) {
             return false;
         }
@@ -4580,11 +4604,16 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
     boolean handleConditionalSelfLeavesTrigger(TriggerMatchContext match,
             ConditionalEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
         if (!(effect.wrapped() instanceof LeavingPermanentCountersAwareEffect aware)) {
+            if (effect.triggerTimeOnly()
+                    && !conditionEvaluationService.isInterveningIfMet(
+                    match.gameData(), effect, match.permanent(), sl.controllerId())) {
+                return false;
+            }
             return handleSelfLeavesDefault(match, effect, ctx);
         }
 
-        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
         if (effect.interveningIf()
                 && !conditionEvaluationService.isInterveningIfMet(
                 match.gameData(), effect, match.permanent(), sl.controllerId())) {

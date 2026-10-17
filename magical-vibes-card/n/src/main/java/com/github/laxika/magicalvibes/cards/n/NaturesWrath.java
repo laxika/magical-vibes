@@ -11,10 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -40,15 +37,16 @@ public class NaturesWrath extends Card {
     }
 
     private static CardEffect sacrificeTrigger(CardSubtype landType, CardColor color) {
-        return new TriggeringCardConditionalEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(landType),
-                        new CardColorPredicate(color))),
+        return new TriggeringPermanentConditionalEffect(
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(landType),
+                        new PermanentColorInPredicate(Set.of(color)))),
                 new SacrificePermanentsEffect(
                         1,
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(landType),
                                 new PermanentColorInPredicate(Set.of(color)))),
-                        SacrificeRecipient.TARGET_PLAYER));
+                        SacrificeRecipient.TARGET_PLAYER),
+                true);
     }
 }

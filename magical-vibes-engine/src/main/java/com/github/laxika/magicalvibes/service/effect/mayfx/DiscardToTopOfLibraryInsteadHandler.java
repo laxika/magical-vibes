@@ -25,7 +25,8 @@ public class DiscardToTopOfLibraryInsteadHandler implements MayEffectHandlerBean
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (ability.targetCardId() != null) {
             cardChoiceHandlerServiceProvider.getObject()
-                    .completeRandomDiscardToLibraryChoice(gameData, player, accepted, ability.targetCardId());
+                    .completeDiscardToLibraryChoice(gameData, player, accepted, ability.targetCardId(),
+                            ability.eventValue() == 0);
             return;
         }
         cardChoiceHandlerServiceProvider.getObject()

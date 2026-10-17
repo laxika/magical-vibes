@@ -989,7 +989,7 @@ public sealed interface MultiPermanentChoiceContext {
       }
 
       /** Nihiloor's optional choice of one untapped creature to tap for one opponent. */
-      record NihiloorTapChoice(StackEntry resolvingEntry, CardEffect reflexiveEffect)
+      record NihiloorTapChoice(StackEntry resolvingEntry, UUID opponentId)
               implements MultiPermanentChoiceContext {
       }
 

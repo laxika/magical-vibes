@@ -70,6 +70,7 @@ class NorthPoleGatesTest extends BaseCardTest {
     void paysCostsBeforeDrawing() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new NorthPoleGates());
         NorthPoleGates draw = new NorthPoleGates();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(draw));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

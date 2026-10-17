@@ -252,6 +252,15 @@ public class TurnCleanupService {
             if (expired.effect() instanceof TemporaryCopyEffect
                     && expired.affectedPermanentId() != null) {
                 Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
+                if (copy == null) {
+                    // A phased-out copy still reverts: the effect ends at cleanup whether or not the
+                    // permanent is currently phased in (CR 514.2).
+                    copy = gameData.phasedOutPermanents.values().stream()
+                            .flatMap(List::stream)
+                            .filter(phased -> phased.getId().equals(expired.affectedPermanentId()))
+                            .findFirst()
+                            .orElse(null);
+                }
                 if (copy != null) {
                     copy.revertEndOfTurnCopy();
                 }

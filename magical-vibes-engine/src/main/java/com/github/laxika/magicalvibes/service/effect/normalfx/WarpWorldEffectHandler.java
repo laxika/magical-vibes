@@ -232,7 +232,7 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
             if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, candidate, auraCard)) {
                 return;
             }
-            if (gameQueryService.hasProtectionFromSourceSubtypes(candidate, auraCard)) {
+            if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, candidate, auraCard)) {
                 return;
             }
             if (auraCard.getTargetFilter() != null) {

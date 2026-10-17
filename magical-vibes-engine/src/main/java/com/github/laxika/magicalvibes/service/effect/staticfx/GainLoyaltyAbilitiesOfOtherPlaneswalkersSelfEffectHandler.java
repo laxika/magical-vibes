@@ -34,6 +34,7 @@ public class GainLoyaltyAbilitiesOfOtherPlaneswalkersSelfEffectHandler implement
             }
             for (Permanent permanent : battlefield) {
                 if (permanent.getId().equals(context.sourceId())
+                        || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         || !support.matchesStaticFilter(context, permanent, new PermanentIsPlaneswalkerPredicate())) {
                     continue;
                 }

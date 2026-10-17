@@ -99,6 +99,7 @@ class NadirKrakenTest extends BaseCardTest {
     void opponentDrawDoesNotTrigger() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new NadirKraken());
         harness.setLibrary(player2, List.of(new NyxbornColossus()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
@@ -116,6 +117,7 @@ class NadirKrakenTest extends BaseCardTest {
     void multipleDrawsHaveIndependentPayments() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new NadirKraken());
         harness.setLibrary(player1, List.of(new NyxbornColossus(), new NyxbornColossus()));
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));

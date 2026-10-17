@@ -184,14 +184,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                         permanent -> permanent.getCard().getName() + ": remove echo counters instead",
                         (ctx, permanent) -> damageSupport.getObject().applySoulEchoCounterRemoval(
                                 ctx.gameData(), ctx.playerId(), permanent, ctx.amount())).whole(),
-                perPermanent("PreventAndPutCounterOnSelf",
-                        ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
-                                ? preventionReplacementSupport.damageToControllerCounterOnSelfSources(
-                                ctx.gameData(), ctx.playerId())
-                                : List.of(),
-                        permanent -> permanent.getCard().getName() + ": prevent the damage and put a counter on it",
-                        (ctx, permanent) -> preventionReplacementSupport.preventDamageToControllerAndPutCounterOnSelf(
-                                ctx.gameData(), permanent, ctx.amount())).whole());
+                counterOnSelfPrevention());
     }
 
     @Override
@@ -222,6 +215,23 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                     "'s " + replaced + " damage to " + ctx.playerName() + logSuffix));
             return ctx.event().withAmount(ctx.amount() - replaced);
         });
+    }
+
+    /**
+     * Each permanent that prevents damage to its controller and takes counters for it, once per
+     * damage source (CR 615.10). Unpreventable damage still gets the counters (CR 615.12).
+     */
+    private Rule<PlayerDamageContext> counterOnSelfPrevention() {
+        return new Rule<PlayerDamageContext>("PreventAndPutCounterOnSelf", PREVENTION, false,
+                ctx -> preventionReplacementSupport.damageToControllerCounterOnSelfSources(ctx.gameData(), ctx.playerId())
+                        .stream().map(permanent -> permanent.getId().toString()).toList(),
+                (ctx, instance) -> permanent(ctx, instance).getCard().getName()
+                        + ": prevent the damage and put a counter on it",
+                (ctx, instance) -> ctx.event(),
+                (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(ctx.amount()
+                        - preventionReplacementSupport.preventDamageToControllerAndPutCounterOnSelf(
+                        ctx.gameData(), permanent(ctx, instance), ctx.amount(),
+                        gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())))));
     }
 
     /** One option per permanent carrying the effect; applying it returns how much damage it took. */

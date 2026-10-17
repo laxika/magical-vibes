@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import java.util.List;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    private final TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,6 +51,15 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
         if (targetEntry == null) {
             log.info("Game {} - Copy target no longer on stack", gameData.id);
+            return;
+        }
+
+        // CR 608.2b — the target must still satisfy the spell filter when the copy is made (e.g. the
+        // spell is no longer controlled by the copying effect's controller).
+        if (copyEffect.spellFilter() != null
+                && !targetLegalityService.matchesStackEntryPredicate(gameData, targetEntry,
+                copyEffect.spellFilter(), entry.getControllerId())) {
+            log.info("Game {} - Copy target no longer matches the copy filter", gameData.id);
             return;
         }
 

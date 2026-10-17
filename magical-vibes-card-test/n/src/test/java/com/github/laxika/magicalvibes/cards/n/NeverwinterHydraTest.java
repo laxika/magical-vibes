@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -130,7 +131,6 @@ class NeverwinterHydraTest extends BaseCardTest {
         castHydraAndTargetWithShockWithWardMana();
 
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");
         harness.assertOnBattlefield(player1, "Neverwinter Hydra");
@@ -147,6 +147,9 @@ class NeverwinterHydraTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 5));
 
         harness.assertLife(player2, 15);
         harness.assertInGraveyard(player2, "Neverwinter Hydra");

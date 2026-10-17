@@ -716,6 +716,9 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        Permanent attackingSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = attackingSource == null
+                ? null : gameQueryService.getEffectivePower(gameData, attackingSource);
 
         String zoneLabel = scope == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
                 ? "your graveyard"
@@ -1157,26 +1160,7 @@ public class GraveyardTargetingService {
                 continue;
             }
 
-            GraveyardSearchScope scope = effect.targetScopes().get(groupIndex);
-            List<Card> matchingCards = new ArrayList<>();
-            for (UUID graveyardOwnerId : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
-                List<Card> graveyard = targetableGraveyard(gameData, graveyardOwnerId, controllerId);
-                if (graveyard == null) {
-                    continue;
-                }
-                for (Card graveyardCard : graveyard) {
-                    if (effect.requiresDistinctTargets()
-                            && gameData.graveyardTargetOperation.independentTargetCardIds
-                            .contains(graveyardCard.getId())) {
-                        continue;
-                    }
-                    if (predicateEvaluationService.matchesCardPredicate(
-                            graveyardCard, effect.targetFilters().get(groupIndex),
-                            gameData.graveyardTargetOperation.card.getId())) {
-                        matchingCards.add(graveyardCard);
-                    }
-                }
-            }
+            List<Card> matchingCards = matchingIndependentGraveyardCards(gameData, controllerId, effect, groupIndex);
 
             if (matchingCards.isEmpty()) {
                 if (effect.minimumTargetCounts().get(groupIndex) > 0) {
@@ -1187,15 +1171,51 @@ public class GraveyardTargetingService {
                 continue;
             }
 
+            // A required target that cannot be chosen means the whole ability is not put on the stack,
+            // so no earlier group is prompted for before a later required group is known to have a target.
+            for (int laterIndex = groupIndex + 1; laterIndex < effect.targetFilters().size(); laterIndex++) {
+                if (effect.minimumTargetCounts().get(laterIndex) > 0
+                        && !(effect.targetGroupsOnlyWhenKicked().get(laterIndex) && !kicked)
+                        && matchingIndependentGraveyardCards(gameData, controllerId, effect, laterIndex).isEmpty()) {
+                    throw new IllegalStateException("No legal target for required graveyard target group");
+                }
+            }
+
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                     effect.minimumTargetCounts().get(groupIndex),
                     "Choose up to one target " + effect.targetDescriptions().get(groupIndex)
-                            + " from " + zoneLabel(scope) + ".");
+                            + " from " + zoneLabel(effect.targetScopes().get(groupIndex)) + ".");
             return true;
         }
 
         gameData.graveyardTargetOperation.independentTargetGroupIndex = -1;
         return false;
+    }
+
+    private List<Card> matchingIndependentGraveyardCards(GameData gameData, UUID controllerId,
+                                                         IndependentlyTargetedGraveyardCardsEffect effect,
+                                                         int groupIndex) {
+        GraveyardSearchScope scope = effect.targetScopes().get(groupIndex);
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID graveyardOwnerId : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId)) {
+            List<Card> graveyard = targetableGraveyard(gameData, graveyardOwnerId, controllerId);
+            if (graveyard == null) {
+                continue;
+            }
+            for (Card graveyardCard : graveyard) {
+                if (effect.requiresDistinctTargets()
+                        && gameData.graveyardTargetOperation.independentTargetCardIds
+                        .contains(graveyardCard.getId())) {
+                    continue;
+                }
+                if (predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, effect.targetFilters().get(groupIndex),
+                        gameData.graveyardTargetOperation.card.getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+        return matchingCards;
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,

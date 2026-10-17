@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -52,6 +53,10 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
         }
 
         Card targetedCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        if (targetedCard != null && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, targetedCard, Zone.GRAVEYARD)) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (creatures can't enter the battlefield from graveyards)."));
+            return;
+        }
         if (targetedCard != null && targetedCard.isAura()) {
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, targetedCard.getId());
             if (ownerId == null || ownerId.equals(controllerId)) return;

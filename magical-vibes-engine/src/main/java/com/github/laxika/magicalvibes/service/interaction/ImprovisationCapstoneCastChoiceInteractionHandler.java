@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandler;
 import java.util.ArrayList;
@@ -13,6 +16,8 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -22,6 +27,13 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.ImprovisationCapstoneCastChoice> {
 
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    private final GameLogService gameLogService;
+    @Autowired
+    @Lazy
+    private ExileReducedCastSupport exileReducedCastSupport;
+    @Autowired
+    @Lazy
+    private InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.ImprovisationCapstoneCastChoice> handledType() {
@@ -55,6 +67,16 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
                 throw new IllegalStateException("The chosen cards exceed the total mana value limit");
             }
             gameData.pendingFreeCastManaValueBudget = interaction.maxTotalManaValue();
+        }
+        if (interaction.payManaCost()) {
+            gameData.interaction.clearAwaitingInput();
+            if (cardIds.isEmpty()) {
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " casts no spells."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            exileReducedCastSupport.castFromExileWithNormalCostDuringResolution(gameData, player, cardIds.getFirst());
+            return;
         }
         if (interaction.castAsCopies()) {
             gameData.interaction.clearAwaitingInput();

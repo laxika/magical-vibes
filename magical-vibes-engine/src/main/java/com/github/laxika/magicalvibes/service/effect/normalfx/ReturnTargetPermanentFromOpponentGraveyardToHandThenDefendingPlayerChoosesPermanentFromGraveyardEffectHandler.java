@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentFromOpponentGraveyardToHandThenDefendingPlayerChoosesPermanentFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -63,12 +64,26 @@ public class ReturnTargetPermanentFromOpponentGraveyardToHandThenDefendingPlayer
         // damaged-player context on its resulting stack entry. Preserve that player for the
         // resolution-time choice that follows the successful return.
         entry.setTargetId(targetOwnerId);
-        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        int effectIndex = indexOfEffectOrWrappingMay(entry, effect);
         if (effectIndex < 0) {
             throw new IllegalStateException(
                     "ReturnTargetPermanentFromOpponentGraveyardToHandThenDefendingPlayerChoosesPermanentFromGraveyardEffect is not part of its stack entry");
         }
         entry.insertEffectsToResolve(effectIndex + 1, List.of(
                 DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffect.withoutRiders(orderedEffect.filter())));
+    }
+
+    private static int indexOfEffectOrWrappingMay(StackEntry entry, CardEffect effect) {
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        int index = effects.indexOf(effect);
+        if (index >= 0) {
+            return index;
+        }
+        for (int i = 0; i < effects.size(); i++) {
+            if (effects.get(i) instanceof MayEffect may && may.wrapped() == effect) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

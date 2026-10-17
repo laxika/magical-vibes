@@ -50,6 +50,18 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
             return;
         }
 
+        if (e.scope() == GrantScope.ENCHANTED_CREATURE) {
+            // Resolved against the aura's current host so that moving the aura in response redirects the requirement.
+            Permanent aura = entry.getSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (aura == null || !aura.isAttached()) {
+                return;
+            }
+            resolveForTarget(gameData, entry, e.requirement(), aura.getAttachedTo());
+            return;
+        }
+
         UUID targetId = e.scope() == GrantScope.SELF
                 ? (entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId())
                 : entry.targetsForEffect(effect).stream().findFirst().orElse(entry.getTargetId());

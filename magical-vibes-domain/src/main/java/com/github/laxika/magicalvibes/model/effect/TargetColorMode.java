@@ -15,5 +15,8 @@ public enum TargetColorMode {
     ALLOWED_COLORS_ONLY,
 
     /** A source is restricted if its effective color set contains exactly one color. */
-    MONOCOLORED
+    MONOCOLORED,
+
+    /** A source is restricted if its effective color set contains two or more colors. */
+    MULTICOLORED
 }

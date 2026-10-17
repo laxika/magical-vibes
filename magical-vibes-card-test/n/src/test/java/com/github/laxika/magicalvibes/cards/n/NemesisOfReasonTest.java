@@ -183,7 +183,7 @@ class NemesisOfReasonTest extends BaseCardTest {
     private Permanent declarePlaneswalkerAttack() {
         addAttacker();
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
-        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

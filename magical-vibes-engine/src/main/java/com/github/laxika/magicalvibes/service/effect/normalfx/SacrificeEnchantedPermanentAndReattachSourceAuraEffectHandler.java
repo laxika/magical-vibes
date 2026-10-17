@@ -45,37 +45,39 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent originalAura = entry.getSourcePermanentSnapshot();
+        if (originalAura == null) return;
+        Permanent aura = gameQueryService.findPermanentById(gameData, originalAura.getId());
         boolean auraOnBattlefield = aura != null;
-        if (aura == null) aura = entry.getSourcePermanentSnapshot();
-        if (aura == null) return;
-        Permanent originalAura = entry.getSourcePermanentSnapshot() != null
-                ? entry.getSourcePermanentSnapshot() : aura;
-        UUID enchantedPermanentId = originalAura.getAttachedTo() != null
-                ? originalAura.getAttachedTo() : originalAura.getLastAttachedTo();
+        if (aura == null) aura = originalAura;
+        UUID enchantedPermanentId = entry.getSourcePermanentId();
         Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedPermanentId);
         if (enchanted == null || gameQueryService.cantBeSacrificed(gameData, enchanted)
                 || !gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, enchanted)) {
             return;
         }
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, enchantedPermanentId);
-        if (controllerId == null) {
-            return;
-        }
+        // "You" is the trigger's controller; a permanent can only be sacrificed by the player who
+        // controls it, so a control change after the trigger leaves the sacrifice undone while the
+        // Aura still moves onto a permanent the trigger's controller controls.
+        UUID controllerId = entry.getControllerId();
+        boolean sacrificeEnchanted = controllerId.equals(
+                gameQueryService.findPermanentController(gameData, enchantedPermanentId));
         if (!auraOnBattlefield) {
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted);
+            if (sacrificeEnchanted) {
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted);
+            }
             return;
         }
 
         SacrificeEnchantedPermanentAndReattachSourceAuraEffect reattachEffect =
                 (SacrificeEnchantedPermanentAndReattachSourceAuraEffect) effect;
-        // Valid re-attach destinations that player controls, other than the permanent about to be sacrificed.
+        // Valid re-attach destinations that player controls, other than a permanent about to be sacrificed.
         List<UUID> validTargetIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getId().equals(enchantedPermanentId)) continue;
+                if (sacrificeEnchanted && p.getId().equals(enchantedPermanentId)) continue;
                 if (predicateEvaluationService.matchesPermanentPredicate(gameData, p,
                         reattachEffect.destinationFilter())
                         && auraAttachmentService.canEnchant(gameData, aura.getCard(), entry.getControllerId(), p)) {
@@ -88,19 +90,21 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
             // Defer the sacrifice until the destination is chosen so the Aura is never orphaned
             // (and removed by a state-based action) while awaiting input.
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.ReattachSourceAuraAfterSacrifice(aura.getId(), enchantedPermanentId));
+                    new PermanentChoiceContext.ReattachSourceAuraAfterSacrifice(aura.getId(),
+                            sacrificeEnchanted ? enchantedPermanentId : null));
             playerInputService.beginPermanentChoice(gameData, controllerId, validTargetIds,
                     aura.getCard().getName() + " — Choose a permanent to attach it to.");
             return;
         }
 
-        // Sacrifice the enchanted permanent.
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted)) {
-            return;
+        if (sacrificeEnchanted) {
+            if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted)) {
+                return;
+            }
+            entry.setSacrificedCard(enchanted.getCard());
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));
         }
-        entry.setSacrificedCard(enchanted.getCard());
-        String playerName = gameData.playerIdToName.get(controllerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));
 
         if (validTargetIds.isEmpty()) {
             // No legal destination — the Aura stays unattached and is removed as a state-based action.

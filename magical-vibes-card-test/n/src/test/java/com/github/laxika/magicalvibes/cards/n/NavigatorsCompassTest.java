@@ -224,6 +224,10 @@ class NavigatorsCompassTest extends BaseCardTest {
         assertThat(gqs.effectiveBasicLandTypes(gd, forest))
                 .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.PLAINS);
         harness.tapPermanent(player1, 1);
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactlyInAnyOrder("GREEN", "WHITE");
+        harness.handleListChoice(player1, "GREEN");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }

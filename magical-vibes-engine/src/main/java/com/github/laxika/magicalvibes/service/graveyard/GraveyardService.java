@@ -364,6 +364,9 @@ public class GraveyardService {
             return null;
         }
         for (Permanent p : bf) {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, p)) {
+                continue;
+            }
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof DiscardToTopOfLibraryInsteadEffect replacement
                         && (!replacement.opponentCausedOnly() || gameData.discardCausedByOpponent)) {
@@ -745,8 +748,11 @@ public class GraveyardService {
         }
         if (sourceZone == Zone.LIBRARY) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY)) {
-                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
-                        card.getName() + "'s ability", new ArrayList<>(List.of(effect)), null, (UUID) null));
+                StackEntry selfTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
+                        card.getName() + "'s ability", new ArrayList<>(List.of(effect)), null, (UUID) null);
+                selfTrigger.setTriggeringCardId(card.getId());
+                selfTrigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                gameData.enqueueTrigger(selfTrigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
             }
         }

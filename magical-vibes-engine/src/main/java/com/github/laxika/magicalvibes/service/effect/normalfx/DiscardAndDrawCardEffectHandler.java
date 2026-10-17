@@ -34,6 +34,9 @@ public class DiscardAndDrawCardEffectHandler implements NormalEffectHandlerBean 
         if (hand == null || hand.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(controllerId) + " has no cards to discard.";
             gameLogService.append(gameData, GameLog.text(logEntry));
+            if (e.drawRegardless()) {
+                playerInteractionSupport.applyDrawCards(gameData, controllerId, e.drawAmount());
+            }
             return;
         }
         gameData.discardCausedByOpponent = false;

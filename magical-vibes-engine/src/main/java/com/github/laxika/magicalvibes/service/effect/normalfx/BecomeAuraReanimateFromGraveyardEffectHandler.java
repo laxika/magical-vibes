@@ -33,7 +33,6 @@ public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffe
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final AuraAttachmentService auraAttachmentService;
-    private final DestructionSupport destructionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -85,7 +84,9 @@ public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffe
 
         if (!auraAttachmentService.canEnchant(
                 gameData, source.getCard(), entry.getControllerId(), creature)) {
-            destructionSupport.sacrificeAndLog(gameData, creature, entry.getControllerId());
+            // The creature stays in play; the unattached source is swept to the graveyard by SBAs, and its
+            // leaves-the-battlefield ability then makes the creature's controller sacrifice it.
+            source.setChosenPermanentId(creature.getId());
             return;
         }
 

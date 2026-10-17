@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +28,8 @@ class NoctisHeirApparentTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+                .processNextETBTokenMultiTargetTrigger(gd));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, equipment.getId());
@@ -50,9 +54,12 @@ class NoctisHeirApparentTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(noctis);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(noctis.getCard());
 
-        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(noctis.getCard().getId()))

@@ -42,7 +42,7 @@ class NimDevourerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(hunter.getId()));
+        harness.handlePermanentChosen(player1, hunter.getId());
 
         harness.assertOnBattlefield(player1, "Nim Devourer");
         harness.assertInGraveyard(player1, "Fangren Hunter");
@@ -114,8 +114,7 @@ class NimDevourerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1,
-                List.of(harness.getPermanentId(player1, "Nim Devourer")));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Nim Devourer"));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Nim Devourer");
@@ -136,7 +135,7 @@ class NimDevourerTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(hunter.getId()));
+        harness.handlePermanentChosen(player1, hunter.getId());
 
         assertThat(harness.getPermanentId(player1, "Nim Devourer")).isNotNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -159,7 +158,7 @@ class NimDevourerTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(5);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);

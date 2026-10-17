@@ -105,32 +105,33 @@ public class ExileSupport {
     /** Associates the exile with one linked ability of the source permanent. */
     public boolean exilePermanentAndTrackWithSource(GameData gameData, Permanent permanent,
                                                     UUID sourcePermanentId, Card sourceCard, String abilityLink) {
-        Card exiledCard = permanent.getOriginalCard();
+        List<Card> exiledCards = permanent.cardsLeavingBattlefield();
         UUID fallbackOwnerId = gameData.findControllerOf(permanent);
         if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
             return false;
         }
 
-        if (exiledCard.isToken()) {
-            gameData.removeFromExile(exiledCard.getId());
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            return true;
-        }
-
-        var exiledEntry = gameData.findExiledCard(exiledCard.getId());
-        UUID ownerId = exiledEntry != null ? exiledEntry.ownerId() : fallbackOwnerId;
-        gameData.removeFromExile(exiledCard.getId());
-        gameData.addToExile(ownerId, exiledCard, sourcePermanentId);
-        if (abilityLink != null) {
-            synchronized (gameData.exiledCards) {
-                gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(exiledCard.getId())
-                        ? exiled.withAbilityLink(abilityLink) : exiled);
+        for (Card exiledCard : exiledCards) {
+            if (exiledCard.isToken()) {
+                gameData.removeFromExile(exiledCard.getId());
+                continue;
             }
-        }
 
-        gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", sourceCard, "."));
-        log.info("Game {} - {} exiles {} (tracked with source)",
-                gameData.id, sourceCard.getName(), exiledCard.getName());
+            var exiledEntry = gameData.findExiledCard(exiledCard.getId());
+            UUID ownerId = exiledEntry != null ? exiledEntry.ownerId() : fallbackOwnerId;
+            gameData.removeFromExile(exiledCard.getId());
+            gameData.addToExile(ownerId, exiledCard, sourcePermanentId);
+            if (abilityLink != null) {
+                synchronized (gameData.exiledCards) {
+                    gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(exiledCard.getId())
+                            ? exiled.withAbilityLink(abilityLink) : exiled);
+                }
+            }
+
+            gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", sourceCard, "."));
+            log.info("Game {} - {} exiles {} (tracked with source)",
+                    gameData.id, sourceCard.getName(), exiledCard.getName());
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
         return true;
     }

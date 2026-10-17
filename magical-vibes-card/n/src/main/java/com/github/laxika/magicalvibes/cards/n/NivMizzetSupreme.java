@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
@@ -22,6 +23,8 @@ import java.util.List;
 public class NivMizzetSupreme extends Card {
 
     public NivMizzetSupreme() {
+        removeKeyword(Keyword.HEXPROOF);
+        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromMonocolored());
         addEffect(EffectSlot.STATIC, GrantSpellCastingAbilityToSpellsEffect.fromZone(
                 Keyword.JUMP_START,
                 new CardAllOfPredicate(List.of(

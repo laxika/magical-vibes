@@ -70,7 +70,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                     .map(type -> new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
                             "Remove " + e.count() + " " + permanentCounterSupport.counterTypeName(type) + " counters",
                             new RemoveCounterFromSourceThenEffect(type, e.count(), e.thenEffect(),
-                                    e.onlyIfLastCounterRemoved())))
+                                    e.onlyIfLastCounterRemoved(), e.reflexive())))
                     .toList();
             if (options.size() > 1) {
                 playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
@@ -94,7 +94,11 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 .text(e.count() == 1 ? " counter." : " counters.").build());
 
         if (!e.onlyIfLastCounterRemoved() || source.getCounterCount(counterType) == 0) {
-            beginReflexiveTrigger(gameData, entry, e.thenEffect());
+            if (!e.reflexive() && entry.getResolvingEffectIndex() >= 0) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(e.thenEffect()));
+            } else {
+                beginReflexiveTrigger(gameData, entry, e.thenEffect());
+            }
         }
     }
 

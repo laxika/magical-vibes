@@ -46,13 +46,14 @@ public class MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSou
                 AmountContext.forStackEntry(entry, null)));
         int maxCount = Math.max(1, amountEvaluationService.evaluate(gameData, millEffect.maxCount(),
                 AmountContext.forStackEntry(entry, null)));
-        List<Card> milled = graveyardService.resolveMillPlayer(
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(
                 gameData, entry.getControllerId(), count);
 
         List<Card> eligibleCards = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, millEffect.filter(), null, gameData, entry.getControllerId()))
-                .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
+                .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null
+                        || gameData.findExiledCard(card.getId()) != null)
                 .toList();
         if (eligibleCards.isEmpty()) {
             putCounterOnSource(gameData, entry);

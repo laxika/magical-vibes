@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.u.UnstableFooting;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -91,6 +92,9 @@ class NineLivesTest extends BaseCardTest {
 
         harness.castKickedInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, order.options().getFirst());
 
         harness.assertLife(player1, 15);
         assertThat(first.getCounterCount(CounterType.INCARNATION)).isEqualTo(1);

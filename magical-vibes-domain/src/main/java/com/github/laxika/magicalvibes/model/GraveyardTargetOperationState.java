@@ -42,6 +42,8 @@ public class GraveyardTargetOperationState {
     public CumulativeUpkeepPaymentContext cumulativeUpkeepPayment;
     /** In-progress payment that moves a fixed number of cards from the controller's graveyard. */
     public ControllerGraveyardPaymentContext controllerGraveyardPayment;
+    /** In-progress replacement effect that exiles a chosen number of cards from a player's graveyard. */
+    public ReplacementGraveyardExileContext replacementGraveyardExile;
 
     public record CumulativeUpkeepPaymentContext(UUID sourceControllerId, Card sourceCard,
                                                   UUID sourcePermanentId, ForcedCostOrElseEffect forcedCost,
@@ -56,6 +58,11 @@ public class GraveyardTargetOperationState {
                                                      UUID sourcePermanentId,
                                                      ForcedCostOrElseEffect forcedCost, int count) {
     }
+
+    /** Nefarious Lich: {@code playerId} chooses exactly {@code count} cards to exile instead of taking damage. */
+    public record ReplacementGraveyardExileContext(UUID playerId, int count) {
+    }
+
     /** Target player for effects like "Target player shuffles ... from their graveyard" */
     public UUID targetPlayerId;
     /** Remaining cast-time graveyard target groups for spells with more than one such group. */

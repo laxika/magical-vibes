@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -98,6 +99,10 @@ class NavigatorsRuinTest extends BaseCardTest {
         harness.setLibrary(player2, cards);
         var controllerLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
         harness.addToBattlefield(player1, new NavigatorsRuin());
+        // Stay in the end step after the trigger resolves; otherwise the game advances to the opponent's
+        // draw step and their draw would remove the one card that is meant to stay in the library.
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.END_STEP));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.END_STEP));
         beginRaidEndStep();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();

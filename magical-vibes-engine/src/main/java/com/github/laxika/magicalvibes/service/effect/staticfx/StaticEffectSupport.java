@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
@@ -254,6 +255,10 @@ public class StaticEffectSupport {
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
+        } else if (wrapped instanceof RemoveKeywordEffect remove
+                && remove.scope() == GrantScope.SELF
+                && matchesStaticFilter(context, context.target(), remove.filter())) {
+            accumulator.removeKeyword(remove.keyword());
         } else if (wrapped instanceof SetBasePowerToughnessEffect setPT
                 && setPT.scope() == GrantScope.SELF
                 && matchesStaticFilter(context, context.target(), setPT.filter())) {

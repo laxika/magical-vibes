@@ -58,7 +58,11 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        LibrarySearchFollowUp searches = LibrarySearchFollowUp.basicLandSearches(searchers, List.of());
+        // "may search" and "each player who searched this way shuffles": an optional search whose
+        // searchers shuffle after the queue, so a player with an empty library still gets the choice.
+        LibrarySearchFollowUp searches = LibrarySearchFollowUp.basicLandSearches(searchers, List.of(), true);
+        searches = searches.withBasicLandSearchQueue(
+                searches.basicLandSearchQueue().withOptionalSearch(true));
         if (!sacrificers.isEmpty()) {
             destructionSupport.beginNextForcedSacrificeFromQueue(
                     gameData, sacrificers, List.of(), true, searches);

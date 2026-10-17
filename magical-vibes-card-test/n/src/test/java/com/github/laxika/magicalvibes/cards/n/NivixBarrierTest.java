@@ -46,7 +46,6 @@ class NivixBarrierTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test

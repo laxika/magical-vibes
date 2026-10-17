@@ -44,9 +44,23 @@ public class EachPlayerWithMostCreaturesInvestigatesEffectHandler implements Nor
             }
         }
 
-        for (UUID playerId : playersWithMostCreatures) {
+        // A token-creation replacement offer parks the creation and re-runs this effect once the choice is made.
+        // Resume at the player the offer belongs to so players who already investigated don't repeat it.
+        int startIndex = 0;
+        if (gameData.pendingTokenCreationReplacement != null) {
+            UUID parkedController = gameQueryService.findPermanentController(
+                    gameData, gameData.pendingTokenCreationReplacement.replacementPermanentId());
+            int parkedIndex = playersWithMostCreatures.indexOf(parkedController);
+            if (parkedIndex > 0) {
+                startIndex = parkedIndex;
+            }
+        }
+        for (UUID playerId : playersWithMostCreatures.subList(startIndex, playersWithMostCreatures.size())) {
             createTokenEffectHandler.resolveForController(
                     gameData, entry, CreateTokenEffect.ofClueToken(1), playerId);
+            if (gameData.pendingTokenCreationReplacement != null) {
+                return;
+            }
         }
     }
 }

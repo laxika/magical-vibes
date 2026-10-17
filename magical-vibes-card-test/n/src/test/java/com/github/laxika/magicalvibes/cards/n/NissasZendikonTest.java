@@ -108,7 +108,7 @@ class NissasZendikonTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, plains, Keyword.REACH)).isFalse();
         assertThat(gqs.hasKeyword(gd, plains, Keyword.HASTE)).isFalse();
         harness.assertInGraveyard(player1, "Nissa's Zendikon");
-        harness.assertNotInHand(player1, "Plains");
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(plains.getCard().getId()));
     }
 
     @Test
@@ -123,11 +123,11 @@ class NissasZendikonTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, plains.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(plains.getCard());
-        harness.assertNotInHand(player2, "Plains");
+        assertThat(gd.playerHands.get(player2.getId())).noneMatch(c -> c.getId().equals(plains.getCard().getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).contains(plains.getCard());
-        harness.assertNotInHand(player1, "Plains");
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(plains.getCard().getId()));
         harness.assertNotInGraveyard(player2, "Plains");
         harness.assertInGraveyard(player1, "Nissa's Zendikon");
     }

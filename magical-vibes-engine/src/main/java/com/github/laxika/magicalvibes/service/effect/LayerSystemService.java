@@ -1108,6 +1108,9 @@ public class LayerSystemService {
             for (CardSubtype granted : permanent.getTransientSubtypes()) {
                 state.addSubtype(granted);
             }
+            for (CardSubtype granted : permanent.getUntilNextTurnSubtypes()) {
+                state.addSubtype(granted);
+            }
             if (!permanent.isFaceDown() && permanent.getCounterCount(CounterType.AWAKENING) > 0) {
                 // An awakened land is an Elemental creature: its creature types are replaced,
                 // while its land types stay.

@@ -48,7 +48,9 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.passPriority(player2);
 
         // Player1 cycles Nimble Obstructionist, countering Fume Spitter's ability.
-        harness.activateHandAbility(player1, 0, fumeSpitter.getId());
+        UUID fumeSpitterAbilityId = gd.stack.getLast().getTargetableId();
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, fumeSpitterAbilityId);
         harness.passBothPriorities();
 
         // Ability countered: Grizzly Bears never received the -1/-1 counter and survives.
@@ -96,9 +98,12 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Grizzly Bears"));
 
-        // Player1 cannot cycle to counter their own ability.
-        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, fumeSpitter.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        // Cycling still draws, but the cycling trigger has no legal target among abilities player1 controls.
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.stream().filter(entry -> entry.getCard() instanceof NimbleObstructionist)).hasSize(1);
     }
 
     @Test
@@ -117,10 +122,12 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
 
-        // Nimble Obstructionist can only counter abilities, not spells.
-        UUID shockId = shock.getId();
-        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, shockId))
-                .isInstanceOf(IllegalStateException.class);
+        // Nimble Obstructionist can only counter abilities, not spells, so its cycling trigger finds no target.
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(shock.getId());
     }
 
     @Test
@@ -137,7 +144,8 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NimbleObstructionist()));
         harness.setLibrary(player1, List.of(new DesertOfTheMindful()));
         addCyclingMana(player1);
-        harness.activateHandAbility(player1, 0, triggerId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, triggerId);
         harness.passBothPriorities();
 
         assertThat(survivor.getPowerModifier()).isZero();
@@ -162,9 +170,11 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NimbleObstructionist()));
         harness.setLibrary(player1, List.of(new DesertOfTheMindful()));
         addCyclingMana(player1);
-        harness.activateHandAbility(player1, 0, desertAbilityId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, desertAbilityId);
         UUID counterTriggerId = gd.stack.getLast().getTargetableId();
-        harness.activateHandAbility(player2, 0, counterTriggerId);
+        harness.activateHandAbility(player2, 0, null);
+        harness.handlePermanentChosen(player2, counterTriggerId);
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -190,8 +200,10 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new DesertOfTheMindful(), new DesertOfTheMindful()));
         addCyclingMana(player1);
         addCyclingMana(player1);
-        harness.activateHandAbility(player1, 0, desertAbilityId);
-        harness.activateHandAbility(player1, 0, desertAbilityId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, desertAbilityId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, desertAbilityId);
 
         harness.passBothPriorities();
         harness.passBothPriorities();

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * Delayed trigger that returns an Aura card from its owner's graveyard to the battlefield attached
- * to a particular permanent under its owner's control.
+ * to a particular permanent under the control of the player whose ability scheduled the return.
  */
 public record DelayedReturnAuraAttachedToPermanent(
         UUID auraCardId,

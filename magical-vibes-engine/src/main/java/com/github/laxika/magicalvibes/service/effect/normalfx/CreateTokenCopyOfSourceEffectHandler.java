@@ -225,7 +225,8 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     entry.getCreatedPermanentIds().add(tokenPermanent.getId());
 
                     if (e.tappedAndAttacking()) {
-                        tokenPermanent.setAttacking(true);
+                        // CR 508.4: it is attacking but was never declared as an attacker.
+                        tokenPermanent.enterAttacking(true);
                         if (sourceForRelativeValues != null) {
                             tokenPermanent.setAttackTarget(sourceForRelativeValues.getAttackTarget());
                         }

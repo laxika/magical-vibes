@@ -46,7 +46,7 @@ public class TheRuinousWreckingCrew extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
-                                "Discard a card, then draw a card.", new DiscardAndDrawCardEffect()),
+                                "Discard a card, then draw a card.", DiscardAndDrawCardEffect.thenDraw(1, 1)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Target opponent loses 2 life.", loseLife, opponentTargetFilter),
                         new ChooseOneEffect.ChooseOneOption(

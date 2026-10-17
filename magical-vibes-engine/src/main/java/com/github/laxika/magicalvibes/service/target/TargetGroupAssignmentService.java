@@ -31,22 +31,34 @@ public class TargetGroupAssignmentService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
-    /** Assigns each occurrence to one distinct optional permanent target group. */
+    /**
+     * Assigns each occurrence to an optional permanent target group with room left. A target that fits
+     * several groups goes to the group with the smallest capacity first (ties keep declaration order),
+     * so a creature an opponent controls chosen for "up to two target creatures" and "up to one target
+     * creature an opponent controls" lands in the narrower group instead of filling the first one.
+     */
     public Optional<Assignment> assignOptionalPermanentGroups(GameData gameData, Card card,
             UUID controllerId, List<UUID> targetIds) {
         List<SpellTarget> groups = card.getSpellTargets();
-        int[] groupToTarget = new int[groups.size()];
-        Arrays.fill(groupToTarget, -1);
+        List<List<Integer>> groupToTargets = new ArrayList<>();
+        for (int i = 0; i < groups.size(); i++) {
+            groupToTargets.add(new ArrayList<>());
+        }
+        List<Integer> groupOrder = new ArrayList<>();
+        for (int i = 0; i < groups.size(); i++) {
+            groupOrder.add(i);
+        }
+        groupOrder.sort(java.util.Comparator.comparingInt(index -> groups.get(index).getMaxTargets()));
         FilterContext context = FilterContext.of(gameData).withSourceControllerId(controllerId)
                 .withSourceCardId(card.getId());
-        if (!assignPermanentTarget(gameData, targetIds, groups, context, groupToTarget, 0)) {
+        if (!assignPermanentTarget(gameData, targetIds, groups, groupOrder, context, groupToTargets, 0)) {
             return Optional.empty();
         }
         List<UUID> ordered = new ArrayList<>();
         List<Integer> sizes = new ArrayList<>();
-        for (int position : groupToTarget) {
-            sizes.add(position < 0 ? 0 : 1);
-            if (position >= 0) ordered.add(targetIds.get(position));
+        for (List<Integer> positions : groupToTargets) {
+            sizes.add(positions.size());
+            positions.stream().sorted().forEach(position -> ordered.add(targetIds.get(position)));
         }
         return Optional.of(new Assignment(ordered, sizes));
     }
@@ -93,17 +105,20 @@ public class TargetGroupAssignmentService {
     }
 
     private boolean assignPermanentTarget(GameData gameData, List<UUID> targets, List<SpellTarget> groups,
-            FilterContext context, int[] groupToTarget, int targetIndex) {
+            List<Integer> groupOrder, FilterContext context, List<List<Integer>> groupToTargets,
+            int targetIndex) {
         if (targetIndex == targets.size()) return true;
         Permanent permanent = gameQueryService.findPermanentById(gameData, targets.get(targetIndex));
         if (permanent == null) return false;
-        for (int groupIndex = 0; groupIndex < groups.size(); groupIndex++) {
-            if (groupToTarget[groupIndex] >= 0) continue;
+        for (int groupIndex : groupOrder) {
+            List<Integer> assigned = groupToTargets.get(groupIndex);
+            if (assigned.size() >= groups.get(groupIndex).getMaxTargets()) continue;
             if (!(groups.get(groupIndex).getFilter() instanceof PermanentPredicateTargetFilter filter)
                     || !predicateEvaluationService.matchesPermanentPredicate(permanent, filter.predicate(), context)) continue;
-            groupToTarget[groupIndex] = targetIndex;
-            if (assignPermanentTarget(gameData, targets, groups, context, groupToTarget, targetIndex + 1)) return true;
-            groupToTarget[groupIndex] = -1;
+            assigned.add(targetIndex);
+            if (assignPermanentTarget(gameData, targets, groups, groupOrder, context, groupToTargets,
+                    targetIndex + 1)) return true;
+            assigned.remove(assigned.size() - 1);
         }
         return false;
     }

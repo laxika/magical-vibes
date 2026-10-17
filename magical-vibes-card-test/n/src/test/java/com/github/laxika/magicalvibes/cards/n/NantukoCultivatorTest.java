@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NantukoCultivator.class, TaintedWood.class, CabalRitual.class, WasteAway.class})
 class NantukoCultivatorTest extends BaseCardTest {
@@ -137,8 +136,8 @@ class NantukoCultivatorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 1);
 
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
 

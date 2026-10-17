@@ -12,10 +12,6 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +27,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
     private final AuraAttachmentService auraAttachmentService;
-    private final TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,52 +57,30 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
             return;
         }
 
-        // Find all creatures controlled by opponents of the dying creature's controller
-        List<UUID> validTargetIds = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(enchantedCreatureControllerId)) continue;
-
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (gameQueryService.isCreature(gameData, p)
-                        && auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, p)
-                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
-                                gameData, p, entry.getCard(), auraControllerId).isEmpty()) {
-                    validTargetIds.add(p.getId());
-                }
-            }
-        }
-
-        if (validTargetIds.isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no opponent creatures to attach to)."));
-            log.info("Game {} - {} death trigger fizzles (no opponent creatures)",
+        // The target was chosen by the dying creature's controller when the trigger went on the stack.
+        Permanent target = entry.getTargetId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID targetControllerId = target == null
+                ? null : gameQueryService.findPermanentController(gameData, target.getId());
+        if (target == null
+                || !gameQueryService.isCreature(gameData, target)
+                || enchantedCreatureControllerId.equals(targetControllerId)
+                || !auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, target)) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (target is no longer legal)."));
+            log.info("Game {} - {} death trigger fizzles (target no longer legal)",
                     gameData.id, entry.getCard().getName());
             return;
         }
 
-        // Remove aura from graveyard
         permanentRemovalService.removeCardFromGraveyardById(gameData, auraCardId);
 
-        if (validTargetIds.size() == 1) {
-            // Auto-attach when only one valid target
-            Permanent target = gameQueryService.findPermanentById(gameData, validTargetIds.getFirst());
-            Permanent auraPerm = new Permanent(auraCard);
-            auraPerm.setAttachedTo(target.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
+        Permanent auraPerm = new Permanent(auraCard);
+        auraPerm.setAttachedTo(target.getId());
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
 
-            String controllerName = gameData.playerIdToName.get(auraControllerId);
-            
-            gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + controllerName + "'s control.").build());
-            log.info("Game {} - {} returns attached to {} (auto-selected)",
-                    gameData.id, auraCard.getName(), target.getCard().getName());
-        } else {
-            // Multiple valid targets — let the dying creature's controller choose
-            gameData.interaction.setPendingAuraCard(auraCard);
-            gameData.interaction.setPendingAuraOwnerId(auraControllerId);
-
-            playerInputService.beginPermanentChoice(gameData, enchantedCreatureControllerId, validTargetIds,
-                    "Choose a creature to attach " + auraCard.getName() + " to.");
-        }
+        String controllerName = gameData.playerIdToName.get(auraControllerId);
+        gameLogService.append(gameData, GameLog.builder().card(auraCard).text(" returns to the battlefield attached to ").card(target.getCard()).text(" under " + controllerName + "'s control.").build());
+        log.info("Game {} - {} returns attached to {}",
+                gameData.id, auraCard.getName(), target.getCard().getName());
     }
 }

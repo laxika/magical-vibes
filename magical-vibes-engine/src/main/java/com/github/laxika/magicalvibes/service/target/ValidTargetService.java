@@ -1548,8 +1548,7 @@ public class ValidTargetService {
 
         // Hexproof from color (blocks opponent's abilities of the specified color)
         Set<CardColor> effectiveSourceColors = targetLegalityService.effectiveSourceColors(gameData, sourceCard);
-        if (effectiveSourceColors.size() == 1
-                && gameQueryService.hasHexproofFromMonocolored(gameData, perm)
+        if (gameQueryService.hasHexproofFromColorCount(gameData, perm, effectiveSourceColors.size())
                 && !(gameQueryService.isCreature(gameData, perm)
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, controllerId))) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
@@ -1600,8 +1599,7 @@ public class ValidTargetService {
             if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, perm, sourceCard)) {
                 return false;
             }
-            if (gameQueryService.hasProtectionFromSourceSubtypes(perm, sourceCard)
-                    || gameQueryService.hasProtectionFromSourceSubtypes(gameData, perm, sourceCard)) {
+            if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, perm, sourceCard)) {
                 return false;
             }
         }

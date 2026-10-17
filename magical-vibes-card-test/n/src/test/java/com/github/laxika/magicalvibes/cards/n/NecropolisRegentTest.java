@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NecropolisRegent.class, GrizzlyBears.class, SerraAngel.class})
@@ -91,6 +93,7 @@ class NecropolisRegentTest extends BaseCardTest {
         first.setAttacking(true);
         second.setAttacking(true);
         harness.setLife(player2, 30);
+        stopAtCombatDamage();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -111,6 +114,7 @@ class NecropolisRegentTest extends BaseCardTest {
     void countersUseDamageRatherThanCurrentPower() {
         Permanent regent = addReady(new NecropolisRegent());
         regent.setAttacking(true);
+        stopAtCombatDamage();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -129,6 +133,7 @@ class NecropolisRegentTest extends BaseCardTest {
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new NecropolisRegent());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
+        stopAtCombatDamage();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -140,5 +145,10 @@ class NecropolisRegentTest extends BaseCardTest {
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(regent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    private void stopAtCombatDamage() {
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
     }
 }

@@ -22,7 +22,8 @@ import java.util.UUID;
 /**
  * Resolves {@link MoveCounterFromTargetCreatureToTargetCreatureEffect}: removes one counter from the
  * first target creature and places it on the second. Reads the two targets from the ability's flat
- * multi-target list (position 0 = source of the counter, position 1 = destination).
+ * multi-target list (position 0 = source of the counter, position 1 = destination); an illegal target
+ * keeps its position, so the other target of a later modal half never takes its place.
  */
 @Slf4j
 @Component
@@ -41,8 +42,8 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targets = entry.getTargetIds();
-        if (targets == null || targets.size() < 2) {
+        List<UUID> targets = entry.getDeclaredTargetIds();
+        if (targets == null || targets.size() < 2 || !entry.isTargetLegal(0) || !entry.isTargetLegal(1)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (invalid targets)."));
             return;
         }

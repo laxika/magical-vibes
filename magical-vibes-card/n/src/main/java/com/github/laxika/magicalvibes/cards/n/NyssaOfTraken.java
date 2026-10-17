@@ -25,7 +25,7 @@ public class NyssaOfTraken extends Card {
     public NyssaOfTraken() {
         addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
 
-        targetUpTo(new EventValue(), TargetFilters.creature(), 100)
+        targetUpTo(new EventValue(), TargetFilters.creature(), 1000)
                 .addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                         new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsArtifactPredicate()),
                         ConditionalEffect.unless(

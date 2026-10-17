@@ -266,7 +266,8 @@ public final class TextChangeTransformer {
                 CardSubtype excluded = replaceSubtype(change.excludedReplacementCreatureType(), substitution);
                 yield excluded == change.excludedReplacementCreatureType() ? change
                         : new ChangeColorTextEffect(change.colorWordsAllowed(), change.landTypesAllowed(),
-                        change.canTargetSpell(), change.untilEndOfTurn(), change.creatureTypesAllowed(), excluded);
+                        change.canTargetSpell(), change.untilEndOfTurn(), change.creatureTypesAllowed(), excluded,
+                        change.fixedReplacementCreatureType());
             }
             case BoostTargetCreatureEffect boost -> {
                 DynamicAmount power = apply(boost.powerBoost(), substitution);

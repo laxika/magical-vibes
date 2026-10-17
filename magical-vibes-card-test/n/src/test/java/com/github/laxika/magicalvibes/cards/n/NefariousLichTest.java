@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.f.FlameBurst;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -26,8 +27,9 @@ class NefariousLichTest extends BaseCardTest {
     void damageExilesExactlyThatManyCards() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new NefariousLich());
-        harness.setGraveyard(player1, List.of(
-                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp()));
+        List<Card> graveyardCards = List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp());
+        harness.setGraveyard(player1, graveyardCards);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -37,6 +39,8 @@ class NefariousLichTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.handleMultipleCardsChosen(player1,
+                List.of(graveyardCards.get(0).getId(), graveyardCards.get(1).getId()));
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -77,6 +81,7 @@ class NefariousLichTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player2);
+        chooseGraveyardCardsToExile(2);
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -103,6 +108,7 @@ class NefariousLichTest extends BaseCardTest {
         attackWithDuskImpPastGlacialChasm();
 
         chooseReplacement("Nefarious Lich");
+        chooseGraveyardCardsToExile(2);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player1, 20);
@@ -119,6 +125,13 @@ class NefariousLichTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player2);
+    }
+
+    private void chooseGraveyardCardsToExile(int count) {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds().subList(0, count));
     }
 
     private void chooseReplacement(String labelPrefix) {

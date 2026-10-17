@@ -108,7 +108,7 @@ class NalathniDragonTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        assertThat(gd.stack).hasSize(4);
+        assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Nalathni Dragon");
@@ -151,7 +151,7 @@ class NalathniDragonTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
 
-        assertThat(gd.stack).hasSize(4);
+        assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Nalathni Dragon");
     }

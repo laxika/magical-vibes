@@ -1721,7 +1721,7 @@ public class CombatDamageService {
             // "Whenever a creature you control deals combat damage, you gain that much life."
             // Fires once per matching enchantment the creature's controller controls (Noble Purpose).
             gameData.forEachPermanent((ownerId, perm) -> {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof GainLifeEqualToControlledCreatureCombatDamageEffect) {
                         UUID enchantmentControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
                         if (controllerId.equals(enchantmentControllerId)) {

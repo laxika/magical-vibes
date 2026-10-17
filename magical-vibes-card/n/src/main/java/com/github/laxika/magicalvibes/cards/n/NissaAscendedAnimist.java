@@ -57,7 +57,7 @@ public class NissaAscendedAnimist extends Card {
                 -7,
                 List.of(
                         new BoostAllOwnCreaturesEffect(forests, forests),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "−7: Until end of turn, creatures you control get +1/+1 for each Forest you control "
                         + "and gain trample."

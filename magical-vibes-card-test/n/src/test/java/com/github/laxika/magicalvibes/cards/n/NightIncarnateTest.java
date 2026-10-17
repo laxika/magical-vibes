@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NightIncarnate.class, AirElemental.class, DoomBlade.class})
+@CardUsed({NightIncarnate.class, AirElemental.class})
 class NightIncarnateTest extends BaseCardTest {
 
     @Test
@@ -68,9 +67,8 @@ class NightIncarnateTest extends BaseCardTest {
     }
 
     private void destroyNightIncarnate(Permanent nightIncarnate) {
-        harness.setHand(player1, List.of(new DoomBlade()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castAndResolveInstant(player1, 0, nightIncarnate.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, nightIncarnate));
         harness.passBothPriorities();
     }
 }

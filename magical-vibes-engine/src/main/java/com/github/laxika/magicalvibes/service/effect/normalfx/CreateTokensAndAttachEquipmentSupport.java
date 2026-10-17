@@ -126,6 +126,7 @@ public class CreateTokensAndAttachEquipmentSupport {
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, token.getId());
             gameLogService.append(gameData,
                     GameLog.cardTextCard(equipment.getCard(), " is now attached to ", token.getCard(), "."));
+            equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
             log.info("Game {} - {} attached to {} via {}", gameData.id,
                     equipment.getCard().getName(), token.getCard().getName(), context.sourceCard().getName());
         }

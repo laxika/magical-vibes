@@ -47,7 +47,7 @@ class NyleasColossusTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
-        assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(7);
     }
 
     @Test

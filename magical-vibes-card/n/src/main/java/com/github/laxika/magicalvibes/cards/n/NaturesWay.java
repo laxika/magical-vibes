@@ -20,7 +20,7 @@ public class NaturesWay extends Card {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.SPELL,
                         new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), GrantScope.TARGET));
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1)
+        target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
     }
 }

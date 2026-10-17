@@ -29,7 +29,9 @@ public class DestroyWeakerBlockParticipantEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+        // The ability names the blocking/attacking creature itself, not a target, so it is still
+        // destroyed if it has stopped being a creature in response (a Licid that became an Aura).
+        if (target == null) {
             return;
         }
         destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName());

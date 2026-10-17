@@ -212,6 +212,10 @@ public class GraveyardReturnSupport {
                 && isCardBlockedFromEnteringFromZone(gameData, targetCard, Zone.GRAVEYARD)) {
             gameLogService.append(gameData, GameLog.cardThen(targetCard,
                     " can't enter the battlefield from a graveyard; it stays in the graveyard."));
+            if (effect.perpetualBattlefieldEffectGrants() != null) {
+                PerpetualCardBattlefieldEffectSupport.remember(
+                        gameData, targetCard, effect.perpetualBattlefieldEffectGrants());
+            }
             return;
         }
 
@@ -338,7 +342,8 @@ public class GraveyardReturnSupport {
 
         Permanent returnedPermanent = null;
         // Unconditional "+1/+1 counters" are put on the card as it enters, so entry triggers see them.
-        boolean entersWithPlusOneCounters = entersWithPlusOneCounters(gameData, targetCard, targetOwnerId, effect);
+        boolean entersWithPlusOneCounters = entersWithPlusOneCounters(gameData, targetCard, targetOwnerId, effect)
+                || entersWithConditionalPlusOneCounters(gameData, entry, destinationPlayerId, effect);
         boolean entersWithEffectCounters = !entersWithPlusOneCounters
                 && effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
@@ -440,6 +445,9 @@ public class GraveyardReturnSupport {
                                              ReturnCardFromGraveyardEffect effect, Card card,
                                              UUID sourceCardId) {
         if (card == null) {
+            return false;
+        }
+        if (card.isToken() || gameData.dynamicTokenCardIds.contains(card.getId())) {
             return false;
         }
         if (effect.requiresPowerAtMostSacrificedPower()) {
@@ -636,7 +644,14 @@ public class GraveyardReturnSupport {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
+        boolean cardOnBattlefield = battlefield != null && battlefield.stream()
+                .anyMatch(p -> p.getCard().getId().equals(card.getId()));
+        if (!cardOnBattlefield) {
+            // The return was prevented or replaced, but "perpetually" still applies to the physical card.
+            if (effect.perpetualBattlefieldEffectGrants() != null) {
+                PerpetualCardBattlefieldEffectSupport.remember(
+                        gameData, card, effect.perpetualBattlefieldEffectGrants());
+            }
             return;
         }
         for (Permanent p : battlefield) {
@@ -798,6 +813,25 @@ public class GraveyardReturnSupport {
                     card, effect.plusOneCountersIfSubtype(), gameData, cardOwnerId);
         }
         return entersWithUnconditionalPlusOneCounters(effect);
+    }
+
+    /**
+     * Whether a conditional {@code plusOneCountersIfCondition} is met as the card enters, so the
+     * counters are placed before entry triggers check power (e.g. Necromantic Summons' spell mastery).
+     */
+    private boolean entersWithConditionalPlusOneCounters(GameData gameData, StackEntry entry, UUID controllerId,
+                                                         ReturnCardFromGraveyardEffect effect) {
+        return effect.plusOneCounterCount() > 0
+                && effect.plusOneCountersIfCondition() != null
+                && effect.plusOneCountersIfSubtype() == null
+                && effect.plusOneCountersIfCardType() == null
+                && effect.plusOneCountersIfExiledCostCardHasSubtype() == null
+                && !(effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                || effect.sacrificeAtEndStep())
+                && conditionEvaluationService.isMet(gameData, effect.plusOneCountersIfCondition(),
+                entry == null
+                        ? ConditionContext.forCasting(controllerId)
+                        : ConditionContext.forStackEntry(entry));
     }
 
     private boolean entersWithUnconditionalPlusOneCounters(ReturnCardFromGraveyardEffect effect) {

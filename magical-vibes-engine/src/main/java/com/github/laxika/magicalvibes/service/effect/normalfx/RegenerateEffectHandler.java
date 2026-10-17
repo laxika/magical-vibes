@@ -41,6 +41,11 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                     Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                     if (source != null && source.getAttachedTo() != null) {
                         regenerationTargetId = source.getAttachedTo();
+                    } else if (source == null && entry.getSourcePermanentSnapshot() != null
+                            && entry.getSourcePermanentSnapshot().getAttachedTo() != null) {
+                        // The enchanted creature is the source's last known information once the Aura has
+                        // left the battlefield (CR 608.2h, CR 113.7a).
+                        regenerationTargetId = entry.getSourcePermanentSnapshot().getAttachedTo();
                     }
                 }
 

@@ -59,6 +59,13 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffectHandler imple
         if (gameData.playerIds.contains(targetId)) {
             return targetId;
         }
-        return gameQueryService.findPermanentController(gameData, targetId);
+        UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null) {
+            controllerId = entry.getRemovedPermanentControllers().get(targetId);
+        }
+        if (controllerId == null && targetId.equals(entry.getAttackedTargetId())) {
+            controllerId = entry.getDefendingPlayerId();
+        }
+        return controllerId;
     }
 }

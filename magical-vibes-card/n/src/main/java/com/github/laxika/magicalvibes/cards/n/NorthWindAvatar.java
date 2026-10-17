@@ -13,6 +13,6 @@ public class NorthWindAvatar extends Card {
 
     public NorthWindAvatar() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new WasCast(), new SearchOutsideGameToHandEffect()));
+                new WasCast(true), new SearchOutsideGameToHandEffect()));
     }
 }

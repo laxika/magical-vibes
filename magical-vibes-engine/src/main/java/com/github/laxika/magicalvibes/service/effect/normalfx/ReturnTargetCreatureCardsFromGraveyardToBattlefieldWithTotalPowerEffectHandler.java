@@ -11,11 +11,15 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Resolves Nethroi's all-or-nothing aggregate-power graveyard return. */
+/**
+ * Resolves Nethroi's aggregate-power graveyard return: legal targets whose total power is within the
+ * limit return, and targets that have become illegal are dropped individually.
+ */
 @Component
 @RequiredArgsConstructor
 public class ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffectHandler
@@ -39,6 +43,8 @@ public class ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEf
             return;
         }
 
+        // CR 608.2b: a target that has become illegal is dropped; the remaining legal targets still return.
+        List<java.util.UUID> legalTargetIds = new ArrayList<>();
         int totalPower = 0;
         for (java.util.UUID targetId : targetIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, targetId);
@@ -47,19 +53,20 @@ public class ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEf
                     || !predicateEvaluationService.matchesCardPredicate(
                     card, returnEffect.graveyardChoiceFilter(), entry.getCard().getId(), gameData,
                     entry.getControllerId(), null, null, entry.getXValue())) {
-                return;
+                continue;
             }
+            legalTargetIds.add(targetId);
             Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
             totalPower += power == null ? 0 : power;
         }
 
-        if (totalPower > returnEffect.maxTotalPower()) {
+        if (legalTargetIds.isEmpty() || totalPower > returnEffect.maxTotalPower()) {
             return;
         }
 
         returnHandler.resolveForController(gameData, entry,
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         returnEffect.graveyardChoiceFilter(), Integer.MAX_VALUE, false, false),
-                entry.getControllerId());
+                entry.getControllerId(), legalTargetIds);
     }
 }

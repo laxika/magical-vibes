@@ -95,6 +95,7 @@ class NecroticPlagueTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -198,6 +199,7 @@ class NecroticPlagueTest extends BaseCardTest {
         castNecroticPlagueOn(player1, enchanted);
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =

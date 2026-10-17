@@ -89,6 +89,8 @@ class NarnamRenegadeTest extends BaseCardTest {
     @DisplayName("A departure on the previous turn does not satisfy revolt")
     void previousTurnDepartureDoesNotSatisfyRevolt() {
         Permanent support = harness.addToBattlefieldAndReturn(player1, new DruidOfTheCowl());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, support));
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

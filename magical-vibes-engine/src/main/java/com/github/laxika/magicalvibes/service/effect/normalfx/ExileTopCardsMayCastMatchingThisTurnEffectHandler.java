@@ -59,7 +59,11 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
             exileService.exileCard(gameData, controllerId, topCard);
             exiled.add(topCard);
 
-            if (predicateEvaluationService.matchesCardPredicate(topCard, e.filter(), null)) {
+            // CR 712.11b — a player casting a modal double-faced card chooses which face to cast, so the
+            // card matches when either face does.
+            if (predicateEvaluationService.matchesCardPredicate(topCard, e.filter(), null)
+                    || (topCard.isModalDoubleFaced() && topCard.getBackFaceCard() != null
+                    && predicateEvaluationService.matchesCardPredicate(topCard.getBackFaceCard(), e.filter(), null))) {
                 gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
                 gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
                 gameData.exilePlayPermissionSpellFilters.put(topCard.getId(), e.filter());

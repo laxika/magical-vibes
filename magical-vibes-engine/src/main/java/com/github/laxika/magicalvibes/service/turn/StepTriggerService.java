@@ -177,6 +177,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
 import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqualToAttachedCountEffect;
@@ -1864,18 +1866,23 @@ public class StepTriggerService {
                 // stack entry's targetId (set below); the sacrifice/life-loss effects find their host
                 // via the source aura, so baking the controller as targetId is safe for them.
 
+                // An ability the Aura grants to the creature is the creature's own: it is the source and its
+                // controller controls the trigger (CR 113.8, 603.3a).
+                boolean grantedToCreature = enchantedPermanent != null
+                        && effect instanceof SacrificeEnchantedCreatureEffect sacrifice && sacrifice.grantedToCreature();
+                Permanent triggerSource = grantedToCreature ? enchantedPermanent : perm;
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        auraOwnerId,
-                        perm.getCard().getName() + "'s upkeep ability",
+                        triggerSource.getCard(),
+                        grantedToCreature ? enchantedPermanentControllerId : auraOwnerId,
+                        triggerSource.getCard().getName() + "'s upkeep ability",
                         new ArrayList<>(List.of(effectForStack)),
                         enchantedPermanentControllerId,
-                        perm.getId()
+                        triggerSource.getId()
                 );
                 entry.setActivePlayerId(activePlayerId);
                 entry.setTriggeringPermanentPowerAtTrigger(enchantedPermanentPowerAtTrigger);
-                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                entry.setSourcePermanentSnapshot(new Permanent(triggerSource));
                 gameData.stack.add(entry);
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
@@ -3287,6 +3294,7 @@ public class StepTriggerService {
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.EACH_DRAW_TRIGGERED);
             if (drawEffects == null || drawEffects.isEmpty()) return;
+            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
 
             for (CardEffect effect : drawEffects) {
                 // Intervening-if: skip trigger if the effect requires an untapped source and it's tapped
@@ -6670,7 +6678,8 @@ public class StepTriggerService {
 
         // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED
         // effects. These fire during the enchanted permanent's controller's end step (e.g. Nettlevine
-        // Blight). The Aura's controller controls its own triggered abilities.
+        // Blight). An ability the Aura grants is controlled by the enchanted permanent's controller
+        // (CR 113.8); the Aura's own abilities (e.g. Aggression) are controlled by the Aura's controller.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedControllerEndStepEffects =
                     perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED);
@@ -6682,7 +6691,11 @@ public class StepTriggerService {
             if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
 
             Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+            // A granted ability is removed by a later "loses all abilities" effect on the enchanted permanent.
+            boolean removed = enchantedPermanent != null
+                    && !gameQueryService.grantedAbilitySurvivesRemoval(gameData, enchantedPermanent, perm.getTimestamp());
             for (CardEffect effect : enchantedControllerEndStepEffects) {
+                if (removed && effect instanceof SacrificeEnchantedPermanentAndReattachSourceAuraEffect) continue;
                 // The enchanted creature's attack status can't be read once it has left the
                 // battlefield, so a creature that attacked never gets this trigger put on the stack.
                 if (effect instanceof ConditionalEffect conditional
@@ -6690,14 +6703,15 @@ public class StepTriggerService {
                         && enchantedPermanent != null && enchantedPermanent.isAttackedThisTurn()) {
                     continue;
                 }
+                boolean grantedAbility = effect instanceof SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
-                        auraOwnerId,
+                        grantedAbility ? enchantedPermanentControllerId : auraOwnerId,
                         perm.getCard().getName() + "'s end step ability",
                         new ArrayList<>(List.of(effect)),
                         perm.getAttachedTo(),
-                        perm.getId()
+                        grantedAbility ? perm.getAttachedTo() : perm.getId()
                 );
                 entry.setNonTargeting(true);
                 entry.setTriggeringPermanentId(perm.getAttachedTo());

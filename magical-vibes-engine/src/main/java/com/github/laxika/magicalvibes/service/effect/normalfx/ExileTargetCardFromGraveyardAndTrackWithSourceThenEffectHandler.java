@@ -72,6 +72,7 @@ public class ExileTargetCardFromGraveyardAndTrackWithSourceThenEffectHandler
         if (effectIndex < 0) {
             throw new IllegalStateException("Could not locate graveyard exile effect on stack entry");
         }
+        entry.setEventValue(targetCard.getManaValue());
         entry.insertEffectsToResolve(effectIndex + 1, List.of(effect.thenEffect()));
     }
 }

@@ -144,7 +144,7 @@ class NormanOsbornTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("menace");
+                .hasMessageContaining("can't be blocked except by two or more creatures");
     }
 
     @Test

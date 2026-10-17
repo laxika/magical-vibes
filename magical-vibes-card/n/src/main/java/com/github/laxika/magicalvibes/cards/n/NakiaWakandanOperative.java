@@ -24,9 +24,9 @@ import java.util.List;
 public class NakiaWakandanOperative extends Card {
 
     public NakiaWakandanOperative() {
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCommanderPredicate(), new BecomeMonarchEffect()));
+                        new PermanentIsCommanderPredicate(true), new BecomeMonarchEffect(), true));
 
         PermanentPredicate creatureOrVehicle = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

@@ -130,7 +130,7 @@ class NantukoShamanTest extends BaseCardTest {
         suspendNantukoShaman();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

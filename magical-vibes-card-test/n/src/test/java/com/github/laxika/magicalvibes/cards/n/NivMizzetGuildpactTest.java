@@ -152,13 +152,13 @@ class NivMizzetGuildpactTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player2, List.of(new LightningHelix()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.RED, 1);
         niv.setAttacking(true);
         resolveCombat();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player1.getId());
 
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, walker.getId());
         resolveAllTriggers();
 

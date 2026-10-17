@@ -158,6 +158,10 @@ public class LibrarySearchSupport {
             }
 
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
+            if ((deck == null || deck.isEmpty()) && !creatureOnly) {
+                // "May search": a player with nothing to find isn't made to search without choosing to.
+                continue;
+            }
             if (deck == null || deck.isEmpty()) {
                 LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, nextPlayerId);
                 if (deck != null) {
@@ -479,11 +483,16 @@ public class LibrarySearchSupport {
         List<LibrarySearchFollowUp.ToHandPick> remaining = new ArrayList<>(followUp.remainingToHandPicks());
         while (!remaining.isEmpty()) {
             LibrarySearchFollowUp.ToHandPick pick = remaining.remove(0);
-            List<Card> matches = deck == null ? List.of()
+            List<Card> matches = new ArrayList<>(deck == null ? List.of()
                     : deck.stream()
                             .filter(card -> pick.searchableCardIds() == null
                                     || pick.searchableCardIds().contains(card.getId()))
-                            .filter(card -> matchesToHandPick(card, pick)).toList();
+                            .filter(card -> matchesToHandPick(card, pick)).toList());
+            if (pick.includeGraveyard()) {
+                gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(card -> matchesToHandPick(card, pick))
+                        .forEach(matches::add);
+            }
             if (matches.isEmpty()) {
                 continue;
             }
@@ -497,8 +506,8 @@ public class LibrarySearchSupport {
                     .followUp(followUp.withRemainingToHandPicks(remaining));
             if (pick.cardName() != null) {
                 builder.filterCardName(pick.cardName());
-                prompt = "Search your library for a card named " + pick.cardName()
-                        + " to reveal and put into your hand.";
+                prompt = "Search your " + (pick.includeGraveyard() ? "library and graveyard" : "library")
+                        + " for a card named " + pick.cardName() + " to reveal and put into your hand.";
                 logMsg = playerName + " searches their library for a card named " + pick.cardName() + ".";
             } else {
                 String descriptor = pick.describe();

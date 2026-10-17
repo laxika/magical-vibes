@@ -39,7 +39,8 @@ public class NissaGenesisMage extends Card {
                 null, +2, null, null,
                 List.<TargetFilter>of(creatureOrLand, creatureOrLand, creatureOrLand, creatureOrLand),
                 0, 4
-        ).withMultiTargetConstraint(MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_LANDS));
+        ).withMultiTargetConstraint(MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_LANDS)
+                .withAllowSharedTargets());
 
         // −3: Target creature gets +5/+5 until end of turn.
         addActivatedAbility(new ActivatedAbility(

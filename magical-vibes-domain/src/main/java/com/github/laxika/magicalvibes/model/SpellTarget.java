@@ -39,6 +39,13 @@ public class SpellTarget {
      * {@code maxTargets} acts only as a sanity cap.
      */
     private final boolean xScaled;
+    /**
+     * Identifies the mode a modal spell's target group belongs to, or {@code -1} when the group is not
+     * scoped. Groups that share a non-negative scope must hold different objects (one mode's "another
+     * target"), even when {@link Card#isAllowSharedTargets()} lets other groups share objects with them.
+     */
+    private int distinctScope = -1;
+
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index) {
         this(card, filter, filter, minTargets, maxTargets, minTargets, maxTargets, index, false, null, null,
                 minTargets);
@@ -99,6 +106,12 @@ public class SpellTarget {
         this.xScaled = xScaled;
         this.dynamicMinTargets = dynamicMinTargets;
         this.dynamicMaxTargets = dynamicMaxTargets;
+    }
+
+    /** Marks this group as part of the mode {@code scope}, whose targets must all be different objects. */
+    public SpellTarget inDistinctScope(int scope) {
+        this.distinctScope = scope;
+        return this;
     }
 
     public TargetFilter getFilter(boolean kicked) {

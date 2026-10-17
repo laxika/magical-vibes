@@ -3169,14 +3169,27 @@ public class CastingCostService {
                     return false;
                 }
             } else if (cost instanceof ExileNCardsFromGraveyardCastingCost exileCost) {
-                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                List<Card> matchingCards = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                         .filter(graveyardCard -> !graveyardCard.getId().equals(card.getId()))
                         .filter(graveyardCard -> exileCost.predicate() == null
                                 || predicateEvaluationService.matchesCardPredicate(
                                 graveyardCard, exileCost.predicate(), graveyardCard.getId()))
-                        .count();
-                if (matchingCount < exileCost.count()) {
+                        .toList();
+                if (matchingCards.size() < exileCost.count()) {
                     return false;
+                }
+                if (exileCost.minCardTypes() > 0) {
+                    java.util.Set<com.github.laxika.magicalvibes.model.CardType> cardTypes =
+                            java.util.EnumSet.noneOf(com.github.laxika.magicalvibes.model.CardType.class);
+                    for (Card matching : matchingCards) {
+                        if (matching.getType() != null) {
+                            cardTypes.add(matching.getType());
+                        }
+                        cardTypes.addAll(matching.getAdditionalTypes());
+                    }
+                    if (cardTypes.size() < exileCost.minCardTypes()) {
+                        return false;
+                    }
                 }
             } else {
                 return false;

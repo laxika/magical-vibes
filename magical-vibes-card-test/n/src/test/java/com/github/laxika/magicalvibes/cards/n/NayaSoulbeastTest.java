@@ -120,8 +120,8 @@ class NayaSoulbeastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Humility does not remove entry counters established by the cast trigger")
-    void resolvedCastTriggerCountersSurviveHumility() {
+    @DisplayName("Humility already applies when the Soulbeast enters, so its enter-with-counters ability does nothing")
+    void humilityStopsEnterWithCountersAbility() {
         harness.addToBattlefield(player2, new Humility());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new AirElemental()));
@@ -133,9 +133,9 @@ class NayaSoulbeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent soulbeast = findPermanent(player1, "Naya Soulbeast");
-        assertThat(soulbeast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
-        assertThat(gqs.getEffectivePower(gd, soulbeast)).isEqualTo(8);
-        assertThat(gqs.getEffectiveToughness(gd, soulbeast)).isEqualTo(8);
+        assertThat(soulbeast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, soulbeast)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, soulbeast)).isEqualTo(1);
     }
 
     @Test

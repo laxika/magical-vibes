@@ -32,7 +32,7 @@ public class NezumiGraverobber extends Card {
                 List.of(
                         new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD),
                         new ConditionalEffect(new NotCondition(new OpponentGraveyardAtLeast(1)),
-                                new TransformToBackFaceEffect())
+                                new TransformToBackFaceEffect(true))
                 ),
                 "{1}{B}: Exile target card from an opponent's graveyard. If no cards are in that graveyard, flip this creature."
         ));

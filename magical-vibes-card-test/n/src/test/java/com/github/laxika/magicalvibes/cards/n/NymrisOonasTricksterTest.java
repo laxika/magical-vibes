@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +29,7 @@ class NymrisOonasTricksterTest extends BaseCardTest {
         castSpellDuringOpponentsTurn();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(milled);
@@ -42,7 +40,8 @@ class NymrisOonasTricksterTest extends BaseCardTest {
     @DisplayName("Only the first spell during an opponent's turn triggers")
     void onlyFirstSpellDuringOpponentsTurnTriggers() {
         harness.addToBattlefield(player1, new NymrisOonasTrickster());
-        harness.setLibrary(player1, List.of(new Divination(), new Island(), new Island(), new Island()));
+        Card chosen = new Divination();
+        harness.setLibrary(player1, List.of(chosen, new Island(), new Island(), new Island()));
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceActivePlayer(player2);
@@ -50,8 +49,7 @@ class NymrisOonasTricksterTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

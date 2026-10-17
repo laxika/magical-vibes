@@ -15,13 +15,19 @@ public record TransformSelectedPermanentFollowUp() implements LibrarySelectionFo
 
     @Override
     public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-        return new TransformChosenPermanentEffect(
-                new PermanentIsSpecificPermanentPredicate(selectedPermanentIds.getFirst()));
+        return new MayEffect(new TransformChosenPermanentEffect(
+                new PermanentIsSpecificPermanentPredicate(selectedPermanentIds.getFirst())), prompt());
     }
 
     @Override
     public String prompt() {
         return "Transform that permanent?";
+    }
+
+    /** The "you may" is asked during the resolution that put the card onto the battlefield, not as a reflexive trigger. */
+    @Override
+    public boolean optional() {
+        return false;
     }
 
     @Override

@@ -29,12 +29,20 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  */
 public record ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell,
                                     boolean untilEndOfTurn, boolean creatureTypesAllowed,
-                                    CardSubtype excludedReplacementCreatureType) implements CardEffect {
+                                    CardSubtype excludedReplacementCreatureType,
+                                    CardSubtype fixedReplacementCreatureType) implements CardEffect {
+
+    public ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell,
+                                boolean untilEndOfTurn, boolean creatureTypesAllowed,
+                                CardSubtype excludedReplacementCreatureType) {
+        this(colorWordsAllowed, landTypesAllowed, canTargetSpell, untilEndOfTurn, creatureTypesAllowed,
+                excludedReplacementCreatureType, null);
+    }
 
     public ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell,
                                 boolean untilEndOfTurn, boolean creatureTypesAllowed) {
         this(colorWordsAllowed, landTypesAllowed, canTargetSpell, untilEndOfTurn, creatureTypesAllowed,
-                creatureTypesAllowed ? CardSubtype.WALL : null);
+                creatureTypesAllowed ? CardSubtype.WALL : null, null);
     }
 
     public ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell) {
@@ -48,6 +56,14 @@ public record ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypes
 
     public static ChangeColorTextEffect creatureTypes(boolean canTargetSpell) {
         return new ChangeColorTextEffect(false, false, canTargetSpell, false, true);
+    }
+
+    /**
+     * Creature-type text change whose replacement word is fixed rather than chosen (New Blood: "replacing
+     * all instances of one creature type with Vampire"). The controller still chooses the word to replace.
+     */
+    public static ChangeColorTextEffect creatureTypesReplacedWith(CardSubtype replacement) {
+        return new ChangeColorTextEffect(false, false, false, false, true, CardSubtype.WALL, replacement);
     }
 
     @Override
