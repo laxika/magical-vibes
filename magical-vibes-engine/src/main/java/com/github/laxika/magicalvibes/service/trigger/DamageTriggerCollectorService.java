@@ -1596,10 +1596,12 @@ public class DamageTriggerCollectorService {
                 .withSourceControllerId(match.controllerId())
                 .withSourcePermanentId(watcher.getId())
                 .withSourcePermanentSnapshot(watcher);
+        // "One or more Pirates you control" counts any object with the type, so a Kindred Pirate spell
+        // is a dealer too; only an unfiltered trigger is limited to creatures.
         boolean matchingDealer = damageContext.damageDealers().stream()
-                .filter(dealer -> gameQueryService.isCreature(match.gameData(), dealer))
                 .anyMatch(dealer -> trigger.predicate() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(
+                        ? gameQueryService.isCreature(match.gameData(), dealer)
+                        : predicateEvaluationService.matchesPermanentPredicate(
                         dealer, trigger.predicate(), triggerContext));
         if (!matchingDealer) {
             return false;

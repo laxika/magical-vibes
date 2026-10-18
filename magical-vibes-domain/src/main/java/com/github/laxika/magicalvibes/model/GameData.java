@@ -479,10 +479,17 @@ public class GameData {
     public final Map<UUID, Integer> perpetualCardPowerModifiers = new ConcurrentHashMap<>();
     /** Perpetually removed keywords attached to individual card identities, keyed by card id. */
     public final Map<UUID, Set<Keyword>> perpetualCardRemovedKeywords = new ConcurrentHashMap<>();
+    /**
+     * Additional instances of a stackable triggered keyword (battle cry, exalted, …) perpetually granted
+     * to a card that already had it, keyed by card id. The first instance lives in the card's keywords.
+     */
+    public final Map<UUID, Map<Keyword, Integer>> perpetualCardExtraKeywordInstances = new ConcurrentHashMap<>();
     /** Card identities that have perpetually gained unearth. */
     public final Set<UUID> cardsGrantedPerpetualUnearth = ConcurrentHashMap.newKeySet();
     /** Keyword or ability word chosen for a card's Legacy pregame ability, keyed by card id. */
     public final Map<UUID, String> legacyChosenWordsByCardId = new ConcurrentHashMap<>();
+    /** The mission index each Secret Mission card's owner secretly chose before the game, keyed by card id. */
+    public final Map<UUID, Integer> secretMissionChoices = new ConcurrentHashMap<>();
     /**
      * Type and amount of mana noted on a permanent (Ice Cauldron — "note the type and amount of
      * mana spent to pay this activation cost"), keyed by the noting card's id like
@@ -7995,7 +8002,10 @@ public class GameData {
             copiedKeywords.addAll(keywords);
             copy.perpetualCardRemovedKeywords.put(cardId, copiedKeywords);
         });
+        this.perpetualCardExtraKeywordInstances.forEach((cardId, instances) ->
+                copy.perpetualCardExtraKeywordInstances.put(cardId, new ConcurrentHashMap<>(instances)));
         copy.legacyChosenWordsByCardId.putAll(this.legacyChosenWordsByCardId);
+        copy.secretMissionChoices.putAll(this.secretMissionChoices);
         copy.exiledVoyageCounters.putAll(this.exiledVoyageCounters);
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
         copy.foretoldCardCosts.putAll(this.foretoldCardCosts);

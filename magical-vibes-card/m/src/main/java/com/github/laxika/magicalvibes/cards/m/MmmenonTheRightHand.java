@@ -28,7 +28,7 @@ public class MmmenonTheRightHand extends Card {
                         true,
                         null,
                         List.of(new AwardRestrictedManaEffect(
-                                ManaColor.BLUE, 1, new ManaRestriction.NonHandSpells())),
+                                ManaColor.BLUE, 1, new ManaRestriction.NonHandSpellsOnly())),
                         "{T}: Add {U}. Spend this mana only to cast a spell from anywhere other than your hand."
                 ),
                 GrantScope.OWN_PERMANENTS,

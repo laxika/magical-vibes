@@ -2440,6 +2440,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * and library (e.g. Memoricide-style effects). {@code validCardIds} keeps the begin-time
      * hand → graveyard → library scan order; views are re-derived by the same scan at prompt
      * time. {@code controllerId} is the effect's controller (same as the deciding player).
+     * {@code showsSearchedZones} marks an effect that searches those zones, so the prompt shows the
+     * searcher every card in them, not just the selectable ones (CR 701.23a).
      */
     record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                 UUID targetPlayerId, UUID controllerId, String cardName,
@@ -2448,8 +2450,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                 String sourceSetCode,
                                 UUID sourcePermanentId,
                                 CardEffect followUpEffect,
-                                boolean exileAllMatchingGraveyardCards)
+                                boolean exileAllMatchingGraveyardCards,
+                                boolean showsSearchedZones)
             implements PendingInteraction {
+
+        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                    UUID targetPlayerId, UUID controllerId, String cardName,
+                                    boolean drawForHandExiled,
+                                    com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                    String sourceSetCode, UUID sourcePermanentId, CardEffect followUpEffect,
+                                    boolean exileAllMatchingGraveyardCards) {
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
+                    drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect,
+                    exileAllMatchingGraveyardCards, false);
+        }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName,

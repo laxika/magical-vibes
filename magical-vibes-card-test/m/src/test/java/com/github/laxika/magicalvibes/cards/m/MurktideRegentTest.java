@@ -181,8 +181,10 @@ class MurktideRegentTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 3, List.of(0, 1, 2));
         resolveAllTriggers();
 
+        // "Exiled with it" is linked only to Murktide's own delve (CR 607.1, 607.2q); the escape cost
+        // Underworld Breach grants exiles the instant and sorcery without counting toward it.
         assertThat(findPermanent(player1, "Murktide Regent")
-                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }

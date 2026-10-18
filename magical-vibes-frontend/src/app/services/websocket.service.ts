@@ -40,6 +40,7 @@ export enum MessageType {
   ACTIVATE_EXILED_ABILITY = 'ACTIVATE_EXILED_ABILITY',
   ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
   ACTIVATE_HAND_ABILITY = 'ACTIVATE_HAND_ABILITY',
+  REVEAL_SECRET_MISSION = 'REVEAL_SECRET_MISSION',
   REVEAL_HAND = 'REVEAL_HAND',
   REVEAL_LIBRARY_TOP = 'REVEAL_LIBRARY_TOP',
   REVEAL_PERMANENT = 'REVEAL_PERMANENT',
@@ -359,7 +360,7 @@ export interface PlanechaseView {
   rollSequence: number;
 }
 
-export interface CommanderView { format: DeckFormat; commandZones: Record<string, Card[]>; commanders: Record<string, string[]>; tax: Record<string, number>; damageReceived: Record<string, Record<string, number>>; playableCardIds: string[]; }
+export interface CommanderView { format: DeckFormat; commandZones: Record<string, Card[]>; commanders: Record<string, string[]>; tax: Record<string, number>; damageReceived: Record<string, Record<string, number>>; playableCardIds: string[]; revealableMissionIds: string[]; }
 export interface Game {
   commander?: CommanderView;
   planechase?: PlanechaseView | null;

@@ -313,6 +313,13 @@ public class ExileFreeCastQueueSupport {
                 castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
                 return;
             }
+            if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
+                    && additionalCosts.sacrificePermanentCost() != null
+                    && !additionalCosts.sacrificePermanentCost().optional()
+                    && additionalSpellCostService.satisfiable(gameData, playerId, cardToCast)) {
+                castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
+                return;
+            }
             if (additionalCosts.sacrificeCreature()
                     && spellEffects.stream().filter(CostEffect.class::isInstance)
                     .allMatch(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance)

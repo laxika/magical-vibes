@@ -87,6 +87,7 @@ class GameActionAvailabilityServiceTest {
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private com.github.laxika.magicalvibes.service.ability.AbilityActivationService abilityActivationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+    @Mock private SecretMissionService secretMissionService;
 
     private GameActionAvailabilityService svc;
     private GameViewProjectionFactory projectionFactory;
@@ -127,7 +128,7 @@ class GameActionAvailabilityServiceTest {
                 cardViewFactory, gameLogViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,
                 castingCostService, castingPermissionService,
-                new GrantedAbilityViewFactory(), svc);
+                new GrantedAbilityViewFactory(), svc, secretMissionService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

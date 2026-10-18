@@ -32,11 +32,14 @@ public class RegisterDelayedDestroyTargetWhenSourceLeavesEffectHandler implement
             return;
         }
 
+        var register = (RegisterDelayedDestroyTargetWhenSourceLeavesEffect) effect;
         gameData.queueDelayedAction(new DelayedDestroyTargetWhenSourceLeaves(
                 entry.getSourcePermanentId(),
                 target.getId(),
                 entry.getControllerId(),
-                entry.getCard()));
+                entry.getCard(),
+                register.alsoWhenSourceUntaps(),
+                register.thisTurnOnly()));
         log.info("Game {} - {} registers delayed trigger: if source leaves this turn, destroy {}",
                 gameData.id, entry.getCard().getName(), target.getCard().getName());
     }

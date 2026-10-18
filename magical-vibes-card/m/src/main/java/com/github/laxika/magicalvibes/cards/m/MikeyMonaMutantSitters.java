@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCounterOnCreatureEffect;
@@ -21,6 +22,7 @@ import java.util.List;
 public class MikeyMonaMutantSitters extends Card {
 
     public MikeyMonaMutantSitters() {
+        setMultiTargetConstraint(MultiTargetConstraint.DISTINCT_TARGETS);
         PlayerPredicateTargetFilter playerTarget = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player");
         CardAnyOfPredicate creatureOrLand = new CardAnyOfPredicate(List.of(

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateExiledAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.RevealSecretMissionRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
@@ -553,6 +554,27 @@ public class GameMessageHandler implements MessageHandler {
         try {
             gameService.activateExiledAbility(gameData, player, request.exiledCardId(), request.abilityIndex(),
                     request.xValue(), request.targetId());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleRevealSecretMission(Connection connection, RevealSecretMissionRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.revealSecretMission(gameData, player, request.cardId());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

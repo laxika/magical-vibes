@@ -181,8 +181,13 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> graveyardOnlyMana = new EnumMap<>(ManaColor.class);
     /** Graveyard-only mana temporarily promoted during a graveyard spell payment. */
     private final EnumMap<ManaColor, Integer> promotedGraveyardOnlyMana = new EnumMap<>(ManaColor.class);
-    /** Per-color mana that can only be spent to cast spells from outside the controller's hand. */
+    /** Per-color mana that can't be spent to cast spells from the controller's hand. */
     private final EnumMap<ManaColor, Integer> nonHandSpellOnlyMana = new EnumMap<>(ManaColor.class);
+    /**
+     * The part of {@link #nonHandSpellOnlyMana} that is spendable only to cast spells from outside the hand,
+     * so it can't pay for abilities either (Mm'menon, the Right Hand).
+     */
+    private final EnumMap<ManaColor, Integer> abilityProhibitedNonHandSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Non-hand-only mana temporarily promoted during a non-hand spell payment. */
     private final EnumMap<ManaColor, Integer> promotedNonHandSpellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells the controller does not own. */
@@ -346,6 +351,7 @@ public class ManaPool {
             graveyardOnlyMana.put(color, 0);
             promotedGraveyardOnlyMana.put(color, 0);
             nonHandSpellOnlyMana.put(color, 0);
+            abilityProhibitedNonHandSpellOnlyMana.put(color, 0);
             promotedNonHandSpellOnlyMana.put(color, 0);
             nonOwnedSpellOnlyMana.put(color, 0);
             promotedNonOwnedSpellOnlyMana.put(color, 0);
@@ -424,6 +430,7 @@ public class ManaPool {
         mergeMana(graveyardOnlyMana, source.graveyardOnlyMana);
         mergeMana(promotedGraveyardOnlyMana, source.promotedGraveyardOnlyMana);
         mergeMana(nonHandSpellOnlyMana, source.nonHandSpellOnlyMana);
+        mergeMana(abilityProhibitedNonHandSpellOnlyMana, source.abilityProhibitedNonHandSpellOnlyMana);
         mergeMana(promotedNonHandSpellOnlyMana, source.promotedNonHandSpellOnlyMana);
         mergeMana(nonOwnedSpellOnlyMana, source.nonOwnedSpellOnlyMana);
         mergeMana(promotedNonOwnedSpellOnlyMana, source.promotedNonOwnedSpellOnlyMana);
@@ -559,6 +566,7 @@ public class ManaPool {
         graveyardOnlyMana.putAll(source.graveyardOnlyMana);
         promotedGraveyardOnlyMana.putAll(source.promotedGraveyardOnlyMana);
         nonHandSpellOnlyMana.putAll(source.nonHandSpellOnlyMana);
+        abilityProhibitedNonHandSpellOnlyMana.putAll(source.abilityProhibitedNonHandSpellOnlyMana);
         promotedNonHandSpellOnlyMana.putAll(source.promotedNonHandSpellOnlyMana);
         nonOwnedSpellOnlyMana.putAll(source.nonOwnedSpellOnlyMana);
         promotedNonOwnedSpellOnlyMana.putAll(source.promotedNonOwnedSpellOnlyMana);
@@ -1155,6 +1163,7 @@ public class ManaPool {
             graveyardOnlyMana.put(color, 0);
             promotedGraveyardOnlyMana.put(color, 0);
             nonHandSpellOnlyMana.put(color, 0);
+            abilityProhibitedNonHandSpellOnlyMana.put(color, 0);
             promotedNonHandSpellOnlyMana.put(color, 0);
             nonOwnedSpellOnlyMana.put(color, 0);
             promotedNonOwnedSpellOnlyMana.put(color, 0);
@@ -2848,6 +2857,12 @@ public class ManaPool {
         nonHandSpellOnlyMana.merge(color, amount, Integer::sum);
     }
 
+    /** Adds mana spendable only to cast spells from outside the hand — not on abilities. */
+    public void addAbilityProhibitedNonHandSpellOnlyMana(ManaColor color, int amount) {
+        nonHandSpellOnlyMana.merge(color, amount, Integer::sum);
+        abilityProhibitedNonHandSpellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
     public int getNonHandSpellOnlyMana(ManaColor color) {
         return nonHandSpellOnlyMana.getOrDefault(color, 0);
     }
@@ -2858,22 +2873,44 @@ public class ManaPool {
 
     /** Temporarily exposes non-hand-only mana to the ordinary spell-payment algorithm. */
     public NonHandSpellOnlyManaState promoteNonHandSpellOnlyMana() {
-        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
-        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
-        for (ManaColor color : ManaColor.values()) {
-            regularBefore.put(color, get(color));
-            int amount = getNonHandSpellOnlyMana(color);
-            promoted.put(color, amount);
-            if (amount > 0) {
-                pool.merge(color, amount, Integer::sum);
-                nonHandSpellOnlyMana.put(color, 0);
-                promotedNonHandSpellOnlyMana.put(color, amount);
-            }
-        }
-        return new NonHandSpellOnlyManaState(regularBefore, promoted);
+        return promoteNonHandSpellOnlyMana(true);
     }
 
-    /** Restores unspent non-hand-only mana after a spell payment. */
+    /**
+     * Temporarily exposes the non-hand-only mana that may pay for an activated ability — everything but
+     * the {@linkplain #addAbilityProhibitedNonHandSpellOnlyMana ability-prohibited} part.
+     */
+    public NonHandSpellOnlyManaState promoteNonHandSpellOnlyManaForAbility() {
+        return promoteNonHandSpellOnlyMana(false);
+    }
+
+    private NonHandSpellOnlyManaState promoteNonHandSpellOnlyMana(boolean includeAbilityProhibited) {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promotedAbilityProhibited = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, get(color));
+            int abilityProhibited = abilityProhibitedNonHandSpellOnlyMana.getOrDefault(color, 0);
+            int kept = includeAbilityProhibited ? 0 : abilityProhibited;
+            int amount = getNonHandSpellOnlyMana(color) - kept;
+            promoted.put(color, amount);
+            promotedAbilityProhibited.put(color, includeAbilityProhibited ? abilityProhibited : 0);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                nonHandSpellOnlyMana.put(color, kept);
+                promotedNonHandSpellOnlyMana.put(color, amount);
+            }
+            if (includeAbilityProhibited) {
+                abilityProhibitedNonHandSpellOnlyMana.put(color, 0);
+            }
+        }
+        return new NonHandSpellOnlyManaState(regularBefore, promoted, promotedAbilityProhibited);
+    }
+
+    /**
+     * Restores unspent non-hand-only mana after a payment. The ability-prohibited mana counts as spent
+     * first, since a payment that could use it is always better off doing so.
+     */
     public void restorePromotedNonHandSpellOnlyMana(NonHandSpellOnlyManaState state) {
         for (ManaColor color : ManaColor.values()) {
             int promoted = state.promoted().getOrDefault(color, 0);
@@ -2883,13 +2920,19 @@ public class ManaPool {
             if (remaining > 0) {
                 pool.merge(color, -remaining, Integer::sum);
                 nonHandSpellOnlyMana.merge(color, remaining, Integer::sum);
+                int abilityProhibited = Math.max(0,
+                        state.promotedAbilityProhibited().getOrDefault(color, 0) - spent);
+                if (abilityProhibited > 0) {
+                    abilityProhibitedNonHandSpellOnlyMana.merge(color, abilityProhibited, Integer::sum);
+                }
             }
             promotedNonHandSpellOnlyMana.put(color, 0);
         }
     }
 
     public record NonHandSpellOnlyManaState(Map<ManaColor, Integer> regularBefore,
-                                            Map<ManaColor, Integer> promoted) {
+                                            Map<ManaColor, Integer> promoted,
+                                            Map<ManaColor, Integer> promotedAbilityProhibited) {
     }
 
     public void addNonOwnedSpellOnlyMana(ManaColor color, int amount) {
@@ -5073,6 +5116,7 @@ public class ManaPool {
         moveColoredManaToColorless(flashbackOnlyMana);
         moveColoredManaToColorless(graveyardOnlyMana);
         moveColoredManaToColorless(nonHandSpellOnlyMana);
+        moveColoredManaToColorless(abilityProhibitedNonHandSpellOnlyMana);
         moveColoredManaToColorless(nonOwnedSpellOnlyMana);
         moveColoredManaToColorless(outsideStartingDeckSpellOnlyMana);
         moveColoredManaToColorless(abilityOnlyMana);

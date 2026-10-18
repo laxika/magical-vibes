@@ -161,8 +161,9 @@ class MikeyMonaMutantSittersTest extends BaseCardTest {
         castMikeyAndMona();
         harness.handleListChoice(player1, RETURN_MODE);
         harness.handleListChoice(player1, COUNTER_MODE);
-        harness.handlePermanentChosen(player1, player2.getId());
+        // Targets are asked for in printed mode order: the counter mode's target first.
         harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(returnedCard);

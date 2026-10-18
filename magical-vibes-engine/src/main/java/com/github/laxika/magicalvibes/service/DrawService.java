@@ -487,11 +487,26 @@ public class DrawService {
         // instead put the top card of the exiled pile into its owner's hand.
         List<UUID> pendingPileDraws = gameData.pendingNextDrawFromExiledPile.get(playerId);
         if (pendingPileDraws != null && !pendingPileDraws.isEmpty()) {
-            UUID pileSourceId = pendingPileDraws.removeFirst();
-            if (pendingPileDraws.isEmpty()) {
-                gameData.pendingNextDrawFromExiledPile.remove(playerId);
+            List<UUID> distinctPiles = pendingPileDraws.stream().distinct().toList();
+            if (distinctPiles.size() > 1) {
+                // Replacements from different Tomes name different piles; the drawing player picks
+                // which one applies (CR 616.1). The others wait for a later draw this turn.
+                java.util.Map<String, UUID> options = new java.util.LinkedHashMap<>();
+                for (int i = 0; i < distinctPiles.size(); i++) {
+                    UUID pileSourceId = distinctPiles.get(i);
+                    int pileSize = gameData.getCardsExiledByPermanent(pileSourceId).size();
+                    options.put("Pile " + (i + 1) + " (" + pileSize + (pileSize == 1 ? " card)" : " cards)"),
+                            pileSourceId);
+                }
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null,
+                        new com.github.laxika.magicalvibes.model.ChoiceContext.DrawFromExiledPileChoice(
+                                playerId, options),
+                        List.copyOf(options.keySet()),
+                        "Choose which exiled pile to put a card into your hand from instead of drawing."));
+                return;
             }
-            resolveDrawFromExiledPile(gameData, playerId, pileSourceId);
+            resolveChosenDrawFromExiledPile(gameData, playerId, pendingPileDraws.getFirst());
             return;
         }
 
@@ -2023,6 +2038,18 @@ public class DrawService {
                         .build(),
                 prompt,
                 false));
+    }
+
+    /** Applies one pending Mangara's Tome replacement for the chosen pile to this draw. */
+    public void resolveChosenDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
+        List<UUID> pendingPileDraws = gameData.pendingNextDrawFromExiledPile.get(playerId);
+        if (pendingPileDraws == null || !pendingPileDraws.remove(pileSourceId)) {
+            throw new IllegalStateException("That draw replacement is no longer available");
+        }
+        if (pendingPileDraws.isEmpty()) {
+            gameData.pendingNextDrawFromExiledPile.remove(playerId);
+        }
+        resolveDrawFromExiledPile(gameData, playerId, pileSourceId);
     }
 
     /** Applies the competing draw replacement selected by the player who would draw (CR 616.1). */

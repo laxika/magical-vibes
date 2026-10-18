@@ -20,6 +20,23 @@
           </div>
         }
       </aside>
+    } @else if (hasCommandZoneCards(command)) {
+      <aside class="commander-panel" aria-label="Command zones">
+        <strong>Command zone</strong>
+        @for (playerId of game()!.playerIds; track playerId; let playerIndex = $index) {
+          @if ((command.commandZones[playerId] || []).length > 0) {
+            <div>
+              <span>{{ game()!.playerNames[playerIndex] }}</span>
+              @for (card of command.commandZones[playerId] || []; track card.id) {
+                <span (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()">{{ card.name }}</span>
+                @if (card.id && command.revealableMissionIds.includes(card.id)) {
+                  <button (click)="revealSecretMission(card)" [disabled]="!hasPriority">Reveal mission</button>
+                }
+              }
+            </div>
+          }
+        }
+      </aside>
     }
   }
 
@@ -701,6 +718,7 @@
               <app-card-display
                 [card]="card"
                 class="graveyard-choice-card"
+                [class.unpickable-choice-card]="!choice.graveyardChoiceCardIds[$index]"
                 [class.selected-graveyard-card]="choice.graveyardChoiceSelectedIds().has(choice.graveyardChoiceCardIds[$index])"
                 (click)="choice.toggleGraveyardCardSelection($index)"
                 (mouseenter)="onCardHover(card)"

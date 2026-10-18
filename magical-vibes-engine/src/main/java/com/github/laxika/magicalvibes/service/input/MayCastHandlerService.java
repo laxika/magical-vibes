@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -41,6 +44,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.service.cast.ConvokePaymentSupport;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -66,6 +70,7 @@ import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostSer
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -1892,7 +1897,10 @@ public class MayCastHandlerService {
                 || (gameQueryService.canPayLifeForCosts(gameData)
                 && gameQueryService.canPlayerLifeChange(gameData, player.getId())
                 && gameData.getLife(player.getId()) >= madnessLifeCost);
-        if (!cost.canPay(pool) || !madnessLifePayable) {
+        boolean poolPaysMadness = cost.canPay(pool);
+        List<UUID> convokeCandidates = poolPaysMadness || !madnessLifePayable
+                ? List.of() : madnessConvokeCandidates(gameData, player.getId(), cardToCast, cost);
+        if (!madnessLifePayable || !poolPaysMadness && convokeCandidates.isEmpty()) {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
             log.info("Game {} - {} can't pay madness cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
@@ -1912,6 +1920,14 @@ public class MayCastHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (!poolPaysMadness) {
+            playerInputService.beginMultiPermanentChoice(gameData, player.getId(), convokeCandidates,
+                    convokeCandidates.size(),
+                    new MultiPermanentChoiceContext.MadnessConvoke(cardToCast, costStr, madnessLifeCost),
+                    "Choose creatures to tap for convoke to cast " + cardToCast.getName()
+                            + " for its madness cost " + costStr + " (choose none to decline).");
+            return;
+        }
         cost.pay(pool);
         if (madnessLifeCost > 0) {
             lifeSupport.applyLifePayment(gameData, player.getId(), madnessLifeCost,
@@ -1926,6 +1942,116 @@ public class MayCastHandlerService {
 
         gameData.removeFromExile(cardToCast.getId());
         castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "madness", 0);
+    }
+
+    /**
+     * Untapped creatures that could convoke a madness cast the mana pool can't pay alone (CR 702.51a), or
+     * an empty list when the card has no convoke or even every creature together can't pay.
+     */
+    private List<UUID> madnessConvokeCandidates(GameData gameData, UUID playerId, Card card, ManaCost cost) {
+        if (!card.getKeywords().contains(Keyword.CONVOKE)) {
+            return List.of();
+        }
+        List<Permanent> creatures = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent)
+                        && !permanent.isTapped() && !permanent.isTapRestrictedUnlessAttacking())
+                .toList();
+        if (madnessConvokeContributions(gameData, playerId, cost, creatures) == null) {
+            return List.of();
+        }
+        return creatures.stream().map(Permanent::getId).toList();
+    }
+
+    /**
+     * The convoke contributions of the creatures chosen for a madness cast, or {@code null} when a chosen
+     * creature can no longer be tapped for convoke or they can't pay the madness cost with the mana pool.
+     */
+    public List<ManaColor> madnessConvokeContributions(GameData gameData, UUID playerId,
+                                                       MultiPermanentChoiceContext.MadnessConvoke context,
+                                                       List<UUID> creatureIds) {
+        List<Permanent> creatures = new ArrayList<>();
+        for (UUID creatureId : creatureIds) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            if (creature == null || !playerId.equals(gameQueryService.findPermanentController(gameData, creatureId))
+                    || !gameQueryService.isCreature(gameData, creature)
+                    || creature.isTapped() || creature.isTapRestrictedUnlessAttacking()) {
+                return null;
+            }
+            creatures.add(creature);
+        }
+        return madnessConvokeContributions(gameData, playerId, new ManaCost(context.manaCost()), creatures);
+    }
+
+    private List<ManaColor> madnessConvokeContributions(GameData gameData, UUID playerId, ManaCost cost,
+                                                        List<Permanent> creatures) {
+        List<Set<ManaColor>> creatureColors = creatures.stream()
+                .map(creature -> gameQueryService.getEffectiveColors(gameData, creature).stream()
+                        .map(color -> ManaColor.fromCode(color.getCode()))
+                        .filter(java.util.Objects::nonNull)
+                        .collect(java.util.stream.Collectors.toSet()))
+                .toList();
+        return ConvokePaymentSupport.choose(cost, gameData.playerManaPools.get(playerId), 0, creatureColors);
+    }
+
+    /**
+     * Finishes a madness cast whose caster chose creatures to tap for convoke: taps them, pays the rest of
+     * the madness cost from the mana pool and casts the card. Choosing no creatures declines the cast.
+     */
+    public void completeMadnessConvokeChoice(GameData gameData, Player player,
+                                             MultiPermanentChoiceContext.MadnessConvoke context,
+                                             List<UUID> creatureIds) {
+        Card cardToCast = context.card();
+        String playerName = player.getUsername();
+        if (creatureIds.isEmpty() || gameData.findExiledCard(cardToCast.getId()) == null) {
+            if (gameData.findExiledCard(cardToCast.getId()) != null) {
+                gameData.removeFromExile(cardToCast.getId());
+                graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            }
+            gameLogService.append(gameData,
+                    GameLog.textCardText(playerName + " declines to cast ", cardToCast, " for its madness cost."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        List<ManaColor> contributions = madnessConvokeContributions(gameData, player.getId(), context, creatureIds);
+        if (contributions == null) {
+            throw new IllegalStateException("The chosen creatures can't pay the madness cost with convoke");
+        }
+        List<Permanent> convokers = creatureIds.stream()
+                .map(creatureId -> gameQueryService.findPermanentById(gameData, creatureId))
+                .toList();
+        // Tap triggers wait until the spell is on the stack, as with any convoke payment.
+        int stackBeforeTriggers = gameData.stack.size();
+        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        try {
+            for (Permanent convoker : convokers) {
+                convoker.tap();
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, convoker);
+            }
+        } finally {
+            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+        }
+        if (gameData.stack.size() > stackBeforeTriggers) {
+            List<StackEntry> deferred = new ArrayList<>(
+                    gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
+            gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
+            gameData.pendingManaAbilityTriggers.addAll(deferred);
+        }
+        new ManaCost(context.manaCost()).payWithConvoke(gameData.playerManaPools.get(player.getId()), 0, contributions);
+        if (context.lifeCost() > 0) {
+            lifeSupport.applyLifePayment(gameData, player.getId(), context.lifeCost(),
+                    cardToCast.getName() + "'s madness cost");
+        }
+
+        gameData.removeFromExile(cardToCast.getId());
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, context.manaCost(), "madness", 0);
+        gameData.stack.stream()
+                .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(cardToCast.getId()))
+                .findFirst()
+                .ifPresent(entry -> {
+                    entry.setConvokeCreatureIds(List.copyOf(creatureIds));
+                    convokers.forEach(convoker ->
+                            entry.rememberLastKnownPermanentCard(convoker.getId(), convoker.getCard()));
+                });
     }
 
     /** Handles casting one Eldrazi spell from the controller's outside-the-game card pool. */

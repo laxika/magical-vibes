@@ -780,6 +780,7 @@ public class LayerSystemService {
         h = mix(h, gameData.perpetualCardKeywords.size());
         h = mix(h, gameData.perpetualCardRemovedKeywords.hashCode());
         h = mix(h, gameData.perpetualCardRemovedKeywords.size());
+        h = mix(h, gameData.perpetualCardExtraKeywordInstances.hashCode());
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
@@ -2709,6 +2710,9 @@ public class LayerSystemService {
             state.addKeywords(permanent.getUntilNextTurnKeywords());
             state.addKeywords(gameData.perpetualCardKeywords.getOrDefault(
                     permanent.getCard().getId(), Set.of()));
+            gameData.perpetualCardExtraKeywordInstances
+                    .getOrDefault(permanent.getCard().getId(), Map.of())
+                    .forEach(state::addPerpetualTriggerKeywordInstances);
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
             gameData.perpetualCardRemovedKeywords
                     .getOrDefault(permanent.getCard().getId(), Set.of())

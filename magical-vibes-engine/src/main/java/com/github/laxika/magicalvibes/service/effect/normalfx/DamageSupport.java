@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
@@ -52,6 +54,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -1245,6 +1248,32 @@ public class DamageSupport {
     }
 
     /**
+     * Stands in for a resolving spell that deals damage, so "whenever one or more Pirates you control deal
+     * damage" can match a Kindred spell. Its subtypes include text changes made to the spell. Returns
+     * {@code null} when the source is not a spell.
+     */
+    private Permanent spellDamageDealerSnapshot(GameData gameData, StackEntry entry, Card source) {
+        if (entry.getSourcePermanentId() != null || source == null
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+            return null;
+        }
+        Permanent snapshot = new Permanent(source);
+        if (!source.getKeywords().contains(Keyword.CHANGELING)) {
+            List<CardSubtype> subtypes = new ArrayList<>(source.getSubtypes());
+            for (TextReplacement replacement : gameData.spellTextReplacements.getOrDefault(source.getId(), List.of())) {
+                CardSubtype from = TextChangeTransformer.creatureTypeForWord(replacement.fromWord());
+                CardSubtype to = TextChangeTransformer.creatureTypeForWord(replacement.toWord());
+                if (from != null && to != null && subtypes.remove(from)) {
+                    subtypes.add(to);
+                }
+            }
+            snapshot.setLastKnownSubtypes(Set.copyOf(subtypes));
+        }
+        return snapshot;
+    }
+
+    /**
      * Deals {@code event}'s damage once every replacement and prevention effect has been applied to
      * it: poison or life loss, the damage records, and the triggers damage causes (CR 120.3).
      */
@@ -1362,8 +1391,12 @@ public class DamageSupport {
             if (triggeringDamageSource != null && gameQueryService.isCreature(gameData, triggeringDamageSource)) {
                 triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
                         gameData, sourceControllerId, playerId, List.of(triggeringDamageSource));
+            }
+            Permanent opponentDamageDealer = triggeringDamageSource != null
+                    ? triggeringDamageSource : spellDamageDealerSnapshot(gameData, entry, source);
+            if (opponentDamageDealer != null) {
                 triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
-                        gameData, sourceControllerId, playerId, List.of(triggeringDamageSource));
+                        gameData, sourceControllerId, playerId, List.of(opponentDamageDealer));
             }
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
                     gameData, playerId, entry.getControllerId(), effectiveDamage);

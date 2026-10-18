@@ -8516,6 +8516,8 @@ public class TriggerCollectionService {
         }
         if (controllerId == null) return;
 
+        processDelayedDestroyTargetWhenSourceUntaps(gameData, untappedPermanent);
+
         boolean lostPrintedAbilities = gameQueryService.hasLostPrintedAbilities(gameData, untappedPermanent);
         for (CardEffect effect : untappedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)) {
             if (lostPrintedAbilities) break;
@@ -13332,22 +13334,43 @@ public class TriggerCollectionService {
         for (DelayedDestroyTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
                 DelayedDestroyTargetWhenSourceLeaves.class,
                 d -> leavingId.equals(d.watchedPermanentId()))) {
-            StackEntry se = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    delayed.sourceCard(),
-                    delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(List.of(new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId()))),
-                    null,
-                    List.of());
-            se.setNonTargeting(true);
-            gameData.enqueueTrigger(se);
-            gameLogService.append(gameData,
-                    GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
-            log.info("Game {} - {} delayed leave-trigger fires (source {} left); destroy target {}",
-                    gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
-                    delayed.targetPermanentId());
+            enqueueDelayedDestroyTarget(gameData, delayed, leavingPermanent);
         }
+    }
+
+    /**
+     * Fires delayed "when this creature ... becomes untapped, destroy that creature" triggers (Merieke Ri
+     * Berit) for the permanent that just became untapped. Each fires only once (CR 603.7b).
+     */
+    private void processDelayedDestroyTargetWhenSourceUntaps(GameData gameData, Permanent untappedPermanent) {
+        if (!gameData.hasDelayedAction(DelayedDestroyTargetWhenSourceLeaves.class)) {
+            return;
+        }
+        UUID untappedId = untappedPermanent.getId();
+        for (DelayedDestroyTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
+                DelayedDestroyTargetWhenSourceLeaves.class,
+                d -> d.alsoWhenUntapped() && untappedId.equals(d.watchedPermanentId()))) {
+            enqueueDelayedDestroyTarget(gameData, delayed, untappedPermanent);
+        }
+    }
+
+    private void enqueueDelayedDestroyTarget(GameData gameData, DelayedDestroyTargetWhenSourceLeaves delayed,
+                                             Permanent watchedPermanent) {
+        StackEntry se = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                delayed.sourceCard(),
+                delayed.controllerId(),
+                delayed.sourceCard().getName() + "'s delayed trigger",
+                new ArrayList<>(List.of(new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId()))),
+                null,
+                List.of());
+        se.setNonTargeting(true);
+        gameData.enqueueTrigger(se);
+        gameLogService.append(gameData,
+                GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
+        log.info("Game {} - {} delayed trigger fires (source {}); destroy target {}",
+                gameData.id, delayed.sourceCard().getName(), watchedPermanent.getCard().getName(),
+                delayed.targetPermanentId());
     }
 
     /**

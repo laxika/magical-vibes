@@ -1218,7 +1218,8 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class);
         gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
-        gameData.clearDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class);
+        gameData.drainDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class,
+                DelayedDestroyTargetWhenSourceLeaves::thisTurnOnly);
         gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
         gameData.clearDelayedActions(DelayedBeginningOfCombatTrigger.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();

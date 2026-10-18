@@ -1150,6 +1150,17 @@ public sealed interface ChoiceContext {
             sourcePermanentIds = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(sourcePermanentIds));
         }
     }
+    /**
+     * The affected player chooses which of several Mangara's Tome replacements, each naming a different
+     * exiled pile, applies to one draw (CR 616.1). {@code pileSourceIds} maps each option label to the
+     * permanent the pile was exiled with.
+     */
+    record DrawFromExiledPileChoice(UUID playerId, java.util.Map<String, UUID> pileSourceIds) implements ChoiceContext {
+        public DrawFromExiledPileChoice {
+            pileSourceIds = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(pileSourceIds));
+        }
+    }
+
     /** The affected player orders competing delayed library-look replacements for one draw. */
     record DrawLookReplacementOrder(UUID playerId, List<Integer> counts) implements ChoiceContext {
         public DrawLookReplacementOrder {
@@ -1213,6 +1224,13 @@ public sealed interface ChoiceContext {
                               UUID sourcePermanentId) implements ChoiceContext {
         public KeywordGrantChoice(UUID targetId, List<Keyword> options) {
             this(targetId, options, GrantDuration.END_OF_TURN, null, null);
+        }
+    }
+
+    /** The owner of a Secret Mission conspiracy secretly chooses one of its missions before the game. */
+    record SecretMissionChoice(Card sourceCard, List<String> missions) implements ChoiceContext {
+        public SecretMissionChoice {
+            missions = List.copyOf(missions);
         }
     }
 

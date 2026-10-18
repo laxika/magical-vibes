@@ -485,6 +485,17 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.DrawFromExiledPileChoice choice) {
+            UUID pileSourceId = choice.pileSourceIds().get(colorName);
+            if (pileSourceId == null || !colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            drawService.resolveChosenDrawFromExiledPile(gameData, choice.playerId(), pileSourceId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.DrawLookReplacementOrder choice) {
             if (!colorChoice.options().contains(colorName)) {
                 throw new IllegalArgumentException("Invalid choice: " + colorName);
@@ -846,6 +857,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.LegacyWordChoice ctx) {
             handleLegacyWordChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SecretMissionChoice ctx) {
+            handleSecretMissionChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.LandwalkGrantChoice ctx) {
@@ -3485,6 +3500,27 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses " + normalizedWord + " for ", ctx.sourceCard(), "."));
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), normalizedWord,
+                ctx.sourceCard().getName());
+
+        playerInputService.processNextMayAbility(gameData);
+        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            mulliganService.continueStartGame(gameData);
+        }
+    }
+
+    private void handleSecretMissionChoice(GameData gameData, Player player, String chosenMission,
+                                           ChoiceContext.SecretMissionChoice ctx) {
+        int missionIndex = ctx.missions().indexOf(chosenMission);
+        if (missionIndex < 0) {
+            throw new IllegalArgumentException("Invalid mission: " + chosenMission);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.secretMissionChoices.put(ctx.sourceCard().getId(), missionIndex);
+        // The choice is secret: the log only says that a mission was chosen.
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " secretly chooses a mission for ", ctx.sourceCard(), "."));
+        log.info("Game {} - {} secretly chooses a mission for {}", gameData.id, player.getUsername(),
                 ctx.sourceCard().getName());
 
         playerInputService.processNextMayAbility(gameData);
@@ -7816,10 +7852,10 @@ public class ChoiceHandlerService {
             return;
         }
 
-        // Present matching cards for "any number" selection
+        // Present matching cards for "any number" selection; the searcher sees the whole searched zones.
         playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards,
                 Math.min(ctx.maxCount(), matchingCards.size()),
-                targetPlayerId, cardName, ctx.drawForHandExiled(), ctx.tokenTemplate(), ctx.sourceSetCode());
+                targetPlayerId, cardName, ctx.drawForHandExiled(), ctx.tokenTemplate(), ctx.sourceSetCode(), true);
         inputCompletionService.publishStateAfterInput(gameData);
     }
 

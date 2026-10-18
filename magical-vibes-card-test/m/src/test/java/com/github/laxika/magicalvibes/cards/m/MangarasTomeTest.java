@@ -273,8 +273,33 @@ class MangarasTomeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A doubled entrance creates two piles and one replaced draw takes a card from each")
-    void doubledEntranceKeepsSeparatePiles() {
+    @DisplayName("The chosen Tome's pile replaces the draw and the other replacement waits for the next draw")
+    void chosenPileReplacesDrawAndOtherReplacementWaits() {
+        setupWithPile(List.of(new Disenchant()));
+        harness.addToBattlefield(player1, new MangarasTome());
+        var secondTome = gd.playerBattlefields.get(player1.getId()).get(1);
+        Card secondPileCard = new MangarasTome();
+        gd.addToExile(player1.getId(), secondPileCard, secondTome.getId(), true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Disenchant()));
+
+        activateTome();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 1, 0, null);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleListChoice(player1, "Pile 2 (1 card)");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondPileCard);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(handNames()).containsExactlyInAnyOrder("Mangara's Tome", "Disenchant");
+        assertThat(deck()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("After a doubled entrance one replaced draw still puts only one exiled card into hand")
+    void doubledEntranceReplacedDrawTakesOneCard() {
         harness.addToBattlefield(player1, new Panharmonicon());
         castTome(List.of(new Disenchant(), new Disenchant(), new Disenchant(), new Disenchant(),
                 new Disenchant(), new MangarasTome(), new MangarasTome(), new MangarasTome(),
@@ -295,8 +320,9 @@ class MangarasTomeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
-        assertThat(handNames()).containsExactlyInAnyOrder("Disenchant", "Mangara's Tome");
-        assertThat(gd.getCardsExiledByPermanent(tomeId)).hasSize(8);
+        // "Instead put the top card of the exiled pile into its owner's hand" moves one card per replaced draw.
+        assertThat(handNames()).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(tomeId)).hasSize(9);
         assertThat(deck()).isEmpty();
     }
 

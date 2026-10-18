@@ -365,6 +365,13 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * The caster chooses which untapped creatures to tap for convoke while casting {@code card} from exile
+     * for its madness cost {@code manaCost} (plus {@code lifeCost} life). Choosing none declines the cast.
+     */
+    record MadnessConvoke(Card card, String manaCost, int lifeCost) implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * The caster chooses which permanents to tap for a "tap N untapped permanents" additional cost
      * of a spell cast without paying its mana cost; {@code entry} is put on the stack once they are tapped.
      */

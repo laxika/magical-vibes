@@ -159,7 +159,7 @@
 | villainous-choice replacement plus additional vote | `t/TheValeyard.java` + `TheValeyardEffect` |
 | draw three, then target opponent chooses between discarding three and a controller free-cast from hand | `g/GreatIntelligencesPlan.java` + `GreatIntelligencesPlanVillainousChoiceEffect` |
 | randomly choose a creature, steal it until end of turn, untap and haste it, then destroy the other creatures | `t/TheNiptonLottery.java` + `ChooseRandomCreatureGainControlUntilEndOfTurnThenDestroyOtherCreaturesEffect` |
-| command-zone secret mission with end-step threshold, optional reveal/reward, and one-shot face-down completion | `m/MarchesasSurpriseParty.java` + `COMMAND_ZONE_END_STEP_TRIGGERED` + `ConditionalEffect(AnyOf(...), MayEffect(SequenceEffect.of(TurnFaceDownCommandZoneCardEffect, DrawCardEffect(1))))` |
+| command-zone Secret Mission: pregame secret choice, end-step reveal special action, reward trigger | `m/MarchesasSurpriseParty.java` + `COMMAND_ZONE_STATIC SecretMissionEffect(List<Mission(label, Condition)>, reward)` |
 | command-zone conspiracy restricting attacks to an even number and doubling a target creature's power | `r/RuleWithAnEvenHand.java` + `COMMAND_ZONE_STATIC CombatAttackCountRestrictionEffect` + `COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK` |
 | commander cast-cost reduction plus draw when that commander enters the command zone | `m/MythUnbound.java` + `ReduceCommanderCastCostEffect(CommanderCastsFromCommandZoneThisGame)` + `ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE DrawCardEffect` |
 | playtest creature with custom nimble evasion and thoughtweft keyword sharing | `b/BrigidWhosSeenSomeStuff.java` + filtered `GrantKeywordEffect` |

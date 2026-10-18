@@ -393,7 +393,8 @@ public class TurnCleanupService {
         gameData.clearDelayedActions(DelayedControllerDamageMultiplication.class);
         gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
-        gameData.clearDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class);
+        gameData.drainDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class,
+                DelayedDestroyTargetWhenSourceLeaves::thisTurnOnly);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.creaturesProtectedFromTargetingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();

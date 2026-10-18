@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FalkenrathGorger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RavensCrime;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -115,6 +116,42 @@ class MarkovBaronTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotInGraveyard(player1, "Markov Baron");
+    }
+
+    @Test
+    void madnessConvokeTapsChosenCreaturesAndPaysTheRestWithMana() {
+        harness.addToBattlefield(player1, new MarkovBaron());
+        harness.addToBattlefield(player1, new MarkovBaron());
+        List<Permanent> convokers = findPermanents(player1, "Markov Baron");
+        MarkovBaron baron = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrderElementsOf(convokers.stream().map(Permanent::getId).toList());
+        harness.handleMultiplePermanentsChosen(player1, convokers.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(convokers).allMatch(Permanent::isTapped);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(baron.getId()));
+    }
+
+    @Test
+    void choosingNoConvokeCreaturesDeclinesMadness() {
+        harness.addToBattlefield(player1, new MarkovBaron());
+        harness.addToBattlefield(player1, new MarkovBaron());
+        harness.addToBattlefield(player1, new MarkovBaron());
+        discardViaRavensCrime();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        harness.assertInGraveyard(player1, "Markov Baron");
+        assertThat(findPermanents(player1, "Markov Baron")).noneMatch(Permanent::isTapped);
     }
 
     private MarkovBaron discardViaRavensCrime() {

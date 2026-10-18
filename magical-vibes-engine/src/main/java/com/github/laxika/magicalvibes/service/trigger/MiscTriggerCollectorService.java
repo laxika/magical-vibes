@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForNonlandCardsMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -233,10 +232,7 @@ public class MiscTriggerCollectorService {
                 .filter(triggeredEffect -> !(triggeredEffect instanceof
                         com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect)
                         || match.permanent().getChosenPermanentId() != null)
-                .map(triggeredEffect -> triggeredEffect instanceof DestroyLinkedPermanentEffect destroy
-                        ? new DestroyLinkedPermanentEffect(
-                                destroy.cannotBeRegenerated(), match.permanent().getChosenPermanentId())
-                        : triggeredEffect instanceof com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect remove
+                .map(triggeredEffect -> triggeredEffect instanceof com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect remove
                         ? new com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect(
                                 remove.mode(), match.permanent().getChosenPermanentId(), null)
                         : triggeredEffect instanceof ReturnCardsExiledWithSourceOnUntapEffect

@@ -97,6 +97,7 @@ public class MultiPermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
 
     private final InputCompletionService inputCompletionService;
+    private final MayCastHandlerService mayCastHandlerService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
@@ -898,6 +899,12 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets attackTargets) {
             validateAtMostOnePermanentPerController(gameData, attackTargets.pending().sourceCard(), permanentIds);
         }
+        if (context instanceof MultiPermanentChoiceContext.MadnessConvoke madnessConvoke
+                && !permanentIds.isEmpty()
+                && mayCastHandlerService.madnessConvokeContributions(
+                gameData, playerId, madnessConvoke, permanentIds) == null) {
+            throw new IllegalStateException("The chosen creatures can't pay the madness cost with convoke");
+        }
 
         gameData.interaction.clearAwaitingInput();
         recordVotingChoiceIfApplicable(gameData, playerId, permanentIds, context);
@@ -1196,6 +1203,8 @@ public class MultiPermanentChoiceHandlerService {
             nihiloorTapAndStealEffectHandler.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost) {
             exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, tapCost);
+        } else if (context instanceof MultiPermanentChoiceContext.MadnessConvoke madnessConvoke) {
+            mayCastHandlerService.completeMadnessConvokeChoice(gameData, player, madnessConvoke, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsDrawPerTapped) {
             handleTapPermanentsDrawPerTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsAndPutCounters ctx) {

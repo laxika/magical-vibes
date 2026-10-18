@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.SecretMissionEffect;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -297,6 +298,17 @@ public class MulliganService {
             }
         }
         for (UUID playerId : pregameActionOrder) {
+            // A Secret Mission's owner secretly chooses its mission before the game.
+            for (Card card : gameData.playerCommandZones.getOrDefault(playerId, List.of())) {
+                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_STATIC)) {
+                    if (effect instanceof SecretMissionEffect mission
+                            && !gameData.secretMissionChoices.containsKey(card.getId())) {
+                        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                                card, playerId, List.of(mission),
+                                card.getName() + " — Secretly choose a mission."));
+                    }
+                }
+            }
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null) continue;
             List<Card> pregameCards = new ArrayList<>(hand);

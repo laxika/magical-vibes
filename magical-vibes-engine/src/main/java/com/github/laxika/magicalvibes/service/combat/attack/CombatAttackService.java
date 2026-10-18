@@ -1610,7 +1610,8 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
             try {
-            if (gameQueryService.hasKeyword(gameData, attacker, Keyword.BATTLE_CRY)) {
+            int battleCryInstances = gameQueryService.triggerKeywordInstances(gameData, attacker, Keyword.BATTLE_CRY);
+            for (int instance = 0; instance < battleCryInstances; instance++) {
                 List<CardEffect> battleCryEffects = List.of(new BoostAllOwnCreaturesEffect(1, 0,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsAttackingPredicate(),

@@ -175,11 +175,24 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /** Mana spendable only to cast spells from outside the controller's hand. */
+    /** Mana that can't be spent to cast spells from the controller's hand; abilities may still use it. */
     record NonHandSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
             pool.addNonHandSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "can't cast spells from hand";
+        }
+    }
+
+    /** Mana spendable only to cast spells from outside the controller's hand, never on abilities. */
+    record NonHandSpellsOnly() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addAbilityProhibitedNonHandSpellOnlyMana(color, amount);
         }
 
         @Override

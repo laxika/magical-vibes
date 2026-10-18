@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyTargetWhenSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,19 +21,15 @@ public class MeriekeRiBerit extends Card {
         // "Merieke Ri Berit doesn't untap during your untap step."
         addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
 
-        // "{T}: Gain control of target creature for as long as you control Merieke Ri Berit."
-        // The stolen creature is linked to Merieke so the destroy triggers below can still refer
-        // to it after the control effect has ended.
+        // "{T}: Gain control of target creature for as long as you control Merieke Ri Berit. When Merieke
+        // Ri Berit leaves the battlefield or becomes untapped, destroy that creature. It can't be
+        // regenerated." Each resolution creates its own delayed trigger for its own creature (CR 603.7a).
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(GainControlOfTargetEffect.linkingToSource(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)),
-                "{T}: Gain control of target creature for as long as you control Merieke Ri Berit.",
+                List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                        new RegisterDelayedDestroyTargetWhenSourceLeavesEffect(true, false)),
+                "{T}: Gain control of target creature for as long as you control Merieke Ri Berit. When Merieke Ri Berit leaves the battlefield or becomes untapped, destroy that creature. It can't be regenerated.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature")));
-
-        // "When Merieke Ri Berit leaves the battlefield or becomes untapped, destroy that
-        // creature. It can't be regenerated."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new DestroyLinkedPermanentEffect(true));
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new DestroyLinkedPermanentEffect(true));
     }
 }

@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLea
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyMerfolkTappedForSourceAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -4428,28 +4427,6 @@ public class DeathTriggerCollectorService {
                 abilityControllerId,
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new RemoveLinkedPermanentEffect(effect.mode(), linkedId, linkedCardId)))
-        ));
-        logSelfLeaves(match);
-        return true;
-    }
-
-    @CollectsTrigger(value = DestroyLinkedPermanentEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
-    boolean handleDestroyLinkedPermanentOnLeave(TriggerMatchContext match,
-            DestroyLinkedPermanentEffect effect, TriggerContext ctx) {
-        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
-        // Capture the linked permanent before the source is gone; the link is cleared so a
-        // simultaneous becomes-untapped trigger cannot destroy the same creature twice.
-        UUID linkedId = match.permanent().getChosenPermanentId();
-        if (linkedId == null) {
-            return false;
-        }
-        match.permanent().setChosenPermanentId(null);
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                sl.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DestroyLinkedPermanentEffect(effect.cannotBeRegenerated(), linkedId)))
         ));
         logSelfLeaves(match);
         return true;

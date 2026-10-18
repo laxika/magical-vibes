@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AttackTarget, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, StackEntry, RevealHandNotification, InteractionPromptNotification, RevealLibraryTopNotification, RevealPermanentNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, GameLogEntry } from '../../services/websocket.service';
+import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNotification, GameStatus, MessageType, TurnStep, PHASE_GROUPS, Card, Permanent, MulliganResolvedNotification, SelectCardsToBottomNotification, AttackTarget, AvailableAttackersNotification, AvailableBlockersNotification, GameOverNotification, StackEntry, RevealHandNotification, InteractionPromptNotification, RevealLibraryTopNotification, RevealPermanentNotification, CombatDamageAssignmentNotification, ValidTargetsResponse, GameLogEntry, CommanderView } from '../../services/websocket.service';
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
@@ -699,6 +699,14 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  hasCommandZoneCards(command: CommanderView): boolean {
+    return Object.values(command.commandZones).some(cards => cards.length > 0);
+  }
+  revealSecretMission(card: Card): void {
+    if (card.id && this.hasPriority) {
+      this.websocketService.send({ type: MessageType.REVEAL_SECRET_MISSION, cardId: card.id });
+    }
+  }
   playCommander(card: Card): void {
     if (card.id && this.hasPriority && this.game()?.commander?.playableCardIds.includes(card.id)) this.choice.targeting.startCommanderPlay(card);
   }

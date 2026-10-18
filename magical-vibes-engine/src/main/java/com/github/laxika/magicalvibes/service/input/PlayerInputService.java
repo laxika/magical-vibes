@@ -1337,6 +1337,15 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a Legacy keyword or ability word", gameData.id, playerName);
     }
 
+    /** Asks a Secret Mission's owner to secretly choose one of its missions before the game. */
+    public void beginSecretMissionChoice(GameData gameData, UUID playerId, Card sourceCard, List<String> missions) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, new ChoiceContext.SecretMissionChoice(sourceCard, missions), missions,
+                "Secretly choose a mission for " + sourceCard.getName() + "."));
+        log.info("Game {} - Awaiting {} to choose a secret mission", gameData.id,
+                gameData.playerIdToName.get(playerId));
+    }
+
     public void beginBasicLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
         ChoiceContext.LandwalkGrantChoice choiceContext = new ChoiceContext.LandwalkGrantChoice(targetId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -2997,12 +3006,21 @@ public class PlayerInputService {
                                           int maxCount, UUID targetPlayerId, String cardName,
                                           boolean drawForHandExiled, CreateTokenEffect tokenTemplate,
                                           String sourceSetCode) {
+        beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, maxCount, targetPlayerId, cardName,
+                drawForHandExiled, tokenTemplate, sourceSetCode, false);
+    }
+
+    /** As above; {@code showsSearchedZones} shows the searcher every card in the searched zones (CR 701.23a). */
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          int maxCount, UUID targetPlayerId, String cardName,
+                                          boolean drawForHandExiled, CreateTokenEffect tokenTemplate,
+                                          String sourceSetCode, boolean showsSearchedZones) {
         List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
                 choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, null, null,
-                maxCount == Integer.MAX_VALUE));
+                maxCount == Integer.MAX_VALUE, showsSearchedZones));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,

@@ -86,6 +86,7 @@ public class GameViewProjectionFactory {
     private final CastingPermissionService castingPermissionService;
     private final GrantedAbilityViewFactory grantedAbilityViewFactory;
     private final GameActionAvailabilityService actionAvailabilityService;
+    private final SecretMissionService secretMissionService;
 
     public Map<UUID, GameStateMessage> createGameStateMessages(
             GameData gameData,
@@ -1217,7 +1218,9 @@ public class GameViewProjectionFactory {
         return new com.github.laxika.magicalvibes.networking.model.CommanderView(game.format, zones, commanders,
                 Map.copyOf(game.commanderTaxByCardId), damage,
                 actingPlayerId == null || controlledViewer ? List.of()
-                        : actionAvailabilityService.getPlayableCommanders(game, actingPlayerId).stream().map(Card::getId).toList());
+                        : actionAvailabilityService.getPlayableCommanders(game, actingPlayerId).stream().map(Card::getId).toList(),
+                actingPlayerId == null || controlledViewer ? List.of()
+                        : secretMissionService.revealableMissionCardIds(game, actingPlayerId));
     }
 
     int getSearchTaxCost(GameData gameData, UUID playerId) {

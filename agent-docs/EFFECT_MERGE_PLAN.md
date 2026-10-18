@@ -672,8 +672,8 @@ Rain of Daggers and Overwhelming Forces — is a separate AI bug, not this merge
 - The `SOURCE` path gained a null-id guard before `findPermanentById`, which the two absorbed
   handlers lacked. It cannot change an outcome, only skip a lookup.
 
-**Kept separate**: `DestroyLinkedPermanentEffect` (Merieke Ri Berit) as the plan says — it also
-clears `source.setChosenPermanentId(null)` and carries a baked `UUID`.
+**Kept separate**: `DestroyLinkedPermanentEffect` (War Barge and Merieke Ri Berit delayed triggers) as the
+plan says — it carries a baked `UUID`.
 `DestroyCreatureAttachedToEnchantedEquipmentEffect` (Artificer's Hex) is a two-hop
 Aura→Equipment→creature walk, not a `PermanentReference`.
 `DestroyOtherPermanentsWithEnteringNameEffect` reads the triggering permanent but destroys everything

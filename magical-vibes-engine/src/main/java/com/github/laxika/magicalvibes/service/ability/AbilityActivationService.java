@@ -3843,7 +3843,7 @@ public class AbilityActivationService {
         boolean abilityManaApplies = pool != null
                 && !isSpecialActionAbility(gameData, player.getId(), permanentIndex, abilityIndex, preResolvedSource);
         ManaPool.NonHandSpellOnlyManaState nonHandAbilityMana = abilityManaApplies
-                ? pool.promoteNonHandSpellOnlyMana() : null;
+                ? pool.promoteNonHandSpellOnlyManaForAbility() : null;
         boolean promotedAbilityOnlyMana = abilityManaApplies && pool.promoteAbilityOnlyMana() > 0;
         boolean promotedLandAbilityOnlyMana = abilityManaApplies
                 && isLandAbilitySource(gameData, player.getId(), permanentIndex, preResolvedSource)
@@ -7069,7 +7069,7 @@ public class AbilityActivationService {
             ManaPool affordabilityPool = manaPool;
             if (manaPool != null && manaPool.getNonHandSpellOnlyManaTotal() > 0) {
                 affordabilityPool = copyManaPool(manaPool);
-                affordabilityPool.promoteNonHandSpellOnlyMana();
+                affordabilityPool.promoteNonHandSpellOnlyManaForAbility();
             }
             if (manaPool != null && isClassLevelUpAbility(abilityEffects)) {
                 affordabilityPool = copyManaPool(affordabilityPool);

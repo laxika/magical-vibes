@@ -780,6 +780,16 @@
   box-shadow: 0 0 16px rgba(45, 122, 80, 0.8);
 }
 
+/* A card shown by a search that can't be chosen (its id slot in the prompt is null). */
+.unpickable-choice-card,
+.unpickable-choice-card:hover {
+  cursor: default;
+  outline: none;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.55;
+}
+
 /* Combat damage assignment */
 
 .combat-damage-popup {

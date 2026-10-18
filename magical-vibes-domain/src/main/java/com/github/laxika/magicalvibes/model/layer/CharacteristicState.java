@@ -41,7 +41,7 @@ import java.util.Set;
 public class CharacteristicState {
 
     private static final Set<Keyword> TRIGGER_INSTANCE_KEYWORDS =
-            EnumSet.of(Keyword.PERSIST, Keyword.UNDYING, Keyword.EXALTED, Keyword.DETHRONE);
+            EnumSet.of(Keyword.PERSIST, Keyword.UNDYING, Keyword.EXALTED, Keyword.DETHRONE, Keyword.BATTLE_CRY);
 
     private String name;
     private final Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);
@@ -302,6 +302,16 @@ public class CharacteristicState {
             if (keywords.contains(keyword)) {
                 triggerKeywordInstances.put(keyword, 1);
             }
+        }
+    }
+
+    /**
+     * Adds extra instances of a stackable-trigger keyword a card perpetually gained while it already had
+     * it. Called during seeding, after the card's own and perpetual keywords are in place.
+     */
+    public void addPerpetualTriggerKeywordInstances(Keyword keyword, int extra) {
+        if (TRIGGER_INSTANCE_KEYWORDS.contains(keyword) && keywords.contains(keyword)) {
+            triggerKeywordInstances.merge(keyword, 1 + extra, (current, added) -> Math.max(1, current) + extra);
         }
     }
 

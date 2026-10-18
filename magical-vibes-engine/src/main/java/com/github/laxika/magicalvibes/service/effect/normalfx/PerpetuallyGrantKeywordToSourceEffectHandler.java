@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Resolves a perpetual keyword grant on the source card. */
 @Component
@@ -31,6 +33,7 @@ public class PerpetuallyGrantKeywordToSourceEffectHandler implements NormalEffec
         if (entry.getSourcePermanentId() == null) {
             Card sourceCard = entry.getCard();
             if (sourceCard != null) {
+                recordExtraInstanceIfAlreadyGranted(gameData, sourceCard, grant.keyword());
                 gameData.perpetualCardKeywords
                         .computeIfAbsent(sourceCard.getId(), ignored -> EnumSet.noneOf(Keyword.class))
                         .add(grant.keyword());
@@ -43,6 +46,7 @@ public class PerpetuallyGrantKeywordToSourceEffectHandler implements NormalEffec
             return;
         }
 
+        recordExtraInstanceIfAlreadyGranted(gameData, source.getCard(), grant.keyword());
         Card modifiedCard = source.getCard().createRuntimeCopy();
         EnumSet<Keyword> keywords = modifiedCard.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)
@@ -51,5 +55,18 @@ public class PerpetuallyGrantKeywordToSourceEffectHandler implements NormalEffec
         modifiedCard.setKeywords(keywords);
         modifiedCard.freeze();
         source.exchangeCard(modifiedCard);
+    }
+
+    /**
+     * A card that perpetually gains a keyword it already has gets another instance of it, which matters
+     * for keywords whose instances trigger separately (CR 702.91b battle cry).
+     */
+    private static void recordExtraInstanceIfAlreadyGranted(GameData gameData, Card card, Keyword keyword) {
+        if (card.getKeywords().contains(keyword)
+                || gameData.perpetualCardKeywords.getOrDefault(card.getId(), Set.of()).contains(keyword)) {
+            gameData.perpetualCardExtraKeywordInstances
+                    .computeIfAbsent(card.getId(), ignored -> new ConcurrentHashMap<>())
+                    .merge(keyword, 1, Integer::sum);
+        }
     }
 }

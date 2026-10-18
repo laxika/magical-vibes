@@ -1151,8 +1151,25 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectMultiZoneExileChoice(
             GameData gameData, PendingInteraction.MultiZoneExileChoice interaction) {
-        List<CardView> cardViews = new ArrayList<>();
         UUID targetPlayerId = interaction.targetPlayerId();
+        String prompt = "Choose any number of cards named \"" + interaction.cardName() + "\" to exile.";
+        if (interaction.showsSearchedZones()) {
+            // A search looks at every card in the searched zones (CR 701.23a). Each card view is paired
+            // with its id when it can be chosen and with null when it is only shown.
+            List<CardView> searchedViews = new ArrayList<>();
+            List<UUID> pickableIds = new ArrayList<>();
+            for (List<Card> zone : List.of(
+                    gameData.playerHands.getOrDefault(targetPlayerId, List.of()),
+                    gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()),
+                    gameData.playerDecks.getOrDefault(targetPlayerId, List.of()))) {
+                for (Card card : zone) {
+                    searchedViews.add(cardViewFactory.create(card));
+                    pickableIds.add(interaction.validCardIds().contains(card.getId()) ? card.getId() : null);
+                }
+            }
+            return InteractionPromptMessage.multiCardPick(pickableIds, searchedViews, interaction.maxCount(), prompt);
+        }
+        List<CardView> cardViews = new ArrayList<>();
         addMatchingCardViews(
                 cardViews,
                 gameData.playerHands.getOrDefault(targetPlayerId, List.of()),
@@ -1166,8 +1183,7 @@ public class InteractionPromptProjectionRegistry {
                 gameData.playerDecks.getOrDefault(targetPlayerId, List.of()),
                 interaction.validCardIds());
         return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
-                "Choose any number of cards named \"" + interaction.cardName() + "\" to exile.");
+                new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(), prompt);
     }
 
     private InteractionPromptMessage projectPutUpToCardsFromHandOntoBattlefieldChoice(

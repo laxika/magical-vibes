@@ -204,6 +204,25 @@ public class GameService {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private SecretMissionService secretMissionService;
+
+    /**
+     * Special action: reveal the chosen mission of a Secret Mission conspiracy in the command zone during
+     * your end step and turn it face down, which triggers its reward.
+     */
+    public void revealSecretMission(GameData gameData, Player player, UUID cardId) {
+        Player actor = player;
+        if (runAsActionIfNeeded(gameData, () -> revealSecretMission(gameData, actor, cardId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            secretMissionService.reveal(gameData, player.getId(), cardId);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
+    }
+
     public void rollPlanarDie(GameData gameData, Player player) {
         Player actor = player;
         if (runAsActionIfNeeded(gameData, () -> rollPlanarDie(gameData, actor))) return;
