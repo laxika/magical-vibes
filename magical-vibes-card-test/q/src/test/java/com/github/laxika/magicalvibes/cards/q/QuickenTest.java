@@ -137,6 +137,8 @@ class QuickenTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         resolveQuicken();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castFromHand(player2, new CullingSun(), "{2}{W}{W}{B}"))
                 .isInstanceOf(IllegalStateException.class)

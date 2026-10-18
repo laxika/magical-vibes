@@ -102,7 +102,10 @@ class QuestForUlasTempleTest extends BaseCardTest {
         temple.setCounterCount(CounterType.QUEST, 2);
         harness.setLibrary(player1, deckOf(new Forest()));
 
-        runEndStep(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

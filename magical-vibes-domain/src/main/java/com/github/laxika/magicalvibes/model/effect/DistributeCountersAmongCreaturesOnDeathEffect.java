@@ -61,6 +61,17 @@ public record DistributeCountersAmongCreaturesOnDeathEffect(
     }
 
     /**
+     * "When this creature dies, distribute X {@code counterType} counters among any number of target
+     * creatures you control, where X is the number of {@code counterType} counters on this creature"
+     * (Quirion Beastcaller). Unlike the Vastwood Hydra form, the division is not optional and the
+     * recipients are declared as targets when the trigger goes on the stack.
+     */
+    public static DistributeCountersAmongCreaturesOnDeathEffect fromDyingSourceCountersAmongTargetControlledCreatures(
+            CounterType counterType) {
+        return new DistributeCountersAmongCreaturesOnDeathEffect(counterType, 0, true, false, false, false, true);
+    }
+
+    /**
      * "Whenever a creature dies, its controller distributes a number of +1/+1 counters equal to its
      * power among any number of target creatures they control" (Grand Ossuary).
      */

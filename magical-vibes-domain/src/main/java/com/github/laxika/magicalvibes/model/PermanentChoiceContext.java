@@ -100,8 +100,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Glamer Spinners: move every Aura in {@code auraPermanentIds} onto the chosen permanent. */
     record AttachAllAurasToAnotherPermanent(List<UUID> auraPermanentIds) implements PermanentChoiceContext {}
 
-    /** Stonehewer Giant: attach the just-placed Equipment {@code equipmentPermanentId} to the chosen creature. */
-    record AttachEquipmentToCreature(UUID equipmentPermanentId, UUID controllerId) implements PermanentChoiceContext {}
+    /**
+     * Stonehewer Giant and Quest for the Holy Relic: attach the just-placed Equipment
+     * {@code equipmentPermanentId} to the chosen creature. When {@code shuffleLibraryAfterAttach} is set,
+     * the controller's library is shuffled once the attachment choice is made.
+     */
+    record AttachEquipmentToCreature(UUID equipmentPermanentId, UUID controllerId,
+                                     boolean shuffleLibraryAfterAttach) implements PermanentChoiceContext {
+        public AttachEquipmentToCreature(UUID equipmentPermanentId, UUID controllerId) {
+            this(equipmentPermanentId, controllerId, false);
+        }
+    }
 
     record AttachSacrificedEquipmentToTarget(UUID targetCreatureId, List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {

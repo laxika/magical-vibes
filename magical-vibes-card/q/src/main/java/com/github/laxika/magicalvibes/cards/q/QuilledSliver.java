@@ -40,7 +40,7 @@ public class QuilledSliver extends Card {
 
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 quilledAbility,
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_PERMANENTS,
                 sliver
         ));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

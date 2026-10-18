@@ -118,8 +118,15 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
         }
     }
 
-    /** A card in exile matching {@code inner}. */
-    record ExiledCards(CardPredicate inner) implements Leaf {
+    /**
+     * A card in exile matching {@code inner}. When {@code exiledWithSource} is true the card must also have
+     * been exiled with the source permanent of the ability or effect choosing it.
+     */
+    record ExiledCards(CardPredicate inner, boolean exiledWithSource) implements Leaf {
+
+        public ExiledCards(CardPredicate inner) {
+            this(inner, false);
+        }
 
         public ExiledCards {
             Objects.requireNonNull(inner, "inner (use CardTruePredicate for any card)");

@@ -386,7 +386,7 @@ telling those apart is why the flat category enum was replaced.
 | `TargetPredicate.Permanents` | `PermanentPredicate` | `PredicateEvaluationService.matchesPermanentPredicate` |
 | `TargetPredicate.Players` | `PlayerPredicate` | `TargetLegalityService.matchesPlayerPredicate` |
 | `TargetPredicate.GraveyardCards` | `CardPredicate` + `GraveyardSearchScope` | `PredicateEvaluationService.matchesCardPredicate` + the scope |
-| `TargetPredicate.ExiledCards` | `CardPredicate` | `PredicateEvaluationService.matchesCardPredicate` |
+| `TargetPredicate.ExiledCards` | `CardPredicate` + `exiledWithSource` flag | `PredicateEvaluationService.matchesCardPredicate`; with the flag, `TargetValidationService` also requires the card's `sourcePermanentId` to match the source (`TargetPredicates.exiledCardsExiledWithSource`) |
 | `TargetPredicate.Spells` | `StackEntryPredicate` | `TargetLegalityService.matchesStackEntryPredicate` |
 | `TargetPredicate.AnyOf` | ≥2 leaves, at most one per kind | dispatches to the leaf of the asked-for kind |
 

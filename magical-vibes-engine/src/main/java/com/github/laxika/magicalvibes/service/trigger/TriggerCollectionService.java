@@ -2169,6 +2169,9 @@ public class TriggerCollectionService {
             if (casterBattlefield != null) {
                 for (Permanent perm : new ArrayList<>(casterBattlefield)) {
                     if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
+                    if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
+                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                     List<CardEffect> grantEffects = perm.getCard().getEffects(
                             EffectSlot.GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND);
                     if (grantEffects.isEmpty()) continue;
@@ -4248,6 +4251,31 @@ public class TriggerCollectionService {
                                                       int totalDamage, int damageToPlayers,
                                                       UUID damagedPlayerId,
                                                       List<CardEffect> snapshottedSelfEffects) {
+        queueSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
+                totalDamage, damageToPlayers, damagedPlayerId, snapshottedSelfEffects, null);
+    }
+
+    /**
+     * Captures, per controller, the permanents with "whenever a creature you control deals combat
+     * damage" abilities before state-based actions remove them: the event happens while they are
+     * still on the battlefield (CR 603.2), so one destroyed by that same damage still triggers.
+     */
+    public Map<UUID, List<Permanent>> snapshotAllyCreatureDealsCombatDamageWatchers(GameData gameData) {
+        Map<UUID, List<Permanent>> watchers = new LinkedHashMap<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!permanent.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE).isEmpty()) {
+                watchers.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(permanent);
+            }
+        });
+        return watchers;
+    }
+
+    public void queueSourceDealsCombatDamageTriggers(GameData gameData, Card sourceCard,
+                                                      UUID sourceControllerId, UUID sourcePermanentId,
+                                                      int totalDamage, int damageToPlayers,
+                                                      UUID damagedPlayerId,
+                                                      List<CardEffect> snapshottedSelfEffects,
+                                                      List<Permanent> snapshottedAllyWatchers) {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) {
             return;
         }
@@ -4268,7 +4296,9 @@ public class TriggerCollectionService {
         if (!damageSourceIsCreature) return;
         List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (battlefield == null) return;
-        for (Permanent watcher : List.copyOf(battlefield)) {
+        List<Permanent> allyWatchers = snapshottedAllyWatchers != null
+                ? snapshottedAllyWatchers : List.copyOf(battlefield);
+        for (Permanent watcher : allyWatchers) {
             for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE)) {
                 var match = new TriggerMatchContext(gameData, watcher, sourceControllerId, effect);
                 dispatch(match, EffectSlot.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE, effect, ctx);

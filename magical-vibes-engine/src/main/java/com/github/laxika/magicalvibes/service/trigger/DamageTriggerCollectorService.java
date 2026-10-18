@@ -2451,10 +2451,16 @@ public class DamageTriggerCollectorService {
     private boolean handleAllyCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
+        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
 
         Card watcherCard = match.permanent().getCard();
         // The watcher, not the damage dealer, is the trigger's source permanent so a self-referencing
-        // effect (Five-Alarm Fire's blaze counter) lands on the watcher.
+        // effect (Five-Alarm Fire's blaze counter) lands on the watcher. The damage dealer is the
+        // triggering permanent so a TRIGGERING-referenced effect (Quilled Greatwurm's counters) lands on it.
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 watcherCard,
@@ -2463,6 +2469,7 @@ public class DamageTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
+        entry.setTriggeringPermanentId(sd.sourcePermanentId());
         entry.setNonTargeting(true);
         entry.setEventValue(sd.totalDamage());
         match.gameData().enqueueTrigger(entry);

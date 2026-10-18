@@ -779,7 +779,7 @@ public class MayCastHandlerService {
                                                PendingMayAbility ability,
                                                CastTargetInstantOrSorceryFromGraveyardEffect castEffect,
                                                int maxSpellManaValue) {
-        if (!castEffect.withoutPayingManaCost() && !castEffect.anyManaType() && castEffect.copyCount() == 0) {
+        if (!castEffect.withoutPayingManaCost() && castEffect.copyCount() == 0) {
             CardPredicate filter = castEffect.filter() != null ? castEffect.filter()
                     : new com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate(List.of(
                     new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.INSTANT),
@@ -790,7 +790,7 @@ public class MayCastHandlerService {
             }
             CastCardFromGraveyardEffect delegated = new CastCardFromGraveyardEffect(
                     filter, castEffect.scope(), exileFilter, false, false,
-                    castEffect.afterSuccessfulCastEffect());
+                    castEffect.afterSuccessfulCastEffect(), castEffect.anyManaType());
             handleCastCardFromGraveyardChoice(gameData, player, accepted,
                     ability.withEffects(List.of(delegated)), delegated);
             return;
@@ -1036,7 +1036,7 @@ public class MayCastHandlerService {
                     exileSplitCard, Integer.MAX_VALUE, castEffect.afterSuccessfulCastEffect(),
                     ability.sourcePermanentId());
             if (splitCardCastSupport.begin(gameData, castEffect.withoutPayingManaCost()
-                    ? splitCast : splitCast.payingManaCost(false))) {
+                    ? splitCast : splitCast.payingManaCost(castEffect.anyManaType()))) {
                 return;
             }
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -1048,8 +1048,13 @@ public class MayCastHandlerService {
                 && spellCard.getParsedManaCost() != null && spellCard.getParsedManaCost().hasX()) {
             int tax = castingCostService.getCastCostModifier(
                     gameData, player.getId(), spellCard, 0, Zone.GRAVEYARD);
-            int maxX = spellCard.getParsedManaCost().calculateMaxX(
-                    potentialManaService.buildVirtualManaPool(gameData, player.getId()), tax);
+            var virtualPool = potentialManaService.buildVirtualManaPool(gameData, player.getId());
+            var parsedCost = spellCard.getParsedManaCost();
+            int maxX = castEffect.anyManaType()
+                    ? (virtualPool.getTotal() - tax - parsedCost.getGenericCost()
+                    - parsedCost.getColoredCosts().values().stream().mapToInt(Integer::intValue).sum())
+                    / parsedCost.getXSymbolCount()
+                    : parsedCost.calculateMaxX(virtualPool, tax);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
                     player.getId(), 0, Math.max(0, maxX), "Choose a value for X to cast "
                     + spellCard.getName() + ".", spellCard.getName(), true,
@@ -1083,7 +1088,7 @@ public class MayCastHandlerService {
                     new PermanentChoiceContext.GraveyardCastSpellTarget(
                             cardToCast, player.getId(), spellEffects, spellType,
                             exileInsteadOfGraveyard, castEffect.withoutPayingManaCost(), graveyardOwnerId,
-                            false, false, 0,
+                            false, castEffect.anyManaType(), 0,
                             castAsAdventure, castEffect.afterSuccessfulCastEffect(),
                             ability.sourcePermanentId(), xValue));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
@@ -1096,7 +1101,7 @@ public class MayCastHandlerService {
         if (!castEffect.withoutPayingManaCost()) {
             try {
                 spellCastingService.paySpellManaCostFromNonHandZone(
-                        gameData, player.getId(), spellCard, xValue, Zone.GRAVEYARD);
+                        gameData, player.getId(), spellCard, xValue, Zone.GRAVEYARD, castEffect.anyManaType());
             } catch (IllegalStateException ex) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                         " can't be cast because its mana cost can't be paid."));

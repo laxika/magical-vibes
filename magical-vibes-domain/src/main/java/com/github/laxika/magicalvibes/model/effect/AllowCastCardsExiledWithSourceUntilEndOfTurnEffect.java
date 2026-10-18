@@ -39,7 +39,7 @@ public record AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
     @Override
     public TargetSpec targetSpec() {
         return targetSpecificCard
-                ? TargetSpec.benign(TargetPredicates.exiledCards(
+                ? TargetSpec.benign(TargetPredicates.exiledCardsExiledWithSource(
                         filter == null ? new CardTruePredicate() : filter))
                 : TargetSpec.NONE;
     }

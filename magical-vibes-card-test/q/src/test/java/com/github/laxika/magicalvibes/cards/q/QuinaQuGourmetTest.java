@@ -89,6 +89,7 @@ class QuinaQuGourmetTest extends BaseCardTest {
     @DisplayName("Does not add a Frog to tokens created under an opponent's control")
     void doesNotAddFrogForOpponent() {
         harness.addToBattlefield(player1, new QuinaQuGourmet());
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new WilyGoblin(), "{R}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();

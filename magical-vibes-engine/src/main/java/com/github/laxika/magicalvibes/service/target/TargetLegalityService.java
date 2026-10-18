@@ -3642,7 +3642,8 @@ public class TargetLegalityService {
                             exileTargetEffects,
                             new TargetValidationContext(gameData, entry.getTargetId(), Zone.EXILE,
                                     entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                                    entry.getSourcePermanentSnapshot()), entry.isTeamworkCostPaid()).isPresent();
+                                    entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
+                                    entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid()).isPresent();
                 }
             } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
                 targetFizzled = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId()) == null;
@@ -3990,7 +3991,8 @@ public class TargetLegalityService {
                     exileTargetEffects,
                     new TargetValidationContext(gameData, targetId, Zone.EXILE,
                             entry.getCard(), entry.getXValue(), entry.getControllerId(),
-                            entry.getSourcePermanentSnapshot()), entry.isTeamworkCostPaid()).isEmpty();
+                            entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
+                            entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid()).isEmpty();
         }
         if (entry.getTargetZone() == Zone.GRAVEYARD) {
             if (gameQueryService.findCardInGraveyardById(gameData, targetId) == null) {

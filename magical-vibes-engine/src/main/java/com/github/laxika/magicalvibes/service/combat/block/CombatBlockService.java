@@ -471,6 +471,7 @@ public class CombatBlockService {
             blockTaxTotal += gameQueryService.getBlockManaTax(gameData, blocker, attacker);
             if (usageCount > 1) {
                 blockTaxTotal -= gameQueryService.getEnchantedCreatureBlockerTax(gameData, blocker);
+                blockTaxTotal -= gameQueryService.getPerCreatureBlockTax(gameData, blocker);
             }
 
             // Board-wide mana tax to block at all (Archangel of Tithes, War Cadence): once per

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext.
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -115,7 +116,8 @@ public class BlockLegalityService {
                                         .withSourceControllerId(playerId)
                                         .withSourceCardId(source.getOriginalCard().getId()));
                     }
-                    if (effect instanceof LandwalkIgnoredForBlockingEffect landwalkEffect) {
+                    if (TextChangeTransformer.transform(effect, source.getTextReplacements())
+                            instanceof LandwalkIgnoredForBlockingEffect landwalkEffect) {
                         if (landwalkEffect.ignoresAllLandwalk()) {
                             allLandwalkIgnored[0] = true;
                         } else {

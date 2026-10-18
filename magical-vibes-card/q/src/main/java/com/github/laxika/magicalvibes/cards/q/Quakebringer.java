@@ -21,7 +21,7 @@ public class Quakebringer extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                new ConditionalEffect(
+                ConditionalEffect.atTriggerTime(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),
                         new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
         addCastingOption(new ForetellCast("{2}{R}{R}"));

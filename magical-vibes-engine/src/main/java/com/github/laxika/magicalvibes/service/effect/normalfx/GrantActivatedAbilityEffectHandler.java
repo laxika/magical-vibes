@@ -93,7 +93,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 count++;
             }
         } else if (e.scope() == GrantScope.TARGET) {
-            if (e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+            if ((e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                    || e.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD)
                     && (entry.getSourcePermanentId() == null
                     || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
                 return;

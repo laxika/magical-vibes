@@ -77,15 +77,14 @@ class QuicksmithGeniusTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with an empty hand cannot draw a card")
-    void emptyHandDoesNotDraw() {
+    @DisplayName("With an empty hand there is nothing to discard, so no choice is offered and nothing is drawn")
+    void emptyHandOffersNoDiscardAndDrawsNothing() {
         Forest drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));
         harness.addToBattlefield(player1, new QuicksmithGenius());
         harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

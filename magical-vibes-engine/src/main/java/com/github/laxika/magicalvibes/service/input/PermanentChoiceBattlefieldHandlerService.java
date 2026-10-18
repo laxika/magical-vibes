@@ -126,6 +126,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanent
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -483,6 +484,10 @@ public class PermanentChoiceBattlefieldHandlerService {
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
             gameLogService.append(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
+        }
+        if (context.shuffleLibraryAfterAttach()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, context.controllerId());
+            gameLogService.append(gameData, GameLog.text("Library is shuffled."));
         }
         // Begun from a library-search resume (Stonehewer Giant) while the search's stack entry is
         // still parked — the canonical epilogue resumes it.

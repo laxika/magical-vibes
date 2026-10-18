@@ -18,8 +18,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCombatDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -84,13 +86,15 @@ public class QuestingCosplayer extends Card {
                                         new PermanentPowerAtMostPredicate(2)),
                                 GrantScope.ENCHANTED_CREATURE),
                         new GrantEffectEffect(
-                                new SourceDamageCantBePreventedEffect(),
+                                new ControlledCreaturesCombatDamageCantBePreventedEffect(),
                                 GrantScope.ENCHANTED_CREATURE),
                         new GrantTriggeredAbilityEffect(
                                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                                         new EventValue(),
-                                        new PermanentControlledByDefendingPlayerPredicate()),
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsPlaneswalkerPredicate(),
+                                                new PermanentControlledByDefendingPlayerPredicate()))),
                                 GrantScope.ENCHANTED_CREATURE))),
                 List.of(),
                 false,

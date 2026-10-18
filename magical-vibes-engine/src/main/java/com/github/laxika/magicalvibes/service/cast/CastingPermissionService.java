@@ -1282,7 +1282,7 @@ public class CastingPermissionService {
         }
         int availablePower = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))
-                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                .mapToInt(permanent -> Math.max(0, gameQueryService.getEffectivePower(gameData, permanent)))
                 .sum();
         return availablePower >= teamworkCost.requiredPower();
     }
@@ -1455,7 +1455,8 @@ public class CastingPermissionService {
                             && (includeAlternativeCostFlash || !grant.alternativeCostOnly())
                             && !gameQueryService.hasLostAllAbilities(gameData, perm)
                             && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
-                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null,
+                            gameData, card.getOwnerId() != null ? card.getOwnerId() : playerId)) {
                         return true;
                     }
                 }

@@ -220,6 +220,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -509,10 +510,9 @@ public class SpellCastingService {
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             removeOneCounter(gameData, permanent, cost.counterType());
+            String label = cost.counterType() == null ? "" : counterLabel(cost.counterType()) + " ";
             gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " removes a ")
-                    .text(counterLabel(cost.counterType()))
-                    .text(" counter from ")
+                    .text(player.getUsername() + " removes a " + label + "counter from ")
                     .card(permanent.getCard())
                     .text(" to cast ")
                     .card(card)
@@ -545,6 +545,15 @@ public class SpellCastingService {
     }
 
     private void removeOneCounter(GameData gameData, Permanent permanent, CounterType counterType) {
+        if (counterType == null) {
+            CounterType actualType = Arrays.stream(CounterType.values())
+                    .filter(type -> type != CounterType.ANY && type != CounterType.SILVER
+                            && permanent.getCounterCount(type) > 0)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Permanent has no counters to remove"));
+            removeOneCounter(gameData, permanent, actualType);
+            return;
+        }
         if (counterType == CounterType.ANY) {
             CounterType actualType = permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                     ? CounterType.MINUS_ONE_MINUS_ONE : CounterType.PLUS_ONE_PLUS_ONE;
@@ -4467,6 +4476,11 @@ public class SpellCastingService {
             }
 
             var manaCost = altCast.getCost(ManaCastingCost.class);
+            if (manaCost.isEmpty() && altCast.costs().isEmpty()) {
+                payFreeCastManaPortion(gameData, playerId, card, effectiveXValue,
+                        castingCostService.getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz()),
+                        "", false);
+            }
             if (manaCost.isPresent()) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 ManaCost cost = castingCostService.applyColoredManaCostReductions(
@@ -6281,27 +6295,38 @@ public class SpellCastingService {
                 if (targetGraveyardOwner == null) {
                     throw new IllegalStateException("Must target a player");
                 }
+                // Other modal targets (a creature of a paired mode, the countered spell) ride in targetIds
+                // and must survive onto the stack entry; a lone player target is carried by targetId.
+                boolean carriesOtherModalTargets = spellCounterTargetId != null
+                        || targetIds.stream().anyMatch(id -> !gameData.playerIds.contains(id));
+                List<UUID> carriedTargetIds = carriesOtherModalTargets ? new ArrayList<>(targetIds) : List.of();
                 long matchingCount = gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
                         .filter(c -> !gameQueryService.isLandCardTargetRestricted(gameData, c, playerId))
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
                     gameData.graveyardTargetOperation.spellCounterTargetId = spellCounterTargetId;
-                    gameData.graveyardTargetOperation.permanentTargetIds = spellCounterTargetId == null
-                            ? null : new ArrayList<>(targetIds);
+                    gameData.graveyardTargetOperation.permanentTargetIds = carriesOtherModalTargets
+                            ? carriedTargetIds : null;
                     graveyardTargetingService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
                             targetGraveyardOwner, card, entryType, shuffleGraveyardCardsEffect.filter(),
                             shuffleGraveyardCardsEffect.maxTargets(), filteredSpellEffects);
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
                 // No matching cards in target player's graveyard — put spell on stack with 0 targets
-                gameData.stack.add(new StackEntry(
+                StackEntry shuffleEntry = new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, 0,
                         spellCounterTargetId != null ? spellCounterTargetId : targetGraveyardOwner,
                         null, Map.of(), spellCounterTargetId != null ? Zone.STACK : null, List.of(),
-                        spellCounterTargetId != null ? targetIds : List.of()
-                ));
+                        carriedTargetIds
+                );
+                // The target player is already one of the flat modal targets, so group 0 must read
+                // the flat list rather than the player held in targetId.
+                if (spellCounterTargetId == null && carriedTargetIds.contains(targetGraveyardOwner)) {
+                    shuffleEntry.setPrimaryTargetStoredSeparately(false);
+                }
+                gameData.stack.add(shuffleEntry);
             } else if (targetPlayerGraveyardExileEffect != null) {
                 UUID targetGraveyardOwner = targetId;
                 if (targetGraveyardOwner == null) {
@@ -16646,7 +16671,14 @@ public class SpellCastingService {
         // Pay mana (for alternate costs that include a mana component)
         var manaCostOpt = altCast.getCost(ManaCastingCost.class);
         if (manaCostOpt.isEmpty()) {
-            return 0;
+            if (!altCast.costs().isEmpty() || alternateCostModifier <= 0) {
+                return 0;
+            }
+            // CR 118.9d: a free alternative cost ("without paying its mana cost") still pays cost increases.
+            ManaPool freeCastPool = gameData.playerManaPools.get(playerId);
+            int freeCastBefore = freeCastPool.getTotalAllMana();
+            payFreeCastManaPortion(gameData, playerId, card, xValue, alternateCostModifier, "", true);
+            return freeCastBefore - freeCastPool.getTotalAllMana();
         }
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int before = pool.getTotalAllMana();

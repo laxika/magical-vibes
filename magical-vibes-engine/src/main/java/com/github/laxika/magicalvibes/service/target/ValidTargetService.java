@@ -2366,7 +2366,7 @@ public class ValidTargetService {
         }
         int totalPower = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> !permanent.isTapped() && gameQueryService.isCreature(gameData, permanent))
-                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                .mapToInt(permanent -> Math.max(0, gameQueryService.getEffectivePower(gameData, permanent)))
                 .sum();
         return totalPower >= cost.requiredPower();
     }

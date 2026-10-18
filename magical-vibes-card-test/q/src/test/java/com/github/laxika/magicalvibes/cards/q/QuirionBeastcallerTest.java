@@ -64,7 +64,6 @@ class QuirionBeastcallerTest extends BaseCardTest {
         killBeastcaller(beastcaller);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -83,7 +82,6 @@ class QuirionBeastcallerTest extends BaseCardTest {
         killBeastcaller(beastcaller);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -102,7 +100,6 @@ class QuirionBeastcallerTest extends BaseCardTest {
         killBeastcaller(beastcaller);
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(opponentGiant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -189,9 +186,6 @@ class QuirionBeastcallerTest extends BaseCardTest {
         killBeastcaller(beastcaller);
         bears.getPersistentGrantedKeywords().add(Keyword.SHROUD);
         harness.passBothPriorities();
-        if (!gd.pendingMayAbilities.isEmpty()) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

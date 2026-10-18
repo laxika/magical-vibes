@@ -16,8 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Looks at the top card privately and offers the matching-card reveal and counter placement as a
- * single may choice.
+ * Looks at the top card privately (the optional look is the enclosing {@code MayEffect}) and, when
+ * it matches, queues a second may choice to reveal it and put the counter on the source.
  */
 @Slf4j
 @Component

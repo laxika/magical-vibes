@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissio
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandManaProducesAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
@@ -2905,7 +2906,7 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(permanent ->
-                hasActiveStaticEffect(gameData, permanent,
+                hasActiveStaticEffectIncludingGranted(gameData, permanent,
                         ControlledCreaturesCombatDamageCantBePreventedEffect.class));
     }
 
@@ -8256,9 +8257,15 @@ public class GameQueryService {
 
     /**
      * Whether a stack object currently has split second: printed or cast-time-granted, or granted by a
-     * continuing static ability because mana from an artifact was spent to cast it.
+     * continuing static ability because mana from an artifact was spent to cast it. Split second is a
+     * property of spells only (CR 702.61a), so triggered and activated abilities never have it, even when
+     * their source card does.
      */
     public boolean hasSplitSecond(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+            return false;
+        }
         if (entry.hasKeyword(Keyword.SPLIT_SECOND)) {
             return true;
         }
@@ -10342,16 +10349,8 @@ public class GameQueryService {
         int attackerPower = getEffectivePower(gameData, attacker);
         int tax = getEnchantedCreatureBlockTax(gameData, attacker)
                 + getEnchantedCreatureBlockerTax(gameData, blocker);
-        StaticBonus bonus = computeStaticBonus(gameData, blocker);
-        if (hasLostPrintedAbilities(gameData, blocker)
-                || bonus.losesAllAbilities()
-                || bonus.losesAllNonManaAbilities()) {
-            return tax;
-        }
         UUID controllerId = findPermanentController(gameData, blocker.getId());
-        List<CardEffect> effects = new ArrayList<>(staticEffectsIncludingTemporary(gameData, blocker, controllerId));
-        effects.addAll(bonus.grantedEffects());
-        for (CardEffect effect : effects) {
+        for (CardEffect effect : blockCostEffects(gameData, blocker)) {
             if (effect instanceof BlockCostEffect blockCost) {
                 tax += blockCost.dynamicBlockCost() == null
                         ? blockCost.blockCost(blocker, attackerPower)
@@ -10360,6 +10359,42 @@ public class GameQueryService {
             }
         }
         return tax;
+    }
+
+    /**
+     * Generic mana the defending player must pay once per blocking creature for an unconditional
+     * "can't block unless its controller pays" cost ({@link CantAttackOrBlockUnlessPaysEffect},
+     * e.g. Qal Sisma Behemoth). {@link #getBlockManaTax} already includes this amount for every
+     * attacker a blocker is assigned to, so declaration code subtracts it again for each repeat
+     * assignment of the same blocker.
+     */
+    public int getPerCreatureBlockTax(GameData gameData, Permanent blocker) {
+        UUID controllerId = findPermanentController(gameData, blocker.getId());
+        int tax = 0;
+        for (CardEffect effect : blockCostEffects(gameData, blocker)) {
+            if (effect instanceof CantAttackOrBlockUnlessPaysEffect unlessPays) {
+                tax += amountEvaluationService.evaluate(gameData, unlessPays.dynamicBlockCost(),
+                        AmountContext.forStaticEffect(blocker, controllerId));
+            }
+        }
+        return tax;
+    }
+
+    /**
+     * Static and granted effects of {@code blocker} that can contribute block costs; empty when the
+     * blocker has lost its printed or all abilities.
+     */
+    private List<CardEffect> blockCostEffects(GameData gameData, Permanent blocker) {
+        StaticBonus bonus = computeStaticBonus(gameData, blocker);
+        if (hasLostPrintedAbilities(gameData, blocker)
+                || bonus.losesAllAbilities()
+                || bonus.losesAllNonManaAbilities()) {
+            return List.of();
+        }
+        UUID controllerId = findPermanentController(gameData, blocker.getId());
+        List<CardEffect> effects = new ArrayList<>(staticEffectsIncludingTemporary(gameData, blocker, controllerId));
+        effects.addAll(bonus.grantedEffects());
+        return effects;
     }
 
     /**

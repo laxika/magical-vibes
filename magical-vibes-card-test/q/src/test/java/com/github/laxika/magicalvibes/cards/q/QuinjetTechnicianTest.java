@@ -72,7 +72,7 @@ class QuinjetTechnicianTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
         assertThat(gd.playerManaPools.get(player1.getId()).getPowerUpAbilityOnlyMana(ManaColor.RED))
                 .isEqualTo(2);
     }

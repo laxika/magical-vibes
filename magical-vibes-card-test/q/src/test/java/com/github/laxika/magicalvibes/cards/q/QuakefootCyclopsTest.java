@@ -52,7 +52,9 @@ class QuakefootCyclopsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateHandAbility(player1, 0, bear.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
         assertThat(bear.isCantBlockThisTurn()).isTrue();
@@ -92,7 +94,9 @@ class QuakefootCyclopsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 4);
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.ensurePriority(player2);
         harness.castAndResolveInstant(player2, 0, target.getId());
         harness.assertNotOnBattlefield(player2, "Quakefoot Cyclops");

@@ -2481,6 +2481,10 @@ public class CastingCostService {
             if (!(manaCost.get().treasureManaOnly()
                     ? pool.canPayWithTreasureMana(cost, additionalCost)
                     : cost.canPay(pool, additionalCost))) return false;
+        } else if (altCast.costs().isEmpty()) {
+            // CR 118.9d: a free alternative cost still pays the cost increases that apply to the spell.
+            int freeCastIncrease = getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz());
+            if (!new ManaCost("{0}").canPay(gameData.playerManaPools.get(playerId), freeCastIncrease)) return false;
         }
 
         return true;
@@ -3160,7 +3164,7 @@ public class CastingCostService {
                                       RemoveCountersFromControlledCreaturesCastingCost cost) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .mapToInt(p -> switch (cost.counterType()) {
+                .mapToInt(p -> cost.counterType() == null ? p.getTotalCounterCount() : switch (cost.counterType()) {
                     case PLUS_ONE_PLUS_ONE -> p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
                     case MINUS_ONE_MINUS_ONE -> p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
                     case CHARGE -> p.getCounterCount(CounterType.CHARGE);

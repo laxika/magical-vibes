@@ -31,7 +31,8 @@ class QuarantineFieldTest extends BaseCardTest {
 
         castForX(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId(), enchantment.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();
 
         Permanent source = findPermanent(player1, "Quarantine Field");
@@ -51,7 +52,8 @@ class QuarantineFieldTest extends BaseCardTest {
 
         castForX(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 
         Permanent source = findPermanent(player1, "Quarantine Field");
@@ -77,11 +79,11 @@ class QuarantineFieldTest extends BaseCardTest {
         castForX(1);
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(land.getId())))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(ownPermanent.getId())))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(legalTarget.getId()));
+        harness.handlePermanentChosen(player1, legalTarget.getId());
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(legalTarget.getOriginalCard().getId())).isNotNull();
     }
@@ -92,7 +94,7 @@ class QuarantineFieldTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ExpeditionEnvoy());
         castForX(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Expedition Envoy");
@@ -107,7 +109,8 @@ class QuarantineFieldTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ExpeditionEnvoy());
         castForX(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(first.getOriginalCard().getId())).isNotNull();
@@ -122,7 +125,8 @@ class QuarantineFieldTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ExpeditionEnvoy());
         castForX(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
         findPermanent(player1, "Quarantine Field").setCounterCount(CounterType.ISOLATION, 0);
         harness.passBothPriorities();
 
@@ -149,7 +153,7 @@ class QuarantineFieldTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ExpeditionEnvoy());
         castForX(1);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 1);
@@ -170,7 +174,8 @@ class QuarantineFieldTest extends BaseCardTest {
         Permanent healer = harness.addToBattlefieldAndReturn(player2, new KalastriaHealer());
         castForX(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(envoy.getId(), healer.getId()));
+        harness.handlePermanentChosen(player1, envoy.getId());
+        harness.handlePermanentChosen(player1, healer.getId());
         harness.passBothPriorities();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

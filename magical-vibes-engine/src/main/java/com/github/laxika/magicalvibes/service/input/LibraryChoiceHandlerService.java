@@ -1664,25 +1664,12 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_CREATURE) {
-            // Stonehewer Giant: put the Equipment onto the battlefield, shuffle, then let the
-            // controller attach it to a creature they control.
+            // Stonehewer Giant and Quest for the Holy Relic: put the Equipment onto the battlefield, let
+            // the controller attach it to a creature they control, then shuffle.
             Permanent equipment = new Permanent(chosenCard, Zone.LIBRARY);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, equipment,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
             performStateBasedActionsIfResolutionComplete(gameData);
-
-            if (shuffleAfterSelection) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
-            }
-            if (shuffleAfterSelection) {
-                gameLogService.append(gameData, GameLog.builder()
-                        .card(chosenCard)
-                        .text(" enters the battlefield under " + player.getUsername() + "'s control. Library is shuffled.")
-                        .build());
-            } else {
-                gameLogService.append(gameData,
-                        GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
-            }
 
             List<UUID> creatureIds = new ArrayList<>();
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
@@ -1691,11 +1678,23 @@ public class LibraryChoiceHandlerService {
                 }
             }
             if (creatureIds.isEmpty()) {
+                if (shuffleAfterSelection) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                    gameLogService.append(gameData, GameLog.builder()
+                            .card(chosenCard)
+                            .text(" enters the battlefield under " + player.getUsername() + "'s control. Library is shuffled.")
+                            .build());
+                } else {
+                    gameLogService.append(gameData,
+                            GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
+                }
                 finishSearchAndResume(gameData);
                 return;
             }
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(chosenCard, player.getUsername()));
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.AttachEquipmentToCreature(equipment.getId(), playerId));
+                    new PermanentChoiceContext.AttachEquipmentToCreature(equipment.getId(), playerId,
+                            shuffleAfterSelection));
             playerInputService.beginPermanentChoice(gameData, playerId, creatureIds,
                     "Choose a creature you control to attach " + chosenCard.getName() + " to.");
             return;

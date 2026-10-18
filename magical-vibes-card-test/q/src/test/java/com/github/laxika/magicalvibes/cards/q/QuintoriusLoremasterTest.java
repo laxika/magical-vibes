@@ -196,12 +196,12 @@ class QuintoriusLoremasterTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(shock));
         advanceToEndStep();
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, shock.getId(), Zone.EXILE);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 

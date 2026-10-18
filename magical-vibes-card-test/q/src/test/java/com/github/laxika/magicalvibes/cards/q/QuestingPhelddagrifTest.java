@@ -105,7 +105,6 @@ class QuestingPhelddagrifTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(phelddagrif.getGrantedKeywords()).contains(Keyword.FLYING);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -123,7 +122,6 @@ class QuestingPhelddagrifTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new AncientSpider()));
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player2.getId()).size();

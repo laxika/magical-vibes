@@ -223,6 +223,108 @@ Don't commit until I say so.
 
 ---
 
+## 35. Choosing the order of token-creation replacement effects
+
+**Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
+
+**Failing tests:**
+- `QueenAllenalOfRuadachTest.doesNotSilentlyForceTokenDoublingBeforeQueenReplacement()`
+
+**What the rules require.** CR 616.1: when several replacement effects would change how tokens are
+created for a player, that player chooses which one applies first, then the next, and so on
+(CR 616.1e: any applicable one may be chosen). With Queen Allenal of Ruadach ("those tokens plus an
+additional 1/1 Soldier") and Parallel Lives (twice that many) out, Captain's Call can make 8 Soldiers
+(Queen first: (3+1)x2) or 7 (Parallel Lives first: 3x2+1). The engine always applies the multiplier
+(`MultiplyTokenCreationEffect`) to the base amount and then adds the Queen/Frog/Squirrel-style
+additions unmultiplied, in a fixed order with no prompt, so the player always gets 7.
+
+**Why it's large.** Token creation doesn't go through `ReplacementOrderService`. The fixed order is
+duplicated in three creation paths (`PermanentControlSupport` ~L120-240, `DestructionSupport` ~L1012,
+`TokenCopySupport` ~L193) plus the additive helpers in `TokenCreationReplacementSupport`. A fix needs
+a token-creation replacement event that collects every applicable multiplier and addition, a choice
+prompt (or a single "order" choice) when more than one applies, and suspend/resume at each creation
+site — some of which run mid-effect. Silently picking the "best" order is not acceptable: the
+player must choose.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 35: let the player order token-creation replacement
+effects (CR 616.1) — multipliers like Parallel Lives/Doubling Season and additions like Queen
+Allenal of Ruadach, Quina Qu Gourmet, Chatterfang. Unify the fixed ordering in PermanentControlSupport,
+DestructionSupport and TokenCopySupport behind one token-creation replacement event, and reuse the
+ChoiceContext / ReplacementOrderService approach from the CR 616.1 death replacement ordering.
+Make QueenAllenalOfRuadachTest.doesNotSilentlyForceTokenDoublingBeforeQueenReplacement pass.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 36. Quenchable Fire's pay-{U}-before-upkeep special action
+
+**Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
+
+**Failing tests:**
+- None. Write one: after Quenchable Fire resolves, the targeted player pays {U} during the caster's
+  end step (or any time they could cast an instant) and no damage is dealt at the caster's upkeep.
+
+**What the rules require.** Quenchable Fire: "It deals an additional 3 damage to that player or
+planeswalker at the beginning of your next upkeep step unless that player or that planeswalker's
+controller pays {U} before that step." Its ruling: paying is a special action that player may take
+any time they have priority before that upkeep starts; once the delayed trigger is on the stack it
+can't be stopped. The engine now pushes the delayed damage trigger under the caster's control at
+upkeep (`StepTriggerService`, `DamageAtNextUpkeepUnlessPays`), but there is no way to pay, so the
+damage always happens.
+
+**Why it's large.** It needs a new player action: a special action (no stack) offered while the
+player has priority, listed in the action-availability service and the client UI, which pays the
+mana and removes the matching `DamageAtNextUpkeepUnlessPays` delayed action.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 36: add a special action that lets the affected player
+pay {U} before the caster's next upkeep to cancel Quenchable Fire's delayed damage
+(DamageAtNextUpkeepUnlessPays). Offer it whenever that player has priority, through
+GameActionAvailabilityService and the networking/frontend action list. Don't run the full test
+suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 37. Choosing modes (and tier costs) when casting a modal spell from a graveyard
+
+**Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
+
+**Failing tests:**
+- `QuistisTrepeTest.tieredSpellRequiresChoosingAModeBeforeItIsCast()`
+
+**What the rules require.** CR 601.2b: modes are announced as the spell is cast, and a tiered spell's
+chosen tier adds its cost. Casting from hand does this (`SpellCastingService.playCard`, with
+`tieredManaSuffix`). Casting from a graveyard (`MayCastHandlerService.handleCastCardFromGraveyardChoice`,
+Quistis Trepe and other "you may cast target card from a graveyard" effects) announces no mode: the
+spell goes on the stack with an unresolved `ChooseOneEffect` and pays no tier cost.
+
+**Why it's large.** Needs a new graveyard-cast mode choice (a `ChoiceContext` next to
+`LibraryFreeCastModeChoice` in `ChoiceHandlerService`), unwrapping the chosen mode via
+`SpellCastingService.prepareModalSpellCast`, carrying a replacement mana cost for the tier through
+`GraveyardCastSpellTarget` (many constructors) to both pay sites (`MayCastHandlerService` untargeted
+pay and `PermanentChoiceSpellHandlerService.handleGraveyardCastSpellTarget`), and building targets
+from the chosen mode's effects. Roughly 150-200 lines across 5-6 files.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 37: casting a modal or tiered spell from a graveyard
+(MayCastHandlerService.handleCastCardFromGraveyardChoice) must announce the mode (CR 601.2b) and pay
+the tier cost. Add a graveyard-cast mode choice next to LibraryFreeCastModeChoice, unwrap via
+prepareModalSpellCast, pass the tiered replacement cost through GraveyardCastSpellTarget, and make
+QuistisTrepeTest.tieredSpellRequiresChoosingAModeBeforeItIsCast pass. Don't run the full test suite;
+ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

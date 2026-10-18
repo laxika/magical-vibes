@@ -65,6 +65,7 @@ class QuandrixCommandTest extends BaseCardTest {
     @DisplayName("Returns a planeswalker and puts counters on a creature")
     void returnsPlaneswalkerAndBoostsCreature() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ProfessorOnyx());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new QuandrixCommand()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

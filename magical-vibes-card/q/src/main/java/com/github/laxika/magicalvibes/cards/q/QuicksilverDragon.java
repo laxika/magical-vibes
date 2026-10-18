@@ -21,7 +21,7 @@ public class QuicksilverDragon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(ChangeTargetOfTargetSpellWithSingleTargetEffect.sourceCreatureTargetsOnly()),
+                List.of(ChangeTargetOfTargetSpellWithSingleTargetEffect.sourceCreatureSingleTarget()),
                 "{U}: If target spell has only one target and that target is this creature, change that spell's target to another creature.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryTypeInPredicate(Set.of(

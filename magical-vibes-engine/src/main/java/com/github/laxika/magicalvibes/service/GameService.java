@@ -1646,7 +1646,8 @@ public class GameService {
                 }
                 ManaPool.SpecialActionManaState specialActionMana = pool.promoteSpecialActionMana();
                 ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana =
-                        pool.promoteFaceDownSpellsOrTurnFaceUpMana();
+                        restrictedManaPaysTurnFaceUp(permanent, !manifestedOrCloaked)
+                                ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : null;
                 ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState enchantmentOrRoomUnlockOrTurnFaceUpMana =
                         pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
                 ManaPool.TurnPermanentsFaceUpManaState turnPermanentsFaceUpMana =
@@ -1679,7 +1680,9 @@ public class GameService {
                     pool.restorePromotedTurnPermanentsFaceUpMana(turnPermanentsFaceUpMana);
                     pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(
                             enchantmentOrRoomUnlockOrTurnFaceUpMana);
-                    pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
+                    if (restrictedMana != null) {
+                        pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
+                    }
                     pool.restorePromotedSpecialActionMana(specialActionMana);
                 }
             }
@@ -1738,10 +1741,24 @@ public class GameService {
         ManaPool actualPool = gameData.playerManaPools.get(playerId);
         ManaPool pool = actualPool == null ? new ManaPool() : new ManaPool(actualPool);
         pool.promoteSpecialActionMana();
-        pool.promoteFaceDownSpellsOrTurnFaceUpMana();
+        if (restrictedManaPaysTurnFaceUp(permanent, morphPayment)) {
+            pool.promoteFaceDownSpellsOrTurnFaceUpMana();
+        }
         pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
         pool.promoteTurnPermanentsFaceUpMana();
         return cost.canPay(pool, 0);
+    }
+
+    /**
+     * Whether mana restricted to face-down spells or turning face up may pay the cost being used to turn
+     * this permanent face up. A morph cost qualifies unless the permanent is disguised; a manifested creature's
+     * mana cost qualifies; a cloaked creature's mana cost does not.
+     */
+    private boolean restrictedManaPaysTurnFaceUp(Permanent permanent, boolean payingMorphCost) {
+        if (permanent.isFaceDownWard()) {
+            return false;
+        }
+        return payingMorphCost || permanent.isManifested();
     }
 
     /** Turns a targeted face-down creature face up without using its morph or disguise action. */

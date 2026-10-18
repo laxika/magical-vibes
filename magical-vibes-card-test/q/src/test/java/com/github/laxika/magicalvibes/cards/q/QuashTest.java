@@ -22,12 +22,14 @@ class QuashTest extends BaseCardTest {
     @DisplayName("Counters an instant spell and exiles every same-name copy from graveyard, hand, and library")
     void countersInstantAndExilesAllCopies() {
         Magnify castCopy = new Magnify();
+        Magnify handCopy = new Magnify();
+        Magnify libraryCopy = new Magnify();
         var creature = harness.addToBattlefieldAndReturn(player1, new MetathranSoldier());
-        harness.setHand(player1, List.of(castCopy, new Magnify()));
+        harness.setHand(player1, List.of(castCopy, handCopy));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setGraveyard(player1, List.of(new Magnify()));
-        harness.setLibrary(player1, List.of(new Magnify(), new MetathranSoldier()));
+        harness.setLibrary(player1, List.of(libraryCopy, new MetathranSoldier()));
 
         harness.setHand(player2, List.of(new Quash()));
         harness.addMana(player2, ManaColor.BLUE, 4);
@@ -35,6 +37,7 @@ class QuashTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, castCopy.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(handCopy.getId(), libraryCopy.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getEffectivePower()).isEqualTo(1);

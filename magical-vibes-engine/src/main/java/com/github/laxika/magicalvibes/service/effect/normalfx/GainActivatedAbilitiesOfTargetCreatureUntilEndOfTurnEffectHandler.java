@@ -38,7 +38,7 @@ public class GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffectHandler i
 
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, target);
         List<ActivatedAbility> abilities = new ArrayList<>();
-        if (staticBonus.losesAllAbilities() || target.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (staticBonus.losesAllAbilities() || target.isLosesAllAbilitiesUntilEndOfTurn() || target.isFaceDown()) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else {
             abilities.addAll(target.getCard().getActivatedAbilities());

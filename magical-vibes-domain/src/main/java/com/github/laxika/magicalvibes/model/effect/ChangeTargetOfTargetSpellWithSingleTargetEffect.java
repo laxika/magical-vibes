@@ -6,9 +6,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param newTargetKind controls whether the new target may be any legal target, only a creature,
  *                      or only a player
  * @param requiresSourceTarget whether the spell's original target must be the source permanent
+ * @param allowsRepeatedSourceTarget when {@code requiresSourceTarget} is set, whether the spell may have
+ *                                   several targets as long as every one of them is the source permanent;
+ *                                   when false the spell must have exactly one target
  */
 public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind,
-                                                               boolean requiresSourceTarget) implements CardEffect {
+                                                               boolean requiresSourceTarget,
+                                                               boolean allowsRepeatedSourceTarget) implements CardEffect {
 
     public enum NewTargetKind {
         ANY,
@@ -17,23 +21,27 @@ public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newT
     }
 
     public ChangeTargetOfTargetSpellWithSingleTargetEffect() {
-        this(NewTargetKind.ANY, false);
+        this(NewTargetKind.ANY, false, false);
     }
 
     public ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind) {
-        this(newTargetKind, false);
+        this(newTargetKind, false, false);
     }
 
     public ChangeTargetOfTargetSpellWithSingleTargetEffect(boolean creatureTargetsOnly) {
-        this(creatureTargetsOnly ? NewTargetKind.CREATURE : NewTargetKind.ANY, false);
+        this(creatureTargetsOnly ? NewTargetKind.CREATURE : NewTargetKind.ANY, false, false);
     }
 
     public static ChangeTargetOfTargetSpellWithSingleTargetEffect playersOnly() {
-        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.PLAYER, false);
+        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.PLAYER, false, false);
     }
 
     public static ChangeTargetOfTargetSpellWithSingleTargetEffect sourceCreatureTargetsOnly() {
-        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.CREATURE, true);
+        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.CREATURE, true, true);
+    }
+
+    public static ChangeTargetOfTargetSpellWithSingleTargetEffect sourceCreatureSingleTarget() {
+        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.CREATURE, true, false);
     }
 
     public boolean creatureTargetsOnly() {

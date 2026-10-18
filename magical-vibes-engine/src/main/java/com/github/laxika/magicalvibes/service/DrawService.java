@@ -243,8 +243,7 @@ public class DrawService {
         }
 
         int drawAmount = amount;
-        Permanent quantumRiddler = findQuantumRiddlerDrawReplacementSource(gameData, playerId);
-        if (quantumRiddler != null) {
+        for (Permanent quantumRiddler : findQuantumRiddlerDrawReplacementSources(gameData, playerId)) {
             drawAmount++;
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(
@@ -1377,24 +1376,27 @@ public class DrawService {
     }
 
     public boolean hasQuantumRiddlerDrawReplacement(GameData gameData, UUID playerId) {
-        return findQuantumRiddlerDrawReplacementSource(gameData, playerId) != null;
+        return !findQuantumRiddlerDrawReplacementSources(gameData, playerId).isEmpty();
     }
 
-    private Permanent findQuantumRiddlerDrawReplacementSource(GameData gameData, UUID playerId) {
+    /** Each controlled Quantum Riddler whose replacement is active adds one card to the same draw instruction. */
+    private List<Permanent> findQuantumRiddlerDrawReplacementSources(GameData gameData, UUID playerId) {
+        List<Permanent> sources = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
-            return null;
+            return sources;
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean active = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> isActiveQuantumRiddlerDrawReplacement(
                             gameData, permanent, playerId, effect));
             if (active) {
-                return permanent;
+                sources.add(permanent);
             }
         }
-        return null;
+        return sources;
     }
 
     private boolean isActiveQuantumRiddlerDrawReplacement(GameData gameData, Permanent permanent,

@@ -65,12 +65,14 @@ public class DiscardHandThenDrawAndReturnArtifactOrCreatureCardsEffectHandler im
                     + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ").";
             gameLogService.append(gameData, GameLog.text(discardLog));
 
-            for (int i = 0; i < discarded.size(); i++) {
-                drawService.resolveDrawCard(gameData, controllerId);
-            }
+            drawService.resolveDrawCards(gameData, controllerId, discarded.size());
             String drawLog = playerName + " draws " + discarded.size()
                     + " card" + (discarded.size() != 1 ? "s" : "") + ".";
             gameLogService.append(gameData, GameLog.text(drawLog));
+            if (gameData.interaction.isAwaitingInput()) {
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                return;
+            }
         }
 
         if (state.choiceMade) {

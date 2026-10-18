@@ -193,7 +193,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
@@ -765,30 +765,29 @@ public class StepTriggerService {
 
         // Quenchable Fire: "It deals an additional N damage to that player or planeswalker at the
         // beginning of your next upkeep step unless that player or that planeswalker's controller pays
-        // {cost} before that step." Fires only at the spell controller's own upkeep; the paying party
-        // is the targeted player, or the targeted planeswalker's controller (skip if the target is
-        // gone). Pushed onto the stack as a "you may pay; if you don't, take damage" trigger.
+        // {cost} before that step." The payment is a special action available only before upkeep
+        // begins, which the engine does not model, so the damage is dealt unconditionally here. The
+        // delayed trigger is controlled by the spell's controller and fizzles if the target is gone.
         if (gameData.hasDelayedAction(DamageAtNextUpkeepUnlessPays.class)) {
             List<DamageAtNextUpkeepUnlessPays> pending = gameData.drainDelayedActions(
                     DamageAtNextUpkeepUnlessPays.class, a -> a.spellControllerId().equals(gameData.activePlayerId));
             for (DamageAtNextUpkeepUnlessPays action : pending) {
-                UUID payerId = gameData.playerIds.contains(action.targetId())
-                        ? action.targetId()
-                        : gameQueryService.findPermanentController(gameData, action.targetId());
-                if (payerId == null) continue; // targeted planeswalker (or player) is gone — trigger fizzles
+                if (!gameData.playerIds.contains(action.targetId())
+                        && gameQueryService.findPermanentById(gameData, action.targetId()) == null) {
+                    continue; // targeted planeswalker is gone — trigger fizzles
+                }
 
-                DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect effect =
-                        new DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect(action.damage(), action.manaCost());
                 gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), payerId,
+                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.spellControllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(effect)), action.targetId(), (UUID) null));
+                        new ArrayList<>(List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(action.damage()))),
+                        action.targetId(), (UUID) null));
 
                 gameLogService.append(gameData, GameLog.text(action.sourceCard().getName()
-                        + "'s delayed ability triggers — pay " + action.manaCost() + " or take "
-                        + action.damage() + " damage."));
-                log.info("Game {} - {} delayed upkeep pay-or-take-damage trigger pushed for {}",
-                        gameData.id, action.sourceCard().getName(), gameData.playerIdToName.get(payerId));
+                        + "'s delayed ability triggers — " + action.damage() + " damage."));
+                log.info("Game {} - {} delayed upkeep damage trigger pushed for {}",
+                        gameData.id, action.sourceCard().getName(),
+                        gameData.playerIdToName.get(action.spellControllerId()));
             }
         }
 

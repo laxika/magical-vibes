@@ -81,7 +81,7 @@ class QuenchableFireTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeAfterImmediate - 3);
     }
 

@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceByEnteringPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardByAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGainKeywordsOfTriggeringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -2218,8 +2219,8 @@ public class EnterTriggerCollectorService {
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(new PutCountersOnSelfEffect(
-                            CounterType.INTENSITY, new ChosenPermanentPower()))),
+                    new ArrayList<>(List.of(new IntensifySourceCardByAmountEffect(
+                            new ChosenPermanentPower()))),
                     null,
                     match.permanent().getId());
             entry.setNonTargeting(true);

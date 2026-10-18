@@ -3400,10 +3400,13 @@ public class PermanentRemovalService {
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
         }
+        // CR 610.3d: several cards exiled by one source return at the same time when it leaves.
+        boolean multipleExiledCards = pendingReturns.size() > 1;
         boolean simultaneousReturn = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
                 .stream().anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileOwnNontokenCreaturesUntilSourceLeavesEffect
-                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect);
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect
+                        || multipleExiledCards && effect instanceof ExileTargetPermanentUntilSourceLeavesEffect);
         if (simultaneousReturn) {
             List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> cards = new ArrayList<>();
             for (PendingExileReturn pending : pendingReturns) {

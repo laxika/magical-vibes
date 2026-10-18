@@ -672,6 +672,8 @@ public class CombatDamageService {
         snapshotDelayedCombatDamageDrawSources(gameData, state);
         snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
         snapshotSelfDealsDamageEffects(gameData, state);
+        Map<UUID, List<Permanent>> allyCombatDamageWatchers =
+                triggerCollectionService.snapshotAllyCreatureDealsCombatDamageWatchers(gameData);
         Map<UUID, List<TriggerCollectionService.AllyDamageTriggerSnapshot>> allyDamageWatchers =
                 triggerCollectionService.snapshotAllyCreaturesDealDamageToOpponentTriggers(gameData);
         // "Whenever a [creature] deals damage" abilities trigger as the damage is dealt, so a watcher
@@ -753,7 +755,7 @@ public class CombatDamageService {
         queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
         gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
-        processSelfDealsCombatDamageTriggers(gameData, state, defenderId);
+        processSelfDealsCombatDamageTriggers(gameData, state, defenderId, allyCombatDamageWatchers);
         processSelfDealsCombatDamageToPlayerOrPlaneswalkerTriggers(gameData, state);
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
         processCombatDamageToBattleTriggers(gameData, state);
@@ -1833,7 +1835,8 @@ public class CombatDamageService {
     }
 
     private void processSelfDealsCombatDamageTriggers(GameData gameData, CombatDamageState state,
-                                                       UUID defenderId) {
+                                                       UUID defenderId,
+                                                       Map<UUID, List<Permanent>> allyCombatDamageWatchers) {
         for (var entry : state.combatDamageDealt.entrySet()) {
             Permanent source = entry.getKey();
             int damageDealt = entry.getValue();
@@ -1848,7 +1851,8 @@ public class CombatDamageService {
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0),
                     state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
-                    state.selfDealsCombatDamageEffects.get(source));
+                    state.selfDealsCombatDamageEffects.get(source),
+                    allyCombatDamageWatchers.getOrDefault(controllerId, List.of()));
         }
     }
 

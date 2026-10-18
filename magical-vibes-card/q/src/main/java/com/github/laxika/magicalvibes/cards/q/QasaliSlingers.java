@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -27,7 +29,9 @@ public class QasaliSlingers extends Card {
                 )),
                 "Target must be an artifact or enchantment"
         )).addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.CAT),
+                new TriggeringCardConditionalEffect(
+                        new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(),
+                                new CardSubtypePredicate(CardSubtype.CAT))),
                         new MayEffect(new DestroyTargetPermanentEffect(),
                                 "Destroy target artifact or enchantment?")));
     }

@@ -17,8 +17,9 @@ public class Quash extends Card {
     public Quash() {
         // Counter target instant or sorcery spell. Search its controller's graveyard, hand, and
         // library for all cards with the same name as that spell and exile them. Then that player
-        // shuffles. Instant/sorcery-only sibling of Counterbore.
-        addEffect(EffectSlot.SPELL, new CounterSpellAndExileAllWithSameNameEffect());
+        // shuffles. Instant/sorcery-only sibling of Counterbore. Graveyard matches are exiled
+        // automatically; the controller may find none of the hand and library matches (CR 701.23b).
+        addEffect(EffectSlot.SPELL, new CounterSpellAndExileAllWithSameNameEffect(false, false, true));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(
                         StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),

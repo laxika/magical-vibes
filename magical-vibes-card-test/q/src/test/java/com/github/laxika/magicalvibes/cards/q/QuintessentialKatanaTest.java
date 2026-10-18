@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,6 +118,8 @@ class QuintessentialKatanaTest extends BaseCardTest {
     @Test
     @DisplayName("Detaching the Katana does not stop the pending trigger from untapping its creature")
     void untapsOriginalCreatureAfterDetachment() {
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
         harness.setLife(player1, 10);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent katana = harness.addToBattlefieldAndReturn(player1, new QuintessentialKatana());
@@ -136,6 +139,8 @@ class QuintessentialKatanaTest extends BaseCardTest {
     @Test
     @DisplayName("Moving the Katana does not change which creature the pending trigger untaps")
     void movingKatanaDoesNotRedirectUntap() {
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent katana = harness.addToBattlefieldAndReturn(player1, new QuintessentialKatana());

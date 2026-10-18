@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -395,6 +396,16 @@ public final class TextChangeTransformer {
                 yield filter == conditional.filter() && ifMatch == conditional.ifMatch()
                         && ifNotMatch == conditional.ifNotMatch() ? conditional
                         : new EnchantedPermanentConditionalEffect(filter, ifMatch, ifNotMatch);
+            }
+            case LandwalkIgnoredForBlockingEffect ignored -> {
+                if (substitution.fromLandType() == null || ignored.landwalkKeyword() == null) {
+                    yield ignored;
+                }
+                Keyword fromWalk = LANDWALK_BY_LAND_TYPE.get(substitution.fromLandType());
+                Keyword toWalk = LANDWALK_BY_LAND_TYPE.get(substitution.toLandType());
+                yield fromWalk == null || toWalk == null || ignored.landwalkKeyword() != fromWalk
+                        ? ignored
+                        : new LandwalkIgnoredForBlockingEffect(toWalk);
             }
             default -> effect;
         };

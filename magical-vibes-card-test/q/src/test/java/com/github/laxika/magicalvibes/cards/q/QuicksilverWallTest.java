@@ -102,6 +102,7 @@ class QuicksilverWallTest extends BaseCardTest {
     void repeatedActivationsDoNotReturnAnotherWall() {
         harness.addToBattlefield(player1, new QuicksilverWall());
         Permanent otherWall = harness.addToBattlefieldAndReturn(player1, new QuicksilverWall());
+        gd.playerHands.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.activateAbility(player1, 0, null, null);

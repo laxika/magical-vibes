@@ -22,9 +22,10 @@ import java.util.List;
 public class QuestForUlasTemple extends Card {
 
     public QuestForUlasTemple() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                 new LookAtTopCardMayRevealMatchingAndPutCounterEffect(
-                        new CardTypePredicate(CardType.CREATURE), CounterType.QUEST));
+                        new CardTypePredicate(CardType.CREATURE), CounterType.QUEST),
+                "Look at the top card of your library?"));
 
         CardAllOfPredicate seaCreature = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

@@ -139,7 +139,7 @@ class QuantumEntanglementTest extends BaseCardTest {
     @DisplayName("A creature controlled by the enchantment's controller returns to its owner")
     void returnsStolenCreatureToOwner() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new WarriorsOfWakanda());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
         castQuantumEntanglement(2);
         beginEntryPayment();
         payAndChooseCreature(creature);

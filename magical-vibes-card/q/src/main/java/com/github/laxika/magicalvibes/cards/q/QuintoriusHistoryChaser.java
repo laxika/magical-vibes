@@ -32,7 +32,7 @@ public class QuintoriusHistoryChaser extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(new MayEffect(
-                        new DiscardCardThenEffect(
+                        DiscardCardThenEffect.continuing(
                                 null,
                                 SequenceEffect.of(
                                         new DrawCardEffect(2),

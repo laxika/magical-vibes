@@ -25,6 +25,6 @@ public class QuirionBeastcaller extends Card {
         // creatures you control, where X is the number of +1/+1 counters on this creature.
         addEffect(EffectSlot.ON_DEATH,
                 DistributeCountersAmongCreaturesOnDeathEffect
-                        .fromDyingSourceCountersAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE));
+                        .fromDyingSourceCountersAmongTargetControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

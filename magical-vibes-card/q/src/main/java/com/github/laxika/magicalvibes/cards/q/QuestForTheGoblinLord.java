@@ -18,12 +18,12 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class QuestForTheGoblinLord extends Card {
 
     public QuestForTheGoblinLord() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.GOBLIN),
                         new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                                 "Put a quest counter on Quest for the Goblin Lord?")));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.QUEST),
-                new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES)));
     }
 }

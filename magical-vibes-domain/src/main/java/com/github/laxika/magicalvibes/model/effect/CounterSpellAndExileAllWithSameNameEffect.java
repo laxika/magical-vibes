@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 /**
  * Counters target spell, then searches that spell's controller's graveyard, hand, and library
  * for cards with the same name as that spell and exiles them. By default all matching cards are
- * exiled; optionally, the controller chooses any number. Then that player shuffles and, when
- * configured, draws a card for each card exiled from their hand this way.
+ * exiled; optionally, the controller chooses any number. When {@code chooseHiddenZoneMatches} is set,
+ * graveyard matches are exiled while the controller may find any number (including none) of the
+ * hand and library matches (CR 701.23b). Then that player shuffles and, when configured, draws a
+ * card for each card exiled from their hand this way.
  * <p>
  * If the target spell can't be countered (uncounterable or protected from the counter's color),
  * it stays on the stack but the search-and-exile still happens (per Counterbore's rulings).
@@ -15,7 +17,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * When {@code exileCondition} is non-null only the search-and-exile half depends on it; the
  * counter is unconditional (Invasive Surgery's delirium).
  * <p>
- * Used by: Counterbore, Test of Talents, Invasive Surgery
+ * Used by: Counterbore, Quash, Test of Talents, Invasive Surgery
  */
 public record CounterSpellAndExileAllWithSameNameEffect(boolean chooseAnyNumber,
                                                          boolean drawCardsExiledFromHand, boolean chooseHiddenZoneMatches,

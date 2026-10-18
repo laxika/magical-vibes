@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -20,10 +21,12 @@ public class QuintessentialKatana extends Card {
 
     public QuintessentialKatana() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
-                        new GainLifeEffect(2)));
+                        new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
+                        new GainLifeEffect(2)),
+                GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.NINJA),
                         new AttachSourceEquipmentToEnteringCreatureEffect()));

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.g.GreaterHarvester;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -92,7 +93,7 @@ class QuicksilverBehemothTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertInHand(player1, "Quicksilver Behemoth");
     }
@@ -110,7 +111,7 @@ class QuicksilverBehemothTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(action -> action.permanentId().equals(behemoth.getId()));
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertInHand(player2, "Quicksilver Behemoth");
     }

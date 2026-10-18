@@ -24,6 +24,8 @@ class QuicksilverLapidaryTest extends BaseCardTest {
 
     @Test
     void conjuresIntoTriggerControllersHandWithThatPlayerAsOwner() {
+        gd.playerHands.get(player1.getId()).clear();
+        gd.playerHands.get(player2.getId()).clear();
         harness.enterBattlefieldAndReturn(player2, new QuicksilverLapidary());
         resolveAllTriggers();
 
@@ -37,6 +39,7 @@ class QuicksilverLapidaryTest extends BaseCardTest {
 
     @Test
     void separateEntriesConjureDistinctCardsWithoutDrawingFromLibrary() {
+        gd.playerHands.get(player1.getId()).clear();
         int librarySize = gd.playerDecks.get(player1.getId()).size();
         harness.enterBattlefieldAndReturn(player1, new QuicksilverLapidary());
         resolveAllTriggers();

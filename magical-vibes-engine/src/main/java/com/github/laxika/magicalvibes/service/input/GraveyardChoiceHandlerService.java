@@ -2006,6 +2006,12 @@ public class GraveyardChoiceHandlerService {
                     null, Map.of(), spellEntryTargetZone, new ArrayList<>(cardIds),
                     pendingPermanentTargetIds == null ? List.of() : new ArrayList<>(pendingPermanentTargetIds)
             );
+            // A target player that is also one of the flat modal targets (Quandrix Command) must not
+            // shadow group 0 as a separately stored primary target.
+            if (pendingSpellCounterTargetId == null && pendingTargetPlayerId != null
+                    && pendingPermanentTargetIds != null && pendingPermanentTargetIds.contains(pendingTargetPlayerId)) {
+                spellEntry.setPrimaryTargetStoredSeparately(false);
+            }
             Map<CardEffect, List<UUID>> effectCardTargets = new java.util.IdentityHashMap<>(pendingTargetCardIdsByEffect);
             List<ReturnTargetCardsFromGraveyardToHandEffect> returnsToHand = pendingEffects.stream()
                     .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)

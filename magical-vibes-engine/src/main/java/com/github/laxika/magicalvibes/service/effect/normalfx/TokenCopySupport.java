@@ -288,6 +288,19 @@ public class TokenCopySupport {
                     : expandedAttackTargets.get(i % originalAttackTargetCount));
         }
 
+        CreateTokenEffect frog = tokens.isEmpty() ? null
+                : TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
+                        gameData, tokenControllerId,
+                        new CreateTokenEffect(1, "Frog", 1, 1,
+                                CardColor.GREEN, List.of(CardSubtype.FROG), Set.of(), Set.of()));
+        if (frog != null) {
+            Card frogCard = TokenCardFactory.create(frog, 1, 1,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            tokens.add(new Permanent(TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, tokenControllerId, frogCard)));
+            expandedAttackTargets.add(null);
+        }
+
         Card jinnieFay = tokens.isEmpty() ? null
                 : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
         if (jinnieFay != null) {

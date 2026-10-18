@@ -235,7 +235,7 @@ class QuestingDruidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAdventure(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.BLUE, 1);

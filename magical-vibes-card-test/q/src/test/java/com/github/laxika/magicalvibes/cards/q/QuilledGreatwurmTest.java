@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -205,12 +206,9 @@ class QuilledGreatwurmTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new QuilledGreatwurm());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 7));
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Quilled Greatwurm");
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

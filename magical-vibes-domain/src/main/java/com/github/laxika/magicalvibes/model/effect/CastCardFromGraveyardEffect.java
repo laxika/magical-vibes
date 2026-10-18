@@ -7,7 +7,8 @@ import java.util.Objects;
 
 /**
  * During resolution, lets the controller choose and may cast one matching spell from a graveyard
- * using its normal mana cost, or without paying it when requested.
+ * using its normal mana cost, or without paying it when requested. {@code anyManaType} lets mana of
+ * any type be spent to cast the spell (Quistis Trepe).
  */
 public record CastCardFromGraveyardEffect(
         CardPredicate filter,
@@ -15,8 +16,20 @@ public record CastCardFromGraveyardEffect(
         CardPredicate exileInsteadOfGraveyardFilter,
         boolean allowAdventure,
         boolean withoutPayingManaCost,
-        CardEffect afterSuccessfulCastEffect
+        CardEffect afterSuccessfulCastEffect,
+        boolean anyManaType
 ) implements CardEffect {
+
+    public CastCardFromGraveyardEffect(
+            CardPredicate filter,
+            GraveyardSearchScope scope,
+            CardPredicate exileInsteadOfGraveyardFilter,
+            boolean allowAdventure,
+            boolean withoutPayingManaCost,
+            CardEffect afterSuccessfulCastEffect) {
+        this(filter, scope, exileInsteadOfGraveyardFilter, allowAdventure, withoutPayingManaCost,
+                afterSuccessfulCastEffect, false);
+    }
 
     public CastCardFromGraveyardEffect(
             CardPredicate filter,

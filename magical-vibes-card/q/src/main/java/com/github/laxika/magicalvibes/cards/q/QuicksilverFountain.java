@@ -40,6 +40,7 @@ public class QuicksilverFountain extends Card {
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ISLAND))));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new NotCondition(new AnyPlayerControlsPermanent(nonIslandLand)),
-                new RemoveAllCountersOfTypeFromAllPermanentsEffect(CounterType.FLOOD)));
+                new RemoveAllCountersOfTypeFromAllPermanentsEffect(CounterType.FLOOD,
+                        new PermanentIsLandPredicate())));
     }
 }

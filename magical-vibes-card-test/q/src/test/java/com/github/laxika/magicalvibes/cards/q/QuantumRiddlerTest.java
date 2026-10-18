@@ -183,6 +183,7 @@ class QuantumRiddlerTest extends BaseCardTest {
     void warpExilesAtEndStepAndAllowsNormalCastingOnALaterTurn() {
         QuantumRiddler riddler = new QuantumRiddler();
         harness.setHand(player1, List.of(riddler));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new CerebralDownload(), new CerebralDownload(),
                 new CerebralDownload(), new CerebralDownload(), new CerebralDownload(),
                 new CerebralDownload()));

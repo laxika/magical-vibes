@@ -102,6 +102,11 @@ public final class TargetPredicates {
         return new TargetPredicate.ExiledCards(predicate);
     }
 
+    /** A card in exile matching {@code predicate} that was exiled with the source permanent. */
+    public static TargetPredicate exiledCardsExiledWithSource(CardPredicate predicate) {
+        return new TargetPredicate.ExiledCards(predicate, true);
+    }
+
     /** A card in the controller's hand matching {@code predicate}. */
     public static TargetPredicate handCards(CardPredicate predicate) {
         return new TargetPredicate.HandCards(predicate);

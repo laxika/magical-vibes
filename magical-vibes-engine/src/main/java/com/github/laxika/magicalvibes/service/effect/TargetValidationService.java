@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -151,6 +152,10 @@ public class TargetValidationService {
             }
             TargetPredicate.ExiledCards restriction = (TargetPredicate.ExiledCards)
                     predicate.leaf(TargetPredicate.Kind.EXILED_CARD).orElseThrow();
+            if (restriction.exiledWithSource()
+                    && !Objects.equals(exiled.sourcePermanentId(), ctx.sourcePermanentId())) {
+                throw new IllegalStateException("Target card is not exiled with this permanent");
+            }
             UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
             if (!predicateEvaluationService.matchesCardPredicate(
                     exiled.card(), restriction.inner(), sourceCardId, ctx.gameData(), exiled.ownerId(),

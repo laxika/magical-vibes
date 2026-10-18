@@ -54,7 +54,9 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
         List<UUID> occurrences = psychicBattleSupport.targetIds(targetSpell);
         boolean onlySource = !occurrences.isEmpty()
                 && occurrences.stream().allMatch(id -> Objects.equals(id, sourcePermanentId));
-        if (!targetSpell.isSingleTarget() && !(redirectEffect.requiresSourceTarget() && onlySource)) {
+        boolean repeatedSourceTargetsAllowed = redirectEffect.requiresSourceTarget()
+                && redirectEffect.allowsRepeatedSourceTarget() && onlySource;
+        if (!targetSpell.isSingleTarget() && !repeatedSourceTargetsAllowed) {
             
             gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
             return;

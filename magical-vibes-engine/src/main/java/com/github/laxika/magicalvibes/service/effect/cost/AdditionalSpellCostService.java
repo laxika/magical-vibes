@@ -2222,7 +2222,10 @@ public class AdditionalSpellCostService {
                     || !gameQueryService.isCreature(gameData, permanent)) {
                 throw new IllegalStateException("Counters must be removed from creatures you control");
             }
-            if (counterCount(permanent, cost.counterType()) < selected.getValue()) {
+            int available = cost.counterType() == null
+                    ? permanent.getTotalCounterCount()
+                    : counterCount(permanent, cost.counterType());
+            if (available < selected.getValue()) {
                 throw new IllegalStateException("Creature does not have enough counters to pay "
                         + card.getName() + "'s cost");
             }

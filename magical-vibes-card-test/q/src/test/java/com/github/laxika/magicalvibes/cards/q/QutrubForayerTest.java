@@ -50,7 +50,7 @@ class QutrubForayerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> cast(0, undamagedId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("dealt damage this turn");
+                .hasMessageContaining("Invalid permanent");
     }
 
     @Test

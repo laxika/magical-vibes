@@ -572,7 +572,8 @@ public final class TokenCreationReplacementSupport {
         }
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            if (permanent.isFaceDown()
+                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                     || permanent.isStaticEffectSuppressed(effectType)) {
                 continue;
             }

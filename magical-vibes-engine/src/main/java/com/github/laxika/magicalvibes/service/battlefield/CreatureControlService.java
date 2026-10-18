@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCre
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MonarchBoundControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
@@ -615,6 +616,7 @@ public class CreatureControlService {
                     || (fe.effect() instanceof CombatAttackRequirementEffect requirement
                     && requirement.endsWhenSourceControllerChanges())
                     || fe.effect() instanceof GrantKeywordEffect
+                    || fe.effect() instanceof GrantActivatedAbilityEffect
                     || (fe.effect() instanceof PermanentLockEffect lock
                     && lock.endsWhenSourceControllerChanges()))
                     && fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
