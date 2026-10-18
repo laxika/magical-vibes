@@ -21,7 +21,7 @@ public class StoicStarCaptain extends Card {
                 new PowerBoostForCrewAndStationEffect(2), GrantScope.ALL_OWN_CREATURES));
 
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}{W}",
                 List.of(new SeekEffect(new CardSubtypePredicate(CardSubtype.SPACECRAFT))),
                 "Exhaust — {1}{W}: Seek a Spacecraft card. (Activate each exhaust ability only once.)"

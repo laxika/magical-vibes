@@ -355,6 +355,11 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt to you and permanents you control this turn." */
+    public static PreventDamageEffect allToControllerAndPermanents() {
+        return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_PERMANENTS, null, false, null, null, null);
+    }
+
     /** "Prevent all damage that would be dealt to you and creatures you control this turn by matching sources." */
     public static PreventDamageEffect allToControllerAndCreaturesFromMatchingSources(
             PermanentPredicate sourcePredicate) {

@@ -87,7 +87,7 @@ class SmugglersCopterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        if (gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class) != null) {
+        if (gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null) {
             harness.handleCardChosen(player1, 0);
         }
 

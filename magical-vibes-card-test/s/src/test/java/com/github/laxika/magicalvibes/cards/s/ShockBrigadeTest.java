@@ -21,15 +21,19 @@ class ShockBrigadeTest extends BaseCardTest {
     void attackingCreatesTappedAndAttackingWarriorToken() {
         addCreatureReady(player1, new ShockBrigade());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().isTapped()).isTrue();
-        assertThat(tokens.getFirst().isAttackedThisTurn()).isTrue();
+        assertThat(tokens.getFirst().isAttacking()).isTrue();
+        // CR 508.4: a creature put onto the battlefield attacking is "attacking" but never "attacked"
+        assertThat(tokens.getFirst().isAttackedThisTurn()).isFalse();
     }
 
     @Test

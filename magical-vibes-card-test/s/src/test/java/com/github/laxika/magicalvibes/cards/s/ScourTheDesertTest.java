@@ -95,7 +95,7 @@ class ScourTheDesertTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Counts variable toughness in exile using creature cards in both graveyards")
+    @DisplayName("Uses the exiled card's toughness from the graveyard, counting creature cards in both graveyards")
     void usesVariableToughnessAfterExile() {
         Card mortivore = new Mortivore();
         harness.setGraveyard(player1, List.of(mortivore, new GrizzlyBears()));
@@ -108,13 +108,13 @@ class ScourTheDesertTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Mortivore");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(mortivore.getId()));
-        assertThat(findPermanents(player1, "Bird")).hasSize(2);
+        assertThat(findPermanents(player1, "Bird")).hasSize(3);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     @Test
-    @DisplayName("Exiles a creature whose toughness becomes zero in exile without creating Birds")
-    void zeroToughnessInExileCreatesNoBirds() {
+    @DisplayName("Mortivore's toughness is read in the graveyard, where it still counts itself")
+    void toughnessReadBeforeExileCountsItself() {
         Card mortivore = new Mortivore();
         harness.setGraveyard(player1, List.of(mortivore));
         harness.setHand(player1, List.of(new ScourTheDesert()));
@@ -125,7 +125,7 @@ class ScourTheDesertTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Mortivore");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(mortivore.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Bird")).hasSize(1);
     }
 
     @Test

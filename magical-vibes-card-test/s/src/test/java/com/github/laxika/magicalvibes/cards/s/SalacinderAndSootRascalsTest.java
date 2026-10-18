@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.r.RiteOfFlame;
 import com.github.laxika.magicalvibes.cards.t.TakeInventory;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,9 +25,9 @@ class SalacinderAndSootRascalsTest extends BaseCardTest {
     @Test
     void entersWithAChoiceBetweenRiteOfFlameAndTakeInventory() {
         harness.enterBattlefieldAndReturn(player1, new SalacinderAndSootRascals());
-        harness.passBothPriorities();
 
-        chooseSpellbookCard("Rite of Flame");
+        chooseMode("Conjure a card named Rite of Flame into your hand");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
@@ -36,9 +38,9 @@ class SalacinderAndSootRascalsTest extends BaseCardTest {
     void triggersWhenControllerCastsAnElementalSpell() {
         harness.addToBattlefield(player1, new SalacinderAndSootRascals());
         harness.castFromHand(player1, new AirElemental(), "{3}{U}{U}");
-        harness.passBothPriorities();
 
-        chooseSpellbookCard("Take Inventory");
+        chooseMode("Conjure a card named Take Inventory into your hand");
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
@@ -59,6 +61,7 @@ class SalacinderAndSootRascalsTest extends BaseCardTest {
 
     @Test
     void entryRequiresModeChoiceBeforeEitherPlayerCanRespond() {
+        harness.setHand(player1, List.of());
         harness.enterBattlefieldAndReturn(player1, new SalacinderAndSootRascals());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -77,6 +80,7 @@ class SalacinderAndSootRascalsTest extends BaseCardTest {
     @Test
     void opponentsElementalDoesNotTrigger() {
         harness.addToBattlefield(player1, new SalacinderAndSootRascals());
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new AirElemental(), "{3}{U}{U}");
         harness.passBothPriorities();
@@ -107,25 +111,20 @@ class SalacinderAndSootRascalsTest extends BaseCardTest {
     @Test
     void tramplesOverABear() {
         addCreatureReady(player1, new SalacinderAndSootRascals());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.resolveCombatDamage();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(bears.getId(), 2, player2.getId(), 1));
 
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Salacinder and Soot, Rascals");
     }
 
-    private void chooseSpellbookCard(String cardName) {
-        PendingInteraction.SpellbookCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
-        assertThat(choice).isNotNull();
-
-        var selectedCard = choice.cards().stream()
-                .filter(card -> card.getName().equals(cardName))
-                .findFirst()
-                .orElseThrow();
-        harness.handleMultipleCardsChosen(player1, List.of(selectedCard.getId()));
+    private void chooseMode(String label) {
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, label);
     }
 }

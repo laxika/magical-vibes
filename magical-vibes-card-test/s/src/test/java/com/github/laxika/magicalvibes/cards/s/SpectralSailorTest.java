@@ -81,7 +81,7 @@ class SpectralSailorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

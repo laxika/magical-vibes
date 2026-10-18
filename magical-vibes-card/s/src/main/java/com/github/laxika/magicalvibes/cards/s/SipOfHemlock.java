@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SipOfHemlock extends Card {
 
     public SipOfHemlock() {
-        // The life loss must resolve before the destruction while the target permanent still exists.
+        // Destruction happens first; the life loss then reads the controller remembered from the destroyed target.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

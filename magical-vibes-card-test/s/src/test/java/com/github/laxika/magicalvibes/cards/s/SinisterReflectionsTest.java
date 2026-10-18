@@ -92,6 +92,7 @@ class SinisterReflectionsTest extends BaseCardTest {
     void skipsATargetThatChangesControllerWhileDuplicatingTheOther() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new SinisterReflections()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));

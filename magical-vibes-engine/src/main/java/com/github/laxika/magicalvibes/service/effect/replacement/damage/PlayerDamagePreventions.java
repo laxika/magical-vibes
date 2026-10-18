@@ -46,7 +46,8 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> ctx.combat() && ctx.gameData().preventAllCombatDamage
                                 && preventable(ctx)).whole(),
                 pure("Flying", PREVENTION,
-                        ctx -> gameQueryService.playerHasFlying(ctx.gameData(), ctx.playerId())
+                        ctx -> preventable(ctx)
+                                && gameQueryService.playerHasFlying(ctx.gameData(), ctx.playerId())
                                 && gameQueryService.isDamageSourceCreature(ctx.gameData(), ctx.entry(), ctx.sourcePermanent())
                                 && !gameQueryService.sourceHasKeyword(
                                 ctx.gameData(), ctx.entry(), ctx.sourcePermanent(), Keyword.FLYING),

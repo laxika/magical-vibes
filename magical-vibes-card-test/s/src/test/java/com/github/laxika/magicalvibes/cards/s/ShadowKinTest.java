@@ -21,7 +21,7 @@ class ShadowKinTest extends BaseCardTest {
     void millsEachPlayerAndCopiesAChosenMilledCreatureWhileRetainingItsAbility() {
         Permanent shadowKin = harness.addToBattlefieldAndReturn(player1, new ShadowKin());
         Card milledCreature = new HordewingSkaab();
-        harness.setLibrary(player1, List.of(new CommandTower(), new CommandTower(), new CommandTower()));
+        harness.setLibrary(player1, List.of(new CommandTower(), new CommandTower(), new CommandTower(), new CommandTower()));
         harness.setLibrary(player2, List.of(milledCreature, new CommandTower(), new CommandTower()));
 
         resolveUpkeepTrigger();
@@ -81,7 +81,7 @@ class ShadowKinTest extends BaseCardTest {
     void exilesAndCopiesDuringTheOriginalResolutionWithoutAnotherStackEntry() {
         Permanent shadowKin = harness.addToBattlefieldAndReturn(player1, new ShadowKin());
         Card creature = new HordewingSkaab();
-        harness.setLibrary(player1, List.of(creature, new CommandTower(), new CommandTower()));
+        harness.setLibrary(player1, List.of(creature, new CommandTower(), new CommandTower(), new CommandTower()));
         harness.setLibrary(player2, List.of(new CommandTower(), new CommandTower(), new CommandTower()));
 
         resolveUpkeepTrigger();
@@ -102,7 +102,7 @@ class ShadowKinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, original.getId());
         Permanent clone = findPermanent(player1, "Shadow Kin");
         Card creature = new HordewingSkaab();
-        harness.setLibrary(player1, List.of(creature, new CommandTower(), new CommandTower()));
+        harness.setLibrary(player1, List.of(creature, new CommandTower(), new CommandTower(), new CommandTower()));
         harness.setLibrary(player2, List.of(new CommandTower(), new CommandTower(), new CommandTower()));
 
         resolveUpkeepTrigger();

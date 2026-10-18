@@ -120,9 +120,9 @@ class StampedingWildebeestsTest extends BaseCardTest {
         Permanent wildebeests = addCreatureReady(player1, new StampedingWildebeests());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, wildebeests.getId());
         harness.assertInHand(player1, "Stampeding Wildebeests");
         resolveAllTriggers();
@@ -140,9 +140,9 @@ class StampedingWildebeestsTest extends BaseCardTest {
         Permanent wildebeests = addCreatureReady(player1, new StampedingWildebeests());
         addCreatureReady(player1, new RagingGoblin());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, wildebeests.getId());
         resolveAllTriggers();
 

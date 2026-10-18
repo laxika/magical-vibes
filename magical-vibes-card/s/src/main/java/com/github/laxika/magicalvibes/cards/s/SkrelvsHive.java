@@ -10,12 +10,11 @@ import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 import java.util.List;
@@ -41,11 +40,8 @@ public class SkrelvsHive extends Card {
                         Set.of(CardType.ARTIFACT),
                         false,
                         false,
-                        Map.of(
-                                EffectSlot.STATIC, new CantBlockEffect(),
-                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)
-                        ),
+                        Map.of(EffectSlot.STATIC, SequenceEffect.of(
+                                new CantBlockEffect(), new ToxicEffect(1))),
                         List.of(),
                         false,
                         false,

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -50,7 +52,7 @@ class ShakedownHeavyTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleMayAbilityChosen(player2, false));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandBefore);
         assertThat(heavy.isTapped()).isTrue();
@@ -83,7 +85,7 @@ class ShakedownHeavyTest extends BaseCardTest {
     @DisplayName("The defender cannot choose a draw prohibited by Narset")
     void cannotChooseDrawWhenControllerHasReachedDrawLimit() {
         Permanent heavy = addCreatureReady(player1, new ShakedownHeavy());
-        harness.addToBattlefield(player2, new NarsetParterOfVeils());
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils()).setCounterCount(CounterType.LOYALTY, 5);
         Forest card = new Forest();
         harness.setLibrary(player1, List.of(card));
         gd.cardsDrawnThisTurn.put(player1.getId(), 1);
@@ -104,7 +106,7 @@ class ShakedownHeavyTest extends BaseCardTest {
     @DisplayName("Restricting the defender's draws does not prevent choosing the controller's draw")
     void defenderDrawRestrictionDoesNotPreventControllerDraw() {
         Permanent heavy = addCreatureReady(player1, new ShakedownHeavy());
-        harness.addToBattlefield(player1, new NarsetParterOfVeils());
+        harness.addToBattlefieldAndReturn(player1, new NarsetParterOfVeils()).setCounterCount(CounterType.LOYALTY, 5);
         Forest card = new Forest();
         harness.setLibrary(player1, List.of(card));
         gd.cardsDrawnThisTurn.put(player2.getId(), 1);

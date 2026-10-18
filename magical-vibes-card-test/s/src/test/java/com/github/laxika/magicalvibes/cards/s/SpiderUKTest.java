@@ -158,7 +158,10 @@ class SpiderUKTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLife(player1, 20);
 
-        advanceToEndStep(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

@@ -50,7 +50,7 @@ class ScrapworkRagerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent rager = findPermanent(player1, "Scrapwork Rager");
-        assertThat(rager.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, rager, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

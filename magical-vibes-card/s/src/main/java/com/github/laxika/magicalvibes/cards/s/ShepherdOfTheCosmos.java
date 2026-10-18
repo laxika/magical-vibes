@@ -22,6 +22,7 @@ public class ShepherdOfTheCosmos extends Card {
                         new CardIsPermanentPredicate(),
                         new CardMaxManaValuePredicate(2))))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
 
         addCastingOption(new ForetellCast("{3}{W}"));

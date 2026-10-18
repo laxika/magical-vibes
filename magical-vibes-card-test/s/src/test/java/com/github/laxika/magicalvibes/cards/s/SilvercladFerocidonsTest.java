@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -130,9 +131,11 @@ class SilvercladFerocidonsTest extends BaseCardTest {
         secondBlocker.setBlocking(true);
         secondBlocker.addBlockingTarget(0);
 
-        resolveCombat(player1);
-        harness.handleCombatDamageAssigned(player1, 0,
-                Map.of(firstBlocker.getId(), 4, secondBlocker.getId(), 4));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            resolveCombat(player1);
+            harness.handleCombatDamageAssigned(player1, 0,
+                    Map.of(firstBlocker.getId(), 4, secondBlocker.getId(), 4));
+        });
 
         assertThat(gd.stack).hasSize(1);
         harness.assertInGraveyard(player2, "Grizzly Bears");

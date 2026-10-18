@@ -133,7 +133,6 @@ class SiegeGangLieutenantTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, battlefieldIndex(lieutenant), null, player2.getId());
-        harness.handlePermanentChosen(player1, lieutenant.getId());
         harness.assertNotOnBattlefield(player1, "Siege-Gang Lieutenant");
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
@@ -169,7 +168,6 @@ class SiegeGangLieutenantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, battlefieldIndex(lieutenant), null, target.getId());
-        harness.handlePermanentChosen(player1, lieutenant.getId());
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
@@ -197,7 +195,7 @@ class SiegeGangLieutenantTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
     }
 

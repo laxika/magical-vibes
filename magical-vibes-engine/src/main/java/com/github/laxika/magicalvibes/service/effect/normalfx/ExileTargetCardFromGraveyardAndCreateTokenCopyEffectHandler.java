@@ -145,7 +145,10 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
 
         // Soul Separator's second token: a black Zombie whose P/T are the exiled card's printed P/T.
         if (e.createZombieTokenWithExiledCardStats()) {
-            CreateTokenEffect zombie = new CreateTokenEffect("Zombie", targetCard.getPower(), targetCard.getToughness(),
+            Integer zombiePower = gameQueryService.getEffectiveCardPower(gameData, targetCard);
+            Integer zombieToughness = gameQueryService.getEffectiveCardToughness(gameData, targetCard);
+            CreateTokenEffect zombie = new CreateTokenEffect("Zombie",
+                    zombiePower == null ? 0 : zombiePower, zombieToughness == null ? 0 : zombieToughness,
                     CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of());
             entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
                     gameData, entry.getControllerId(), zombie, 1, entry.getCard().getSetCode()));

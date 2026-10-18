@@ -36,11 +36,11 @@ public class RegisterPoisonAtNextUpkeepUnlessPaysEffectHandler implements Normal
         if (playerId == null) return;
 
         gameData.queueDelayedAction(new PoisonAtNextUpkeepUnlessPays(
-                playerId, e.amount(), e.manaCost(), entry.getCard()));
+                playerId, entry.getControllerId(), e.amount(), e.manaCost(), entry.getCard()));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " must pay " + e.manaCost()
-                + " before their next upkeep or get another poison counter. (", entry.getCard(), ")"));
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " will get another poison counter at the"
+                + " beginning of their next upkeep. (", entry.getCard(), ")"));
         log.info("Game {} - {} scheduled an upkeep pay-or-poison obligation on {}",
                 gameData.id, entry.getCard().getName(), playerName);
     }

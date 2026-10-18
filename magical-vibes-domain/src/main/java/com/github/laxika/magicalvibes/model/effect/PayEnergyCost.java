@@ -4,8 +4,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public record PayEnergyCost(int amount) implements AlternativeSpellCost {
 
     public PayEnergyCost {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Energy cost must be positive");
+        if (amount < 0) {
+            throw new IllegalArgumentException("Energy cost must not be negative");
         }
     }
 

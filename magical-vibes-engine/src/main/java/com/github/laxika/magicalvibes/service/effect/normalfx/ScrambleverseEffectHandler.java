@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ScrambleverseEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +19,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link ScrambleverseEffect}. Each nonland permanent independently draws a random player;
  * control moves to that player (permanently, via the layer-2 control machinery) and the permanent is
- * untapped whether or not its controller actually changed.
+ * untapped whether or not its controller actually changed. Land status is checked against the
+ * effective type, so a permanent turned into a land is left alone.
  */
 @Component
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class ScrambleverseEffectHandler implements NormalEffectHandlerBean {
 
     private final CreatureControlService creatureControlService;
     private final TapUntapSupport tapUntapSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +49,7 @@ public class ScrambleverseEffectHandler implements NormalEffectHandlerBean {
         // cannot reassign control while iterating.
         List<Permanent> nonlands = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (!permanent.getCard().hasType(CardType.LAND)) {
+            if (!gameQueryService.isLand(gameData, permanent)) {
                 nonlands.add(permanent);
             }
         });
@@ -56,6 +58,10 @@ public class ScrambleverseEffectHandler implements NormalEffectHandlerBean {
             UUID chosen = players.get(ThreadLocalRandom.current().nextInt(players.size()));
             creatureControlService.applyControlEffect(gameData, chosen, permanent, CONTROL_EFFECT,
                     ControlDuration.PERMANENT.toEffectDuration(), null, entry.getCard().getName());
+        }
+
+        // Untap only after every control change, so untap triggers see the final controllers.
+        for (Permanent permanent : nonlands) {
             tapUntapSupport.untapPermanent(gameData, permanent);
         }
     }

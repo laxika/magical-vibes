@@ -131,7 +131,7 @@ class SamiteMinistrationTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, source.getId());
 
         source.setAttacking(true);
-        resolveCombat(player2);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player2));
 
         harness.assertLife(player1, 20);
         assertThat(gd.stack).hasSize(1);

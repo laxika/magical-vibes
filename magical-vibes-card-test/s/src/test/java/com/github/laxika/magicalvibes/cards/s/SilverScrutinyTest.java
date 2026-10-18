@@ -75,7 +75,7 @@ class SilverScrutinyTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.castAndResolveSorcery(player1, 0, 0));
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);

@@ -21,7 +21,7 @@ public class SanctumGuardian extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        PreventDamageFromChosenSourceEffect.nextDamageToAnyTarget()
+                        PreventDamageFromChosenSourceEffect.nextDamageToTarget()
                 ),
                 "Sacrifice this creature: The next time a source of your choice would deal damage to any target this turn, prevent that damage."
         ));

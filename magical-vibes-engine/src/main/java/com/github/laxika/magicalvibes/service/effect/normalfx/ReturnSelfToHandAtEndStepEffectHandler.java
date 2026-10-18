@@ -46,7 +46,8 @@ public class ReturnSelfToHandAtEndStepEffectHandler implements NormalEffectHandl
         }
 
         gameData.queueDelayedAction(new DelayedPermanentAction(sourceId,
-                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP, false, null, null, null, false,
+                null, entry.getControllerId(), sourceId));
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                 " will be returned to its owner's hand at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for return to hand at end step", gameData.id, source.getCard().getName());

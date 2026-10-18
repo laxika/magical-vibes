@@ -175,6 +175,7 @@ class SphinxOfUthuunTest extends BaseCardTest {
         gd.playerManaPools.put(id, new ManaPool());
         gd.playerLifeTotals.put(id, 20);
         harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), id, "Charlie");
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Island(), new Forest(), new Swamp(), new Plains(), new Mountain()));
         harness.enterBattlefieldAndReturn(player1, new SphinxOfUthuun());
 

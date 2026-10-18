@@ -106,6 +106,8 @@ class SanguineEvangelistTest extends BaseCardTest {
         assertThat(nonattacker.getPowerModifier()).isZero();
         assertThat(opponent.getPowerModifier()).isZero();
 
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
         assertThat(attacker.getPowerModifier()).isEqualTo(1);
         harness.passUntil(TurnStep.CLEANUP);

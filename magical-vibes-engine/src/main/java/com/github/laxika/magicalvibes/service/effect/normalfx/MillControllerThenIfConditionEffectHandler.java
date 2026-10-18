@@ -31,7 +31,10 @@ public class MillControllerThenIfConditionEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MillControllerThenIfConditionEffect millThen = (MillControllerThenIfConditionEffect) effect;
-        graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), millThen.count());
+        // "Mill a card. When you do, ..." — the reflexive trigger needs a card to have actually been milled.
+        if (graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), millThen.count()).isEmpty()) {
+            return;
+        }
 
         Condition condition = millThen.condition();
         if (!conditionEvaluationService.isMet(gameData, condition,

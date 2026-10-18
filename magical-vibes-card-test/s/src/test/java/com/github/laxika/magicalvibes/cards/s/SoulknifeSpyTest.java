@@ -60,6 +60,8 @@ class SoulknifeSpyTest extends BaseCardTest {
     @Test
     @DisplayName("Draw waits for the trigger to resolve and survives the Spy leaving play")
     void drawTriggerSurvivesSourceLeavingBattlefield() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE));
         Permanent spy = addCreatureReady(player1, new SoulknifeSpy());
         spy.setAttacking(true);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();

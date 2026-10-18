@@ -93,9 +93,6 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
         }
 
         if (effect.mayDiscard()) {
-            if (gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).isEmpty()) {
-                return;
-            }
             MayEffect mayDiscard = new MayEffect(
                     new DiscardCardThenEffect(null,
                             new ConjureDuplicateOfCardIntoHandEffect(sacrificedCard), "a card"),

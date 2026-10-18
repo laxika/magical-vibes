@@ -25,7 +25,7 @@ public class Sasaya extends Card {
                         new RevealHandCost(),
                         new ConditionalEffect(
                                 new CardsInHandMatchingAtLeast(7, new CardTypePredicate(CardType.LAND)),
-                                new TransformToBackFaceEffect())),
+                                new TransformToBackFaceEffect(true))),
                 "Reveal your hand: If you have seven or more land cards in your hand, flip Sasaya."));
     }
 

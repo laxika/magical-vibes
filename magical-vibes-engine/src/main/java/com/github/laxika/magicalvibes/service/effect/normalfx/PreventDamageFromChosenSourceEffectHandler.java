@@ -84,7 +84,7 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
 
         List<UUID> validIds = e.scope() == ChosenSourcePreventionScope.NEXT_COMBAT_DAMAGE_TO_CONTROLLER_ALL_BUT_ONE
                 ? collectValidBattlefieldSourceIds(gameData, sourceFilter)
-                : collectValidSourceIds(gameData, sourceFilter);
+                : collectValidSourceIds(gameData, sourceFilter, entry);
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
             return;
@@ -211,7 +211,7 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
         return gameQueryService.findPermanentById(gameData, attachedTo) == null ? null : attachedTo;
     }
 
-    private List<UUID> collectValidSourceIds(GameData gameData, PermanentPredicate sourceFilter) {
+    private List<UUID> collectValidSourceIds(GameData gameData, PermanentPredicate sourceFilter, StackEntry resolvingEntry) {
         List<UUID> validIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, perm) -> {
             if (sourceFilter == null
@@ -219,6 +219,15 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 validIds.add(perm.getId());
             }
         });
+        // CR 609.7a: the resolving ability refers to its own source, which may already have left the
+        // battlefield (e.g. sacrificed as a cost); its last known information is used (CR 113.7a).
+        if (!isSpell(resolvingEntry.getEntryType()) && resolvingEntry.getSourcePermanentSnapshot() != null) {
+            Permanent abilitySource = resolvingEntry.getSourcePermanentSnapshot();
+            if (!validIds.contains(abilitySource.getId()) && (sourceFilter == null
+                    || predicateEvaluationService.matchesPermanentPredicate(gameData, abilitySource, sourceFilter))) {
+                validIds.add(abilitySource.getId());
+            }
+        }
         for (StackEntry stackEntry : gameData.stack) {
             // CR 609.7a: any object referred to by an object on the stack is a legal source, even
             // while it sits in a graveyard or exile.
@@ -230,6 +239,9 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 if (referencedCard == null && gameData.findExiledCard(referencedId) != null) {
                     referencedCard = gameData.findExiledCard(referencedId).card();
                 }
+                if (referencedCard == null) {
+                    referencedCard = findDepartedAbilitySourceCard(gameData, resolvingEntry, referencedId);
+                }
                 if (referencedCard != null && !validIds.contains(referencedId)
                         && (sourceFilter == null || predicateEvaluationService.matchesPermanentPredicate(
                         gameData, new Permanent(referencedCard), sourceFilter))) {
@@ -237,12 +249,17 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 }
             }
             boolean spell = isSpell(stackEntry.getEntryType());
-            Permanent source = spell ? new Permanent(stackEntry.getCard())
+            // An ability whose source never was a permanent (a trigger of a discarded card) is sourced by the card.
+            boolean cardSourcedAbility = !spell && stackEntry.getSourcePermanentSnapshot() == null
+                    && stackEntry.getSourcePermanentId() == null
+                    && stackEntry.getCard() != null;
+            Permanent source = spell || cardSourcedAbility ? new Permanent(stackEntry.getCard())
                     : stackEntry.getSourcePermanentSnapshot();
             if (source == null) continue;
             if (sourceFilter == null
                     || predicateEvaluationService.matchesPermanentPredicate(gameData, source, sourceFilter)) {
-                UUID sourceId = spell ? stackEntry.getTargetableId() : source.getId();
+                UUID sourceId = spell ? stackEntry.getTargetableId()
+                        : cardSourcedAbility ? stackEntry.getCard().getId() : source.getId();
                 if (!validIds.contains(sourceId)) validIds.add(sourceId);
             }
         }
@@ -258,6 +275,27 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             }
         });
         return validIds;
+    }
+
+    /**
+     * Last-known card of a permanent that left the battlefield while it was the source of an ability
+     * (on the stack or the resolving entry), matched by the permanent's id as a stack reference holds it.
+     */
+    private Card findDepartedAbilitySourceCard(GameData gameData, StackEntry resolvingEntry, UUID permanentId) {
+        if (matchesAbilitySourceSnapshot(resolvingEntry, permanentId)) {
+            return resolvingEntry.getSourcePermanentSnapshot().getCard();
+        }
+        for (StackEntry stackEntry : gameData.stack) {
+            if (matchesAbilitySourceSnapshot(stackEntry, permanentId)) {
+                return stackEntry.getSourcePermanentSnapshot().getCard();
+            }
+        }
+        return null;
+    }
+
+    private static boolean matchesAbilitySourceSnapshot(StackEntry entry, UUID permanentId) {
+        return !isSpell(entry.getEntryType()) && entry.getSourcePermanentSnapshot() != null
+                && permanentId.equals(entry.getSourcePermanentSnapshot().getId());
     }
 
     private static boolean isSpell(StackEntryType type) {

@@ -37,7 +37,7 @@ class SaheeliTheSunsBrillianceTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.stack).hasSize(1);
@@ -98,7 +98,7 @@ class SaheeliTheSunsBrillianceTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken() && !permanent.getId().equals(firstToken.getId()))
                 .findFirst().orElseThrow();
         assertThat(secondToken.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(secondToken.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(secondToken.hasKeyword(Keyword.HASTE)).isFalse();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();

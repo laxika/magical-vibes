@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * a graveyard, exile it instead" (Toshiro Umezawa). {@code additionalGenericCost} adds a
  * conditional generic cost when the spell does not target a creature controlled by its caster
  * (Mavinda, Students' Advocate). {@code additionalGraveyardExileCount} and {@code escape} support
- * targeted escape permissions such as Desdemona, Freedom's Edge.</p>
+ * targeted escape permissions such as Desdemona, Freedom's Edge. {@code withoutPayingManaCost} lets the
+ * card be cast without paying its mana cost (Sins of the Past).</p>
  */
 public record GrantTargetGraveyardCardCastEffect(
         CardPredicate filter,
@@ -21,13 +22,22 @@ public record GrantTargetGraveyardCardCastEffect(
         int additionalGenericCost,
         boolean anyManaType,
         int additionalGraveyardExileCount,
-        boolean escape
+        boolean escape,
+        boolean withoutPayingManaCost
 ) implements CardEffect {
 
     public GrantTargetGraveyardCardCastEffect {
         if (additionalGraveyardExileCount < 0) {
             throw new IllegalArgumentException("Additional graveyard exile count cannot be negative");
         }
+    }
+
+    public GrantTargetGraveyardCardCastEffect(
+            CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard,
+            int additionalGenericCost, boolean anyManaType, int additionalGraveyardExileCount,
+            boolean escape) {
+        this(filter, scope, exileInsteadOfGraveyard, additionalGenericCost, anyManaType,
+                additionalGraveyardExileCount, escape, false);
     }
 
     public GrantTargetGraveyardCardCastEffect(
@@ -51,6 +61,15 @@ public record GrantTargetGraveyardCardCastEffect(
             CardPredicate filter, GraveyardSearchScope scope, boolean exileInsteadOfGraveyard,
             int additionalGenericCost, boolean anyManaType) {
         this(filter, scope, exileInsteadOfGraveyard, additionalGenericCost, anyManaType, 0, false);
+    }
+
+    /**
+     * "Until end of turn, you may cast target [filter] card from [scope] graveyard without paying its
+     * mana cost. If that spell would be put into a graveyard, exile it instead." (Sins of the Past)
+     */
+    public static GrantTargetGraveyardCardCastEffect withoutPayingManaCostExilingSpell(
+            CardPredicate filter, GraveyardSearchScope scope) {
+        return new GrantTargetGraveyardCardCastEffect(filter, scope, true, 0, false, 0, false, true);
     }
 
     public static GrantTargetGraveyardCardCastEffect withEscape(

@@ -23,7 +23,7 @@ public class ScarwoodBandits extends Card {
                         "{2}",
                         null,
                         "Pay {2} to keep control of the target artifact?",
-                        MayPayPayer.TARGET_PERMANENT_CONTROLLER,
+                        MayPayPayer.ANY_OPPONENT,
                         new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS),
                         0
                 )),

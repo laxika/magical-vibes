@@ -178,6 +178,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         int pendingIndex = gameData.pendingEffectResolutionIndex;
         if (pendingEntry != null
                 && !cumulativeUpkeep
+                && !(forcedCost instanceof PayEchoCost)
                 && pendingEntry.getControllerId().equals(controllerId)
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0
@@ -297,6 +298,15 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ForcedCostOrElseEffect) effect;
+
+        if (e.payerIsEnchantedController() && entry.getTriggeringPermanentId() != null) {
+            // "That creature's controller" is the controller as the ability resolves, so a control
+            // change since the trigger moves both the payment prompt and the penalty to the new one.
+            UUID currentController = gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+            if (currentController != null) {
+                entry.setTargetId(currentController);
+            }
+        }
 
         UUID sourceCardId = entry.getCard().getId();
         boolean versionBelongsToSource = entry.getTriggeringCardId() == null

@@ -132,7 +132,7 @@ class ShowdownOfTheSkaldsTest extends BaseCardTest {
 
     @Test
     void chapterIIPutsACounterForEverySpellCast() {
-        addSaga(1);
+        addSaga(2);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         triggerChapter();
         harness.passBothPriorities();
@@ -174,12 +174,15 @@ class ShowdownOfTheSkaldsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.setHand(player1, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(exiled.getId());
         assertThatThrownBy(() -> harness.castFromExile(player2, exiled.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsKey(exiled.getId());
+        harness.setHand(player1, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());

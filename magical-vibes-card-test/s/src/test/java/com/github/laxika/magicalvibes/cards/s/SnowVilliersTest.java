@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AdventurersInn;
 import com.github.laxika.magicalvibes.cards.t.TravelingChocobo;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -86,7 +87,7 @@ class SnowVilliersTest extends BaseCardTest {
     void attackingDoesNotTapSnow() {
         Permanent snow = addCreatureReady(player1, new SnowVilliers());
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(snow.isAttacking()).isTrue();
         assertThat(snow.isTapped()).isFalse();

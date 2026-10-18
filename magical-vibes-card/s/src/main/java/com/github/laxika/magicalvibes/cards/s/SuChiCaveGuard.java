@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "BRO", collectorNumber = "249")
 public class SuChiCaveGuard extends Card {
 
     public SuChiCaveGuard() {
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(4));
         addEffect(EffectSlot.ON_DEATH,
                 new AwardPersistentManaEffect(ManaColor.COLORLESS, new Fixed(8)));
     }

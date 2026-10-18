@@ -354,16 +354,12 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
-        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+        // The Ward cost may still be paid when the spell can't be countered, but then nothing is countered.
+        boolean cannotBeCountered = gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard());
+        if (cannotBeCountered && !accepted) {
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (gameQueryService.isProtectedFromCounterBySourceCard(gameData, targetEntry.getControllerId(), ability.sourceCard())) {
-            log.info("Game {} - {} cannot be countered by {} spells",
-                    gameData.id, targetEntry.getCard().getName(),
-                    ability.sourceCard().getColor().name().toLowerCase());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -406,6 +402,11 @@ public class MayPenaltyChoiceHandlerService {
             }
 
             // Hand changed since prompt — no cards left, fall through to counter
+        }
+
+        if (cannotBeCountered) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         // Declined or no cards — counter the spell/ability
@@ -1844,7 +1845,9 @@ public class MayPenaltyChoiceHandlerService {
         Permanent sourcePermanent = null;
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard().getId().equals(sourceCard.getId())) {
+                if (ability.sourcePermanentId() != null
+                        ? p.getId().equals(ability.sourcePermanentId())
+                        : p.getCard().getId().equals(sourceCard.getId())) {
                     sourcePermanent = p;
                     break;
                 }
@@ -2336,6 +2339,9 @@ public class MayPenaltyChoiceHandlerService {
                 ability.targetCardId(), ability.sourcePermanentId());
         syntheticEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
         syntheticEntry.setAttackedTargetId(ability.attackedTargetId());
+        if (effect.payerIsEnchantedController()) {
+            syntheticEntry.setTriggeringPermanentControllerId(ability.controllerId());
+        }
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

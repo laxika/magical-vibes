@@ -107,9 +107,9 @@ class SilversmoteGhoulTest extends BaseCardTest {
     void sacrificeDuringEndStepDoesNotTriggerReturn() {
         harness.addToBattlefield(player1, new SilversmoteGhoul());
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        advanceToEndStep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        advanceToEndStep(player1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -125,11 +125,11 @@ class SilversmoteGhoulTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ghoul));
         harness.setHand(player1, List.of(new MakeshiftMannequin()));
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
             advanceToEndStep(player1);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+            harness.addMana(player1, ManaColor.BLACK, 2);
             assertThat(gd.stack).hasSize(1);
             harness.castInstant(player1, 0, ghoul.getId());
             harness.passBothPriorities();

@@ -89,7 +89,7 @@ class SoulherderTest extends BaseCardTest {
     void stolenCreatureReturnsToOwner() {
         Permanent soulherder = harness.addToBattlefieldAndReturn(player1, new Soulherder());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        setOwnerAndController(bears, player2, player1);
 
         advanceToEndStep(player1);
         harness.handlePermanentChosen(player1, bears.getId());

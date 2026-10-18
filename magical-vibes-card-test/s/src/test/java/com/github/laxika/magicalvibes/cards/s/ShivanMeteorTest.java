@@ -59,9 +59,9 @@ class ShivanMeteorTest extends BaseCardTest {
         ShivanMeteor card = suspendCard();
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

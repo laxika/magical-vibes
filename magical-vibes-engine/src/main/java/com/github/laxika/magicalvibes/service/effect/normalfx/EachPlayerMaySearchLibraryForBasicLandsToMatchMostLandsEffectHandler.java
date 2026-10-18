@@ -53,8 +53,9 @@ public class EachPlayerMaySearchLibraryForBasicLandsToMatchMostLandsEffectHandle
                 .toList();
 
         if (!picks.isEmpty()) {
-            basicLandSearchQueueSupport.advance(
-                    gameData, LibrarySearchFollowUp.basicLandSearches(picks, List.of()));
+            LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of());
+            basicLandSearchQueueSupport.advance(gameData, followUp.withBasicLandSearchQueue(
+                    followUp.basicLandSearchQueue().withOptionalSearch(false)));
         }
     }
 }

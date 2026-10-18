@@ -494,6 +494,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature or planeswalker must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy destroyChoice
+                && destroyChoice.mandatory() && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one permanent must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
@@ -524,9 +528,25 @@ public class MultiPermanentChoiceHandlerService {
                     + " lands must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.UntapPermanentsForAmount choice
+                && !choice.upTo()
                 && permanentIds.size() != choice.requiredCount()) {
             throw new IllegalStateException("Exactly " + choice.requiredCount()
                     + " permanents must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.StaticOrbUntap orbUntap) {
+            for (var restriction : orbUntap.remainingRestrictions()) {
+                long matching = permanentIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .filter(perm -> restriction.filter() == null
+                                || predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, perm, restriction.filter()))
+                        .count();
+                if (matching > restriction.maxUntap()) {
+                    throw new IllegalStateException("At most " + restriction.maxUntap()
+                            + " of these permanents can untap");
+                }
+            }
         }
         if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 && permanentIds.size() != 2) {
@@ -873,6 +893,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne ctx
                 && ctx.opponentChoosing() && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
+        }
+
+        if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets attackTargets) {
+            validateAtMostOnePermanentPerController(gameData, attackTargets.pending().sourceCard(), permanentIds);
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -1337,6 +1361,20 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
+        }
+    }
+
+    private void validateAtMostOnePermanentPerController(GameData gameData, Card sourceCard, List<UUID> permanentIds) {
+        if (sourceCard == null
+                || sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+            return;
+        }
+        Set<UUID> controllers = new HashSet<>();
+        for (UUID permanentId : permanentIds) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
+            if (controllerId != null && !controllers.add(controllerId)) {
+                throw new IllegalStateException("May target at most one permanent per controller");
+            }
         }
     }
 
@@ -2298,17 +2336,20 @@ public class MultiPermanentChoiceHandlerService {
 
     private void handleSacrificeLandsSearchLandsToBattlefieldTapped(GameData gameData, UUID playerId,
                                                                     List<UUID> permanentIds) {
-        int sacrificed = 0;
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
+        List<Permanent> sacrificedPermanents = permanentIds.stream()
+                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        int sacrificed = sacrificedPermanents.size();
+        permanentRemovalService.performSimultaneousRemovals(gameData, sacrificedPermanents, () -> {
+            for (Permanent perm : sacrificedPermanents) {
                 destructionSupport.sacrificeAndLog(gameData, perm, playerId);
-                sacrificed++;
             }
-        }
+        });
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Search the library for up to that many land cards, put them onto the battlefield tapped.
+        // Scapeshift shuffles its controller's library whether or not a search happens.
         if (sacrificed > 0 && !librarySearchSupport.isSearchPrevented(gameData, playerId)) {
             List<Card> deck = gameData.playerDecks.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
@@ -2319,7 +2360,6 @@ public class MultiPermanentChoiceHandlerService {
                         .filter(card -> card.hasType(com.github.laxika.magicalvibes.model.CardType.LAND))
                         .toList();
                 if (lands.isEmpty()) {
-                    com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
                     gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no land cards. Library is shuffled."));
                 } else {
                     String prompt = "Search your library for up to " + sacrificed + " land card"
@@ -2336,6 +2376,8 @@ public class MultiPermanentChoiceHandlerService {
                 }
             }
         }
+
+        com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
         // No search begun — follow standard completion: SBA → may abilities → resume effects
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

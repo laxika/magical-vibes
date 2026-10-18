@@ -27,7 +27,7 @@ public class SummonEsperValigarmanda extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         addEffect(EffectSlot.SAGA_CHAPTER_I,
-                new ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect(instantOrSorcery));
+                new ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect(instantOrSorcery, true));
 
         for (EffectSlot chapter : Set.of(
                 EffectSlot.SAGA_CHAPTER_II,

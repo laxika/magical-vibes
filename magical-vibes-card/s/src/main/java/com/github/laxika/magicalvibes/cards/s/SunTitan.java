@@ -41,7 +41,8 @@ public class SunTitan extends Card {
     public SunTitan() {
         // Whenever Sun Titan enters the battlefield or attacks,
         // you may return target permanent card with mana value 3 or less
-        // from your graveyard to the battlefield.
+        // from your graveyard to the battlefield. The target is chosen when the trigger goes on the
+        // stack (CR 603.3d); the "may" is decided on resolution (CR 603.5).
         MayEffect returnEffect = new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -49,8 +50,10 @@ public class SunTitan extends Card {
                                 new CardIsPermanentPredicate(),
                                 new CardMaxManaValuePredicate(3)
                         )))
+                        .targetGraveyard(true)
+                        .chooseAuraAttachment(true)
                         .build(),
-                "You may return target permanent card with mana value 3 or less from your graveyard to the battlefield."
+                "Return the targeted permanent card to the battlefield?"
         );
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnEffect);
         addEffect(EffectSlot.ON_ATTACK, returnEffect);

@@ -45,7 +45,8 @@ public class ReturnOneCreatureCardPutIntoGraveyardThisWayEffectHandler implement
         List<Integer> validIndices = IntStream.range(0, graveyard.size())
                 .filter(index -> {
                     Card card = graveyard.get(index);
-                    return destroyedCardIds.contains(card.getId()) && card.hasType(CardType.CREATURE);
+                    return destroyedCardIds.contains(card.getId()) && !card.isToken()
+                            && card.hasType(CardType.CREATURE);
                 })
                 .boxed()
                 .toList();

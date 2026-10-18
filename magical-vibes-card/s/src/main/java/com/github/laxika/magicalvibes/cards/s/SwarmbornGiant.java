@@ -20,7 +20,7 @@ public class SwarmbornGiant extends Card {
     public SwarmbornGiant() {
         SourceIsMonstrous monstrous = new SourceIsMonstrous();
 
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF, new SacrificeSelfEffect());
+        addEffect(EffectSlot.ON_CONTROLLER_DEALT_COMBAT_DAMAGE, new SacrificeSelfEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{G}{G}",

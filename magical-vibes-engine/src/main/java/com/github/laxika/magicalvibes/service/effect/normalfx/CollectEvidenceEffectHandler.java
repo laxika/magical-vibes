@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,7 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -115,7 +117,9 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 for (Permanent permanent : battlefield) {
-                    if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)) {
+                    if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)
+                            && !validTargetService.isBlockedByHexproofOrGrantedEffect(
+                            gameData, permanent, entry.getControllerId())) {
                         validPermanentTargets.add(permanent.getId());
                     }
                 }

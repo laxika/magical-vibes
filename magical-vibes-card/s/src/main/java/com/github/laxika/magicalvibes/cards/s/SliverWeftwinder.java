@@ -25,9 +25,11 @@ import com.github.laxika.magicalvibes.cards.s.SteelformSliver;
 import com.github.laxika.magicalvibes.cards.s.StrikingSliver;
 import com.github.laxika.magicalvibes.cards.t.TemperedSliver;
 import com.github.laxika.magicalvibes.cards.t.TheFirstSliver;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -74,6 +76,7 @@ public class SliverWeftwinder extends Card {
         CardSubtypePredicate sliverCard = new CardSubtypePredicate(CardSubtype.SLIVER);
         PermanentHasSubtypePredicate sliverCreature = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
 
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
         addEffect(EffectSlot.STATIC, AlternativeCostForSpellsEffect.warp("{3}", sliverCard));
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -7,7 +7,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -106,8 +111,11 @@ class SkyfisherSpiderTest extends BaseCardTest {
     void stolenSpiderStaysInOwnersGraveyard() {
         SkyfisherSpider spiderCard = new SkyfisherSpider();
         spiderCard.setOwnerId(player2.getId());
-        Permanent spider = harness.addToBattlefieldAndReturn(player1, spiderCard);
-        gd.stolenCreatures.put(spider.getId(), player2.getId());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, spiderCard);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), spider,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         int lifeBefore = gd.getLife(player1.getId());
         int opponentLifeBefore = gd.getLife(player2.getId());

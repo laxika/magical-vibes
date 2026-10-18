@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,6 +19,6 @@ public class FealtyToTheRealm extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect())
                 .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect(true))
                 .addEffect(EffectSlot.STATIC, new MustAttackEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackControllerEffect());
+                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackPlayerEffect());
     }
 }

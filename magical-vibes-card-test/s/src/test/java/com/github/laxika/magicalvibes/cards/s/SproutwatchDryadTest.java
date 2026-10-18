@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SproutwatchDryad.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({SproutwatchDryad.class, WindDrake.class, GrizzlyBears.class})
 class SproutwatchDryadTest extends BaseCardTest {
 
     private void advanceToCombatAndResolve(Player activePlayer) {
@@ -30,21 +30,21 @@ class SproutwatchDryadTest extends BaseCardTest {
     @DisplayName("Gains a keyword shared by a creature you control")
     void gainsKeywordSharedByControlledCreature() {
         Permanent dryad = harness.addToBattlefieldAndReturn(player1, new SproutwatchDryad());
-        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent flier = harness.addToBattlefieldAndReturn(player1, new WindDrake());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToCombatAndResolve(player1);
 
         assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
-        assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, flier, Keyword.FLYING)).isTrue();
     }
 
     @Test
     @DisplayName("Gains a keyword found on a card in its controller's hand")
     void gainsKeywordFoundInHand() {
         Permanent dryad = harness.addToBattlefieldAndReturn(player1, new SproutwatchDryad());
-        harness.setHand(player1, List.of(new FugitiveWizard()));
+        harness.setHand(player1, List.of(new WindDrake()));
 
         advanceToCombatAndResolve(player1);
 

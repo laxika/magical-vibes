@@ -116,6 +116,7 @@ class SkybladesBoonTest extends BaseCardTest {
         SkybladesBoon first = new SkybladesBoon();
         SkybladesBoon second = new SkybladesBoon();
         harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.WHITE, 1);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerReturnsCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -42,15 +43,20 @@ public class TargetPlayerReturnsCardFromGraveyardToHandEffectHandler implements 
         if (targetPlayerId == null) {
             return;
         }
+        returnCardFromGraveyard(gameData, entry.getCard(), targetPlayerId, returnEffect.filter());
+    }
 
+    /** Makes the player return a card matching {@code filter} from their graveyard to their hand. */
+    public void returnCardFromGraveyard(GameData gameData, Card sourceCard, UUID targetPlayerId,
+                                        CardPredicate filter) {
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         if (graveyard == null) {
             return;
         }
         List<Card> matchingCards = graveyard.stream()
-                .filter(card -> returnEffect.filter() == null
+                .filter(card -> filter == null
                         || predicateEvaluationService.matchesCardPredicate(
-                        card, returnEffect.filter(), entry.getCard().getId(), gameData, targetPlayerId))
+                        card, filter, sourceCard.getId(), gameData, targetPlayerId))
                 .toList();
         if (matchingCards.isEmpty()) {
             return;
@@ -65,8 +71,8 @@ public class TargetPlayerReturnsCardFromGraveyardToHandEffectHandler implements 
         List<Integer> validIndices = IntStream.range(0, matchingCards.size()).boxed().toList();
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice.builder(
                         targetPlayerId, validIndices, GraveyardChoiceDestination.HAND,
-                        entry.getCard().getName() + " — choose a "
-                                + CardPredicateUtils.describeFilter(returnEffect.filter())
+                        sourceCard.getName() + " — choose a "
+                                + CardPredicateUtils.describeFilter(filter)
                                 + " from your graveyard to return to your hand.")
                 .cardPool(new ArrayList<>(matchingCards))
                 .mandatory(true)

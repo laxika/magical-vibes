@@ -37,6 +37,13 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                 if (regenerationTargetId == null && entry.targetsForEffect(effect).size() == 1) {
                     regenerationTargetId = entry.targetsForEffect(effect).getFirst();
                 }
+                if (effect instanceof RegenerateEffect chosenOpponentRegenerate
+                        && chosenOpponentRegenerate.opponentMayDrawOnRegenerate()
+                        && !chosenOpponentRegenerate.targetsPermanent()
+                        && regenerationTargetId != null && gameData.playerIds.contains(regenerationTargetId)) {
+                    // The target is the opponent who may draw; the creature regenerating is the source.
+                    regenerationTargetId = entry.getSourcePermanentId();
+                }
                 if (entry.getSourcePermanentId() != null) {
                     Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                     if (source != null && source.getAttachedTo() != null) {
@@ -57,9 +64,14 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                 if (effect instanceof RegenerateEffect regenerate) {
                     if (regenerate.opponentMayDrawOnRegenerate()) {
                         perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() + 1);
-                        UUID opponentId = gameQueryService.getOpponentId(gameData, entry.getControllerId());
+                        UUID chosenOpponentId = !regenerate.targetsPermanent()
+                                && entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                                ? entry.getTargetId() : null;
+                        UUID opponentId = chosenOpponentId != null ? chosenOpponentId
+                                : gameQueryService.getOpponentId(gameData, entry.getControllerId());
                         if (opponentId != null) {
                             perm.getOpponentDrawRegenerationShieldRecipients().add(opponentId);
+                            perm.getOpponentDrawRegenerationShieldControllers().add(entry.getControllerId());
                         }
                     }
                     if (regenerate.putMinusOneCounterOnRegenerate()) {
@@ -68,6 +80,7 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                     if (regenerate.putPlusOnePlusOneCounterOnRegenerate()) {
                         perm.setPlusOnePlusOneCounterRegenerationShield(
                                 perm.getPlusOnePlusOneCounterRegenerationShield() + 1);
+                        perm.getPlusOnePlusOneCounterRegenerationShieldControllers().add(entry.getControllerId());
                     }
                     if (regenerate.gainControlOnRegenerate() && entry.getControllerId() != null) {
                         perm.getGainControlRegenerationShields().add(entry.getControllerId());

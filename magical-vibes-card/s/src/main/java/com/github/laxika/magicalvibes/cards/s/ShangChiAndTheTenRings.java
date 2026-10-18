@@ -21,7 +21,7 @@ public class ShangChiAndTheTenRings extends Card {
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // When the tenth +1/+1 counter is put on Shang-Chi, draw five cards and gain 5 life.
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
                 SequenceEffect.of(new DrawCardEffect(5), new GainLifeEffect(5))));
     }

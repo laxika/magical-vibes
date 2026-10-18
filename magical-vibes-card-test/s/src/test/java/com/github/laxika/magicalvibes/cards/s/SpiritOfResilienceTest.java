@@ -153,6 +153,7 @@ class SpiritOfResilienceTest extends BaseCardTest {
                 (PendingInteraction.GraveyardChoice) gd.interaction.activeInteraction();
         assertThat(choice.cardPool()).containsExactly(stone, timepiece);
         harness.handleGraveyardCardChosen(player1, 1);
+        harness.passBothPriorities();
 
         assertThat(spirit.getCard().getName()).isEqualTo("Perpetual Timepiece");
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

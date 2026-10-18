@@ -65,8 +65,8 @@ class SapVitalityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent boostedCreature = findPermanent(player1, "Grizzly Bears");
-        assertThat(boostedCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(boostedCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boostedCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, boostedCreature)).isEqualTo(2);
     }
 
     @Test
@@ -122,9 +122,9 @@ class SapVitalityTest extends BaseCardTest {
         Permanent chosenPermanent = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(chosen.getId()))
                 .findFirst().orElseThrow();
-        assertThat(unchosenPermanent.getEffectivePower()).isEqualTo(2);
-        assertThat(chosenPermanent.getEffectivePower()).isEqualTo(5);
-        assertThat(chosenPermanent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, unchosenPermanent)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, chosenPermanent)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, chosenPermanent)).isEqualTo(2);
     }
 
     @Test
@@ -146,8 +146,8 @@ class SapVitalityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent boostedCreature = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(boostedCreature.getEffectivePower()).isEqualTo(8);
-        assertThat(boostedCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boostedCreature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, boostedCreature)).isEqualTo(2);
     }
 
     @Test
@@ -172,8 +172,8 @@ class SapVitalityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent boostedCreature = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(boostedCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(boostedCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boostedCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, boostedCreature)).isEqualTo(2);
     }
 
     @Test
@@ -201,8 +201,8 @@ class SapVitalityTest extends BaseCardTest {
 
         Permanent secondIncarnation = findPermanent(player1, "Grizzly Bears");
         assertThat(secondIncarnation.getId()).isNotEqualTo(firstIncarnation.getId());
-        assertThat(secondIncarnation.getEffectivePower()).isEqualTo(5);
-        assertThat(secondIncarnation.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondIncarnation)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, secondIncarnation)).isEqualTo(2);
     }
 
     private void addSapVitalityMana() {

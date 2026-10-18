@@ -55,12 +55,13 @@ class SisterOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player2, 0, null, bearsId);
+        UUID abilityId = gd.stack.getFirst().getTargetableId();
         harness.passPriority(player2);
 
         harness.castFromHand(player1, new SisterOfSilence(), "{4}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, icy.getId());
+        harness.handlePermanentChosen(player1, abilityId);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();

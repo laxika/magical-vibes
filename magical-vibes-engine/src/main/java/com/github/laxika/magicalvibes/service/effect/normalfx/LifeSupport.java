@@ -359,7 +359,7 @@ public class LifeSupport {
 
     public void applyRadCounters(GameData gameData, UUID playerId, int amount, String sourceName,
                                  UUID placingPlayerId) {
-        if (amount <= 0) return;
+        if (amount <= 0 || gameQueryService.playersCantGetCounters(gameData)) return;
 
         int currentRad = gameData.playerRadCounters.getOrDefault(playerId, 0);
         gameData.playerRadCounters.put(playerId, currentRad + amount);

@@ -727,7 +727,7 @@ public class PermanentCounterSupport {
             // Multiple eligible — controller must choose one
             String counterName = counterTypeName(counterType);
             playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds,
-                    1, new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(counterType, count),
+                    1, new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(counterType, count, true),
                     "Choose a permanent to put " + count + " " + counterName + " counter(s) on.");
         }
     }
@@ -1122,7 +1122,7 @@ public class PermanentCounterSupport {
         gameData.stack.add(trigger);
     }
 
-    private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga, int loreCount) {
+    public void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga, int loreCount) {
         Card card = saga.getCard();
 
         if (sagaChapterService != null) {
@@ -1569,6 +1569,7 @@ public class PermanentCounterSupport {
             return;
         }
 
+        boolean firstCountersThisTurn = gameData.creaturesThatReceivedCountersThisTurn.add(creature.getId());
         for (Permanent source : new ArrayList<>(battlefield)) {
             Card card = source.getCard();
             List<CardEffect> effects = card.getEffects(EffectSlot.ON_ALLY_COUNTER_PUT_ON_CREATURE);
@@ -1611,7 +1612,7 @@ public class PermanentCounterSupport {
                     if (resolved instanceof OncePerTurnPerCreatureTriggerEffect oncePerCreature) {
                         Set<UUID> firedCreatures = gameData.oncePerCreatureTriggersFiredThisTurn
                                 .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet());
-                        if (firedCreatures.contains(creature.getId())) {
+                        if (!firstCountersThisTurn || firedCreatures.contains(creature.getId())) {
                             continue;
                         }
                         resolved = oncePerCreature.wrapped();
@@ -2113,6 +2114,8 @@ public class PermanentCounterSupport {
                 if (controllerId.equals(placingPlayerId)) {
                     firePlusOnePlusOneCountersPutOnControlledCreatureTriggers(gameData, controllerId, count);
                 }
+                firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, controllerId, count,
+                        EffectSlot.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE);
                 fireControllerPutPlusOnePlusOneCountersOnCreatureTriggers(
                         gameData, target, count, placingPlayerId, controllerId);
                 fireYouPutPlusOnePlusOneCountersOnAnyCreatureTriggers(gameData, count, placingPlayerId);

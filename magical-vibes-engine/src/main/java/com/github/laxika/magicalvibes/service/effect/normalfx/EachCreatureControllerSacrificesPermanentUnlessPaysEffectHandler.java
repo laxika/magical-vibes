@@ -53,6 +53,14 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
         List<UUID> keptIds = new ArrayList<>(context.accumulatedKeepIds());
         keptIds.addAll(chosenKeepIds);
 
+        if (!gameQueryService.canEffectCauseSacrifice(gameData, context.choosingPlayerId(),
+                context.sourceControllerId())) {
+            // The effect can't make this player sacrifice; paying was their only decision.
+            beginNextPlayer(gameData, context.remainingPlayerIds(), keptIds, context.accumulatedSacrificeIds(),
+                    context.manaCost(), context.sourceControllerId(), context.sourceName());
+            return;
+        }
+
         List<UUID> creatureIds = context.creatureIds();
         Set<UUID> chosenKeeps = new HashSet<>(chosenKeepIds);
         int requiredSacrifices = (int) creatureIds.stream()
@@ -77,9 +85,8 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         while (!remaining.isEmpty()) {
             UUID playerId = remaining.removeFirst();
-            if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
-                continue;
-            }
+            boolean sacrificeProtected = !gameQueryService.canEffectCauseSacrifice(
+                    gameData, playerId, sourceControllerId);
 
             List<UUID> creatureIds = collectCreatureIds(gameData, playerId);
             if (creatureIds.isEmpty()) {
@@ -88,6 +95,9 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
 
             int maxKeeps = maxAffordableKeeps(gameData, playerId, manaCost, creatureIds.size());
             if (maxKeeps == 0) {
+                if (sacrificeProtected) {
+                    continue;
+                }
                 beginSacrificeChoice(gameData, playerId, creatureIds, creatureIds.size(), remaining,
                         accumulatedKeepIds, accumulatedSacrificeIds, manaCost, sourceControllerId,
                         sourceName);
@@ -102,7 +112,8 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
             return;
         }
 
-        applyDecisions(gameData, accumulatedKeepIds, accumulatedSacrificeIds, manaCost, sourceName);
+        applyDecisions(gameData, accumulatedKeepIds, accumulatedSacrificeIds, manaCost, sourceName,
+                sourceControllerId);
     }
 
     private void beginSacrificeChoice(GameData gameData, UUID playerId, List<UUID> creatureIds,
@@ -141,7 +152,7 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
     }
 
     private void applyDecisions(GameData gameData, List<UUID> keepIds,
-            List<UUID> sacrificeIds, String manaCost, String sourceName) {
+            List<UUID> sacrificeIds, String manaCost, String sourceName, UUID sourceControllerId) {
         Set<UUID> finalKeepIds = new HashSet<>(keepIds);
         List<UUID> finalSacrificeIds = new ArrayList<>(sacrificeIds);
 
@@ -163,7 +174,9 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
                                     + sourceName + "."));
                 } else {
                     finalKeepIds.remove(keepId);
-                    finalSacrificeIds.add(keepId);
+                    if (gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
+                        finalSacrificeIds.add(keepId);
+                    }
                 }
             }
         }

@@ -69,7 +69,7 @@ class SaheeliTheGiftedTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(copies).hasSize(1);
-        assertThat(copies.getFirst().getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(copies.getFirst().hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(
                         copies.getFirst().getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
@@ -77,6 +77,7 @@ class SaheeliTheGiftedTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Worn Powerstone")).hasSize(1);

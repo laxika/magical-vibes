@@ -231,6 +231,10 @@ class StorageMatrixTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+        for (int rounds = 0; rounds < 20 && !gd.interaction.isAwaitingInput()
+                && !(gd.activePlayerId.equals(nextActivePlayer.getId())
+                && (gd.currentStep == TurnStep.UNTAP || gd.currentStep == TurnStep.UPKEEP)); rounds++) {
+            harness.passBothPriorities();
+        }
     }
 }

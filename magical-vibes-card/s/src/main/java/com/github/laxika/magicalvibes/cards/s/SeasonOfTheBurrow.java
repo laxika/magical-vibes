@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -63,7 +64,8 @@ public class SeasonOfTheBurrow extends Card {
                             new CardIsPermanentPredicate(),
                             new CardMaxManaValuePredicate(3))))
                     .targetGraveyard(true)
-                    .grantIndestructible(true)
+                    .enterWithCounter(CounterType.INDESTRUCTIBLE)
+                    .enterWithCounterCount(1)
                     .build());
         }
 

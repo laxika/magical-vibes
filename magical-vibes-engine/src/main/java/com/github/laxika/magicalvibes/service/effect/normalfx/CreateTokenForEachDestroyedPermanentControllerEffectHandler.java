@@ -30,7 +30,9 @@ public class CreateTokenForEachDestroyedPermanentControllerEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var createTokens = (CreateTokenForEachDestroyedPermanentControllerEffect) effect;
         Map<UUID, Integer> tokenCountsByController = new LinkedHashMap<>();
-        List<UUID> destroyedControllerIds = createTokens.nontokenOnly()
+        List<UUID> destroyedControllerIds = createTokens.eachTarget()
+                ? entry.getEventTargetedPlayerIds()
+                : createTokens.nontokenOnly()
                 ? entry.getEventNontokenPlayerIds()
                 : entry.getEventPlayerIds();
         for (UUID controllerId : destroyedControllerIds) {

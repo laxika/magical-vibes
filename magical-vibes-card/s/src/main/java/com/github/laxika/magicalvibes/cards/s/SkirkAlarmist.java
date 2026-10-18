@@ -22,7 +22,7 @@ public class SkirkAlarmist extends Card {
                 null,
                 List.of(
                         new TurnTargetCreatureFaceUpEffect(),
-                        new SacrificeTargetPermanentAtEndStepEffect()
+                        new SacrificeTargetPermanentAtEndStepEffect(false, true)
                 ),
                 "{T}: Turn target face-down creature you control face up. At the beginning of the next end step, sacrifice it.",
                 new PermanentPredicateTargetFilter(

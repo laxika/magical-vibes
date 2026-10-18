@@ -26,10 +26,12 @@ class SkyknightVanguardTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0));
 
-        assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
+        });
 
         List<Permanent> soldiers = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Soldier"))
@@ -71,11 +73,13 @@ class SkyknightVanguardTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0, 1));
 
-        assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(2);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).toList();
@@ -101,13 +105,15 @@ class SkyknightVanguardTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0));
 
-        harness.castInstant(player2, 0, vanguard.getId());
-        harness.passBothPriorities();
-        harness.assertInGraveyard(player1, "Skyknight Vanguard");
-        harness.assertNotOnBattlefield(player1, "Skyknight Vanguard");
-        harness.passBothPriorities();
+            harness.castInstant(player2, 0, vanguard.getId());
+            harness.passBothPriorities();
+            harness.assertInGraveyard(player1, "Skyknight Vanguard");
+            harness.assertNotOnBattlefield(player1, "Skyknight Vanguard");
+            harness.passBothPriorities();
+        });
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).toList();

@@ -33,8 +33,12 @@ public class EnteringCreatureFightsTargetCreatureEffectHandler implements Normal
                 : entry.getSourcePermanentId();
         if (fighterId == null) return;
 
-        fightSupport.fight(gameData, entry,
-                gameQueryService.findPermanentById(gameData, fighterId),
-                gameQueryService.findPermanentById(gameData, targetId));
+        var fighter = gameQueryService.findPermanentById(gameData, fighterId);
+        var target = gameQueryService.findPermanentById(gameData, targetId);
+        if (((EnteringCreatureFightsTargetCreatureEffect) effect).noFight()) {
+            fightSupport.dealPowerDamageToEachOther(gameData, entry, fighter, target);
+            return;
+        }
+        fightSupport.fight(gameData, entry, fighter, target);
     }
 }

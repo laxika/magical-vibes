@@ -13,6 +13,6 @@ public class SeasonedWarrenguard extends Card {
 
     public SeasonedWarrenguard() {
         addEffect(EffectSlot.ON_ATTACK,
-                new ConditionalEffect(new ControlsPermanent(new PermanentIsTokenPredicate()), new BoostSelfEffect(2, 0)));
+                ConditionalEffect.atTriggerTime(new ControlsPermanent(new PermanentIsTokenPredicate()), new BoostSelfEffect(2, 0)));
     }
 }

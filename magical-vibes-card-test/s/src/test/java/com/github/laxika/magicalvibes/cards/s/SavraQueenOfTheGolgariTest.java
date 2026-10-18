@@ -201,10 +201,9 @@ class SavraQueenOfTheGolgariTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new SavraQueenOfTheGolgari());
         harness.addToBattlefield(player2, new CullingDais());
-        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new GolgariRotwurm());
+        harness.addToBattlefield(player2, new GolgariRotwurm());
 
         harness.activateAbility(player2, 0, null, null);
-        harness.handlePermanentChosen(player2, sacrificed.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

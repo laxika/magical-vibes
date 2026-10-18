@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -57,6 +59,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -137,28 +140,32 @@ public final class TextChangeTransformer {
      * the battlefield, which makes {@link #transform(CardEffect, List, List)} a no-op.
      */
     public static List<TextReplacement> globalColorWordReplacements(GameData gameData) {
-        List<TextReplacement> replacements = null;
+        List<Permanent> sources = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                CardColor chosen = permanent.getChosenColor();
-                if (chosen == null || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .noneMatch(AllColorWordsBecomeChosenColorEffect.class::isInstance)) {
-                    continue;
-                }
-                String chosenWord = chosen.name().toLowerCase(Locale.ROOT);
-                if (replacements == null) {
-                    replacements = new ArrayList<>();
-                }
-                for (String word : COLOR_WORDS.keySet()) {
-                    if (!word.equals(chosenWord)) {
-                        replacements.add(new TextReplacement(word, chosenWord));
-                    }
+                if (permanent.getChosenColor() != null && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(AllColorWordsBecomeChosenColorEffect.class::isInstance)) {
+                    sources.add(permanent);
                 }
             }
         }
-        return replacements == null ? List.of() : replacements;
+        if (sources.isEmpty()) {
+            return List.of();
+        }
+        // Layer 3 applies in timestamp order (CR 613.7), so the most recent source's rewrite runs last.
+        sources.sort(Comparator.comparingLong(Permanent::getTimestamp));
+        List<TextReplacement> replacements = new ArrayList<>();
+        for (Permanent source : sources) {
+            String chosenWord = source.getChosenColor().name().toLowerCase(Locale.ROOT);
+            for (String word : COLOR_WORDS.keySet()) {
+                if (!word.equals(chosenWord)) {
+                    replacements.add(new TextReplacement(word, chosenWord));
+                }
+            }
+        }
+        return replacements;
     }
 
     /**
@@ -268,6 +275,10 @@ public final class TextChangeTransformer {
                         : new ChangeColorTextEffect(change.colorWordsAllowed(), change.landTypesAllowed(),
                         change.canTargetSpell(), change.untilEndOfTurn(), change.creatureTypesAllowed(), excluded,
                         change.fixedReplacementCreatureType());
+            }
+            case ReturnToHandEffect bounce -> {
+                PermanentPredicate filter = apply(bounce.filter(), substitution);
+                yield filter == bounce.filter() ? bounce : bounce.withFilter(filter);
             }
             case BoostTargetCreatureEffect boost -> {
                 DynamicAmount power = apply(boost.powerBoost(), substitution);
@@ -528,6 +539,10 @@ public final class TextChangeTransformer {
                 Set<CardColor> colors = replaceColor(colorIn.colors(), substitution);
                 yield colors == colorIn.colors() ? colorIn : new PermanentColorInPredicate(colors);
             }
+            case PermanentPowerAtMostControlledSubtypeCountPredicate count ->
+                    replaceSubtype(count.subtype(), substitution) == count.subtype()
+                            ? count : new PermanentPowerAtMostControlledSubtypeCountPredicate(
+                                    replaceSubtype(count.subtype(), substitution));
             case PermanentAllOfPredicate allOf -> {
                 List<PermanentPredicate> children = applyAll(allOf.predicates(), substitution);
                 yield children == allOf.predicates() ? allOf : new PermanentAllOfPredicate(children);

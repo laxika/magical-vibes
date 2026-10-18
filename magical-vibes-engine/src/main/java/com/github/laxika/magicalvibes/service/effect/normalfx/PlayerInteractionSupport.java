@@ -307,7 +307,8 @@ public class PlayerInteractionSupport {
         gameData.rerunCurrentEffectAfterInteraction = false;
 
         List<UUID> drawnCardIds = gameData.cardsDrawnThisTurnIds.getOrDefault(playerId, List.of());
-        if (drawnCardIds.size() <= beforeDrawCount) {
+        // CR 121.6c: a replaced draw (nothing drawn, or several cards drawn instead) gets no reveal or discard.
+        if (drawnCardIds.size() - beforeDrawCount != 1) {
             return;
         }
 

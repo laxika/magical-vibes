@@ -45,7 +45,7 @@ public class ExileOtherNonlandPermanentsWithManaValueAtMostEventValueEffectHandl
             for (Permanent permanent : battlefield) {
                 if (!sourcePermanentId.equals(permanent.getId())
                         && !gameQueryService.isLand(gameData, permanent)
-                        && permanent.getCard().getManaValue() <= maximumManaValue) {
+                        && gameQueryService.getPermanentManaValue(permanent) <= maximumManaValue) {
                     toExile.add(permanent);
                 }
             }

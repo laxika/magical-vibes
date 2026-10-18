@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -21,7 +22,7 @@ public class SavvyHunter extends Card {
     public SavvyHunter() {
         CreateTokenEffect foodToken = foodToken();
         addEffect(EffectSlot.ON_ATTACK, foodToken);
-        addEffect(EffectSlot.ON_BLOCK, foodToken);
+        addEffect(EffectSlot.ON_BLOCK, foodToken, TriggerMode.ONCE_PER_BLOCK);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -21,7 +21,7 @@ public class SpiderManNoir extends Card {
                 new AttacksAlone(),
                 SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                        new SurveilEffect(new CountersOnTargetPermanent(CounterType.PLUS_ONE_PLUS_ONE))
+                        new SurveilEffect(new CountersOnTargetPermanent(null))
                 )));
     }
 }

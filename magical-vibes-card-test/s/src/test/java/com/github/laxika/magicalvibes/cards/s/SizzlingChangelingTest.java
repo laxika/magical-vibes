@@ -128,6 +128,8 @@ class SizzlingChangelingTest extends BaseCardTest {
     @Test
     void playPermissionLastsThroughNextTurnAndThenExpires() {
         Card shock = resolveDeathTrigger();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Mountain(), new Mountain(), new Mountain()));
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain(), new Mountain()));
 

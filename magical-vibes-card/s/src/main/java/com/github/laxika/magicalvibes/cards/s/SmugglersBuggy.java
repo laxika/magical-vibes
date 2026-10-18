@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 import java.util.List;
@@ -25,15 +23,11 @@ public class SmugglersBuggy extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(4, true));
 
         // Whenever this Vehicle deals combat damage to a player, you may cast the exiled card
-        // without paying its mana cost.
+        // without paying its mana cost. If you do, return this Vehicle to its owner's hand.
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         new PermanentIsSourcePermanentPredicate(),
-                        new MayCastCardExiledWithSourceEffect()));
-
-        // If the exiled card is cast, return this Vehicle to its owner's hand.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new PlayedCardExiledWithSourceTriggerEffect(ReturnToHandEffect.self()));
+                        MayCastCardExiledWithSourceEffect.returningSourceToHandIfCast()));
 
         // Crew 2.
         addActivatedAbility(new ActivatedAbility(

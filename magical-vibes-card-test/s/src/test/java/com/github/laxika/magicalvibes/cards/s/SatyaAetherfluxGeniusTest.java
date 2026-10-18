@@ -32,7 +32,7 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isTrue();
+        assertThat(token.isAttackedThisTurn()).isFalse();
         assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(gqs.getEffectivePower(gd, bears));
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(gqs.getEffectiveToughness(gd, bears));

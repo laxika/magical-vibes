@@ -3,14 +3,21 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardAndPutCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+
+import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "143")
 @CardRegistration(set = "OM1", collectorNumber = "141")
 public class ScarletSpiderKaine extends Card {
 
     public ScarletSpiderKaine() {
+        // Mayhem {B/R}
+        addCastingOption(new GraveyardCast(null, "{B/R}", List.of(), new CardDiscardedThisTurn()));
+
         // When Scarlet Spider enters, you may discard a card. If you do, put a +1/+1 counter on
         // him.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(

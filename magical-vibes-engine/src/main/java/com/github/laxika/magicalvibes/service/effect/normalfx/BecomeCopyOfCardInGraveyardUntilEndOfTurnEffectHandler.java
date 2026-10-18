@@ -40,6 +40,11 @@ public class BecomeCopyOfCardInGraveyardUntilEndOfTurnEffectHandler implements N
                 (BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, copyEffect.cardId());
+        if (graveyardCard == null) {
+            // A replacement effect (Rest in Peace) exiled the card instead; it was still found and revealed.
+            var exiled = gameData.findExiledCard(copyEffect.cardId());
+            graveyardCard = exiled == null ? null : exiled.card();
+        }
         if (source == null || graveyardCard == null) {
             return;
         }

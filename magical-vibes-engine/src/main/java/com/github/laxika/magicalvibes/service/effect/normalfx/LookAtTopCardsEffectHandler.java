@@ -911,7 +911,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     private void resolveWithoutPredicate(GameData gameData, StackEntry entry, UUID controllerId,
             List<Card> topCards, String playerName, int count, int toHandCount,
             LookAtTopCardsEffect effect) {
-        if (count <= toHandCount) {
+        boolean upToSeveral = toHandCount > 1 && !effect.exactChooseCount();
+        if (count <= toHandCount && !upToSeveral) {
             for (Card card : topCards) {
                 gameData.addCardToHand(controllerId, card);
             }

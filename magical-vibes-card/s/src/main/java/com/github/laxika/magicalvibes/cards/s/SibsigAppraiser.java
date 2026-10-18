@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class SibsigAppraiser extends Card {
 
     public SibsigAppraiser() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
     }
 }

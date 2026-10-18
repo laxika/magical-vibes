@@ -229,7 +229,8 @@ class SaviorOfTheSmallTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInHand(player1, "Grizzly Bears");
 
-        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        Card assault = new RelentlessAssault();
+        harness.castFromHand(player1, assault, "{2}{R}{R}");
         harness.passBothPriorities();
         gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
@@ -237,7 +238,7 @@ class SaviorOfTheSmallTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(secondCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(secondCreature, assault);
     }
 
     private Permanent addSavior() {

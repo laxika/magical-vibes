@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,7 +45,8 @@ class SkyhunterStrikeForceTest extends BaseCardTest {
         int powerBefore = gqs.getEffectivePower(gd, ally);
         int toughnessBefore = gqs.getEffectiveToughness(gd, ally);
 
-        declareAttackers(player1, java.util.List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, java.util.List.of(1)));
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(powerBefore + 1);

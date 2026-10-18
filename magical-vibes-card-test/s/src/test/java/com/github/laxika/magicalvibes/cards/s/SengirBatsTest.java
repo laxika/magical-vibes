@@ -130,8 +130,10 @@ class SengirBatsTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         resolveCombat();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.assertOnBattlefield(player2, "Sengir Bats");
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);

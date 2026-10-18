@@ -13,9 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class Soulcatcher extends Card {
 
     public Soulcatcher() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        TriggeringPermanentConditionalEffect flyingCreatureDies = new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 new PutCountersOnSourceEffect(1, 1, 1)
-        ));
+        );
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, flyingCreatureDies);
+        addEffect(EffectSlot.ON_DEATH, flyingCreatureDies);
     }
 }

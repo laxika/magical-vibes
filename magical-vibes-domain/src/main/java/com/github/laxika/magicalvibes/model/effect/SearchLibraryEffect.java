@@ -73,6 +73,19 @@ public record SearchLibraryEffect(
         boolean continuesPreviousSearch
 ) implements CardEffect {
 
+    /**
+     * The same tutor without its own shuffle, for a multi-part search whose last part shuffles once
+     * (Shard Convergence's "then shuffle" follows all four picks).
+     */
+    public SearchLibraryEffect withoutShuffle() {
+        return new SearchLibraryEffect(count, filter, destination, manaValueBound, castFromGraveyardCount,
+                requireDifferentNames, grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
+                searchPlayer, onlyIfSacrificed, battlefieldIfChosenBeholdType, false,
+                battlefieldCounter, enterWithCounters, topLibraryPosition,
+                battlefieldIfOpponentControlsMoreLands, topLibraryFractionDenominator, optionalCount,
+                continuesPreviousSearch);
+    }
+
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,
                                boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,

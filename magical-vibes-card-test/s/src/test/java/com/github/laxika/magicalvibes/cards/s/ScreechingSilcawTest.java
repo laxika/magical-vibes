@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ class ScreechingSilcawTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new SerraAngel(),
                 new SuntailHawk(), new SamiteHealer()));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).removeFirst();
         resolveAllTriggers();

@@ -94,7 +94,8 @@ public class DrawAndLoseLifeEqualToChosenCommanderManaValueEffectHandler
     private int commanderManaValue(GameData gameData, UUID ownerId, UUID commanderId) {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
-                if (permanent.getOriginalCard().getId().equals(commanderId)) {
+                if (permanent.getOriginalCard().getId().equals(commanderId)
+                        || permanent.getCard().getId().equals(commanderId)) {
                     return permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue();
                 }
             }

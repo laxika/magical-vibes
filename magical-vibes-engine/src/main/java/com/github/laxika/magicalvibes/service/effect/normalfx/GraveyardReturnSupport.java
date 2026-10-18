@@ -157,9 +157,15 @@ public class GraveyardReturnSupport {
      * {@code exileSourceFromGraveyard} ("exile it, then …" — Moldgraf Monstrosity, Sylvan
      * Hierophant). A no-op when the source card has already left the graveyard.
      */
-    private void exileSourceFromGraveyardIfRequested(GameData gameData, ReturnCardFromGraveyardEffect effect,
+    private void exileSourceFromGraveyardIfRequested(GameData gameData, StackEntry entry,
+                                                     ReturnCardFromGraveyardEffect effect,
                                                      UUID controllerId, UUID sourceCardId) {
         if (!effect.exileSourceFromGraveyard() || sourceCardId == null) {
+            return;
+        }
+        // A card that left the graveyard and came back is a new object the trigger cannot exile.
+        if (entry != null && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
             return;
         }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCardId);
@@ -191,7 +197,7 @@ public class GraveyardReturnSupport {
                                         UUID controllerId, UUID sourceCardId, UUID targetCardId) {
         // "Exile it, then return another target creature card …" (Sylvan Hierophant): the self-exile
         // happens first and is not contingent on the return actually working.
-        exileSourceFromGraveyardIfRequested(gameData, effect, controllerId, sourceCardId);
+        exileSourceFromGraveyardIfRequested(gameData, entry, effect, controllerId, sourceCardId);
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
@@ -441,10 +447,32 @@ public class GraveyardReturnSupport {
         if (effect.loseLifeEqualToManaValue()) {
             applyLifeLossEqualToManaValue(gameData, entry, controllerId, targetCard);
         }
-        if (returnedPermanent != null && effect.enterAttacking()) {
+        if (returnedPermanent != null && effect.enterAttacking()
+                && attacksSameOpponentAsAbilitySource(gameData, entry, effect, targetOwnerId)) {
+            // CR 508.4: the effect already specified what the creature attacks ("attacking that player").
+            returnedPermanent.enterAttacking(true);
+            returnedPermanent.setAttackedOrBlockedSinceLastUpkeep(true);
+            returnedPermanent.setAttackTarget(targetOwnerId);
+        } else if (returnedPermanent != null && effect.enterAttacking()) {
             makeChosenPermanentAttackingEffectHandler.resolve(gameData, entry,
                     new com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect(returnedPermanent.getId()));
         }
+    }
+
+    /**
+     * True when the returned creature comes from an opponent's graveyard on an ability whose attacking
+     * source is already attacking that same opponent, so "enters tapped and attacking that player"
+     * leaves nothing for the controller to choose.
+     */
+    private boolean attacksSameOpponentAsAbilitySource(GameData gameData, StackEntry entry,
+                                                       ReturnCardFromGraveyardEffect effect, UUID targetOwnerId) {
+        if (effect.source() != GraveyardSearchScope.OPPONENT_GRAVEYARD || targetOwnerId == null
+                || entry.getSourcePermanentId() == null) {
+            return false;
+        }
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return sourcePermanent != null && sourcePermanent.isAttacking()
+                && targetOwnerId.equals(sourcePermanent.getAttackTarget());
     }
 
     private boolean matchesReturnCardFilter(GameData gameData, StackEntry entry,
@@ -1489,7 +1517,7 @@ public class GraveyardReturnSupport {
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
         // Exile the source card from graveyard before selecting random cards (e.g. Moldgraf Monstrosity)
-        exileSourceFromGraveyardIfRequested(gameData, effect, controllerId, sourceCardId);
+        exileSourceFromGraveyardIfRequested(gameData, entry, effect, controllerId, sourceCardId);
         if (effect.exileSourceFromGraveyard() && graveyard != null && sourceCardId != null) {
             Card sourceCard = graveyard.stream()
                     .filter(c -> c.getId().equals(sourceCardId))
@@ -2823,7 +2851,11 @@ public class GraveyardReturnSupport {
             entry.getCreatedPermanentIds().add(tokenPermanent.getId());
 
             if (exileAtEndStep) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                // CR 603.7e: the ability that created the delayed exile keeps controlling it, even if the
+                // token changes control before the end step.
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
+                        false, null, null, entry.getControllerId(), false, entry.getCard()));
             }
             if (exileAtEndOfCombat) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(

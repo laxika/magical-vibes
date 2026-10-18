@@ -20,7 +20,7 @@ public class ShardOfTheNightbringer extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 new LoseLifeEffect(
                         new HalvedRoundedUp(new TargetPlayerLifeTotal()),
                         LoseLifeRecipient.TARGET_PLAYER,

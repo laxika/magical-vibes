@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +58,8 @@ class ScrollThiefTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage draws for Scroll Thief's controller, not the damaged player")
     void drawsForOtherController() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent thief = addCreatureReady(player2, new ScrollThief());
         thief.setAttacking(true);
         int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
@@ -74,6 +77,8 @@ class ScrollThiefTest extends BaseCardTest {
     @Test
     @DisplayName("The draw trigger resolves after Scroll Thief leaves the battlefield")
     void drawsAfterSourceLeavesBattlefield() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent thief = addCreatureReady(player1, new ScrollThief());
         thief.setAttacking(true);
         int handBefore = gd.playerHands.get(player1.getId()).size();

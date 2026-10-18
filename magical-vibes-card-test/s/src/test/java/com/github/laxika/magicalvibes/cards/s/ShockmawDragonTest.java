@@ -24,7 +24,7 @@ class ShockmawDragonTest extends BaseCardTest {
         Permanent twoToughnessCreature = addCreatureReady(player2, new FrontierMastodon());
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(oneToughnessCreature);

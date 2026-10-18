@@ -98,7 +98,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
-        assertThat(duplicate.getClass()).isEqualTo(discovered.getClass());
+        assertThat(duplicate.getName()).isEqualTo(discovered.getName());
         assertThat(duplicate.getId()).isNotEqualTo(discovered.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == discovered);

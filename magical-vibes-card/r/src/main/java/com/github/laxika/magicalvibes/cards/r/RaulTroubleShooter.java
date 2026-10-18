@@ -22,9 +22,7 @@ public class RaulTroubleShooter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(
-                        new MillEffect(1, MillRecipient.CONTROLLER),
-                        new MillEffect(1, MillRecipient.EACH_OPPONENT)),
+                List.of(new MillEffect(1, MillRecipient.EACH_PLAYER)),
                 "{T}: Each player mills a card."));
     }
 }

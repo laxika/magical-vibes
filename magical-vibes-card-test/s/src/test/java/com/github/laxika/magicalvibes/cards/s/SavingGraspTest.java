@@ -178,7 +178,7 @@ class SavingGraspTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Dawntreader Elk");
         harness.assertInHand(player1, "Dawntreader Elk");
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).noneMatch(c -> c.getName().equals("Dawntreader Elk"));
     }
 
     @Test

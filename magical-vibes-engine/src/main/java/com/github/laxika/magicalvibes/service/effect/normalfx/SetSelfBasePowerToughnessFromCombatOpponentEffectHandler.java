@@ -39,16 +39,24 @@ public class SetSelfBasePowerToughnessFromCombatOpponentEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent combatOpponent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (source == null || (combatOpponent == null
+        // CR 608.2h: an object that left the battlefield is used as it last existed there, so its
+        // departure snapshot (modifiers applied after the trigger was put on the stack) wins over
+        // the values captured when the trigger was put on the stack.
+        Permanent departed = combatOpponent != null || entry.getTargetId() == null ? null
+                : gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> entry.getTargetId().equals(snapshot.getId()))
+                .findFirst().orElse(null);
+        if (source == null || (combatOpponent == null && departed == null
                 && (entry.getCombatOpponentPowerAtTrigger() == null
                 || entry.getCombatOpponentToughnessAtTrigger() == null))) {
             return;
         }
 
-        int power = combatOpponent == null ? entry.getCombatOpponentPowerAtTrigger()
-                : gameQueryService.getEffectivePower(gameData, combatOpponent);
-        int toughness = combatOpponent == null ? entry.getCombatOpponentToughnessAtTrigger()
-                : gameQueryService.getEffectiveToughness(gameData, combatOpponent);
+        Permanent lastKnown = combatOpponent != null ? combatOpponent : departed;
+        int power = lastKnown == null ? entry.getCombatOpponentPowerAtTrigger()
+                : gameQueryService.getEffectivePower(gameData, lastKnown);
+        int toughness = lastKnown == null ? entry.getCombatOpponentToughnessAtTrigger()
+                : gameQueryService.getEffectiveToughness(gameData, lastKnown);
 
         source.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
         source.setBasePowerOverride(power);

@@ -77,6 +77,8 @@ public enum PreventionScope {
     ALL_BY_SELF,
     /** "Prevent all damage that would be dealt to you and creatures you control this turn" (Safe Passage). */
     ALL_TO_CONTROLLER_AND_CREATURES,
+    /** "Prevent all damage that would be dealt to you and permanents you control this turn" (Endure). */
+    ALL_TO_CONTROLLER_AND_PERMANENTS,
     /** "Prevent all damage that would be dealt to you and creatures you control this turn by matching sources." */
     ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that would be dealt to you this turn" (Riot Control). Unlike

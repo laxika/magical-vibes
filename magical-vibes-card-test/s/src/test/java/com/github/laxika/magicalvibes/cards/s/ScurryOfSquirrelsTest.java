@@ -46,9 +46,10 @@ class ScurryOfSquirrelsTest extends BaseCardTest {
             assertThat(copy.getAttackTarget()).isEqualTo(player3.getId());
         });
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        scurry.setAttacking(false);
+        copies.forEach(copy -> copy.setAttacking(false));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Scurry of Squirrels").stream()
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();

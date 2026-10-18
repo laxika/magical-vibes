@@ -97,7 +97,7 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("too few attack requirements");
+                .hasMessageContaining("must attack this combat");
     }
 
     @Test
@@ -134,6 +134,8 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
 
     @Test
     void requirementLastsThroughControllersNextTurnThenExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent surfer = addCreatureReady(player1, new SilverSurferGalactussHerald());
         Permanent target = addCreatureReady(player1, new GalactusDevourerOfWorlds());
         surfer.setAttacking(true);
@@ -144,7 +146,7 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("too few attack requirements");
+                .hasMessageContaining("must attack this combat");
 
         target.tap();
         declareAttackers(player1, List.of());

@@ -23,7 +23,7 @@ public class SilvergillMentor extends Card {
         // As an additional cost to cast this spell, behold a Merfolk or pay {2}.
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))),
-                new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.MERFOLK)));
+                new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.MERFOLK, true)));
 
         // When this creature enters, create a 1/1 white and blue Merfolk creature token.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(

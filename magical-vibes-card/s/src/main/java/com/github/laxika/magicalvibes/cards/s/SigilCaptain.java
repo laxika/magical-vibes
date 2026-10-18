@@ -12,7 +12,7 @@ public class SigilCaptain extends Card {
 
     public SigilCaptain() {
         // Whenever a creature you control enters, if that creature is 1/1, put two +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureExactStatsConditionalEffect(1, 1,
                         new PutCountersOnEnteringCreatureEffect(2, false)));
     }

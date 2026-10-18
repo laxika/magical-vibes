@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -19,7 +20,7 @@ public class SigardianEvangel extends Card {
 
     public SigardianEvangel() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConjureCardNamedIntoHandEffect(NAME, true));
+                new ConjureCardNamedIntoHandEffect(NAME, true), TriggerMode.INDEPENDENT);
 
         PermanentPredicate permanentYouDoNotControl = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());

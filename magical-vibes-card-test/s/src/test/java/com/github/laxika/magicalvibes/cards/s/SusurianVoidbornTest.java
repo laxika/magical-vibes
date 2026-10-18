@@ -194,6 +194,7 @@ class SusurianVoidbornTest extends BaseCardTest {
         SusurianVoidborn voidborn = new SusurianVoidborn();
         harness.setHand(player1, List.of(voidborn));
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of());
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
         harness.passUntil(TurnStep.END_STEP);

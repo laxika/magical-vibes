@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -18,7 +19,8 @@ public class Stonecloaker extends Card {
     public Stonecloaker() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ReturnPermanentControlledByPlayerToHandEffect(
-                        new PermanentIsCreaturePredicate(), "creature"));
+                        new PermanentIsCreaturePredicate(), "creature"),
+                TriggerMode.INDEPENDENT);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false));
     }

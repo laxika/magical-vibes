@@ -569,6 +569,14 @@ public class GameTestHarness {
                         false, null, null, null, null, null, true));
     }
 
+    public void castKickedCreatureWithRepeatedCosts(Player player, int cardIndex, UUID targetId,
+                                                     List<String> repeatedAdditionalCosts) {
+        castPermanentFromHand(player, cardIndex, targetId, null, 0, true, (castTargetId, castTargetIds) ->
+                gameService.playCard(gameData, player, cardIndex, 0, castTargetId, null, castTargetIds, List.of(),
+                        false, null, null, null, null, null, true, null, null, null, null,
+                        repeatedAdditionalCosts, false));
+    }
+
     public void castKickedCreatureWithPermanent(Player player, int cardIndex, UUID permanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
@@ -1837,7 +1845,9 @@ public class GameTestHarness {
     }
 
     public void tapPermanent(Player player, int permanentIndex) {
-        ensurePriority(player);
+        if (!isPayingMayCost(player)) {
+            ensurePriority(player);
+        }
         gameService.tapPermanent(gameData, player, permanentIndex);
     }
 
@@ -2304,6 +2314,12 @@ public class GameTestHarness {
      * Called automatically by harness action methods (cast, activate, tap) so
      * tests don't need to manually set up priority state.
      */
+    /** True while {@code player} is answering a "may pay" prompt, where mana abilities are activated mid-prompt. */
+    private boolean isPayingMayCost(Player player) {
+        return gameData.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice mc
+                && mc.playerId().equals(player.getId()) && mc.manaCost() != null;
+    }
+
     public void ensurePriority(Player player) {
         if (gameData.activePlayerId == null) {
             gameData.activePlayerId = player.getId();

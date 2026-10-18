@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,8 +38,10 @@ class SigiledSwordOfValeronTest extends BaseCardTest {
         Permanent sword = harness.addToBattlefieldAndReturn(player1, new SigiledSwordOfValeron());
         sword.setAttachedTo(creature.getId());
 
-        declareAttackers(player1, List.of(0));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passBothPriorities();
+        });
 
         Permanent knight = findPermanent(player1, "Knight");
         assertThat(knight.isTapped()).isFalse();
@@ -137,10 +140,11 @@ class SigiledSwordOfValeronTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         Permanent sword = harness.addToBattlefieldAndReturn(player1, new SigiledSwordOfValeron());
         sword.setAttachedTo(creature.getId());
-        declareAttackers(player1, List.of(0));
-        gd.playerBattlefields.get(player1.getId()).remove(sword);
-
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            gd.playerBattlefields.get(player1.getId()).remove(sword);
+            harness.passBothPriorities();
+        });
 
         assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
         assertThat(findPermanent(player1, "Knight").isAttacking()).isTrue();

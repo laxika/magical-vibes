@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -31,6 +32,7 @@ public class PutUpToCardsFromHandOntoBattlefieldSupport {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final AuraAttachmentService auraAttachmentService;
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             int maxCount, UUID sourceCardId, String sourceCardName) {
@@ -109,7 +111,7 @@ public class PutUpToCardsFromHandOntoBattlefieldSupport {
         try {
             if (hand != null) {
                 hand.removeIf(card -> {
-                    if (chosenIds.contains(card.getId())) {
+                    if (chosenIds.contains(card.getId()) && !staysInHand(gameData, playerId, card)) {
                         chosenCards.add(card);
                         return true;
                     }
@@ -151,10 +153,29 @@ public class PutUpToCardsFromHandOntoBattlefieldSupport {
                 graveyardService.endGraveyardLeaveBatch(gameData);
             }
         }
+        for (Card card : chosenCards) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+        }
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " puts "
                 + chosenCards.size() + (chosenCards.size() == 1 ? " card" : " cards")
                 + (includeGraveyard ? " from their hand and/or graveyard" : " from their hand")
                 + " onto the battlefield (" + sourceCardName + ")."));
+    }
+
+    /** An Aura with no legal object to enchant stays in its current zone (CR 303.4g). */
+    private boolean staysInHand(GameData gameData, UUID playerId, Card card) {
+        if (!card.isAura() || card.isEnchantZone()) {
+            return false;
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (auraAttachmentService.canEnchant(gameData, card, playerId, permanent)) {
+                    return false;
+                }
+            }
+        }
+        return !card.isEnchantPlayer() || gameData.orderedPlayerIds.stream()
+                .noneMatch(id -> auraAttachmentService.canEnchantPlayer(gameData, card, playerId, id));
     }
 }

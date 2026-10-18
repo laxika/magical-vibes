@@ -16,6 +16,6 @@ public class ShimianSpecter extends Card {
         // The damaged player is baked in as the trigger's target, so no target(...) is declared.
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new RevealHandChooseCardFromItAndExileAllCopiesEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true));
     }
 }

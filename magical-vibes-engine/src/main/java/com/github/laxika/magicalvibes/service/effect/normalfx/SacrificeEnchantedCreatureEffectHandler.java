@@ -34,17 +34,18 @@ public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHand
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         boolean granted = ((SacrificeEnchantedCreatureEffect) effect).grantedToCreature();
 
-        // Find the Aura permanent via sourcePermanentId. The attachment captured when the trigger
-        // fired remains authoritative if the Aura has since left or become attached elsewhere.
-        // A granted ability belongs to the creature itself, which is then the source.
+        // Find the Aura permanent via sourcePermanentId. While the Aura is still on the battlefield
+        // its current attachment is what "it" refers to at resolution (CR 608.2h); once the Aura has
+        // left, the attachment it had when it left (its snapshot) is used. A granted ability belongs
+        // to the creature itself, which is then the source.
         Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent auraSnapshot = entry.getSourcePermanentSnapshot();
 
         UUID enchantedId = granted
                 ? entry.getSourcePermanentId()
-                : auraSnapshot != null && auraSnapshot.getAttachedTo() != null
-                ? auraSnapshot.getAttachedTo()
-                : auraPerm == null ? null : auraPerm.getAttachedTo();
+                : auraPerm != null
+                ? auraPerm.getAttachedTo()
+                : auraSnapshot == null ? null : auraSnapshot.getAttachedTo();
         if (enchantedId == null) {
             log.info("Game {} - {} is not attached to anything, skipping sacrifice trigger",
                     gameData.id, entry.getCard().getName());

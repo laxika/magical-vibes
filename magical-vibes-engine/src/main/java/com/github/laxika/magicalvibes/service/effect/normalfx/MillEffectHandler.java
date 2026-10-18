@@ -68,6 +68,8 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
                     graveyardService.resolveMillPlayer(gameData, playerId, count);
                 }
             }
+            case EACH_PLAYER -> graveyardService.resolveMillPlayersSimultaneously(gameData,
+                    List.copyOf(gameData.orderedPlayerIds), evaluateCount(gameData, entry, mill, source, null));
             case TARGET_SPELL_CONTROLLER -> {
                 int count = evaluateCount(gameData, entry, mill, source, null);
                 UUID spellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());

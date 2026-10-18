@@ -8,4 +8,9 @@ public record PowerBoostForCrewAndStationEffect(int powerBonus)
     public boolean usesToughnessInsteadOfPower() {
         return false;
     }
+
+    @Override
+    public boolean crewOnly() {
+        return true;
+    }
 }

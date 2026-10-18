@@ -15,10 +15,12 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
@@ -69,7 +71,7 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         ManaCost cost = new ManaCost(manaCost);
         int lifeCost = e.lifeCost();
         boolean canPayLife = lifeCost <= 0
-                || (gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
+                || (gameQueryService.canPlayerLoseLife(gameData, targetControllerId)
                         && gameData.getLife(targetControllerId) >= lifeCost);
 
         boolean canPayMana = cost.canPayResolutionCost(pool)
@@ -87,6 +89,11 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
             // Not paid (couldn't afford): resolve any rider against the spell's controller (Power Sink).
             counterSupport.resolveNotPaidRider(gameData, entry.getCard(), entry.getControllerId(),
                     targetControllerId, e.onNotPaidEffects());
+        } else if (e.onNotPaidEffects().isEmpty() && e.onPaidEffects().isEmpty()
+                && counterSupport.findCounterTarget(gameData, targetCardId, entry) == null) {
+            // The spell can't be countered, so paying would only waste the cost; nobody is asked.
+            log.info("Game {} - {} can't be countered; the counter-unless-pays prompt is skipped",
+                    gameData.id, targetEntry.getCard().getName());
         } else {
             String costText = manaCost.equals("{0}") && lifeCost > 0
                     ? lifeCost + " life"

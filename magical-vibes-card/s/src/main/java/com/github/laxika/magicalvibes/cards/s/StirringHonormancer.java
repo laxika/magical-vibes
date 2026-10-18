@@ -16,6 +16,6 @@ public class StirringHonormancer extends Card {
     public StirringHonormancer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LookAtTopCardsEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
-                new Fixed(1), null, LookDestination.GRAVEYARD, false));
+                new Fixed(1), null, LookDestination.GRAVEYARD, false).withExactChooseCount());
     }
 }

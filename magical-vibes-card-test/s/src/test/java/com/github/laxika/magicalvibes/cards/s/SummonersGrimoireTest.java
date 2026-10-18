@@ -111,8 +111,7 @@ class SummonersGrimoireTest extends BaseCardTest {
 
         attackWith(attacker);
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.HandCardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
         harness.assertInHand(player1, "Summoner's Grimoire");
         assertThat(findPermanents(player1, "Summoner's Grimoire")).hasSize(1);
     }

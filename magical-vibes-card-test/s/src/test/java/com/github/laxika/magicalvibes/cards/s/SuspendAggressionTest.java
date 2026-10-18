@@ -65,13 +65,19 @@ class SuspendAggressionTest extends BaseCardTest {
         addMana(player1);
         harness.castInstant(player1, 0, academic.getId());
         harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKeys(academicCardId, top.getId());
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(academicCardId).containsKey(top.getId());
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKeys(academicCardId, top.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId()))

@@ -1848,10 +1848,18 @@ public class PlayerInputService {
     public void beginMoveAnyCountersFromControlledCreaturesAmountChoice(
             GameData gameData, UUID playerId, List<ChoiceContext.CounterSource> sources, int index,
             UUID toPermanentId, String sourceCardName, int max) {
+        beginMoveAnyCountersFromControlledCreaturesAmountChoice(gameData, playerId, sources, index,
+                toPermanentId, sourceCardName, max, java.util.Map.of());
+    }
+
+    public void beginMoveAnyCountersFromControlledCreaturesAmountChoice(
+            GameData gameData, UUID playerId, List<ChoiceContext.CounterSource> sources, int index,
+            UUID toPermanentId, String sourceCardName, int max,
+            java.util.Map<com.github.laxika.magicalvibes.model.CounterType, Integer> movedSoFar) {
         ChoiceContext.CounterSource source = sources.get(index);
         ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice choiceContext =
                 new ChoiceContext.MoveAnyCountersFromControlledCreaturesAmountChoice(
-                        sources, index, toPermanentId, sourceCardName);
+                        sources, index, toPermanentId, sourceCardName, movedSoFar);
 
         List<String> options = IntStream.rangeClosed(0, Math.max(0, max))
                 .mapToObj(Integer::toString)
@@ -2332,17 +2340,24 @@ public class PlayerInputService {
     public void beginStaticOrbUntapChoice(GameData gameData, UUID playerId, List<UUID> candidateIds,
                                           int maxUntap,
                                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
-        String prompt = "Choose up to " + maxUntap + " permanent" + (maxUntap == 1 ? "" : "s") + " to untap.";
-        beginMultiPermanentChoice(gameData, playerId, candidateIds, maxUntap,
-                new MultiPermanentChoiceContext.StaticOrbUntap(playerId, filter,
-                        untapStepService == null ? List.of() : untapStepService.bindingUntapRestrictions(gameData, playerId).stream()
-                                .filter(effect -> !java.util.Objects.equals(effect.filter(), filter)).toList(),
-                        List.of()),
+        List<com.github.laxika.magicalvibes.model.effect.StaticOrbEffect> restrictions =
+                untapStepService == null ? List.of() : untapStepService.bindingUntapRestrictions(gameData, playerId);
+        Set<UUID> pool = new java.util.LinkedHashSet<>(candidateIds);
+        int cap = maxUntap;
+        if (restrictions.size() > 1) {
+            for (var restriction : restrictions) {
+                pool.addAll(untapStepService.staticOrbUntapCandidates(gameData, playerId, restriction));
+                cap = Math.max(cap, restriction.maxUntap());
+            }
+        }
+        String prompt = "Choose up to " + cap + " permanent" + (cap == 1 ? "" : "s") + " to untap.";
+        beginMultiPermanentChoice(gameData, playerId, List.copyOf(pool), cap,
+                new MultiPermanentChoiceContext.StaticOrbUntap(playerId, filter, restrictions, List.of()),
                 prompt);
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose up to {} permanent(s) to untap (untap lock)",
-                gameData.id, playerName, maxUntap);
+                gameData.id, playerName, cap);
     }
 
     private static List<Integer> allHandIndices(List<Card> hand) {

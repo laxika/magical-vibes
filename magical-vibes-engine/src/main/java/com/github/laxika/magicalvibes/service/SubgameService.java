@@ -97,10 +97,16 @@ public class SubgameService {
         child.alwaysOfferPriorityWindows = parent.alwaysOfferPriorityWindows;
         child.playersAutoOrderingTriggers.addAll(parent.playersAutoOrderingTriggers);
         Map<UUID, List<Card>> decks = new LinkedHashMap<>();
+        Map<UUID, List<Card>> commandZones = new LinkedHashMap<>();
         mutations.mutate(parent, () -> {
             for (UUID player : parent.orderedPlayerIds) {
                 decks.put(player, new ArrayList<>(parent.playerDecks.get(player)));
                 parent.playerDecks.get(player).clear();
+                List<Card> parentCommandZone = parent.playerCommandZones.get(player);
+                if (parentCommandZone != null) {
+                    commandZones.put(player, new ArrayList<>(parentCommandZone));
+                    parentCommandZone.clear();
+                }
                 child.playerSideboards.put(player, new ArrayList<>(parent.playerSideboards.getOrDefault(player, List.of())));
                 parent.playerSideboards.computeIfAbsent(player, ignored -> new ArrayList<>()).clear();
                 child.playerAutoStopSteps.put(player, new HashSet<>(parent.playerAutoStopSteps.getOrDefault(player, Set.of())));
@@ -119,6 +125,10 @@ public class SubgameService {
         if (!child.simulation) registry.register(child);
         mutations.mutate(child, () -> {
             setup.initializeSubgame(child, decks);
+            commandZones.forEach((player, zone) -> zone.forEach(card -> {
+                child.playerCommandZones.get(player).add(card);
+                if (parent.isCommander(card.getId())) child.addCommander(player, card);
+            }));
             emitActive(child);
         });
     }
@@ -145,8 +155,12 @@ public class SubgameService {
                 child.planechase.faceUp.clear();
             }
         });
+        Map<UUID, List<Card>> returningCommandZones = new LinkedHashMap<>();
+        child.playerCommandZones.forEach((owner, zone) -> returningCommandZones.put(owner, new ArrayList<>(zone)));
         session.pop();
         mutations.mutate(parent, () -> {
+            returningCommandZones.forEach((owner, zone) ->
+                    parent.playerCommandZones.computeIfAbsent(owner, ignored -> new ArrayList<>()).addAll(zone));
             for (Card card : cards.values()) {
                 UUID owner = card.getOwnerId();
                 if (owner == null) owner = findOwner(child, card);

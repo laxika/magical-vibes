@@ -43,7 +43,10 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Equipment";
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        UUID attachedId = equipment != null ? equipment.getAttachedTo()
+        // A trigger granted by an attachment ("it gets ...") boosts the creature that triggered it,
+        // even if the attachment moved or left the battlefield before resolution.
+        UUID attachedId = entry.getAttachedPermanentSnapshot() != null ? entry.getAttachedPermanentSnapshot().getId()
+                : equipment != null ? equipment.getAttachedTo()
                 : entry.getSourcePermanentSnapshot() != null
                 ? entry.getSourcePermanentSnapshot().getAttachedTo() : entry.getTargetId();
         Permanent equippedCreature = attachedId == null ? null : gameQueryService.findPermanentById(gameData, attachedId);

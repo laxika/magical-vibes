@@ -100,11 +100,8 @@ public class EachOpponentSacrificesPermanentUnlessPaysEffectHandler implements N
     }
 
     private boolean hasSacrificeOption(GameData gameData, UUID playerId, UUID sourceControllerId) {
-        if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
-            return false;
-        }
-        List<?> battlefield = gameData.playerBattlefields.get(playerId);
-        return battlefield != null && !battlefield.isEmpty();
+        // A player with no permanents may still pay; "unless pays" doesn't require anything to be sacrificed.
+        return gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId);
     }
 
     private UUID sourceControllerId(GameData gameData, PendingMayAbility ability, UUID fallback) {

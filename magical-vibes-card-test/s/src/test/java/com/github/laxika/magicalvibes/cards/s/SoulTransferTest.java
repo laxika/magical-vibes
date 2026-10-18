@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.t.TezzeretBetrayerOfFlesh;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -92,6 +93,7 @@ class SoulTransferTest extends BaseCardTest {
     @Test
     void exilesTargetPlaneswalker() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new TezzeretBetrayerOfFlesh());
+        target.setCounterCount(CounterType.LOYALTY, target.getCard().getLoyalty());
 
         cast(new int[]{0}, List.of(target.getId()));
 

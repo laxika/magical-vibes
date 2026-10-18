@@ -107,7 +107,7 @@ class SporeFrogTest extends BaseCardTest {
         var blocker = addCreatureReady(player2, new PygmyRazorback());
         harness.addToBattlefield(player2, new SporeFrog());
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(0)));
         harness.activateAbility(player2, 1, null, null);
         harness.passBothPriorities();
 

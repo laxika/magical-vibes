@@ -103,7 +103,6 @@ class SwarmbornGiantTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
         harness.resolveCombatDamage();
-        harness.passBothPriorities();
 
         harness.assertLife(player2, 14);
         harness.assertOnBattlefield(player1, "Swarmborn Giant");

@@ -38,7 +38,7 @@ public class ShorikaiGenesisEngine extends Card {
                                 List.of(CardSubtype.PILOT),
                                 Set.of(),
                                 Set.of(),
-                                Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2)))),
+                                Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true)))),
                 "{1}, {T}: Draw two cards, then discard a card. Create a 1/1 colorless Pilot creature token "
                         + "with \"This token crews Vehicles as though its power were 2 greater.\""
         ));

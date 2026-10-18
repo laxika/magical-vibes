@@ -35,7 +35,7 @@ public class SidarJabariOfZhalfir extends Card {
         ConditionalEffect eminenceGate = new ConditionalEffect(
                 new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield())),
                 attackEffect);
-        ConditionalEffect knightAttacker = new ConditionalEffect(
+        ConditionalEffect knightAttacker = ConditionalEffect.atTriggerTime(
                 new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)),
                 eminenceGate);
 

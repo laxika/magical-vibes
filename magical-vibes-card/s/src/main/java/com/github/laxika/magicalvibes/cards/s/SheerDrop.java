@@ -36,6 +36,7 @@ public class SheerDrop extends Card {
     }
 
     public SheerDrop() {
+        setAllowSharedTargets(true);
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{W}"))));
 
         target(new PermanentPredicateTargetFilter(

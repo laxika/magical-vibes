@@ -56,10 +56,8 @@ class ShorecrasherElementalTest extends BaseCardTest {
         Permanent elemental = addCreatureReady(player1, new ShorecrasherElemental());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, 0, null);
         harness.passBothPriorities();
-
-        harness.handleListChoice(player1, "This creature gets +1/-1 until end of turn");
 
         assertThat(elemental.getPowerModifier()).isEqualTo(1);
         assertThat(elemental.getToughnessModifier()).isEqualTo(-1);
@@ -74,10 +72,8 @@ class ShorecrasherElementalTest extends BaseCardTest {
         Permanent elemental = addCreatureReady(player1, new ShorecrasherElemental());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, 1, null);
         harness.passBothPriorities();
-
-        harness.handleListChoice(player1, "This creature gets -1/+1 until end of turn");
 
         assertThat(elemental.getPowerModifier()).isEqualTo(-1);
         assertThat(elemental.getToughnessModifier()).isEqualTo(1);

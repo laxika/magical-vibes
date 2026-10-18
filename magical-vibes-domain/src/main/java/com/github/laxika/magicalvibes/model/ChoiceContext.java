@@ -1519,13 +1519,22 @@ public sealed interface ChoiceContext {
 
     /**
      * Slippery Bogbonder: the controller chooses how many counters of each concrete kind to move
-     * from each controlled creature onto the target creature.
+     * from each controlled creature onto the target creature. {@code movedSoFar} holds the counters
+     * already taken from earlier sources; they are put on the target together as one placement once
+     * every choice has been made.
      */
     record MoveAnyCountersFromControlledCreaturesAmountChoice(List<CounterSource> sources, int index,
-                                                               UUID toPermanentId, String sourceCardName)
+                                                               UUID toPermanentId, String sourceCardName,
+                                                               Map<CounterType, Integer> movedSoFar)
             implements ChoiceContext {
         public MoveAnyCountersFromControlledCreaturesAmountChoice {
             sources = List.copyOf(sources);
+            movedSoFar = Map.copyOf(movedSoFar);
+        }
+
+        public MoveAnyCountersFromControlledCreaturesAmountChoice(List<CounterSource> sources, int index,
+                                                                   UUID toPermanentId, String sourceCardName) {
+            this(sources, index, toPermanentId, sourceCardName, Map.of());
         }
     }
 

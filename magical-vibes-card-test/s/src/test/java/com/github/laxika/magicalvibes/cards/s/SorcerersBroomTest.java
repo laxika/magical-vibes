@@ -77,12 +77,11 @@ class SorcerersBroomTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing the Broom itself does not trigger its ability")
     void sacrificingItselfDoesNotTrigger() {
-        Permanent broom = addCreatureReady(player1, new SorcerersBroom());
+        addCreatureReady(player1, new SorcerersBroom());
         harness.addToBattlefield(player1, new WitchsOven());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 1, null, null);
-        harness.handlePermanentChosen(player1, broom.getId());
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

@@ -160,6 +160,7 @@ class SengirAutocratTest extends BaseCardTest {
     }
 
     private Permanent castAndResolveAutocrat(com.github.laxika.magicalvibes.model.Player player) {
+        harness.forceActivePlayer(player);
         harness.castFromHand(player, new SengirAutocrat(), "{3}{B}");
         resolveAllTriggers();
         return findPermanent(player, "Sengir Autocrat");

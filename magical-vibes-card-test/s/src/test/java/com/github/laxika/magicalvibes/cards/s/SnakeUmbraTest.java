@@ -123,6 +123,7 @@ class SnakeUmbraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);
+        harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

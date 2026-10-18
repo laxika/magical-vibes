@@ -282,17 +282,21 @@ class SeasingerTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
+        advanceToNextTurn(currentActivePlayer, TurnStep.UPKEEP);
+    }
+
+    private void advanceToNextTurn(Player currentActivePlayer, TurnStep targetStep) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(newActivePlayer, targetStep);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
-        advanceToNextTurn(currentActivePlayer);
+        advanceToNextTurn(currentActivePlayer, TurnStep.UNTAP);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }

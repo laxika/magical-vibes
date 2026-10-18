@@ -20,7 +20,7 @@ public class ShieldhideDragon extends Card {
 
     public ShieldhideDragon() {
         addMorph("{5}{W}{W}");
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(1));
+        addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false));
         addEffect(EffectSlot.ON_TURNED_FACE_UP,
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,

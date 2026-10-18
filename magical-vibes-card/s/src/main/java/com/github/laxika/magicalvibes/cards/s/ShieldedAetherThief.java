@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -16,7 +17,7 @@ import java.util.List;
 public class ShieldedAetherThief extends Card {
 
     public ShieldedAetherThief() {
-        addEffect(EffectSlot.ON_BLOCK, new EnergyCountersEffect(1));
+        addEffect(EffectSlot.ON_BLOCK, new EnergyCountersEffect(1), TriggerMode.ONCE_PER_BLOCK);
 
         addActivatedAbility(new ActivatedAbility(
                 true,

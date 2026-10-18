@@ -109,14 +109,16 @@ class SwiftManeuverTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new KjeldoranOutrider(), new KjeldoranOutrider(),
                 new KjeldoranOutrider()));
         advanceToUpkeep(player1);
+        harness.setHand(player2, List.of());
         castSwiftManeuver(player2.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         harness.passBothPriorities();
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 

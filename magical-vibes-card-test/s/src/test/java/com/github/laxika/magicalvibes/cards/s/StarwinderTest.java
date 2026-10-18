@@ -153,6 +153,7 @@ class StarwinderTest extends BaseCardTest {
         harness.setHand(player1, List.of(starwinder));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreatureWithAlternateCost(player1, 0, List.of());

@@ -72,11 +72,11 @@ class SavantiRomeroTimesExileTest extends BaseCardTest {
         int handSize = gd.playerHands.get(player1.getId()).size();
         int life = gd.getLife(player1.getId());
         harness.setHand(player2, List.of(new MakeYourMove()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
 
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
             startBeginningOfCombat(player1);
             assertThat(gd.stack).hasSize(1);
+            harness.addMana(player2, ManaColor.WHITE, 3);
             harness.castInstant(player2, 0, savanti.getId());
             resolveAllTriggers();
         });

@@ -105,6 +105,7 @@ class SouthPoleVoyagerTest extends BaseCardTest {
     @Test
     void doesNotTriggerForOpponentsAllies() {
         addCreatureReady(player1, new SouthPoleVoyager());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SouthPoleVoyager()));
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 

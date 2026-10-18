@@ -69,8 +69,9 @@ class SirenOfTheSilentSongTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded, milled);
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerHand);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(controllerLibrary);
+        // The controller's own draw step (CR 504.1) follows the resolved untap trigger and draws the top card.
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerHand, controllerLibrary);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -154,8 +155,9 @@ class SirenOfTheSilentSongTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded, milled);
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(controllerHand);
-        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(controllerLibrary);
+        // The controller's own draw step (CR 504.1) follows the resolved untap trigger and draws the top card.
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(controllerHand, controllerLibrary);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     private Permanent addTappedSiren() {

@@ -54,14 +54,20 @@ class StiltManToweringTerrorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gqs.cantBeSacrificed(gd, artifact)).isTrue();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gqs.cantBeSacrificed(gd, artifact)).isTrue();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);

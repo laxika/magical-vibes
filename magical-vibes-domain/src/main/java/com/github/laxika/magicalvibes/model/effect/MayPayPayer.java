@@ -16,6 +16,12 @@ public enum MayPayPayer {
     ANY_OTHER_PLAYER,
 
     /**
+     * Any opponent of the ability's controller, offered in APNAP order ("unless an opponent pays
+     * {X}", Scarwood Bandits).
+     */
+    ANY_OPPONENT,
+
+    /**
      * The enchanted permanent's controller — the player carried on the stack entry's
      * {@code targetId} by an {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} trigger
      * ("that player may pay {X}", Paralyze).

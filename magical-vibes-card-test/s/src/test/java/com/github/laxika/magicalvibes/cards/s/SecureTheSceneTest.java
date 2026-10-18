@@ -98,9 +98,7 @@ class SecureTheSceneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castSorcery(player1, 0, target.getId());
 
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(target);
+        setOwnerAndController(target, player2, player1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Walking Corpse");

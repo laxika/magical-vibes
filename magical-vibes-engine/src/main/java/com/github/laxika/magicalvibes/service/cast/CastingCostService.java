@@ -1062,6 +1062,9 @@ public class CastingCostService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
             for (Permanent source : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, source)) {
+                    continue;
+                }
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof ReduceOpponentCostForTargetingControlledPermanentEffect reduceEffect)) {
                         continue;
@@ -1467,6 +1470,9 @@ public class CastingCostService {
 
         int reduction = 0;
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof NinjutsuCostReducingEffect reducer) {
                     reduction += reducer.genericCostReduction();
@@ -2357,6 +2363,12 @@ public class CastingCostService {
             return false;
         }
 
+        if (altCast.getCost(com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost.class).isPresent()
+                && gameData.orderedPlayerIds.stream().anyMatch(opponentId ->
+                !opponentId.equals(playerId) && !gameQueryService.canPlayerGainLife(gameData, opponentId))) {
+            return false;
+        }
+
         var sacCost = altCast.getCost(SacrificePermanentsCost.class);
         if (sacCost.isPresent()) {
             if (battlefield == null) return false;
@@ -2808,6 +2820,10 @@ public class CastingCostService {
     public int getAttackLifePaymentPerCreature(GameData gameData, UUID attackingPlayerId,
                                                UUID attackTargetId, Permanent attackingCreature) {
         if (attackingCreature == null) return 0;
+        Permanent attackedPermanent = attackTargetId == null ? null
+                : gameQueryService.findPermanentById(gameData, attackTargetId);
+        // Life taxes cover attacks on the defending player and their planeswalkers, never on a battle.
+        if (attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)) return 0;
         UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defenderBattlefield == null) return 0;

@@ -1133,7 +1133,10 @@ public class TargetLegalityService {
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
-                predicateEvaluationService.validateTargetFilter(ability.getTargetFilter(),
+                predicateEvaluationService.validateTargetFilter(
+                        TextChangeTransformer.transformTargetFilter(ability.getTargetFilter(),
+                                abilitySourceTextReplacements(gameData,
+                                        findSourcePermanentIdByCardId(gameData, sourceCard.getId()))),
                         target,
                         filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             } else if (gameData.playerIds.contains(targetId)
@@ -2204,7 +2207,8 @@ public class TargetLegalityService {
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .filter(group -> !skipStackTargetGroups || selectedEffects.stream()
                         .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
-                        .noneMatch(EffectResolution::targetsSpellOnStack))
+                        .noneMatch(effect -> EffectResolution.targetsSpellOnStack(effect)
+                                && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)))
                 .toList();
         int minTargets = targetGroups.stream()
                 .mapToInt(group -> {
@@ -2374,18 +2378,21 @@ public class TargetLegalityService {
 
         validateGraveyardChoicePowerLimit(gameData, card, targetIds, selectedEffects, targetGroups);
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
-        if (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
-                || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT) {
+        MultiTargetConstraint perControllerConstraint = card.getMultiTargetConstraint();
+        if (perControllerConstraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
+                || perControllerConstraint == MultiTargetConstraint.ONE_PER_OPPONENT
+                || perControllerConstraint == MultiTargetConstraint.ONE_PER_OPPONENT_IF_ABLE) {
             Set<UUID> targetedControllers = targetIds.stream()
                     .map(id -> gameQueryService.findPermanentController(gameData, id))
                     .collect(java.util.stream.Collectors.toSet());
-            boolean includesController = card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
+            boolean includesController = perControllerConstraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
+            boolean mustTargetEvenIfUnable = perControllerConstraint == MultiTargetConstraint.ONE_PER_OPPONENT;
             for (UUID playerId : gameData.playerIds) {
                 if ((!includesController && playerId.equals(controllerId)) || targetedControllers.contains(playerId)) continue;
                 boolean hasLegalTarget = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                         .anyMatch(permanent -> checkSpellTargeting(
                                 gameData, card, permanent.getId(), null, controllerId).isEmpty());
-                if (hasLegalTarget || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT) {
+                if (hasLegalTarget || mustTargetEvenIfUnable) {
                     throw new IllegalStateException(includesController
                             ? "Must target a permanent controlled by each player if able"
                             : "Must target a permanent controlled by each opponent if able");
@@ -2773,7 +2780,8 @@ public class TargetLegalityService {
         }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
-                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT) {
+                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT
+                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT_IF_ABLE) {
             validateAtMostOnePerController(gameData, targetIds);
             return;
         }
@@ -2846,7 +2854,7 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
-                         AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT,
+                         AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT, ONE_PER_OPPONENT_IF_ABLE,
                          AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
                          DIFFERENT_MANA_VALUES, SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST -> {
                         // Handled by early returns above.
@@ -3505,6 +3513,29 @@ public class TargetLegalityService {
                     }
                 }
             }
+            if (multiTargetConstraint == MultiTargetConstraint.SHARE_CREATURE_TYPES) {
+                // "Share a creature type" is a relation between the targets: when the ones still
+                // around no longer share one, none of them satisfies it and all are illegal.
+                boolean sharesType = true;
+                for (int i = 0; i < declaredTargetIds.size() && sharesType; i++) {
+                    for (int j = i + 1; j < declaredTargetIds.size() && sharesType; j++) {
+                        if (!targetLegal[i] || !targetLegal[j]) {
+                            continue;
+                        }
+                        Permanent a = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
+                        Permanent b = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(j));
+                        sharesType = a != null && b != null && gameQueryService.shareCreatureType(gameData, a, b);
+                    }
+                }
+                if (!sharesType) {
+                    for (int i = 0; i < targetLegal.length; i++) {
+                        if (targetLegal[i]) {
+                            targetLegal[i] = false;
+                            entry.markTargetIllegal(i);
+                        }
+                    }
+                }
+            }
             if (multiTargetConstraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
                     && targetLegal.length > 0) {
                 if (gameData.playerIds.contains(declaredTargetIds.getFirst())) {
@@ -3512,6 +3543,21 @@ public class TargetLegalityService {
                     // changed controllers becomes illegal, the player stays a legal target.
                     UUID requiredControllerId = declaredTargetIds.getFirst();
                     for (int i = 0; i < declaredTargetIds.size(); i++) {
+                        UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
+                        if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
+                            targetLegal[i] = false;
+                            entry.markTargetIllegal(i);
+                        }
+                    }
+                } else if (entry.getEffectsToResolve().stream().anyMatch(
+                        com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect.class::isInstance)) {
+                    // A targeted planeswalker anchors "that planeswalker's controller": only the creature
+                    // whose controller differs from the planeswalker's current controller becomes
+                    // illegal (a planeswalker that left the battlefield has no controller to match).
+                    Permanent anchor = gameQueryService.findPermanentById(gameData, declaredTargetIds.getFirst());
+                    UUID requiredControllerId = anchor == null ? null
+                            : gameQueryService.findPermanentController(gameData, anchor.getId());
+                    for (int i = 1; i < declaredTargetIds.size(); i++) {
                         UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
                         if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
                             targetLegal[i] = false;
@@ -4042,12 +4088,31 @@ public class TargetLegalityService {
     }
 
     /**
+     * The text changes an activated ability's target restriction is read through: those made to its
+     * source permanent (Spectral Shift on Vedalken Shackles), then any global color-word change.
+     */
+    private List<TextReplacement> abilitySourceTextReplacements(GameData gameData, UUID sourcePermanentId) {
+        List<TextReplacement> global = TextChangeTransformer.globalColorWordReplacements(gameData);
+        Permanent source = sourcePermanentId == null ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null || source.getTextReplacements().isEmpty()) {
+            return global;
+        }
+        List<TextReplacement> combined = new ArrayList<>(source.getTextReplacements());
+        combined.addAll(global);
+        return combined;
+    }
+
+    /**
      * The text changes a resolving entry's target restriction is read through (CR 612.1): those
      * made to the spell itself while it was on the stack (Glamerdye), then any global color-word
      * change. Abilities on the stack are independent of their source, so only spells carry their own.
      */
-    private static List<TextReplacement> resolutionTextReplacements(GameData gameData, StackEntry entry) {
+    private List<TextReplacement> resolutionTextReplacements(GameData gameData, StackEntry entry) {
         List<TextReplacement> global = TextChangeTransformer.globalColorWordReplacements(gameData);
+        if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY && entry.getCard() != null) {
+            return abilitySourceTextReplacements(gameData, entry.getSourcePermanentId());
+        }
         if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY || entry.getCard() == null) {
             return global;
@@ -4592,6 +4657,30 @@ public class TargetLegalityService {
         String reason = checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, sourceCard);
         if (reason != null) {
             throw new IllegalStateException(reason);
+        }
+    }
+
+    /**
+     * Rejects a permanent that {@code sourceCard}'s controller cannot target because of hexproof,
+     * shroud or protection (used for targets announced outside the ordinary target fields, such as
+     * counter-distribution assignments).
+     */
+    public void validatePermanentTargetableBySpell(GameData gameData, Card sourceCard, UUID targetId,
+                                                   UUID controllerId) {
+        validateTargetable(gameData, targetId, controllerId);
+        Permanent protectedTarget = gameQueryService.findPermanentById(gameData, targetId);
+        if (protectedTarget == null) {
+            return;
+        }
+        for (CardColor color : effectiveSourceColors(gameData, sourceCard)) {
+            if (gameQueryService.hasProtectionFrom(gameData, protectedTarget, color)) {
+                throw new IllegalStateException(protectedTarget.getCard().getName()
+                        + " has protection from " + color.name().toLowerCase());
+            }
+        }
+        if (gameQueryService.hasProtectionFromSource(gameData, protectedTarget, sourceCard, controllerId)) {
+            throw new IllegalStateException(protectedTarget.getCard().getName()
+                    + " has protection from this source");
         }
     }
 
@@ -5231,7 +5320,8 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryManaValueEqualsXPredicate) {
             // When X is unknown (target enumeration before X is chosen), match permissively —
             // any spell is potentially a legal target since X can be any non-negative integer.
-            int manaValue = stackEntry.getCard().getManaValue()
+            // A face-down spell has no mana cost, so its mana value is 0 (CR 708.2).
+            int manaValue = stackEntry.isCastFaceDown() ? 0 : stackEntry.getCard().getManaValue()
                     + (stackEntry.getCard().getParsedManaCost() == null ? 0
                         : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return xValue == null || manaValue == xValue;
@@ -5313,7 +5403,7 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());
-            return stackEntry.getCard().getManaValue() <= count;
+            return stackEntry.getSpellManaValue() <= count;
         }
         if (predicate instanceof StackEntryManaValueAtMostControllerGraveyardCountPredicate) {
             UUID targetControllerId = stackEntry.getControllerId();

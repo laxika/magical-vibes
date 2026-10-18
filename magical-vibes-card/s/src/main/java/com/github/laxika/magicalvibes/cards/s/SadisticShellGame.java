@@ -13,6 +13,6 @@ public class SadisticShellGame extends Card {
     public SadisticShellGame() {
         addEffect(EffectSlot.SPELL,
                 new EachPlayerChoosesOpponentPermanentToDestroyEffect(
-                        new PermanentIsCreaturePredicate(), true));
+                        new PermanentIsCreaturePredicate(), true, true, true));
     }
 }

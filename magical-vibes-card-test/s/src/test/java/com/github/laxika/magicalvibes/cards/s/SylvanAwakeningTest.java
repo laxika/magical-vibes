@@ -163,7 +163,11 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, forest)).isTrue();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, forest)).isFalse();

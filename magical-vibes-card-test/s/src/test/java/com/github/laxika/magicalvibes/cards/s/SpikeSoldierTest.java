@@ -87,7 +87,7 @@ class SpikeSoldierTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, spike)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, spike)).isEqualTo(4);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, spike)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, spike)).isEqualTo(2);

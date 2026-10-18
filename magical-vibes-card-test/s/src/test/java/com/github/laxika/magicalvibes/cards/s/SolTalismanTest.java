@@ -39,6 +39,7 @@ class SolTalismanTest extends BaseCardTest {
         }
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);

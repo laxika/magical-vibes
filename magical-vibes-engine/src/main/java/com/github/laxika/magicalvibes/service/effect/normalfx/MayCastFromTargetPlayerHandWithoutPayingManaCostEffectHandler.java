@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromTargetPlayerHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Component;
 public class MayCastFromTargetPlayerHandWithoutPayingManaCostEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,11 +49,13 @@ public class MayCastFromTargetPlayerHandWithoutPayingManaCostEffectHandler imple
         List<Card> hand = gameData.playerHands.get(targetId);
         if (hand == null || hand.isEmpty()) return;
 
-        // The "look at that player's hand" form offers every card so the controller can inspect the hand;
-        // a land among them is shown but cannot be cast.
-        boolean inspectsHand = !e.targetsPlayer() && e.spellFilter() == null;
+        // The "look at that player's hand" form shows the controller every card, but a land among them is
+        // not a spell and so is never offered.
+        if (!e.targetsPlayer() && e.spellFilter() == null) {
+            cardRevealService.lookAtHand(gameData, controllerId, targetId);
+        }
         List<Card> eligible = hand.stream()
-                .filter(c -> inspectsHand || !c.hasType(CardType.LAND))
+                .filter(c -> !c.hasType(CardType.LAND))
                 .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.spellFilter(), null))
                 .toList();
 

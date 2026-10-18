@@ -177,6 +177,8 @@ class StaveOffTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StaveOff()));
         harness.setHand(player2, List.of(new Pacifism()));
         harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castEnchantment(player2, 0, target.getId());
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Pacifism");

@@ -26,6 +26,6 @@ public class ScrapTrawler extends Card {
                 .build();
         addEffect(EffectSlot.ON_DEATH, returnArtifact);
         addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
-                new TriggeringArtifactControllerConditionalEffect(returnArtifact));
+                TriggeringArtifactControllerConditionalEffect.another(returnArtifact));
     }
 }

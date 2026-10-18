@@ -87,9 +87,9 @@ class SkeletonizeTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0);
         harness.setHand(player1, List.of(new Skeletonize(), new BoneSplinters()));
         harness.addMana(player1, ManaColor.RED, 5);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
         assertThat(target.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Druid of the Anima");
         harness.castSorceryWithSacrifice(player1, 0, target.getId(), sacrifice.getId());

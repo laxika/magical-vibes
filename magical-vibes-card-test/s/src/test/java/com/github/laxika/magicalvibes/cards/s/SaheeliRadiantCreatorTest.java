@@ -62,9 +62,11 @@ class SaheeliRadiantCreatorTest extends BaseCardTest {
         assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(token.getCard().getPower()).isEqualTo(5);
         assertThat(token.getCard().getToughness()).isEqualTo(5);
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(),
-                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .anySatisfy(action -> {
+                    assertThat(action.permanentId()).isEqualTo(token.getId());
+                    assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+                });
     }
 }

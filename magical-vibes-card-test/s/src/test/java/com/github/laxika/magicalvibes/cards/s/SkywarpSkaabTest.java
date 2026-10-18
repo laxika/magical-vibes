@@ -30,6 +30,7 @@ class SkywarpSkaabTest extends BaseCardTest {
 
         castSkywarpSkaab();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(first, second);
@@ -76,6 +77,7 @@ class SkywarpSkaabTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId(), third.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(first, second);

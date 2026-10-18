@@ -148,7 +148,7 @@ class SakashimaTheImpostorTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Sakashima the Impostor");
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.passUntil(TurnStep.END_STEP);
+            harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
         });

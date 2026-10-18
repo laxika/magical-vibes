@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class SkyswimmerKoi extends Card {
 
     public SkyswimmerKoi() {
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
                 new MayEffect(
                         SequenceEffect.of(
                                 new DrawCardEffect(1),

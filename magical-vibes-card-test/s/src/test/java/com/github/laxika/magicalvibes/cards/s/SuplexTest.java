@@ -128,10 +128,10 @@ class SuplexTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         harness.setHand(player1, List.of(new Suplex(), new Unsummon()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castModalSorcery(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Avatar of Might");

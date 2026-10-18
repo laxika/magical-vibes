@@ -21,7 +21,7 @@ public class StingingLionfish extends Card {
                 new MayEffect(
                         new SpellCastTriggerEffect(null,
                                 List.of(new TapOrUntapTargetPermanentEffect()),
-                                null, null, null, true, false, null, 1),
+                                null, TargetFilters.nonlandPermanent(), null, true, false, null, 1),
                         "Tap or untap target nonland permanent?"));
     }
 }

@@ -9,6 +9,14 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link PutSourceCardFromGraveyardIntoLibraryNFromTopEffect} and
  * {@link ReturnSourceCardFromGraveyardToOwnerHandEffect}. Used by Cyclopean Mummy
  * ("When this creature dies, exile it.").
+ *
+ * <p>With {@code onlyFromControllersGraveyard} the card is exiled only when it is in the graveyard of the
+ * ability's controller ("exile this card from your graveyard", Skyfisher Spider), so a stolen creature
+ * that died into its owner's graveyard stays there.
  */
-public record ExileSourceCardFromGraveyardEffect() implements CardEffect {
+public record ExileSourceCardFromGraveyardEffect(boolean onlyFromControllersGraveyard) implements CardEffect {
+
+    public ExileSourceCardFromGraveyardEffect() {
+        this(false);
+    }
 }

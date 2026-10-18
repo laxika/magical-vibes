@@ -178,8 +178,8 @@ class StormsplitterTest extends BaseCardTest {
     void endStepCopyWaitsForFollowingEndStep() {
         harness.addToBattlefield(player1, new Stormsplitter());
         harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

@@ -155,7 +155,9 @@ class SlickshotLockpickerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock()));
         harness.setLibrary(player2, List.of(new Shock(), new Shock(), new Shock()));
         SlickshotLockpicker lockpicker = plotLockpicker();
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.castFromExile(player1, lockpicker.getId());

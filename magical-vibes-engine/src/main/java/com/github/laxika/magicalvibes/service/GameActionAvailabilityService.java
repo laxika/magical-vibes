@@ -576,7 +576,10 @@ public class GameActionAvailabilityService {
             pool.promoteXSpellOnlyMana();
         }
         boolean landPlayable = card.hasType(CardType.LAND)
-                && ctx.isActivePlayer() && ctx.isMainPhase()
+                && ctx.isActivePlayer()
+                && (ctx.isMainPhase() || card.hasType(CardType.CREATURE)
+                && castingPermissionService.canCastWithTiming(gameData, playerId, card,
+                ctx.isActivePlayer(), false, ctx.stackEmpty()))
                 && ctx.landsPlayed() < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && ctx.stackEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
@@ -623,6 +626,7 @@ public class GameActionAvailabilityService {
                         && effect.hasOptionalTarget()
                         || effect instanceof ReturnCardFromGraveyardEffect returnEffect
                         && returnEffect.upTo()
+                        || effect instanceof ExileTargetGraveyardCardsAndSeparateIntoPilesEffect
                         || effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                         && (returnEffect.xScaled() || returnEffect.minTargets() == 0)
                         || effect instanceof DealDividedDamageEffect dividedDamage
@@ -1550,7 +1554,8 @@ public class GameActionAvailabilityService {
         }
         boolean hasPermission = castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card);
         return hasPermission
-                || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
+                || castingPermissionService.hasGraveyardPlayPermissionOtherThanOtherGraveyardGrant(
+                gameData, card, playerId)
                 || hasOwnMayhemLandPermission(gameData, playerId, card);
     }
 

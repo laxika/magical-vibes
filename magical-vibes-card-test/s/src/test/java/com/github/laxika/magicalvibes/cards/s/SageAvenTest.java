@@ -150,7 +150,6 @@ class SageAvenTest extends BaseCardTest {
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         resolveAllTriggers();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);

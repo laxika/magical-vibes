@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -28,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAndTakeExtraTurnReplacementEffect;
@@ -134,7 +136,20 @@ public class GraveyardService {
      * returned list; everyone else ignores it.
      */
     public List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
-        return resolveMillPlayer(gameData, targetPlayerId, count, false, false);
+        return resolveMillPlayer(gameData, targetPlayerId, count, false, false, null);
+    }
+
+    /**
+     * Mills {@code count} cards from each listed player's library as a single simultaneous event
+     * ("each player mills a card"): "one or more nonland cards are milled" triggers fire once for
+     * the combined number of nonland cards milled by all of the players.
+     */
+    public void resolveMillPlayersSimultaneously(GameData gameData, List<UUID> playerIds, int count) {
+        int[] nonlandCardsMilled = {0};
+        for (UUID playerId : playerIds) {
+            resolveMillPlayer(gameData, playerId, count, false, false, nonlandCardsMilled);
+        }
+        triggerCollectionService.checkNonlandCardsMilledTriggers(gameData, playerIds.getFirst(), nonlandCardsMilled[0]);
     }
 
     /**
@@ -143,16 +158,17 @@ public class GraveyardService {
      * replacement effect.
      */
     public List<Card> resolveMillPlayerIncludingExiled(GameData gameData, UUID targetPlayerId, int count) {
-        return resolveMillPlayer(gameData, targetPlayerId, count, true, false);
+        return resolveMillPlayer(gameData, targetPlayerId, count, true, false, null);
     }
 
     /** Returns every card in the mill event, including cards moved elsewhere by replacement effects. */
     public List<Card> resolveMillPlayerAndReturnAllMilledCards(GameData gameData, UUID targetPlayerId, int count) {
-        return resolveMillPlayer(gameData, targetPlayerId, count, true, true);
+        return resolveMillPlayer(gameData, targetPlayerId, count, true, true, null);
     }
 
     private List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count,
-                                         boolean includeCardsDivertedToExile, boolean includeAllMilledCards) {
+                                         boolean includeCardsDivertedToExile, boolean includeAllMilledCards,
+                                         int[] simultaneousNonlandCardsMilled) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         gameData.lastMilledCardColorSymbols.clear();
         int additionalCards = 0;
@@ -227,8 +243,12 @@ public class GraveyardService {
                 .filter(card -> cardsEnteredGraveyard.contains(card) || gameData.findExiledCard(card.getId()) != null)
                 .count();
         triggerCollectionService.checkOpponentMillTriggers(gameData, targetPlayerId, milledCardsCount);
-        triggerCollectionService.checkNonlandCardsMilledTriggers(
-                gameData, targetPlayerId, nonlandCardsEntered);
+        if (simultaneousNonlandCardsMilled != null) {
+            simultaneousNonlandCardsMilled[0] += nonlandCardsEntered;
+        } else {
+            triggerCollectionService.checkNonlandCardsMilledTriggers(
+                    gameData, targetPlayerId, nonlandCardsEntered);
+        }
         triggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers(
                 gameData, targetPlayerId, cardsEnteredGraveyard);
         triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
@@ -1380,9 +1400,23 @@ public class GraveyardService {
     private void spendOpponentDrawRegenerationShield(GameData gameData, Permanent perm, UUID opponentId) {
         perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() - 1);
 
-        perm.getOpponentDrawRegenerationShieldRecipients().remove(opponentId);
+        List<UUID> recipients = perm.getOpponentDrawRegenerationShieldRecipients();
+        List<UUID> shieldControllers = perm.getOpponentDrawRegenerationShieldControllers();
+        int shieldIndex = recipients.indexOf(opponentId);
+        UUID triggerControllerId = shieldIndex >= 0 && shieldIndex < shieldControllers.size()
+                ? shieldControllers.remove(shieldIndex)
+                : gameQueryService.findPermanentController(gameData, perm.getId());
+        if (shieldIndex >= 0) {
+            recipients.remove(shieldIndex);
+        }
 
-        gameData.queueMayAbility(perm.getCard(), opponentId, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), triggerControllerId,
+                perm.getCard().getName() + "'s regeneration ability",
+                new ArrayList<>(List.of(new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?",
+                        null, MayChoicePlayer.TARGET_PLAYER))),
+                opponentId, perm.getId());
+        trigger.setNonTargeting(true);
+        gameData.enqueueTrigger(trigger);
         gameLogService.append(gameData, GameLog.textCardText(
                 "", perm.getCard(), " offers " + gameData.playerIdToName.get(opponentId) + " a card."));
     }
@@ -1415,9 +1449,13 @@ public class GraveyardService {
             return;
         }
         perm.setPlusOnePlusOneCounterRegenerationShield(perm.getPlusOnePlusOneCounterRegenerationShield() - 1);
+        List<UUID> shieldControllers = perm.getPlusOnePlusOneCounterRegenerationShieldControllers();
+        UUID triggerControllerId = shieldControllers.isEmpty()
+                ? gameQueryService.findPermanentController(gameData, perm.getId())
+                : shieldControllers.removeFirst();
 
         StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(),
-                gameQueryService.findPermanentController(gameData, perm.getId()),
+                triggerControllerId,
                 perm.getCard().getName() + "'s regeneration ability",
                 new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1))),
                 perm.getId(), perm.getId());
@@ -1441,8 +1479,11 @@ public class GraveyardService {
 
     private void performRegeneration(GameData gameData, Permanent perm) {
         perm.setTimesRegeneratedThisTurn(perm.getTimesRegeneratedThisTurn() + 1);
+        boolean wasTapped = perm.isTapped();
         perm.tap();
-        triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+        if (!wasTapped) {
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+        }
         perm.setAttacking(false);
         perm.setBlocking(false);
         perm.getBlockingTargets().clear();
@@ -1581,18 +1622,35 @@ public class GraveyardService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof GlobalColorGraveyardExileReplacement replacement
-                            && cardColors.stream().anyMatch(replacement.colors()::contains)) {
-                        exileService.exileCard(gameData, ownerId, card);
-                        gameLogService.append(gameData, GameLog.cardThen(card,
-                                " is exiled instead of being put into a graveyard."));
-                        log.info("Game {} - {} replacement effect: colored card exiled instead of graveyard",
-                                gameData.id, card.getName());
-                        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
-                        return true;
-                    }
+                if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
+                if (applyGlobalColorGraveyardExile(gameData, ownerId, card, cardColors, permanent)) {
+                    return true;
                 }
+            }
+        }
+        // Permanents leaving the battlefield together still apply their replacement effects to each
+        // other's cards, even once an earlier member of the group has already left.
+        for (Permanent permanent : gameData.simultaneousDyingPermanents.values()) {
+            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            if (applyGlobalColorGraveyardExile(gameData, ownerId, card, cardColors, permanent)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean applyGlobalColorGraveyardExile(GameData gameData, UUID ownerId, Card card,
+                                                   Set<CardColor> cardColors, Permanent permanent) {
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof GlobalColorGraveyardExileReplacement replacement
+                    && cardColors.stream().anyMatch(replacement.colors()::contains)) {
+                exileService.exileCard(gameData, ownerId, card);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: colored card exiled instead of graveyard",
+                        gameData.id, card.getName());
+                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                return true;
             }
         }
         return false;
@@ -1701,37 +1759,54 @@ public class GraveyardService {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (!(effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement)) {
-                        continue;
-                    }
-                    if (replacement.excludeSource() && battlefieldSnapshot != null
-                            && p.getId().equals(battlefieldSnapshot.getId())) {
-                        continue;
-                    }
-                    PermanentPredicate filter = replacement.filter();
-                    if (filter != null && (battlefieldSnapshot == null
-                            || !predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, battlefieldSnapshot, filter))) {
-                        continue;
-                    }
-                    if (replacement.trackWithSource()) {
-                        exileService.exileCard(gameData, ownerId, card, p.getId());
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                card.getName() + " is exiled with ", p.getCard(),
-                                " instead of being put into a graveyard."));
-                        log.info("Game {} - {} is exiled with {} instead of graveyard",
-                                gameData.id, card.getName(), p.getCard().getName());
-                    } else {
-                        exileService.exileCard(gameData, ownerId, card);
-                        gameLogService.append(gameData, GameLog.cardThen(card,
-                                " is exiled instead of being put into a graveyard."));
-                        log.info("Game {} - {} replacement effect: permanent exiled instead of graveyard",
-                                gameData.id, card.getName());
-                    }
+                if (gameQueryService.hasLostPrintedAbilities(gameData, p)) continue;
+                if (applyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, p, battlefieldSnapshot)) {
                     return true;
                 }
             }
+        }
+        // Permanents leaving the battlefield together still apply their replacement effects to each
+        // other's cards, even once an earlier member of the group has already left.
+        for (Permanent p : gameData.simultaneousDyingPermanents.values()) {
+            if (p.isFaceDown() || p.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            if (applyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, p, battlefieldSnapshot)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean applyBattlefieldExilePermanentsReplacement(GameData gameData, UUID ownerId, Card card,
+                                                               Permanent p, Permanent battlefieldSnapshot) {
+        for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+            if (!(effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement)) {
+                continue;
+            }
+            if (replacement.excludeSource() && battlefieldSnapshot != null
+                    && p.getId().equals(battlefieldSnapshot.getId())) {
+                continue;
+            }
+            PermanentPredicate filter = replacement.filter();
+            if (filter != null && (battlefieldSnapshot == null
+                    || !predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, battlefieldSnapshot, filter))) {
+                continue;
+            }
+            if (replacement.trackWithSource()) {
+                exileService.exileCard(gameData, ownerId, card, p.getId());
+                gameLogService.append(gameData, GameLog.textCardText(
+                        card.getName() + " is exiled with ", p.getCard(),
+                        " instead of being put into a graveyard."));
+                log.info("Game {} - {} is exiled with {} instead of graveyard",
+                        gameData.id, card.getName(), p.getCard().getName());
+            } else {
+                exileService.exileCard(gameData, ownerId, card);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: permanent exiled instead of graveyard",
+                        gameData.id, card.getName());
+            }
+            return true;
         }
         return false;
     }
@@ -1959,7 +2034,7 @@ public class GraveyardService {
                                                     UUID dyingControllerId, Permanent sourcePermanent,
                                                     UUID controllerId, UUID sourcePermanentId,
                                                     Permanent dyingPermanent) {
-        if (gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
+        if (sourcePermanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
             return;
         }
         Card sourceCard = sourcePermanent.getCard();
@@ -2121,12 +2196,15 @@ public class GraveyardService {
                         gameData, 1);
             }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingCreatureOwners) {
-                triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+                triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId,
+                        gameData.graveyardLeaveNotificationPendingCreatureCards.getOrDefault(ownerId, List.of()));
             }
             for (var pending : gameData.graveyardLeaveNotificationPendingCreatureCardCounts.entrySet()) {
                 for (int i = 0; i < pending.getValue(); i++) {
                     triggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers(
-                            gameData, pending.getKey());
+                            gameData, pending.getKey(),
+                            gameData.graveyardLeaveNotificationPendingCreatureCards
+                                    .getOrDefault(pending.getKey(), List.of()));
                 }
             }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners) {
@@ -2146,6 +2224,7 @@ public class GraveyardService {
             gameData.graveyardOrBattlefieldExileNotificationPending = false;
             gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
             gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
+            gameData.graveyardLeaveNotificationPendingCreatureCards.clear();
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
             gameData.graveyardLeaveNotificationPendingArtifactOwners.clear();
             gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards.clear();
@@ -2169,6 +2248,10 @@ public class GraveyardService {
         cards.forEach(card -> gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.cardsGrantedJumpStartUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
+        // A card that left the graveyard is a new object (CR 400.7), so a later return to the graveyard
+        // is not a discard or cycling made this turn.
+        cards.forEach(card -> gameData.cardsDiscardedOrCycledThisTurn.values()
+                .forEach(discardedIds -> discardedIds.remove(card.getId())));
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.
         gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
@@ -2206,7 +2289,7 @@ public class GraveyardService {
                 leavingCard == null ? List.of() : List.of(leavingCard));
         notifyInstantOrSorceryCardLeftGraveyard(gameData, ownerId, leavingCard);
         if (leavingCard != null && !isToken(gameData, leavingCard) && leavingCard.hasType(CardType.CREATURE)) {
-            notifyCreatureCardsLeftGraveyard(gameData, ownerId, 1);
+            notifyCreatureCardsLeftGraveyard(gameData, ownerId, List.of(leavingCard));
         }
         if (isArtifactOrCreatureCard(gameData, leavingCard)) {
             notifyArtifactOrCreatureCardsLeftGraveyard(gameData, ownerId, List.of(leavingCard));
@@ -2236,11 +2319,11 @@ public class GraveyardService {
         for (Card card : leavingCards) {
             notifyInstantOrSorceryCardLeftGraveyard(gameData, ownerId, card);
         }
-        int creatureCardCount = (int) leavingCards.stream()
+        List<Card> creatureCards = leavingCards.stream()
                 .filter(card -> !isToken(gameData, card) && card.hasType(CardType.CREATURE))
-                .count();
-        if (creatureCardCount > 0) {
-            notifyCreatureCardsLeftGraveyard(gameData, ownerId, creatureCardCount);
+                .toList();
+        if (!creatureCards.isEmpty()) {
+            notifyCreatureCardsLeftGraveyard(gameData, ownerId, creatureCards);
         }
         List<Card> artifactOrCreatureCards = leavingCards.stream()
                 .filter(card -> isArtifactOrCreatureCard(gameData, card))
@@ -2347,18 +2430,22 @@ public class GraveyardService {
                 gameData, controllerId, 1, creatureCards);
     }
 
-    private void notifyCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId, int count) {
+    private void notifyCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId, List<Card> cards) {
+        int count = cards.size();
         if (count > 0) {
             gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn.add(ownerId);
         }
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingCreatureOwners.add(ownerId);
             gameData.graveyardLeaveNotificationPendingCreatureCardCounts.merge(ownerId, count, Integer::sum);
+            gameData.graveyardLeaveNotificationPendingCreatureCards
+                    .computeIfAbsent(ownerId, ignored -> new ArrayList<>())
+                    .addAll(cards);
             return;
         }
-        triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId);
+        triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId, cards);
         for (int i = 0; i < count; i++) {
-            triggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers(gameData, ownerId);
+            triggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers(gameData, ownerId, cards);
         }
     }
 

@@ -225,7 +225,7 @@ class ScentOfBrineTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(blueCard.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.tapPermanent(player2, 0);
+        harness.inMutationScope(() -> gs.tapPermanent(gd, player2, 0));
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 

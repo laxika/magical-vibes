@@ -21,6 +21,6 @@ public class SpectralForce extends Card {
                 new ConditionalEffect(
                         new NotCondition(new DefendingPlayerControlsPermanent(
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)))),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)));
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)));
     }
 }

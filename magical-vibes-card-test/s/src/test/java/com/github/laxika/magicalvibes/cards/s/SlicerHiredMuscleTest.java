@@ -63,6 +63,7 @@ class SlicerHiredMuscleTest extends BaseCardTest {
     void combatDamageWithConvertedSlicerConvertsItBack() {
         Permanent slicer = castConvertedSlicer();
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         harness.assertLife(player2, 17);
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveAllTriggers);

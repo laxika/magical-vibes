@@ -27,10 +27,10 @@ public class SummonFatChocobo extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I, bird);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.SAGA_CHAPTER_IV,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
     }
 }

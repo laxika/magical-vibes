@@ -55,6 +55,7 @@ class SelfcraftMechanTest extends BaseCardTest {
     @DisplayName("Selfcraft Mechan can sacrifice itself and target an opponent's creature")
     void sacrificeItselfCountersOpponentsCreatureAndDrawsForController() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         castSelfcraftMechan();
         Permanent mechan = gd.playerBattlefields.get(player1.getId()).getFirst();

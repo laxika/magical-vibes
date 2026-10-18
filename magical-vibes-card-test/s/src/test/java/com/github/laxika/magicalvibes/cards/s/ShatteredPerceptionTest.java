@@ -162,9 +162,9 @@ class ShatteredPerceptionTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnInResponse, first, second));
         harness.setLibrary(player2, List.of(new YoungWolf(), new YoungWolf(), new YoungWolf()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castSorcery(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 

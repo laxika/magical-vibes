@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +29,9 @@ public class SanguineStatuette extends Card {
         // artifact creature with haste until end of turn.
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                        new PermanentAllOfPredicate(List.of(
+                        new PermanentIsTokenPredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD))),
                         new MayEffect(
                                 new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.VAMPIRE),
                                         Set.of(Keyword.HASTE), null, Set.of(CardType.ARTIFACT)),

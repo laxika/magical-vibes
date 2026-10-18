@@ -534,6 +534,7 @@ public class DamageSupport {
         ResolutionDamageEvent event = new ResolutionDamageEvent(entry.getTargetableId(), entry.damageEventAt(index));
         if (event.equals(gameData.openDamageEvent)) return true;
         if (!endOpenDamageEvent(gameData)) return false;
+        gameData.playerSourceShieldsUsedInOpenEvent.clear();
         gameData.openDamageEvent = event;
         return true;
     }
@@ -553,6 +554,7 @@ public class DamageSupport {
     public void endDamageEvent(GameData gameData) {
         flushLifelinkGains(gameData);
         gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
+        gameData.playerSourceShieldsUsedInOpenEvent.clear();
         gameData.openDamageEvent = null;
     }
 
@@ -586,6 +588,7 @@ public class DamageSupport {
         if (gameData.damageJournal != null) return false;
         gameData.pendingSimultaneousDamage.removeAll(held);
         gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
+        gameData.playerSourceShieldsUsedInOpenEvent.clear();
         return true;
     }
 
@@ -735,6 +738,12 @@ public class DamageSupport {
         if (source == null) {
             // Damage from a source that has since left uses its last known information (CR 608.2h).
             source = entry.getSourcePermanentSnapshot();
+        }
+        if (source != null && entry.getDamageSourceCard() != null
+                && entry.getDamageSourceCard() != source.getCard()) {
+            // The ability belongs to this permanent but another object deals the damage (an Equipment
+            // that granted the ability), so restrictions on the permanent's own damage don't apply.
+            return false;
         }
         if (source != null && (gameQueryService.isPreventedFromDealingDamage(gameData, source)
                 || gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)

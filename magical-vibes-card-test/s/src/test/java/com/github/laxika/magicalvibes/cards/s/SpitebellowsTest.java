@@ -4,7 +4,12 @@ import com.github.laxika.magicalvibes.cards.b.BurrentonBombardier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -174,10 +179,10 @@ class SpitebellowsTest extends BaseCardTest {
         Permanent spitebellows = findPermanent(player1, "Spitebellows");
         assertThat(gd.stack).hasSize(1);
 
-        harness.inMutationScope(() -> {
-            gd.playerBattlefields.get(player1.getId()).remove(spitebellows);
-            gd.playerBattlefields.get(player2.getId()).add(spitebellows);
-        });
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), spitebellows,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Spitebellows");

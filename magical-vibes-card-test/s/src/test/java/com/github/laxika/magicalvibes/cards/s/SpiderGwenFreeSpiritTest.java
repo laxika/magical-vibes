@@ -77,7 +77,9 @@ class SpiderGwenFreeSpiritTest extends BaseCardTest {
 
         tap(gwen);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);

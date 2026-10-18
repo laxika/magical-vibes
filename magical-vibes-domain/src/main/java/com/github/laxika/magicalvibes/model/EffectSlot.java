@@ -385,6 +385,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a permanent of any type, including a token, is put into the controller's
      *  graveyard from the battlefield. Fires only for the graveyard owner. */
     ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a permanent of any type, including a token, is put into the <em>watcher
+     *  controller's own</em> graveyard from the battlefield ("put into your graveyard"). Unlike
+     *  {@link #ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD}, the graveyard's owner (not the
+     *  permanent's controller) decides whether it fires, and the watcher sees its own move. Supports
+     *  {@code TriggeringPermanentConditionalEffect} gating. Used by Scrapheap. */
+    ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever a permanent (of any type, any player's) is put into an <em>opponent's</em>
      *  graveyard from the battlefield — the graveyard's owner, not the permanent's controller, is
      *  what makes it an opponent's graveyard. The triggered ability's {@code targetId} is baked to
@@ -614,6 +620,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this creature is dealt combat damage. The amount of combat damage dealt
      *  is snapshotted onto the triggered ability's event value. */
     ON_COMBAT_DAMAGE_TO_SELF,
+    /** Triggers once per combat damage step in which this permanent's controller is dealt combat damage. */
+    ON_CONTROLLER_DEALT_COMBAT_DAMAGE,
     ON_OPENING_HAND_REVEAL,
     /** Special actions offered while a player is deciding whether to mulligan. */
     MULLIGAN_ACTION,
@@ -855,6 +863,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers when the controller casts a spell matching the filter, while this card is in the
+     *  controller's hand and is not the spell being cast (Covercast). */
+    HAND_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller casts a spell while this card is in exile. */
     EXILE_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the card's owner sacrifices a token while this card is face up in exile. */
@@ -1069,6 +1080,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
     /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+    /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls,
+     *  no matter which player puts them there. Fired once per counter-placement event with the
+     *  counter count as the event value. Used by Shalai and Hallar. */
+    ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE,
     /** Triggers whenever one or more +1/+1 counters are put on a creature, regardless of that
      *  creature's controller, including the source itself. Fired once per counter-placement event. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE,

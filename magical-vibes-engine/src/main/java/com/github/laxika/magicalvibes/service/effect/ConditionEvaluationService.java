@@ -473,6 +473,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceExploitedTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
@@ -1184,6 +1185,11 @@ public class ConditionEvaluationService {
                         ? ctx.sourcePermanent().isCast()
                         : ctx.sourceZone() != null;
             }
+            case SourceExploitedTriggeringPermanent ignored ->
+                    ctx.sourcePermanentId() != null && ctx.triggeringPermanentId() != null
+                            && gameData.exploitedPermanentIdsBySource
+                            .getOrDefault(ctx.sourcePermanentId(), java.util.Set.of())
+                            .contains(ctx.triggeringPermanentId());
             case SourceWasCastWithEscape ignored ->
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isEscaped();
             case DidntAttack ignored ->
@@ -1209,9 +1215,18 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
             }
-            case AttackedTargetIsOpponent ignored ->
-                    ctx.targetId() != null && gameData.playerIds.contains(ctx.targetId())
-                            && ctx.controllerId() != null && !ctx.controllerId().equals(ctx.targetId());
+            case AttackedTargetIsOpponent ignored -> {
+                UUID attackedId = ctx.targetId();
+                if ((attackedId == null || !gameData.playerIds.contains(attackedId))
+                        && ctx.triggeringPermanentId() != null) {
+                    Permanent attacker = gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                    if (attacker != null && attacker.getAttackTarget() != null) {
+                        attackedId = attacker.getAttackTarget();
+                    }
+                }
+                yield attackedId != null && gameData.playerIds.contains(attackedId)
+                        && ctx.controllerId() != null && !ctx.controllerId().equals(attackedId);
+            }
             case AttackedOpponentHasMoreLifeThanAnotherOpponent ignored ->
                     ctx.targetId() != null && ctx.controllerId() != null
                             && gameData.playerIds.contains(ctx.targetId())
@@ -1658,6 +1673,10 @@ public class ConditionEvaluationService {
                     // "counter target spell. If it was ..." reads it after the counter has removed it.
                     Card lastKnown = ctx.targetId() == null ? null
                             : gameQueryService.findCardById(gameData, ctx.targetId());
+                    if (lastKnown != null
+                            && c.filter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate maxValue) {
+                        yield lastKnown.getManaValue() <= maxValue.maxManaValue();
+                    }
                     if (lastKnown == null || !(c.filter() instanceof StackEntrySubtypeInPredicate subtypeIn)) {
                         yield false;
                     }
@@ -1844,7 +1863,16 @@ public class ConditionEvaluationService {
                     triggeringPermanent = ctx.sourcePermanent();
                 }
                 if (triggeringPermanent == null) {
-                    yield false;
+                    if (ctx.triggeringPermanentId() == null || ctx.triggeringPermanentPowerAtTrigger() == null) {
+                        yield false;
+                    }
+                    // The creature already left the battlefield: its last known power is compared with
+                    // every creature that remains (CR 608.2h).
+                    final int lastKnownPower = ctx.triggeringPermanentPowerAtTrigger();
+                    yield gameData.playerBattlefields.values().stream()
+                            .flatMap(List::stream)
+                            .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                            .allMatch(permanent -> lastKnownPower > gameQueryService.getEffectivePower(gameData, permanent));
                 }
                 int triggeringPower = gameQueryService.findPermanentById(gameData, triggeringPermanent.getId()) != null
                         ? gameQueryService.getEffectivePower(gameData, triggeringPermanent)

@@ -205,6 +205,7 @@ class SeasonOfTheBoldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(exiledShock, land,
                 new Plains(), new Plains(), new Plains(), new Plains()));
         harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Plains(), new Plains()));
+        harness.setHand(player2, List.of());
         cast(mode(1, 2));
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

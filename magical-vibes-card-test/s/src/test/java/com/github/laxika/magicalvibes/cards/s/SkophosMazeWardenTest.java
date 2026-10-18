@@ -111,7 +111,7 @@ class SkophosMazeWardenTest extends BaseCardTest {
         Permanent warden = addWarden(player1);
         harness.addToBattlefield(player1, new LabyrinthOfSkophos());
         Permanent target = addCreatureReady(player1, new UnderworldRageHound());
-        declareAttackers(player1, List.of(2));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(2)));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 1, 1, null, target.getId());
@@ -130,7 +130,7 @@ class SkophosMazeWardenTest extends BaseCardTest {
         Permanent warden = addWarden(player1);
         harness.addToBattlefield(player1, new LabyrinthOfSkophos());
         Permanent target = addCreatureReady(player1, new UnderworldRageHound());
-        declareAttackers(player1, List.of(2));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(2)));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 1, 1, null, target.getId());

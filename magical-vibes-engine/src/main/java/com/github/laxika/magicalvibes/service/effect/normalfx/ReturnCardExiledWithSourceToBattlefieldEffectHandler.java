@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -125,7 +126,11 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
         gameData.queueInteraction(new PendingReturnExiledWithSourceCard(true, controllerId,
                 returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking(),
-                returnEffect.grantHaste(), returnEffect.battlefieldEntryReplacement()));
+                returnEffect.grantHaste(), returnEffect.additionalPlusOnePlusOneCounters() > 0
+                && returnEffect.battlefieldEntryReplacement() == null
+                ? new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                new Fixed(returnEffect.additionalPlusOnePlusOneCounters()))
+                : returnEffect.battlefieldEntryReplacement()));
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,

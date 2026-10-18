@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -102,6 +103,8 @@ class SlumberingCerberusTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(cerberus.isTapped()).isFalse();

@@ -21,6 +21,7 @@ class SireOfTheStormTest extends BaseCardTest {
     void arcaneSpellDrawsCard() {
         harness.addToBattlefield(player1, new SireOfTheStorm());
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -35,6 +36,7 @@ class SireOfTheStormTest extends BaseCardTest {
     void spiritSpellDrawsCard() {
         harness.addToBattlefield(player1, new SireOfTheStorm());
         harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -47,6 +49,7 @@ class SireOfTheStormTest extends BaseCardTest {
     void decliningDrawsNothing() {
         harness.addToBattlefield(player1, new SireOfTheStorm());
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -109,8 +112,10 @@ class SireOfTheStormTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SireOfTheStorm());
         harness.addToBattlefield(player1, new SireOfTheStorm());
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

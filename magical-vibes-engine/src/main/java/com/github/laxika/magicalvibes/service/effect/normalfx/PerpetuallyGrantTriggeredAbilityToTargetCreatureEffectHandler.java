@@ -49,15 +49,12 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureEffectHandler
                 }
                 List<CardEffect> effects = updated.computeIfAbsent(grant.triggeredAbilitySlot(),
                         ignoredSlot -> new ArrayList<>());
-                if (!effects.contains(grant.triggeredAbility())) {
-                    effects.add(grant.triggeredAbility());
-                }
+                effects.add(grant.triggeredAbility());
                 updated.replaceAll((slot, slotEffects) -> List.copyOf(slotEffects));
                 return Map.copyOf(updated);
             });
 
-            if (target != null && !target.getPersistentTriggeredEffects(grant.triggeredAbilitySlot())
-                    .contains(grant.triggeredAbility())) {
+            if (target != null) {
                 target.addPersistentTriggeredEffect(grant.triggeredAbilitySlot(),
                         grant.triggeredAbility());
             }

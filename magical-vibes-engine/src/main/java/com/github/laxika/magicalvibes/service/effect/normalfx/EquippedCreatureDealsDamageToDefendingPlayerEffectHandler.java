@@ -34,19 +34,29 @@ public class EquippedCreatureDealsDamageToDefendingPlayerEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EquippedCreatureDealsDamageToDefendingPlayerEffect) effect;
-        Permanent creature = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        boolean selfTrigger = entry.getTriggeringPermanentId() == null;
+        Permanent creature = gameQueryService.findPermanentById(gameData,
+                selfTrigger ? entry.getSourcePermanentId() : entry.getTriggeringPermanentId());
         Card damageSourceCard = creature != null ? creature.getCard() : entry.getDamageSourceCard();
+        if (damageSourceCard == null && selfTrigger && entry.getSourcePermanentSnapshot() != null) {
+            damageSourceCard = entry.getSourcePermanentSnapshot().getCard();
+        }
+        if (damageSourceCard == null && !selfTrigger && entry.getAttachedPermanentSnapshot() != null) {
+            damageSourceCard = entry.getAttachedPermanentSnapshot().getCard();
+        }
         UUID attackedTargetId = entry.getAttackedTargetId();
         if (damageSourceCard == null || attackedTargetId == null) {
             return;
         }
 
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : gameData.playerIds.contains(attackedTargetId)
                 ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         UUID creatureControllerId = creature != null
                 ? gameQueryService.findPermanentController(gameData, creature.getId())
-                : entry.getTriggeringPermanentControllerId();
+                : selfTrigger ? entry.getControllerId() : entry.getTriggeringPermanentControllerId();
         if (defendingPlayerId == null || creatureControllerId == null) {
             return;
         }
@@ -58,7 +68,7 @@ public class EquippedCreatureDealsDamageToDefendingPlayerEffectHandler implement
                 damageSourceCard.getName() + "'s ability",
                 List.of(),
                 defendingPlayerId,
-                entry.getTriggeringPermanentId());
+                creature != null ? creature.getId() : entry.getTriggeringPermanentId());
         damageEntry.setDamageSourceCard(damageSourceCard);
         int amount = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(damageEntry, creature));

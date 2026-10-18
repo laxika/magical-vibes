@@ -178,8 +178,7 @@ class SearchTheCityTest extends BaseCardTest {
         UUID permId = resolveEtb(List.of(new Forest()));
         var source = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(permId)).findFirst().orElseThrow();
-        gd.playerBattlefields.get(player1.getId()).remove(source);
-        gd.playerBattlefields.get(player2.getId()).add(source);
+        setOwnerAndController(source, player1, player2);
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Forest()));
         harness.playLand(player2, 0);

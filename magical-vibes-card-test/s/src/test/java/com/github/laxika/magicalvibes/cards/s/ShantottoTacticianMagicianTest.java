@@ -123,9 +123,9 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         setUpMainPhase(player1);
         harness.setHand(player1, List.of(new Hurricane(), new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         assertThat(shantotto.getPowerModifier()).isEqualTo(1);
@@ -169,7 +169,7 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(shantotto.getPowerModifier()).isEqualTo(1);
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(shantotto.getPowerModifier()).isZero();
         assertThat(shantotto.getToughnessModifier()).isZero();

@@ -22,6 +22,6 @@ public class SleepOfTheDead extends Card {
 
         addCastingOption(new GraveyardCast(null, "{2}{U}",
                 List.of(new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)),
-                null, false, true));
+                null, false, false, true));
     }
 }

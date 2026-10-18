@@ -140,6 +140,7 @@ public class ReturnDelayedGraveyardCardUnderControlEffectHandler implements Norm
                     .add(permanent.getId());
             gameData.seraphControlWatch.putIfAbsent(pending.sourcePermanentId(),
                     gameQueryService.findPermanentController(gameData, sourcePermanent.getId()));
+            gameData.seraphLinkedController.putIfAbsent(pending.sourcePermanentId(), returnControllerId);
         }
     }
 }

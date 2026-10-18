@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -88,8 +89,10 @@ class SalvageDroneTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(topCard, secondCard));
         harness.setLibrary(player1, List.of(ownCard));
 
-        resolveUnblockedCombat();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            resolveUnblockedCombat();
+            resolveAllTriggers();
+        });
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
         assertThat(gd.findExiledCard(secondCard.getId())).isNull();
@@ -105,8 +108,10 @@ class SalvageDroneTest extends BaseCardTest {
         drone.setAttacking(true);
         harness.setLibrary(player2, List.of());
 
-        resolveUnblockedCombat();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            resolveUnblockedCombat();
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         harness.assertLife(player2, 19);

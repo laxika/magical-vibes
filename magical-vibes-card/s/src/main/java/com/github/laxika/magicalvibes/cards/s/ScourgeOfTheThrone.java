@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
@@ -24,8 +25,8 @@ public class ScourgeOfTheThrone extends Card {
 
     public ScourgeOfTheThrone() {
         addEffect(EffectSlot.ON_ATTACK, new OncePerTurnTriggerEffect(
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAttacksPlayerWithMostLifePredicate(),
+                new ConditionalEffect(
+                        new SourceMatchesPermanentPredicate(new PermanentAttacksPlayerWithMostLifePredicate()),
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(
                                         TapUntapScope.ALL_CREATURES,

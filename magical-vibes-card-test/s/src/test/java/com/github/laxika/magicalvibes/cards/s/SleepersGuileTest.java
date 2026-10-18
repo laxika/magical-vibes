@@ -138,6 +138,7 @@ class SleepersGuileTest extends BaseCardTest {
     @DisplayName("Sleeper's Guile returns only itself, not other copies in graveyards")
     void returnsOnlyTheAuraThatDied() {
         SleepersGuile other = new SleepersGuile();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(other));
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new SleepersGuile());

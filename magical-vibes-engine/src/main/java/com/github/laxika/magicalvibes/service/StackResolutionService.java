@@ -429,6 +429,8 @@ public class StackResolutionService {
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
         perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
+        perm.setGiftPromised(entry.isGiftPromised());
+        perm.setDelvedCards(entry.getDelvedCards());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         // Keywords granted until the controller's next turn while the spell was on the stack (Jade Orb's hexproof).
@@ -1654,14 +1656,6 @@ public class StackResolutionService {
                 .findFirst()
                 .orElse(null);
 
-        if (exileSpellEffect != null && entry.getSourceZone() == Zone.HAND
-                && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
-                && gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
-                .getOrDefault(entry.getControllerId(), 0) > 0) {
-            gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.compute(
-                    entry.getControllerId(), (ignored, count) -> count == null || count <= 1 ? null : count - 1);
-        }
-
         // Feather's replacement is chosen first when it is available; otherwise flashback's
         // replacement exiles the spell instead of letting it go anywhere else.
         if (entry.isExileAndReturnToHandAtNextEndStep()
@@ -1697,17 +1691,6 @@ public class StackResolutionService {
             gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
             gameLogService.append(gameData, GameLog.cardThen(physicalCard,
                     " is exiled with permission to cast its creature face."));
-        } else if (entry.getSourceZone() == Zone.HAND
-                && exileSpellEffect == null
-                && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
-                && gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
-                .getOrDefault(entry.getControllerId(), 0) > 0) {
-            gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.compute(
-                    entry.getControllerId(), (ignored, count) -> count == null || count <= 1 ? null : count - 1);
-            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
-            gameData.addCardToHand(ownerId, physicalCard);
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                    " is returned to its owner's hand instead of going to the graveyard."));
         } else if (entry.isReturnToHandAfterResolving() && exileSpellEffect == null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);

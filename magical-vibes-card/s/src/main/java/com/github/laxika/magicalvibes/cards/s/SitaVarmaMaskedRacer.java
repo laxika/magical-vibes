@@ -25,8 +25,8 @@ public class SitaVarmaMaskedRacer extends Card {
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
                         new MayEffect(
                                 new SetAllOwnCreaturesBasePowerToughnessEffect(
-                                        new SourcePower(),
-                                        new SourcePower(),
+                                        new SourcePower(true),
+                                        new SourcePower(true),
                                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),
                                 "Have the base power and toughness of each other creature you control become equal to Sita Varma's power?")
                 ),

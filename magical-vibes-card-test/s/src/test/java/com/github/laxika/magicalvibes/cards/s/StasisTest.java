@@ -156,7 +156,7 @@ class StasisTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
 
-        advanceToUpkeep(player1);
+        advanceToNextTurn(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

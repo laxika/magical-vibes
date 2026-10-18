@@ -169,6 +169,8 @@ class SeethingSkitterPriestTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);

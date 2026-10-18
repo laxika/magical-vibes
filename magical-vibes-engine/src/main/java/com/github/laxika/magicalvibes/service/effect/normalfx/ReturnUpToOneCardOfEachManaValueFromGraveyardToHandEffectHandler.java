@@ -41,6 +41,6 @@ public class ReturnUpToOneCardOfEachManaValueFromGraveyardToHandEffectHandler
         gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
                 controllerId, distinctManaValues, null, GraveyardChoiceDestination.HAND,
                 true, false, false, true, Set.of()));
-        graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
+        graveyardReturnSupport.beginGraveyardReturnQueueAsOneEvent(gameData);
     }
 }

@@ -34,7 +34,7 @@ public class SomberwaldBeastmaster extends Card {
 
         // Creature tokens you control have deathtouch.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH,
-                GrantScope.OWN_CREATURES, new PermanentAllOfPredicate(List.of(
+                GrantScope.ALL_OWN_CREATURES, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTokenPredicate()))));
     }

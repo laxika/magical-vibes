@@ -145,6 +145,12 @@ public class TurnCleanupService {
         for (ExpireControlAtEndOfNextTurn expiration : expirations) {
             gameData.expireFloatingEffects(effect -> expiration.controlEffectId().equals(effect.id()));
         }
+        gameData.expireFloatingEffects(effect ->
+                effect.duration() == com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN
+                        && !effect.isControlEffect()
+                        && activePlayerId.equals(effect.controllerId())
+                        && gameData.turnStartTimestamp > 0
+                        && effect.timestamp() < gameData.turnStartTimestamp);
     }
 
     /** Releases Teferi's mass phase-out restriction after the controller's next turn ends. */
@@ -308,11 +314,14 @@ public class TurnCleanupService {
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
             p.getOpponentDrawRegenerationShieldRecipients().clear();
+            p.getOpponentDrawRegenerationShieldControllers().clear();
             p.setMinusOneCounterRegenerationShield(0);
             p.setPlusOnePlusOneCounterRegenerationShield(0);
+            p.getPlusOnePlusOneCounterRegenerationShieldControllers().clear();
             p.getGainControlRegenerationShields().clear();
             p.clearTappedPermanentsForAbilityThisTurn();
         });
+        gameData.endSacredBoonShieldsAtCleanup();
 
         gameData.playerDamagePreventionShields.clear();
         gameData.playerCombatDamagePreventionShields.clear();
@@ -368,6 +377,7 @@ public class TurnCleanupService {
         gameData.sourceNextCombatDamageToControllerShields.clear();
         gameData.sourceNextDamageRedirectToPermanentShields.clear();
         gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
+        gameData.playerSourceShieldsUsedInOpenEvent.clear();
         gameData.playerSourceNextDamageRedirectShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
@@ -389,6 +399,7 @@ public class TurnCleanupService {
         gameData.targetSpellDamagePreventionShields.clear();
         gameData.targetSorceryDamageRedirectShields.clear();
         gameData.playersWithAllDamagePrevented.clear();
+        gameData.playersWithAllPermanentDamagePrevented.clear();
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
@@ -585,6 +596,7 @@ public class TurnCleanupService {
         gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
         gameData.cardsExiledThisTurn = 0;
         gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
+        gameData.graveyardLeaveNotificationPendingCreatureCards.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOwners.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards.clear();

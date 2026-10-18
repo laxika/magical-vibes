@@ -94,7 +94,19 @@ public class TokenCopySupport {
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, attackTargetIds, copyException, false);
+                effect, attackTargetIds, copyException, false, null);
+    }
+
+    /**
+     * Creates token copies of Auras that enter attached to {@code auraHost} rather than having their
+     * controller choose what they enchant. A copy that could not enchant the host is not created.
+     */
+    public List<UUID> createTokenCopiesAttachedTo(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                  Permanent sourcePermanent, UUID tokenControllerId,
+                                                  CreateTokenCopyOfTargetPermanentEffect effect,
+                                                  Permanent auraHost) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                effect, null, null, false, auraHost);
     }
 
     /** Prepares all per-opponent copies, including token replacements, before choosing their attack targets. */
@@ -104,14 +116,15 @@ public class TokenCopySupport {
                                                                CreateTokenCopyOfTargetPermanentEffect effect,
                                                                List<UUID> opponentIds) {
         createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect,
-                opponentIds, null, true);
+                opponentIds, null, true, null);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                          Permanent sourcePermanent, UUID tokenControllerId,
                                          CreateTokenCopyOfTargetPermanentEffect effect,
                                          List<UUID> attackTargetIds,
-                                         Consumer<Card> copyException, boolean chooseOpponentAttackTargets) {
+                                         Consumer<Card> copyException, boolean chooseOpponentAttackTargets,
+                                         Permanent auraHost) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
@@ -157,7 +170,14 @@ public class TokenCopySupport {
                 }
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
-                tokens.add(withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect));
+                Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
+                if (auraHost != null && tokenCard.isAura() && !tokenCard.isEnchantZone()) {
+                    if (!auraAttachmentService.canEnchant(gameData, tokenCard, tokenControllerId, auraHost)) {
+                        continue;
+                    }
+                    preparedToken.setAttachedTo(auraHost.getId());
+                }
+                tokens.add(preparedToken);
                 expandedAttackTargets.add(sourceAttackTarget);
             }
         }
@@ -489,10 +509,12 @@ public class TokenCopySupport {
             }
             if (effect.exileAtEndOfCombat()) {
                 // One resolution's tokens share a single "exile them at end of combat" delayed trigger;
-                // the source card is the batching key, needed only when several tokens are created.
+                // the source card is the batching key. CR 603.7e: the ability that created the delayed
+                // trigger keeps controlling it and remains its source, even if a token changes control.
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT,
-                        false, null, null, null, false, tokens.size() > 1 ? entry.getCard() : null));
+                        false, null, null, null, false, entry.getCard(),
+                        entry.getControllerId(), entry.getSourcePermanentId()));
             }
             if (effect.sacrificeAtEndStep()) {
                 // Only the player who created the token sacrifices it, and only while they control it

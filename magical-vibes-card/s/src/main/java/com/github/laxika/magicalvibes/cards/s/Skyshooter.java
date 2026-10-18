@@ -22,7 +22,7 @@ public class Skyshooter extends Card {
     public Skyshooter() {
         addActivatedAbility(new ActivatedAbility(
                 true,
-                "{1}{G}",
+                null,
                 List.of(new SacrificeSelfCost(), new DestroyTargetPermanentEffect()),
                 "{T}, Sacrifice Skyshooter: Destroy target attacking or blocking creature with flying.",
                 new PermanentPredicateTargetFilter(

@@ -25,6 +25,7 @@ class SurgeConductorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ornithopter()));
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -63,6 +64,7 @@ class SurgeConductorTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Ornithopter()));
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of());
 

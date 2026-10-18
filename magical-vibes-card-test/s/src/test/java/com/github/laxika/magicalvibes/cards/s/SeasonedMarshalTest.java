@@ -152,7 +152,7 @@ class SeasonedMarshalTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.BlockerDeclaration.class);
         assertThat(marshal.isTapped()).isFalse();
         assertThat(opposingBears.isTapped()).isFalse();
     }

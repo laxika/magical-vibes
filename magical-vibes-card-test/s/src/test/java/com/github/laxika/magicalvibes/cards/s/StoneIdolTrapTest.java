@@ -129,6 +129,7 @@ class StoneIdolTrapTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player1, List.of(new StoneIdolTrap()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.castAndResolveInstant(player1, 0);

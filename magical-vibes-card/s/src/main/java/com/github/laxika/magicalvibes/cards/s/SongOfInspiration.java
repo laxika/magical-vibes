@@ -23,10 +23,12 @@ public class SongOfInspiration extends Card {
         target(new GraveyardCardPredicateTargetFilter(
                 new CardIsPermanentPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 2)
                 .addEffect(EffectSlot.SPELL, RollD20Effect.withAddedAmount(
-                        new TargetCardsManaValueSum(),
+                        new TargetCardsManaValueSum(true),
                         returnCards,
+                        // Life gain is evaluated while the cards are still in the graveyard, so only
+                        // targets that are still there (and are thus returned) count.
                         SequenceEffect.of(
-                                returnCards,
-                                new GainLifeEffect(new TargetCardsManaValueSum()))));
+                                new GainLifeEffect(new TargetCardsManaValueSum(true)),
+                                returnCards)));
     }
 }

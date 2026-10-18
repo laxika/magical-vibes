@@ -26,7 +26,10 @@ class SilverFurMasterTest extends BaseCardTest {
     @Test
     void ownNinjutsuEntersTappedAndAttacking() {
         Permanent attacker = addCreatureReady(player1, new SilverFurMaster());
+        addCreatureReady(player2, new GrizzlyBears());
         declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new SilverFurMaster()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

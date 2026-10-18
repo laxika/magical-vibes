@@ -171,6 +171,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileAnyNumberThenEffectChoiceMade;
     /** The cards chosen for the optional any-number graveyard exile, or an empty list for a decline. */
     public List<UUID> resolutionTimeExileAnyNumberThenEffectChosenCardIds;
+    /** Whether the own-graveyard shuffle choice is awaiting its answer. */
+    public boolean resolutionTimeShuffleOwnGraveyardCardsResume;
+    /** Whether the own-graveyard shuffle choice has been answered. */
+    public boolean resolutionTimeShuffleOwnGraveyardCardsChoiceMade;
+    /** The cards chosen for the own-graveyard shuffle, or an empty list for none. */
+    public List<UUID> resolutionTimeShuffleOwnGraveyardCardsChosenCardIds;
     /** Whether Winter's multi-card graveyard selection is awaiting its answer. */
     public boolean resolutionTimeExileAnyNumberWithFourCardTypesResume;
     /** Whether Winter's multi-card graveyard selection has been answered. */
@@ -290,7 +296,7 @@ public class GraveyardTargetOperationState {
     public DeadlyCoverUpContext resolutionTimeDeadlyCoverUp;
 
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
-            UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {
+            UUID controllerId, UUID sourcePermanentId, CardPredicate filter, boolean requireOne) {
     }
 
     public record EachPlayerExilesCardFromGraveyardContext(

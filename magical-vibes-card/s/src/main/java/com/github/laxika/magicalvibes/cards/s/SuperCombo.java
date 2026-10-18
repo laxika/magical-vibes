@@ -19,7 +19,7 @@ public class SuperCombo extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}"));
 
         target(TargetFilters.creatureYouControl());
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1)
+        target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
     }
 }

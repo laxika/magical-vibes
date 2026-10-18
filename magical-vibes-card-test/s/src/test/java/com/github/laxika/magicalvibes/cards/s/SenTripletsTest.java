@@ -162,7 +162,7 @@ class SenTripletsTest extends BaseCardTest {
         lockOpponent(player2);
         gd.playerBattlefields.get(player1.getId()).clear();
 
-        harness.getDrawService().resolveDrawCard(gd, player2.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
         harness.clearMessages();
         harness.publishState();
 

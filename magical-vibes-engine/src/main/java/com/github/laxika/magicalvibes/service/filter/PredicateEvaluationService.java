@@ -360,6 +360,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithWarpCostPredicate;
@@ -660,6 +661,10 @@ public class PredicateEvaluationService {
                         && gameData.spellWasCastWithConvokeGrant(card.getId())) {
                     granted = true;
                 }
+                if (p.keyword() == Keyword.CONVOKE && gameData != null && cardOwnerId != null
+                        && gameQueryService.hasSpellCastingAbilityGrant(gameData, cardOwnerId, card, Keyword.CONVOKE)) {
+                    granted = true;
+                }
                 if (p.keyword() == Keyword.FLASH && gameData != null && cardOwnerId != null
                         && card.getFlashCastCondition() != null && card.getCardText() != null
                         && card.getCardText().contains("has flash")) {
@@ -688,7 +693,15 @@ public class PredicateEvaluationService {
             case CardHasAwakenPredicate ignored ->
                     card.getCardText() != null && AWAKEN_ABILITY_PATTERN.matcher(card.getCardText()).find();
             case CardHasCascadePredicate ignored ->
-                    card.getEffects(EffectSlot.ON_SELF_CAST).stream().anyMatch(CascadeEffect.class::isInstance);
+                    card.getEffects(EffectSlot.ON_SELF_CAST).stream().anyMatch(CascadeEffect.class::isInstance)
+                            || gameData != null && cardOwnerId != null
+                            && gameData.getDelayedActions(
+                                    com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger.class)
+                            .stream()
+                            .anyMatch(delayed -> cardOwnerId.equals(delayed.controllerId())
+                                    && delayed.resolvedEffects().stream().anyMatch(CascadeEffect.class::isInstance)
+                                    && (delayed.spellFilter() == null
+                                    || matchesCardPredicate(card, delayed.spellFilter(), null, gameData, cardOwnerId)));
             case CardIsSelfPredicate ignored ->
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
@@ -2513,8 +2526,9 @@ public class PredicateEvaluationService {
             }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
                     !permanent.isSummoningSick();
-            case PermanentEnteredBattlefieldThisTurnPredicate ignored ->
-                    enteredBattlefieldThisTurn(gameData, permanent);
+            case PermanentEnteredBattlefieldThisTurnPredicate enteredPredicate ->
+                    enteredBattlefieldThisTurn(gameData, permanent,
+                            enteredPredicate.underSourceControllersControl() ? sourceControllerId : null);
             case PermanentTurnedFaceUpThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsTurnedFaceUpThisTurn.contains(permanent.getId());
             case PermanentCrewedBySourceThisTurnPredicate ignored -> {
@@ -2552,6 +2566,7 @@ public class PredicateEvaluationService {
                     gameData != null
                             && gameQueryService.isCreature(gameData, permanent)
                             && gameData.permanentsThatFoughtThisTurn.contains(permanent.getId());
+            case PermanentCastFromZonePredicate castFrom -> permanent.getCastFromZone() == castFrom.zone();
             case PermanentCastBySourceControllerThisTurnPredicate ignored -> {
                 // "Target creature you cast this turn" â€” identity match against the spells the
                 // source's controller cast this turn, so tokens and non-cast arrivals never match.
@@ -2666,7 +2681,9 @@ public class PredicateEvaluationService {
                 // During cast-time ETB validation the source isn't a permanent yet, so fall back to the
                 // source card's base power.
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
-                boolean sourceIsLive = sourcePermanent != null;
+                boolean sourceIsLive = sourcePermanent != null
+                        && (filterContext == null || filterContext.sourcePermanentSnapshot() == null
+                        || sourcePermanent.getId().equals(filterContext.sourcePermanentSnapshot().getId()));
                 if (!sourceIsLive && filterContext != null) {
                     sourcePermanent = filterContext.sourcePermanentSnapshot();
                 }
@@ -2686,7 +2703,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
-                boolean sourceIsLive = sourcePermanent != null;
+                boolean sourceIsLive = sourcePermanent != null
+                        && (filterContext == null || filterContext.sourcePermanentSnapshot() == null
+                        || sourcePermanent.getId().equals(filterContext.sourcePermanentSnapshot().getId()));
                 if (!sourceIsLive && filterContext != null) {
                     sourcePermanent = filterContext.sourcePermanentSnapshot();
                 }
@@ -3219,54 +3238,7 @@ public class PredicateEvaluationService {
      * so combat-damage triggers recognize both static Auras and resolved temporary goad effects.
      */
     private boolean isGoaded(GameData gameData, Permanent permanent) {
-        if (gameData == null || permanent == null) {
-            return false;
-        }
-
-        final boolean[] goaded = {false};
-        gameData.forEachPermanent((sourceControllerId, sourcePermanent) -> {
-            if (goaded[0]
-                    || sourcePermanent.isFaceDown()
-                    || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
-                return;
-            }
-            FilterContext context = FilterContext.of(gameData)
-                    .withSourceCardId(sourcePermanent.getOriginalCard().getId())
-                    .withSourceControllerId(sourceControllerId)
-                    .withSourcePermanentId(sourcePermanent.getId());
-            for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CombatAttackRequirementEffect requirement
-                        && requirement.requiresAttackAtOtherPlayerIfAble()
-                        && requirement.isActive(gameData, sourcePermanent)
-                        && matchesPermanentPredicate(permanent, requirement.affectedPredicate(), context)) {
-                    goaded[0] = true;
-                    return;
-                }
-            }
-        });
-        if (goaded[0]) {
-            return true;
-        }
-
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect floating : List.copyOf(gameData.floatingEffects)) {
-                if (!(floating.effect() instanceof CombatAttackRequirementEffect requirement)
-                        || !requirement.requiresAttackAtOtherPlayerIfAble()) {
-                    continue;
-                }
-                if (floating.affectedPermanentId() != null) {
-                    if (permanent.getId().equals(floating.affectedPermanentId())) {
-                        return true;
-                    }
-                    continue;
-                }
-                if (matchesPermanentPredicate(permanent, requirement.affectedPredicate(),
-                        FilterContext.of(gameData).withSourceControllerId(floating.controllerId()))) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return gameData != null && permanent != null && gameQueryService.isGoaded(gameData, permanent);
     }
 
     private boolean sharesCardTypeWithSourcePermanent(Permanent permanent, FilterContext filterContext) {
@@ -3544,8 +3516,10 @@ public class PredicateEvaluationService {
                 yield receivedPlusOneCountersThisTurn(gameData, permanent, counterPredicate,
                         context == null ? null : context.sourceControllerId());
             }
-            case PermanentEnteredBattlefieldThisTurnPredicate ignored ->
-                    enteredBattlefieldThisTurn(context == null ? null : context.gameData(), permanent);
+            case PermanentEnteredBattlefieldThisTurnPredicate enteredPredicate ->
+                    enteredBattlefieldThisTurn(context == null ? null : context.gameData(), permanent,
+                            enteredPredicate.underSourceControllersControl() && context != null
+                                    ? context.sourceControllerId() : null);
             case PermanentTurnedFaceUpThisTurnPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameData.permanentsTurnedFaceUpThisTurn.contains(permanent.getId());
@@ -3792,13 +3766,16 @@ public class PredicateEvaluationService {
         };
     }
 
-    private static boolean enteredBattlefieldThisTurn(GameData gameData, Permanent permanent) {
+    private static boolean enteredBattlefieldThisTurn(GameData gameData, Permanent permanent,
+                                                      UUID enteredUnderControlOf) {
         if (gameData == null) {
             return false;
         }
         UUID currentCardId = permanent.getCard().getId();
         UUID originalCardId = permanent.getOriginalCard().getId();
-        return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
+        return gameData.permanentsEnteredBattlefieldThisTurn.entrySet().stream()
+                .filter(entered -> enteredUnderControlOf == null || enteredUnderControlOf.equals(entered.getKey()))
+                .map(java.util.Map.Entry::getValue)
                 .flatMap(List::stream)
                 .anyMatch(card -> card.getId().equals(currentCardId)
                         || card.getId().equals(originalCardId));

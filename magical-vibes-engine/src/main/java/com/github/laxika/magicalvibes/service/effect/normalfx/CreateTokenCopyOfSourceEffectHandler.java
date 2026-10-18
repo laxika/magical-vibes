@@ -87,6 +87,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                 int totalAmount = gameQueryService.getTokenCreationAmount(gameData, entry.getControllerId(), amount, tokenSubtypes, creatureToken);
                 Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
                 List<Permanent> simultaneouslyEntered = new ArrayList<>();
+                List<Card> enteredTokenCards = new ArrayList<>();
                 for (int copy = 0; copy < totalAmount; copy++) {
                     // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
                     Card tokenCard = new Card();
@@ -236,7 +237,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         // One delayed trigger exiles every token this resolution created (CR 603.7).
                         gameData.queueDelayedAction(new DelayedPermanentAction(
                                 tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
-                                false, null, null, null, false, entry.getCard()));
+                                false, null, null, entry.getControllerId(), false, entry.getCard()));
                     }
                     if (e.exileAtEndOfCombat()) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(
@@ -254,7 +255,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
                     // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
+                    enteredTokenCards.add(tokenCard);
 
                     if (e.initialCounters() != null && !e.initialCounters().isEmpty()
                             && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
@@ -268,6 +269,11 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         }
                     }
                 }
-    
+
+                // The tokens enter simultaneously, so each one's entry triggers see all of them.
+                for (Card enteredTokenCard : enteredTokenCards) {
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(
+                            gameData, entry.getControllerId(), enteredTokenCard, null, false);
+                }
     }
 }

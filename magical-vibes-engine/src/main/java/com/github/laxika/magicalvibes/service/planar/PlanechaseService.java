@@ -301,6 +301,9 @@ public class PlanechaseService {
             if (card.hasType(CardType.PLANE)) state.planeswalkedToNamesThisTurn.add(card.getName());
         }
         state.planeswalkedToTurn = game.turnNumber;
+        if (ascendEffectHandler != null) {
+            ascendEffectHandler.checkPlanarAscend(game);
+        }
         for (PlanarObject object : List.copyOf(state.faceUp)) {
             logs.append(game, GameLogEntry.text("The planar card is " + object.getCard().getName() + "."));
             trigger(game, object, EffectSlot.PLANESWALK_TO_TRIGGERED, controllerId);

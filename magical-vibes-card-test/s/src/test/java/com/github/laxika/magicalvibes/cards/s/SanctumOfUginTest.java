@@ -252,8 +252,6 @@ class SanctumOfUginTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

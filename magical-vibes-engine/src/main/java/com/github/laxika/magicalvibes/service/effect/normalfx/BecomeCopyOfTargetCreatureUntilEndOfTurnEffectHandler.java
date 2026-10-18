@@ -44,7 +44,8 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         if (targetId == null) return;
 
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-        if (targetPerm == null) {
+        Card lastKnownTarget = targetPerm == null && entry.isNonTargeting() ? entry.getTriggeringCardSnapshot() : null;
+        if (targetPerm == null && lastKnownTarget == null) {
             log.info("Game {} - Become-copy-until-end-of-turn target no longer exists", gameData.id);
             return;
         }
@@ -65,9 +66,15 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
                 (BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) effect;
         Card originalCard = sourcePermanent.getCard();
         EffectRegistration retainedRegistration = findRetainedRegistration(originalCard, copyEffect);
-        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm,
-                copyEffect.powerOverride(), copyEffect.toughnessOverride(),
-                copyEffect.additionalTypesOverride());
+        if (targetPerm != null) {
+            permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm,
+                    copyEffect.powerOverride(), copyEffect.toughnessOverride(),
+                    copyEffect.additionalTypesOverride());
+        } else {
+            permanentCopierService.applyCloneCopy(sourcePermanent, lastKnownTarget,
+                    copyEffect.powerOverride(), copyEffect.toughnessOverride(),
+                    copyEffect.additionalTypesOverride());
+        }
         if (copyEffect.nameOverride() != null) {
             sourcePermanent.getCard().setName(copyEffect.nameOverride());
         }
@@ -109,7 +116,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
                 entry.getControllerId(), effect, sourcePermanentId, null, null,
                 EffectDuration.UNTIL_END_OF_TURN, 0));
 
-        String targetName = targetPerm.getCard().getName();
+        String targetName = targetPerm != null ? targetPerm.getCard().getName() : lastKnownTarget.getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";
         gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} becomes a copy of {} until end of turn", gameData.id, originalName, targetName);

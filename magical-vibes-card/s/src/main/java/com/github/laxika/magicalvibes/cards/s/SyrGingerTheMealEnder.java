@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -31,13 +31,13 @@ public class SyrGingerTheMealEnder extends Card {
                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.HASTE), GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
-                new TriggeringArtifactControllerConditionalEffect(
+                TriggeringArtifactControllerConditionalEffect.another(
                         SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new SacrificeSelfCost(), new GainLifeEffect(new SourcePower())),
+                List.of(new SacrificeSelfCost(true), new GainLifeEffect(new XValue())),
                 "{2}, {T}, Sacrifice Syr Ginger: You gain life equal to its power."
         ));
     }

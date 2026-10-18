@@ -3410,6 +3410,14 @@ public class ChoiceHandlerService {
         if (target != null && !gameQueryService.cantHaveOrGainKeyword(gameData, target, keyword)) {
             GrantDuration duration = ctx.duration();
             addChosenKeywordToLegacyBucket(target, keyword, duration);
+            if (duration == GrantDuration.INDEFINITE) {
+                gameData.perpetualKeywords.merge(target.getOriginalCard().getId(), Set.of(keyword),
+                        (existing, added) -> {
+                            Set<Keyword> merged = new java.util.HashSet<>(existing);
+                            merged.addAll(added);
+                            return Set.copyOf(merged);
+                        });
+            }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ctx.sourceCardName(), sourcePermanentIdFor(ctx), player.getId(),
                     new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, duration, null),
@@ -4756,9 +4764,8 @@ public class ChoiceHandlerService {
             }
         }
 
-        // CR 704.5n/704.5q — the new protection can make an attached aura or equipment illegal
-        stateBasedActionService.performStateBasedActions(gameData);
-
+        // State-based actions are not checked mid-resolution (CR 704.3); any attached aura or
+        // equipment made illegal by the new protection is handled once the resolving spell finishes.
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -6513,26 +6520,22 @@ public class ChoiceHandlerService {
         ChoiceContext.CounterSource source = ctx.sources().get(ctx.index());
         Permanent from = gameQueryService.findPermanentById(gameData, source.permanentId());
         Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
+        Map<CounterType, Integer> moved = new java.util.EnumMap<>(CounterType.class);
+        moved.putAll(ctx.movedSoFar());
         if (from != null && to != null && chosen > 0
                 && gameQueryService.isCreature(gameData, from)
                 && !cantHaveCounter(gameData, to, source.counterType())) {
-            int moved = Math.min(chosen, from.getCounterCount(source.counterType()));
-            if (moved > 0) {
-                from.setCounterCount(source.counterType(), from.getCounterCount(source.counterType()) - moved);
+            int movedCount = Math.min(chosen, from.getCounterCount(source.counterType()));
+            if (movedCount > 0) {
+                from.setCounterCount(source.counterType(), from.getCounterCount(source.counterType()) - movedCount);
                 if (source.counterType() == CounterType.OIL) {
-                    gameData.recordOilCounterRemoved(from, moved);
+                    gameData.recordOilCounterRemoved(from, movedCount);
                 }
-                StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-                if (sourceEntry != null) {
-                    permanentCounterSupport.placeCounterOnPermanent(
-                            gameData, sourceEntry, to, source.counterType(), moved);
-                } else {
-                    to.setCounterCount(source.counterType(), to.getCounterCount(source.counterType()) + moved);
-                }
+                moved.merge(source.counterType(), movedCount, Integer::sum);
                 gameLogService.append(gameData, GameLog.builder()
-                        .text(player.getUsername()).text(" moves ").text(Integer.toString(moved))
+                        .text(player.getUsername()).text(" moves ").text(Integer.toString(movedCount))
                         .text(" ").text(source.counterType().name().toLowerCase()).text(" counter")
-                        .text(moved == 1 ? " from " : "s from ").card(from.getCard()).text(" onto ")
+                        .text(movedCount == 1 ? " from " : "s from ").card(from.getCard()).text(" onto ")
                         .card(to.getCard()).text(".").build());
             }
         }
@@ -6546,10 +6549,23 @@ public class ChoiceHandlerService {
                     && !cantHaveCounter(gameData, to, next.counterType())) {
                 playerInputService.beginMoveAnyCountersFromControlledCreaturesAmountChoice(
                         gameData, player.getId(), ctx.sources(), nextIndex, ctx.toPermanentId(),
-                        ctx.sourceCardName(), nextFrom.getCounterCount(next.counterType()));
+                        ctx.sourceCardName(), nextFrom.getCounterCount(next.counterType()), moved);
                 return;
             }
             nextIndex++;
+        }
+
+        // Every counter moved this way is put on the target together, so replacement effects such as
+        // Hardened Scales apply once per counter kind rather than once per source creature.
+        if (to != null) {
+            StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+            moved.forEach((counterType, count) -> {
+                if (sourceEntry != null) {
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to, counterType, count);
+                } else {
+                    to.setCounterCount(counterType, to.getCounterCount(counterType) + count);
+                }
+            });
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -8102,7 +8118,7 @@ public class ChoiceHandlerService {
         // Validate before touching interaction state: clearing first and then throwing destroys the
         // only thing that would resume the entry parked in pendingEffectResolutionEntry.
         PendingSphinxAmbassadorChoice pending = gameData.peekPendingInteraction(PendingSphinxAmbassadorChoice.class);
-        if (pending == null || pending.selectedCard() == null) {
+        if (pending == null) {
             throw new IllegalStateException("No pending Sphinx Ambassador choice");
         }
 
@@ -8111,17 +8127,27 @@ public class ChoiceHandlerService {
         Card selectedCard = pending.selectedCard();
         UUID controllerId = pending.controllerId();
         UUID targetPlayerId = pending.targetPlayerId();
-        
+
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         String choiceLog = targetName + " chooses \"" + cardName + "\".";
         gameLogService.append(gameData, GameLog.text(choiceLog));
         log.info("Game {} - {} chooses card name \"{}\" for Sphinx Ambassador", gameData.id, targetName, cardName);
 
+        if (selectedCard == null) {
+            // No search took place (prevented or empty library): the name is still chosen and the library shuffled.
+            gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+            gameData.clearPendingInteractions(PendingSphinxAmbassadorChoice.class);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         boolean isCreature = selectedCard.hasType(CardType.CREATURE);
         boolean nameDoesNotMatch = !selectedCard.getName().equals(cardName);
+        boolean blockedByCage = gameQueryService.isCardBlockedFromEnteringFromZone(gameData, selectedCard, Zone.LIBRARY);
 
-        if (isCreature && nameDoesNotMatch) {
+        if (isCreature && nameDoesNotMatch && !blockedByCage) {
             // Conditions met — present may ability to controller: "You may put it onto the battlefield"
             String prompt = pending.sourceCard().getName() + " — Put " + selectedCard.getName()
                     + " onto the battlefield under your control?";

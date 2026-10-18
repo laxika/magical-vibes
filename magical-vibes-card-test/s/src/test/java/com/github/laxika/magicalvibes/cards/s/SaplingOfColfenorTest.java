@@ -118,7 +118,8 @@ class SaplingOfColfenorTest extends BaseCardTest {
         attackWith(player2);
 
         harness.assertLife(player2, 23);
-        harness.assertLife(player1, 20);
+        // The unblocked 2-power Sapling also deals combat damage to player1; the trigger itself does not touch them.
+        harness.assertLife(player1, 18);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherTopCard);
     }

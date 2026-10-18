@@ -40,7 +40,11 @@ class ShieldedPassageTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new BorosGuildgate(), new BorosGuildgate()));
 
         castShieldedPassage(creature);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         castMugging(creature);
 

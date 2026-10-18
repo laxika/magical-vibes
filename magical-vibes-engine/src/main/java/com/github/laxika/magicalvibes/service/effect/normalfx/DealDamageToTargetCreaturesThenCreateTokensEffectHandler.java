@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -50,7 +54,10 @@ public class DealDamageToTargetCreaturesThenCreateTokensEffectHandler implements
                 AmountContext.forStackEntry(entry, source));
         int rawDamage = evaluatedDamage;
 
-        int damagedCreatureCount = 0;
+        Map<UUID, Integer> markedDamageBefore = new HashMap<>();
+        gameData.forEachPermanent((playerId, permanent) ->
+                markedDamageBefore.put(permanent.getId(), permanent.getMarkedDamage()));
+        Set<UUID> damagedCreatureIds = new HashSet<>();
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null || !gameQueryService.isCreature(gameData, target)
@@ -58,12 +65,19 @@ public class DealDamageToTargetCreaturesThenCreateTokensEffectHandler implements
                 continue;
             }
             if (damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage) > 0) {
-                damagedCreatureCount++;
+                damagedCreatureIds.add(targetId);
             }
         }
+        // Damage redirected to another creature still counts as that creature being dealt damage this way.
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && permanent.getMarkedDamage() > markedDamageBefore.getOrDefault(permanent.getId(), 0)) {
+                damagedCreatureIds.add(permanent.getId());
+            }
+        });
 
-        if (damagedCreatureCount > 0) {
-            createTokenEffectHandler.resolve(gameData, entry, e.token().withAmount(damagedCreatureCount));
+        if (!damagedCreatureIds.isEmpty()) {
+            createTokenEffectHandler.resolve(gameData, entry, e.token().withAmount(damagedCreatureIds.size()));
         }
         gameOutcomeService.checkWinCondition(gameData);
     }

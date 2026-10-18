@@ -26,6 +26,8 @@ import java.util.Set;
 public class SublimeEpiphany extends Card {
 
     public SublimeEpiphany() {
+        setAllowSharedTargets(true);
+
         var abilityFilter = new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(
                         StackEntryType.ACTIVATED_ABILITY,

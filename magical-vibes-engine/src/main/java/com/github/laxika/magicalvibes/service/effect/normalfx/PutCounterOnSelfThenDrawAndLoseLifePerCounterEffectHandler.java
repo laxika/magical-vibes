@@ -32,13 +32,16 @@ public class PutCounterOnSelfThenDrawAndLoseLifePerCounterEffectHandler implemen
         var e = (PutCounterOnSelfThenDrawAndLoseLifePerCounterEffect) effect;
         UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
-        if (self == null) {
+        Permanent counted = self != null ? self : entry.getSourcePermanentSnapshot();
+        if (counted == null) {
             return;
         }
 
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), 1);
+        if (self != null) {
+            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), 1);
+        }
         int amount = amountEvaluationService.evaluate(gameData, e.drawnCardAmount(),
-                AmountContext.forStackEntry(entry, self));
+                AmountContext.forStackEntry(entry, counted));
         playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
         lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), amount, entry.getCard().getName());
     }

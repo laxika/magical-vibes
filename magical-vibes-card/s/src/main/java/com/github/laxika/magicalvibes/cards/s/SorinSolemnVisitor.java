@@ -33,7 +33,7 @@ public class SorinSolemnVisitor extends Card {
                 +1,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN),
-                        new GrantKeywordEffect(Set.of(Keyword.LIFELINK), GrantScope.OWN_CREATURES,
+                        new GrantKeywordEffect(Set.of(Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
                                 GrantDuration.UNTIL_YOUR_NEXT_TURN)
                 ),
                 "+1: Until your next turn, creatures you control get +1/+0 and gain lifelink."

@@ -108,6 +108,16 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
                         e.counterType(), previousCount,
                         permanent.getCounterCount(e.counterType()) - previousCount));
 
+        if (e.counterType() == CounterType.LORE) {
+            previousCounts.forEach((permanent, previousCount) -> {
+                if (!permanent.getCard().isSaga()) return;
+                int finalCount = permanent.getCounterCount(CounterType.LORE);
+                for (int loreCount = previousCount + 1; loreCount <= finalCount; loreCount++) {
+                    permanentCounterSupport.triggerSagaChapter(gameData, entry, permanent, loreCount);
+                }
+            });
+        }
+
         // Fire +1/+1 counter-placement triggers after all placements.
         // Deferred past the loop since firing pushes triggered abilities onto the stack.
         for (Permanent p : plusOneTargets) {

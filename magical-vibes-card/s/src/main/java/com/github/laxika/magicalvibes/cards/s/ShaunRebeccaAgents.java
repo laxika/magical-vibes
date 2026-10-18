@@ -17,9 +17,9 @@ public class ShaunRebeccaAgents extends Card {
 
     public ShaunRebeccaAgents() {
         // When Shaun & Rebecca enters, search your graveyard, hand, and library for The Animus
-        // and put it onto the battlefield, then shuffle if you searched your library.
+        // and put it onto the battlefield, then shuffle.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new SearchZonesForCardNamedToBattlefieldEffect("The Animus"));
+                SearchZonesForCardNamedToBattlefieldEffect.alwaysShuffling("The Animus"));
 
         // {T}: Add {C}. When you do, mill two cards.
         addActivatedAbility(new ActivatedAbility(

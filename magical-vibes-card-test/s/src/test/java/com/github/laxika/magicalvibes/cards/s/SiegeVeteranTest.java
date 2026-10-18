@@ -154,7 +154,7 @@ class SiegeVeteranTest extends BaseCardTest {
         advanceToCombat(player2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

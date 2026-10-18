@@ -107,9 +107,11 @@ class ScarecrowGuideTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, "WHITE");
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, "WHITE");
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

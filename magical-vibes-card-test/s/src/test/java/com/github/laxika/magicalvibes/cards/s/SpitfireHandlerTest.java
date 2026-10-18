@@ -93,7 +93,7 @@ class SpitfireHandlerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, spitfireHandler)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, spitfireHandler)).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, spitfireHandler)).isEqualTo(1);
     }

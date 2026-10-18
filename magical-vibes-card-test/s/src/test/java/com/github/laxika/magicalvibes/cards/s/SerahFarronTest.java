@@ -88,7 +88,7 @@ class SerahFarronTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(serah.isTransformed()).isFalse();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
     }
 
     @Test
@@ -167,7 +167,7 @@ class SerahFarronTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(serah.isTransformed()).isFalse();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
     }
 
     @Test
@@ -184,7 +184,7 @@ class SerahFarronTest extends BaseCardTest {
 
         assertThat(serah.isTransformed()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
     }
 
     @Test
@@ -247,6 +247,7 @@ class SerahFarronTest extends BaseCardTest {
     @CardUsed({HopeEstheim.class})
     void reductionIsAvailableAgainOnANewTurn() {
         addCreatureReady(player1, new SerahFarron());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new HopeEstheim()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

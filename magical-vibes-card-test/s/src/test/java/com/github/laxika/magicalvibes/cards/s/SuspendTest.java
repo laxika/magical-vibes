@@ -43,6 +43,7 @@ class SuspendTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(targetCard.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -72,6 +73,7 @@ class SuspendTest extends BaseCardTest {
         assertThat(gd.exiledCardTimeCounters).containsEntry(targetCard.getId(), 1);
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -87,6 +89,7 @@ class SuspendTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -109,6 +112,7 @@ class SuspendTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

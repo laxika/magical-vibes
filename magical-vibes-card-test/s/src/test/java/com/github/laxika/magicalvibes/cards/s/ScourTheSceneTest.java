@@ -24,6 +24,7 @@ class ScourTheSceneTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent detective = findPermanent(player1, "Detective");
         assertThat(detective.getEffectivePower()).isEqualTo(2);
@@ -36,6 +37,7 @@ class ScourTheSceneTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrimBauble());
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
+        harness.setLibrary(player1, List.of());
         addSacrificeMana();
 
         sacrificeGrimBauble();
@@ -43,6 +45,7 @@ class ScourTheSceneTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PerpetualCreatureCardOrPermanentChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -51,8 +54,8 @@ class ScourTheSceneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent entered = findPermanent(player1, "Grizzly Bears");
-        assertThat(entered.getEffectivePower()).isEqualTo(3);
-        assertThat(entered.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, entered)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, entered)).isEqualTo(2);
     }
 
     @Test

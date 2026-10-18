@@ -150,11 +150,11 @@ class SigardasSplendorTest extends BaseCardTest {
         Card topCard = new HarvesttideSentry();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player2, List.of(new ReturnToNature()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         advanceToUpkeep(player1);
-        harness.castInstant(player2, 0, 1, harness.getPermanentId(player1, "Sigarda's Splendor"));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castModalInstant(player2, 0, 1, List.of(harness.getPermanentId(player1, "Sigarda's Splendor")));
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Sigarda's Splendor");

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -19,9 +20,14 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Resolves an all-or-nothing sacrifice of several permanents followed by a reflexive effect. */
+/**
+ * Resolves an all-or-nothing sacrifice of several permanents followed by an "If you do" effect, which
+ * resolves as part of the same resolution rather than as a separate triggered ability.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -33,6 +39,9 @@ public class SacrificePermanentsThenEffectHandler implements NormalEffectHandler
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    @Autowired
+    @Lazy
+    private EffectResolutionService effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -124,15 +133,19 @@ public class SacrificePermanentsThenEffectHandler implements NormalEffectHandler
             return;
         }
 
-        StackEntry triggeredEntry = new StackEntry(
+        StackEntry inlineEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s effect",
-                List.of(thenEffect),
+                new ArrayList<>(List.of(thenEffect)),
                 null,
                 sourcePermanentId);
-        gameData.stack.add(triggeredEntry);
+        if (resolvingEntry != null) {
+            inlineEntry.setSourcePermanentSnapshot(resolvingEntry.getSourcePermanentSnapshot());
+        }
+        inlineEntry.setNonTargeting(true);
+        effectResolutionService.resolveEffects(gameData, inlineEntry);
     }
 
     private void logNoSacrifice(GameData gameData, StackEntry entry, SacrificePermanentsThenEffect effect) {

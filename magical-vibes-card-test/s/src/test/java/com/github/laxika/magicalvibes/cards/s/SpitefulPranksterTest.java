@@ -65,6 +65,7 @@ class SpitefulPranksterTest extends BaseCardTest {
         Permanent prankster = harness.addToBattlefieldAndReturn(player1, new SpitefulPrankster());
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent ajani = harness.addToBattlefieldAndReturn(player2, new AjaniGoldmane());
+        ajani.setCounterCount(CounterType.LOYALTY, 4);
         int initialLoyalty = ajani.getCounterCount(CounterType.LOYALTY);
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player2);

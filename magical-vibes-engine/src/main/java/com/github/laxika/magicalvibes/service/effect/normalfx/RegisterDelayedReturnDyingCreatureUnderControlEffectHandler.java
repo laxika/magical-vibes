@@ -73,7 +73,7 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
                 dyingCardId, returnControllerId, sourcePermanentId,
                 e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),
                 e.grantColor(), e.grantSubtype(), e.returnUnderOwnersControl(), e.requireSourceOnBattlefield(),
-                graveyardEntryVersion, entry.getControllerId()));
+                graveyardEntryVersion, entry.getControllerId(), e.optionalReturn()));
         log.info("Game {} - {} schedules a dying creature to return under control at the next end step",
                 gameData.id, entry.getCard().getName());
     }

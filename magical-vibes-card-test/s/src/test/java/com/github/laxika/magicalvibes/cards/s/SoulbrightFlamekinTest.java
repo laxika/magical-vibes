@@ -125,7 +125,7 @@ class SoulbrightFlamekinTest extends BaseCardTest {
         activateTargeting(flamekin);
         activateTargeting(flamekin);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.hasKeyword(gd, flamekin, Keyword.TRAMPLE)).isFalse();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.ensurePriority(player1);

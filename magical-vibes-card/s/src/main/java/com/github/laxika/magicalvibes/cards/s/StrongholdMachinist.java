@@ -29,7 +29,7 @@ public class StrongholdMachinist extends Card {
                         new StackEntryNotPredicate(
                                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
                         ),
-                        "Target must be a noncreature spell."
+                        "Target must be a noncreature spell on the stack"
                 )
         ));
     }

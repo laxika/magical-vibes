@@ -168,6 +168,15 @@ public class EffectResolutionService {
             }
             int resolvingTargetGroup = (entry.getCard() == null ? -1 : entry.getCard().getEffectTargetIndex(effect, effectOccurrence));
             entry.setResolvingEffectTargetGroup(resolvingTargetGroup >= 0 ? resolvingTargetGroup : null);
+            // A spell's untargeted effects read through a global color-word change (Swirl the Mists, CR 612.1).
+            // Targeted effects keep their identity so their target groups still resolve.
+            if (resolvingTargetGroup < 0 && entry.getCard() != null
+                    && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                    && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+                effect = TextChangeTransformer.transform(effect,
+                        TextChangeTransformer.globalColorWordReplacements(gameData));
+                effectToResolve = effect;
+            }
 
             // Resolution-time conditions that depend on the target (e.g. TargetPermanentMatches)
             // must see this effect's group target, not the raw entry.targetId — for a multi-target

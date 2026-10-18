@@ -47,7 +47,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         var e = (CantBlockThisTurnEffect) effect;
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
         switch (e.scope()) {
-            case TARGET -> resolveTarget(gameData, entry);
+            case TARGET -> resolveTarget(gameData, entry, e);
             case ENCHANTED -> resolveEnchanted(gameData, entry);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e, filterContext);
             case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e);
@@ -56,10 +56,10 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void resolveTarget(GameData gameData, StackEntry entry) {
-        // Multi-target: apply to each valid target
+    private void resolveTarget(GameData gameData, StackEntry entry, CantBlockThisTurnEffect effect) {
+        // Multi-target: apply to each valid target of the group this effect is bound to
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetIds()) {
+            for (UUID targetId : entry.targetsForEffect(effect)) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     continue;
@@ -69,7 +69,11 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        // Single-target fallback
+        // Single-target fallback: a bound effect whose group was omitted has no target
+        if (entry.targetsForEffect(effect).isEmpty() && entry.getTargetId() != null
+                && entry.getTargetingCard() != null && entry.getTargetingCard().hasEffectTargetIndex(effect)) {
+            return;
+        }
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;

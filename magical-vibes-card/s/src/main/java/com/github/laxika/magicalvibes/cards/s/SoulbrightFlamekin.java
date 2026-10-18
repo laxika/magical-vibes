@@ -4,9 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SoulbrightFlamekinEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +30,8 @@ public class SoulbrightFlamekin extends Card {
                 "{2}",
                 List.of(
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
-                        new SoulbrightFlamekinEffect()
+                        new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
+                                new MayEffect(new AwardManaEffect(ManaColor.RED, 8), "Add {R}{R}{R}{R}{R}{R}{R}{R}?"))
                 ),
                 "{2}: Target creature gains trample until end of turn. If this is the third time this ability has resolved this turn, you may add {R}{R}{R}{R}{R}{R}{R}{R}.",
                 TargetFilters.creature()

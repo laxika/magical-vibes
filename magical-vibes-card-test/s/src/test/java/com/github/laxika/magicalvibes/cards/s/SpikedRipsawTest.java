@@ -140,10 +140,12 @@ class SpikedRipsawTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, forest.getId());
+        });
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -158,12 +160,13 @@ class SpikedRipsawTest extends BaseCardTest {
         ripsaw.setAttachedTo(attacker.getId());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        declareAttackers(List.of(0));
-        ripsaw.setAttachedTo(otherCreature.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, forest.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(List.of(0));
+            ripsaw.setAttachedTo(otherCreature.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, forest.getId());
+        });
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isFalse();

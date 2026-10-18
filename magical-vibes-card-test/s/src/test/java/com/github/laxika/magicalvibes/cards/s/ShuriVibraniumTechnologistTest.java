@@ -72,6 +72,7 @@ class ShuriVibraniumTechnologistTest extends BaseCardTest {
     void drawModeResolvesAfterShuriLeavesTheBattlefield() {
         ShuriVibraniumTechnologist libraryCard = new ShuriVibraniumTechnologist();
         harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player2, List.of());
         castShuri();
         harness.handleListChoice(player1, "Draw a card.");
 

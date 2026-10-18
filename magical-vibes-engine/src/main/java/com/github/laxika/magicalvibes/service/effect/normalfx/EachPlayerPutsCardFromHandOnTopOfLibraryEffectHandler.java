@@ -68,6 +68,17 @@ public class EachPlayerPutsCardFromHandOnTopOfLibraryEffectHandler implements No
             return;
         }
 
+        for (var choice : state.chosen.entrySet()) {
+            List<Card> hand = gameData.playerHands.get(choice.getKey());
+            Card card = hand == null ? null
+                    : hand.stream().filter(c -> c.getId().equals(choice.getValue())).findFirst().orElse(null);
+            if (card != null) {
+                hand.remove(card);
+                gameData.playerDecks.get(choice.getKey()).add(0, card);
+                log.info("Game {} - {} put a card from hand on top of their library for {}",
+                        gameData.id, gameData.playerIdToName.get(choice.getKey()), entry.getCard().getName());
+            }
+        }
         state.reset();
         gameData.rerunCurrentEffectAfterInteraction = false;
     }

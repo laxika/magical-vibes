@@ -140,13 +140,14 @@ class ScaretillerTest extends BaseCardTest {
     }
 
     private void resolveTriggerAndChooseMode(String mode) {
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player1, mode);
     }
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+        harness.inMutationScope(() -> {
+            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+            harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd);
+        });
     }
 }

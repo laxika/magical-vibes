@@ -171,7 +171,6 @@ class SkeletalVampireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handlePermanentChosen(player1, vampire.getId());
         harness.assertInGraveyard(player1, "Skeletal Vampire");
         harness.passBothPriorities();
 
@@ -184,7 +183,6 @@ class SkeletalVampireTest extends BaseCardTest {
         Permanent vampire = makeVampireABat();
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handlePermanentChosen(player1, vampire.getId());
         harness.assertInGraveyard(player1, "Skeletal Vampire");
         harness.passBothPriorities();
 

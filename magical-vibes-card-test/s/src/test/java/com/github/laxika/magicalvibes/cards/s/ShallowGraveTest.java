@@ -124,9 +124,10 @@ class ShallowGraveTest extends BaseCardTest {
     @DisplayName("Casting during the end step waits until the following end step to exile")
     void castDuringEndStepWaitsUntilFollowingEndStep() {
         harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player2, List.of());
         harness.setGraveyard(player1, List.of(new IronTuskElephant()));
         harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.assertOnBattlefield(player1, "Iron Tusk Elephant");
@@ -143,9 +144,10 @@ class ShallowGraveTest extends BaseCardTest {
     @DisplayName("Haste expires at cleanup even when the delayed exile is still pending")
     void hasteExpiresBeforeFollowingTurn() {
         harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player2, List.of());
         harness.setGraveyard(player1, List.of(new IronTuskElephant()));
         harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(findPermanent(player1, "Iron Tusk Elephant").hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);

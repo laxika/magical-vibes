@@ -21,10 +21,10 @@ import java.util.List;
 public class SaidDone extends Card {
 
     public SaidDone() {
-        CardEffect said = new ReturnTargetCardsFromGraveyardToHandEffect(
+        CardEffect said = ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))), 1);
+                        new CardTypePredicate(CardType.SORCERY))));
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Said — Return target instant or sorcery card from your graveyard to your hand",

@@ -5,8 +5,14 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KorHalberd;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -72,8 +78,8 @@ class ScrollshiftTest extends BaseCardTest {
     @CardUsed({Scrollshift.class, KorHalberd.class})
     @DisplayName("A borrowed artifact returns untapped to its owner and the caster draws")
     void borrowedArtifactReturnsToOwner() {
-        Permanent original = harness.addToBattlefieldAndReturn(player1, new KorHalberd());
-        gd.stolenCreatures.put(original.getId(), player2.getId());
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new KorHalberd());
+        borrow(original, player1);
         original.tap();
         harness.setHand(player1, List.of(new Scrollshift()));
         harness.setLibrary(player1, List.of(new KorHalberd()));
@@ -125,9 +131,7 @@ class ScrollshiftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castInstant(player1, 0, original.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(original);
-        gd.playerBattlefields.get(player2.getId()).add(original);
-        gd.stolenCreatures.put(original.getId(), player1.getId());
+        borrow(original, player2);
 
         harness.passBothPriorities();
 
@@ -137,5 +141,12 @@ class ScrollshiftTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    private void borrow(Permanent permanent, Player newController) {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, newController.getId(), permanent,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
     }
 }

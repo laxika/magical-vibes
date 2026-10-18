@@ -159,11 +159,11 @@ class SavageBeatingTest extends BaseCardTest {
 
         for (int i = 0; i < 2; i++) {
             harness.forceStep(TurnStep.END_OF_COMBAT);
-            gs.advanceStep(gd);
+            harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> gs.advanceStep(gd));
             assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
         }
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        gs.advanceStep(gd);
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> gs.advanceStep(gd));
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
@@ -175,9 +175,9 @@ class SavageBeatingTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         prepareManaAndHand(2, 3);
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> harness.passBothPriorities());
 
-        gs.advanceStep(gd);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> gs.advanceStep(gd));
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
     }
@@ -197,7 +197,7 @@ class SavageBeatingTest extends BaseCardTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         prepareManaAndHand(redMana, colorlessMana);
         harness.castModalInstantWithModes(player1, 0, 1, 2, modes, List.of());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> harness.passBothPriorities());
     }
 
     private void prepareManaAndHand(int redMana, int colorlessMana) {

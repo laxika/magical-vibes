@@ -12,6 +12,6 @@ public class SageOfTheSkies extends Card {
 
     public SageOfTheSkies() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfConditionEffect(
-                new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()), true));
+                new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()), true, false, true));
     }
 }

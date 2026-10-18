@@ -41,20 +41,20 @@ public class ExileTopCardMayGetEnergyOrPlayThisTurnEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Card> library = gameData.playerDecks.get(controllerId);
-        if (library == null || library.isEmpty()) {
-            return;
+        Card topCard = library == null || library.isEmpty() ? null : library.removeFirst();
+        if (topCard != null) {
+            exileService.exileCard(gameData, controllerId, topCard);
         }
-
-        Card topCard = library.removeFirst();
-        exileService.exileCard(gameData, controllerId, topCard);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 controllerId,
-                List.of(new ExileTopCardMayGetEnergyOrPlayThisTurnEffect(topCard.getId())),
+                List.of(new ExileTopCardMayGetEnergyOrPlayThisTurnEffect(topCard == null ? null : topCard.getId())),
                 entry.getCard().getName() + " — Get {E}{E}?"
         ));
-        gameLogService.append(gameData, GameLog.cardThen(topCard,
-                " is exiled from the top of the library."));
+        if (topCard != null) {
+            gameLogService.append(gameData, GameLog.cardThen(topCard,
+                    " is exiled from the top of the library."));
+        }
         playerInputService.processNextMayAbility(gameData);
     }
 }

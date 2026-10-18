@@ -169,8 +169,6 @@ class StormscapeBattlemageTest extends BaseCardTest {
     }
 
     private void castWithAdditionalCosts(List<String> payments, java.util.UUID targetId, boolean kicked) {
-        gs.playCard(gd, player1, 0, 0, targetId, null, List.of(), List.of(), false,
-                null, null, null, null, null, kicked, null, null, null, null,
-                payments, false);
+        harness.castKickedCreatureWithRepeatedCosts(player1, 0, targetId, payments);
     }
 }

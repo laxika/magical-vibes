@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 
 import java.util.List;
@@ -41,7 +43,9 @@ public class ShadowbornApostle extends Card {
                 false,
                 "{B}",
                 List.of(
-                        new SacrificeMultiplePermanentsCost(6, new PermanentNamedPredicate("Shadowborn Apostle")),
+                        new SacrificeMultiplePermanentsCost(6, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNamedPredicate("Shadowborn Apostle")))),
                         new SearchLibraryEffect(
                                 new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),

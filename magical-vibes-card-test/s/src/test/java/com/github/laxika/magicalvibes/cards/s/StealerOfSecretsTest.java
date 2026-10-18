@@ -51,6 +51,7 @@ class StealerOfSecretsTest extends BaseCardTest {
     void opposingControllerDraws() {
         Permanent stealer = addCreatureReady(player2, new StealerOfSecrets());
         stealer.setAttacking(true);
+        stealer.setAttackTarget(player1.getId());
         int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
         int defenderHandBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -69,6 +70,7 @@ class StealerOfSecretsTest extends BaseCardTest {
     void drawsAfterSourceLeavesBattlefield() {
         Permanent stealer = addCreatureReady(player1, new StealerOfSecrets());
         stealer.setAttacking(true);
+        stealer.setAttackTarget(player2.getId());
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();

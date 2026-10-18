@@ -22,7 +22,7 @@ class SkycloudEggTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new SkycloudEgg()));
         harness.addToBattlefield(player1, new SkycloudEgg());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);

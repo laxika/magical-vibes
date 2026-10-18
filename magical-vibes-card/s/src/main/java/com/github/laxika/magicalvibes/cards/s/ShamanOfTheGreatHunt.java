@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -36,8 +35,6 @@ public class ShamanOfTheGreatHunt extends Card {
                 "{2}{G/U}{G/U}",
                 List.of(new DrawCardEffect(new PermanentCount(qualifyingCreature, CountScope.CONTROLLER))),
                 "{2}{G/U}{G/U}: Draw a card for each creature you control with power 4 or greater."
-        ).withActivationCondition(
-                new ControlsPermanent(qualifyingCreature),
-                "Activate only if you control a creature with power 4 or greater"));
+        ));
     }
 }

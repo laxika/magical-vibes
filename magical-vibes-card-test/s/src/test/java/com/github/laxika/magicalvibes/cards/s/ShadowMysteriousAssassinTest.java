@@ -82,6 +82,7 @@ class ShadowMysteriousAssassinTest extends BaseCardTest {
         shadow.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, artifact.getId());
@@ -105,6 +106,7 @@ class ShadowMysteriousAssassinTest extends BaseCardTest {
         shadow.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player2, "Mind Stone");

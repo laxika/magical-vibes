@@ -106,7 +106,7 @@ class ScatterRayTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Millstone");
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.activateAbility(player1, 0, null, null);
+        harness.tapPermanent(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

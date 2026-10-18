@@ -171,6 +171,8 @@ class SnowslopeHunterTest extends BaseCardTest {
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addReadyHunter();
         harness.addToBattlefield(player1, new SnowslopeHunter());
         prepareYourTurn();

@@ -14,7 +14,7 @@ import java.util.List;
 public class SilentSubmersible extends Card {
 
     public SilentSubmersible() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect());
+        addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER, new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

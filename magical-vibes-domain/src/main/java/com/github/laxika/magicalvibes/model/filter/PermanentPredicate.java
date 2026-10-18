@@ -23,6 +23,7 @@ public sealed interface PermanentPredicate permits
         PermanentBlockedBySourceThisTurnPredicate,
         PermanentBlockedThisTurnPredicate,
         PermanentCastBySourceControllerThisTurnPredicate,
+        PermanentCastFromZonePredicate,
         PermanentCastForWarpCostPredicate,
         PermanentBlockingSourcePredicate,
         PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate,

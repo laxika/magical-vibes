@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +27,7 @@ public class EvolveTriggerEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final GameLogService gameLogService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,8 +40,22 @@ public class EvolveTriggerEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        EvolveTriggerEffect evolve = (EvolveTriggerEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null || gameQueryService.cantHaveCounters(gameData, source)) {
+        Permanent departedSource = null;
+        if (source == null) {
+            if (evolve.alsoResolve() == null) {
+                return;
+            }
+            departedSource = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(entry.getSourcePermanentId()))
+                    .findFirst().orElse(null);
+            if (departedSource == null) {
+                return;
+            }
+        }
+        boolean canPlaceCounter = source != null && !gameQueryService.cantHaveCounters(gameData, source);
+        if (!canPlaceCounter && evolve.alsoResolve() == null) {
             return;
         }
 
@@ -50,17 +67,36 @@ public class EvolveTriggerEffectHandler implements NormalEffectHandlerBean {
                 ? gameQueryService.getEffectiveToughness(gameData, entering)
                 : valueOrZero(entry.getTriggeringPermanentToughnessAtTrigger());
 
-        if (enteringPower <= gameQueryService.getEffectivePower(gameData, source)
-                && enteringToughness <= gameQueryService.getEffectiveToughness(gameData, source)) {
+        int sourcePower;
+        int sourceToughness;
+        if (source != null) {
+            sourcePower = gameQueryService.getEffectivePower(gameData, source);
+            sourceToughness = gameQueryService.getEffectiveToughness(gameData, source);
+        } else {
+            sourcePower = departedSource.getLastKnownPower() != null
+                    ? departedSource.getLastKnownPower()
+                    : gameQueryService.getEffectivePower(gameData, departedSource);
+            sourceToughness = departedSource.getLastKnownToughness() != null
+                    ? departedSource.getLastKnownToughness()
+                    : gameQueryService.getEffectiveToughness(gameData, departedSource);
+        }
+        if (enteringPower <= sourcePower && enteringToughness <= sourceToughness) {
             return;
         }
 
-        EvolveTriggerEffect evolve = (EvolveTriggerEffect) effect;
-        int before = source.getCounterCount(evolve.counterType());
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, evolve.counterType(), 1);
-        if (source.getCounterCount(evolve.counterType()) > before
-                && evolve.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-            fireEvolvesTriggers(gameData, source);
+        if (canPlaceCounter) {
+            int before = source.getCounterCount(evolve.counterType());
+            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, evolve.counterType(), 1);
+            if (source.getCounterCount(evolve.counterType()) > before
+                    && evolve.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                fireEvolvesTriggers(gameData, source);
+            }
+        }
+        if (evolve.alsoResolve() != null) {
+            EffectHandler handler = effectHandlerRegistry.getHandler(evolve.alsoResolve());
+            if (handler != null) {
+                handler.resolve(gameData, entry, evolve.alsoResolve());
+            }
         }
     }
 

@@ -42,7 +42,12 @@ public class ReturnSourceAuraToCreatureOnDeathEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID auraCardId = entry.getCard().getId();
         UUID auraControllerId = entry.getControllerId();
-        Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
+        // "return this card from your graveyard": an Aura owned by another player is not in the controller's graveyard.
+        List<Card> controllerGraveyard = gameData.playerGraveyards.get(auraControllerId);
+        Card auraCard = controllerGraveyard == null ? null : controllerGraveyard.stream()
+                .filter(c -> c.getId().equals(auraCardId))
+                .findFirst()
+                .orElse(null);
 
         if (auraCard == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in a graveyard)."));

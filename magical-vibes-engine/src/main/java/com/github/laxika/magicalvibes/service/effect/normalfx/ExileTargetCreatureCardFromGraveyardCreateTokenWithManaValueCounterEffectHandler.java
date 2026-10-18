@@ -2,17 +2,19 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardCreateTokenWithManaValueCounterEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -24,6 +26,7 @@ public class ExileTargetCreatureCardFromGraveyardCreateTokenWithManaValueCounter
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentControlSupport permanentControlSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,10 +59,18 @@ public class ExileTargetCreatureCardFromGraveyardCreateTokenWithManaValueCounter
                 gameData.playerIdToName.get(entry.getControllerId()) + " exiles ", targetCard,
                 " from a graveyard."));
 
-        CreateTokenEffect token = e.tokenTemplate()
-                .withAmount(1)
-                .withInitialPlusOnePlusOneCounters(counters);
-        entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
-                gameData, entry.getControllerId(), token, entry.getCard().getSetCode()));
+        List<UUID> createdIds = permanentControlSupport.applyCreateToken(
+                gameData, entry.getControllerId(), e.tokenTemplate().withAmount(1), entry.getCard().getSetCode());
+        entry.getCreatedPermanentIds().addAll(createdIds);
+        if (counters <= 0) {
+            return;
+        }
+        for (UUID createdId : createdIds) {
+            Permanent createdToken = gameQueryService.findPermanentById(gameData, createdId);
+            if (createdToken != null && !gameQueryService.cantHaveCounters(gameData, createdToken)) {
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, entry, createdToken, CounterType.PLUS_ONE_PLUS_ONE, counters);
+            }
+        }
     }
 }

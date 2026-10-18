@@ -24,8 +24,10 @@ class SqueeDubiousMonarchTest extends BaseCardTest {
     void attackingCreatesGoblinToken() {
         addCreatureReady(player1, new SqueeDubiousMonarch());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(countPermanents(player1, "Goblin")).isEqualTo(1);
         Permanent goblin = findPermanents(player1, "Goblin").stream()
@@ -33,7 +35,8 @@ class SqueeDubiousMonarchTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(goblin.isTapped()).isTrue();
-        assertThat(goblin.isAttackedThisTurn()).isTrue();
+        assertThat(goblin.isAttacking()).isTrue();
+        assertThat(goblin.isAttackedThisTurn()).isFalse();
         assertThat(goblin.getCard().getPower()).isEqualTo(1);
         assertThat(goblin.getCard().getToughness()).isEqualTo(1);
         assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);

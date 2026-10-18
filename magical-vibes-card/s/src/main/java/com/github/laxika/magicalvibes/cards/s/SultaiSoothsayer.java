@@ -11,6 +11,6 @@ public class SultaiSoothsayer extends Card {
 
     public SultaiSoothsayer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 1));
+                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 1));
     }
 }

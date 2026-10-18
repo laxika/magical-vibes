@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.NoCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
@@ -423,11 +424,12 @@ public class PlayedCardNameTriggerCollectorService {
 
         Card sourceCard = match.permanent().getCard();
         List<CardEffect> effects = new ArrayList<>(List.of(
-                new MayEffect(new PutCardExiledWithSourceIntoHandEffect(playedName),
+                new MayEffect(new PutCardExiledWithSourceIntoHandEffect(playedName, null, true),
                         "Put a card named " + playedName + " exiled with " + sourceCard.getName()
                                 + " into your hand?"),
                 new ConditionalEffect(new NoCardsExiledWithSource(),
-                        SequenceEffect.of(new SacrificeSelfEffect(), new ControllerExtraTurnEffect(1)))));
+                        new ConditionalEffect(new SourceIsOnBattlefield(),
+                                SequenceEffect.of(new SacrificeSelfEffect(), new ControllerExtraTurnEffect(1))))));
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

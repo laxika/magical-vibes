@@ -33,6 +33,6 @@ public class ScoldingAdministrator extends Card {
 
         // When this creature dies, if it had counters on it, put those counters on up to
         // one target creature.
-        addEffect(EffectSlot.ON_DEATH, new MoveDyingSourceCountersToTargetCreatureEffect());
+        target(0, 1).addEffect(EffectSlot.ON_DEATH, new MoveDyingSourceCountersToTargetCreatureEffect());
     }
 }

@@ -84,6 +84,7 @@ class SpreadingSeasTest extends BaseCardTest {
         Card libraryCard = new KrakenHatchling();
         harness.setLibrary(player1, List.of(libraryCard));
         harness.setHand(player1, List.of(new SpreadingSeas(), new IntoTheRoil()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castEnchantment(player1, 0, land.getId());

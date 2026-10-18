@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,10 +30,12 @@ public class SeasonedPyromancer extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new DiscardCardThenEffect(
                         null, elemental, "a card",
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                        false, null, null, DiscardRecipient.CONTROLLER, true),
                 new DiscardCardThenEffect(
                         null, elemental, "a card",
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                        false, null, null, DiscardRecipient.CONTROLLER, true),
                 new DrawCardEffect(2)
         ));
 

@@ -103,9 +103,9 @@ class ScorchmarkTest extends BaseCardTest {
         Permanent avatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         harness.setHand(player1, List.of(new Scorchmark(), new Unsummon()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, avatar.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, avatar.getId());
 
         harness.assertNotOnBattlefield(player2, "Avatar of Might");

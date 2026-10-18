@@ -35,6 +35,16 @@ public class PreventionSupport {
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
                 .map(entry -> entry.getCard().getId())
                 .forEach(validIds::add);
+        // An ability whose source is a card outside the battlefield (a "when you discard this card"
+        // trigger) is itself a source of damage: its card is the source.
+        gameData.stack.stream()
+                .filter(entry -> (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                        || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                        && entry.getSourcePermanentId() == null
+                        && entry.getCard() != null)
+                .map(entry -> entry.getCard().getId())
+                .filter(id -> !validIds.contains(id))
+                .forEach(validIds::add);
         gameData.stack.stream()
                 .filter(entry -> entry.getSourcePermanentId() != null
                         && entry.getSourcePermanentSnapshot() != null)

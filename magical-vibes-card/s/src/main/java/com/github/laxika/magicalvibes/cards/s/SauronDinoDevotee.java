@@ -43,11 +43,11 @@ public class SauronDinoDevotee extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Turn People into Dinosaurs — Put a saurian counter on another target creature. It's a green Dinosaur with base power and toughness 5/5 for as long as it has a saurian counter on it.",
                         List.of(
+                                new PutCounterOnTargetPermanentEffect(CounterType.SAURIAN),
                                 new GrantEffectsToCounterBearersEffect(CounterType.SAURIAN, List.of(
                                         new GrantColorEffect(CardColor.GREEN, GrantScope.ALL_PERMANENTS, true),
                                         new GrantSubtypeEffect(CardSubtype.DINOSAUR, GrantScope.ALL_PERMANENTS, true),
-                                        new SetBasePowerToughnessEffect(5, 5, GrantScope.ALL_CREATURES))),
-                                new PutCounterOnTargetPermanentEffect(CounterType.SAURIAN)),
+                                        new SetBasePowerToughnessEffect(5, 5, GrantScope.ALL_CREATURES)), true)),
                         new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"))
         )));
     }

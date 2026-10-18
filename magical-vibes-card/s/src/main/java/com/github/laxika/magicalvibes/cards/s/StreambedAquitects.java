@@ -40,7 +40,7 @@ public class StreambedAquitects extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantBasicLandTypeToTargetEffect(EffectDuration.UNTIL_END_OF_TURN, CardSubtype.ISLAND)),
+                List.of(new GrantBasicLandTypeToTargetEffect(EffectDuration.UNTIL_END_OF_TURN, CardSubtype.ISLAND, true)),
                 "{T}: Target land becomes an Island until end of turn.",
                 TargetFilters.land()
         ));

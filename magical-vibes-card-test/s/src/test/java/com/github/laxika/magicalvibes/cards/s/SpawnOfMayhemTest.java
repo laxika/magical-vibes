@@ -119,11 +119,11 @@ class SpawnOfMayhemTest extends BaseCardTest {
         harness.setLife(player1, 11);
         harness.setLife(player2, 20);
         harness.setHand(player2, List.of(new Mortify()));
+
+        advanceToUpkeep(player1);
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-
-        advanceToUpkeep(player1);
         harness.castInstant(player2, 0, spawn.getId());
         resolveAllTriggers();
 

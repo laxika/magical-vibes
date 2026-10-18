@@ -24,6 +24,7 @@ public class TransformSelfAndAttachToCreatureYouControlEffectHandler implements 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final AnimationSupport animationSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +57,8 @@ public class TransformSelfAndAttachToCreatureYouControlEffectHandler implements 
         }
 
         if (validCreatureIds.isEmpty()) {
+            // "Transform this enchantment, then attach it": the transformation happens even with nothing to attach to.
+            animationSupport.transformToBackFace(gameData, source);
             return;
         }
 

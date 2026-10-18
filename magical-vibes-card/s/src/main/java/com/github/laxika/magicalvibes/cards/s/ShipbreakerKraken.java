@@ -26,6 +26,6 @@ public class ShipbreakerKraken extends Card {
 
         target(TargetFilters.creature(), 0, 4)
                 .addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, DoesntUntapEffect.targetWhileSourceOnBattlefield());
+                .addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, DoesntUntapEffect.targetWhileSourceControlled());
     }
 }

@@ -137,7 +137,7 @@ class SupernaturalStaminaTest extends BaseCardTest {
     @Test
     void stolenCreatureControllerControlsDeathTriggerButOwnerGetsCreature() {
         Permanent target = addCreature(player1);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         harness.setHand(player1, List.of(new SupernaturalStamina(), new GoForTheThroat()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

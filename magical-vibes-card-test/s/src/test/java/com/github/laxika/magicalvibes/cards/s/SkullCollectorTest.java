@@ -121,6 +121,7 @@ class SkullCollectorTest extends BaseCardTest {
     @Test
     @DisplayName("Each Collector's trigger resolves even after a Collector leaves the battlefield")
     void multipleCollectorsReturnTwoCreatures() {
+        harness.setHand(player1, List.of());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new SkullCollector());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new SkullCollector());
 

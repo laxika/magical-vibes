@@ -158,10 +158,22 @@ public class PermanentChoiceSpellHandlerService {
                 for (int i = 0; i < replacements.size(); i++) {
                     psychicBattleSupport.replaceTarget(targetSpell, i, replacements.get(i));
                 }
+            } else if (retarget.replaceAllOccurrences() && retarget.targetIndex() != null) {
+                List<UUID> currentTargets = psychicBattleSupport.targetIds(targetSpell);
+                UUID oldTarget = currentTargets.get(retarget.targetIndex());
+                for (int i = 0; i < currentTargets.size(); i++) {
+                    if (oldTarget.equals(currentTargets.get(i))) {
+                        psychicBattleSupport.replaceTarget(targetSpell, i, permanentId);
+                    }
+                }
             } else if (retarget.targetIndex() != null) {
                 psychicBattleSupport.replaceTarget(targetSpell, retarget.targetIndex(), permanentId);
             } else {
                 targetSpell.setTargetId(permanentId);
+                if (targetSpell.getTargetZone() == Zone.GRAVEYARD && targetSpell.getTargetCardIds() != null
+                        && !targetSpell.getTargetCardIds().isEmpty()) {
+                    targetSpell.setTargetCardIds(List.of(permanentId));
+                }
             }
             String spellName = targetSpell.isCopy()
                     ? "Copy of " + targetSpell.getCard().getName()
@@ -428,8 +440,15 @@ public class PermanentChoiceSpellHandlerService {
             entry.setSourceZone(Zone.EXILE);
             var exiledEntry = gameData.findExiledCard(entry.getPhysicalCard().getId());
             if (!ect.copy()) {
-                entry.setOwnerIdOverride(exiledEntry == null
-                        ? entry.getPhysicalCard().getOwnerId() : exiledEntry.ownerId());
+                UUID exiledOwnerId = exiledEntry == null
+                        ? entry.getPhysicalCard().getOwnerId() : exiledEntry.ownerId();
+                if (exiledOwnerId == null) {
+                    exiledOwnerId = gameData.startingDeckCardIds.entrySet().stream()
+                            .filter(owned -> owned.getValue().contains(entry.getPhysicalCard().getId()))
+                            .map(java.util.Map.Entry::getKey)
+                            .findFirst().orElse(null);
+                }
+                entry.setOwnerIdOverride(exiledOwnerId);
             }
             entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {

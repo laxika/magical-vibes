@@ -32,7 +32,7 @@ public class CounterUnlessDiscardsEffectHandler implements NormalEffectHandlerBe
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
         UUID targetControllerId = targetEntry.getControllerId();
@@ -40,7 +40,10 @@ public class CounterUnlessDiscardsEffectHandler implements NormalEffectHandlerBe
         boolean hasCards = hand != null && !hand.isEmpty();
 
         if (!hasCards) {
-            counterSupport.counterSpell(gameData, entry, targetEntry);
+            StackEntry counterableTarget = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+            if (counterableTarget != null) {
+                counterSupport.counterSpell(gameData, entry, counterableTarget);
+            }
             return;
         }
 

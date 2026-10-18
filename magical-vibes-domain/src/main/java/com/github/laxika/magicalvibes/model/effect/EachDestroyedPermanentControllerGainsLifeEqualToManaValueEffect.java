@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * the sum of their three mana values. The recipients come from the {@code StackEntry.eventPlayerIds}
  * channel the destroy-all handler stamps with the controller of every permanent actually destroyed,
  * paired positionally with the last-known mana values on {@code StackEntry.eventManaValues}
- * (indestructible / regenerated permanents are absent from both, so they grant no life).
+ * (every permanent the destroy-all matched is included, so indestructible ones still grant life).
  * Seeds of Innocence.
  *
  * <p>Deliberately not a {@link LifeGainEffect}: the life goes to the destroyed permanents'

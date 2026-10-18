@@ -98,9 +98,7 @@ class ShimmerwingChimeraTest extends BaseCardTest {
     void returnsEnchantmentToOwner() {
         harness.addToBattlefield(player1, new ShimmerwingChimera());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new BanishingLight());
-        gd.playerBattlefields.get(player2.getId()).remove(enchantment);
-        gd.playerBattlefields.get(player1.getId()).add(enchantment);
-        gd.stolenCreatures.put(enchantment.getId(), player2.getId());
+        setOwnerAndController(enchantment, player2, player1);
 
         advanceToUpkeep(player1);
         harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
@@ -119,9 +117,7 @@ class ShimmerwingChimeraTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
-        gd.playerBattlefields.get(player1.getId()).remove(enchantment);
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
-        gd.stolenCreatures.put(enchantment.getId(), player1.getId());
+        setOwnerAndController(enchantment, player1, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Banishing Light");

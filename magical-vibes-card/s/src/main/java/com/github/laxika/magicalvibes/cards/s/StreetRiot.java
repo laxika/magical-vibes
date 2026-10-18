@@ -17,6 +17,6 @@ public class StreetRiot extends Card {
     public StreetRiot() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControllerTurn(),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES)));
     }
 }

@@ -100,6 +100,7 @@ class SpringLeafAvengerTest extends BaseCardTest {
     @Test
     @DisplayName("A removed graveyard target is not replaced by another permanent card")
     void removedTargetDoesNotReturnAnotherCard() {
+        harness.setHand(player1, List.of());
         SpringLeafAvenger target = new SpringLeafAvenger();
         CarefulCultivation otherCard = new CarefulCultivation();
         harness.setGraveyard(player1, List.of(target, otherCard));
@@ -119,6 +120,7 @@ class SpringLeafAvengerTest extends BaseCardTest {
     @Test
     @DisplayName("With no permanent cards in your graveyard, combat damage still happens without a choice")
     void noEligibleGraveyardCards() {
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of());
         harness.setGraveyard(player2, List.of(new SpringLeafAvenger()));
         addCreatureReady(player1, new SpringLeafAvenger()).setAttacking(true);

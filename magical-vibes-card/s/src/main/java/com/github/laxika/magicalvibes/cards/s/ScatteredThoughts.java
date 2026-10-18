@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class ScatteredThoughts extends Card {
 
     public ScatteredThoughts() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 2));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 2));
     }
 }

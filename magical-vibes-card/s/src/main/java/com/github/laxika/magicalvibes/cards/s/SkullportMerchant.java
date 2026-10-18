@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -27,10 +30,14 @@ public class SkullportMerchant extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentAnyOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsCreaturePredicate(),
+                                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                                        )),
                                         new PermanentHasSubtypePredicate(CardSubtype.TREASURE)
                                 )),
-                                "another creature or a Treasure"
+                                "another creature or a Treasure",
+                                false
                         ),
                         new DrawCardEffect(1)
                 ),

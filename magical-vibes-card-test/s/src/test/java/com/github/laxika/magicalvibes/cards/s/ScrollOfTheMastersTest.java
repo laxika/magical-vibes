@@ -112,13 +112,15 @@ class ScrollOfTheMastersTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         scroll.setCounterCount(CounterType.LORE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
 
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UNTAP);
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();

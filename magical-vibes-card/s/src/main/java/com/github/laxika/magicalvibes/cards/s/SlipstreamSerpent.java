@@ -28,7 +28,7 @@ public class SlipstreamSerpent extends Card {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
                     if (battlefield == null) return true;
                     return battlefield.stream()
-                            .noneMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
+                            .noneMatch(p -> !p.isFaceDown() && p.getCard().getSubtypes().contains(CardSubtype.ISLAND));
                 },
                 List.of(new SacrificeSelfEffect()),
                 "Slipstream Serpent's state-triggered ability"

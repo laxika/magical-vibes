@@ -25,6 +25,7 @@ public class SoulShredder extends Card {
                 new PerpetuallyBoostSourceEffect(1, 1));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, deathTrigger);
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_DIES, deathTrigger);
+        addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_CREATURE_DIES, deathTrigger);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

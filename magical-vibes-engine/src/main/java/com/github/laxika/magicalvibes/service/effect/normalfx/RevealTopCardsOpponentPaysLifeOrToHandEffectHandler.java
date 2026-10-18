@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
@@ -51,7 +52,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
                 .orElseThrow();
         int opponentLife = gameData.playerLifeTotals.get(opponentId);
 
-        if (opponentLife < e.lifeCost()) {
+        if (opponentLife < e.lifeCost() || !gameQueryService.canPlayerLoseLife(gameData, opponentId)) {
             // Opponent can't afford to pay for even one card
             for (Card card : topCards) {
                 gameData.addCardToHand(controllerId, card);

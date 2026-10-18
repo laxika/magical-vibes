@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,6 +23,12 @@ class SolKanarTheTaintedTest extends BaseCardTest {
             "Sol'Kanar deals 3 damage to up to one other target creature or planeswalker";
     private static final String EXILE =
             "Exile Sol'Kanar, then return it to the battlefield under an opponent's control";
+
+    @BeforeEach
+    void emptyOpeningHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     private Permanent addSolKanar() {
         return harness.addToBattlefieldAndReturn(player1, new SolKanarTheTainted());

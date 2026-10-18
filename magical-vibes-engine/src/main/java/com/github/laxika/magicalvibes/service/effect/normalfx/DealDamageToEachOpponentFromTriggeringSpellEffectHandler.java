@@ -66,6 +66,22 @@ public class DealDamageToEachOpponentFromTriggeringSpellEffectHandler implements
             return spell.getCard();
         }
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        return card != null ? card : gameQueryService.findCardInExileById(gameData, cardId);
+        if (card != null) {
+            return card;
+        }
+        card = gameQueryService.findCardInExileById(gameData, cardId);
+        if (card != null) {
+            return card;
+        }
+        for (var zones : List.of(gameData.playerHands, gameData.playerDecks)) {
+            for (List<Card> cards : zones.values()) {
+                for (Card candidate : cards) {
+                    if (candidate.getId().equals(cardId)) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

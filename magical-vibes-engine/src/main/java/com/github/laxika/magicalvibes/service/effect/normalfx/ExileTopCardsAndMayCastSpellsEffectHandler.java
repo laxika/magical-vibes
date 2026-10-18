@@ -116,6 +116,18 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             }
         }
 
+        if (e.trackWithSource() && sourcePermanentId != null) {
+            for (Card earlier : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
+                if (exiledCardIds.contains(earlier.getId()) || castableSpellIds.contains(earlier.getId())) {
+                    continue;
+                }
+                if (isCastable(earlier, e, entry) && earlier.getManaValue() <= manaValueLimit
+                        || hasCastableAdventureFace(earlier, e, entry, manaValueLimit)) {
+                    castableSpellIds.add(earlier.getId());
+                }
+            }
+        }
+
         if (e.normalCost()) {
             for (UUID cardId : castableSpellIds) {
                 var exiled = gameData.findExiledCard(cardId);

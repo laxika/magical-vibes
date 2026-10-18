@@ -9,6 +9,8 @@ public enum MillRecipient {
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
     EACH_OPPONENT,
+    /** Every player, including the controller, mills simultaneously as one event. */
+    EACH_PLAYER,
     /**
      * The controller of the spell targeted by this stack entry (i.e. {@code entry.getTargetId()}
      * resolves a spell on the stack, and that spell's controller mills). Used by "counter target

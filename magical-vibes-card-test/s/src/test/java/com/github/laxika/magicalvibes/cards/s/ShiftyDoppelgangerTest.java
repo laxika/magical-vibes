@@ -136,11 +136,12 @@ class ShiftyDoppelgangerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ShiftyDoppelganger());
         harness.setHand(player1, List.of(new DuskImp()));
         advanceToEndStep();
+        harness.setHand(player2, List.of());
         addActivationMana();
         activateAndChooseCreature();
         assertThat(findPermanent(player1, "Dusk Imp").hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Dusk Imp");
         assertThat(findPermanent(player1, "Dusk Imp").hasKeyword(Keyword.HASTE)).isFalse();

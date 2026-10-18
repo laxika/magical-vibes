@@ -66,6 +66,8 @@ class SoulCollectorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         harness.setHand(player1, List.of(new SparkSpray(), new SparkSpray(), new SparkSpray(), new SparkSpray()));

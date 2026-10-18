@@ -19,6 +19,6 @@ public class SpectraWard extends Card {
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(
                         CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN),
-                        GrantScope.ENCHANTED_CREATURE));
+                        GrantScope.ENCHANTED_CREATURE, true));
     }
 }

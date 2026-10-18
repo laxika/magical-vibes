@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEqualToCastSpellManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -14,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -31,13 +34,20 @@ public class SarumanTheWhiteHand extends Card {
         ));
 
         // Goblins and Orcs you control have ward {2}.
+        PermanentPredicate goblinOrOrc = new PermanentAnyOfPredicate(List.of(
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN)),
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ORC))
+        ));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.WARD,
-                GrantScope.OWN_CREATURES,
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN)),
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ORC))
-                ))
+                GrantScope.OWN_PERMANENTS,
+                goblinOrOrc
+        ));
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                new CounterUnlessPaysEffect(2),
+                GrantScope.OWN_PERMANENTS,
+                goblinOrOrc
         ));
     }
 }

@@ -29,7 +29,12 @@ public class PutEnchantedPermanentIntoLibraryNFromTopEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // The Aura's current host is "enchanted creature" at resolution; once the Aura has left the
+        // battlefield the creature it last enchanted (the stored target) is used.
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent enchanted = gameQueryService.findPermanentById(gameData,
+                source != null && source.getAttachedTo() != null ? source.getAttachedTo() : entry.getTargetId());
         if (enchanted == null) {
             return;
         }

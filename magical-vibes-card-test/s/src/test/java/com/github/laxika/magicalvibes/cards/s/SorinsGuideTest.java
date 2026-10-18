@@ -35,6 +35,9 @@ class SorinsGuideTest extends BaseCardTest {
         setupAndCast();
 
         resolveMayPrompt(true);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(sorin.getId()));
 
         harness.assertInHand(player1, "Sorin, Vampire Lord");
         harness.assertNotInGraveyard(player1, "Sorin, Vampire Lord");
@@ -49,10 +52,12 @@ class SorinsGuideTest extends BaseCardTest {
 
         resolveMayPrompt(true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
-                .isEqualTo(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.pool())
                 .extracting(Card::getName)
                 .containsExactly("Sorin, Vampire Lord");
     }
@@ -103,7 +108,7 @@ class SorinsGuideTest extends BaseCardTest {
         setupAndCast();
 
         resolveMayPrompt(true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(sorin.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorin);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(sorin);
@@ -117,7 +122,7 @@ class SorinsGuideTest extends BaseCardTest {
         setupAndCast();
 
         resolveMayPrompt(true);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotInHand(player1, "Sorin, Vampire Lord");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sorin);

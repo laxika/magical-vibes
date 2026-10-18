@@ -73,11 +73,16 @@ public class ExileTargetAndAttachedMatchingEffectHandler implements NormalEffect
             }
         }
 
-        for (Permanent attached : matchingAttached) {
-            exileToExile(gameData, entry, attached);
-        }
-        for (Permanent target : targets) {
-            exileToExile(gameData, entry, target);
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent attached : matchingAttached) {
+                exileToExile(gameData, entry, attached);
+            }
+            for (Permanent target : targets) {
+                exileToExile(gameData, entry, target);
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

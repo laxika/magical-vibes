@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
@@ -19,6 +20,7 @@ import java.util.Set;
 public class StingingHivemaster extends Card {
 
     public StingingHivemaster() {
+        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
         addEffect(EffectSlot.ON_DEATH, miteToken());
     }
 

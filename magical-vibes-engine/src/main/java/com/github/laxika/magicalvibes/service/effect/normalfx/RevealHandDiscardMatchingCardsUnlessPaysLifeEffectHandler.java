@@ -100,7 +100,7 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
             return;
         }
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
         if (!canPay) {
             discardCard(gameData, playerId, cardId, sourceCard, sourceControllerId);

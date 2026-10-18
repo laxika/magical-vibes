@@ -118,6 +118,8 @@ class SphinxOfForesightTest extends BaseCardTest {
     void battlefieldSphinxTriggersAgainOnOwnUpkeepButNotOpponents() {
         GameTestHarness h = newHarness();
         h.addToBattlefield(h.getPlayer1(), new SphinxOfForesight());
+        h.setHand(h.getPlayer1(), List.of());
+        h.setHand(h.getPlayer2(), List.of());
         h.skipMulligan();
         h.passUntil(h.getPlayer1(), TurnStep.UPKEEP);
         h.passBothPriorities();
@@ -148,7 +150,7 @@ class SphinxOfForesightTest extends BaseCardTest {
 
         assertThat(h.getGameData().interaction.isAwaitingInput()).isFalse();
         assertThat(h.getGameData().stack).isEmpty();
-        assertThat(h.getGameData().currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(h.getGameData().currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
     }
 
     private GameTestHarness newHarness() {

@@ -80,7 +80,7 @@ class ScrapworkMuttTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent permanent = findPermanent(player1, "Scrapwork Mutt");
-        assertThat(permanent.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Scrapwork Mutt");
     }
 
@@ -124,13 +124,12 @@ class ScrapworkMuttTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with an empty hand does not draw")
+    @DisplayName("With an empty hand there is nothing to discard and no draw")
     void emptyHandDoesNotDraw() {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.castFromHand(player1, new ScrapworkMutt(), "{2}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

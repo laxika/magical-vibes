@@ -41,6 +41,8 @@ class SupportSkyforgeTest extends BaseCardTest {
 
     @Test
     void newlyCreatedServosCanCrewAndAnimationExpiresAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent skyforge = harness.enterBattlefieldAndReturn(player1, new SupportSkyforge());
         harness.passBothPriorities();
         List<Permanent> servos = findPermanents(player1, "Servo");
@@ -83,6 +85,8 @@ class SupportSkyforgeTest extends BaseCardTest {
 
     @Test
     void draftOffersDistinctSpellbookCardsAndCreatureChangeSurvivesEnteringBattlefieldAndCleanup() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent skyforge = harness.enterBattlefieldAndReturn(player1, new SupportSkyforge());
         harness.passBothPriorities();
         skyforge.setSummoningSick(false);

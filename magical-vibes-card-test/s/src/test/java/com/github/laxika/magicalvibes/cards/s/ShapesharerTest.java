@@ -70,6 +70,7 @@ class ShapesharerTest extends BaseCardTest {
         Permanent shapesharer = addCreatureReady(player1, new Shapesharer());
         Permanent target = addCreatureReady(player1, new GoldmeadowStalwart());
         harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(shapesharer.getId(), target.getId()));
         harness.passBothPriorities();
@@ -146,6 +147,7 @@ class ShapesharerTest extends BaseCardTest {
         addCreatureReady(player2, new Shapesharer());
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
                 List.of(recipient.getId(), avian.getId()));
@@ -169,6 +171,7 @@ class ShapesharerTest extends BaseCardTest {
         Permanent recipient = addCreatureReady(player2, new Shapesharer());
         Permanent creature = addCreatureReady(player2, new GoldmeadowStalwart());
         harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
                 List.of(recipient.getId(), creature.getId()));

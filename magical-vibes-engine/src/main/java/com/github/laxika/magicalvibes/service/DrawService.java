@@ -430,12 +430,20 @@ public class DrawService {
 
         Map<String, Permanent> exileReplacementSources = collectExileReplacementSources(gameData, playerId);
         MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
+        Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
+        Permanent ubaMaskSource = findUbaMaskSource(gameData);
+        boolean sagesAndUbaMaskCompete = revealCreaturesSource != null && ubaMaskSource != null;
         if (exileReplacementSources.size() > 1
-                || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)) {
+                || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)
+                || sagesAndUbaMaskCompete) {
             Map<String, UUID> sourceIds = new LinkedHashMap<>();
             exileReplacementSources.forEach((name, source) -> sourceIds.put(name, source.getId()));
             if (maySkipDrawSource != null) {
                 sourceIds.putIfAbsent(maySkipDrawSource.card().getName(), maySkipDrawSource.sourcePermanentId());
+            }
+            if (sagesAndUbaMaskCompete) {
+                sourceIds.putIfAbsent(revealCreaturesSource.getCard().getName(), revealCreaturesSource.getId());
+                sourceIds.putIfAbsent(ubaMaskSource.getCard().getName(), ubaMaskSource.getId());
             }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null,
@@ -596,7 +604,6 @@ public class DrawService {
         // Sages of the Anima — "If you would draw a card, instead reveal the top three cards of your
         // library. Put all creature cards revealed this way into your hand and the rest on the bottom of
         // your library in any order." Mandatory replacement for the drawing controller.
-        Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
         if (revealCreaturesSource != null) {
             resolveRevealCreaturesDrawReplacement(gameData, playerId, revealCreaturesSource);
             return;
@@ -634,7 +641,6 @@ public class DrawService {
 
         // Uba Mask — "If a player would draw a card, that player exiles that card face up instead."
         // Global, mandatory: the exiled card carries an end-of-turn play permission for that player.
-        Permanent ubaMaskSource = findUbaMaskSource(gameData);
         if (ubaMaskSource != null) {
             resolveUbaMaskDrawReplacement(gameData, playerId, ubaMaskSource);
             return;
@@ -1055,9 +1061,11 @@ public class DrawService {
     /** The mandatory exile-style replacements that currently compete for this player's draw, keyed by card name. */
     private Map<String, Permanent> collectExileReplacementSources(GameData gameData, UUID playerId) {
         Map<String, Permanent> exileReplacementSources = new LinkedHashMap<>();
-        Permanent sharedFateSource = findSharedFateSource(gameData);
-        if (sharedFateSource != null) {
-            exileReplacementSources.putIfAbsent(sharedFateSource.getCard().getName(), sharedFateSource);
+        List<Permanent> sharedFateSources = findSharedFateSources(gameData);
+        for (int i = 0; i < sharedFateSources.size(); i++) {
+            Permanent sharedFateSource = sharedFateSources.get(i);
+            String name = sharedFateSource.getCard().getName();
+            exileReplacementSources.put(i == 0 ? name : name + " (" + (i + 1) + ")", sharedFateSource);
         }
         Permanent exileTopCardsSource = findExileTopCardsMayPlayThisTurnDrawReplacementSource(gameData, playerId);
         if (exileTopCardsSource != null) {
@@ -1122,7 +1130,9 @@ public class DrawService {
         return false;
     }
 
-    private Permanent findSharedFateSource(GameData gameData) {
+    /** Every Shared Fate on the battlefield; each is a separate replacement the drawing player may choose (CR 616.1). */
+    private List<Permanent> findSharedFateSources(GameData gameData) {
+        List<Permanent> sources = new ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
@@ -1130,11 +1140,11 @@ public class DrawService {
                 boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof SharedFateDrawReplacement);
                 if (hasEffect) {
-                    return permanent;
+                    sources.add(permanent);
                 }
             }
         }
-        return null;
+        return sources;
     }
 
     private AlmsCollectorSource findAlmsCollectorSource(GameData gameData, UUID drawingPlayerId) {
@@ -1730,6 +1740,9 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof RevealTopCardsCreaturesToHandDrawReplacementEffect);
             if (hasEffect) {
@@ -2026,6 +2039,16 @@ public class DrawService {
         Permanent skipSource = findDrawSkipSource(gameData, playerId);
         if (skipSource != null && skipSource.getId().equals(sourcePermanentId)) {
             skipDraw(gameData, playerId);
+            return;
+        }
+        Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
+        if (revealCreaturesSource != null && revealCreaturesSource.getId().equals(sourcePermanentId)) {
+            resolveRevealCreaturesDrawReplacement(gameData, playerId, revealCreaturesSource);
+            return;
+        }
+        Permanent ubaMaskSource = findUbaMaskSource(gameData);
+        if (ubaMaskSource != null && ubaMaskSource.getId().equals(sourcePermanentId)) {
+            resolveUbaMaskDrawReplacement(gameData, playerId, ubaMaskSource);
             return;
         }
         applyExileDrawReplacement(gameData, playerId, source);

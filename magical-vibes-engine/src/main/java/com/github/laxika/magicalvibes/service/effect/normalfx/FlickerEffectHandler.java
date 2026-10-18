@@ -625,6 +625,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     simultaneous.get(i), enterTappedTypes, simultaneous));
         }
         afterEntry.forEach(Runnable::run);
+        exiled.stream()
+                .filter(flickered -> !returning.contains(flickered) && flickered.hadBonusSubtype())
+                .forEach(flickered -> applyImmediateBonus(gameData, entry, effect, flickered.card(), true));
     }
 
     private void returnAuraBatch(GameData gameData, List<FlickeredPermanent> returning) {
@@ -737,19 +740,27 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 grantKeywordEffectHandler.grantToPermanent(gameData, entry, returned, e.grantedKeywordsOnReturn());
             }
 
-            // Apply bonus if the exiled permanent had the required subtype
-            if (hadBonusSubtype && e.bonusEffect() instanceof DrawCardEffect drawEffect) {
-                int drawAmount = amountEvaluationService.evaluate(gameData, drawEffect.amount(),
-                        AmountContext.forStackEntry(entry, null));
-                for (int i = 0; i < drawAmount; i++) {
-                    drawService.resolveDrawCard(gameData, entry.getControllerId());
-                }
-                String matchingSubtype = e.bonusSubtype() != null
-                        ? e.bonusSubtype().getDisplayName()
-                        : card.getSubtypes().stream().filter(e.bonusSubtypes()::contains)
-                                .findFirst().map(CardSubtype::getDisplayName).orElse("matching subtype");
-                gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + matchingSubtype + ").").build());
-            }
+            applyImmediateBonus(gameData, entry, e, card, hadBonusSubtype);
         };
+    }
+
+    /**
+     * Applies the flicker's bonus to a permanent that was exiled with the required subtype, whether or
+     * not it returns: a token is exiled and then ceases to exist, but still counts as exiled this way.
+     */
+    private void applyImmediateBonus(GameData gameData, StackEntry entry, FlickerEffect e, Card card,
+                                     boolean hadBonusSubtype) {
+        if (hadBonusSubtype && e.bonusEffect() instanceof DrawCardEffect drawEffect) {
+            int drawAmount = amountEvaluationService.evaluate(gameData, drawEffect.amount(),
+                    AmountContext.forStackEntry(entry, null));
+            for (int i = 0; i < drawAmount; i++) {
+                drawService.resolveDrawCard(gameData, entry.getControllerId());
+            }
+            String matchingSubtype = e.bonusSubtype() != null
+                    ? e.bonusSubtype().getDisplayName()
+                    : card.getSubtypes().stream().filter(e.bonusSubtypes()::contains)
+                            .findFirst().map(CardSubtype::getDisplayName).orElse("matching subtype");
+            gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + matchingSubtype + ").").build());
+        }
     }
 }

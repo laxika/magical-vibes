@@ -57,7 +57,7 @@ class StaticOrbTest extends BaseCardTest {
         forest.tap();
         petal.tap();
 
-        advanceToNextTurn(player2);
+        advanceThroughUntapStep(player2);
 
         // No choice was presented; the untap step untapped everything, including the Orb.
         assertThat(orb.isTapped()).isFalse();
@@ -80,7 +80,7 @@ class StaticOrbTest extends BaseCardTest {
         forest.tap();
         petal.tap();
 
-        advanceToNextTurn(player2);
+        advanceThroughUntapStep(player2);
 
         assertThat(giant.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
@@ -96,7 +96,7 @@ class StaticOrbTest extends BaseCardTest {
         giant.tap();
         forest.tap();
 
-        advanceToNextTurn(player2);
+        advanceThroughUntapStep(player2);
 
         assertThat(giant.isTapped()).isFalse();
     }
@@ -206,6 +206,16 @@ class StaticOrbTest extends BaseCardTest {
         assertThat(petal.isTapped()).isTrue();
     }
 
+    private void advanceThroughUntapStep(Player currentActivePlayer) {
+        harness.forceActivePlayer(currentActivePlayer);
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(newActivePlayer, TurnStep.UPKEEP);
+    }
+
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
@@ -213,6 +223,6 @@ class StaticOrbTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(newActivePlayer, TurnStep.UNTAP);
     }
 }

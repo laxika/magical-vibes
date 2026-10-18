@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleChosenCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,7 +24,7 @@ public class StreamOfThought extends Card {
                 "Target must be a player"
         )).addEffect(EffectSlot.SPELL, new MillEffect(4, MillRecipient.TARGET_PLAYER));
         addEffect(EffectSlot.SPELL,
-                new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null, 4));
+                new ShuffleChosenCardsFromControllerGraveyardIntoLibraryEffect(4));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}{U}{U}"));
     }
 }

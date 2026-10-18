@@ -105,7 +105,7 @@ class SplitThePartyTest extends BaseCardTest {
         NeverwinterDryad card = new NeverwinterDryad();
         card.setOwnerId(player1.getId());
         Permanent stolen = harness.addToBattlefieldAndReturn(player2, card);
-        gd.stolenCreatures.put(stolen.getId(), player1.getId());
+        setOwnerAndController(stolen, player1, player2);
         harness.setHand(player1, List.of(new SplitTheParty()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

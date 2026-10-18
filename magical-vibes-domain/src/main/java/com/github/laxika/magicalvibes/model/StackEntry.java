@@ -237,6 +237,8 @@ public class StackEntry {
     @Setter private boolean cyclingAbility;
     /** Cards exiled from the graveyard to pay this spell's delve cost. */
     @Setter private List<UUID> delvedCardIds = List.of();
+    /** The cards exiled to pay this spell's delve cost, kept even after they leave exile (Soulflayer). */
+    @Setter private List<Card> delvedCards = List.of();
     /**
      * Overrides the card's disposition owner when this spell is controlled by someone other than its
      * owner (e.g. cast from an opponent's hand via Sen Triplets). Null for the overwhelming majority of
@@ -405,6 +407,9 @@ public class StackEntry {
     /** Controllers of the nontoken permanents actually destroyed by the event, positionally aligned
      * with the nontoken subset of {@link #eventPlayerIds}. */
     @Setter private List<UUID> eventNontokenPlayerIds = List.of();
+    /** Controllers of every permanent a destroy instruction was applied to, whether or not it was
+     * actually destroyed ("for each of those permanents"), one entry per permanent. */
+    @Setter private List<UUID> eventTargetedPlayerIds = List.of();
     /** Controllers of the permanents destroyed by the event wherever they ended up (a destroyed
      * permanent exiled instead of dying still counts as destroyed), one entry per permanent. */
     @Setter private List<UUID> eventDestroyedPlayerIds = List.of();
@@ -464,6 +469,8 @@ public class StackEntry {
     @Setter private boolean triggerOrderChosen;
     /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
     @Setter private Card triggeringCardSnapshot;
+    /** The targets the triggering spell had when this ability triggered, kept in case the spell leaves the stack first. */
+    @Setter private List<UUID> triggeringSpellTargetIds = List.of();
     @Setter private long triggeringCardGraveyardEntryVersion = -1;
     /** Mixed-zone card targets remember their original permanent identity or graveyard incarnation. */
     private final Map<UUID, UUID> mixedZoneTargetPermanentIds = new HashMap<>();
@@ -524,6 +531,8 @@ public class StackEntry {
     @Setter private UUID triggeringPermanentOwnerId;
     /** Power and toughness captured for a permanent when its trigger was created. */
     @Setter private Integer triggeringPermanentPowerAtTrigger;
+    /** The source permanent's power, static bonuses included, when the ability triggered (last known information). */
+    @Setter private Integer sourcePowerAtTrigger;
     @Setter private Integer triggeringPermanentToughnessAtTrigger;
     private List<UUID> targetIds;
     /**
@@ -584,6 +593,13 @@ public class StackEntry {
     @Setter private Integer baseToughnessOverrideOnEntry;
     /** Keywords this spell gains while it is on the stack. */
     private final Set<Keyword> grantedKeywordsWhileOnStack = EnumSet.noneOf(Keyword.class);
+    /**
+     * Whether a static ability of a permanent its controller controls (Shadow the Hedgehog) gives this
+     * spell split second because mana from an artifact was spent to cast it. The grant lasts only while
+     * that permanent keeps the ability, so it is re-checked instead of being stored in
+     * {@link #grantedKeywordsWhileOnStack}.
+     */
+    @Setter private boolean artifactManaSplitSecond;
     /**
      * Bloodthirst granted to this creature spell while it is on the stack (Bloodlord of Vaasgoth:
      * "it gains bloodthirst 3"). Per CR 702.54c each instance of bloodthirst applies separately, so
@@ -951,6 +967,7 @@ public class StackEntry {
         this.sourceZone = source.sourceZone;
         this.cyclingAbility = source.cyclingAbility;
         this.delvedCardIds = source.delvedCardIds.isEmpty() ? List.of() : new ArrayList<>(source.delvedCardIds);
+        this.delvedCards = source.delvedCards.isEmpty() ? List.of() : new ArrayList<>(source.delvedCards);
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
         this.buyback = source.buyback;
@@ -1020,6 +1037,8 @@ public class StackEntry {
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
+        this.eventTargetedPlayerIds = source.eventTargetedPlayerIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.eventTargetedPlayerIds);
         this.eventDestroyedPlayerIds = source.eventDestroyedPlayerIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.eventDestroyedPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
@@ -1042,6 +1061,7 @@ public class StackEntry {
         this.triggeringCardId = source.triggeringCardId;
         this.triggerOrderChosen = source.triggerOrderChosen;
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
+        this.triggeringSpellTargetIds = source.triggeringSpellTargetIds;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.mixedZoneTargetPermanentIds.putAll(source.mixedZoneTargetPermanentIds);
         this.mixedZoneTargetGraveyardVersions.putAll(source.mixedZoneTargetGraveyardVersions);
@@ -1068,6 +1088,7 @@ public class StackEntry {
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;
+        this.sourcePowerAtTrigger = source.sourcePowerAtTrigger;
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);

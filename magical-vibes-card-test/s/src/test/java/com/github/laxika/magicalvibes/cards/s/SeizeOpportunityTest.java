@@ -184,6 +184,7 @@ class SeizeOpportunityTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second,
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         cast(0, List.of());
 

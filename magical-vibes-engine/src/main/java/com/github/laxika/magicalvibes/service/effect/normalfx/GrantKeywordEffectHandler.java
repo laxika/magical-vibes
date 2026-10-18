@@ -130,7 +130,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     : gameQueryService.findStackEntryByCardId(gameData, entry.getTriggeringCardId());
             List<UUID> targetIds;
             if (triggeringSpell == null) {
-                targetIds = entry.targetsForEffect(grant);
+                targetIds = entry.getTriggeringSpellTargetIds().isEmpty()
+                        ? entry.targetsForEffect(grant) : entry.getTriggeringSpellTargetIds();
             } else {
                 targetIds = new ArrayList<>();
                 if (triggeringSpell.getTargetId() != null) {
@@ -299,6 +300,12 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     return;
                 }
                 addLegacyBucket(permanent, grant.duration(), grantableKeywords);
+                // Layer-6 floating effect as well, so a grant resolving after an earlier "loses all
+                // abilities" effect on the land survives it (CR 613.7 timestamp order).
+                gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                        entry.getCard().getName(), null, entry.getControllerId(),
+                        new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(), grant.duration(), grant.grantCondition()),
+                        permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
                 count[0]++;
             });
 

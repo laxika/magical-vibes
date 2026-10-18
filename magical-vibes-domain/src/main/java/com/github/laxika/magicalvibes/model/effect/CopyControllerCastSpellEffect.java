@@ -69,6 +69,11 @@ public record CopyControllerCastSpellEffect(
                 false, false);
     }
 
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies) {
+        this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), Set.of(), false, true, false, false, false,
+                false, false, List.of(), null, null, copies);
+    }
+
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords) {
         this(spellSnapshot, castingPlayerId, grantedKeywords, Set.of(), Set.of(), false, true, false, false, false,

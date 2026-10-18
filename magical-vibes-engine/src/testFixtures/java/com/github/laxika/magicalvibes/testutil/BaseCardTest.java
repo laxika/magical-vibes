@@ -144,7 +144,7 @@ public abstract class BaseCardTest {
         harness.performUntapStep(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.UPKEEP);
     }
 
     /**

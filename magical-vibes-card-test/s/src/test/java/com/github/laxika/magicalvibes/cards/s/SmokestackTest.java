@@ -170,6 +170,7 @@ class SmokestackTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(battlefield(player2)).isEmpty();

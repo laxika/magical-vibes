@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
-import com.github.laxika.magicalvibes.cards.c.CoercedToKill;
 import com.github.laxika.magicalvibes.cards.g.GiantTortoise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SharpEyedRookie.class, CentaurCourser.class, GiantTortoise.class, GrizzlyBears.class,
-        SampleCollector.class, Murder.class, Solemnity.class, CoercedToKill.class})
+        SampleCollector.class, Murder.class, Solemnity.class})
 class SharpEyedRookieTest extends BaseCardTest {
 
     @Test
@@ -149,12 +148,8 @@ class SharpEyedRookieTest extends BaseCardTest {
     void originalAbilityControllerInvestigatesAfterRookieChangesController() {
         Permanent rookie = harness.addToBattlefieldAndReturn(player1, new SharpEyedRookie());
         harness.enterBattlefieldAndReturn(player1, new SampleCollector());
-        harness.setHand(player2, List.of(new CoercedToKill()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castEnchantment(player2, 0, rookie.getId());
-
+        gd.playerBattlefields.get(player1.getId()).remove(rookie);
+        gd.playerBattlefields.get(player2.getId()).add(rookie);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Sharp-Eyed Rookie");

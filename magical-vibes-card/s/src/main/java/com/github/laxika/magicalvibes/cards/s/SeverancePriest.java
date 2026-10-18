@@ -26,7 +26,8 @@ public class SeverancePriest extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE, true));
+                new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE, true)
+                        .withUpTo(true));
 
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new CreateTokenForImprintedCardOwnerEffect(new CreateTokenEffect(

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsNoPermane
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureToExileWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -21,7 +22,8 @@ public class SotheraTheSupervoid extends Card {
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new AnyPlayerControlsNoPermanent(new PermanentIsCreaturePredicate()),
-                        new SacrificeSelfThenEffect(
+                        SequenceEffect.of(
+                                new SacrificeSelfEffect(),
                                 new ReturnCardExiledWithSourceToBattlefieldEffect(
                                         new CardTypePredicate(CardType.CREATURE), false, null,
                                         false, false, false, 2))));

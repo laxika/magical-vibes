@@ -78,7 +78,6 @@ public class ExileAnyNumberOfOwnGraveyardCardsThenEffectHandler implements Norma
         }
         UUID sourceCardId = entry.getCard().getId();
         return graveyard.stream()
-                .filter(card -> !card.getId().equals(sourceCardId))
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, effect.exileFilter(), sourceCardId))
                 .toList();

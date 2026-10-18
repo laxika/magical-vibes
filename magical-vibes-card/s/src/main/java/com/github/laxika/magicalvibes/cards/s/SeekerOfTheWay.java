@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -21,12 +20,6 @@ import java.util.List;
 public class SeekerOfTheWay extends Card {
 
     public SeekerOfTheWay() {
-        // Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new BoostSelfEffect(1, 1))
-        ));
-
         // Whenever you cast a noncreature spell, this creature gains lifelink until end of turn.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

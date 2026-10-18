@@ -44,6 +44,10 @@ class ShimianSpecterTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
         harness.handleListChoice(player1, "Augur of Skulls");
+        // CR 701.23b: hidden-zone copies are found by choice, so the controller picks every remaining copy.
+        var remainingCopies = gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
+        assertThat(remainingCopies).isNotNull();
+        harness.handleMultipleCardsChosen(player1, remainingCopies.validCardIds());
 
         long exiled = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Augur of Skulls")).count();

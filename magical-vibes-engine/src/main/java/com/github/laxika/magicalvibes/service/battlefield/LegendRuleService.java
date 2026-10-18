@@ -163,7 +163,7 @@ public class LegendRuleService {
                                                   Permanent permanent) {
         var effectiveSubtypes = gameQueryService.effectiveCreatureSubtypes(gameData, permanent);
         return battlefield.stream()
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream())
                 .filter(ControlledSubtypeLegendRuleExemptionEffect.class::isInstance)
                 .map(ControlledSubtypeLegendRuleExemptionEffect.class::cast)
                 .anyMatch(exemption -> effectiveSubtypes.contains(exemption.exemptedSubtype()));

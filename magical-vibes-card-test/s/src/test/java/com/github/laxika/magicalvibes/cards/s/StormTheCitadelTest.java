@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -98,6 +99,7 @@ class StormTheCitadelTest extends BaseCardTest {
     void combatDamageToPlaneswalkerDestroysArtifact() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new SaheeliSublimeArtificer());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
 

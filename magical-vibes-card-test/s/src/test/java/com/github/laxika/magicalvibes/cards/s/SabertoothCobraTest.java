@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.p.PsionicGift;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
@@ -73,7 +72,7 @@ class SabertoothCobraTest extends BaseCardTest {
         dealCombatDamageToPlayer2();
         advanceToPlayer2UpkeepObligation();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(poison()).isEqualTo(2);
     }
@@ -90,7 +89,7 @@ class SabertoothCobraTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 2);
         harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(poison()).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(2);
     }
@@ -131,7 +130,7 @@ class SabertoothCobraTest extends BaseCardTest {
 
         assertThat(poison()).isEqualTo(1);
         advanceToPlayer2UpkeepObligation();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(poison()).isEqualTo(2);
     }

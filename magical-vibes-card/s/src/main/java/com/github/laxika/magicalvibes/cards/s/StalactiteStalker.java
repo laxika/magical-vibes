@@ -28,7 +28,7 @@ public class StalactiteStalker extends Card {
                 false,
                 "{2}{B}",
                 List.of(
-                        new SacrificeSelfCost(true),
+                        new SacrificeSelfCost(true, false, true),
                         new BoostTargetCreatureEffect(
                                 new Scaled(new XValue(), -1),
                                 new Scaled(new XValue(), -1))),

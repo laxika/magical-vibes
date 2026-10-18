@@ -49,7 +49,7 @@ class ScreamreachBrawlerTest extends BaseCardTest {
 
         Permanent brawler = findPermanent(player1, "Screamreach Brawler");
         assertThat(brawler.hasKeyword(Keyword.HASTE)).isTrue();
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Screamreach Brawler");

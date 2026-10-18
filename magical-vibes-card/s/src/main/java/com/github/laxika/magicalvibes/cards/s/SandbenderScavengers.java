@@ -11,13 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-
-import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "239")
 public class SandbenderScavengers extends Card {
@@ -31,9 +28,8 @@ public class SandbenderScavengers extends Card {
                 new ExileSourceCardFromGraveyardThenEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                .filter(new CardAllOfPredicate(List.of(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardManaValueAtMostSourcePowerPredicate())))
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .dynamicMaxManaValue(new SourcePower(true))
                                 .targetGraveyard(true)
                                 .build()),
                 "Exile Sandbender Scavengers?"));

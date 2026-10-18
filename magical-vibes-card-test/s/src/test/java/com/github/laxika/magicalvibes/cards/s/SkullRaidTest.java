@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -79,7 +80,8 @@ class SkullRaidTest extends BaseCardTest {
     @CardUsed({SkullRaid.class, Island.class, TamiyoCollectorOfTales.class})
     @DisplayName("Controller draws two when the opponent cannot discard")
     void drawsTwoWhenDiscardIsPrevented() {
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
         Island first = new Island();
         Island second = new Island();
         harness.setHand(player2, List.of(first, second));

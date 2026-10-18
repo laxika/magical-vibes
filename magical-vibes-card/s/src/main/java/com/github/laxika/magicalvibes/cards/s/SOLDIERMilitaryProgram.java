@@ -6,9 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,8 +30,6 @@ public class SOLDIERMilitaryProgram extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.SOLDIER))));
 
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                ConditionalEffect.unless(commander, ChooseOneEffect.oneOrMore(options)));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                ConditionalEffect.unless(new NotCondition(commander), new ChooseOneEffect(options)));
+                ChooseOneEffect.oneOrMoreWhen(options, commander));
     }
 }

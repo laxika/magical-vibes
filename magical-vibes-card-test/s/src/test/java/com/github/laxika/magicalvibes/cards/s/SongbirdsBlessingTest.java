@@ -106,7 +106,7 @@ class SongbirdsBlessingTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -121,7 +121,7 @@ class SongbirdsBlessingTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

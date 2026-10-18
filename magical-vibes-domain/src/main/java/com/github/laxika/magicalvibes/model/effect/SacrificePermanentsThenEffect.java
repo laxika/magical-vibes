@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>The sacrifice is all-or-nothing. When more than {@code count} matching permanents are
  * available, the controller chooses exactly {@code count}; the follow-up is resolved only after
- * all selected permanents have been sacrificed.
+ * all selected permanents have been sacrificed, as part of the same resolution (an "If you do"
+ * clause, not a reflexive "When you do" trigger).
  */
 public record SacrificePermanentsThenEffect(
         int count,

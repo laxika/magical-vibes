@@ -101,6 +101,10 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
                 .map(permanent -> controllerByPermanentId.get(permanent.getId()))
                 .filter(java.util.Objects::nonNull)
                 .toList());
+        entry.setEventTargetedPlayerIds(toDestroy.stream()
+                .map(permanent -> controllerByPermanentId.get(permanent.getId()))
+                .filter(java.util.Objects::nonNull)
+                .toList());
         entry.setEventPlayerIds(destroyedControllerIds);
         entry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
     }

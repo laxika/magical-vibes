@@ -63,6 +63,7 @@ class SparkReaperTest extends BaseCardTest {
         Permanent reaper = harness.addToBattlefieldAndReturn(player1, new SparkReaper());
         reaper.setSummoningSick(true);
         reaper.tap();
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new PrimordialWurm());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -107,6 +108,7 @@ class SparkReaperTest extends BaseCardTest {
         Permanent reaper = addCreatureReady(player1, new SparkReaper());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
         harness.addToBattlefield(player1, new PrimordialWurm());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         int lifeBefore = gd.getLife(player1.getId());

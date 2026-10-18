@@ -90,7 +90,7 @@ class SecretArcadeDustyParlorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GhostlyPrison()));
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castEnchantment(player1, 0);
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

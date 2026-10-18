@@ -21,6 +21,9 @@ import lombok.Getter;
 @Getter
 public class SpellTarget {
 
+    /** Effective maximum for an "any number of targets" group; large enough to never constrain play. */
+    public static final int ANY_NUMBER_OF_TARGETS = 1_000_000;
+
     private final Card card;
     private final TargetFilter filter;
     private final TargetFilter kickedFilter;
@@ -98,14 +101,23 @@ public class SpellTarget {
         this.filter = filter;
         this.kickedFilter = kickedFilter;
         this.minTargets = minTargets;
-        this.maxTargets = maxTargets;
+        this.maxTargets = unboundedIfAnyNumber(maxTargets);
         this.kickedMinTargets = kickedMinTargets;
-        this.kickedMaxTargets = kickedMaxTargets;
+        this.kickedMaxTargets = unboundedIfAnyNumber(kickedMaxTargets);
         this.giftPromisedMinTargets = giftPromisedMinTargets;
         this.index = index;
         this.xScaled = xScaled;
         this.dynamicMinTargets = dynamicMinTargets;
         this.dynamicMaxTargets = dynamicMaxTargets;
+    }
+
+    /**
+     * Cards written "any number of target ..." declare a maximum of 99 as a stand-in for no limit; a
+     * declared maximum of at least 99 is lifted to {@link #ANY_NUMBER_OF_TARGETS} so that more than
+     * 99 targets are legal.
+     */
+    private static int unboundedIfAnyNumber(int declaredMaximum) {
+        return declaredMaximum >= 99 ? ANY_NUMBER_OF_TARGETS : declaredMaximum;
     }
 
     /** Marks this group as part of the mode {@code scope}, whose targets must all be different objects. */

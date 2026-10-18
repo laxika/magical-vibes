@@ -314,6 +314,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (!declined) {
             entry.setTargetId(permanentId);
         }
+        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dtt.dyingCard().getId()));
         // Carry the death event's numeric payload (e.g. the dying creature's last-known power) so an
         // EventValue-based amount can be evaluated at resolution.
         if (dtt.eventValue() != null) {
@@ -2055,6 +2056,8 @@ public class PermanentChoiceTriggerHandlerService {
                         ? ownTarget != null && gameQueryService.isCreature(gameData, p)
                                 && gameQueryService.getEffectivePower(gameData, p)
                                 <= gameQueryService.getEffectivePower(gameData, ownTarget)
+                                && !validTargetService.isBlockedByHexproofOrGrantedEffect(
+                                        gameData, p, pmot.controllerId())
                         : !p.getCard().hasType(CardType.LAND)
                                 && p.getCard().getManaValue() <= ownManaValue) {
                     validOpponentTargets.add(p.getId());
@@ -2498,6 +2501,7 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setWaterbendCostPaid(sourcePermanent.isWaterbendCostPaid());
                 entry.setRevealCardFromHandCostPaid(sourcePermanent.isRevealCardFromHandCostPaid());
                 entry.setControlledDragonAsCast(sourcePermanent.isControlledDragonAsCast());
+                entry.setGiftPromised(sourcePermanent.isGiftPromised());
             }
         }
         pushTriggeredEntry(gameData, entry);

@@ -24,6 +24,7 @@ public class SwordOfSinewAndSteel extends Card {
         addEffect(EffectSlot.STATIC,
                 new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED), GrantScope.EQUIPPED_CREATURE));
 
+        setAllowSharedTargets(true);
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(), "Target must be a planeswalker"), 0, 1)
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DestroyTargetPermanentEffect());

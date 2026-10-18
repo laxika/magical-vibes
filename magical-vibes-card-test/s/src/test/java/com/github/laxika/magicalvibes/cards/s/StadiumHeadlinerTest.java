@@ -32,7 +32,8 @@ class StadiumHeadlinerTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().isTapped()).isTrue();
-        assertThat(tokens.getFirst().isAttackedThisTurn()).isTrue();
+        assertThat(tokens.getFirst().isAttacking()).isTrue();
+        assertThat(tokens.getFirst().isAttackedThisTurn()).isFalse();
     }
 
     @Test

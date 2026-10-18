@@ -19,7 +19,7 @@ public class SpinningWheelKick extends Card {
         setAllowSharedTargets(true);
 
         target(TargetFilters.creatureYouControl());
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate()

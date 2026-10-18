@@ -240,6 +240,7 @@ class SangromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castAndResolveInstant(player1, 0, sangromancer.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 

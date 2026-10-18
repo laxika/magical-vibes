@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -35,7 +36,8 @@ public class SamutTheTested extends Card {
         // −2: Samut deals 2 damage divided as you choose among one or two targets.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(DealDividedDamageEffect.chosenAmongAnyTargets(2)),
+                List.of(new DealDividedDamageEffect(
+                        new Fixed(2), null, DivisionMode.CHOSEN, null, 2, true, false, false)),
                 "−2: Samut deals 2 damage divided as you choose among one or two targets."
         ));
 

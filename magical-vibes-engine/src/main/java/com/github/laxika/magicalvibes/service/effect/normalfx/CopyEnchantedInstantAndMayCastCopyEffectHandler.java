@@ -48,6 +48,14 @@ public class CopyEnchantedInstantAndMayCastCopyEffectHandler implements NormalEf
             return;
         }
 
+        if (!gameQueryService.canPlayerCastSpellsFromZone(
+                gameData, entry.getControllerId(), com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
+            // The copy is created in the graveyard, where a casting restriction keeps it from being cast.
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " can't cast a copy of the enchanted instant from a graveyard."));
+            return;
+        }
+
         Card copy = copySupport.createCopyCard(enchantedCard);
         exileService.exileCard(gameData, entry.getControllerId(), copy);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

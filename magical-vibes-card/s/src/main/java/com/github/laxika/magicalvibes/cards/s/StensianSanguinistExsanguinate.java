@@ -22,9 +22,9 @@ public class StensianSanguinistExsanguinate extends Card {
         setBackFaceCard(new Exsanguinate());
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_ATTACK,
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                         new GrantEffectToTargetUntilEndOfCombatEffect(
                                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                                 new BecomePreparedEffect()));

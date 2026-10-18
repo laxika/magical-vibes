@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class SpinneretAndSpiderling extends Card {
 
     public SpinneretAndSpiderling() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
                 new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.SPIDER),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, new ConditionalEffect(

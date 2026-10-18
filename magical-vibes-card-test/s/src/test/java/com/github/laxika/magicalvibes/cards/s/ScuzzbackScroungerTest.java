@@ -93,7 +93,6 @@ class ScuzzbackScroungerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(scrounger);
         gd.playerGraveyards.get(player1.getId()).add(scrounger.getCard());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(countPermanents(player1, "Treasure")).isZero();
         assertThat(opponent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();

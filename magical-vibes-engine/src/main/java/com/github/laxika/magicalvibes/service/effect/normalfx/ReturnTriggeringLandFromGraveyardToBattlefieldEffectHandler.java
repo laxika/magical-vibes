@@ -39,6 +39,10 @@ public class ReturnTriggeringLandFromGraveyardToBattlefieldEffectHandler impleme
         UUID controllerId = entry.getControllerId();
 
         Card landCard = gameQueryService.findCardInGraveyardById(gameData, e.landCardId());
+        if (landCard != null && e.graveyardEntryVersion() != null
+                && gameData.graveyardEntryVersion(landCard.getId()) != e.graveyardEntryVersion()) {
+            landCard = null;
+        }
         if (landCard == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the land is no longer in a graveyard)."));
             return;

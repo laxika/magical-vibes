@@ -277,6 +277,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentEachCreatesTokens(UUID controllerId,
                                            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect token,
                                            String sourceCardName) implements PermanentChoiceContext {}
+    /** Skullwinder: choose the opponent who returns a card from their graveyard to their hand. */
+    record ChooseOpponentReturnsCardFromGraveyard(UUID controllerId, Card sourceCard, CardPredicate filter)
+            implements PermanentChoiceContext {}
     /** Boreas Charger: choose an opponent before searching for the land-count difference. */
     record ChooseOpponentThenSearchLandDifference(UUID controllerId, CardSubtype subtype,
                                                    String sourceCardName) implements PermanentChoiceContext {}
@@ -308,12 +311,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * {@code targetIndex} is settled, the chooser is offered the next target and may keep it unchanged.
      */
     record SpellRetarget(UUID spellCardId, Integer targetIndex, List<UUID> replacementTargets,
-                        UUID chooserId, boolean chooseEachTarget) implements PermanentChoiceContext {
+                        UUID chooserId, boolean chooseEachTarget, boolean replaceAllOccurrences)
+            implements PermanentChoiceContext {
+        public SpellRetarget(UUID spellCardId, Integer targetIndex, List<UUID> replacementTargets,
+                             UUID chooserId, boolean chooseEachTarget) {
+            this(spellCardId, targetIndex, replacementTargets, chooserId, chooseEachTarget, false);
+        }
         public SpellRetarget(UUID spellCardId, Integer targetIndex, List<UUID> replacementTargets, UUID chooserId) {
-            this(spellCardId, targetIndex, replacementTargets, chooserId, false);
+            this(spellCardId, targetIndex, replacementTargets, chooserId, false, false);
         }
         public SpellRetarget(UUID spellCardId, Integer targetIndex) {
-            this(spellCardId, targetIndex, null, null, false);
+            this(spellCardId, targetIndex, null, null, false, false);
+        }
+        /** Changes every occurrence of the target at {@code targetIndex} to the one new target (Silver Wyvern). */
+        public static SpellRetarget allOccurrences(UUID spellCardId) {
+            return new SpellRetarget(spellCardId, 0, null, null, false, true);
         }
         public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
     }

@@ -44,7 +44,9 @@ public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalE
         List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
         if (graveyard == null) return;
 
-        boolean removed = graveyard.removeIf(c -> c.getId().equals(sourceCard.getId()));
+        boolean sameGraveyardObject = entry.getTriggeringCardGraveyardEntryVersion() < 0
+                || entry.getTriggeringCardGraveyardEntryVersion() == gameData.graveyardEntryVersion(sourceCard.getId());
+        boolean removed = sameGraveyardObject && graveyard.removeIf(c -> c.getId().equals(sourceCard.getId()));
         if (removed) gameData.playerDecks.get(ownerId).add(sourceCard);
         LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
         if (removed) graveyardService.notifyCardsLeftGraveyard(gameData, ownerId, sourceCard);

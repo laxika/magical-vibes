@@ -97,16 +97,11 @@ class SurtlandElementalistTest extends BaseCardTest {
     private Permanent addAttacker() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new SurtlandElementalist());
         attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
         return attacker;
     }
 
     private void advanceToAttackTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         harness.passBothPriorities();
     }
 }

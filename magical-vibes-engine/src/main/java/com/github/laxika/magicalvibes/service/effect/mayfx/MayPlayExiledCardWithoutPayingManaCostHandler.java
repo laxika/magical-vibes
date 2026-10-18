@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,8 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
     private final ExileFreeCastSupport exileFreeCastSupport;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final GameQueryService gameQueryService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,12 +56,30 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
                     .anyMatch(MayPlayExiledCardWithoutPayingManaCostEffect::grantHaste);
             exileFreeCastSupport.castFromExileWithoutPaying(
                     gameData, player, ability.targetCardId(), grantHaste);
+            if (returnsSourceToHand(ability) && gameData.findExiledCard(ability.targetCardId()) == null) {
+                returnSourceToHand(gameData, ability);
+            }
         } else {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to play " , ability.sourceCard(), "."));
             log.info("Game {} - {} declines to play exiled {}", gameData.id,
                     player.getUsername(), ability.sourceCard().getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    /** "If you do, return this permanent to its owner's hand" — the spell has left exile to be cast. */
+    private void returnSourceToHand(GameData gameData, PendingMayAbility ability) {
+        Permanent source = ability.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+        if (source != null && permanentRemovalService.removePermanentToHand(gameData, source)) {
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is returned to its owner's hand."));
+        }
+    }
+
+    private boolean returnsSourceToHand(PendingMayAbility ability) {
+        return ability.effects().stream()
+                .anyMatch(effect -> effect instanceof MayPlayExiledCardWithoutPayingManaCostEffect e
+                        && e.returnSourceToHand());
     }
 
     private boolean isExclusive(PendingMayAbility ability) {

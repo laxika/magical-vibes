@@ -154,7 +154,6 @@ class ScourgeOfTheSkyclavesTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, scourge.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Scourge of the Skyclaves");
         harness.passBothPriorities();

@@ -119,6 +119,7 @@ class SoulsFireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, List.of(giant.getId(), player2.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, giant.getId());
         harness.passBothPriorities();
 
@@ -136,6 +137,7 @@ class SoulsFireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, List.of(giant.getId(), bears.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 

@@ -92,6 +92,9 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             return;
         }
         int maxX = maxPotentialX(pool, cost, maximumX);
+        if (maxX <= 0) {
+            return;
+        }
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.XValueChoice(
                         controllerId,

@@ -55,23 +55,38 @@ public class ExchangeControlOfTargetSpellAndCreatureEffectHandler implements Nor
 
         List<UUID> spellTargets = entry.targetsForGroup(creatureTargetGroup - 1);
         List<UUID> creatureTargets = entry.targetsForGroup(creatureTargetGroup);
-        if (spellTargets.isEmpty() || creatureTargets.isEmpty()) {
+        if (spellTargets.isEmpty()) {
             return;
         }
 
         UUID spellId = spellTargets.getFirst();
-        UUID creatureId = creatureTargets.getFirst();
         StackEntry spellEntry = gameData.stack.stream()
                 .filter(stackEntry -> spellId.equals(stackEntry.getTargetableId()))
                 .findFirst()
                 .orElse(null);
-        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-        if (spellEntry == null || creature == null
-                || !NONCREATURE_SPELL_TYPES.contains(spellEntry.getEntryType())
-                || !gameQueryService.isCreature(gameData, creature)) {
+        if (spellEntry == null || !NONCREATURE_SPELL_TYPES.contains(spellEntry.getEntryType())) {
             return;
         }
 
+        Permanent creature = creatureTargets.isEmpty()
+                ? null : gameQueryService.findPermanentById(gameData, creatureTargets.getFirst());
+        if (creature != null && gameQueryService.isCreature(gameData, creature)) {
+            exchangeControl(gameData, entry, spellEntry, creature);
+        }
+
+        // The spell's controller chooses new targets even when the exchange did not happen (e.g. the
+        // creature left the battlefield or both were already controlled by the same player).
+        if (hasSpellTargets(spellEntry)) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(),
+                    spellEntry.getControllerId(),
+                    List.of(new ChooseNewTargetsForTargetSpellEffect()),
+                    "Choose new targets for " + spellEntry.getCard().getName() + "?",
+                    spellEntry.getCard().getId()));
+        }
+    }
+
+    private void exchangeControl(GameData gameData, StackEntry entry, StackEntry spellEntry, Permanent creature) {
         UUID spellControllerId = spellEntry.getControllerId();
         UUID creatureControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (spellControllerId == null || creatureControllerId == null
@@ -105,15 +120,6 @@ public class ExchangeControlOfTargetSpellAndCreatureEffectHandler implements Nor
                 .build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id,
                 entry.getCard().getName(), spellEntry.getCard().getName(), creature.getCard().getName());
-
-        if (hasSpellTargets(spellEntry)) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    entry.getCard(),
-                    creatureControllerId,
-                    List.of(new ChooseNewTargetsForTargetSpellEffect()),
-                    "Choose new targets for " + spellEntry.getCard().getName() + "?",
-                    spellEntry.getCard().getId()));
-        }
     }
 
     private boolean hasSpellTargets(StackEntry spellEntry) {

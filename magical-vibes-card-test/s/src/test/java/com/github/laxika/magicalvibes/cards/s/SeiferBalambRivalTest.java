@@ -42,6 +42,8 @@ class SeiferBalambRivalTest extends BaseCardTest {
         Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker1.getId());
+        harness.passBothPriorities();
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),

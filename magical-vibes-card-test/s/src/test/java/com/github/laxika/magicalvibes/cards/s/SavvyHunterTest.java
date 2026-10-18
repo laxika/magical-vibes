@@ -96,8 +96,6 @@ class SavvyHunterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new SavvyHunter()));
 
         harness.activateAbility(player1, indexOf(player1, hunter), null, null);
-        harness.handlePermanentChosen(player1, firstFood.getId());
-        harness.handlePermanentChosen(player1, secondFood.getId());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Gingerbrute")).isEmpty();

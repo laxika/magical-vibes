@@ -18,6 +18,7 @@ public class SibsigMuckdraggers extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
+                .targetGraveyard(true)
                 .build());
     }
 }

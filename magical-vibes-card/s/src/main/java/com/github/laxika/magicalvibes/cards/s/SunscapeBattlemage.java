@@ -24,7 +24,7 @@ public class SunscapeBattlemage extends Card {
 
     public SunscapeBattlemage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{2}{U}")));
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}{U}"), true, 1));
 
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
+import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
@@ -166,6 +168,11 @@ public class EtbEffectResolver {
                                 >= paid.minimumPayments() ? conditional.wrapped() : null;
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
+                // Gift intervening-if (CR 603.4): the promise is recorded on the entering permanent when
+                // the spell resolves, so an unpromised gift never puts the trigger on the stack.
+                case GiftPromised ignored ->
+                        ctx.sourcePermanent() != null && ctx.sourcePermanent().isGiftPromised()
+                                ? effect : null;
                 case CastForMadnessCost ignored -> ctx.madness() ? conditional.wrapped() : null;
                 // CR 702.152a: blitz's end-step sacrifice is a delayed trigger queued by StackResolutionService.
                 case CastForAlternateCost ignored when conditional.wrapped() instanceof SacrificeSelfAtEndStepEffect -> null;
@@ -217,6 +224,8 @@ public class EtbEffectResolver {
                 case SourceUntapped ignored ->
                         conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
                                 ? conditional.wrapped() : null;
+                case com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid ignored ->
+                        collectEvidenceCostPaid ? conditional.wrapped() : null;
                 case SourceEntryCostPaid ignored ->
                         conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
                                 ? conditional.wrapped() : null;
@@ -242,6 +251,12 @@ public class EtbEffectResolver {
                         inner instanceof RevealCardFromHandCostPaid || inner instanceof ControlledDragonAsCast) ->
                         ctx.sourcePermanent().isRevealCardFromHandCostPaid()
                                 || ctx.sourcePermanent().isControlledDragonAsCast() ? effect : null;
+                // "if you cast it during your main phase" (Addendum, CR 603.4): both halves are facts fixed
+                // when the permanent enters, so the trigger is never put on the stack when either is false.
+                case AllOf allOf when allOf.conditions().stream().allMatch(inner ->
+                        inner instanceof WasCast || inner instanceof ControllerMainPhase) ->
+                        conditionEvaluationService.isMet(ctx.gameData(), allOf, conditionContext)
+                                ? conditional.wrapped() : null;
                 default -> effect;
             };
         });

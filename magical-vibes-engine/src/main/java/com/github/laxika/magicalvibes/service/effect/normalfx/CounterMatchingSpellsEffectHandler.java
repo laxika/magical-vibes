@@ -42,7 +42,7 @@ public class CounterMatchingSpellsEffectHandler implements NormalEffectHandlerBe
 
         List<StackEntry> toCounter = new ArrayList<>();
         for (StackEntry se : gameData.stack) {
-            if (!SPELL_TYPES.contains(se.getEntryType())) {
+            if (se == entry || !SPELL_TYPES.contains(se.getEntryType())) {
                 continue;
             }
             if (!targetLegalityService.matchesStackEntryPredicate(
@@ -54,7 +54,7 @@ public class CounterMatchingSpellsEffectHandler implements NormalEffectHandlerBe
 
         int counteredCount = 0;
         for (StackEntry target : toCounter) {
-            StackEntry resolved = counterSupport.findCounterTarget(gameData, target.getCard().getId(), entry);
+            StackEntry resolved = counterSupport.findCounterTargetExcludingSource(gameData, target.getCard().getId(), entry);
             if (resolved != null && counterSupport.counterSpell(gameData, entry, resolved)) {
                 counteredCount++;
             }

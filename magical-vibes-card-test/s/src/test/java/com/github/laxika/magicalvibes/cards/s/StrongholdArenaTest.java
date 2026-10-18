@@ -78,6 +78,7 @@ class StrongholdArenaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -133,6 +134,7 @@ class StrongholdArenaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -150,6 +152,7 @@ class StrongholdArenaTest extends BaseCardTest {
         addCreatureReady(player1, new YavimayaSteelcrusher()).setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -170,6 +173,7 @@ class StrongholdArenaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -190,6 +194,7 @@ class StrongholdArenaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(firstCard, secondCard));
 
         resolveCombat();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         if (!gd.interaction.isAwaitingInput()) {

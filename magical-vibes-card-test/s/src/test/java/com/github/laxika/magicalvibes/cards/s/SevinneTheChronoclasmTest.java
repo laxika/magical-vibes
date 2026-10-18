@@ -112,6 +112,8 @@ class SevinneTheChronoclasmTest extends BaseCardTest {
     @Test
     void copiesSorceryAndAllowsNewTargetWithoutPayingFlashbackLifeAgain() {
         addCreatureReady(player1, new SevinneTheChronoclasm());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setGraveyard(player1, List.of(new DeepAnalysis()));
         harness.setLibrary(player1, List.of(new ThinkTwice(), new ThinkTwice()));
         harness.setLibrary(player2, List.of(new ThinkTwice(), new ThinkTwice()));
@@ -146,6 +148,7 @@ class SevinneTheChronoclasmTest extends BaseCardTest {
     @Test
     void copiesAgainOnOpponentsTurn() {
         addCreatureReady(player1, new SevinneTheChronoclasm());
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(new ThinkTwice(), new ThinkTwice()));
         harness.setLibrary(player1, List.of(new ThinkTwice(), new ThinkTwice(), new ThinkTwice()));
         harness.setLibrary(player2, List.of(new ThinkTwice(), new ThinkTwice()));
@@ -154,7 +157,7 @@ class SevinneTheChronoclasmTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();

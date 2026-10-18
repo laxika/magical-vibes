@@ -24,7 +24,8 @@ import java.util.UUID;
  * creature is attacking and snow lands <em>its controller</em> controls otherwise.
  *
  * <p>The toughness the cap is measured against is the creature's toughness as computed so far in
- * the pass — its own effective toughness plus the bonuses already in the accumulator — so other
+ * the pass — its own effective toughness (or the characteristic-defining toughness already recorded as the
+ * base override) plus the bonuses already in the accumulator — so other
  * pumps count while this effect's own reduction does not. Reading it off the accumulator instead
  * of re-querying {@code getEffectiveToughness} is also what keeps this self-referential value from
  * recursing back into static bonus assembly.
@@ -51,7 +52,9 @@ public class ShrinkEnchantedCreatureEffectHandler implements StaticEffectHandler
         UUID enchantedControllerId = context.gameData().findControllerOf(enchanted);
         AmountContext ctx = AmountContext.forStaticEffect(enchanted, enchantedControllerId);
         int x = Math.max(0, amountEvaluationService.evaluate(context.gameData(), shrink.amount(), ctx));
-        int toughnessSoFar = enchanted.getEffectiveToughness() + accumulator.getToughness();
+        int baseToughness = accumulator.isBasePTOverridden() && accumulator.getBaseToughnessOverride() != null
+                ? accumulator.getBaseToughnessOverride() : enchanted.getEffectiveToughness();
+        int toughnessSoFar = baseToughness + accumulator.getToughness();
         int y = Math.min(x, toughnessSoFar - 1);
         accumulator.addPower(-x);
         accumulator.addToughness(-y);

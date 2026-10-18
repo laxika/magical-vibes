@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.w.Weakness;
 import com.github.laxika.magicalvibes.cards.u.UndergroundSea;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -201,6 +202,8 @@ class SedgeTrollTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.setHand(player2, List.of(new Weakness(), new Weakness()));
         harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castEnchantment(player2, 0, troll.getId());
         harness.passBothPriorities();

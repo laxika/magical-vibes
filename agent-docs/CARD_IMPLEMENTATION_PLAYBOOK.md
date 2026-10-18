@@ -128,6 +128,10 @@ public class ExampleCard extends Card {
   - `addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, effect, TriggerMode.ONCE_PER_BATCH)`
   - The tap-payment path brackets multi-permanent tap events so the registration fires once
 
+- "Whenever you create one or more tokens" (a token-creation event, not an enter trigger):
+  - `addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, effect, TriggerMode.TOKEN_CREATION)` fires once per creation event and is neither doubled nor suppressed by Elesh Norn, Mother of Machines
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/StaffOfTheStoryteller.java`
+
 - Predicate-based targeting:
   - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
   - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`, `PermanentHasSupertypePredicate`

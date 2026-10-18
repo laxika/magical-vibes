@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "YMID", collectorNumber = "32")
 @CardRegistration(set = "MB2", collectorNumber = "260")
@@ -23,7 +27,9 @@ public class SanguineBrushstroke extends Card {
                 new ConjureCardNamedOntoBattlefieldEffect("AVR", "86")));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                                new PermanentIsTokenPredicate())),
                         SequenceEffect.of(
                                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                                 new GainLifeEffect(1))));

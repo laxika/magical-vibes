@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
@@ -18,12 +19,10 @@ import java.util.List;
 public class StuffyDoll extends Card {
 
     public StuffyDoll() {
-        // As this creature enters, choose a player. Whenever this creature is dealt damage,
-        // it deals that much damage to the chosen player. The chosen player is the controller's
-        // opponent (single-opponent model, as in Booby Trap / Cursed Rack); the damage amount
-        // snapshots onto the trigger's eventValue.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChoosePlayerOnEnterEffect());
+
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
-                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.CHOSEN_PLAYER));
 
         // {T}: This creature deals 1 damage to itself.
         addActivatedAbility(new ActivatedAbility(

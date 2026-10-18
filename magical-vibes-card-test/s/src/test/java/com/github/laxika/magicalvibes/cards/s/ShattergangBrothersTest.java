@@ -94,7 +94,7 @@ class ShattergangBrothersTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen, survivor);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        harness.handlePermanentChosen(player2, chosen.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(survivor).doesNotContain(chosen);
         harness.assertOnBattlefield(player2, "Spellbook");

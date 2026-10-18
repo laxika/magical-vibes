@@ -21,7 +21,7 @@ public class ShuriVibraniumTechnologist extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 1/1 colorless Robot Hero artifact creature token with flying.",
-                        new CreateTokenEffect("Robot", 1, 1, null,
+                        new CreateTokenEffect("Robot Hero Token", 1, 1, null,
                                 List.of(CardSubtype.ROBOT, CardSubtype.HERO),
                                 Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT))),
                 new ChooseOneEffect.ChooseOneOption("Draw a card.", new DrawCardEffect(1)

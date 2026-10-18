@@ -139,7 +139,7 @@ class SimianSlingTest extends BaseCardTest {
 
     @Test
     void equippedCreatureStillDealsDamageAfterLeavingBattlefield() {
-        Permanent creature = addCreatureReady(player1, new SimianSling());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sling = addCreatureReady(player1, new SimianSling());
         sling.setAttachedTo(creature.getId());
         Permanent blocker = addCreatureReady(player2, new SimianSling());
@@ -157,7 +157,7 @@ class SimianSlingTest extends BaseCardTest {
     @Test
     @CardUsed({SimianSling.class, TezzeretBetrayerOfFlesh.class})
     void equippedCreatureDamagesDefenderAfterAttackedPlaneswalkerLeaves() {
-        Permanent creature = addCreatureReady(player1, new SimianSling());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent sling = addCreatureReady(player1, new SimianSling());
         sling.setAttachedTo(creature.getId());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TezzeretBetrayerOfFlesh());

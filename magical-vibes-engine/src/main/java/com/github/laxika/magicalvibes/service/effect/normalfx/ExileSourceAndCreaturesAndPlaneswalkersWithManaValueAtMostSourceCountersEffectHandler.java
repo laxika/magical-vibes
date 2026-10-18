@@ -53,7 +53,7 @@ public class ExileSourceAndCreaturesAndPlaneswalkersWithManaValueAtMostSourceCou
                 }
                 if ((gameQueryService.isCreature(gameData, permanent)
                         || gameQueryService.isPlaneswalker(gameData, permanent))
-                        && permanent.getCard().getManaValue() <= maxManaValue) {
+                        && gameQueryService.getPermanentManaValue(permanent) <= maxManaValue) {
                     permanentsToExile.add(permanent);
                 }
             }

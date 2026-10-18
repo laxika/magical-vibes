@@ -27,7 +27,7 @@ public class SensorSplicer extends Card {
 
         // Golem creatures you control have vigilance.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.VIGILANCE, GrantScope.OWN_CREATURES,
+                Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

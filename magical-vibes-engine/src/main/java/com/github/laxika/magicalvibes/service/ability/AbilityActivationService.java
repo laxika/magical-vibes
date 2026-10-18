@@ -1419,8 +1419,8 @@ public class AbilityActivationService {
         }
 
         // Exile-N-cards-from-graveyard cost (Salvage Titan: "Exile three artifact cards from your
-        // graveyard"). Validate up front that enough matching cards other than the source exist —
-        // the source card must remain in the graveyard for the ability's own return effect.
+        // graveyard"). Validate up front that enough matching cards exist; the source card itself may
+        // be exiled to pay the cost, in which case the ability finds nothing to return.
         ExileNCardsFromGraveyardCost exileNGraveyardCost = ability.getEffects().stream()
                 .filter(ExileNCardsFromGraveyardCost.class::isInstance)
                 .map(ExileNCardsFromGraveyardCost.class::cast)
@@ -1736,11 +1736,17 @@ public class AbilityActivationService {
         // slot's candidates via getValidChoiceIds, so size<=required is not a safe auto-pay gate.
         if (handler.shouldAutoPayAll(gameData, playerId, required)) {
             List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
-            for (UUID id : validIds) {
-                Permanent chosen = gameQueryService.findPermanentById(gameData, id);
-                if (chosen != null) {
-                    handler.validateAndPay(gameData, player, chosen);
-                }
+            List<Permanent> chosenPermanents = validIds.stream()
+                    .map(id -> gameQueryService.findPermanentById(gameData, id))
+                    .filter(Objects::nonNull)
+                    .toList();
+            Runnable payment = () -> chosenPermanents.forEach(
+                    chosen -> handler.validateAndPay(gameData, player, chosen));
+            if (handler instanceof MultiplePermanentSacrificeCostHandler && chosenPermanents.size() > 1) {
+                // Sacrifices paid together are one event, so their dies triggers see each other leave (CR 603.10a).
+                permanentRemovalService.performSimultaneousRemovals(gameData, chosenPermanents, payment);
+            } else {
+                payment.run();
             }
             return false;
         }
@@ -2053,8 +2059,12 @@ public class AbilityActivationService {
                         Map.of()
                 );
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        stackEntry.setTriggeringCardId(card.getId());
         stackEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
         stackEntry.setTargetFilter(ability.getTargetFilter());
+        if (multiTarget) {
+            configureHandAbilityTargets(stackEntry, ability, graveyardTargetIds);
+        }
         if (hasGraveyardTargets) {
             for (UUID graveyardTargetId : graveyardTargetIds) {
                 stackEntry.getMixedZoneTargetGraveyardVersions().put(
@@ -2210,6 +2220,12 @@ public class AbilityActivationService {
             validateNotBlockedByCombatActionLock(gameData, ability);
         }
         if (ability.isSuspendsSourceFromHand()) {
+            // CR 702.62a: suspend requires that the player could begin to cast the card, so a name
+            // prohibition on casting it also prevents suspending it.
+            if (castingPermissionService.getForbiddenCardNames(gameData, playerId).contains(card.getName())
+                    || castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId)) {
+                throw new IllegalStateException("This card cannot be suspended at this time");
+            }
             boolean mainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
             if (!castingPermissionService.canCastWithTiming(gameData, playerId, card,
@@ -2382,6 +2398,9 @@ public class AbilityActivationService {
             recordHandAbilityActivationUse(gameData, card, idx);
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
+            gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(card.getId())
+                    ? exiled.withAbilityLink(com.github.laxika.magicalvibes.model.ExileCast.OWN_HAND_ABILITY_LINK)
+                    : exiled);
             triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, 1);
             if (isManaAbility(ability, abilityEffects)) {
                 resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
@@ -2575,7 +2594,7 @@ public class AbilityActivationService {
         if (discarded) {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
-                triggerCollectionService.checkCycleTriggers(gameData, playerId, card);
+                triggerCollectionService.checkCycleTriggers(gameData, playerId, card, xValue);
                 triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
                 if (!gameData.interaction.isAwaitingInput()) {
                     triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
@@ -8253,7 +8272,7 @@ public class AbilityActivationService {
                 if (gameData.currentStep != TurnStep.DECLARE_ATTACKERS) {
                     throw new IllegalStateException("This ability can only be activated during the declare attackers step");
                 }
-                if (!gameQueryService.isPlayerBeingAttacked(gameData, playerId)
+                if (!gameQueryService.isPlayerBeingAttackedByDeclaredAttacker(gameData, playerId)
                         && !gameData.playersAttackedThisCombat.contains(playerId)) {
                     throw new IllegalStateException("This ability can only be activated if you've been attacked this step");
                 }
@@ -8810,12 +8829,12 @@ public class AbilityActivationService {
 
         ManaPool pool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(pool);
-        EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
+        ManaPool.CreatureAbilityManaState promotedCreatureSourceMana = pool.promoteCreatureAbilityMana();
         try {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
-                    sourceSubtypes, additionalCost);
+                    sourceSubtypes, sourceSubtypes, additionalCost, null);
         } finally {
-            pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
+            pool.restorePromotedCreatureAbilityMana(promotedCreatureSourceMana, regularManaBefore);
         }
     }
 
@@ -9365,7 +9384,9 @@ public class AbilityActivationService {
             Card card = graveyard.get(i);
             boolean typeMatch = requiredType == null || card.hasType(requiredType)
                     || (alternateType != null && card.hasType(alternateType));
-            boolean subtypeMatch = requiredSubtype == null || card.getSubtypes().contains(requiredSubtype);
+            boolean subtypeMatch = requiredSubtype == null || card.getSubtypes().contains(requiredSubtype)
+                    || (requiredSubtype.isCreatureType() && card.hasType(CardType.CREATURE)
+                    && card.hasKeyword(Keyword.CHANGELING));
             if (typeMatch && subtypeMatch) {
                 validIndices.add(i);
             }
@@ -9488,9 +9509,6 @@ public class AbilityActivationService {
             return candidates;
         }
         for (Card card : graveyard) {
-            if (card == sourceCard) {
-                continue;
-            }
             if ((cost.requiredType() == null || card.hasType(cost.requiredType()))
                     && (cost.predicate() == null
                     || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null))) {
@@ -10214,7 +10232,7 @@ public class AbilityActivationService {
     private void validateNotBlockedByNonManaAbilityLock(GameData gameData, UUID playerId, ActivatedAbility ability) {
         if (ability != null && isManaAbility(ability)) return;
         if (gameData.stack.stream()
-                .anyMatch(entry -> entry.hasKeyword(Keyword.SPLIT_SECOND))) {
+                .anyMatch(entry -> gameQueryService.hasSplitSecond(gameData, entry))) {
             throw new IllegalStateException(
                     "You can't activate abilities that aren't mana abilities while a spell with split second is on the stack");
         }

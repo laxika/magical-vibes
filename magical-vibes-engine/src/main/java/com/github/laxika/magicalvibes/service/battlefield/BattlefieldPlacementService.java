@@ -1489,11 +1489,18 @@ public class BattlefieldPlacementService {
         if (grants == null) {
             return;
         }
-        grants.forEach((slot, effects) -> effects.forEach(effect -> {
-            if (!permanent.getPersistentTriggeredEffects(slot).contains(effect)) {
-                permanent.addPersistentTriggeredEffect(slot, effect);
+        // Repeated grants of the same ability are separate instances (CR 113.2c): top the permanent up to
+        // the number of grants instead of collapsing equal abilities into one.
+        grants.forEach((slot, effects) -> {
+            for (CardEffect effect : new java.util.LinkedHashSet<>(effects)) {
+                long granted = effects.stream().filter(effect::equals).count();
+                long present = permanent.getPersistentTriggeredEffects(slot).stream()
+                        .filter(effect::equals).count();
+                for (long i = present; i < granted; i++) {
+                    permanent.addPersistentTriggeredEffect(slot, effect);
+                }
             }
-        }));
+        });
     }
 
     private void applyPerpetualCardCharacteristics(GameData gameData, Permanent permanent) {
@@ -1672,6 +1679,10 @@ public class BattlefieldPlacementService {
         }
         if (enterTapped.filter() != null) {
             return predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, enterTapped.filter());
+        }
+        if (enteringPermanent.isFaceDown()) {
+            // A face-down permanent is a 2/2 creature with no other types (CR 708.2).
+            return enterTapped.cardTypes().contains(CardType.CREATURE);
         }
         return matchesAnyType(enteringPermanent.getCard(), enterTapped.cardTypes());
     }
@@ -2071,7 +2082,27 @@ public class BattlefieldPlacementService {
 
         applyGrantedBloodthirst(gameData, controllerId, permanent);
         applySpellAdditionalEnterCounters(gameData, controllerId, permanent, sourceStackEntry);
+        applySpellGrantedSunburst(gameData, controllerId, permanent);
         applySpellGrantedHaste(gameData, permanent);
+    }
+
+    /**
+     * Sunburst granted to a spell while it was on the stack (Solar Array) — CR 702.44a: the permanent enters
+     * with a +1/+1 counter (creature) or charge counter (otherwise) for each color of mana spent to cast it.
+     * Cards that print Sunburst place their counters through their own enter-with-counters effect.
+     */
+    private void applySpellGrantedSunburst(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (!permanent.getGrantedKeywords().contains(Keyword.SUNBURST)
+                || permanent.getCard().getKeywords().contains(Keyword.SUNBURST)) {
+            return;
+        }
+        int colorsSpent = gameData.getSpellCastColorsSpent(permanent.getCard().getId()).size();
+        if (colorsSpent > 0) {
+            applyEntryCounters(gameData, controllerId, permanent,
+                    permanent.getCard().hasType(CardType.CREATURE)
+                            ? CounterType.PLUS_ONE_PLUS_ONE : CounterType.CHARGE,
+                    colorsSpent);
+        }
     }
 
     /**

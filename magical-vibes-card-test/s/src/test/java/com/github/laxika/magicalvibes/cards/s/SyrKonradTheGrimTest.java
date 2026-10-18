@@ -225,7 +225,8 @@ class SyrKonradTheGrimTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castAndResolveSorcery(player1, 0, creature.getId());
+        harness.castSorcery(player1, 0, 0, creature.getId());
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
@@ -258,7 +259,8 @@ class SyrKonradTheGrimTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castAndResolveSorcery(player1, 0, konrad.getId());
+        harness.castSorcery(player1, 0, 0, konrad.getId());
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Syr Konrad, the Grim");
         assertThat(gd.stack).isEmpty();

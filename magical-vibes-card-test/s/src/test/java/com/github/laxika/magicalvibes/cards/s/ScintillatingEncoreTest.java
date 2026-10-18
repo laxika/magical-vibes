@@ -91,7 +91,7 @@ class ScintillatingEncoreTest extends BaseCardTest {
     @DisplayName("The Encore caster controls the delayed trigger even when the creature has another owner")
     void casterControlsReturnTriggerForBorrowedCreature() {
         Permanent target = addCreature(player1);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         castEncore(target.getId());
 
         harness.setHand(player1, List.of(new DoomBlade()));

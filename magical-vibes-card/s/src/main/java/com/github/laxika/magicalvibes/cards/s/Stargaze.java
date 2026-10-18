@@ -17,7 +17,7 @@ public class Stargaze extends Card {
     public Stargaze() {
         addEffect(EffectSlot.SPELL, new LookAtTopCardsEffect(
                 new Scaled(new XValue(), 2), new XValue(), null,
-                LookDestination.GRAVEYARD, false));
+                LookDestination.GRAVEYARD, false).withExactChooseCount());
         addEffect(EffectSlot.SPELL, new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
     }
 }

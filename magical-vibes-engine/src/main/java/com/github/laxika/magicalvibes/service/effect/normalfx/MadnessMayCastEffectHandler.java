@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -48,13 +49,24 @@ public class MadnessMayCastEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        int madnessLifeCost = card.getCastingOption(MadnessCast.class)
+                .flatMap(madness -> madness.getCost(LifeCastingCost.class))
+                .map(LifeCastingCost::amount)
+                .orElse(0);
+        String costText = madnessLifeCost > 0 ? cost + " and " + madnessLifeCost + " life" : cost;
+
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 card,
                 controllerId,
                 List.of(new MayCastForMadnessCostEffect()),
-                "Cast " + card.getName() + " for its madness cost (" + cost + ")?",
+                "Cast " + card.getName() + " for its madness cost (" + costText + ")?",
                 null,
-                cost
+                cost,
+                null,
+                null,
+                0,
+                madnessLifeCost,
+                null, null, null, null, null, null, 0, null, null, null, null
         ));
         log.info("Game {} - offering madness cast of {} for {}", gameData.id, card.getName(), cost);
     }

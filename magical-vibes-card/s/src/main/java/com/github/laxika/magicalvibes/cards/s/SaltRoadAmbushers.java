@@ -22,7 +22,7 @@ public class SaltRoadAmbushers extends Card {
 
     public SaltRoadAmbushers() {
         addMorph("{3}{G}{G}");
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(1));
+        addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

@@ -116,7 +116,7 @@ class SilentSentinelTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(enchantment.getId()));
         harness.setGraveyard(player1, List.of());
-        gd.getPlayerExiledCards(player1.getId()).add(enchantment);
+        gd.addToExile(player1.getId(), enchantment);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Archetype of Courage");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(enchantment);

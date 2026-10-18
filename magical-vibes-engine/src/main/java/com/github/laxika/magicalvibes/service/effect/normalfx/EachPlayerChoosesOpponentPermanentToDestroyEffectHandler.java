@@ -43,7 +43,7 @@ public class EachPlayerChoosesOpponentPermanentToDestroyEffectHandler implements
                 : orderStartingWith(gameData, controllerId);
         beginNextChoice(gameData, playerOrder, List.of(),
                 destroyEffect.filter(), entry.getCard().getId(), controllerId, entry.getCard().getName(),
-                destroyEffect.opponentsOfSourceController());
+                destroyEffect.opponentsOfSourceController(), destroyEffect.mandatory());
     }
 
     public void completeChoice(GameData gameData, List<UUID> permanentIds,
@@ -52,12 +52,12 @@ public class EachPlayerChoosesOpponentPermanentToDestroyEffectHandler implements
         chosenIds.addAll(permanentIds);
         beginNextChoice(gameData, context.remainingPlayerIds(), chosenIds, context.filter(),
                 context.sourceCardId(), context.sourceControllerId(), context.sourceName(),
-                context.opponentsOfSourceController());
+                context.opponentsOfSourceController(), context.mandatory());
     }
 
     private void beginNextChoice(GameData gameData, List<UUID> remainingPlayerIds, List<UUID> chosenIds,
                                  PermanentPredicate filter, UUID sourceCardId, UUID sourceControllerId,
-                                 String sourceName, boolean opponentsOfSourceController) {
+                                 String sourceName, boolean opponentsOfSourceController, boolean mandatory) {
         if (remainingPlayerIds.isEmpty()) {
             destroyChosen(gameData, chosenIds, sourceName);
             return;
@@ -72,15 +72,17 @@ public class EachPlayerChoosesOpponentPermanentToDestroyEffectHandler implements
                 sourceCardId, sourceControllerId);
         if (candidates.isEmpty()) {
             beginNextChoice(gameData, nextRemainingPlayerIds, chosenIds, filter, sourceCardId,
-                    sourceControllerId, sourceName, opponentsOfSourceController);
+                    sourceControllerId, sourceName, opponentsOfSourceController, mandatory);
             return;
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId, candidates, 1,
                 new MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy(
                         nextRemainingPlayerIds, chosenIds, filter, sourceCardId, sourceControllerId, sourceName,
-                        opponentsOfSourceController),
-                sourceName + " — Choose up to one permanent an opponent controls to destroy.");
+                        opponentsOfSourceController, mandatory),
+                sourceName + (mandatory
+                        ? " — Choose a permanent an opponent controls to destroy."
+                        : " — Choose up to one permanent an opponent controls to destroy."));
     }
 
     private List<UUID> opponentPermanentIds(GameData gameData, UUID choosingPlayerId,

@@ -626,6 +626,18 @@ public class CombatAttackService {
     }
 
     /**
+     * Adds creatures to the set of creatures that could have attacked this turn, accumulated across
+     * every declaration of attackers this turn so that a creature able to attack in an earlier
+     * combat stays recorded after it becomes unable to attack later.
+     */
+    private void recordCreaturesAbleToAttackThisTurn(GameData gameData, UUID playerId, Set<UUID> creatureIds) {
+        Set<UUID> merged = new HashSet<>(gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn
+                .getOrDefault(playerId, Set.of()));
+        merged.addAll(creatureIds);
+        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(playerId, merged);
+    }
+
+    /**
      * Initiates the declare-attackers step. Sends available attackers to the active player.
      * If no creatures can attack, the step is skipped.
      */
@@ -652,7 +664,7 @@ public class CombatAttackService {
                 .filter(index -> index >= 0 && index < battlefield.size())
                 .map(index -> battlefield.get(index).getId())
                 .collect(Collectors.toSet());
-        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(gameData.activePlayerId, ableToAttack);
+        recordCreaturesAbleToAttackThisTurn(gameData, gameData.activePlayerId, ableToAttack);
 
         if (prompt.attackableIndices().isEmpty()) {
             UUID activeId = gameData.activePlayerId;
@@ -743,7 +755,7 @@ public class CombatAttackService {
         }
 
         // Empty declaration is always valid — no tax or target validation needed
-        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(playerId, attackable.stream()
+        recordCreaturesAbleToAttackThisTurn(gameData, playerId, attackable.stream()
                 .map(battlefield::get)
                 .map(Permanent::getId)
                 .collect(Collectors.toSet()));
@@ -1099,6 +1111,7 @@ public class CombatAttackService {
 
                 // Filter out controls-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
                         && ce.condition() instanceof ControlsPermanent
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
@@ -1258,17 +1271,7 @@ public class CombatAttackService {
                                 (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
                         UUID otherAttackerId = may.wrapped() instanceof OtherAttackingCreatureReferenceEffect
                                 ? findOtherAttackerId(attackerIndices, idx, battlefield) : null;
-                        if (may.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER) {
-                            UUID attackedTargetId = attacker.getAttackTarget();
-                            UUID defendingPlayerId = attackedTargetId == null ? null
-                                    : gameData.playerIds.contains(attackedTargetId)
-                                            ? attackedTargetId
-                                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                            if (defendingPlayerId != null) {
-                                gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, null,
-                                        attacker.getId(), defendingPlayerId, new Permanent(attacker));
-                            }
-                        } else if ((may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
+                        if ((may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
                                 ? sequence.steps() : List.of(may.wrapped())).stream().anyMatch(step ->
                                 step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
                                         && skip.controllerStepOnly())) {
@@ -2425,13 +2428,16 @@ public class CombatAttackService {
         if (attackerIndices.size() == 1) {
             Permanent attacker = battlefield.get(attackerIndices.getFirst());
             for (Permanent perm : battlefield) {
-                if (perm.getCard().getKeywords().contains(Keyword.EXALTED)
-                        || gameQueryService.hasLostPrintedAbilities(gameData, perm)
+                if (gameQueryService.hasLostPrintedAbilities(gameData, perm)
                         || !gameQueryService.hasKeyword(gameData, perm, Keyword.EXALTED)) {
                     continue;
                 }
 
-                int instances = gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.EXALTED);
+                // A printed exalted ability is implemented as an ON_ALLY_CREATURE_ATTACKS trigger on the
+                // card, so only the instances beyond the printed one are granted ones.
+                int printedInstances = perm.getCard().getKeywords().contains(Keyword.EXALTED) ? 1 : 0;
+                int instances = gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.EXALTED)
+                        - printedInstances;
                 for (int i = 0; i < instances; i++) {
                     StackEntry exaltedTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -2733,6 +2739,10 @@ public class CombatAttackService {
                         );
                         trigger.setNonTargeting(true);
                         trigger.setActivePlayerId(playerId);
+                        trigger.setAttackingPermanentSnapshots(attackerIndices.stream()
+                                .filter(idx -> attackedPlayerId.equals(resolvedTargets.get(idx)))
+                                .map(battlefield::get)
+                                .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                         gameData.stack.add(trigger);
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
@@ -3186,8 +3196,19 @@ public class CombatAttackService {
             if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
                 continue;
             }
-            List<CardEffect> effects = new ArrayList<>(
-                    card.getEffects(EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK));
+            List<CardEffect> effects = new ArrayList<>();
+            for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK)) {
+                if (effect instanceof ConditionalEffect conditional
+                        && containsHasAttackerCondition(conditional.condition())) {
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forCard(card, playerId))) {
+                        continue;
+                    }
+                    effects.add(conditional.wrapped());
+                } else {
+                    effects.add(effect);
+                }
+            }
             if (effects.isEmpty()) {
                 continue;
             }
@@ -3850,6 +3871,10 @@ public class CombatAttackService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (perm.isLosesAllAbilitiesUntilEndOfTurn()
+                        || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof OpponentsMustAttackRequirementEffect) {
                         return true;
@@ -4073,6 +4098,7 @@ public class CombatAttackService {
                                                      List<Integer> attackerIndices) {
         for (int idx : attackerIndices) {
             Permanent restricted = battlefield.get(idx);
+            if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
             restricted.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(MatchingAttackerRestrictionEffect.class::isInstance)
                     .map(MatchingAttackerRestrictionEffect.class::cast)

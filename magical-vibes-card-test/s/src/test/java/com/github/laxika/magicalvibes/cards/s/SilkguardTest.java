@@ -131,7 +131,8 @@ class SilkguardTest extends BaseCardTest {
         Permanent modifiedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         modifiedCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setHand(player1, List.of(new Silkguard(), new Unsummon()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstantForX(player1, 0, 1, List.of(target.getId()));
@@ -151,7 +152,8 @@ class SilkguardTest extends BaseCardTest {
         Permanent modifiedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         modifiedCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setHand(player1, List.of(new Silkguard(), new Unsummon()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstantForX(player1, 0, 2, List.of(removedTarget.getId(), remainingTarget.getId()));

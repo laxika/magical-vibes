@@ -116,6 +116,7 @@ class SeasonOfGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
         Card top = new Shock();
         harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 

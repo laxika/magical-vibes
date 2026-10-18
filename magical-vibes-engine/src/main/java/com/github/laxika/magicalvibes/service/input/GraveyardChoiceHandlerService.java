@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -1108,6 +1109,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeShuffleOwnGraveyardCardsChosenCardIds =
+                    List.copyOf(cardIds);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesResume = false;
@@ -1419,6 +1430,14 @@ public class GraveyardChoiceHandlerService {
                 UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
                 if (ownerId == null || !selectedOwners.add(ownerId)) {
                     throw new IllegalStateException("Choose at most one card from each graveyard");
+                }
+            }
+            if (exileFromEachContext.requireOne()) {
+                for (Card option : multiGraveyardChoice.cards()) {
+                    UUID optionOwnerId = gameQueryService.findGraveyardOwnerById(gameData, option.getId());
+                    if (optionOwnerId != null && !selectedOwners.contains(optionOwnerId)) {
+                        throw new IllegalStateException("Choose a card from each graveyard that has one");
+                    }
                 }
             }
 
@@ -2079,6 +2098,12 @@ public class GraveyardChoiceHandlerService {
                 triggeredEntry.setAttackedTargetId(pendingAttackedTargetId);
             }
             triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
+            if (pendingCard != null && pendingEffects.stream().anyMatch(effect ->
+                    effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                            && returnEffect.exileSourceFromGraveyard())) {
+                triggeredEntry.setTriggeringCardGraveyardEntryVersion(
+                        gameData.graveyardEntryVersion(pendingCard.getId()));
+            }
             triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger);
             triggeredEntry.setMarkSourceOncePerTurnOnAcceptance(pendingMarkSourceOncePerTurnOnAcceptance);
             if (mixedZoneEffect != null) {

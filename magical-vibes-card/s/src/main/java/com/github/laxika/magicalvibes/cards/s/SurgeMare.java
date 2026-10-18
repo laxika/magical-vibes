@@ -26,7 +26,7 @@ public class SurgeMare extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
 
         // "Whenever this creature deals damage to an opponent, you may draw a card. If you do, discard a card."
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new MayEffect(
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new MayEffect(
                 SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "Draw a card and discard a card?"));
 

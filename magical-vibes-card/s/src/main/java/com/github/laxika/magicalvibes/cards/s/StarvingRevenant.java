@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "123")
 @CardRegistration(set = "LCI", collectorNumber = "338")
@@ -24,10 +27,13 @@ public class StarvingRevenant extends Card {
                 new DrawCardEffect(new EventValue()),
                 new LoseLifeEffect(new Scaled(new EventValue(), 3), LoseLifeRecipient.CONTROLLER))));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new ConditionalEffect(
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new ConditionalEffect(
                 new GraveyardCardThreshold(8, new CardIsPermanentPredicate()),
                 SequenceEffect.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
                         new GainLifeEffect(1))));
     }
 }

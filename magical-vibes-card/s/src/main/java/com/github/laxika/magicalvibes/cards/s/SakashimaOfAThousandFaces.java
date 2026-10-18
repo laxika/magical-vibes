@@ -28,6 +28,7 @@ public class SakashimaOfAThousandFaces extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate())), "creature you control", Set.of(),
-                Map.of(EffectSlot.STATIC, List.<CardEffect>of(legendRuleExemption))));
+                Map.of(EffectSlot.STATIC, List.<CardEffect>of(legendRuleExemption)),
+                Set.of(Keyword.PARTNER)));
     }
 }

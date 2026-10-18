@@ -30,6 +30,7 @@ class ShadowgrangeArchfiendTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Hill Giant");
@@ -48,6 +49,7 @@ class ShadowgrangeArchfiendTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -56,6 +58,7 @@ class ShadowgrangeArchfiendTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactlyInAnyOrder(firstGiant.getId(), secondGiant.getId());
 
         harness.handleMultiplePermanentsChosen(player2, List.of(firstGiant.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(Permanent::getId)
@@ -68,10 +71,11 @@ class ShadowgrangeArchfiendTest extends BaseCardTest {
     @DisplayName("Madness costs {2}{B} and 8 life")
     void madnessPaysManaAndLife() {
         ShadowgrangeArchfiend archfiend = discardViaRavensCrime();
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

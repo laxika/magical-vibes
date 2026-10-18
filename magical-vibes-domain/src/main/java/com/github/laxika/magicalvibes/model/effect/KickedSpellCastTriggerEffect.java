@@ -12,8 +12,16 @@ import java.util.List;
  * entry's event-value channel.
  *
  * @param resolvedEffects effects to put on the stack when a kicked spell is cast
+ * @param triggerPerKick  true for "whenever a player kicks a spell" wording, where each kicker payment
+ *                        (each multikicker payment) is a separate trigger; false for "whenever you cast a
+ *                        kicked spell" wording, which triggers once
  */
 public record KickedSpellCastTriggerEffect(
-        List<CardEffect> resolvedEffects
+        List<CardEffect> resolvedEffects,
+        boolean triggerPerKick
 ) implements CardEffect {
+
+    public KickedSpellCastTriggerEffect(List<CardEffect> resolvedEffects) {
+        this(resolvedEffects, false);
+    }
 }

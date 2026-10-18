@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -811,13 +812,15 @@ public class DamageTriggerCollectorService {
                     dc.damagedCreature().getId()
             );
             entry.setTargetId(opponentId);
+            entry.setSourcePermanentSnapshot(lastKnownDamageSource(gameData, dc.damagedCreature()));
             gameData.stack.add(entry);
         } else {
             // Planeswalkers present — need player choice between opponent and planeswalkers
             TargetFilter targetFilter = targetFilterFor(dc.damagedCreature(), trigger);
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)),
-                    false, targetFilter, dc.damageDealt()
+                    false, targetFilter, dc.damageDealt(), dc.damagedCreature().getId(),
+                    lastKnownDamageSource(gameData, dc.damagedCreature())
             ));
         }
 
@@ -2287,17 +2290,10 @@ public class DamageTriggerCollectorService {
                     .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent));
             if (!hasCreature) continue;
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.getCard(),
-                    match.controllerId(),
-                    watcher.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    damagedPlayerId,
-                    watcher.getId());
-            entry.setEventValue(damage);
-            entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            CardEffect targeted = effect.forDamagedPlayer(damagedPlayerId, damage);
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                    watcher.getCard(), match.controllerId(), List.of(targeted), watcher.getId(),
+                    effect.targetChooserId(damagedPlayerId, match.controllerId()), damagedPlayerId));
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
             log.info("Game {} - {} triggers for {} damage dealt to opponent {}",
                     gameData.id, watcher.getCard().getName(), damage,
@@ -2475,14 +2471,31 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE)
     @CollectsTrigger(value = CardEffect.class,
             slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
     private boolean handleEquippedCreatureDealsCombatDamage(TriggerMatchContext match, CardEffect effect,
                                                               TriggerContext ctx) {
         TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
+        return queueEquippedCreatureCombatDamageTrigger(match, effect, sd, sd.totalDamage());
+    }
+
+    /**
+     * "Whenever equipped creature deals combat damage to a player, ... that much" counts only the
+     * damage dealt to players, not what the same creature assigned to blockers.
+     */
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER)
+    private boolean handleEquippedCreatureDealsCombatDamageToPlayer(TriggerMatchContext match, CardEffect effect,
+                                                                      TriggerContext ctx) {
+        TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
+        return queueEquippedCreatureCombatDamageTrigger(match, effect, sd, sd.damageToPlayers());
+    }
+
+    private boolean queueEquippedCreatureCombatDamageTrigger(TriggerMatchContext match, CardEffect effect,
+                                                               TriggerContext.SourceDealsCombatDamage sd,
+                                                               int damage) {
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
+        if (effect instanceof ConjureDuplicateOfCombatDamageSourceIntoHandEffect && sd.sourceCard().isToken()) return false;
 
         Permanent equipment = match.permanent();
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -2495,7 +2508,7 @@ public class DamageTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     equipment.getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
                     !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
-                    targetFilterForTriggeredEffect(equipment.getCard(), effect), sd.totalDamage(), equipment.getId(),
+                    targetFilterForTriggeredEffect(equipment.getCard(), effect), damage, equipment.getId(),
                     optionalTarget));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
             log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger awaits target",
@@ -2526,13 +2539,13 @@ public class DamageTriggerCollectorService {
             entry.setTargetId(sd.damagedPlayerId());
         }
         entry.setNonTargeting(true);
-        entry.setEventValue(sd.totalDamage());
+        entry.setEventValue(damage);
         entry.setSourcePermanentSnapshot(new Permanent(equipment));
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
         log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger fires ({} damage by {})",
-                match.gameData().id, equipment.getCard().getName(), sd.totalDamage(), sd.sourceCard().getName());
+                match.gameData().id, equipment.getCard().getName(), damage, sd.sourceCard().getName());
         return true;
     }
 
@@ -2679,10 +2692,33 @@ public class DamageTriggerCollectorService {
                 damagedCreature.getId()
         );
         triggerEntry.setEventValue(damageDealt);
-        triggerEntry.setSourcePermanentSnapshot(new Permanent(damagedCreature));
+        if (effect instanceof DealDamageToPlayersEffect toPlayers
+                && toPlayers.recipient() == DamageRecipient.CHOSEN_PLAYER) {
+            triggerEntry.setTargetId(damagedCreature.getRememberedTargetPlayerId());
+        }
+        triggerEntry.setSourcePermanentSnapshot(lastKnownDamageSource(gameData, damagedCreature));
         gameData.stack.add(triggerEntry);
         gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());
+    }
+
+    /**
+     * Last known information for a creature whose own ability deals damage after it may have died:
+     * the damage-relevant keywords it had from other permanents' static abilities are baked in.
+     */
+    private Permanent lastKnownDamageSource(com.github.laxika.magicalvibes.model.GameData gameData,
+                                            Permanent creature) {
+        Permanent snapshot = new Permanent(creature);
+        for (com.github.laxika.magicalvibes.model.Keyword keyword : List.of(
+                com.github.laxika.magicalvibes.model.Keyword.LIFELINK,
+                com.github.laxika.magicalvibes.model.Keyword.DEATHTOUCH,
+                com.github.laxika.magicalvibes.model.Keyword.INFECT,
+                com.github.laxika.magicalvibes.model.Keyword.WITHER)) {
+            if (gameQueryService.hasKeyword(gameData, creature, keyword)) {
+                snapshot.getGrantedKeywords().add(keyword);
+            }
+        }
+        return snapshot;
     }
 
     private TargetFilter targetFilterFor(Permanent source, CardEffect effect) {

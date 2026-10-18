@@ -183,8 +183,8 @@ class SerumCoreChimeraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }

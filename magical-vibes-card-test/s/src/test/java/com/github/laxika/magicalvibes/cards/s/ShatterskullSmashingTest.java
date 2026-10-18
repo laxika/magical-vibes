@@ -97,6 +97,7 @@ class ShatterskullSmashingTest extends BaseCardTest {
     void doubledDamageCanBeDividedIntoOddAmountsAmongCreatureAndPlaneswalker() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CanopyBaloth());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NissaOfShadowedBoughs());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new ShatterskullSmashing()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 6);

@@ -18,8 +18,8 @@ import java.util.List;
 public class StingingShot extends Card {
 
     public StingingShot() {
-        // Put three -1/-1 counters on target creature with flying.
-        // Cycling {2} is auto-loaded from Scryfall and handled by the engine.
+        addCycling("{2}");
+
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

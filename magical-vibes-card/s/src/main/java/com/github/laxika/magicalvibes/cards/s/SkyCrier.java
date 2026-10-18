@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,9 +19,12 @@ public class SkyCrier extends Card {
 
     public SkyCrier() {
         addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new DrawCardEffect(1), new DrawCardForTargetPlayerEffect(1, false, true)),
+                false,
+                "{3}{W}",
+                List.of(
+                        new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(1)),
+                        new DrawCardForTargetPlayerEffect(1, false, true),
+                        new ConditionalEffect(new NotControllerTurn(), new DrawCardEffect(1))),
                 "{3}{W}: You and target opponent each draw a card.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

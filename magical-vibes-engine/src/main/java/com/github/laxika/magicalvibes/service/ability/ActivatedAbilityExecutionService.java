@@ -756,7 +756,11 @@ public class ActivatedAbilityExecutionService {
             if (equipment == null || !equipment.isAttached()) {
                 throw new IllegalStateException("The granting Equipment is not attached");
             }
-            unattachedEquipmentCard = equipment.getCard();
+            boolean equipmentIsDamageSource = abilityEffects.stream()
+                    .filter(UnattachSourceEquipmentCost.class::isInstance)
+                    .map(UnattachSourceEquipmentCost.class::cast)
+                    .noneMatch(UnattachSourceEquipmentCost::equippedCreatureIsDamageSource);
+            unattachedEquipmentCard = equipmentIsDamageSource ? equipment.getCard() : null;
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, equipment.getAttachedTo(), null);
             equipment.setAttachedTo(null);
             equipSupport.expireAttachedCopyEffects(gameData, equipment);

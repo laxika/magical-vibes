@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,9 +26,10 @@ import java.util.List;
 public class SpiritBonds extends Card {
 
     public SpiritBonds() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
-                new MayPayManaEffect("{W}", CreateTokenEffect.whiteSpirit(1),
-                        "Pay {W} to create a 1/1 white Spirit creature token?"));
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()),
+                        new MayPayManaEffect("{W}", CreateTokenEffect.whiteSpirit(1),
+                                "Pay {W} to create a 1/1 white Spirit creature token?")));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

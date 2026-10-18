@@ -39,6 +39,14 @@ public class TemporaryCreatureTypesEffectHandler implements NormalEffectHandlerB
                     .map(Permanent::getId)
                     .toList();
             applied = new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET, grant.filter());
+        } else if (effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
+                && grant.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+            // Creatures the targeted player controls as the spell resolves (CR 611.2c).
+            targets = gameData.playerBattlefields.getOrDefault(entry.getTargetId(), List.of()).stream()
+                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            applied = new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET, grant.filter());
         } else if (targets.isEmpty() && entry.getTargetId() != null) {
             targets = List.of(entry.getTargetId());
         }

@@ -698,7 +698,9 @@ public class StateBasedActionService {
 
             UUID currentController = seraph == null ? null : gameData.findControllerOf(seraph);
             UUID prevController = gameData.seraphControlWatch.get(seraphId);
-            if (prevController != null && !prevController.equals(currentController)) {
+            UUID linkedController = gameData.seraphLinkedController.getOrDefault(seraphId, prevController);
+            if (prevController != null && !prevController.equals(currentController)
+                    && prevController.equals(linkedController)) {
                 for (UUID creatureId : new ArrayList<>(linked)) {
                     Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
                     if (creature != null && prevController.equals(gameData.findControllerOf(creature))) {
@@ -714,20 +716,24 @@ public class StateBasedActionService {
                         trigger.setNonTargeting(true);
                         gameData.enqueueTrigger(trigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
-                        linked.remove(creatureId);
                         queued = true;
                     }
                 }
+                // The control-loss event happens once: after the returning player loses control of the
+                // source, later control changes of the source no longer concern the linked creatures.
+                linked.clear();
             }
             if (seraph == null) {
                 gameData.seraphReturnedCreatures.remove(seraphId);
                 gameData.seraphControlWatch.remove(seraphId);
+                gameData.seraphLinkedController.remove(seraphId);
                 continue;
             }
             gameData.seraphControlWatch.put(seraphId, currentController);
             if (linked.isEmpty()) {
                 gameData.seraphReturnedCreatures.remove(seraphId);
                 gameData.seraphControlWatch.remove(seraphId);
+                gameData.seraphLinkedController.remove(seraphId);
             }
         }
         return queued;

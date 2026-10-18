@@ -158,6 +158,7 @@ class SpiderMan2099Test extends BaseCardTest {
     @DisplayName("Several spells cast outside hand still produce only one end-step trigger")
     void triggersOnlyOnceForSeveralOutsideHandCasts() {
         harness.addToBattlefield(player1, new SpiderMan2099());
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(new ThinkTwice(), new ThinkTwice()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

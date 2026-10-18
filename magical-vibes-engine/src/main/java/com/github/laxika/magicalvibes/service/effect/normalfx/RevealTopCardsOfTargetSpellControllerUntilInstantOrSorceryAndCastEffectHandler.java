@@ -45,7 +45,11 @@ public class RevealTopCardsOfTargetSpellControllerUntilInstantOrSorceryAndCastEf
         UUID targetControllerId = targetSpell.getControllerId();
         counterSpellEffectHandler.resolve(gameData, entry, new CounterSpellEffect());
         List<Card> library = gameData.playerDecks.get(targetControllerId);
-        if (library == null || library.isEmpty()) {
+        if (library == null) {
+            return;
+        }
+        if (library.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
             return;
         }
 

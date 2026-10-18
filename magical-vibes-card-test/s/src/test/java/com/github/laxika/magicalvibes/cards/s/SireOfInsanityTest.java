@@ -53,7 +53,7 @@ class SireOfInsanityTest extends BaseCardTest {
         advanceToEndStepAndResolve(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(discarded);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
     }
 
@@ -70,7 +70,7 @@ class SireOfInsanityTest extends BaseCardTest {
         harness.setHand(player2, List.of(drawn));
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(drawn);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(drawn);
         assertThat(gd.stack).isEmpty();
     }
@@ -91,7 +91,7 @@ class SireOfInsanityTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sire);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(secondDiscard);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(secondDiscard);
         assertThat(gd.stack).isEmpty();

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughness
 public class SymmetryMatrix extends Card {
 
     public SymmetryMatrix() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentPowerEqualsToughnessPredicate(),
                         new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay {1} to draw a card?")));

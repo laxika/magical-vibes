@@ -137,8 +137,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bear.getId());
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -156,6 +155,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
         sephiroth.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(sephiroth);
         harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(0));
@@ -178,6 +178,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(sephiroth);
         Permanent salvagers = harness.addToBattlefieldAndReturn(player1, new AlBhedSalvagers());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         declareAttackers(List.of(0));
@@ -188,8 +189,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
             harness.handlePermanentChosen(player1, player2.getId());
         }
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 18);

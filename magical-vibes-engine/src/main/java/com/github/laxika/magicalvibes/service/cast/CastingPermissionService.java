@@ -798,6 +798,9 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    continue;
+                }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.CantCastSpellsSharingColorWithMostRecentSpellEffect) {
                         if (mostRecentSpell != null && card != null
@@ -1034,7 +1037,7 @@ public class CastingPermissionService {
 
     public boolean isSplitSecondActive(GameData gameData) {
         return gameData.stack.stream()
-                .anyMatch(entry -> entry.hasKeyword(Keyword.SPLIT_SECOND));
+                .anyMatch(entry -> gameQueryService.hasSplitSecond(gameData, entry));
     }
 
     public boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
@@ -1349,7 +1352,7 @@ public class CastingPermissionService {
             case DECLARE_ATTACKERS_IF_ATTACKED ->
                     gameData.currentStep == TurnStep.DECLARE_ATTACKERS
                             && (gameData.playersAttackedThisCombat.contains(playerId)
-                            || gameQueryService.isPlayerBeingAttacked(gameData, playerId));
+                            || gameQueryService.isPlayerBeingAttackedByDeclaredAttacker(gameData, playerId));
             case YOUR_END_STEP ->
                     gameData.currentStep == TurnStep.END_STEP
                             && playerId.equals(gameData.activePlayerId);
@@ -1374,7 +1377,8 @@ public class CastingPermissionService {
                             && gameData.currentStep == TurnStep.DECLARE_BLOCKERS;
             case OPPONENTS_TURN_BEFORE_ATTACKERS ->
                     !playerId.equals(gameData.activePlayerId)
-                            && gameData.currentStep.isBeforeAttackersDeclared();
+                            && gameData.currentStep.isBeforeAttackersDeclared()
+                            && gameData.combatPhasesThisTurn <= 1;
             case OPPONENTS_TURN -> !playerId.equals(gameData.activePlayerId);
             case OPPONENTS_COMBAT -> !playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep.isCombatPhase();
@@ -1869,14 +1873,31 @@ public class CastingPermissionService {
     private boolean matchesGraveyardPermission(GameData gameData, UUID playerId, Card card,
                                                GraveyardPlayPermission permission) {
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
-        if (graveyardOwnerId == null
-                || !permission.graveyardScope().graveyardOwners(gameData.orderedPlayerIds, playerId)
-                .contains(graveyardOwnerId)) {
+        if (graveyardOwnerId == null) {
+            return false;
+        }
+        if (!permission.graveyardScope().graveyardOwners(gameData.orderedPlayerIds, playerId)
+                .contains(graveyardOwnerId)
+                && !isTreatedAsInPlayersGraveyardThisTurn(gameData, playerId, card, graveyardOwnerId)) {
             return false;
         }
         return !permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
                 || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
                 .getOrDefault(graveyardOwnerId, Set.of()).contains(card.getId());
+    }
+
+    /**
+     * Whether a turn-wide grant (Shaman's Trance) lets the player treat this card, in another
+     * graveyard, as though it were in their own graveyard, so that their own graveyard permissions
+     * (Crucible of Worlds) apply to it.
+     */
+    private boolean isTreatedAsInPlayersGraveyardThisTurn(GameData gameData, UUID playerId, Card card,
+                                                         UUID graveyardOwnerId) {
+        return gameData.graveyardPlayFilterPermissionsThisTurn.stream()
+                .anyMatch(grant -> grant.playerId().equals(playerId)
+                        && grant.scope().graveyardOwners(gameData.orderedPlayerIds, playerId)
+                        .contains(graveyardOwnerId)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null));
     }
 
     /**
@@ -2003,6 +2024,21 @@ public class CastingPermissionService {
     }
 
     public boolean hasGraveyardPlayPermission(GameData gameData, Card card, UUID playerId) {
+        return hasGraveyardPlayPermission(gameData, card, playerId, true);
+    }
+
+    /**
+     * Like {@link #hasGraveyardPlayPermission(GameData, Card, UUID)} but ignores the turn-wide
+     * "play from other players' graveyards" grant (Shaman's Trance), which only lets a card be cast
+     * as though it were in the caster's graveyard and so does not replace its flashback cost.
+     */
+    public boolean hasGraveyardPlayPermissionOtherThanOtherGraveyardGrant(
+            GameData gameData, Card card, UUID playerId) {
+        return hasGraveyardPlayPermission(gameData, card, playerId, false);
+    }
+
+    private boolean hasGraveyardPlayPermission(GameData gameData, Card card, UUID playerId,
+                                               boolean includeOtherGraveyardGrant) {
         UUID permittedPlayer = gameData.graveyardPlayPermissions.get(card.getId());
         if (permittedPlayer != null && permittedPlayer.equals(playerId)) {
             return true;
@@ -2011,7 +2047,8 @@ public class CastingPermissionService {
             return true;
         }
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
-        if (graveyardOwnerId != null && gameData.graveyardPlayFilterPermissionsThisTurn.stream()
+        if (includeOtherGraveyardGrant && graveyardOwnerId != null
+                && gameData.graveyardPlayFilterPermissionsThisTurn.stream()
                 .anyMatch(permission -> permission.playerId().equals(playerId)
                         && permission.scope().graveyardOwners(gameData.orderedPlayerIds, playerId)
                         .contains(graveyardOwnerId)

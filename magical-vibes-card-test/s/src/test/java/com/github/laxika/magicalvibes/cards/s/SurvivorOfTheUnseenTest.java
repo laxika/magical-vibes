@@ -90,7 +90,7 @@ class SurvivorOfTheUnseenTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(survivor.getCounterCount(CounterType.AGE)).isEqualTo(2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(survivor);
         harness.assertInGraveyard(player1, "Survivor of the Unseen");

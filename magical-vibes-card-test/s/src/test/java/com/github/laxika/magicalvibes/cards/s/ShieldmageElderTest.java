@@ -179,8 +179,13 @@ class ShieldmageElderTest extends BaseCardTest {
                                  java.util.UUID firstWizardOrClericId, java.util.UUID secondWizardOrClericId) {
         int permanentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(elder);
         harness.activateAbility(player1, permanentIndex, abilityIndex, null, targetId);
-        harness.handlePermanentChosen(player1, firstWizardOrClericId);
-        harness.handlePermanentChosen(player1, secondWizardOrClericId);
+        // Exactly as many untapped matching permanents as the cost needs are paid without a prompt.
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, firstWizardOrClericId);
+        }
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, secondWizardOrClericId);
+        }
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getId().equals(firstWizardOrClericId)
                         || permanent.getId().equals(secondWizardOrClericId))

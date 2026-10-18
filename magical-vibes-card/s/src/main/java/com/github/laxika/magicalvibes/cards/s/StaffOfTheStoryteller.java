@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -27,7 +28,8 @@ public class StaffOfTheStoryteller extends Card {
         addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardTypePredicate(CardType.CREATURE),
-                        new PutCountersOnSelfEffect(CounterType.STORY)));
+                        new PutCountersOnSelfEffect(CounterType.STORY)),
+                TriggerMode.TOKEN_CREATION);
 
         addActivatedAbility(new ActivatedAbility(
                 true,

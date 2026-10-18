@@ -47,6 +47,7 @@ public class SummonEsperRamuh extends Card {
                 new PermanentPredicateTargetFilter(OPPONENT_CREATURE,
                         "Must target a creature an opponent controls")
         ));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II,
                 new BoostAllOwnCreaturesEffect(1, 0, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));

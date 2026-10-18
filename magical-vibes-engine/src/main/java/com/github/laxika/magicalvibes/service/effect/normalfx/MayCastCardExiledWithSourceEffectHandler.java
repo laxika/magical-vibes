@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -61,8 +62,8 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
                         || controllerId.equals(gameData.findExiledCard(card.getId()).ownerId()))
                 .filter(card -> castEffect.filter() == null
                         ? !card.hasType(CardType.LAND)
-                        : predicateEvaluationService.matchesCardPredicate(
-                        card, castEffect.filter(), null))
+                        : predicateEvaluationService.matchesCardPredicate(card, castEffect.filter(), null)
+                        || matchesAsAdventure(card, castEffect))
                 .filter(card -> manaValue == null || card.getManaValue() == manaValue)
                 .toList();
         if (exiled.isEmpty()) {
@@ -78,7 +79,8 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
         for (int i = offeredCards.size() - 1; i >= 0; i--) {
             Card card = offeredCards.get(i);
             CardEffect offer = castEffect.withoutPayingManaCost()
-                    ? new MayPlayExiledCardWithoutPayingManaCostEffect(true)
+                    ? new MayPlayExiledCardWithoutPayingManaCostEffect(
+                            true, false, castEffect.returnSourceToHandIfCast())
                     : new MayCastExiledCardWithNormalCostEffect(
                             offerGroupId, false, false, castEffect.genericCostReduction());
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
@@ -94,6 +96,14 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
         log.info("Game {} - {} offers a {} cast of {} card(s) exiled with it",
                 gameData.id, entry.getCard().getName(),
                 castEffect.withoutPayingManaCost() ? "free" : "normal-cost", offeredCards.size());
+    }
+
+    /** An exiled Adventurer may be cast as its Adventure spell, so that spell's characteristics count. */
+    private boolean matchesAsAdventure(Card card, MayCastCardExiledWithSourceEffect castEffect) {
+        Card adventureFace = card.getCastingOption(AdventureCast.class).isPresent()
+                ? card.getBackFaceCard() : null;
+        return adventureFace != null
+                && predicateEvaluationService.matchesCardPredicate(adventureFace, castEffect.filter(), null);
     }
 
     /**

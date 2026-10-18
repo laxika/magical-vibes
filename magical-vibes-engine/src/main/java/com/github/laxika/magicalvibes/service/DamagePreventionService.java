@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreatu
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndAddPlusOneCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -232,7 +233,7 @@ public class DamagePreventionService {
      */
     public boolean applySokraticDialogue(GameData gameData, Permanent source, int damage,
                                          UUID sourceControllerId, UUID playerId) {
-        if (!gameQueryService.isDamagePreventable(gameData, true) || damage <= 0) return false;
+        if (damage <= 0) return false;
         if (!gameQueryService.hasActiveStaticEffectIncludingGranted(
                 gameData, source, PreventCombatDamageToPlayerAndDrawHalfEffect.class)) return false;
 
@@ -247,7 +248,8 @@ public class DamagePreventionService {
                 drawService.resolveDrawCard(gameData, playerId);
             }
         }
-        return true;
+        // The draws happen either way; the damage is only prevented when damage prevention is allowed.
+        return gameQueryService.isDamagePreventable(gameData, true);
     }
 
     /**
@@ -547,10 +549,12 @@ public class DamagePreventionService {
                 (gd, c, damage) -> gameQueryService.isDamagePreventable(gd, c.combatDamage())
                         && controllerOf(gd, c.permanent()) != null
                         && gd.playersWithAllCreatureDamagePrevented.contains(controllerOf(gd, c.permanent()))));
-        steps.add(preventAll("ControllerAllDamagePrevented", "Prevent all damage to you and your permanents",
+        steps.add(preventAll("ControllerAllDamagePrevented", "Prevent all damage to you and your creatures or permanents",
                 (gd, c, damage) -> gameQueryService.isDamagePreventable(gd, c.combatDamage())
                         && controllerOf(gd, c.permanent()) != null
-                        && gd.playersWithAllDamagePrevented.contains(controllerOf(gd, c.permanent()))));
+                        && (gd.playersWithAllPermanentDamagePrevented.contains(controllerOf(gd, c.permanent()))
+                        || (gameQueryService.isCreature(gd, c.permanent())
+                        && gd.playersWithAllDamagePrevented.contains(controllerOf(gd, c.permanent()))))));
         steps.add(preventAll("PlaneswalkerCombatPrevented", "Prevent combat damage to your planeswalkers",
                 (gd, c, damage) -> c.combatDamage() && gameQueryService.isDamagePreventable(gd, true)
                         && gameQueryService.isPlaneswalker(gd, c.permanent())
@@ -772,19 +776,17 @@ public class DamagePreventionService {
                 giveEachPlayerRadCounters(gameData, countersToRemove);
             }
         }
-        int preventedDamage = effect.preventOnlyIfCounterAvailable() ? countersToRemove : damage;
-        if (!gameQueryService.isDamagePreventable(gameData, context.combatDamage())) {
-            return damage;
-        }
+        int amount = effect.preventOnlyIfCounterAvailable() ? countersToRemove : damage;
+        boolean preventable = gameQueryService.isDamagePreventable(gameData, context.combatDamage());
         CreateTokenEffect tokenTemplate = effect.tokenTemplate();
         if (tokenTemplate != null) {
             UUID controllerId = controllerOf(gameData, permanent);
             if (controllerId != null) {
                 permanentControlSupportProvider.getObject().applyCreateToken(
-                        gameData, controllerId, tokenTemplate.withAmount(preventedDamage), permanent.getCard().getSetCode());
+                        gameData, controllerId, tokenTemplate.withAmount(amount), permanent.getCard().getSetCode());
             }
         }
-        return damage - preventedDamage;
+        return preventable ? damage - amount : damage;
     }
 
     /** Puts the +1/+1 counters a shielded creature gets for damage dealt to it (Gatta and Luzzu). */
@@ -1598,9 +1600,35 @@ public class DamagePreventionService {
         if (damage > 0 && lifeGainSources != null && lifeGainSources.contains(sourcePermanentId)
                 && sourceColors != null
                 && (sourceColors.contains(CardColor.BLACK) || sourceColors.contains(CardColor.RED))) {
-            lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
+            queuePreventedDamageLifeGainTrigger(gameData, playerId, sourcePermanentId, damage);
         }
         return 0;
+    }
+
+    /**
+     * Samite Ministration's "Whenever damage from a black or red source is prevented this way this
+     * turn, you gain that much life": a triggered ability that goes on the stack after the damage
+     * has been prevented. The ability is represented by the damage source's card; if that source can
+     * no longer be found the life is gained immediately.
+     */
+    private void queuePreventedDamageLifeGainTrigger(GameData gameData, UUID playerId, UUID sourceId, int damage) {
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourceId);
+        Card card = sourcePermanent != null ? sourcePermanent.getCard() : gameData.stack.stream()
+                .map(StackEntry::getCard)
+                .filter(candidate -> candidate != null && sourceId.equals(candidate.getId()))
+                .findFirst().orElse(null);
+        if (card == null) {
+            lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
+            return;
+        }
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s triggered ability",
+                List.of(new GainLifeEffect(new Fixed(damage))),
+                (UUID) null,
+                (UUID) null));
     }
 
     /**
@@ -1709,6 +1737,14 @@ public class DamagePreventionService {
                 || gameData.playerSourceNextDamageShields.isEmpty()) {
             return damage;
         }
+        for (var shield : List.copyOf(gameData.playerSourceShieldsUsedInOpenEvent)) {
+            if (shield.coversControlledCreatures()
+                    && shield.playerId().equals(creatureControllerId)
+                    && shieldMatchesSource(gameData, shield, sourcePermanentId, null)) {
+                applyNextSourceShieldRiders(gameData, shield, damage, null);
+                return 0;
+            }
+        }
         var it = gameData.playerSourceNextDamageShields.iterator();
         while (it.hasNext()) {
             var shield = it.next();
@@ -1716,6 +1752,10 @@ public class DamagePreventionService {
                     && shield.playerId().equals(creatureControllerId)
                     && shieldMatchesSource(gameData, shield, sourcePermanentId, null)) {
                 it.remove();
+                // One damage event can hit several creatures at once; the shield covers all of them.
+                if (!gameData.pendingSimultaneousDamage.isEmpty() || gameData.openDamageEvent != null) {
+                    gameData.playerSourceShieldsUsedInOpenEvent.add(shield);
+                }
                 applyNextSourceShieldRiders(gameData, shield, damage, null);
                 return 0;
             }
@@ -3154,7 +3194,8 @@ public class DamagePreventionService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (p.isAttached() && p.getAttachedTo().equals(creature.getId())) {
+                if (p.isAttached() && p.getAttachedTo().equals(creature.getId())
+                        && !gameQueryService.hasLostAllAbilities(gameData, p)) {
                     for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof PreventXDamageFromEachSourceToAttachedCreatureEffect e) {
                             totalReduction += amountEvaluationService.evaluate(gameData, e.amount(),
@@ -3599,7 +3640,8 @@ public class DamagePreventionService {
                                                                 UUID sourceId, boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)
                 || creatureControllerId == null || sourceId == null) return false;
-        return gameData.playerSourceNextDamageShields.stream()
+        return java.util.stream.Stream.concat(gameData.playerSourceNextDamageShields.stream(),
+                        gameData.playerSourceShieldsUsedInOpenEvent.stream())
                 .anyMatch(shield -> shield.coversControlledCreatures()
                         && shield.playerId().equals(creatureControllerId)
                         && shieldMatchesSource(gameData, shield, sourceId, null));
@@ -3706,8 +3748,7 @@ public class DamagePreventionService {
 
     /** Whether Sokrates' dialogue replaces combat damage {@code source} would deal to a player. */
     public boolean hasSokraticDialogue(GameData gameData, Permanent source) {
-        return source != null && gameQueryService.isDamagePreventable(gameData, true)
-                && gameQueryService.hasActiveStaticEffectIncludingGranted(
+        return source != null && gameQueryService.hasActiveStaticEffectIncludingGranted(
                 gameData, source, PreventCombatDamageToPlayerAndDrawHalfEffect.class);
     }
 

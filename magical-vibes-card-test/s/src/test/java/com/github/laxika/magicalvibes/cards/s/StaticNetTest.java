@@ -34,6 +34,7 @@ class StaticNetTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     @Test

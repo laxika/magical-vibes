@@ -92,6 +92,7 @@ class SteelgazeGriffinTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(griffin.getPowerModifier()).isEqualTo(2);
 
+        harness.setHand(player1, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(griffin.getPowerModifier()).isZero();
         assertThat(griffin.getToughnessModifier()).isZero();

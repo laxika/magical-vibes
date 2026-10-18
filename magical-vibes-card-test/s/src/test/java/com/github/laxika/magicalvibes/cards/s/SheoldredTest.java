@@ -124,8 +124,8 @@ class SheoldredTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 2);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         harness.assertInHand(player2, "Grizzly Bears");
@@ -203,7 +203,7 @@ class SheoldredTest extends BaseCardTest {
         harness.castFromHand(player1, new Sheoldred(), "{3}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player2, planeswalker.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(planeswalker.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         harness.assertInGraveyard(player2, "Liliana Vess");
@@ -266,7 +266,8 @@ class SheoldredTest extends BaseCardTest {
                     .findFirst().orElseThrow());
         }
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMultiplePermanentsChosen(player1, List.of(target2.getId(), target3.getId()));
+        harness.handlePermanentChosen(player1, target2.getId());
+        harness.handlePermanentChosen(player1, target3.getId());
         for (int i = 0; i < 6 && !gd.stack.isEmpty(); i++) {
             UUID priorityPlayer = gqs.getPriorityPlayerId(gd);
             harness.passPriority(players.stream().filter(p -> p.getId().equals(priorityPlayer))

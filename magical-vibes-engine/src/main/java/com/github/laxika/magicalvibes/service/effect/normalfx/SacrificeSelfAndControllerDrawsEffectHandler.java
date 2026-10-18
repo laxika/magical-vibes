@@ -45,7 +45,14 @@ public class SacrificeSelfAndControllerDrawsEffectHandler implements NormalEffec
 
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self == null) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
+            // The source already left (destroyed in response, or sacrificed by an earlier activation):
+            // its last controller still draws; only the sacrifice is impossible.
+            UUID lastController = entry.getCard().getOwnerId() != null
+                    ? entry.getCard().getOwnerId()
+                    : gameQueryService.getOpponentId(gameData, entry.getControllerId());
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " can't be sacrificed — it is no longer on the battlefield."));
+            playerInteractionSupport.applyDrawCards(gameData, lastController, e.cards());
             return;
         }
 

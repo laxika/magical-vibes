@@ -152,6 +152,7 @@ class SouthernPaladinTest extends BaseCardTest {
     void returnedTargetIsNotDestroyed() {
         setupPaladin();
         Permanent target = addCreatureReady(player2, new HillGiant());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

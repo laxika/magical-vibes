@@ -255,17 +255,19 @@ class SacredBoonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        advanceToEndStep(player1);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            advanceToEndStep(player1);
+            resolveAllTriggers();
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player2, 0, bear.getId());
+            harness.setHand(player2, List.of(new Shock()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castAndResolveInstant(player2, 0, bear.getId());
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(bear.getMarkedDamage()).isZero();
-        assertThat(bear.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
-        assertThat(gd.stack).isEmpty();
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            assertThat(bear.getMarkedDamage()).isZero();
+            assertThat(bear.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+            assertThat(gd.stack).isEmpty();
+        });
     }
 
     @Test
@@ -317,8 +319,9 @@ class SacredBoonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new SacredBoon()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.castAndResolveInstant(player1, 0, bear.getId()));
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(bear.getDamageToCounterPreventionShield()).isZero();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

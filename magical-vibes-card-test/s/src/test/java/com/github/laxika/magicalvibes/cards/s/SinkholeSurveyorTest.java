@@ -79,7 +79,8 @@ class SinkholeSurveyorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player2, "Put 1 +1/+1 counter on this permanent");
 
-        harness.assertLife(player1, 20);
+        // The unblocked 1/3 flier has grown to 2/4 by the time combat damage is dealt to the defender.
+        harness.assertLife(player1, 18);
         harness.assertLife(player2, 19);
         assertThat(surveyor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(findPermanents(player1, "Spirit")).isEmpty();

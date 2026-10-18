@@ -84,11 +84,15 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(controllerId))
                 .toList();
+        boolean controllerPicksSeparatingOpponent = !e.defendingPlayerChoosesPile() && !e.targetedSeparator()
+                && opponentIds.size() > 1
+                && (e.controllerSeparates() && e.faceDownPile() || !e.controllerSeparates() && !e.faceDownPile());
         UUID opponentId = e.defendingPlayerChoosesPile()
                 ? defendingPlayerId(gameData, entry)
                 : e.targetedSeparator()
                         ? entry.getTargetId()
                         : opponentIds.size() == 1 || e.controllerSeparates() && e.faceDownPile() && !opponentIds.isEmpty()
+                                || controllerPicksSeparatingOpponent
                                 ? opponentIds.getFirst() : null;
         if (opponentId == null || opponentId.equals(controllerId) || !gameData.playerIds.contains(opponentId)) {
             // No opponent to separate the piles — put the revealed cards into the controller's hand.
@@ -106,11 +110,12 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
                 List.of(), revealedCards, cardOwners, List.of(), List.of(), e.disposition(),
                 !e.controllerSeparates()));
 
-        if (!e.defendingPlayerChoosesPile() && !e.targetedSeparator()
-                && e.controllerSeparates() && e.faceDownPile() && opponentIds.size() > 1) {
+        if (controllerPicksSeparatingOpponent) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CuratorOpponentChoice());
             playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponentIds,
-                    "Choose an opponent to choose a pile for " + entry.getCard().getName() + ".");
+                    e.controllerSeparates()
+                            ? "Choose an opponent to choose a pile for " + entry.getCard().getName() + "."
+                            : "Choose an opponent to separate the cards for " + entry.getCard().getName() + ".");
             return;
         }
 

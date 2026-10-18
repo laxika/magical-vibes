@@ -32,6 +32,6 @@ public class Shapesharer extends Card {
                 ),
                 2,
                 2
-        ));
+        ).withAllowSharedTargets());
     }
 }

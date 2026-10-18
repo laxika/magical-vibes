@@ -13,4 +13,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * source's controller.
  */
 public record TargetOpponentMayDrawCardEffect() implements CardEffect {
+
+    /** The opponent target stays legal even when the sibling creature target is gone (CR 608.2b). */
+    @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return true;
+    }
 }

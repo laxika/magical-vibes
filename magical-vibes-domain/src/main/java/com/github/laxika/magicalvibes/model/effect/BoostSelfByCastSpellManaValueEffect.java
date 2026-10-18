@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -13,13 +14,23 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param spellFilter which spells trigger this ({@code null} = any spell)
  * @param boostToughness whether the mana-value boost also applies to toughness
+ * @param grantedKeyword keyword this permanent also gains until end of turn by the same trigger, or {@code null}
  */
 public record BoostSelfByCastSpellManaValueEffect(
         CardPredicate spellFilter,
-        boolean boostToughness
+        boolean boostToughness,
+        Keyword grantedKeyword
 ) implements CardEffect {
 
     public BoostSelfByCastSpellManaValueEffect(CardPredicate spellFilter) {
-        this(spellFilter, true);
+        this(spellFilter, true, null);
+    }
+
+    public BoostSelfByCastSpellManaValueEffect(CardPredicate spellFilter, boolean boostToughness) {
+        this(spellFilter, boostToughness, null);
+    }
+
+    public BoostSelfByCastSpellManaValueEffect(CardPredicate spellFilter, Keyword grantedKeyword) {
+        this(spellFilter, true, grantedKeyword);
     }
 }

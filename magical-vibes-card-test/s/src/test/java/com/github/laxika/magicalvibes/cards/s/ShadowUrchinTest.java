@@ -132,8 +132,7 @@ class ShadowUrchinTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.exilePlayPermissions).containsKey(top.getId());
 
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());

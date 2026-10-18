@@ -104,6 +104,10 @@ final class TokenCardFactory {
                 }
             }
         }
+        if (token.tokenEffects() != null && token.tokenEffects().containsKey(EffectSlot.ON_ATTACK)
+                && token.subtypes() != null && token.subtypes().contains(CardSubtype.AURA)) {
+            tokenCard.setAttackTriggerOwnedByAura(true);
+        }
         if (token.tokenEffects() != null) {
             token.tokenEffects().values().stream()
                     .filter(BandsWithOtherEffect.class::isInstance)

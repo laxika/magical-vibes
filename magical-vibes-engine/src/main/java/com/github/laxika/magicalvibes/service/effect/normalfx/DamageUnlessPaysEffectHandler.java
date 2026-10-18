@@ -9,10 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,6 +31,10 @@ public class DamageUnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
 
+    @Autowired
+    @Lazy
+    private PotentialManaService potentialManaService;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return DamageUnlessPaysEffect.class;
@@ -41,7 +48,10 @@ public class DamageUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         ManaCost cost = new ManaCost("{" + e.payAmount() + "}");
         ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
 
-        if (!cost.canPayResolutionCost(pool)) {
+        boolean canPay = cost.canPayResolutionCost(pool)
+                || (potentialManaService != null
+                && cost.canPay(potentialManaService.buildVirtualManaPool(gameData, targetPlayerId)));
+        if (!canPay) {
             // Can't pay — apply the damage now, reusing the real entry (correct source + target).
             DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(e.damage(), DamageRecipient.TARGET_PLAYER);
             dealDamageToPlayersEffectHandler.resolve(gameData, entry, damage);

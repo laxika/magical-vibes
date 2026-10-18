@@ -166,8 +166,9 @@ class SokratesAthenianTeacherTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         int hand1 = gd.playerHands.get(player1.getId()).size();
         int hand2 = gd.playerHands.get(player2.getId()).size();
 

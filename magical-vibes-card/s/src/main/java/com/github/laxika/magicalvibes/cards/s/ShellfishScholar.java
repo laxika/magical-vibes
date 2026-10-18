@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -22,7 +24,8 @@ public class ShellfishScholar extends Card {
     public ShellfishScholar() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.RAT),
+                        new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(),
+                                new CardSubtypePredicate(CardSubtype.RAT))),
                         new ConjureCardToGraveyardEffect("ISD", "83")));
 
         addActivatedAbility(new ActivatedAbility(

@@ -55,7 +55,7 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (!gameQueryService.shareCreatureType(gameData, source, topCard)) {
+        if (!gameQueryService.shareCreatureType(gameData, source, topCard, controllerId)) {
             gameLogService.append(gameData, GameLog.text("The top card does not share a creature type with " + sourceName + "."));
             log.info("Game {} - top card {} shares no creature type with {}", gameData.id, topCard.getName(), sourceName);
             return;

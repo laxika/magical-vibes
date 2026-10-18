@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacr
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureAttackRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -280,7 +280,7 @@ public class AttackLegalityService {
      * is routed through {@link ConditionEvaluationService} with the attacker as source.
      */
     private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
-        if (gameQueryService.hasLostAllAbilities(gameData, creature)) {
+        if (creature.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, creature)) {
             return false;
         }
         ConditionContext ctx = null;
@@ -368,7 +368,7 @@ public class AttackLegalityService {
                         effect = conditional.wrapped();
                     }
                     if (effect instanceof EnchantedCreatureAttackRestrictionEffect
-                            && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackControllerEffect))
+                            && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect))
                             && !source.isAuraEffectsIgnoredFor(
                                     gameQueryService.findPermanentController(gameData, attacker.getId()))
                             && source.isAttached()
@@ -1007,7 +1007,8 @@ public class AttackLegalityService {
                     && !creature.getId().equals(floatingEffect.affectedPermanentId()))
                     || !predicateEvaluationService.matchesPermanentPredicate(creature,
                     requirement.affectedPredicate(), FilterContext.of(gameData)
-                            .withSourceControllerId(floatingEffect.controllerId()))) {
+                            .withSourceControllerId(floatingEffect.controllerId())
+                                .withSourcePermanentId(floatingEffect.sourcePermanentId()))) {
                 continue;
             }
             Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
@@ -1163,7 +1164,8 @@ public class AttackLegalityService {
         }
         return predicateEvaluationService.matchesPermanentPredicate(creature,
                 requirement.affectedPredicate(), FilterContext.of(gameData)
-                        .withSourceControllerId(floatingEffect.controllerId()));
+                        .withSourceControllerId(floatingEffect.controllerId())
+                                .withSourcePermanentId(floatingEffect.sourcePermanentId()));
     }
 
     /**

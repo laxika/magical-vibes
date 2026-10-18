@@ -17,4 +17,9 @@ public record OpponentCastSpellThisTurn(CardPredicate filter) implements Conditi
     public String conditionNotMetReason() {
         return "no opponent cast a matching spell this turn";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

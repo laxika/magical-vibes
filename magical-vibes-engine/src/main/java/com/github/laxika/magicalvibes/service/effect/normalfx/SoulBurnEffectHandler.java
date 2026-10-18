@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -57,10 +56,10 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
         if (targetIsPlayer) {
             targetCap = Math.max(0, gameData.getLife(targetId));
             damageBefore = gameData.damageDealtToPlayersThisTurn.getOrDefault(targetId, 0);
-        } else if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+        } else if (gameQueryService.isPlaneswalker(gameData, targetPermanent)) {
             targetCap = Math.max(0, targetPermanent.getCounterCount(CounterType.LOYALTY));
             damageBefore = targetPermanent.getCounterCount(CounterType.LOYALTY);
-        } else if (targetPermanent.getCard().hasType(CardType.BATTLE)) {
+        } else if (gameQueryService.isBattle(gameData, targetPermanent)) {
             targetCap = Integer.MAX_VALUE;
             damageBefore = targetPermanent.getCounterCount(CounterType.DEFENSE);
         } else {
@@ -81,10 +80,10 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
             if (after == null) {
                 // Creature left the battlefield (unlikely mid-resolution before SBAs) — use cap.
                 damageDealt = targetCap;
-            } else if (after.getCard().hasType(CardType.PLANESWALKER)) {
+            } else if (gameQueryService.isPlaneswalker(gameData, after)) {
                 int loyaltyAfter = after.getCounterCount(CounterType.LOYALTY);
                 damageDealt = Math.max(0, damageBefore - loyaltyAfter);
-            } else if (after.getCard().hasType(CardType.BATTLE)) {
+            } else if (gameQueryService.isBattle(gameData, after)) {
                 damageDealt = resolvedDamage;
             } else {
                 damageDealt = Math.max(0, after.getMarkedDamage() - damageBefore);

@@ -266,6 +266,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentForTargetingRelayEffectHandler chooseOpponentForTargetingRelayEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentEachCreatesTokensEffectHandler chooseOpponentEachCreatesTokensEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentThenSearchLandDifferenceEffectHandler chooseOpponentThenSearchLandDifferenceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentReturnsCardFromGraveyardToHandEffectHandler chooseOpponentReturnsCardFromGraveyardToHandEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler eachPlayerMayPutCountersAndRestrictAttacksHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffectHandler tapAndChooseOpponentGainsControlHandler;
@@ -1199,6 +1200,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleChooseOpponentReturnsCardFromGraveyard(GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseOpponentReturnsCardFromGraveyard context) {
+        chooseOpponentReturnsCardFromGraveyardToHandEffectHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleChooseOpponentThenSearchLandDifference(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentThenSearchLandDifference context) {
         chooseOpponentThenSearchLandDifferenceEffectHandler.completeChoice(gameData, playerId, context);
@@ -1295,15 +1302,21 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleCuratorOpponentChoice(GameData gameData, UUID opponentId) {
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
-        if (state == null || state.disposition() != CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
-            throw new IllegalStateException("No pending Curator of Destinies pile choice");
+        if (state == null) {
+            throw new IllegalStateException("No pending pile separation opponent choice");
         }
 
         gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), opponentId,
                 state.allPermanentIds(), state.cards(), state.cardOwners(), state.pile1Ids(), state.pile2Ids(),
                 state.disposition(), state.controllerChoosesPile()));
-        playerInputService.beginMultiGraveyardChoice(gameData, state.controllerId(), state.cards(), state.cards().size(),
-                "Look at the cards and select cards for the face-up pile (unselected cards form the face-down pile).");
+        if (state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
+            playerInputService.beginMultiGraveyardChoice(gameData, state.controllerId(), state.cards(),
+                    state.cards().size(),
+                    "Look at the cards and select cards for the face-up pile (unselected cards form the face-down pile).");
+            return;
+        }
+        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, state.cards(), state.cards().size(),
+                "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
     }
 
     /** Echo Chamber: the opponent picked which of their creatures the controller gets a copy of. */
@@ -2493,6 +2506,20 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (abilitySource != null) {
             return abilitySource;
         }
+        Card cardSourcedAbility = gameData.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && entry.getSourcePermanentSnapshot() == null && entry.getSourcePermanentId() == null
+                        && entry.getCard() != null && sourceId.equals(entry.getCard().getId()))
+                .map(StackEntry::getCard)
+                .findFirst().orElse(null);
+        if (cardSourcedAbility != null) {
+            return cardSourcedAbility;
+        }
+        StackEntry parkedEntry = gameData.pendingEffectResolutionEntry;
+        if (parkedEntry != null && parkedEntry.getSourcePermanentSnapshot() != null
+                && sourceId.equals(parkedEntry.getSourcePermanentSnapshot().getId())) {
+            return parkedEntry.getSourcePermanentSnapshot().getCard();
+        }
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
@@ -2751,6 +2778,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         // CR 702.110: "exploits a creature" only if the exploit permanent was on the battlefield
         // as the ability started resolving (sacrificing itself still counts).
         if (ctx.sourceStillOnBattlefield()) {
+            gameData.exploitedPermanentIdsBySource
+                    .computeIfAbsent(ctx.sourcePermanentId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(toSacrifice.getId());
             triggerCollectionService.checkExploitTriggers(
                     gameData, ctx.sourceCard(), ctx.controllerId(), ctx.sourcePermanentId());
             triggerCollectionService.checkAllyCreatureExploitTriggers(

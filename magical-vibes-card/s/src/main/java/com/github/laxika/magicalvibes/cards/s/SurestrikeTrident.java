@@ -25,7 +25,7 @@ public class SurestrikeTrident extends Card {
                         true,
                         null,
                         List.of(
-                                new UnattachSourceEquipmentCost(),
+                                new UnattachSourceEquipmentCost(true),
                                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(new SourcePower())
                         ),
                         "{T}, Unattach Surestrike Trident: This creature deals damage equal to its power to target player or planeswalker."

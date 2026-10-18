@@ -97,10 +97,9 @@ class SandbenderScavengersTest extends BaseCardTest {
     void opponentsSacrificeDoesNotPutCounterOnScavengers() {
         Permanent scavengers = addCreatureReady(player1, new SandbenderScavengers());
         harness.addToBattlefield(player2, new CullingDais());
-        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player2, 0, null, null);
-        harness.handlePermanentChosen(player2, victim.getId());
         resolveAllTriggers();
 
         assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -153,7 +152,6 @@ class SandbenderScavengersTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CullingDais());
 
         harness.activateAbility(player1, 1, null, null);
-        harness.handlePermanentChosen(player1, permanent.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();

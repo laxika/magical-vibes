@@ -35,7 +35,7 @@ public class MillEachOpponentThenIfMilledEffectHandler implements NormalEffectHa
         List<Card> milled = new ArrayList<>();
         for (var playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(entry.getControllerId())) {
-                milled.addAll(graveyardService.resolveMillPlayer(gameData, playerId, millEffect.count()));
+                milled.addAll(graveyardService.resolveMillPlayerIncludingExiled(gameData, playerId, millEffect.count()));
             }
         }
 

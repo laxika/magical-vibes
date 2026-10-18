@@ -155,6 +155,8 @@ class SpiritOfTheLabyrinthTest extends BaseCardTest {
         Card first = new Forest();
         Card second = new Island();
         harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);

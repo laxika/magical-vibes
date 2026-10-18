@@ -117,13 +117,18 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         for (UUID cardId : battlefieldChoices) {
             movedAny |= attachFromBattlefield(gameData, host, cardId, true);
         }
-        for (UUID cardId : interaction.validCardIds()) {
-            if (!chosen.contains(cardId) || findAttachmentPermanent(gameData, cardId) != null) {
-                continue;
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (UUID cardId : interaction.validCardIds()) {
+                if (!chosen.contains(cardId) || findAttachmentPermanent(gameData, cardId) != null) {
+                    continue;
+                }
+                movedAny |= attachFromGraveyard(gameData, host, controllerId, cardId)
+                        || attachFromHand(gameData, host, controllerId, cardId)
+                        || attachFromLibrary(gameData, host, controllerId, cardId);
             }
-            movedAny |= attachFromGraveyard(gameData, host, controllerId, cardId)
-                    || attachFromHand(gameData, host, controllerId, cardId)
-                    || attachFromLibrary(gameData, host, controllerId, cardId);
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
         if (movedAny && host != null) {

@@ -96,7 +96,7 @@ class SeedshipImpactTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Lander")).isEmpty();
         harness.assertNotOnBattlefield(player1, "Island");
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanent(player1, "Island").getCard()).isSameAs(island);
         assertThat(findPermanent(player1, "Island").isTapped()).isTrue();

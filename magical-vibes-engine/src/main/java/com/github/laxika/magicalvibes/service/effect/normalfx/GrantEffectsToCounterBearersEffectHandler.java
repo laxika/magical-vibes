@@ -43,7 +43,9 @@ public class GrantEffectsToCounterBearersEffectHandler implements NormalEffectHa
                 return;
             }
             boundPredicate = new PermanentIsSpecificPermanentPredicate(bound.getId());
-            scope = new PermanentAllOfPredicate(List.of(boundPredicate, counterScope));
+            var boundCounterScope = new PermanentHasCountersPredicate(rule.counterType(),
+                    bound.getLastCounterRemovalVersions().getOrDefault(rule.counterType(), 0L));
+            scope = new PermanentAllOfPredicate(List.of(boundPredicate, boundCounterScope));
         } else if (ruleAlreadyEstablished(gameData, rule, scope)) {
             return;
         }

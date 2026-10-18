@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsThenControllerDrawsShortfallEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ public class TargetPlayerDiscardsThenControllerDrawsShortfallEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -55,6 +57,13 @@ public class TargetPlayerDiscardsThenControllerDrawsShortfallEffectHandler
         }
 
         gameData.discardCausedByOpponent = !controllerId.equals(targetPlayerId);
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, targetPlayerId)) {
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(targetPlayerId)
+                    + " can't discard cards. " + gameData.playerIdToName.get(controllerId)
+                    + " draws " + discardAmount + " cards."));
+            playerInteractionSupport.applyDrawCards(gameData, controllerId, discardAmount);
+            return;
+        }
         DiscardFollowUp followUp = drawAmount == 0
                 ? DiscardFollowUp.NONE
                 : DiscardFollowUp.rummageToPlayer(drawAmount, controllerId);

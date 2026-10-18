@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -50,6 +51,9 @@ public class ExileCastTargetSupport {
     @Autowired
     @Lazy
     private PutCountersOnSourceEffectHandler putCountersOnSourceEffectHandler;
+    @Autowired
+    @Lazy
+    private TransformSelfEffectHandler transformSelfEffectHandler;
 
     public StackEntryType mapCardTypeToSpellType(Card card) {
         return switch (card.getType()) {
@@ -92,6 +96,21 @@ public class ExileCastTargetSupport {
                     sourcePermanentId);
             resolving.setNonTargeting(true);
             putCountersOnSourceEffectHandler.resolve(gameData, resolving, afterCastEffect);
+            return;
+        }
+        if (afterCastEffect instanceof TransformSelfEffect && sourcePermanent != null) {
+            // "If you do, convert/transform [source]" is part of the resolving ability, so it happens
+            // before anyone can respond to the spell that was just cast.
+            StackEntry resolving = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s ability",
+                    List.of(afterCastEffect),
+                    null,
+                    sourcePermanentId);
+            resolving.setNonTargeting(true);
+            transformSelfEffectHandler.resolve(gameData, resolving, afterCastEffect);
             return;
         }
         StackEntry entry = new StackEntry(

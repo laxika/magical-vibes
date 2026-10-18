@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class SkizzikSurger extends Card {
 
     public SkizzikSurger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addEffect(EffectSlot.STATIC,
                 new RegisterEchoAtNextUpkeepEffect(
                         new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate())));
     }

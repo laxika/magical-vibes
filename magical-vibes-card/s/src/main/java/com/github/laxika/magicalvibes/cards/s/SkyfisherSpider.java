@@ -41,7 +41,7 @@ public class SkyfisherSpider extends Card {
                 SequenceEffect.of(
                         new GainLifeEffect(new CardsInGraveyard(
                                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)),
-                        new ExileSourceCardFromGraveyardEffect()),
+                        new ExileSourceCardFromGraveyardEffect(true)),
                 "Gain life and exile Skyfisher Spider from your graveyard?"));
     }
 }

@@ -54,6 +54,17 @@ public class FightSupport {
         triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, second, secondControllerId);
     }
 
+    /** Has {@code first} and {@code second} deal damage equal to their power to each other, without fighting. */
+    public void dealPowerDamageToEachOther(GameData gameData, StackEntry entry, Permanent first, Permanent second) {
+        if (first == null || second == null) {
+            return;
+        }
+        int firstPower = gameQueryService.getPowerBasedDamage(gameData, first);
+        int secondPower = gameQueryService.getPowerBasedDamage(gameData, second);
+        dealMutualDamage(gameData, entry, first, second, firstPower);
+        dealMutualDamage(gameData, entry, second, first, secondPower);
+    }
+
     public void dealToughnessDamageToEachOther(GameData gameData, StackEntry entry,
                                                Permanent first, Permanent second) {
         if (first == null || second == null) {

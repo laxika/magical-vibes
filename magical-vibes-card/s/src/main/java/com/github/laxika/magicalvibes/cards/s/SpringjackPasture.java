@@ -12,9 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -39,10 +37,7 @@ public class SpringjackPasture extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(
-                        new SacrificeXPermanentsCost(new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.GOAT)
-                        ))),
+                        new SacrificeXPermanentsCost(new PermanentHasSubtypePredicate(CardSubtype.GOAT)),
                         new AwardAnyColorManaEffect(new XValue()),
                         new GainLifeEffect(new XValue())
                 ),

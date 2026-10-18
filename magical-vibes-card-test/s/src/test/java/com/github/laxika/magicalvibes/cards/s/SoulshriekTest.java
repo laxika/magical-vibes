@@ -160,7 +160,8 @@ class SoulshriekTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.setHand(player1, List.of(new Soulshriek()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castAndResolveInstant(player1, 0, falcon.getId());
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> harness.castAndResolveInstant(player1, 0, falcon.getId()));
         assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(basePower + 1);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

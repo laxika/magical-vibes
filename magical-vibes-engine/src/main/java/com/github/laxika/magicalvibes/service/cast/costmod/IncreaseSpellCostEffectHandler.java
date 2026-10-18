@@ -36,6 +36,13 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
         return amountEvaluationService.evaluate(context.gameData(), increase.amount(), amountContext);
     }
 
+    /** CR 118.9d: a cost increase applies to an alternative cost the spell is cast for. */
+    @Override
+    public int modifyAlternateCost(CostModificationContext context, CardEffect effect,
+                                   CostModificationSource source) {
+        return modifyCost(context, effect, source);
+    }
+
     @Override
     public ManaCost coloredManaCostIncrease(CostModificationContext context, CardEffect effect,
                                             CostModificationSource source) {

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -140,6 +141,7 @@ class ScalebanesEliteTest extends BaseCardTest {
         elite.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(elite.getId(), 4, player2.getId(), 1));
 
         assertThat(elite.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Scalebane's Elite");

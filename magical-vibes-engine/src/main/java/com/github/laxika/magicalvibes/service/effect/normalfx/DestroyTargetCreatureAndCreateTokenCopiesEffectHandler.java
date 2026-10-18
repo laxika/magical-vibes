@@ -35,14 +35,16 @@ public class DestroyTargetCreatureAndCreateTokenCopiesEffectHandler implements N
             return;
         }
 
-        Card copiedCard = target.getCard();
+        Card copiedCard = target.isFaceDown()
+                ? ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler.faceDownCopiableValues()
+                : target.getCard();
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         int power = halfRoundedUp(gameQueryService.getEffectivePower(gameData, target));
         int toughness = halfRoundedUp(gameQueryService.getEffectiveToughness(gameData, target));
 
-        boolean destroyed = destructionSupport.tryDestroyAndLog(
-                gameData, target, entry.getCard().getName());
-        if (!destroyed || targetControllerId == null) {
+        List<Permanent> died = destructionSupport.destroyBatchCollecting(
+                gameData, List.of(target), entry.getCard().getName(), false);
+        if (died.isEmpty() || targetControllerId == null) {
             return;
         }
 

@@ -91,8 +91,8 @@ class SettleBeyondRealityTest extends BaseCardTest {
     void flickerReturnsStolenCreatureToItsOwner() {
         GrizzlyBears card = new GrizzlyBears();
         card.setOwnerId(player2.getId());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, card);
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
+        setOwnerAndController(creature, player2, player1);
 
         cast(new int[]{1}, List.of(creature.getId()));
 
@@ -124,9 +124,7 @@ class SettleBeyondRealityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1},
                 List.of(opposingCreature.getId(), ownCreature.getId()), null);
-        gd.playerBattlefields.get(player2.getId()).remove(opposingCreature);
-        gd.playerBattlefields.get(player1.getId()).add(opposingCreature);
-        gd.stolenCreatures.put(opposingCreature.getId(), player2.getId());
+        setOwnerAndController(opposingCreature, player2, player1);
 
         harness.passBothPriorities();
 
@@ -146,9 +144,7 @@ class SettleBeyondRealityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1},
                 List.of(opposingCreature.getId(), ownCreature.getId()), null);
-        gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
-        gd.playerBattlefields.get(player2.getId()).add(ownCreature);
-        gd.stolenCreatures.put(ownCreature.getId(), player1.getId());
+        setOwnerAndController(ownCreature, player1, player2);
 
         harness.passBothPriorities();
 

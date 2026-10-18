@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.List;
 
 public record TransformSelfThenEffect(List<CardEffect> effectsOnTransform)
-        implements CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect, SourcePermanentSnapshotRequiredEffect {
 
     public TransformSelfThenEffect {
         effectsOnTransform = List.copyOf(effectsOnTransform);

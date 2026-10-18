@@ -99,7 +99,7 @@ class ShelteringWordTest extends BaseCardTest {
     void blinkedTargetMakesSpellFailToResolve() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ShelteringWord(), new Cloudshift()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, bears.getId());

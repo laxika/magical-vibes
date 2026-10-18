@@ -65,7 +65,10 @@ public class ParleyEffectHandler implements NormalEffectHandlerBean {
                     entry.getCard(), entry.getEntryType());
         }
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        List<UUID> drawingPlayers = new java.util.ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = drawingPlayers.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) java.util.Collections.rotate(drawingPlayers, -activeIndex);
+        for (UUID playerId : drawingPlayers) {
             playerInteractionSupport.applyDrawCards(gameData, playerId, 1);
         }
 

@@ -131,7 +131,7 @@ class ScarabOfTheUnseenTest extends BaseCardTest {
     void canTargetOwnedPermanentUnderOpponentControl() {
         harness.addToBattlefield(player1, new ScarabOfTheUnseen());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.stolenCreatures.put(bears.getId(), player1.getId());
+        setOwnerAndController(bears, player1, player2);
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
         aura.setAttachedTo(bears.getId());
 

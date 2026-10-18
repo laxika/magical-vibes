@@ -133,9 +133,7 @@ class SeaDrakeTest extends BaseCardTest {
         castSeaDrake(List.of(firstLand.getId(), secondLand.getId()));
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player1.getId()).remove(firstLand);
-        gd.playerBattlefields.get(player2.getId()).add(firstLand);
-        gd.stolenCreatures.put(firstLand.getId(), player1.getId());
+        setOwnerAndController(firstLand, player1, player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstLand);
@@ -153,9 +151,7 @@ class SeaDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (var land : List.of(firstLand, secondLand)) {
-            gd.playerBattlefields.get(player1.getId()).remove(land);
-            gd.playerBattlefields.get(player2.getId()).add(land);
-            gd.stolenCreatures.put(land.getId(), player1.getId());
+            setOwnerAndController(land, player1, player2);
         }
         harness.passBothPriorities();
 
@@ -171,7 +167,7 @@ class SeaDrakeTest extends BaseCardTest {
     void returnsLandsToTheirOwners() {
         var borrowedLand = harness.addToBattlefieldAndReturn(player1, new Island());
         var ownLand = harness.addToBattlefieldAndReturn(player1, new Island());
-        gd.stolenCreatures.put(borrowedLand.getId(), player2.getId());
+        setOwnerAndController(borrowedLand, player2, player1);
         castSeaDrake(List.of(borrowedLand.getId(), ownLand.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();

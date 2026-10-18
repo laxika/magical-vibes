@@ -624,7 +624,7 @@ public class CardChoiceHandlerService {
                 && !choice.declinable()) {
             return;
         }
-        if (cardIndex == -1 && cloaked) {
+        if (cardIndex == -1 && (cloaked || (faceDown && !putAnyNumber && !drawAndRepeat && !isTargeted))) {
             throw new IllegalStateException("This card choice cannot be declined");
         }
         if (cardIndex != -1 && !validIndices.contains(cardIndex)) {
@@ -769,8 +769,21 @@ public class CardChoiceHandlerService {
                 if (thenEffect != null) {
                     StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
                     if (pendingEntry != null) {
-                        if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
-                                card, thenCondition, sourceCardId, gameData, playerId)) {
+                        // A subtype condition reads the permanent as it entered, so a type-changing
+                        // effect (Blood Moon turning a Cave into a Mountain) is honored.
+                        boolean thenConditionMet;
+                        if (thenCondition == null) {
+                            thenConditionMet = true;
+                        } else if (thenCondition instanceof com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate subtypeCondition
+                                && enteredPermanent != null
+                                && gameQueryService.findPermanentById(gameData, enteredPermanent.getId()) != null) {
+                            thenConditionMet = gameQueryService.hasEffectiveSubtype(
+                                    gameData, enteredPermanent, subtypeCondition.subtype());
+                        } else {
+                            thenConditionMet = predicateEvaluationService.matchesCardPredicate(
+                                    card, thenCondition, sourceCardId, gameData, playerId);
+                        }
+                        if (thenConditionMet) {
                             if (thenEffect.usesChosenPermanentReference()) {
                                 pendingEntry.setChosenPermanentId(enteredPermanent.getId());
                             }
@@ -1023,6 +1036,7 @@ public class CardChoiceHandlerService {
         DiscardFollowUp followUp = discardChoice.followUp();
 
         boolean replacedByBattlefield = false;
+        boolean putOnLibraryHidden = false;
         if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
             // Replacement effect: put onto battlefield instead of graveyard (e.g. Obstinate Baloth)
             Permanent permanent = new Permanent(card);
@@ -1037,6 +1051,7 @@ public class CardChoiceHandlerService {
             List<Card> library = gameData.playerDecks.get(playerId);
             boolean putOnLibrary = !enteredGraveyard && library != null && !library.isEmpty()
                     && library.getFirst() == card;
+            putOnLibraryHidden = putOnLibrary;
             // A card put on top of the library instead of into the graveyard stays hidden.
             gameLogService.append(gameData, putOnLibrary
                     ? GameLog.text(player.getUsername() + " discards a card.")
@@ -1047,6 +1062,10 @@ public class CardChoiceHandlerService {
         followUp = followUp.withDiscardedCard(card.getId());
 
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        if (putOnLibraryHidden) {
+            // CR 701.9c: a card put into a hidden zone without being revealed has undefined mana value.
+            gameData.lastDiscardedCardManaValue = 0;
+        }
 
         if (replacedByBattlefield && card.hasType(CardType.CREATURE)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
@@ -3115,7 +3134,8 @@ public class CardChoiceHandlerService {
                         permanent.getId(), playerId, sourceCard));
             } else {
                 gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
-                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId));
+                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId,
+                        null, playerId));
             }
         }
         if (returnToHandAtEndStep) {

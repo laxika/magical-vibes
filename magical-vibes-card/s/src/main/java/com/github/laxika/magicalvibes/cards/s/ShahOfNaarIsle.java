@@ -12,7 +12,7 @@ import java.util.List;
 public class ShahOfNaarIsle extends Card {
 
     public ShahOfNaarIsle() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addEffect(EffectSlot.STATIC,
                 new RegisterEchoAtNextUpkeepEffect("{0}",
                         List.of(new EachOtherPlayerMayDrawUpToNCardsEffect(3))));
     }

@@ -23,7 +23,7 @@ public class SpectacleMage extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY)
                         )),
-                        new CardMinManaValuePredicate(5)
+                        new CardMinManaValuePredicate(5, true)
                 )), 1, CostModificationScope.SELF));
     }
 }

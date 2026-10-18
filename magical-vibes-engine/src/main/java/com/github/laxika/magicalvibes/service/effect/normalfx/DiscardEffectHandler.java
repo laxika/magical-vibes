@@ -168,12 +168,17 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 // The attacked player/planeswalker was baked onto the combat trigger as
                 // attackedTargetId; the discarder is that player or the planeswalker's controller.
                 UUID attackedTargetId = entry.getAttackedTargetId();
-                if (attackedTargetId == null) {
+                if (entry.getDefendingPlayerId() != null) {
+                    // Fixed when the attack trigger was put on the stack, so an attacked planeswalker
+                    // that has since left the battlefield does not change who discards.
+                    playerId = entry.getDefendingPlayerId();
+                } else if (attackedTargetId == null) {
                     return;
+                } else {
+                    playerId = gameData.playerIds.contains(attackedTargetId)
+                            ? attackedTargetId
+                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
                 }
-                playerId = gameData.playerIds.contains(attackedTargetId)
-                        ? attackedTargetId
-                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
                 if (playerId == null) {
                     return;
                 }

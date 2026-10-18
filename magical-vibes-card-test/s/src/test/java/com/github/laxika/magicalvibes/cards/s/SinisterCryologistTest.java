@@ -108,6 +108,7 @@ class SinisterCryologistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, cryologist.getId(), target.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

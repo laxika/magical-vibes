@@ -22,11 +22,14 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -173,6 +176,23 @@ public class CombatTriggerService {
                         ConditionContext attackTargetContext = ConditionContext
                                 .forPermanent(creature, finalCreatureControllerId)
                                 .withTargetId(creature.getAttackTarget());
+                        // "if it's attacking one of your opponents" is read from the Aura's controller, who
+                        // controls the Aura's own trigger (Scriv's Contract), against the declared attack target.
+                        ConditionContext auraOwnerAttackContext = ConditionContext
+                                .forPermanent(perm, auraOwnerId)
+                                .withTargetId(creature.getAttackTarget());
+                        List<CardEffect> attackOpponentResolved = new ArrayList<>();
+                        for (CardEffect e : effectsForStack) {
+                            attackOpponentResolved.addAll(resolveAttackedTargetOpponentSteps(
+                                    gameData, e, auraOwnerAttackContext));
+                        }
+                        effectsForStack.clear();
+                        effectsForStack.addAll(attackOpponentResolved);
+                        effectsForStack.replaceAll(e -> e instanceof EnchantedCreatureControllerLosesLifeEffect loss
+                                && loss.affectedPlayerId() == null
+                                ? new EnchantedCreatureControllerLosesLifeEffect(
+                                        loss.amount(), finalCreatureControllerId)
+                                : e);
                         effectsForStack.removeIf(e -> e instanceof ConditionalEffect ce
                                 && ce.condition() instanceof AttackedTargetIsMonarch
                                 && !conditionEvaluationService.isMet(gameData, ce.condition(), attackTargetContext));
@@ -316,6 +336,10 @@ public class CombatTriggerService {
                                                 ? creature.getAttackTarget()
                                                 : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
                                 trigger.setTriggeringPermanentId(creature.getId());
+                                if (effectsForStack.stream().anyMatch(
+                                        EquippedCreatureDealsDamageToDefendingPlayerEffect.class::isInstance)) {
+                                    trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
+                                }
                                 trigger.setSourcePermanentSnapshot(new Permanent(grantedToCreature ? creature : perm));
                                 trigger.setAttachedPermanentSnapshot(new Permanent(creature));
                                 trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
@@ -515,5 +539,29 @@ public class CombatTriggerService {
             }
         });
         return matches[0];
+    }
+
+    private List<CardEffect> resolveAttackedTargetOpponentSteps(GameData gameData, CardEffect effect,
+                                                               ConditionContext context) {
+        if (!(effect instanceof SequenceEffect sequence)
+                || sequence.steps().stream().noneMatch(this::isAttackedTargetOpponentConditional)) {
+            return List.of(effect);
+        }
+        List<CardEffect> resolved = new ArrayList<>();
+        for (CardEffect step : sequence.steps()) {
+            if (!isAttackedTargetOpponentConditional(step)) {
+                resolved.add(step);
+            } else if (conditionEvaluationService.isMet(gameData, ((ConditionalEffect) step).condition(), context)) {
+                resolved.add(((ConditionalEffect) step).wrapped());
+            }
+        }
+        return resolved;
+    }
+
+    private boolean isAttackedTargetOpponentConditional(CardEffect effect) {
+        return effect instanceof ConditionalEffect conditional
+                && (conditional.condition() instanceof AttackedTargetIsOpponent
+                || conditional.condition() instanceof NotCondition not
+                && not.inner() instanceof AttackedTargetIsOpponent);
     }
 }

@@ -72,6 +72,7 @@ class SoulServitudeTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");

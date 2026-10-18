@@ -143,7 +143,7 @@ class SurgeEngineTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(engine.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, engine, Keyword.DEFENDER)).isFalse();
         assertThat(gqs.hasCantBeBlocked(gd, engine)).isTrue();
     }
 }

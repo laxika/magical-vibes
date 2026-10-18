@@ -76,6 +76,7 @@ class SpinnerOfSoulsTest extends BaseCardTest {
 
     @Test
     void unrevealedCardsStayAboveCardsReturnedToBottom() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new SpinnerOfSouls());
         harness.addToBattlefield(player1, new BearCub());
         Forest revealed = new Forest();
@@ -94,6 +95,7 @@ class SpinnerOfSoulsTest extends BaseCardTest {
 
     @Test
     void libraryWithoutCreaturesIsReturnedInItsEntirety() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new SpinnerOfSouls());
         harness.addToBattlefield(player1, new BearCub());
         Forest forest = new Forest();
@@ -111,6 +113,7 @@ class SpinnerOfSoulsTest extends BaseCardTest {
 
     @Test
     void acceptingWithEmptyLibraryCompletesWithoutAddingCards() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new SpinnerOfSouls());
         harness.addToBattlefield(player1, new BearCub());
         harness.setLibrary(player1, List.of());

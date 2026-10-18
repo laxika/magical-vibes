@@ -42,12 +42,6 @@ public class MillAndRegisterDelayedAttackerBoostEffectHandler implements NormalE
 
         int power = creatureCount * e.powerPerCreature();
         int toughness = creatureCount * e.toughnessPerCreature();
-        if (power == 0 && toughness == 0) {
-            log.info("Game {} - {} milled {} creature card(s); no delayed attacker boost registered",
-                    gameData.id, entry.getCard().getName(), creatureCount);
-            return;
-        }
-
         gameData.queueDelayedAction(
                 new DelayedAttackerBoost(controllerId, power, toughness, entry.getCard()));
         log.info("Game {} - {} registers delayed attacker boost +{}/+{} ({} creature card(s) milled)",

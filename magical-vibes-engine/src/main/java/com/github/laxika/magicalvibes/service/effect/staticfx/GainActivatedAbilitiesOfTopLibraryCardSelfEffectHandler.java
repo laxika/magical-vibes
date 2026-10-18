@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -42,6 +45,13 @@ public class GainActivatedAbilitiesOfTopLibraryCardSelfEffectHandler implements 
         if (!predicateEvaluationService.matchesCardPredicate(topCard, gain.filter(), null)) return;
         for (var ability : topCard.getActivatedAbilities()) {
             accumulator.addActivatedAbility(ability);
+        }
+        // Mana abilities stored as ON_TAP effects ("{T}: Add {G}.") are activated abilities too.
+        for (CardEffect tapEffect : topCard.getEffects(EffectSlot.ON_TAP)) {
+            if (tapEffect instanceof AwardManaEffect) {
+                accumulator.addActivatedAbility(new ActivatedAbility(true, null, List.of(tapEffect),
+                        "{T}: Add mana."));
+            }
         }
     }
 }

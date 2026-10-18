@@ -80,6 +80,11 @@ public final class CardPrintingRegistry {
             result = tokenMap.get(buildTokenKey(
                     tokenName.substring("Phyrexian ".length()), power, toughness, color));
         }
+        if (result == null && tokenName.endsWith(" Token")) {
+            // CR 111.4: an unnamed token is called "<subtypes> Token", while token art is keyed by the bare name.
+            result = tokenMap.get(buildTokenKey(
+                    tokenName.substring(0, tokenName.length() - " Token".length()), power, toughness, color));
+        }
         return result;
     }
 

@@ -17,6 +17,8 @@ class SakikoMotherOfSummerTest extends BaseCardTest {
     @Test
     @DisplayName("Sakiko's own combat damage triggers mana through the stack")
     void sakikoOwnCombatDamageUsesStack() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent sakiko = addCreatureReady(player1, new SakikoMotherOfSummer());
         sakiko.setAttacking(true);
 
@@ -35,6 +37,8 @@ class SakikoMotherOfSummerTest extends BaseCardTest {
     @Test
     @DisplayName("A pending trigger still adds mana after Sakiko leaves the battlefield")
     void triggerResolvesAfterSakikoLeaves() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent sakiko = addCreatureReady(player1, new SakikoMotherOfSummer());
         Permanent creature = addCreatureReady(player1, new GnarledMass());
         creature.setAttacking(true);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PreparedSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ public class PhasingService {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PreparedSupport preparedSupport;
 
     /**
      * Runs the untap step's phasing turn-based action for {@code activePlayerId}. Both directions
@@ -75,6 +77,7 @@ public class PhasingService {
             gameData.playerBattlefields
                     .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
                     .add(permanent);
+            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
 
@@ -107,6 +110,7 @@ public class PhasingService {
             gameData.playerBattlefields
                     .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
                     .add(permanent);
+            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
 
@@ -187,6 +191,7 @@ public class PhasingService {
             gameData.playerBattlefields
                     .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
                     .add(permanent);
+            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
 
@@ -290,6 +295,7 @@ public class PhasingService {
             gameData.playerBattlefields
                     .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
                     .add(permanent);
+            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
         clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
@@ -320,6 +326,7 @@ public class PhasingService {
             if (gameData.tappedWhenSourceLeavesPhasesIn.remove(permanent.getId())) {
                 permanent.tap();
             }
+            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
             triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
 
@@ -347,8 +354,15 @@ public class PhasingService {
             }
             permanent.clearCombatState();
             permanent.clearUntilEndOfCombatAnimation();
+            preparedSupport.releasePreparedCopyOnPhaseOut(gameData, permanent);
             gameData.playerBattlefields.get(controllerId).remove(permanent);
             phasedOutList(gameData, controllerId).add(permanent);
+            // CR 702.26f: "for as long as" durations tracking this permanent end when it phases out.
+            UUID phasedOutId = permanent.getId();
+            gameData.forEachPermanent((ownerId, other) -> {
+                other.getUntapPreventedWhileSourceOnBattlefieldIds().remove(phasedOutId);
+                other.getUntapPreventedByPermanentIds().remove(phasedOutId);
+            });
         });
     }
 

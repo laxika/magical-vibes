@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -18,19 +17,20 @@ import java.util.List;
 public class SuspendedSentence extends Card {
 
     public SuspendedSentence() {
-        // The life loss resolves before destruction so the target's controller remains available.
+        // Destroy first, then the target's controller loses 3 life (CR 608.2c). The destroyed
+        // creature's controller is still recorded on the stack entry, so the life loss reaches it.
         target(TargetFilters.creatureAnOpponentControls())
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.SPELL,
                         new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.SPELL, new ExileSpellEffect(3));
 
+        // Suspend follows the card's own timing (CR 702.62a), so an instant can be suspended at instant speed.
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
                 List.of(),
-                "Suspend 3\u2014{1}{B}",
-                ActivationTimingRestriction.SORCERY_SPEED
+                "Suspend 3\u2014{1}{B}"
         ).withSuspendsSourceFromHand(3));
     }
 }

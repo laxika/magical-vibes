@@ -148,7 +148,7 @@ class SoulOfNewPhyrexiaTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isFalse();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isTrue();
         Permanent laterForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         assertThat(gqs.hasKeyword(gd, laterForest, Keyword.INDESTRUCTIBLE)).isFalse();

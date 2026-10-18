@@ -17,7 +17,7 @@ public class VirtualAssistant extends Card {
 
     public VirtualAssistant() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new TeamworkSpellCastTriggerEffect(List.of(
-                new CreateTokenEffect("Robot", 1, 1, null,
+                new CreateTokenEffect("Robot Hero Token", 1, 1, null,
                         List.of(CardSubtype.ROBOT, CardSubtype.HERO),
                         Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)))));
     }

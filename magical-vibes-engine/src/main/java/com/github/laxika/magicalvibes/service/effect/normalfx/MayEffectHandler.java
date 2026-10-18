@@ -228,7 +228,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 null,
                 0,
                 0,
-                entry.getAttackedTargetId(),
+                attackedTargetForPendingMay(gameData, entry),
                 e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER ? entry.getActivePlayerId() : null,
                 defendingPlayerChoice ? choicePlayerId : null,
                 entry.getSourcePermanentSnapshot(),
@@ -242,6 +242,20 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getTriggeringPermanentToughnessAtTrigger(),
                 entry.getTriggeringCardGraveyardEntryVersion()
         ));
+    }
+
+    /**
+     * CR 508.5: the defending player stays the player the creature attacked even after an attacked
+     * planeswalker or battle has left the battlefield, so fall back to the player recorded at trigger time.
+     */
+    private UUID attackedTargetForPendingMay(GameData gameData, StackEntry entry) {
+        UUID attacked = entry.getAttackedTargetId();
+        if (attacked != null && entry.getDefendingPlayerId() != null
+                && !gameData.playerIds.contains(attacked)
+                && gameQueryService.findPermanentById(gameData, attacked) == null) {
+            return entry.getDefendingPlayerId();
+        }
+        return attacked;
     }
 
     private void insertElseEffect(StackEntry entry, MayEffect may) {

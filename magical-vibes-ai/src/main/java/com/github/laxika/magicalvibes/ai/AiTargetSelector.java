@@ -904,7 +904,8 @@ class AiTargetSelector {
         }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
-                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT) {
+                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT
+                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT_IF_ABLE) {
             UUID candidateControllerId = gameQueryService.findPermanentController(gameData, candidate.getId());
             return chosenSoFar.stream()
                     .map(id -> gameQueryService.findPermanentController(gameData, id))
@@ -948,7 +949,8 @@ class AiTargetSelector {
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
-                     ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
+                     ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT, ONE_PER_OPPONENT_IF_ABLE,
+                     AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
                      AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->
                         isAnotherPermanentOfAuraHostType(gameData, other, candidate);

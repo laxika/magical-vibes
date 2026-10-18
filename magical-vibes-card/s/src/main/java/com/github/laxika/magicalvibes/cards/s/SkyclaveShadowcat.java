@@ -27,9 +27,10 @@ public class SkyclaveShadowcat extends Card {
                 "{1}{B}, Sacrifice another creature: Put a +1/+1 counter on this creature."
         ));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DrawCardEffect()));
+        var drawIfCountered = new TriggeringPermanentConditionalEffect(
+                new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
+                new DrawCardEffect());
+        addEffect(EffectSlot.ON_DEATH, drawIfCountered);
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawIfCountered);
     }
 }

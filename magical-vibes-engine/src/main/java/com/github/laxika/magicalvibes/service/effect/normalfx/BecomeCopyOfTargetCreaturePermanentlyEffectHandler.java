@@ -69,6 +69,8 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
                 .forEach(retainedTargetingEffects::add);
         String originalName = source.getCard().getName();
         permanentCopierService.applyCloneCopy(source, target, null, null);
+        // The copied abilities are new abilities, so "choose a mode that hasn't been chosen" starts over.
+        source.getChosenModeLabels().clear();
         if (copyEffect.nameOverride() != null) {
             source.getCard().setName(copyEffect.nameOverride());
         }

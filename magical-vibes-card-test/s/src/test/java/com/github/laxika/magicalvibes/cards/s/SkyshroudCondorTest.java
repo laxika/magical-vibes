@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -66,6 +68,8 @@ class SkyshroudCondorTest extends BaseCardTest {
     void previousTurnSpellDoesNotEnableCast() {
         harness.castFromHand(player1, new LotusPetal(), "{0}");
         harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

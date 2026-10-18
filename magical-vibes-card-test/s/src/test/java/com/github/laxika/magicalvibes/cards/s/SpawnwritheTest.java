@@ -81,7 +81,7 @@ class SpawnwritheTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
         harness.assertLife(player2, 16);
         harness.passBothPriorities();
 
@@ -97,7 +97,7 @@ class SpawnwritheTest extends BaseCardTest {
         token.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
         harness.assertLife(player2, 14);
         harness.passBothPriorities();
 
@@ -118,9 +118,9 @@ class SpawnwritheTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.handleCombatDamageAssigned(player1, 0,
-                Map.of(blocker.getId(), 4, player2.getId(), 1));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 4, player2.getId(), 1)));
 
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player1, "Spawnwrithe");
@@ -134,7 +134,7 @@ class SpawnwritheTest extends BaseCardTest {
         token.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
         harness.assertLife(player2, 17);
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);

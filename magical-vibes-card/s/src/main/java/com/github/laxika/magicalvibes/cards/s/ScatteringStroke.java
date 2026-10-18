@@ -15,12 +15,8 @@ public class ScatteringStroke extends Card {
     public ScatteringStroke() {
         // Counter target spell. Clash with an opponent. If you win, at the beginning of your next
         // main phase, you may add an amount of {C} equal to that spell's mana value.
-        //
-        // The clash reward is listed before the counter so that, on a clash win, the targeted spell
-        // is still on the stack when the reward snapshots its mana value. The two instructions are
-        // independent, so this ordering is rules-equivalent.
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL,
                 new ClashEffect(new RegisterDelayedManaEqualToTargetSpellManaValueEffect(ManaColor.COLORLESS)));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

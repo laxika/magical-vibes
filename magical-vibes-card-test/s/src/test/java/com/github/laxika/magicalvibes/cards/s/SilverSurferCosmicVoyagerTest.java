@@ -103,7 +103,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         GrizzlyBears borrowedCard = new GrizzlyBears();
         borrowedCard.setOwnerId(player2.getId());
         Permanent borrowedBears = harness.addToBattlefieldAndReturn(player1, borrowedCard);
-        gd.stolenCreatures.put(borrowedBears.getId(), player2.getId());
+        setOwnerAndController(borrowedBears, player2, player1);
 
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();

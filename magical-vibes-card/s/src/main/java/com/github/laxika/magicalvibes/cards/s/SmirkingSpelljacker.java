@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -19,6 +21,7 @@ public class SmirkingSpelljacker extends Card {
                 "Target must be a spell an opponent controls."))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetSpellUntilSourceLeavesEffect());
 
-        addEffect(EffectSlot.ON_ATTACK, new MayCastCardExiledWithSourceEffect());
+        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new SourceExiledCardsThreshold(1),
+                new MayCastCardExiledWithSourceEffect()));
     }
 }

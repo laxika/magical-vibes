@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -53,8 +54,8 @@ public class SpawnbedProtector extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardSubtypePredicate(CardSubtype.ELDRAZI)));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(eldraziCreature, 1));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ELDRAZI_SCION);
+        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+                ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(eldraziCreature, 1),
+                ELDRAZI_SCION));
     }
 }

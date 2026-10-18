@@ -40,7 +40,7 @@ class SublimeExhalationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
 
         harness.assertInHand(player1, "Sublime Exhalation");
         assertThat(gd.stack).isEmpty();
@@ -54,7 +54,7 @@ class SublimeExhalationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
 
         harness.assertInHand(player1, "Sublime Exhalation");
         assertThat(gd.stack).isEmpty();

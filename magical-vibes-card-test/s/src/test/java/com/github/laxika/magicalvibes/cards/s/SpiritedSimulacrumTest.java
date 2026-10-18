@@ -120,6 +120,7 @@ class SpiritedSimulacrumTest extends BaseCardTest {
                 new SpiritedSimulacrum(), new SpiritedSimulacrum()));
         harness.setLibrary(player2, List.of(new SpiritedSimulacrum(), new SpiritedSimulacrum()));
         harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());

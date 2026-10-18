@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -30,7 +31,7 @@ public class SnoopingPage extends Card {
         ));
 
         // Whenever this creature deals combat damage to a player, you draw a card and lose 1 life.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect());
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new LoseLifeEffect(1));
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                SequenceEffect.of(new DrawCardEffect(), new LoseLifeEffect(1)));
     }
 }

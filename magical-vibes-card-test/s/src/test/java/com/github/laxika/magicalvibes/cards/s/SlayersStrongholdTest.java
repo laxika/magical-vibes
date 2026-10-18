@@ -217,8 +217,7 @@ class SlayersStrongholdTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(als.canAttack(gd, creature, player1.getId())).isTrue();
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gs.declareAttackers(gd, player1, List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
 
         assertThat(creature.isAttacking()).isTrue();
         assertThat(creature.isTapped()).isFalse();

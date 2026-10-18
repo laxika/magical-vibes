@@ -219,6 +219,12 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return filter;
     }
 
+    /** A copy of this bounce with its permanent filter replaced and every other parameter kept. */
+    public ReturnToHandEffect withFilter(PermanentPredicate updatedFilter) {
+        return new ReturnToHandEffect(scope, updatedFilter, lifeLoss, drawCount, enchantedPermanentId,
+                castTimeXValue, thenEffect, minimumControlledNontokenCount, grantingEquipmentId);
+    }
+
     public int lifeLoss() {
         return lifeLoss;
     }

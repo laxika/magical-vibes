@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorsUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -14,6 +15,8 @@ import java.util.EnumSet;
 public class SyggWanderbrineShield extends Card {
 
     public SyggWanderbrineShield() {
+        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+
         // Whenever this creature transforms into Sygg, Wanderbrine Shield, target creature you control
         // gains protection from each color until your next turn.
         target(TargetFilters.creatureYouControl());

@@ -166,7 +166,7 @@ class SarkhanTheDragonspeakerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player1, "Mountain");

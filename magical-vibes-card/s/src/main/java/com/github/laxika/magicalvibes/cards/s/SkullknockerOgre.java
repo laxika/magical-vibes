@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardThen
 public class SkullknockerOgre extends Card {
 
     public SkullknockerOgre() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new TargetPlayerRandomDiscardThenDrawEffect());
     }
 }

@@ -136,9 +136,9 @@ class SkeletalSwarmingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SkeletalSwarming());
         Permanent victim = addCreatureReady(player2, new DireWolfProwler());
         harness.setHand(player1, List.of(new PowerWordKill()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
         advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveInstant(player1, 0, victim.getId());
         harness.passBothPriorities();
 

@@ -93,6 +93,7 @@ class ShadewingLaureateTest extends BaseCardTest {
         destroyCreature(flyingCreature);
         harness.handlePermanentChosen(player1, target.getId());
         destroyCreature(target);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

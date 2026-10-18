@@ -21,7 +21,7 @@ public class SpringleafDrum extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(
-                        new TapCreatureCost(new PermanentIsCreaturePredicate()),
+                        new TapCreatureCost(new PermanentIsCreaturePredicate(), true, false),
                         new AwardAnyColorManaEffect()),
                 "{T}, Tap an untapped creature you control: Add one mana of any color."
         ));

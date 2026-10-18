@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -9,7 +8,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +32,7 @@ public class SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedE
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,7 +47,7 @@ public class SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedE
         List<UUID> landIds = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (perm.getCard().hasType(CardType.LAND)) {
+                if (gameQueryService.isLand(gameData, perm)) {
                     landIds.add(perm.getId());
                 }
             }
@@ -56,6 +58,7 @@ public class SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedE
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no lands to sacrifice for {}",
                     gameData.id, gameData.playerIdToName.get(controllerId), entry.getCard().getName());
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 

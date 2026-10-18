@@ -40,6 +40,9 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectTargetValidator {
                 exiled.card(), effect.filter(), ctx.sourceCard() == null ? null : ctx.sourceCard().getId())) {
             throw new IllegalStateException("Target card does not match the effect");
         }
+        if (effect.requiresManaValueEqualsX() && exiled.card().getManaValue() != ctx.xValue()) {
+            throw new IllegalStateException("Target card's mana value must equal X");
+        }
 
         Permanent source = ctx.sourcePermanentSnapshot() != null
                 ? ctx.sourcePermanentSnapshot()

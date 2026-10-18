@@ -37,7 +37,7 @@ public class ExileTargetCreatureAndAllWithSameNameEffectHandler implements Norma
             return;
         }
 
-        String targetName = target.getCard().getName();
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
 
         // Collect all creatures with the same name across all battlefields (including the target)
         List<Permanent> toExile = new ArrayList<>();
@@ -45,8 +45,9 @@ public class ExileTargetCreatureAndAllWithSameNameEffectHandler implements Norma
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm)
-                        && perm.getCard().getName().equals(targetName)) {
+                boolean sharesName = perm == target
+                        || (targetName != null && targetName.equals(gameQueryService.getEffectiveName(gameData, perm)));
+                if (sharesName && gameQueryService.isCreature(gameData, perm)) {
                     toExile.add(perm);
                 }
             }

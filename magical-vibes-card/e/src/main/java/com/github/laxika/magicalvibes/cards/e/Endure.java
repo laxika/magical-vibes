@@ -9,9 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 public class Endure extends Card {
 
     public Endure() {
-        // Prevent all damage that would be dealt to you and permanents you control this turn.
-        // The shield keys off each permanent's controller (not its type), so this covers every
-        // permanent the controller controls, combat and noncombat alike.
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControllerAndCreatures());
+        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControllerAndPermanents());
     }
 }

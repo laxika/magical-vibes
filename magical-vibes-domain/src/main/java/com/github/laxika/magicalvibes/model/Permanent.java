@@ -111,9 +111,12 @@ public class Permanent {
      *  cleared at turn start — it stays set until an effect that reads a "since your last upkeep"
      *  window consumes it (Wiitigo's upkeep trigger clears it after resolving). */
     @Setter private boolean blockedOrWasBlockedSinceLastUpkeep;
-    /** Set when this permanent attacks, blocks, or becomes blocked and consumed by a
-     *  "since your last upkeep" effect. */
-    @Setter private boolean attackedOrBlockedSinceLastUpkeep;
+    /** Set when this permanent attacks, blocks, or becomes blocked. A "since your last upkeep" effect
+     *  reads it together with {@link #upkeepsStartedSinceAttackOrBlock}. */
+    private boolean attackedOrBlockedSinceLastUpkeep;
+    /** How many upkeeps each player has begun since this permanent last attacked or blocked, so that
+     *  every "since your last upkeep" effect measures the window from its own controller's upkeep. */
+    private final Map<UUID, Integer> upkeepsStartedSinceAttackOrBlock = new HashMap<>();
     /** Set when this permanent's "whenever this becomes the target of a spell or ability for the first
      *  time each turn, counter that spell or ability" trigger (Glyph Keeper) has already fired this
      *  turn, so it won't trigger again until the flag is reset at the next turn start. */
@@ -168,6 +171,9 @@ public class Permanent {
     @Setter private int opponentDrawRegenerationShield;
     /** The opponent chosen for each Soldevi Sentry regeneration shield, in grant order. */
     private final List<UUID> opponentDrawRegenerationShieldRecipients = new ArrayList<>();
+    /** The player who activated the ability granting each Soldevi Sentry regeneration shield (the
+     *  controller of the resulting draw trigger), aligned with {@link #opponentDrawRegenerationShieldRecipients}. */
+    private final List<UUID> opponentDrawRegenerationShieldControllers = new ArrayList<>();
     /** How many of this permanent's {@link #regenerationShield}s carry Matopi Golem's rider — when
      *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
      *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
@@ -176,6 +182,10 @@ public class Permanent {
      *  when such a shield is actually used, put a +1/+1 counter on this permanent. Plain shields are
      *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
     @Setter private int plusOnePlusOneCounterRegenerationShield;
+    /** Controllers of the abilities that granted the +1/+1-counter regeneration shields, in grant order. The
+     *  rider is that ability's delayed trigger, so its controller is the one who activated it (CR 603.7d).
+     *  Cleared at turn cleanup alongside {@link #plusOnePlusOneCounterRegenerationShield}. */
+    private final List<UUID> plusOnePlusOneCounterRegenerationShieldControllers = new ArrayList<>();
     /** Controller ids of this permanent's {@link #regenerationShield}s that carry Debt of Loyalty's
      *  rider — when such a shield is actually used, that player gains control of this permanent.
      *  Plain shields are consumed first, so a rider shield is only spent once it is all that is left.
@@ -707,6 +717,10 @@ public class Permanent {
     @Setter private boolean revealCardFromHandCostPaid;
     /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
     @Setter private boolean controlledDragonAsCast;
+    /** Whether the spell's Gift was promised as it was cast. */
+    @Setter private boolean giftPromised;
+    /** Cards exiled to pay the delve cost of the spell this permanent resolved from, kept after they leave exile. */
+    @Setter private List<Card> delvedCards = List.of();
     /** Repeatable additional mana payments made to cast this permanent's spell. */
     private List<String> repeatedAdditionalCosts = List.of();
     /** Whether the required tribute counters were placed on this permanent as it entered. */
@@ -836,12 +850,41 @@ public class Permanent {
     @Setter private Card untilNextTurnPreCopyCard;
     /** The player whose next turn ends an "until your next turn" copy (the ability's controller). */
     @Setter private UUID copyUntilNextTurnControllerId;
+    /** The copies currently applied by Shapesharer-style "until your next turn" effects, oldest first.
+     *  The newest one overrides the earlier ones (CR 613.7); when it expires first, the previous
+     *  still-active copy applies again (CR 613.6). */
+    private final List<UntilNextTurnCopyLayer> untilNextTurnCopyLayers = new ArrayList<>();
+
+    /** A copy applied by an effect that lasts until {@code controllerId}'s next turn. */
+    public record UntilNextTurnCopyLayer(UUID controllerId, Card copyCard) {}
+
     /** CR 613.7 timestamp: stamped from {@link GameData#nextTimestamp()} when this permanent
      *  enters a battlefield, and re-stamped each time it becomes attached (CR 613.7e — Auras and
      *  Equipment). Control changes do NOT re-stamp (CR 613.7c). Stays 0 for permanents added to
      *  a battlefield directly in tests; the layered engine falls back to battlefield position
      *  order for equal timestamps (see {@code agent-docs/LAYER_SYSTEM.md}). */
     @Setter private long timestamp;
+
+    public void setAttackedOrBlockedSinceLastUpkeep(boolean attackedOrBlocked) {
+        this.attackedOrBlockedSinceLastUpkeep = attackedOrBlocked;
+        if (attackedOrBlocked) {
+            upkeepsStartedSinceAttackOrBlock.clear();
+        }
+    }
+
+    /** Records that the given player's upkeep step began, for "since your last upkeep" windows. */
+    public void markUpkeepStarted(UUID playerId) {
+        upkeepsStartedSinceAttackOrBlock.merge(playerId, 1, Integer::sum);
+    }
+
+    /**
+     * Whether this permanent attacked, blocked, or became blocked since the given player's last
+     * upkeep, read during that player's current upkeep: only the current upkeep may have begun since.
+     */
+    public boolean attackedOrBlockedSinceUpkeepOf(UUID playerId) {
+        return attackedOrBlockedSinceLastUpkeep
+                && upkeepsStartedSinceAttackOrBlock.getOrDefault(playerId, 0) <= 1;
+    }
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -914,6 +957,7 @@ public class Permanent {
         this.blockedThisCombat = source.blockedThisCombat;
         this.blockedOrWasBlockedSinceLastUpkeep = source.blockedOrWasBlockedSinceLastUpkeep;
         this.attackedOrBlockedSinceLastUpkeep = source.attackedOrBlockedSinceLastUpkeep;
+        this.upkeepsStartedSinceAttackOrBlock.putAll(source.upkeepsStartedSinceAttackOrBlock);
         this.becomeTargetCounterUsedThisTurn = source.becomeTargetCounterUsedThisTurn;
         this.backupAbilityCopyUsedThisTurn = source.backupAbilityCopyUsedThisTurn;
         this.blockingTargets.addAll(source.blockingTargets);
@@ -937,8 +981,12 @@ public class Permanent {
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
         this.opponentDrawRegenerationShieldRecipients.addAll(
                 source.opponentDrawRegenerationShieldRecipients);
+        this.opponentDrawRegenerationShieldControllers.addAll(
+                source.opponentDrawRegenerationShieldControllers);
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
         this.plusOnePlusOneCounterRegenerationShield = source.plusOnePlusOneCounterRegenerationShield;
+        this.plusOnePlusOneCounterRegenerationShieldControllers.addAll(
+                source.plusOnePlusOneCounterRegenerationShieldControllers);
         this.gainControlRegenerationShields.addAll(source.gainControlRegenerationShields);
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
@@ -1148,6 +1196,8 @@ public class Permanent {
         this.waterbendCostPaid = source.waterbendCostPaid;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.controlledDragonAsCast = source.controlledDragonAsCast;
+        this.giftPromised = source.giftPromised;
+        this.delvedCards = source.delvedCards;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.renowned = source.renowned;
@@ -1188,6 +1238,7 @@ public class Permanent {
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
+        this.untilNextTurnCopyLayers.addAll(source.untilNextTurnCopyLayers);
         this.timestamp = source.timestamp;
     }
 
@@ -2241,12 +2292,41 @@ public class Permanent {
      * pre-copy card. Called at the beginning of the ability controller's next turn.
      */
     public void revertUntilNextTurnCopy() {
+        this.untilNextTurnCopyLayers.clear();
         if (this.copyUntilControllerNextTurn && this.untilNextTurnPreCopyCard != null) {
             this.card = this.untilNextTurnPreCopyCard;
         }
         this.copyUntilControllerNextTurn = false;
         this.untilNextTurnPreCopyCard = null;
         this.copyUntilNextTurnControllerId = null;
+    }
+
+    /** Records the copy just applied by an effect that lasts until {@code controllerId}'s next turn. */
+    public void pushUntilNextTurnCopyLayer(UUID controllerId) {
+        this.untilNextTurnCopyLayers.add(new UntilNextTurnCopyLayer(controllerId, this.card));
+    }
+
+    /**
+     * Ends the copies that last until {@code controllerId}'s next turn. If the newest copy ended while an
+     * earlier one is still active, that earlier copy applies again; otherwise the permanent reverts.
+     */
+    public void expireUntilNextTurnCopyLayers(UUID controllerId) {
+        if (untilNextTurnCopyLayers.isEmpty()) {
+            return;
+        }
+        UntilNextTurnCopyLayer newestBefore = untilNextTurnCopyLayers.getLast();
+        untilNextTurnCopyLayers.removeIf(layer -> layer.controllerId().equals(controllerId));
+        if (untilNextTurnCopyLayers.isEmpty()) {
+            revertUntilNextTurnCopy();
+        } else if (!untilNextTurnCopyLayers.getLast().equals(newestBefore)) {
+            UntilNextTurnCopyLayer newest = untilNextTurnCopyLayers.getLast();
+            this.card = newest.copyCard();
+            this.copyUntilNextTurnControllerId = newest.controllerId();
+        }
+    }
+
+    public boolean hasUntilNextTurnCopyLayers() {
+        return !untilNextTurnCopyLayers.isEmpty();
     }
 
     public void ignoreAuraEffectsThisTurnFor(UUID playerId) {

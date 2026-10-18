@@ -20,7 +20,7 @@ public class SHIELDSpyKit extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new AttacksAlone(),
                 SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
+                        new UntapPermanentsEffect(TapUntapScope.TRIGGERING),
                         new ScryEffect(1))));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

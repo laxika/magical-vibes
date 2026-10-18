@@ -16,7 +16,7 @@ public class StalkingYeti extends Card {
 
     public StalkingYeti() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnteringCreatureFightsTargetCreatureEffect());
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, EnteringCreatureFightsTargetCreatureEffect.dealingPowerDamageToEachOther());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

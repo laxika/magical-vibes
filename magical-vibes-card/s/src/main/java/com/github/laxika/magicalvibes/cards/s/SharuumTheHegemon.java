@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -17,13 +18,13 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class SharuumTheHegemon extends Card {
 
     public SharuumTheHegemon() {
-        // When Sharuum enters, you may return target artifact card from your graveyard
-        // to the battlefield. (Modeled as up-to-one graveyard target.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
+        // "When Sharuum enters, you may return target artifact card from your graveyard to the
+        // battlefield." The target is chosen when the trigger goes on the stack (CR 603.3d); the
+        // "may" is decided on resolution (CR 603.5).
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.ARTIFACT))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return the targeted artifact card to the battlefield?"));
     }
 }

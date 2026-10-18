@@ -46,7 +46,7 @@ public class TargetPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler impleme
                 return;
             }
 
-            gameData.discardCausedByOpponent = true;
+            gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, chosenCount,
                     DiscardFollowUp.rummage(chosenCount));
             return;

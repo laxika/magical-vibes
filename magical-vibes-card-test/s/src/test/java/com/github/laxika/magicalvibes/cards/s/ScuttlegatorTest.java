@@ -49,8 +49,8 @@ class ScuttlegatorTest extends BaseCardTest {
         scuttlegator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         prepareAttack();
 
-        gs.declareAttackers(gd, player1,
-                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(scuttlegator)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(scuttlegator))));
 
         assertThat(scuttlegator.isAttacking()).isTrue();
     }

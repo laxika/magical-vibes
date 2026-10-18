@@ -155,6 +155,7 @@ class SheerDropTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
+        harness.setHand(player2, List.of());
         gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null,
                 List.of(target.getId(), land.getId()));
         harness.passBothPriorities();

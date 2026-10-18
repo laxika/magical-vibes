@@ -19,7 +19,7 @@ public class ScorchedEarth extends Card {
                 new CardTypePredicate(CardType.LAND), "land cards"));
 
         // Destroy X target lands: one X-scaled target group, every chosen target destroyed.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Targets must be lands"
         ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());

@@ -82,6 +82,7 @@ class SibyllineSoothsayerTest extends BaseCardTest {
         setUpSoothsayer(List.of(qualifyingCard, new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         resolveEnterTrigger();
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), 3);

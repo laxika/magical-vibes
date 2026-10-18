@@ -47,7 +47,7 @@ class SmokeTest extends BaseCardTest {
         bears.tap();
         forest.tap();
 
-        advanceToNextTurn(player2);
+        advanceToNextTurnWithoutUntapChoice(player2);
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
@@ -108,7 +108,7 @@ class SmokeTest extends BaseCardTest {
         Permanent tappedBears = addCreatureReady(player1, new GrizzlyBears());
         tappedBears.tap();
 
-        advanceToNextTurn(player2);
+        advanceToNextTurnWithoutUntapChoice(player2);
 
         assertThat(untappedBears.isTapped()).isFalse();
         assertThat(tappedBears.isTapped()).isFalse();
@@ -132,12 +132,20 @@ class SmokeTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
+        advanceToNextTurn(currentActivePlayer, TurnStep.UNTAP);
+    }
+
+    private void advanceToNextTurnWithoutUntapChoice(Player currentActivePlayer) {
+        advanceToNextTurn(currentActivePlayer, TurnStep.UPKEEP);
+    }
+
+    private void advanceToNextTurn(Player currentActivePlayer, TurnStep targetStep) {
         harness.forceActivePlayer(currentActivePlayer);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(newActivePlayer, targetStep);
     }
 }

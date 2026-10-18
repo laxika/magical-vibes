@@ -14,11 +14,19 @@ import java.util.UUID;
  *
  * @param landCardId the UUID of the land card to return from the graveyard
  * @param enterTapped whether the land enters the battlefield tapped
+ * @param graveyardEntryVersion the graveyard entry the trigger event happened to, or {@code null} to accept
+ *                              any entry; a land that left the graveyard and re-entered it is a new object
+ *                              and is not returned
  */
-public record ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId, boolean enterTapped)
+public record ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId, boolean enterTapped,
+                                                                   Long graveyardEntryVersion)
         implements CardEffect {
 
     public ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId) {
-        this(landCardId, false);
+        this(landCardId, false, null);
+    }
+
+    public ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId, boolean enterTapped) {
+        this(landCardId, enterTapped, null);
     }
 }

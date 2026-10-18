@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
@@ -11,6 +12,9 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -30,8 +34,18 @@ public class ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler implemen
         if (!source.controlledBy(context.castingPlayerId())) {
             return 0;
         }
-        Card imprinted = context.gameData().getImprintedCard(source.sourcePermanent().getCard());
-        if (imprinted == null || !support.sharesCardType(context.spell(), imprinted)) {
+        GameData gameData = context.gameData();
+        // Every card this permanent exiled and that is still exiled counts (several imprint
+        // triggers can each exile one); the single recorded imprint covers sources that did not
+        // track their exile with the permanent.
+        List<Card> imprintedCards = new ArrayList<>(
+                gameData.getCardsExiledByPermanent(source.sourcePermanent().getId()));
+        Card imprinted = gameData.getImprintedCard(source.sourcePermanent().getCard());
+        if (imprinted != null && gameData.findExiledCard(imprinted.getId()) != null
+                && imprintedCards.stream().noneMatch(card -> card.getId().equals(imprinted.getId()))) {
+            imprintedCards.add(imprinted);
+        }
+        if (imprintedCards.stream().noneMatch(card -> support.sharesCardType(context.spell(), card))) {
             return 0;
         }
         int amount = amountEvaluationService.evaluate(context.gameData(), reduce.amount(),

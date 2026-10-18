@@ -204,8 +204,10 @@ public final class FaceOracleMapper {
      * That is not cosmetic: Defender leaking onto Awoken Horror produces a creature the combat code
      * refuses to attack with. The same filtering prevents a front face from treating a mentioned
      * keyword as its own. Narrowing also stops a face that <em>grants</em> a keyword
-     * ("Creatures you control have flying") from claiming it, and drops Transform and Prepared for
-     * free, since neither heads a keyword line of any back face's text.
+     * ("Creatures you control have flying") from claiming it, and drops Transform for
+     * free, since it heads no keyword line of any back face's text. Prepared is never a keyword line
+     * (it is stated as "enters prepared" or "becomes prepared"), so a face keeps it only when its own
+     * text mentions being prepared.
      *
      * <p>Order matters: this runs on {@code cardText} <em>after</em> capitalisation, which is
      * itself driven by the full combined list. Narrowing first would change which lines capitalise.
@@ -222,6 +224,11 @@ public final class FaceOracleMapper {
             if (keyword != null) {
                 keywords.add(keyword);
             }
+        }
+        if (cardText != null
+                && face.keywords().stream().anyMatch(raw -> "Prepared".equalsIgnoreCase(raw))
+                && java.util.regex.Pattern.compile("(?i)\\bprepared\\b").matcher(cardText).find()) {
+            keywords.add(Keyword.PREPARED);
         }
         if (cardText != null && java.util.regex.Pattern.compile("(?m)^Nimble(?:[ (]|$)")
                 .matcher(cardText).find()) {

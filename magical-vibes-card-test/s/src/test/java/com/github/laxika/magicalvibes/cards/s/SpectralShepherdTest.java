@@ -68,7 +68,7 @@ class SpectralShepherdTest extends BaseCardTest {
     void returnsStolenSpiritToOwnersHand() {
         addCreatureReady(player1, new SpectralShepherd());
         Permanent spirit = addCreatureReady(player1, new ApothecaryGeist());
-        gd.stolenCreatures.put(spirit.getId(), player2.getId());
+        setOwnerAndController(spirit, player2, player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -88,9 +88,7 @@ class SpectralShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, 0, null, spirit.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(spirit);
-        gd.playerBattlefields.get(player2.getId()).add(spirit);
-        gd.stolenCreatures.put(spirit.getId(), player1.getId());
+        setOwnerAndController(spirit, player1, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Apothecary Geist");

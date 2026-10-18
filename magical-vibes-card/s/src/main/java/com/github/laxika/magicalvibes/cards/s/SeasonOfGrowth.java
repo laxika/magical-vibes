@@ -18,7 +18,7 @@ import java.util.List;
 public class SeasonOfGrowth extends Card {
 
     public SeasonOfGrowth() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new ScryEffect(1));
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, new ScryEffect(1));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,

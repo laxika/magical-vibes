@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -34,7 +36,9 @@ public class SalvationSwan extends Card {
         ), 0, 1).addEffect(
                 EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.BIRD),
+                        new CardAnyOfPredicate(List.of(
+                                new CardIsSelfPredicate(),
+                                new CardSubtypePredicate(CardSubtype.BIRD))),
                         FlickerEffect.exileTargetReturnAtEndStepWithCounter(CounterType.FLYING)));
     }
 }

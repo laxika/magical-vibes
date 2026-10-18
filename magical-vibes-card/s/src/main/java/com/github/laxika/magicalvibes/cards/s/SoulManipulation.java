@@ -41,14 +41,12 @@ public class SoulManipulation extends Card {
                         creatureSpell),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardTypePredicate(CardType.CREATURE), 1)),
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(new CardTypePredicate(CardType.CREATURE))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target creature spell and return target creature card from your graveyard to your hand",
                         List.<CardEffect>of(
                                 new CounterSpellEffect(),
-                                new ReturnTargetCardsFromGraveyardToHandEffect(
-                                        new CardTypePredicate(CardType.CREATURE), 1)),
+                                ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(new CardTypePredicate(CardType.CREATURE))),
                         creatureSpell)
         )));
     }

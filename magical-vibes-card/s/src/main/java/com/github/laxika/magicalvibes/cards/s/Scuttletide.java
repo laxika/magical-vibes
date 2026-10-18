@@ -32,7 +32,7 @@ public class Scuttletide extends Card {
         ));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new Delirium(),
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.CRAB))));
     }
 }

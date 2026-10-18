@@ -77,6 +77,7 @@ class ShaunRebeccaAgentsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "The Animus");
         harness.assertNotInHand(player1, "The Animus");
@@ -109,7 +110,7 @@ class ShaunRebeccaAgentsTest extends BaseCardTest {
         castShaunRebecca();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardAnimus);
         assertThat(gd.playerBattlefields.get(player1.getId()))

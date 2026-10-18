@@ -202,7 +202,7 @@ class ScrollRackTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2).contains(kithkin)
-                .allMatch(card -> card instanceof KithkinBrinefarer)
+                .allMatch(card -> card.getName().equals("Kithkin Brinefarer"))
                 .anyMatch(card -> !card.getId().equals(kithkin.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pegasus);
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(drawsBefore);

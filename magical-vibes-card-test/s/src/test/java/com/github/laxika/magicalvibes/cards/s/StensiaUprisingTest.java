@@ -144,9 +144,9 @@ class StensiaUprisingTest extends BaseCardTest {
     void removedSourceStillCreatesTokenWithoutDamage() {
         Permanent uprising = addUprisingWithElevenOtherPermanents();
         harness.setHand(player1, List.of(new AlchemistsRetrieval()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, uprising.getId());
         resolveAllTriggers();
 

@@ -118,9 +118,9 @@ class SurrakTheHuntCallerTest extends BaseCardTest {
         Permanent surrak = addCreatureReady(player1, new SurrakTheHuntCaller());
         Permanent contributor = addCreatureReady(player1, new GladeWatcher());
         harness.setHand(player1, List.of(new Flatten()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLACK, 4);
         harness.handlePermanentChosen(player1, surrak.getId());
         harness.castAndResolveInstant(player1, 0, contributor.getId());
         harness.assertInGraveyard(player1, "Glade Watcher");
@@ -137,9 +137,9 @@ class SurrakTheHuntCallerTest extends BaseCardTest {
         addCreatureReady(player1, new GladeWatcher());
         addCreatureReady(player1, new GladeWatcher());
         harness.setHand(player1, List.of(new Flatten()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLACK, 4);
         harness.handlePermanentChosen(player1, target.getId());
         harness.castAndResolveInstant(player1, 0, surrak.getId());
         harness.assertInGraveyard(player1, "Surrak, the Hunt Caller");
@@ -156,11 +156,12 @@ class SurrakTheHuntCallerTest extends BaseCardTest {
         addCreatureReady(player1, new ColossodonYearling());
         Permanent tombshell = addCreatureReady(player1, new WanderingTombshell());
         harness.setHand(player1, List.of(new Flatten()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveInstant(player1, 0, tombshell.getId());
         assertThat(gqs.getEffectivePower(gd, tombshell)).isEqualTo(-3);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLACK, 4);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
@@ -173,9 +174,9 @@ class SurrakTheHuntCallerTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GladeWatcher());
         Permanent other = addCreatureReady(player1, new GladeWatcher());
         harness.setHand(player1, List.of(new Flatten()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.BLACK, 4);
         harness.handlePermanentChosen(player1, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -29,12 +30,7 @@ public class SteelDromedary extends Card {
         addEffect(EffectSlot.STATIC,
                 new DoesntUntapWithCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-        ));
-        target(new PermanentPredicateTargetFilter(anotherCreature,
-                "Target must be another creature"))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                         new MayEffect(
                                 new MoveCounterFromSourceToTargetCreatureEffect(

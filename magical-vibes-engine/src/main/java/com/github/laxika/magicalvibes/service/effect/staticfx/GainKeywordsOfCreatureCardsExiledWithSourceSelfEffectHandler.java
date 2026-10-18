@@ -50,16 +50,15 @@ public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implem
                 }
             }
 
-            if (keywordEffect.copyProtectionEffects()) {
-                for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
-                    if (staticEffect instanceof ProtectionGrantingEffect protection
-                            && protection.protectionScope() == null) {
-                        accumulator.addGrantedEffect(staticEffect);
-                    } else if (staticEffect instanceof TargetingRestrictionEffect restriction
-                            && restriction.hexproofLike()
-                            && keywordEffect.watchedKeywords().contains(Keyword.HEXPROOF)) {
-                        accumulator.addGrantedEffect(staticEffect);
-                    }
+            for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+                if (keywordEffect.copyProtectionEffects()
+                        && staticEffect instanceof ProtectionGrantingEffect protection
+                        && protection.protectionScope() == null) {
+                    accumulator.addGrantedEffect(staticEffect);
+                } else if (staticEffect instanceof TargetingRestrictionEffect restriction
+                        && restriction.hexproofLike()
+                        && keywordEffect.watchedKeywords().contains(Keyword.HEXPROOF)) {
+                    accumulator.addGrantedEffect(staticEffect);
                 }
             }
         }
@@ -73,7 +72,17 @@ public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implem
     private List<Card> candidateCards(StaticEffectContext context,
                                       GainKeywordsOfCreatureCardsExiledWithSourceEffect keywordEffect) {
         if (keywordEffect.requiredExiledCardCounter() != CounterType.BLOOD) {
-            return context.gameData().getCardsExiledByPermanent(context.sourceId());
+            List<Card> cards = context.gameData().getCardsExiledByPermanent(context.sourceId());
+            // Cards exiled to pay the source's delve cost still count once they have left exile
+            // (Soulflayer: "a creature card with flying was exiled with this creature's delve ability").
+            if (context.source() != null) {
+                for (Card delvedCard : context.source().getDelvedCards()) {
+                    if (cards.stream().noneMatch(card -> card.getId().equals(delvedCard.getId()))) {
+                        cards.add(delvedCard);
+                    }
+                }
+            }
+            return cards;
         }
         List<Card> cards = new ArrayList<>();
         synchronized (context.gameData().exiledCards) {

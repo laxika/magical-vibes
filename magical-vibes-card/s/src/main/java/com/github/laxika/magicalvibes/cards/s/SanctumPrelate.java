@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsWithChosenMa
 public class SanctumPrelate extends Card {
 
     public SanctumPrelate() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNumberOnEnterEffect(0, 20));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNumberOnEnterEffect(0, 99));
         addEffect(EffectSlot.STATIC, new NoncreatureSpellsWithChosenManaValueCantBeCastEffect());
     }
 }

@@ -378,9 +378,16 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
     }
 
-    /** The affected player chooses exactly the required number of permanents to untap. */
-    record UntapPermanentsForAmount(String sourceName, int requiredCount)
+    /**
+     * The affected player chooses the required number of permanents to untap, or fewer when
+     * {@code upTo} is true.
+     */
+    record UntapPermanentsForAmount(String sourceName, int requiredCount, boolean upTo)
             implements MultiPermanentChoiceContext {
+
+        public UntapPermanentsForAmount(String sourceName, int requiredCount) {
+            this(sourceName, requiredCount, false);
+        }
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
@@ -723,14 +730,15 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Each player chooses up to one qualifying permanent controlled by an opponent. */
+    /** Each player chooses up to one (or, when {@code mandatory}, exactly one) qualifying permanent controlled by an opponent. */
     record EachPlayerChoosesOpponentPermanentToDestroy(List<UUID> remainingPlayerIds,
                                                        List<UUID> chosenIds,
                                                        PermanentPredicate filter,
                                                        UUID sourceCardId,
                                                        UUID sourceControllerId,
                                                        String sourceName,
-                                                       boolean opponentsOfSourceController) implements MultiPermanentChoiceContext {
+                                                       boolean opponentsOfSourceController,
+                                                       boolean mandatory) implements MultiPermanentChoiceContext {
 
         public EachPlayerChoosesOpponentPermanentToDestroy {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
@@ -1193,7 +1201,8 @@ public sealed interface MultiPermanentChoiceContext {
      * {@code filter} that would otherwise untap; only those (plus any permanents the filter excludes)
      * untap this step. A {@code null} filter means all permanents count against the cap (Static Orb).
      * The untap-step bookkeeping and turn advance then resume exactly as they would have without the
-     * restriction.
+     * restriction. When several caps bind at once, {@code remainingRestrictions} lists every binding cap
+     * and the single choice must satisfy all of them (Static Orb with Winter Orb or Stoic Angel).
      */
     record StaticOrbUntap(UUID activePlayerId,
                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter,

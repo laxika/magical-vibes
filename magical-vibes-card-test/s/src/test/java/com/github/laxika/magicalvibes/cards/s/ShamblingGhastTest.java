@@ -57,7 +57,7 @@ class ShamblingGhastTest extends BaseCardTest {
                 "Target creature an opponent controls gets -1/-1 until end of turn.");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, friendly.getId()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalStateException.class);
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

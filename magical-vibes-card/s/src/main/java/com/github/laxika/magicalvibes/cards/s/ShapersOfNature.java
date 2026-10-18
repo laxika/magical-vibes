@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
@@ -19,7 +20,8 @@ public class ShapersOfNature extends Card {
                 false,
                 "{3}{G}",
                 List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
-                "{3}{G}: Put a +1/+1 counter on target creature."
+                "{3}{G}: Put a +1/+1 counter on target creature.",
+                TargetFilters.creature()
         ));
 
         // {2}{U}, Remove a +1/+1 counter from a creature you control: Draw a card.

@@ -17,6 +17,6 @@ public class SightOfTheScalelords extends Card {
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new BoostAllOwnCreaturesEffect(2, 2, toughnessAtLeastFour));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES, toughnessAtLeastFour));
+                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, toughnessAtLeastFour));
     }
 }

@@ -90,7 +90,9 @@ class SmeltingVatTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, sacrificed.getId());
+        }
         harness.passBothPriorities();
     }
 }

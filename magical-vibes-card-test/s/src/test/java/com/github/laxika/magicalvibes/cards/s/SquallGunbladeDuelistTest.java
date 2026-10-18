@@ -23,7 +23,7 @@ class SquallGunbladeDuelistTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 5);
     }
 
     @Test
@@ -36,6 +36,6 @@ class SquallGunbladeDuelistTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 }

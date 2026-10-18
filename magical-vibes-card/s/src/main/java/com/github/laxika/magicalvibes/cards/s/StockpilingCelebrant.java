@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,6 +27,7 @@ public class StockpilingCelebrant extends Card {
                 )),
                 "Target must be another nonland permanent you control"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new ReturnTargetPermanentsThenEffect(new ScryEffect(2)));
+                        new MayEffect(new ReturnTargetPermanentsThenEffect(new ScryEffect(2)),
+                                "Return the targeted permanent to its owner's hand?"));
     }
 }

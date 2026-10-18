@@ -18,5 +18,6 @@ public class ShadowUrchin extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.ANY),
                 new ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect()));
+        addEffect(EffectSlot.ON_DEATH, new ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect());
     }
 }

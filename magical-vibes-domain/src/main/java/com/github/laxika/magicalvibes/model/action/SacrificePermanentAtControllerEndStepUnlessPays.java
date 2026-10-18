@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 
 import java.util.UUID;
 
-/** Delayed end-step action that asks a permanent's controller to pay before sacrificing it. */
+/**
+ * Delayed action for "at the beginning of the next end step" sacrifices: the next end step of any player
+ * fires it, and its controller is asked to pay before the permanent is sacrificed.
+ */
 public record SacrificePermanentAtControllerEndStepUnlessPays(
         UUID permanentId,
         UUID controllerId,

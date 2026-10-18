@@ -25,6 +25,7 @@ class SpellpyrePhoenixTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new SpellpyrePhoenix());
         harness.handleMultipleCardsChosen(player1, List.of(rakingClaws.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Raking Claws");
     }
@@ -46,10 +47,10 @@ class SpellpyrePhoenixTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 
+        assertThat(gd.cardsCycledThisTurn.get(player1.getId())).isEqualTo(2);
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getId()).contains(phoenix.getId());
         harness.assertNotInGraveyard(player1, "Spellpyre Phoenix");
-        assertThat(gd.cardsCycledThisTurn.get(player1.getId())).isEqualTo(2);
     }
 
     @Test

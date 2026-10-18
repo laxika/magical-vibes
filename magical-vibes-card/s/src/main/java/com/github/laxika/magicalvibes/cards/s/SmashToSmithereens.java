@@ -18,9 +18,10 @@ public class SmashToSmithereens extends Card {
 
     public SmashToSmithereens() {
         // Destroy target artifact. Smash to Smithereens deals 3 damage to that artifact's controller.
-        // The controller is snapshotted before destruction; the then-effect deals real damage (not life loss).
+        // The rider stays controlled by the caster (damage source and shields key on the spell) while
+        // retargeting the damaged player to the destroyed artifact's controller.
         target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER),
-                ThenEffectRecipient.TARGET_CONTROLLER));
+                new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER),
+                ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

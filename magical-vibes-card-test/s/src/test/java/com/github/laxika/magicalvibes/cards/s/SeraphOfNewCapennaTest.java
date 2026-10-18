@@ -150,6 +150,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(vehicle.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
 
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, seraph)).isEqualTo(3);

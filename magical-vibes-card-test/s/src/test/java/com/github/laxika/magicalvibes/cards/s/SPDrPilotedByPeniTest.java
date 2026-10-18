@@ -180,7 +180,7 @@ class SPDrPilotedByPeniTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new ProfessionalWrestler()));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         attacker.setCounterCount(CounterType.CHARGE, 0);
         resolveAllTriggers();

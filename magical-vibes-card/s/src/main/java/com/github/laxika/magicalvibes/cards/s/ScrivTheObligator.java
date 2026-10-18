@@ -9,14 +9,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -50,14 +47,11 @@ public class ScrivTheObligator extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ATTACK,
-                        SequenceEffect.of(
-                                new ConditionalEffect(new AttackedTargetIsOpponent(),
-                                        new BoostSelfEffect(2, 0)),
-                                new ConditionalEffect(new NotCondition(new AttackedTargetIsOpponent()),
-                                        new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER))),
-                        GrantScope.ENCHANTED_CREATURE)),
+                Map.of(EffectSlot.ON_ATTACK, SequenceEffect.of(
+                        new ConditionalEffect(new AttackedTargetIsOpponent(),
+                                new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(2, 0)),
+                        new ConditionalEffect(new NotCondition(new AttackedTargetIsOpponent()),
+                                new EnchantedCreatureControllerLosesLifeEffect(2)))),
                 List.of(),
                 false,
                 false,

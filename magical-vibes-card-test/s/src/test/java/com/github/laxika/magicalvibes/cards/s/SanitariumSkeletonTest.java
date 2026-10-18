@@ -49,6 +49,7 @@ class SanitariumSkeletonTest extends BaseCardTest {
         SanitariumSkeleton first = new SanitariumSkeleton();
         SanitariumSkeleton second = new SanitariumSkeleton();
         SanitariumSkeleton opponents = new SanitariumSkeleton();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(first, second));
         harness.setGraveyard(player2, List.of(opponents));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -77,6 +78,7 @@ class SanitariumSkeletonTest extends BaseCardTest {
     @Test
     void multipleActivationsReturnTheCardOnlyOnce() {
         SanitariumSkeleton skeleton = new SanitariumSkeleton();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(skeleton));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

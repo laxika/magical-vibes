@@ -204,6 +204,18 @@ public record CreateTokenEffect(
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
                 tokenTargetFilter, newInvestigate, List.of(), attackingUntapped);
     }
+    /**
+     * Copy with the token target filter: an Aura token's enchant restriction ("enchant creature"), or the
+     * target filter for a targeted token ability.
+     */
+    public CreateTokenEffect withTokenTargetFilter(TargetFilter newTokenTargetFilter) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors,
+                subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
+                newTokenTargetFilter, investigate, simultaneousTokens, attackingUntapped);
+    }
+
     /** Copy of this blueprint with a different (already-evaluated) token count, all other fields preserved. */
     public CreateTokenEffect withAmount(int newAmount) {
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color,
@@ -246,15 +258,6 @@ public record CreateTokenEffect(
                 color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped);
-    }
-
-    /** Copy of this blueprint with the target filter for a targeted token ability. */
-    public CreateTokenEffect withTokenTargetFilter(TargetFilter newTokenTargetFilter) {
-        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors,
-                subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
-                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
-                newTokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /**

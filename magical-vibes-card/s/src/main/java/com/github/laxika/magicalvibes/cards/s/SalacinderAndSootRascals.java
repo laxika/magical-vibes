@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardFromSpellbookToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -14,16 +16,18 @@ import java.util.List;
 public class SalacinderAndSootRascals extends Card {
 
     public SalacinderAndSootRascals() {
-        ConjureCardFromSpellbookToHandEffect conjureChoice = new ConjureCardFromSpellbookToHandEffect(
-                List.of(
-                        new ConjureCardFromSpellbookToHandEffect.CardPrintingReference("CSP", "96"),
-                        new ConjureCardFromSpellbookToHandEffect.CardPrintingReference("EMN", "76")
-                ));
+        ChooseOneEffect modes = new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption(
+                        "Conjure a card named Rite of Flame into your hand",
+                        new ConjureCardNamedIntoHandEffect("Rite of Flame", false)),
+                new ChooseOneEffect.ChooseOneOption(
+                        "Conjure a card named Take Inventory into your hand",
+                        new ConjureCardNamedIntoHandEffect("Take Inventory", false))));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, conjureChoice);
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(modes));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         new CardSubtypePredicate(CardSubtype.ELEMENTAL),
-                        List.of(conjureChoice)));
+                        List.of(modes)));
     }
 }

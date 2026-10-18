@@ -82,7 +82,7 @@ class StonewoodInvocationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.assertLife(player2, 18);
     }

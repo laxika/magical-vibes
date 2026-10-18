@@ -120,7 +120,6 @@ class ShadowmageInfiltratorTest extends BaseCardTest {
 
         resolveCombat(player2);
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

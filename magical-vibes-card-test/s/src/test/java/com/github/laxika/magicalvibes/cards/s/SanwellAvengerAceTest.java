@@ -51,7 +51,7 @@ class SanwellAvengerAceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(vehicle.getId()));
+                .anyMatch(permanent -> permanent.getCard().getId().equals(vehicle.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 

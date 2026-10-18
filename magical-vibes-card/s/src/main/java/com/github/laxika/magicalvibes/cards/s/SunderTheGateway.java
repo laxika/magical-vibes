@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -16,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -44,7 +45,7 @@ public class SunderTheGateway extends Card {
                         "Incubate 2, then transform an Incubator token you control",
                         List.of(incubate(2), new TransformChosenPermanentEffect(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsTokenPredicate(),
-                                new PermanentNamedPredicate("Incubator"),
+                                new PermanentHasSubtypePredicate(CardSubtype.INCUBATOR),
                                 new PermanentControlledBySourceControllerPredicate())))))
         )));
     }
@@ -62,7 +63,7 @@ public class SunderTheGateway extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(CardSubtype.INCUBATOR), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
                 false, false, false, counters, Set.of()
         );
     }

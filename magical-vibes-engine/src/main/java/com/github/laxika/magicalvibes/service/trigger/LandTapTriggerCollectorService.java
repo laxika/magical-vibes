@@ -592,14 +592,29 @@ public class LandTapTriggerCollectorService {
                 .forEach(producedColors::add);
         if (producedColors.isEmpty()) return false;
 
-        ManaPool pool = gameData.playerManaPools.get(lt.tappingPlayerId());
-        for (ManaColor color : producedColors) {
-            pool.add(color, Math.toIntExact(matchingLandCount));
+        if (producedColors.size() == 1) {
+            ManaColor color = producedColors.iterator().next();
+            gameData.playerManaPools.get(lt.tappingPlayerId()).add(color, Math.toIntExact(matchingLandCount));
+        } else {
+            List<ManaColor> choices = producedColors.stream().sorted().toList();
+            for (long i = 0; i < matchingLandCount; i++) {
+                StackEntry noFollowUp = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        match.permanent().getCard(), lt.tappingPlayerId(),
+                        match.permanent().getCard().getName() + "'s mana ability",
+                        new ArrayList<>(), null, match.permanent().getId());
+                noFollowUp.setNonTargeting(true);
+                AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, gameData,
+                        new PendingInteraction.ColorChoice(lt.tappingPlayerId(), null, null,
+                                new ChoiceContext.FixedManaColorThenEffectsChoice(
+                                        lt.tappingPlayerId(), choices, 1, noFollowUp),
+                                choices.stream().map(Enum::name).toList(),
+                                "Choose a type of mana the land produced."));
+            }
         }
 
         gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + gameData.playerIdToName.get(lt.tappingPlayerId())
-                        + " adds " + matchingLandCount + " additional mana of each type produced by "
+                        + " adds " + matchingLandCount + " additional mana of a type produced by "
                         + tappedLand.getCard().getName() + "."));
         return true;
     }

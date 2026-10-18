@@ -84,7 +84,7 @@ class ShamblingRemainsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(findPermanent(player1, "Shambling Remains").isAttacking()).isTrue();
     }

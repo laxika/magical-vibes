@@ -111,6 +111,7 @@ class SisterRepentiaTest extends BaseCardTest {
     @Test
     @DisplayName("Sister Repentia drawn second in a turn does not offer miracle")
     void secondDrawDoesNotOfferMiracle() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SisterRepentia(), new SisterRepentia()));
 
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -55,8 +57,9 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
         sigurd.setAttackedThisTurn(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 1, 0, 0, saga.getId());
+        harness.activateAbility(player1, 1, 0, null, saga.getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Put a lore counter on target Saga you control");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, sigurd.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -73,20 +76,21 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int sigurdIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sigurd);
-        assertThatThrownBy(() -> harness.activateAbility(player1, sigurdIndex, 0, 0, saga.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, sigurdIndex, 0, null, saga.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacked this turn");
 
         sigurd.setAttackedThisTurn(true);
         Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
         int firstSigurdIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sigurd);
-        harness.activateAbility(player1, firstSigurdIndex, 0, 0, saga.getId());
+        harness.activateAbility(player1, firstSigurdIndex, 0, null, saga.getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Put a lore counter on target Saga you control");
         harness.handlePermanentChosen(player1, otherCreature.getId());
         harness.passBothPriorities();
 
         int finalSigurdIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sigurd);
-        assertThatThrownBy(() -> harness.activateAbility(player1, finalSigurdIndex, 0, 0, saga.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, finalSigurdIndex, 0, null, saga.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("once each turn");
     }
@@ -117,8 +121,9 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
         sigurd.setAttackedThisTurn(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 1, 0, 0, saga.getId());
+        harness.activateAbility(player1, 1, 0, null, saga.getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Put a lore counter on target Saga you control");
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         resolveAllTriggers();
 
@@ -132,7 +137,10 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
         addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
         Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
 
-        harness.enterBattlefieldAndReturn(player1, new HistoryOfBenalia());
+        harness.setHand(player1, List.of(new HistoryOfBenalia()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, otherCreature.getId());
         resolveAllTriggers();
 
@@ -145,8 +153,12 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
         addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
         Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent saga = harness.enterBattlefieldAndReturn(player1, new TheWeatherseedTreaty());
+        harness.setHand(player1, List.of(new TheWeatherseedTreaty()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
+        Permanent saga = findPermanent(player1, "The Weatherseed Treaty");
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         harness.handlePermanentChosen(player1, otherCreature.getId());
         harness.handlePermanentChosen(player1, otherCreature.getId());
@@ -164,8 +176,9 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
         sigurd.setAttackedThisTurn(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 1, 0, 0, saga.getId());
+        harness.activateAbility(player1, 1, 0, null, saga.getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Put a lore counter on target Saga you control");
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
@@ -200,8 +213,9 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
                 .orElseThrow();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int sigurdIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sigurd);
-        harness.activateAbility(player1, sigurdIndex, 0, modeIndex, saga.getId());
+        harness.activateAbility(player1, sigurdIndex, 0, null, saga.getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, modeIndex == 0 ? "Put a lore counter on target Saga you control" : "Remove a lore counter from target Saga you control");
         if (modeIndex == 0) {
             harness.handlePermanentChosen(player1, otherCreature.getId());
         }

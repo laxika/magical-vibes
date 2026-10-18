@@ -42,6 +42,7 @@ public class SummonPrimalGaruda extends Card {
                         tappedCreatureOpponentControls,
                         "Target must be a tapped creature an opponent controls")
         ));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
         addEffect(EffectSlot.SAGA_CHAPTER_II,
@@ -51,6 +52,7 @@ public class SummonPrimalGaruda extends Card {
                         anotherCreatureYouControl,
                         "Target must be another creature you control")
         ));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
@@ -60,5 +62,6 @@ public class SummonPrimalGaruda extends Card {
                         anotherCreatureYouControl,
                         "Target must be another creature you control")
         ));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
     }
 }

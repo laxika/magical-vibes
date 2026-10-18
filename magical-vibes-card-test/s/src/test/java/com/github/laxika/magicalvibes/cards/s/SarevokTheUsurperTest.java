@@ -50,7 +50,6 @@ class SarevokTheUsurperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 4, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent sarevok = findPermanent(player1, "Sarevok, Mighty Usurper");
         assertThat(gqs.hasKeyword(gd, sarevok, Keyword.TRAMPLE)).isTrue();
@@ -176,7 +175,7 @@ class SarevokTheUsurperTest extends BaseCardTest {
         advanceToCombat(player2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

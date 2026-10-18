@@ -34,9 +34,9 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.RETURN);
 
         harness.handleGraveyardCardChosen(player1, 0);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 1);
         harness.handleGraveyardCardChosen(player2, 0);
-        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleGraveyardCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(player1First, player1Second);
         assertThat(gd.playerHands.get(player2.getId())).contains(player2First, player2Second);

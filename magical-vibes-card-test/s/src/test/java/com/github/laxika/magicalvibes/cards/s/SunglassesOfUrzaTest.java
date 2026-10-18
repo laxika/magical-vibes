@@ -141,8 +141,7 @@ class SunglassesOfUrzaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

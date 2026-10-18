@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCreatesTokensEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -33,9 +34,9 @@ public class SwanSong extends Card {
                         StackEntryType.SORCERY_SPELL
                 )),
                 "Target must be an enchantment, instant, or sorcery spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        )).addEffect(EffectSlot.SPELL, new TargetSpellControllerCreatesTokensEffect(new CreateTokenEffect(
                         "Bird", 2, 2, CardColor.BLUE,
-                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())))
+                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

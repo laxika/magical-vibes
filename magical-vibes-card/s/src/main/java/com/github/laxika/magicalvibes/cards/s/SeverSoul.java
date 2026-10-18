@@ -26,8 +26,8 @@ public class SeverSoul extends Card {
         // Destroy target nonblack creature. It can't be regenerated. You gain life equal to its
         // toughness.
         //
-        // Gain life first so the toughness is snapshotted while the creature is still on the
-        // battlefield, before the destruction resolves.
+        // The effects resolve in printed order; the life gain reads the destroyed creature's
+        // last-known toughness.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -35,7 +35,7 @@ public class SeverSoul extends Card {
                 )),
                 "Target must be a nonblack creature"
         ))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetToughness()))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true))
+                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetToughness()));
     }
 }

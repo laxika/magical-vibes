@@ -106,7 +106,7 @@ class ShriekingDrakeTest extends BaseCardTest {
     @DisplayName("A creature controlled by you but owned by the opponent returns to their hand")
     void bounceStolenCreatureToOwnersHand() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new CloudElemental());
-        gd.stolenCreatures.put(elemental.getId(), player2.getId());
+        setOwnerAndController(elemental, player2, player1);
         castAndResolveSpell();
         resolveTriggerToChoice();
 

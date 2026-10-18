@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -94,12 +96,33 @@ public class ReturnNControlledPermanentsToHandEffectHandler implements NormalEff
         if (sourcePermanentId != null && orderedPermanentIds.remove(sourcePermanentId)) {
             orderedPermanentIds.add(sourcePermanentId);
         }
+        List<Permanent> toReturn = new ArrayList<>();
         for (UUID permanentId : orderedPermanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && controllerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
-                    && permanentRemovalService.removePermanentToHand(gameData, permanent)) {
-                bouncedCards.add(permanent.getCard());
+            if (permanent != null && controllerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                toReturn.add(permanent);
             }
+        }
+        // The permanents leave together, so each one's "whenever a creature is returned" watcher also sees
+        // the others returned in this event (CR 603.10a); only the leaving snapshots are shared, since
+        // returning to hand is not dying.
+        Map<UUID, Permanent> previousLeaving = new HashMap<>(gameData.simultaneousDyingPermanents);
+        Map<UUID, UUID> previousLeavingControllers = new HashMap<>(gameData.simultaneousDyingPermanentControllers);
+        try {
+            for (Permanent permanent : toReturn) {
+                gameData.simultaneousDyingPermanents.put(permanent.getId(), new Permanent(permanent));
+                gameData.simultaneousDyingPermanentControllers.put(permanent.getId(), controllerId);
+            }
+            for (Permanent permanent : toReturn) {
+                if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
+                    bouncedCards.add(permanent.getCard());
+                }
+            }
+        } finally {
+            gameData.simultaneousDyingPermanents.clear();
+            gameData.simultaneousDyingPermanents.putAll(previousLeaving);
+            gameData.simultaneousDyingPermanentControllers.clear();
+            gameData.simultaneousDyingPermanentControllers.putAll(previousLeavingControllers);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
         if (!bouncedCards.isEmpty()) {

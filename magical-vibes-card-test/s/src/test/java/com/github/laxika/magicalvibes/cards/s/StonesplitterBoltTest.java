@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.u.UpTheBeanstalk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,7 @@ class StonesplitterBoltTest extends BaseCardTest {
 
     @Test
     void removesXLoyaltyWithoutBargain() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshiokWickedManipulator());
+        Permanent target = addAshiokWithStartingLoyalty(player2);
         castBolt(target.getId());
 
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
@@ -82,7 +83,7 @@ class StonesplitterBoltTest extends BaseCardTest {
     @Test
     void removesTwiceXLoyaltyWhenBargainedWithEnchantment() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshiokWickedManipulator());
+        Permanent target = addAshiokWithStartingLoyalty(player2);
         prepareBolt(2);
         castBargainedBolt(2, target.getId(), sacrifice.getId());
 
@@ -96,7 +97,7 @@ class StonesplitterBoltTest extends BaseCardTest {
     @Test
     void bargainWithZeroXStillSacrificesButDealsNoDamage() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new CandyTrail());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshiokWickedManipulator());
+        Permanent target = addAshiokWithStartingLoyalty(player2);
         prepareBolt(0);
         castBargainedBolt(0, target.getId(), sacrifice.getId());
 
@@ -145,6 +146,7 @@ class StonesplitterBoltTest extends BaseCardTest {
         harness.passBothPriorities();
         java.util.UUID ratId = harness.getPermanentId(player1, "Rat");
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AshiokWickedManipulator());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         prepareBolt(2);
         castBargainedBolt(2, target.getId(), ratId);
 
@@ -165,6 +167,12 @@ class StonesplitterBoltTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Edgewall Pack");
+    }
+
+    private Permanent addAshiokWithStartingLoyalty(Player player) {
+        Permanent ashiok = harness.addToBattlefieldAndReturn(player, new AshiokWickedManipulator());
+        ashiok.setCounterCount(CounterType.LOYALTY, 5);
+        return ashiok;
     }
 
     private void prepareBolt(int xValue) {

@@ -111,6 +111,7 @@ class ScoldingAdministratorTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         assertThat(admin.getPlusOnePlusOneCounters()).isEqualTo(1);
+        harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
     }
 

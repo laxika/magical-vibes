@@ -188,7 +188,7 @@ class SpelljackTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mental Note");
         harness.assertNotInGraveyard(player2, "Mental Note");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
         assertThat(gd.findExiledCard(mentalNote.getId())).isNull();
         assertThat(gd.exilePlayPermissions).doesNotContainKey(mentalNote.getId());
         assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(mentalNote.getId());

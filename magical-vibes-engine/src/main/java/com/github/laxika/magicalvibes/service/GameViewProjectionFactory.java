@@ -447,6 +447,11 @@ public class GameViewProjectionFactory {
             }
         }
 
+        if (gameData.senControlledPlayerId != null && !gameData.senControlledPlayerId.equals(playerId)) {
+            // Sen Triplets: the targeted player plays with their hand revealed this turn.
+            opponentRevealsOwnHand = true;
+        }
+
         boolean fullHandRevealed = allHandsRevealed
                 || opponentRevealsOwnHand
                 || opponentHandRevealedBySource(gameData, playerId);

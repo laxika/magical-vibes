@@ -34,8 +34,10 @@ public class EmbroseDeanOfShadow extends Card {
                         "Target must be another creature")
         ));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        TriggeringPermanentConditionalEffect drawForCounteredCreatureDeath = new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
-                new DrawCardEffect(1)));
+                new DrawCardEffect(1));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawForCounteredCreatureDeath);
+        addEffect(EffectSlot.ON_DEATH, drawForCounteredCreatureDeath);
     }
 }

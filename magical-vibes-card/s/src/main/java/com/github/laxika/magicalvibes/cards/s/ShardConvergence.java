@@ -15,9 +15,13 @@ public class ShardConvergence extends Card {
         // Reveal those cards, put them into your hand, then shuffle." Each restricted subtype search
         // reveals its pick and may fail to find; a card found for one subtype leaves the library
         // before the next search, so a dual-type card can only satisfy one subtype (CR-consistent).
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS)));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ISLAND)));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP)));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN)));
+        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS))
+                .withoutShuffle());
+        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ISLAND))
+                .withoutShuffle().asContinuationOfPreviousSearch());
+        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP))
+                .withoutShuffle().asContinuationOfPreviousSearch());
+        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN))
+                .asContinuationOfPreviousSearch());
     }
 }

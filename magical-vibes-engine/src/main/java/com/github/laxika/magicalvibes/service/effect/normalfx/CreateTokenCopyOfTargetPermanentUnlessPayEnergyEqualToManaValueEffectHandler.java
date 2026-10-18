@@ -56,7 +56,7 @@ public class CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffe
                     entry.getControllerId(), copyEffect.copyEffect());
             for (UUID tokenId : tokenIds) {
                 Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
-                if (token != null && token.getCard().getManaValue() > 0) {
+                if (token != null) {
                     gameData.queueDelayedAction(new SacrificePermanentAtControllerEndStepUnlessPays(
                             tokenId, entry.getControllerId(), entry.getCard(),
                             new PayEnergyCost(token.getCard().getManaValue())));

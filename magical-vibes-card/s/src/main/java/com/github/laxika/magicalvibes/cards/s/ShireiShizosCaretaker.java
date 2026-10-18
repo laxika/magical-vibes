@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -24,8 +23,6 @@ public class ShireiShizosCaretaker extends Card {
         addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentPowerAtMostPredicate(1),
-                        new MayEffect(
-                                new RegisterDelayedReturnDyingCreatureUnderControlEffect(true),
-                                "return that creature to the battlefield at the beginning of the next end step?")));
+                        RegisterDelayedReturnDyingCreatureUnderControlEffect.optionalWhileSourceRemains()));
     }
 }

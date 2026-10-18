@@ -55,6 +55,8 @@ import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThi
 import com.github.laxika.magicalvibes.service.effect.normalfx.IllusionistsGambitAdditionalCombatEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RunedTerrorEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
@@ -916,8 +918,9 @@ public class TurnProgressionService {
         gameData.currentExtraTurnSequence = extraTurnSequence;
 
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
-        // untap step this player would actually get (CR 614.10a).
-        int queuedUntapSkips = gameData.skipNextUntapStepCount.getOrDefault(nextActive, 0);
+        // untap step this player would actually get (CR 614.10a). A turn whose untap step is already
+        // skipped by an extra-turn skip does not consume the queued skip; it waits for the next one.
+        int queuedUntapSkips = skipUntapStep ? 0 : gameData.skipNextUntapStepCount.getOrDefault(nextActive, 0);
         if (queuedUntapSkips > 0) {
             if (queuedUntapSkips == 1) {
                 gameData.skipNextUntapStepCount.remove(nextActive);
@@ -1266,6 +1269,7 @@ public class TurnProgressionService {
         gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
         gameData.firstOpponentLifeLossTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
+        gameData.creaturesThatReceivedCountersThisTurn.clear();
         gameData.creatureTapCountsThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
@@ -1404,10 +1408,22 @@ public class TurnProgressionService {
                     affected.removeTapRestriction(expired.id());
                 }
             }
+            if (expired.effect() instanceof GrantKeywordEffect keywordGrant
+                    && keywordGrant.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                    && expired.affectedPermanentId() != null) {
+                // The grant ends at its controller's turn even when the creature changed controllers,
+                // so the mirrored keyword set on the permanent can't wait for its own controller's turn.
+                Permanent affected = findPermanent(gameData, expired.affectedPermanentId());
+                if (affected != null) {
+                    affected.getUntilNextTurnKeywords().removeAll(keywordGrant.keywords());
+                }
+            }
             if (expired.effect() instanceof MakeTargetCopyOfTargetCreatureUntilNextTurnEffect
                     && expired.affectedPermanentId() != null) {
                 Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
-                if (copy != null && copy.isCopyUntilControllerNextTurn()
+                if (copy != null && copy.hasUntilNextTurnCopyLayers()) {
+                    copy.expireUntilNextTurnCopyLayers(nextActive);
+                } else if (copy != null && copy.isCopyUntilControllerNextTurn()
                         && nextActive.equals(copy.getCopyUntilNextTurnControllerId())) {
                     copy.revertUntilNextTurnCopy();
                 }
@@ -1461,6 +1477,7 @@ public class TurnProgressionService {
         for (var battlefieldEntry : gameData.playerBattlefields.entrySet()) {
             UUID sourceControllerId = battlefieldEntry.getKey();
             for (Permanent permanent : battlefieldEntry.getValue()) {
+                if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
                 boolean applies = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(ExtraTurnSkipReplacementEffect.class::isInstance)
                         .map(ExtraTurnSkipReplacementEffect.class::cast)
@@ -1527,24 +1544,17 @@ public class TurnProgressionService {
             List<com.github.laxika.magicalvibes.model.effect.StaticOrbEffect> remainingRestrictions,
             List<UUID> previouslyExcludedIds) {
         var excluded = new java.util.LinkedHashSet<>(previouslyExcludedIds);
+        // Every binding cap was satisfied by the one choice, so the tapped permanents any of the caps
+        // covers untap only when chosen; permanents none of them covers untap normally.
+        java.util.function.Predicate<Permanent> cappedByAnyRestriction = permanent ->
+                staticOrbFilter == null || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, staticOrbFilter)
+                        || remainingRestrictions.stream().anyMatch(restriction -> restriction.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, restriction.filter()));
         gameData.playerBattlefields.getOrDefault(activePlayerId, List.of()).stream()
-                .filter(permanent -> permanent.isTapped()
-                        && (staticOrbFilter == null || predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, staticOrbFilter)))
+                .filter(permanent -> permanent.isTapped() && cappedByAnyRestriction.test(permanent))
                 .map(Permanent::getId).filter(id -> !chosenUntapIds.contains(id)).forEach(excluded::add);
-        for (int index = 0; index < remainingRestrictions.size(); index++) {
-            var restriction = remainingRestrictions.get(index);
-            var candidates = untapStepService.staticOrbUntapCandidates(gameData, activePlayerId, restriction)
-                    .stream().filter(id -> !excluded.contains(id)).toList();
-            if (candidates.size() <= restriction.maxUntap()) continue;
-            playerInputService.beginMultiPermanentChoice(gameData, activePlayerId, candidates, restriction.maxUntap(),
-                    new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.StaticOrbUntap(
-                            activePlayerId, restriction.filter(),
-                            remainingRestrictions.subList(index + 1, remainingRestrictions.size()),
-                            List.copyOf(excluded)),
-                    "Choose up to " + restriction.maxUntap() + " permanents to untap.");
-            return;
-        }
         var excludedPredicate = new com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate(
                 excluded.stream().map(id -> (com.github.laxika.magicalvibes.model.filter.PermanentPredicate)
                         new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(id)).toList());

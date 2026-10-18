@@ -172,6 +172,14 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                     allToAndByTargetPermanentUntilNextTurn(gameData, entry);
             case ALL_TO_SELF -> allToSelf(gameData, entry, e.combatOnly());
             case ALL_BY_SELF -> allBySelf(gameData, entry, e.combatOnly());
+            case ALL_TO_CONTROLLER_AND_PERMANENTS -> {
+                UUID controllerId = entry.getControllerId();
+                gameData.playersWithAllDamagePrevented.add(controllerId);
+                gameData.playersWithAllPermanentDamagePrevented.add(controllerId);
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameLogService.append(gameData, GameLog.text(
+                        "All damage that would be dealt to " + playerName + " and permanents " + playerName + " controls this turn is prevented."));
+            }
             case ALL_TO_CONTROLLER_AND_CREATURES -> {
                 UUID controllerId = entry.getControllerId();
                 gameData.playersWithAllDamagePrevented.add(controllerId);

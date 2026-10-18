@@ -60,7 +60,7 @@ class SimianSimulacrumTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent simian = findPermanent(player1, "Simian Simulacrum");
-        assertThat(simian.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, simian, Keyword.HASTE)).isTrue();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

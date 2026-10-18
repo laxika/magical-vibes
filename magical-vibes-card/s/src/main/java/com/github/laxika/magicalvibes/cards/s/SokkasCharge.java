@@ -18,7 +18,7 @@ public class SokkasCharge extends Card {
 
     public SokkasCharge() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK), GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.ALLY))));
     }
 }

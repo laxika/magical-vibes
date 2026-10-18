@@ -5,6 +5,8 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -37,7 +39,9 @@ public class SoldeviGolem extends Card {
         target(tappedOpponentCreature).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT)
+                        ConditionalEffect.unless(
+                                new TargetPermanentMatches(new PermanentNotPredicate(new PermanentIsTappedPredicate())),
+                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT))
                 ),
                 "Untap target tapped creature an opponent controls? If you do, untap this creature."
         ));

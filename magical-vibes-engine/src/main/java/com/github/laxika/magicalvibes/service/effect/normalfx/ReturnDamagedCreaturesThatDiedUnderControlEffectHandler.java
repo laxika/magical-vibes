@@ -118,6 +118,7 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
                         .computeIfAbsent(sourcePermanentId, k -> ConcurrentHashMap.newKeySet())
                         .add(permanent.getId());
                 gameData.seraphControlWatch.putIfAbsent(sourcePermanentId, entry.getControllerId());
+                gameData.seraphLinkedController.putIfAbsent(sourcePermanentId, entry.getControllerId());
             }
         }
     }

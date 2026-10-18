@@ -28,7 +28,7 @@ class SolarArrayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent bruiser = findPermanent(player1, "Arcbound Bruiser");
         assertThat(bruiser.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
@@ -46,12 +46,12 @@ class SolarArrayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanent(first).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(findPermanent(second).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

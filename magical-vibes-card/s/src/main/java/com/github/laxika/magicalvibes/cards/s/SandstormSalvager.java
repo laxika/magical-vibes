@@ -35,7 +35,7 @@ public class SandstormSalvager extends Card {
                 List.of(
                         new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
                                 creatureToken),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, creatureToken)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, creatureToken)
                 ),
                 "{2}, {T}: Put a +1/+1 counter on each creature token you control. They gain trample until end of turn."
         ));

@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
@@ -225,6 +226,22 @@ public class ETBTokenTargetService {
                 continue;
             }
 
+            if (!validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty() && validSpellTargets.isEmpty()
+                    && pending.effects().stream().anyMatch(CardEffect::targetChosenAtRandom)) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
+                UUID randomTarget = validPermanentTargets.get(
+                        ThreadLocalRandom.current().nextInt(validPermanentTargets.size()));
+                putTargetedETBTriggerOnStack(gameData, pending, randomTarget);
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s enter-the-battlefield ability randomly targets "
+                                + gameQueryService.findPermanentById(gameData, randomTarget).getCard().getName() + "."));
+                if (triggerCollectionService != null) {
+                    triggerCollectionService.getObject().checkBecomesTargetOfAbilityTriggers(gameData);
+                    triggerCollectionService.getObject().checkCrimeTriggers(gameData, gameData.stack.getLast());
+                }
+                continue;
+            }
+
             gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             List<UUID> validPlayerChoiceTargets = new ArrayList<>(validPlayerTargets);
@@ -286,15 +303,24 @@ public class ETBTokenTargetService {
 
     private void putTargetlessETBTriggerOnStack(GameData gameData,
                                                  PermanentChoiceContext.ETBTokenTargetTrigger pending) {
+        putTargetedETBTriggerOnStack(gameData, pending, null);
+    }
+
+    private void putTargetedETBTriggerOnStack(GameData gameData,
+                                              PermanentChoiceContext.ETBTokenTargetTrigger pending,
+                                              UUID targetId) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 pending.sourceCard(),
                 pending.controllerId(),
                 pending.sourceCard().getName() + "'s ETB ability",
                 new ArrayList<>(pending.effects()),
-                (UUID) null,
+                targetId,
                 pending.sourcePermanentId());
         entry.setXValue(pending.xValue());
+        if (targetId != null && pending.targetFilter() != null) {
+            entry.setTargetFilter(pending.targetFilter());
+        }
         entry.setTriggeringPermanentId(pending.triggeringPermanentId());
         if (pending.sourcePermanentId() != null) {
             Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
@@ -305,6 +331,7 @@ public class ETBTokenTargetService {
                 entry.setWaterbendCostPaid(sourcePermanent.isWaterbendCostPaid());
                 entry.setRevealCardFromHandCostPaid(sourcePermanent.isRevealCardFromHandCostPaid());
                 entry.setControlledDragonAsCast(sourcePermanent.isControlledDragonAsCast());
+                entry.setGiftPromised(sourcePermanent.isGiftPromised());
             }
         }
         gameData.stack.add(entry);
@@ -544,7 +571,12 @@ public class ETBTokenTargetService {
                     && validExiledCardTargets.isEmpty()
                     && validGraveyardCardTargets.isEmpty();
 
-            if (noLegalTargets) {
+            int availableTargetCount = validPlayerTargets.size() + validPermanentTargets.size()
+                    + validExiledCardTargets.size() + validGraveyardCardTargets.size();
+            boolean cannotReachMinimum = chosenInGroup < effectiveMinTargets
+                    && availableTargetCount < effectiveMinTargets - chosenInGroup;
+
+            if (noLegalTargets || cannotReachMinimum) {
                 if (chosenInGroup < effectiveMinTargets) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
@@ -936,6 +968,7 @@ public class ETBTokenTargetService {
             if (sourcePermanent != null) {
                 etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 etbEntry.setAttackedTargetId(sourcePermanent.getAttackTarget());
+                etbEntry.setGiftPromised(sourcePermanent.isGiftPromised());
                 if (card.isAura() && sourcePermanent.isAttached() && sourcePermanent.getAttachedTo() != null) {
                     Permanent enchanted = gameQueryService.findPermanentById(gameData, sourcePermanent.getAttachedTo());
                     if (enchanted != null) {

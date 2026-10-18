@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
 
         List<Permanent> attackingCreatures = battlefield.stream()
                 .filter(Permanent::isAttacking)
-                .filter(p -> p.getCard().hasType(CardType.CREATURE))
+                .filter(p -> gameQueryService.isCreature(gameData, p))
                 .toList();
 
         int exiledCount = 0;
@@ -82,6 +83,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         if (deck == null || deck.isEmpty()) {
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, targetPlayerId);
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             return;
@@ -94,6 +96,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
                 .toList();
 
         if (basicLands.isEmpty()) {
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, targetPlayerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));

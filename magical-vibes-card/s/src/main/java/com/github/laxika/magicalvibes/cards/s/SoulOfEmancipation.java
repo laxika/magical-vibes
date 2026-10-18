@@ -30,7 +30,7 @@ public class SoulOfEmancipation extends Card {
                 "Target must be another nonland permanent"), 0, 3);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyEachTargetPermanentEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenForEachDestroyedPermanentControllerEffect(
+                CreateTokenForEachDestroyedPermanentControllerEffect.forEachTarget(
                         new CreateTokenEffect("Angel", 3, 3, CardColor.WHITE,
                                 List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of())));
     }

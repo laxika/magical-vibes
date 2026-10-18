@@ -109,8 +109,8 @@ class SolfataraTest extends BaseCardTest {
     @Test
     @DisplayName("Casting during upkeep does not draw until the following turn's upkeep")
     void upkeepCastWaitsForNextTurn() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
+        advanceToUpkeep(player1);
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Solfatara()));
         harness.setLibrary(player1, List.of(new RiverBoa(), new Quicksand(), new RiverBoa()));
         harness.addMana(player1, ManaColor.RED, 3);

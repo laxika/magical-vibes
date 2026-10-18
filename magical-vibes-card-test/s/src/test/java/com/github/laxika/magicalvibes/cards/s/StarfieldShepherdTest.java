@@ -173,6 +173,7 @@ class StarfieldShepherdTest extends BaseCardTest {
 
         harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains()));
         harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Plains()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.castFromExile(player1, shepherd.getId());

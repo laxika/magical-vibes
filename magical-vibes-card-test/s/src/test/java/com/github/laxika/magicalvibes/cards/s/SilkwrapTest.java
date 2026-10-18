@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AtarkaBeastbreaker;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -108,10 +109,9 @@ class SilkwrapTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled creature returns to its owner rather than its previous controller")
     void stolenCreatureReturnsToOwner() {
-        harness.addToBattlefield(player2, new AtarkaBeastbreaker());
-        UUID targetId = harness.getPermanentId(player2, "Atarka Beastbreaker");
-        gd.stolenCreatures.put(targetId, player1.getId());
-        castAndResolve(targetId);
+        Permanent beastbreaker = harness.addToBattlefieldAndReturn(player2, new AtarkaBeastbreaker());
+        setOwnerAndController(beastbreaker, player1, player2);
+        castAndResolve(beastbreaker.getId());
 
         harness.assertNotOnBattlefield(player2, "Atarka Beastbreaker");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

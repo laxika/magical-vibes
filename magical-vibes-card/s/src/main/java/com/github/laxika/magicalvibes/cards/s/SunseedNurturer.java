@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 import java.util.List;
@@ -21,7 +23,8 @@ public class SunseedNurturer extends Card {
         // At the beginning of your end step, if you control a creature with power 5 or greater,
         // you may gain 2 life.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(5)),
+                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(5)))),
                 new MayEffect(new GainLifeEffect(2), "Gain 2 life?")));
 
         // {T}: Add {C}.

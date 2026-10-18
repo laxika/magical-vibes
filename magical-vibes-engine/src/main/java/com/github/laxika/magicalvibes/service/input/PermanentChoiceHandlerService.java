@@ -361,6 +361,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseOpponentForTargetingRelay(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentEachCreatesTokens chooseOpponent) {
             battlefieldHandler.handleChooseOpponentEachCreatesTokens(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentReturnsCardFromGraveyard chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentReturnsCardFromGraveyard(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentThenSearchLandDifference chooseOpponent) {
             battlefieldHandler.handleChooseOpponentThenSearchLandDifference(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.OrzhovAdvokistCreatureChoice advokistChoice) {

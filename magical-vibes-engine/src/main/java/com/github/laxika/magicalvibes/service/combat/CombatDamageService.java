@@ -522,6 +522,14 @@ public class CombatDamageService {
         // CR 510.1 — Snapshot Phyrexian Unlife infect conversion before lifelink changes life totals.
         // All combat damage is simultaneous, so the infect check must use pre-damage life.
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
+        Set<Permanent> lifelinkDealers = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (List<Permanent> side : List.of(atkBf, defBf)) {
+            for (Permanent dealer : side) {
+                if (gameQueryService.hasKeyword(gameData, dealer, Keyword.LIFELINK)) {
+                    lifelinkDealers.add(dealer);
+                }
+            }
+        }
 
         applyDamageToEachPlayer(gameData, state, defenderId);
         Map<UUID, Set<Permanent>> damagedPlayerSources = new LinkedHashMap<>();
@@ -575,7 +583,7 @@ public class CombatDamageService {
         applyPlaneswalkerDamage(gameData, state);
         // CR 510.2 — lifelink gains life as the simultaneous damage is dealt, so it can't change
         // whether a life-dependent prevention applied to that same damage. Before dead creatures leave.
-        processLifelink(gameData, state.combatDamageDealt);
+        processLifelink(gameData, state.combatDamageDealt, lifelinkDealers);
         processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
         processGainLifeEqualToControlledCreatureCombatDamage(gameData, state.combatDamageDealt);
         checkCombatExcessDamageTriggers(gameData, state, atkBf, defBf);
@@ -1702,12 +1710,13 @@ public class CombatDamageService {
         }
     }
 
-    private void processLifelink(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
+    private void processLifelink(GameData gameData, Map<Permanent, Integer> combatDamageDealt,
+                                 Set<Permanent> lifelinkDealers) {
         for (var entry : combatDamageDealt.entrySet()) {
             Permanent creature = entry.getKey();
             int damageDealt = entry.getValue();
             if (damageDealt <= 0) continue;
-            if (!gameQueryService.hasKeyword(gameData, creature, Keyword.LIFELINK)) continue;
+            if (!lifelinkDealers.contains(creature)) continue;
             UUID controllerId = gameData.findControllerOf(creature);
             if (controllerId == null) continue;
             lifeSupport.applyGainLife(gameData, controllerId, damageDealt, "lifelink");
@@ -1851,6 +1860,8 @@ public class CombatDamageService {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        triggerCollectionService.checkControllerDealtCombatDamageTriggers(gameData, defenderId,
+                combatDamageDealtToPlayer.values().stream().mapToInt(Integer::intValue).sum());
         triggerCollectionService.checkGoadedCreatureCombatDamageToOpponentTriggers(
                 gameData,
                 defenderId,
@@ -1929,7 +1940,13 @@ public class CombatDamageService {
             // earlier (e.g. an encoded cipher spell's trigger).
             boolean lostAllAbilities = creature.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.computeStaticBonus(gameData, creature).losesAllAbilities();
-            boolean hasPrintedAbilities = !creature.isFaceDown() && !lostAllAbilities;
+            // An animated noncreature Equipment that is not attached is not an equipped creature, so its
+            // printed "equipped creature deals combat damage" triggers do not apply. Equipment creatures
+            // (reconfigure) keep theirs: they read "this creature or equipped creature".
+            boolean unattachedEquipment = creature.getAttachedTo() == null
+                    && GameQueryService.permanentHasSubtype(creature, CardSubtype.EQUIPMENT)
+                    && !creature.getCard().hasType(CardType.CREATURE);
+            boolean hasPrintedAbilities = !creature.isFaceDown() && !lostAllAbilities && !unattachedEquipment;
             if (hasPrintedAbilities) {
                 allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
                 allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
@@ -1971,6 +1988,8 @@ public class CombatDamageService {
                 gameData.beginTriggeredAbilityCopies(
                         candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.TransformGrantingPermanentEffect
                                 ? 1 : creatureTriggerCopies);
+                if (candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect
+                        && creature.getCard().isToken()) continue;
                 if (candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
                         && !defenderId.equals(onlyDamagedPlayer.playerId())) continue;
                 CardEffect rawEffect = candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
@@ -2456,6 +2475,10 @@ public class CombatDamageService {
                 // matching branch. Null branches contribute nothing.
                 List<CardEffect> effects = new ArrayList<>();
                 for (CardEffect effect : rawEffects) {
+                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect
+                            && creature.getCard().isToken()) {
+                        continue;
+                    }
                     if (effect instanceof EnchantedPermanentConditionalEffect cond) {
                         CardEffect active = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
                                 ? cond.ifMatch()
@@ -2514,7 +2537,11 @@ public class CombatDamageService {
                                 "'s combat damage trigger goes on the stack — choose a target."));
                     } else {
                         UUID sourcePermanentId = perm.getId();
-                        boolean bindsToDamageDealer = effects.stream()
+                        // The Equipment itself deals the damage (Sword of War and Peace), so it keeps
+                        // its own characteristics rather than the equipped creature's infect or lifelink.
+                        boolean equipmentDealsDamage = effects.stream()
+                                .anyMatch(com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect.class::isInstance);
+                        boolean bindsToDamageDealer = !equipmentDealsDamage && effects.stream()
                                 .anyMatch(effect -> effect instanceof CombatDamageTriggerContextEffect contextEffect
                                         && (contextEffect.combatDamageTriggerContext()
                                         == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF
@@ -5189,6 +5216,9 @@ public class CombatDamageService {
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
         if (bf == null) return null;
         for (Permanent perm : bf) {
+            if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                continue;
+            }
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ReplaceCombatDamageWithMillEffect replacement
                         && predicateEvaluationService.matchesPermanentPredicate(
@@ -5338,7 +5368,11 @@ public class CombatDamageService {
                 || gameData.creaturesAssigningNoCombatDamageThisCombat.contains(atk.getId())
                 || gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
         // Blocked with no blockers (CR 510.1c): no damage is assigned, so nothing to divide.
-        if (livingBlockerIndices.isEmpty() && atk.isBlockedWithoutBlockers()) return false;
+        // A creature that may assign its damage as though it weren't blocked still gets the choice.
+        if (livingBlockerIndices.isEmpty() && atk.isBlockedWithoutBlockers()) {
+            return assignsCombatDamageAsThoughUnblocked(gameData, atk)
+                    && !mustAssignCombatDamageAsThoughUnblocked(gameData, atk);
+        }
         if (livingBlockerIndices.isEmpty()) {
             // Unblocked attacker that may assign its combat damage to a defending creature
             // (e.g. Cunning Giant). Prompt only when there is a defending creature to choose.

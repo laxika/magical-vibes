@@ -25,7 +25,7 @@ public class SamiteAlchemist extends Card {
                 List.of(
                         PreventDamageEffect.nextToTarget(4),
                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)
+                        new SkipNextUntapEffect(TapUntapScope.TARGET, null, 1, false, false, true)
                 ),
                 "{W}{W}, {T}: Prevent the next 4 damage that would be dealt this turn to target creature you control. "
                         + "Tap that creature. It doesn't untap during your next untap step.",

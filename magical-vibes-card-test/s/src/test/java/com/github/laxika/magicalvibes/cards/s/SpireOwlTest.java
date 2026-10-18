@@ -66,12 +66,8 @@ class SpireOwlTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
-                .containsExactly(onlyCard);
-
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
-
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("looks at the top card")).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
     }
 

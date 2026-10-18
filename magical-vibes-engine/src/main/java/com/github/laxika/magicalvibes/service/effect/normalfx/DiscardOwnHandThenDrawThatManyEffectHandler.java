@@ -64,9 +64,7 @@ public class DiscardOwnHandThenDrawThatManyEffectHandler implements NormalEffect
         gameLogService.append(gameData, GameLog.text(discardLog));
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discardCount, cardName);
 
-        for (int i = 0; i < discardCount; i++) {
-            drawService.resolveDrawCard(gameData, controllerId);
-        }
+        drawService.resolveDrawCards(gameData, controllerId, discardCount);
         String drawLog = playerName + " draws " + discardCount + " card" + (discardCount != 1 ? "s" : "") + ".";
         gameLogService.append(gameData, GameLog.text(drawLog));
         log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, discardCount, cardName);

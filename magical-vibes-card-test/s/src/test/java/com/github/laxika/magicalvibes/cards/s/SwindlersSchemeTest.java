@@ -56,6 +56,7 @@ class SwindlersSchemeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, spell, "{2}{U}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -90,6 +91,7 @@ class SwindlersSchemeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, spell, "{1}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());

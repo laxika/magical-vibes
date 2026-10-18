@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 public class SeasonedConsultant extends Card {
 
     public SeasonedConsultant() {
-        addEffect(EffectSlot.ON_ATTACK,
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new MinimumAttackers(3), new BoostSelfEffect(2, 0)));
     }
 }

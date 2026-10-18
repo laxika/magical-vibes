@@ -18,7 +18,7 @@ public class ShalaiAndHallar extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+                .addEffect(EffectSlot.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE,
                         new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER));
     }
 }

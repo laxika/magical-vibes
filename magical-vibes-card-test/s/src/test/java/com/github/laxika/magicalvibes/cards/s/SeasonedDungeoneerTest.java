@@ -126,7 +126,7 @@ class SeasonedDungeoneerTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
     }
@@ -149,7 +149,7 @@ class SeasonedDungeoneerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(first).doesNotContain(second);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
     }
 
     @Test

@@ -318,7 +318,8 @@ public class CreatureControlService {
                                                      UUID previousController) {
         boolean queued = false;
         for (var registration : gameData.controlLossUnattachTriggersFor(permanent.getId())) {
-            if (!previousController.equals(registration.controllerId())) {
+            if (!previousController.equals(registration.controllerId())
+                    || !isAttachedToCreatureControlledBy(gameData, permanent, registration.controllerId())) {
                 continue;
             }
             StackEntry trigger = new StackEntry(
@@ -333,6 +334,16 @@ public class CreatureControlService {
             queued = true;
         }
         return queued;
+    }
+
+    /** Intervening-if for "if it's attached to a creature you control": checked when control is lost. */
+    private boolean isAttachedToCreatureControlledBy(GameData gameData, Permanent equipment, UUID controllerId) {
+        if (equipment.getAttachedTo() == null) {
+            return false;
+        }
+        Permanent creature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        return creature != null && gameQueryService.isCreature(gameData, creature)
+                && controllerId.equals(gameQueryService.findPermanentController(gameData, creature.getId()));
     }
 
     private void queueControlLossTapTriggers(GameData gameData, Permanent permanent,

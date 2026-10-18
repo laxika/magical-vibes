@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,7 +78,9 @@ class SergeantJohnBentonTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        resolveCombatAndTrigger();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 1));
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -96,7 +100,7 @@ class SergeantJohnBentonTest extends BaseCardTest {
 
         Permanent benton = addCreatureReady(player1, new SergeantJohnBenton());
         benton.setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -119,7 +123,7 @@ class SergeantJohnBentonTest extends BaseCardTest {
 
         Permanent benton = addCreatureReady(player1, new SergeantJohnBenton());
         benton.setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(benton);

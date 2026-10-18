@@ -128,6 +128,7 @@ public class StateTriggerService {
             // Snapshot to avoid ConcurrentModificationException if a trigger modifies the list
             List<Permanent> snapshot = List.copyOf(battlefield);
             for (Permanent perm : snapshot) {
+                if (perm.isFaceDown()) continue;
                 if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> effects = stateTriggeredEffects(gameData, perm);
                 for (int i = 0; i < effects.size(); i++) {

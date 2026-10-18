@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,6 +35,6 @@ public class Sparkcaster extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1), TriggerMode.INDEPENDENT);
     }
 }

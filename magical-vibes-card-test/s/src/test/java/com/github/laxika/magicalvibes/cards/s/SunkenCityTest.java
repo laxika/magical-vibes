@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.cards.m.MonssGoblinRaiders;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -155,7 +156,7 @@ class SunkenCityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertNotOnBattlefield(player1, "Sunken City");
         harness.assertInGraveyard(player1, "Sunken City");

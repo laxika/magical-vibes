@@ -166,6 +166,20 @@ public class LibraryRevealSupport {
                 }
             }
         }
+        // A double-faced card has two names, and either face's name may be chosen.
+        Set<String> checkedFronts = new java.util.HashSet<>();
+        for (CardSet set : CardSet.values()) {
+            for (var printing : cardCatalog.getPrintings(set)) {
+                if (!printing.hasBackFace() || !checkedFronts.add(printing.cardClassName())) {
+                    continue;
+                }
+                Card backFace = printing.createCard().getBackFaceCard();
+                if (backFace != null && name.equalsIgnoreCase(backFace.getName())
+                        && excludedTypes.stream().noneMatch(backFace::hasType)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 

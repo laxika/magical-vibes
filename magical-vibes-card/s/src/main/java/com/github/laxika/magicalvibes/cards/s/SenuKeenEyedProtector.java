@@ -21,7 +21,7 @@ public class SenuKeenEyedProtector extends Card {
     public SenuKeenEyedProtector() {
         addActivatedAbility(new ActivatedAbility(
                 true,
-                "{1}{W}",
+                null,
                 List.of(new ExileSelfCost(), new GainLifeEffect(2), new ScryEffect(2)),
                 "{T}, Exile Senu: You gain 2 life and scry 2."
         ));

@@ -104,9 +104,9 @@ class ScoriaWurmTest extends BaseCardTest {
         ScoriaWurm wurm = new ScoriaWurm();
         harness.addToBattlefield(player1, wurm);
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Scoria Wurm"));
 
         assertThat(gd.stack).hasSize(1);

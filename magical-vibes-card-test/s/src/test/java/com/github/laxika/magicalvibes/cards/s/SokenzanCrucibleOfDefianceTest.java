@@ -67,7 +67,7 @@ class SokenzanCrucibleOfDefianceTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Spirit")).allMatch(permanent -> permanent.hasKeyword(Keyword.HASTE));
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(findPermanents(player1, "Spirit")).allMatch(permanent -> !permanent.hasKeyword(Keyword.HASTE));
     }
@@ -183,7 +183,7 @@ class SokenzanCrucibleOfDefianceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         List<Permanent> spirits = findPermanents(player1, "Spirit");
         assertThat(spirits).hasSize(2);

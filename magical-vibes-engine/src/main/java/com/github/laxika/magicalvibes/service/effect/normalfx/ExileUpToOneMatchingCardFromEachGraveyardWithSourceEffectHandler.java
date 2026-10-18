@@ -48,9 +48,11 @@ public class ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffectHandler
 
         gameData.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume =
                 new ExileUpToOneMatchingCardFromEachGraveyardContext(
-                        controllerId, entry.getSourcePermanentId(), filter);
+                        controllerId, entry.getSourcePermanentId(), filter, exileEffect.requireOne());
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards,
                 gameData.orderedPlayerIds.size(),
-                "Choose up to one creature or planeswalker card from each graveyard to exile.");
+                exileEffect.requireOne()
+                        ? "Choose one matching card from each graveyard to exile."
+                        : "Choose up to one matching card from each graveyard to exile.");
     }
 }

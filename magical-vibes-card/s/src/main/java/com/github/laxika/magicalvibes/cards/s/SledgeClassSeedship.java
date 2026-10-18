@@ -50,7 +50,8 @@ public class SledgeClassSeedship extends Card {
                 new SourceCounterThreshold(7, CounterType.CHARGE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ATTACK, new PutCardToBattlefieldEffect(
-                new CardTypePredicate(CardType.CREATURE), "creature"));
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
+                new SourceCounterThreshold(7, CounterType.CHARGE),
+                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")));
     }
 }

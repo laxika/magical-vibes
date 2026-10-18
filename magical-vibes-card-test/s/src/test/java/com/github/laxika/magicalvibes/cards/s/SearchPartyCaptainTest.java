@@ -151,6 +151,7 @@ class SearchPartyCaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Attackers from an earlier turn do not reduce the cost")
     void costReductionExpiresAtTheEndOfTheTurn() {
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new GavonyTrapper());
         harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> declareAttackers(List.of(0)));
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);

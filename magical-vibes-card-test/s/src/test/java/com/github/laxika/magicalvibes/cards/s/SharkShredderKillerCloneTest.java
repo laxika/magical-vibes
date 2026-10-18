@@ -41,7 +41,7 @@ class SharkShredderKillerCloneTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(bears.getId()))
                 .findFirst().orElseThrow();
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.isAttackedThisTurn()).isTrue();
+        assertThat(returned.isAttacking()).isTrue();
         assertThat(returned.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(card -> card.getId().equals(bears.getId()));
     }
@@ -144,8 +144,8 @@ class SharkShredderKillerCloneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A first-strike creature returned after first-strike damage still deals regular damage")
-    void returnedFirstStrikerDealsRegularDamage() {
+    @DisplayName("A first-strike creature returned after first-strike damage deals no regular damage")
+    void returnedFirstStrikerDealsNoRegularDamage() {
         Card creature = new WhiteKnight();
         harness.setLife(player2, 20);
         harness.setGraveyard(player2, List.of(creature));
@@ -161,7 +161,7 @@ class SharkShredderKillerCloneTest extends BaseCardTest {
             harness.passUntil(TurnStep.END_OF_COMBAT);
         });
 
-        harness.assertLife(player2, 14);
+        harness.assertLife(player2, 16);
     }
 
     @Test

@@ -34,7 +34,7 @@ class ShriekgeistTest extends BaseCardTest {
         ));
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
@@ -55,7 +55,7 @@ class ShriekgeistTest extends BaseCardTest {
         ));
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Card> graveyard = gd.playerGraveyards.get(player2.getId());
         assertThat(graveyard).extracting(Card::getName)
@@ -77,7 +77,7 @@ class ShriekgeistTest extends BaseCardTest {
         ));
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -100,7 +100,7 @@ class ShriekgeistTest extends BaseCardTest {
         ));
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
@@ -115,7 +115,7 @@ class ShriekgeistTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new StormboundGeist()));
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -130,7 +130,7 @@ class ShriekgeistTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
@@ -140,6 +140,7 @@ class ShriekgeistTest extends BaseCardTest {
     void millResolvesAfterSourceLeaves() {
         Permanent shriekgeist = addReadyShriekgeist();
         shriekgeist.setAttacking(true);
+        shriekgeist.setAttackTarget(player2.getId());
         Card first = new StormboundGeist();
         Card second = new SilverclawGriffin();
         Card remaining = new Shriekgeist();
@@ -164,15 +165,17 @@ class ShriekgeistTest extends BaseCardTest {
     @Test
     @DisplayName("Each Shriekgeist that damages a player triggers separately")
     void multipleShriekgeistsEachMillTwo() {
-        addReadyShriekgeist().setAttacking(true);
-        addReadyShriekgeist().setAttacking(true);
+        for (int i = 0; i < 2; i++) {
+            Permanent shriekgeist = addReadyShriekgeist();
+            shriekgeist.setAttacking(true);
+            shriekgeist.setAttackTarget(player2.getId());
+        }
         harness.setLibrary(player2, List.of(new StormboundGeist(), new StormboundGeist(),
                 new SilverclawGriffin(), new SilverclawGriffin(), new Shriekgeist()));
 
         resolveCombat();
         assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);

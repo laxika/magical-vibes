@@ -124,6 +124,9 @@ class SolitaryStudyEndlessCorridorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castModalSorcery(player1, 0, doorIndex, List.of());
         harness.passBothPriorities();
+        if (doorIndex == 1) {
+            harness.passBothPriorities();
+        }
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ROOM))
                 .findFirst().orElseThrow();

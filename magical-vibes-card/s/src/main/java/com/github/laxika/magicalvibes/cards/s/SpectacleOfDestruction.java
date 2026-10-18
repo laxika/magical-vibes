@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OneOrMoreCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,7 +28,7 @@ public class SpectacleOfDestruction extends Card {
                         new SourceCounterThreshold(1, CounterType.WRECK),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.WRECK, 1),
-                                new SeekLibraryToHandEffect(
+                                new SeekEffect(
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))))));
     }
 }

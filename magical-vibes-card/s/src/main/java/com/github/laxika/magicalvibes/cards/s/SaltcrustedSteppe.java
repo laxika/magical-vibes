@@ -33,7 +33,7 @@ public class SaltcrustedSteppe extends Card {
 
         // {1}, Remove X storage counters from this land: Add X mana in any combination of {G} and/or {W}.
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}",
                 List.of(new RemoveCountersForManaEffect(
                         List.of(ManaColor.GREEN, ManaColor.WHITE), CounterType.STORAGE)),

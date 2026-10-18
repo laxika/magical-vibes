@@ -21,10 +21,10 @@ public class SigardasSummons extends Card {
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE);
 
         addEffect(EffectSlot.STATIC, new SetBasePowerToughnessEffect(
-                4, 4, GrantScope.OWN_CREATURES, hasPlusOnePlusOneCounters));
+                4, 4, GrantScope.ALL_OWN_CREATURES, hasPlusOnePlusOneCounters));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.OWN_CREATURES, hasPlusOnePlusOneCounters));
+                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, hasPlusOnePlusOneCounters));
         addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
-                CardSubtype.ANGEL, GrantScope.OWN_CREATURES, false, hasPlusOnePlusOneCounters));
+                CardSubtype.ANGEL, GrantScope.ALL_OWN_CREATURES, false, hasPlusOnePlusOneCounters));
     }
 }

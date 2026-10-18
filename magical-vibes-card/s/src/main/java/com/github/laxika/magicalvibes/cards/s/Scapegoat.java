@@ -12,7 +12,7 @@ public class Scapegoat extends Card {
 
     public Scapegoat() {
         addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
-        target(TargetFilters.creatureYouControl(), 0, 99)
+        target(TargetFilters.creatureYouControl(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 }

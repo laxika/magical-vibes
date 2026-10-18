@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -34,18 +34,18 @@ public class StormchasersTalent extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 false,
-                "{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {U} ({U}: Put a level counter on this. Level up only as a sorcery.)",
+                "{3}{U}",
+                List.of(new ClassLevelUpEffect(2)),
+                "Level up {3}{U} ({3}{U}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "This Class is already level 2 or higher."));
         addActivatedAbility(new ActivatedAbility(
                 false,
-                "{3}{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {3}{U} ({3}{U}: Put a level counter on this. Level up only as a sorcery.)",
+                "{5}{U}",
+                List.of(new ClassLevelUpEffect(3)),
+                "Level up {5}{U} ({5}{U}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new AllOf(List.of(

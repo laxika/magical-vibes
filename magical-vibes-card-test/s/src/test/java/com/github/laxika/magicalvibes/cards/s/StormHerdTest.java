@@ -31,7 +31,7 @@ class StormHerdTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(7);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getCard().getName()).isEqualTo("Pegasus Token");
+            assertThat(token.getCard().getName()).isEqualTo("Pegasus");
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(token.getCard().getPower()).isEqualTo(1);
             assertThat(token.getCard().getToughness()).isEqualTo(1);

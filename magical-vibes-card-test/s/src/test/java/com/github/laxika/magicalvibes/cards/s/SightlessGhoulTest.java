@@ -93,6 +93,7 @@ class SightlessGhoulTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(ghoul.isAttacking()).isTrue();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.assertLife(player2, 18);
     }

@@ -223,6 +223,16 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                 Set.of(), false, false, null, false, false);
     }
 
+    /** Clone that adds subtypes, abilities, and keywords of its own to the copy (Sakashima of a Thousand Faces). */
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
+                                      Set<CardSubtype> additionalSubtypesOverride,
+                                      Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+                                      Set<Keyword> additionalKeywordsOverride) {
+        this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null,
+                additionalSubtypesOverride, additionalSlotEffects, false, false, null, Set.of(),
+                additionalKeywordsOverride, false, true, Set.of(), false, false, null, false, false);
+    }
+
     /** Clone that also adds copy exceptions to the resulting permanent and may omit its color. */
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       Set<CardSubtype> additionalSubtypesOverride,

@@ -30,13 +30,13 @@ public class SongOfFreyalise extends Card {
         // Chapter I: Until your next turn, creatures you control gain "{T}: Add one mana of any color."
         addEffect(EffectSlot.SAGA_CHAPTER_I, new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
+                GrantScope.ALL_OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
         ));
 
         // Chapter II: Same as chapter I
         addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
+                GrantScope.ALL_OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
         ));
 
         // Chapter III: Put a +1/+1 counter on each creature you control.

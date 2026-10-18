@@ -48,7 +48,7 @@ public class SigurdJarlOfRavensthorpe extends Card {
         ).withActivationCondition(
                 new NotCondition(new DidntAttack()),
                 "Activate only if this creature attacked this turn."
-        ).withBoast().withModalChoiceAtActivation());
+        ).withBoast());
 
         addEffect(EffectSlot.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(

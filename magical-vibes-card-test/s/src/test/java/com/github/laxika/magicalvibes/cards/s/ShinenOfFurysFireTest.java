@@ -28,7 +28,7 @@ class ShinenOfFurysFireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shinen = findPermanent(player1, "Shinen of Fury's Fire");
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(shinen.isAttacking()).isTrue();
     }
@@ -64,7 +64,7 @@ class ShinenOfFurysFireTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, bears.getId());
         harness.passBothPriorities();
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(bears.isAttacking()).isTrue();
     }

@@ -179,9 +179,9 @@ class SavageSummoningTest extends BaseCardTest {
     @DisplayName("The grants work on an opponent's turn and only for their controller")
     void grantsBelongOnlyToController() {
         harness.forceActivePlayer(player2);
+        resolveSavageSummoning();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        resolveSavageSummoning();
 
         assertThatThrownBy(() -> harness.castFromHand(player2, new KalonianTusker(), "{G}{G}"))
                 .isInstanceOf(IllegalStateException.class);

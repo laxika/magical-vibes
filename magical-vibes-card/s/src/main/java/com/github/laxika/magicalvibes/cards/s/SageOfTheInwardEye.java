@@ -19,7 +19,7 @@ public class SageOfTheInwardEye extends Card {
     public SageOfTheInwardEye() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES))
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES))
         ));
     }
 }

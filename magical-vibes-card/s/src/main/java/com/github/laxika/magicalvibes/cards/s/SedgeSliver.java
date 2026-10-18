@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -26,8 +26,10 @@ public class SedgeSliver extends Card {
                 new PermanentControllerControlsPermanentPredicate(
                         new PermanentHasSubtypePredicate(CardSubtype.SWAMP));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
-                new PermanentAllOfPredicate(List.of(sliver, controllerControlsSwamp))));
+        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                new StaticBoostEffect(1, 1, GrantScope.SELF, controllerControlsSwamp),
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                sliver));
 
         ActivatedAbility regenerateAbility = new ActivatedAbility(
                 false,
@@ -37,7 +39,7 @@ public class SedgeSliver extends Card {
         );
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 regenerateAbility,
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_PERMANENTS,
                 sliver
         ));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

@@ -398,6 +398,7 @@ public class AuraAttachmentService {
         }
 
         if (gameQueryService.hasProtectionFromSource(gameData, host, attachment)
+                && !(isAura && hostHasAuraSafeProtection(gameData, host))
                 && (!grantsSelfExemptProtection(attachment)
                 || gameQueryService.hasProtectionFromAuraIgnoringOwnGrant(gameData, host, attachment))) {
             String relation = isAura ? "enchanted" : isFortification ? "fortified" : "equipped";
@@ -465,6 +466,23 @@ public class AuraAttachmentService {
      * among the protected sources. The fixed-color form is used by Spectra Ward, the chosen-color
      * form by Ward of Lights, and the card-type form by Tattoo Ward.
      */
+    /**
+     * Whether an attached permanent gives the host protection that doesn't remove Auras (Spectra
+     * Ward's "This effect doesn't remove Auras"), so Auras already attached to it stay attached.
+     */
+    private boolean hostHasAuraSafeProtection(GameData gameData, Permanent host) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent candidate : battlefield) {
+                if (!host.getId().equals(candidate.getAttachedTo())) continue;
+                boolean safe = candidate.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof ProtectionFromColorsEffect protection
+                                && protection.doesNotRemoveAuras());
+                if (safe) return true;
+            }
+        }
+        return false;
+    }
+
     private boolean grantsSelfExemptProtection(Permanent attachment) {
         return attachment.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> {

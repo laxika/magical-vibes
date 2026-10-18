@@ -71,8 +71,8 @@ class SheoldredsHeadcleaverTest extends BaseCardTest {
     @DisplayName("Menace allows two blockers and blocked combat gives no poison")
     void twoBlockersPreventPlayerDamageAndPoison() {
         Permanent attacker = addCreatureReady(player1, new SheoldredsHeadcleaver());
-        harness.addToBattlefield(player2, new SheoldredsHeadcleaver());
-        harness.addToBattlefield(player2, new SheoldredsHeadcleaver());
+        Permanent firstBlocker = harness.addToBattlefieldAndReturn(player2, new SheoldredsHeadcleaver());
+        Permanent secondBlocker = harness.addToBattlefieldAndReturn(player2, new SheoldredsHeadcleaver());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
         harness.setLife(player2, 20);
@@ -81,6 +81,8 @@ class SheoldredsHeadcleaverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(firstBlocker.getId(), 1, secondBlocker.getId(), 1));
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);

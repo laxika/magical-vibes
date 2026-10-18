@@ -17,7 +17,7 @@ public class StitchersGraft extends Card {
 
     public StitchersGraft() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_ATTACK, new SkipNextUntapEffect(TapUntapScope.ENCHANTED));
+        addEffect(EffectSlot.ON_ATTACK, new SkipNextUntapEffect(TapUntapScope.TRIGGERING));
         addEffect(EffectSlot.STATIC, new SacrificeOnUnattachEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

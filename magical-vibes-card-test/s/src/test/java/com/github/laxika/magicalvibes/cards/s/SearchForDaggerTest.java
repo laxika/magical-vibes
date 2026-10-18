@@ -43,6 +43,7 @@ class SearchForDaggerTest extends BaseCardTest {
         addCreatureReady(player1, commander);
 
         declareAttackers(List.of(1));
+        harness.passBothPriorities();
         chooseSearchCard(legendaryCreature);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(legendaryCreature);
@@ -52,6 +53,7 @@ class SearchForDaggerTest extends BaseCardTest {
     @DisplayName("Noncommanders do not trigger the search")
     void noncommanderDoesNotTrigger() {
         setupSearchAndLibrary();
+        harness.setHand(player1, List.of());
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -68,10 +70,10 @@ class SearchForDaggerTest extends BaseCardTest {
     }
 
     private void chooseSearchCard(Card legendaryCreature) {
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search).isNotNull();
-        assertThat(search.params().cards()).containsExactly(legendaryCreature);
-        harness.handleCardChosen(player1, 0);
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(legendaryCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(legendaryCreature.getId()));
     }
 }

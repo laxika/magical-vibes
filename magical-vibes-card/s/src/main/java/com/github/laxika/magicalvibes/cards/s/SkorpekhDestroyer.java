@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class SkorpekhDestroyer extends Card {
 
     public SkorpekhDestroyer() {
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
     }
 }

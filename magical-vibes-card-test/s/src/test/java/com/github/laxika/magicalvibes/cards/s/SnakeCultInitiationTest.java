@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -120,7 +121,7 @@ class SnakeCultInitiationTest extends BaseCardTest {
         attachAura(creature);
         creature.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
@@ -138,7 +139,7 @@ class SnakeCultInitiationTest extends BaseCardTest {
         Permanent aura = attachAura(creature);
         creature.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
@@ -177,7 +178,7 @@ class SnakeCultInitiationTest extends BaseCardTest {
         attachAura(creature);
         creature.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(7);

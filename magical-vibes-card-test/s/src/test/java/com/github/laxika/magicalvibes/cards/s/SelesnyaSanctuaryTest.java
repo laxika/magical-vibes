@@ -129,7 +129,7 @@ class SelesnyaSanctuaryTest extends BaseCardTest {
     @DisplayName("A controlled land owned by the opponent returns to the opponent's hand")
     void returnsLandToOwnerRatherThanController() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        gd.stolenCreatures.put(forest.getId(), player2.getId());
+        setOwnerAndController(forest, player2, player1);
         harness.setHand(player1, List.of(new SelesnyaSanctuary()));
         harness.playLand(player1, 0);
         harness.passBothPriorities();

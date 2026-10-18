@@ -18,7 +18,7 @@ import java.util.List;
 public class SigardianSavior extends Card {
 
     public SigardianSavior() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

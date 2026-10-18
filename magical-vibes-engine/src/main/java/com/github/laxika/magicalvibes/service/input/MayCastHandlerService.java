@@ -409,6 +409,7 @@ public class MayCastHandlerService {
         if (cardToPlay.isCastOnlyFromGraveyard()
                 || !cardToPlay.hasType(CardType.LAND)
                 && (!gameQueryService.canCastSpellFromZone(gameData, cardToPlay, Zone.LIBRARY, player.getId())
+                || castingPermissionService.isSpellLimitReached(gameData, player.getId(), cardToPlay)
                 || !additionalSpellCostService.satisfiableWithoutManaCost(gameData, player.getId(), cardToPlay))) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                     " cannot be cast from the library."));
@@ -1886,7 +1887,12 @@ public class MayCastHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (!cost.canPay(pool)) {
+        int madnessLifeCost = ability.additionalLifeCost();
+        boolean madnessLifePayable = madnessLifeCost <= 0
+                || (gameQueryService.canPayLifeForCosts(gameData)
+                && gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                && gameData.getLife(player.getId()) >= madnessLifeCost);
+        if (!cost.canPay(pool) || !madnessLifePayable) {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
             log.info("Game {} - {} can't pay madness cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
@@ -1907,6 +1913,10 @@ public class MayCastHandlerService {
             return;
         }
         cost.pay(pool);
+        if (madnessLifeCost > 0) {
+            lifeSupport.applyLifePayment(gameData, player.getId(), madnessLifeCost,
+                    cardToCast.getName() + "'s madness cost");
+        }
 
         if (cardToCast.hasType(CardType.LAND)) {
             spellCastingService.playLandFromMadness(gameData, player, cardToCast.getId());
@@ -1946,6 +1956,12 @@ public class MayCastHandlerService {
         }
 
         List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, sideboardOwnerId);
+        if (castingPermissionService.isSpellLimitReached(gameData, player.getId(), cardToCast)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " cannot be cast because no more spells can be cast this turn."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (!gameQueryService.canCastSpellFromZone(gameData, cardToCast, Zone.OUTSIDE_GAME, player.getId())) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " cannot be cast from outside the game."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

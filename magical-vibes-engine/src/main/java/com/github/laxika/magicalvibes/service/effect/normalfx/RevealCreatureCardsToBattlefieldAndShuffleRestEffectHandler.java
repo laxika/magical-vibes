@@ -50,7 +50,10 @@ public class RevealCreatureCardsToBattlefieldAndShuffleRestEffectHandler
 
         if (typedEffect.creatureCount() <= 0 || deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
-                    controllerName + "'s library is empty — no cards are revealed."));
+                    controllerName + " reveals no cards."));
+            if (deck != null) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             return;
         }
 

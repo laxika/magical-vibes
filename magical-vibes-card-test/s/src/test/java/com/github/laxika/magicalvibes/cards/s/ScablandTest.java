@@ -67,9 +67,9 @@ class ScablandTest extends BaseCardTest {
             harness = new GameTestHarness();
             player1 = harness.getPlayer1();
             harness.skipMulligan();
+            gd = harness.getGameData();
 
             Permanent land = addScablandReady(player1);
-            GameData gd = harness.getGameData();
             int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
             harness.activateAbility(player1, 0, 1, null, null);

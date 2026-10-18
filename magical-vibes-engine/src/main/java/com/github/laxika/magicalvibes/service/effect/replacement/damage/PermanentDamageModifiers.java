@@ -40,7 +40,7 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                         ? gameQueryService.getCombatSourceDamageBonuses(ctx.gameData(), ctx.damageSource())
                         : gameQueryService.getDealingSourceDamageBonuses(ctx.gameData(), ctx.entry())),
                 spellDamageReductionRule(),
-                bonusRule("NoncreatureSourceBonus", ctx -> ctx.combat() ? List.of()
+                bonusRule("NoncreatureSourceBonus", ctx -> ctx.combat() || isCreatureExplicitSource(ctx) ? List.of()
                         : gameQueryService.getNoncreatureSourceDamageBonuses(ctx.gameData(), ctx.entry(), null, ctx.target())),
                 bonusRule("PlayersAndBattlesBonus", ctx -> ctx.combat() ? List.of()
                         : gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), false, ctx.target())),
@@ -94,6 +94,15 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
      * own doublings count too when it isn't the stack entry's source. Combat damage to a creature
      * also gets that creature's own doublings.
      */
+    /**
+     * A permanent that deals damage on its own behalf (a Dragon making Sarkhan's trigger deal damage) is a
+     * creature source, so noncreature-source damage bonuses from the stack entry's spell or ability don't apply.
+     */
+    private boolean isCreatureExplicitSource(PermanentDamageContext ctx) {
+        Permanent explicitSource = ctx.event().explicitSource();
+        return explicitSource != null && gameQueryService.isCreature(ctx.gameData(), explicitSource);
+    }
+
     private int sourceMultiplier(PermanentDamageContext ctx) {
         if (ctx.combat()) {
             int multiplier = gameQueryService.getCombatSourceDamageMultiplier(ctx.gameData(), ctx.damageSource(),

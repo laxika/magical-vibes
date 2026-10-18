@@ -13,7 +13,7 @@ public class SolidarityOfHeroes extends Card {
 
     public SolidarityOfHeroes() {
         setAdditionalManaCostPerExtraTarget("{1}{G}");
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new DoublePlusOneCountersOnTargetCreatureEffect());
     }
 }

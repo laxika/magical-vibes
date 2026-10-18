@@ -89,9 +89,10 @@ class SunCrestedPterodonTest extends BaseCardTest {
         pterodon.setSummoningSick(false);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(pterodon.isAttacking()).isTrue();
         assertThat(pterodon.isTapped()).isFalse();
@@ -103,9 +104,10 @@ class SunCrestedPterodonTest extends BaseCardTest {
         pterodon.setSummoningSick(false);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(pterodon.isAttacking()).isTrue();
         assertThat(pterodon.isTapped()).isTrue();

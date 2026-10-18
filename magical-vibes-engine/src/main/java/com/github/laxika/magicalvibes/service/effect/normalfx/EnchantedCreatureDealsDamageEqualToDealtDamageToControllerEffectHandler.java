@@ -67,7 +67,10 @@ public class EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffectHan
                 sourceName + " deals damage to its controller",
                 List.of(),
                 controllerId,
-                entry.getSourcePermanentId()
+                // The enchanted creature is the damage source (CR 120.3), so lifelink and other
+                // source abilities read its permanent rather than the Aura's.
+                !e.auraIsSource() && entry.getTriggeringPermanentId() != null
+                        ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId()
         );
 
         damageSupport.dealDamageToPlayer(gameData, creatureEntry, controllerId, rawDamage);

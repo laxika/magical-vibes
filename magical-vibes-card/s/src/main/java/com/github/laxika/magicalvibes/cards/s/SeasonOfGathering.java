@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -25,8 +26,8 @@ public class SeasonOfGathering extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on a creature you control. It gains vigilance and trample until end of turn.",
                         List.of(
-                                new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                        new PermanentIsCreaturePredicate()),
+                                new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                                        new Fixed(1), new PermanentIsCreaturePredicate(), false, true),
                                 new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.VIGILANCE, null),
                                 new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.TRAMPLE, null)
                         )),

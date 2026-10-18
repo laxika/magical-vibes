@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveControllerRadCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ public class GiveControllerRadCountersEffectHandler implements NormalEffectHandl
 
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,7 +32,7 @@ public class GiveControllerRadCountersEffectHandler implements NormalEffectHandl
         int amount = amountEvaluationService.evaluate(gameData,
                 ((GiveControllerRadCountersEffect) effect).amount(),
                 AmountContext.forStackEntry(entry, null));
-        if (amount <= 0) {
+        if (amount <= 0 || gameQueryService.playersCantGetCounters(gameData)) {
             return;
         }
 

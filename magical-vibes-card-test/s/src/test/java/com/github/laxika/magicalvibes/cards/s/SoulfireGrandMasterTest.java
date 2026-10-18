@@ -192,10 +192,10 @@ class SoulfireGrandMasterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new WildSlash()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, player2.getId());
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -213,12 +213,13 @@ class SoulfireGrandMasterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WildSlash()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.assertInHand(player1, "Wild Slash");
 
@@ -235,11 +236,11 @@ class SoulfireGrandMasterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new WildSlash()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, soulfire.getId());
         harness.castAndResolveInstant(player2, 0, soulfire.getId());
         harness.passBothPriorities();
@@ -258,12 +259,12 @@ class SoulfireGrandMasterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Negate()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player2, 0, firstSpell.getId());
         harness.assertInGraveyard(player1, "Wild Slash");

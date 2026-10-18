@@ -45,7 +45,7 @@ class SeedtimeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.castFromHand(player2, new MentalNote(), "{U}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         harness.castFromHand(player1, new Seedtime(), "{1}{G}");
         harness.passBothPriorities();
 

@@ -54,8 +54,8 @@ class ShoveAsideTest extends BaseCardTest {
     @Test
     void startingPlayerCannotCastItOutsideTheirMainPhase() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.startingPlayerId = player1.getId();
         harness.forceActivePlayer(player2);
+        gd.startingPlayerId = player1.getId();
         harness.setHand(player1, List.of(new ShoveAside()));
         harness.addMana(player1, ManaColor.RED, 1);
 

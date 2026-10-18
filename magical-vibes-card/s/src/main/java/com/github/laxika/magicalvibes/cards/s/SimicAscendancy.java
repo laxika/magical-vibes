@@ -29,7 +29,7 @@ public class SimicAscendancy extends Card {
                 "{1}{G}{U}: Put a +1/+1 counter on target creature you control.",
                 TargetFilters.creatureYouControl()));
 
-        addEffect(EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+        addEffect(EffectSlot.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE,
                 new PutCountersOnSelfEffect(CounterType.GROWTH, new EventValue()));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConditionalEffect(new SourceCounterThreshold(20, CounterType.GROWTH), new WinGameEffect()));

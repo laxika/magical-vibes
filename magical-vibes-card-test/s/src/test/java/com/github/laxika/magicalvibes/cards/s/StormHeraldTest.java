@@ -79,7 +79,7 @@ class StormHeraldTest extends BaseCardTest {
         castStormHerald(List.of(holyStrength, pacifism));
         harness.handleMultipleCardsChosen(player1, List.of(holyStrength.getId()));
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))

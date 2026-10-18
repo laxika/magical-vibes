@@ -43,8 +43,14 @@ public class DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent aura = findSourceAura(gameData, entry);
-        Permanent enchanted = findEnchantedPermanent(gameData, aura);
+        boolean granted = ((DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect) effect)
+                .grantedToCreature();
+        Permanent aura = granted && entry.getTriggeringPermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId())
+                : findSourceAura(gameData, entry);
+        Permanent enchanted = granted
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : findEnchantedPermanent(gameData, aura);
         UUID enchantedControllerId = entry.getTargetId();
         if (enchantedControllerId == null && enchanted != null) {
             enchantedControllerId = gameQueryService.findPermanentController(gameData, enchanted.getId());

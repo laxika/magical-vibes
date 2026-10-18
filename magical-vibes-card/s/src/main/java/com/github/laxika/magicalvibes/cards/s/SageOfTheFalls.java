@@ -17,12 +17,13 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class SageOfTheFalls extends Card {
 
     public SageOfTheFalls() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        MayEffect loot = new MayEffect(SequenceEffect.of(
+                new DrawCardEffect(1),
+                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                "You may draw a card. If you do, discard a card.");
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loot);
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)),
-                        new MayEffect(SequenceEffect.of(
-                                new DrawCardEffect(1),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
-                                "You may draw a card. If you do, discard a card.")));
+                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)), loot));
     }
 }

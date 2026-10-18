@@ -18,7 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Records a triggered ability on each matching permanent and hand card. */
+/**
+ * Records a triggered ability on each matching permanent and hand card. Every grant is kept as its own
+ * instance, so repeated grants of the same ability each trigger independently (CR 113.2c).
+ */
 @Component
 @RequiredArgsConstructor
 public class PerpetuallyGrantTriggeredAbilityToMatchingCardsEffectHandler
@@ -48,11 +51,8 @@ public class PerpetuallyGrantTriggeredAbilityToMatchingCardsEffectHandler
             }
             UUID cardId = permanent.getOriginalCard().getId();
             addPerpetualGrant(gameData, cardId, perpetual);
-            if (!permanent.getPersistentTriggeredEffects(perpetual.triggeredAbilitySlot())
-                    .contains(perpetual.triggeredAbility())) {
-                permanent.addPersistentTriggeredEffect(
-                        perpetual.triggeredAbilitySlot(), perpetual.triggeredAbility());
-            }
+            permanent.addPersistentTriggeredEffect(
+                    perpetual.triggeredAbilitySlot(), perpetual.triggeredAbility());
         }
 
         for (Card card : gameData.playerHands.getOrDefault(entry.getControllerId(), List.of())) {
@@ -72,9 +72,7 @@ public class PerpetuallyGrantTriggeredAbilityToMatchingCardsEffectHandler
             }
             List<CardEffect> effects = updated.computeIfAbsent(effect.triggeredAbilitySlot(),
                     ignoredSlot -> new ArrayList<>());
-            if (!effects.contains(effect.triggeredAbility())) {
-                effects.add(effect.triggeredAbility());
-            }
+            effects.add(effect.triggeredAbility());
             updated.replaceAll((slot, slotEffects) -> List.copyOf(slotEffects));
             return Map.copyOf(updated);
         });

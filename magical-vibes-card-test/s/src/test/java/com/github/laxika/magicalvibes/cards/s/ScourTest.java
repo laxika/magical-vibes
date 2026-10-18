@@ -68,10 +68,12 @@ class ScourTest extends BaseCardTest {
     @DisplayName("Exiles the target enchantment and every same-name copy from graveyard, hand, and library")
     void exilesTargetAndAllCopies() {
         harness.addToBattlefield(player2, new InTheWebOfWar());
-        harness.setHand(player2, List.of(new InTheWebOfWar(), new GnarledMass()));
+        var handCopy = new InTheWebOfWar();
+        var libraryCopy = new InTheWebOfWar();
+        harness.setHand(player2, List.of(handCopy, new GnarledMass()));
         harness.setGraveyard(player2, List.of(new InTheWebOfWar(), new GnarledMass()));
 
-        harness.setLibrary(player2, List.of(new InTheWebOfWar(), new GnarledMass()));
+        harness.setLibrary(player2, List.of(libraryCopy, new GnarledMass()));
 
         harness.setHand(player1, List.of(new Scour()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -79,6 +81,7 @@ class ScourTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "In the Web of War");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId(), libraryCopy.getId()));
 
         harness.assertNotOnBattlefield(player2, "In the Web of War");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

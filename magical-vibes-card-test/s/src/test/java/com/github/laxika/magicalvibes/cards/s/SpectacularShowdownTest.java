@@ -29,6 +29,7 @@ class SpectacularShowdownTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
+        resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.DOUBLE_STRIKE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
@@ -85,6 +86,7 @@ class SpectacularShowdownTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
+        resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.DOUBLE_STRIKE)).isEqualTo(2);
         assertThat(gqs.isGoaded(gd, target)).isTrue();
@@ -126,6 +128,7 @@ class SpectacularShowdownTest extends BaseCardTest {
     @Test
     void overloadGoadExpiresOnCastersNextTurnButDoubleStrikeRemains() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ExaltedAngel());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new SpectacularShowdown()));
         harness.addMana(player1, ManaColor.RED, 7);
         harness.castWithOverload(player1, 0);

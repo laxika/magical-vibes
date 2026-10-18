@@ -809,7 +809,9 @@ public class EtbTriggerService {
         // Separate opponent-graveyard steal effects (need single-target selection at trigger time)
         List<CardEffect> graveyardStealEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect
-                        || e instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect).toList();
+                        || e instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect
+                        || e instanceof MayEffect may
+                        && may.wrapped() instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect).toList();
         // Separate graveyard return-to-hand effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardReturnToHandEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect).toList();
@@ -1072,6 +1074,7 @@ public class EtbTriggerService {
                 etbEntry.setWaterbendCostPaid(waterbendCostPaid);
                 etbEntry.setRevealCardFromHandCostPaid(revealCardFromHandCostPaid);
                 etbEntry.setControlledDragonAsCast(controlledDragonAsCast);
+                etbEntry.setGiftPromised(enteringPermanent != null && enteringPermanent.isGiftPromised());
                 gameData.stack.add(etbEntry);
                 queueTriggeredAbilityCounters(gameData, etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
@@ -1122,6 +1125,7 @@ public class EtbTriggerService {
                     extraEtbEntry.setWaterbendCostPaid(waterbendCostPaid);
                     extraEtbEntry.setRevealCardFromHandCostPaid(revealCardFromHandCostPaid);
                     extraEtbEntry.setControlledDragonAsCast(controlledDragonAsCast);
+                    extraEtbEntry.setGiftPromised(etbEntry.isGiftPromised());
                     gameData.stack.add(extraEtbEntry);
                     queueTriggeredAbilityCounters(gameData, extraEtbEntry);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));

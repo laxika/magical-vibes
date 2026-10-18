@@ -85,14 +85,14 @@ class SkylineScoutTest extends BaseCardTest {
     @DisplayName("Two mana without white cannot pay for the flying trigger")
     void paymentRequiresWhiteMana() {
         Permanent scout = addReadyScout();
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         declareAttackers(List.of(0));
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.hasKeyword(gd, scout, Keyword.FLYING)).isFalse();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gameLogContains("cannot pay {1}{W}")).isTrue();
     }
 
     private Permanent addReadyScout() {

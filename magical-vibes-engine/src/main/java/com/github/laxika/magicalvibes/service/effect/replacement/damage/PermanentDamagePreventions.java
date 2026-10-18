@@ -303,7 +303,13 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
 
     /** The source the "can't deal damage" checks read: the dealing permanent, or its last known state. */
     private static Permanent preventionSource(PermanentDamageContext ctx) {
-        return ctx.damageSource() != null ? ctx.damageSource() : ctx.entry().getSourcePermanentSnapshot();
+        if (ctx.damageSource() != null) {
+            return ctx.damageSource();
+        }
+        Permanent snapshot = ctx.entry().getSourcePermanentSnapshot();
+        boolean otherObjectDealsDamage = snapshot != null && ctx.entry().getDamageSourceCard() != null
+                && ctx.entry().getDamageSourceCard() != snapshot.getCard();
+        return otherObjectDealsDamage ? null : snapshot;
     }
 
     private Void logSourcePrevented(PermanentDamageContext ctx) {

@@ -155,7 +155,7 @@ class StarfieldMysticTest extends BaseCardTest {
         harness.assertInHand(player1, "Starfield Mystic");
         assertThat(gd.stack).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         assertThat(gd.stack).isEmpty();
         harness.addMana(player1, ManaColor.WHITE, 2);

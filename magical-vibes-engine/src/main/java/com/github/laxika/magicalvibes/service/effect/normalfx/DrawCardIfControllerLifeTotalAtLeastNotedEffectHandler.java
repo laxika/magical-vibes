@@ -24,7 +24,16 @@ public class DrawCardIfControllerLifeTotalAtLeastNotedEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent livePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // The noted life total is read from last known information when the source has left the battlefield.
+        Permanent source = livePermanent != null ? livePermanent : entry.getSourcePermanentSnapshot();
+        if (source == null) {
+            Permanent departed = gameData.departedPermanentSnapshots.get(entry.getCard().getId());
+            if (departed != null && departed.getId().equals(entry.getSourcePermanentId())) {
+                source = departed;
+            }
+        }
         if (source == null) {
             return;
         }
@@ -33,6 +42,8 @@ public class DrawCardIfControllerLifeTotalAtLeastNotedEffectHandler implements N
         if (currentLife >= source.getChosenNumber()) {
             playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), 1);
         }
-        source.setChosenNumber(currentLife);
+        if (livePermanent != null) {
+            livePermanent.setChosenNumber(gameData.getLife(entry.getControllerId()));
+        }
     }
 }

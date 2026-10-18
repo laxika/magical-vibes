@@ -152,7 +152,7 @@ class SilumgarsScornTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Dragon Hunter");
         assertThat(gd.playerHands.get(player2.getId())).contains(dragon);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -171,7 +171,7 @@ class SilumgarsScornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Dragon Hunter");
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -227,7 +227,7 @@ class SilumgarsScornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Dragon Hunter");
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(scorn.getId()));
     }
 }

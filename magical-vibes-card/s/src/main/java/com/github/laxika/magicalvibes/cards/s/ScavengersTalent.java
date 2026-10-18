@@ -11,15 +11,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -44,32 +44,32 @@ public class ScavengersTalent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {1}{B} ({1}{B}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(2)),
+                "{1}{B}: Level 2. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
-                new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                new NotCondition(new SourceClassLevelAtLeast(2)),
                 "This Class is already level 2 or higher."));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{B}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {2}{B} ({2}{B}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(3)),
+                "{2}{B}: Level 3. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new AllOf(List.of(
-                        new SourceCounterThreshold(1, CounterType.LEVEL),
-                        new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL))))
-                , "This Class must be level 2."));
+                        new SourceClassLevelAtLeast(2),
+                        new NotCondition(new SourceClassLevelAtLeast(3)))),
+                "This Class must be level 2."));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, new ConditionalEffect(
-                new SourceCounterThreshold(1, CounterType.LEVEL),
+                new SourceClassLevelAtLeast(2),
                 new MillEffect(2, MillRecipient.TARGET_PLAYER)));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
-                new SourceCounterThreshold(2, CounterType.LEVEL),
+                new SourceClassLevelAtLeast(3),
                 new MayEffect(
                         new SacrificePermanentsThenEffect(
                                 3,

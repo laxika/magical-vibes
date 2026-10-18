@@ -143,7 +143,8 @@ class SanctumOfAllTest extends BaseCardTest {
 
     @Test
     void doesNotDoubleItsOwnUpkeepTriggerAtSixShrines() {
-        addSixM21Shrines();
+        harness.addToBattlefield(player1, new SanctumOfAll());
+        addGenericShrines(5);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

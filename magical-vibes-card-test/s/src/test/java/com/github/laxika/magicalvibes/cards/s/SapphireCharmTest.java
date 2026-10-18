@@ -248,7 +248,7 @@ class SapphireCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, creature.getId()))
-                    .hasMessageContaining("Target");
+                    .hasMessageContaining("target");
         }
     }
 }

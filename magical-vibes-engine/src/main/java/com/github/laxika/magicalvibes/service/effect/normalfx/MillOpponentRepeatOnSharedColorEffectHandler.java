@@ -38,9 +38,14 @@ public class MillOpponentRepeatOnSharedColorEffectHandler implements NormalEffec
         if (opponentId == null) {
             return;
         }
+        // Hexproof stops the opponent from being chosen, so nothing is milled.
+        if (gameQueryService.playerHasHexproof(gameData, opponentId)
+                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, entry.getControllerId())) {
+            return;
+        }
 
         while (true) {
-            List<Card> milled = graveyardService.resolveMillPlayer(gameData, opponentId, count);
+            List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, opponentId, count);
             if (milled == null || !twoNonlandCardsShareAColor(milled)) {
                 return;
             }

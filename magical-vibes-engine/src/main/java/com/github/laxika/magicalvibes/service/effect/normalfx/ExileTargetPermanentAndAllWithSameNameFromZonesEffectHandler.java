@@ -52,7 +52,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             return;
         }
 
-        String name = target.isFaceDown() ? null : target.getOriginalCard().getName();
+        String name = gameQueryService.getEffectiveName(gameData, target);
         ExileTargetPermanentAndAllWithSameNameFromZonesEffect exileEffect =
                 (ExileTargetPermanentAndAllWithSameNameFromZonesEffect) effect;
         CardSubtype requiredTargetSubtype = exileEffect.requiredTargetSubtype();

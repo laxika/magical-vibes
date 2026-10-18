@@ -58,12 +58,13 @@ class SaheeliRaiTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }
@@ -152,7 +153,7 @@ class SaheeliRaiTest extends BaseCardTest {
                 .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
                 .findFirst().orElseThrow();
         assertThat(clone.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(clone.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(clone.hasKeyword(Keyword.HASTE)).isFalse();
         assertThat(clone.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
     }
 

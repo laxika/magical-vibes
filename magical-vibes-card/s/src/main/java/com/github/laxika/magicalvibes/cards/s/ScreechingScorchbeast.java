@@ -28,7 +28,7 @@ public class ScreechingScorchbeast extends Card {
                 new EventValue(), "Zombie Mutant", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.ZOMBIE, CardSubtype.MUTANT), Set.of(), Set.of());
         addEffect(EffectSlot.ON_NONLAND_CARDS_MILLED,
-                new OncePerTurnTriggerEffect(new MayEffect(
+                OncePerTurnTriggerEffect.markOnAcceptance(new MayEffect(
                         new CreateTokensForNonlandCardsMilledEffect(zombieMutant),
                         "Create that many Zombie Mutant tokens?")));
     }

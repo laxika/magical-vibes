@@ -90,10 +90,10 @@ class SkittishValeskTest extends BaseCardTest {
     void upkeepTriggerResolvesAfterSourceLeavesBattlefield() {
         Permanent valesk = harness.addToBattlefieldAndReturn(player1, new SkittishValesk());
         harness.setHand(player2, List.of(new ChainOfVapor()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castInstant(player2, 0, valesk.getId());
         resolveAllTriggers();
 

@@ -24,6 +24,8 @@ import java.util.List;
 public class SavageAlliance extends Card {
 
     public SavageAlliance() {
+        setAllowSharedTargets(true);
+
         // Escalate {1} (Pay this cost for each mode chosen beyond the first.)
         addEffect(EffectSlot.SPELL, new EscalateManaCost("{1}"));
 

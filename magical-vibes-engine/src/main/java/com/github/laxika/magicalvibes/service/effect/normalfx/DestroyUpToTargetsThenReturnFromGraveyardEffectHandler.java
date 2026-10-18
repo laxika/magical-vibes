@@ -35,6 +35,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final DestructionSupport destructionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,23 +57,22 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
         String sourceName = entry.getCard().getName();
         List<Card> cardsToReturn = new ArrayList<>();
 
+        List<Permanent> targets = new ArrayList<>();
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
+            if (target != null) {
+                targets.add(target);
             }
-
-            Card card = target.getCard();
-            if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-                gameLogService.append(gameData, GameLog.cardThen(card, " is destroyed."));
-                log.info("Game {} - {} is destroyed by {}", gameData.id, card.getName(), sourceName);
-                Card originalCard = target.getOriginalCard();
-                if (!originalCard.isToken() && originalCard.hasType(CardType.CREATURE)) {
-                    cardsToReturn.add(originalCard);
-                }
+        }
+        for (Permanent destroyed : destructionSupport.destroyBatchCollecting(gameData, targets, sourceName, false)) {
+            Card originalCard = destroyed.getOriginalCard();
+            if (!originalCard.isToken()
+                    && (originalCard.hasType(CardType.CREATURE) || originalCard.hasType(CardType.PLANESWALKER))) {
+                cardsToReturn.add(originalCard);
             }
         }
 
+        List<Permanent> returnedPermanents = new ArrayList<>();
         for (Card card : cardsToReturn) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
             if (graveyardOwnerId == null) {
@@ -107,7 +107,24 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
             log.info("Game {} - {} returns {} to the battlefield under {}", gameData.id, playerName,
                     card.getName(), playerName);
 
-            graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+            returnedPermanents.add(permanent);
+        }
+
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
+        if (!alreadyCollectingEntries) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
+        try {
+            for (Permanent permanent : returnedPermanents) {
+                graveyardReturnSupport.handleCreatureEtbAndLegendRule(
+                        gameData, controllerId, permanent, permanent.getCard());
+            }
+        } finally {
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
         }
     }
 }

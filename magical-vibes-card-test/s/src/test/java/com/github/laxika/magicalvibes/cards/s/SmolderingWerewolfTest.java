@@ -50,6 +50,7 @@ class SmolderingWerewolfTest extends BaseCardTest {
     void etbCanChooseNoTargets() {
         castSmolderingWerewolf(List.of());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Smoldering Werewolf");

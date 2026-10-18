@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
 import com.github.laxika.magicalvibes.cards.a.AysenAbbey;
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
@@ -205,7 +206,7 @@ class SerraBestiaryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertInGraveyard(player1, "Serra Bestiary");
         harness.assertOnBattlefield(player2, "Beast Walkers");

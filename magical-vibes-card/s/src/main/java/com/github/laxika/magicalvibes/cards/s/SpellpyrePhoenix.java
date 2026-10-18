@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.ControllerCycledAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -26,12 +27,11 @@ public class SpellpyrePhoenix extends Card {
                         new CardTypePredicate(CardType.SORCERY))),
                 new CardHasCyclingPredicate()));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(instantOrSorceryWithCycling)
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return the targeted card to your hand?"));
 
         addEffect(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED, new ConditionalEffect(
                 new ControllerCycledAtLeastCardsThisTurn(2),

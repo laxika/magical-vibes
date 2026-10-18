@@ -28,7 +28,6 @@ class SetzerWanderingGamblerTest extends BaseCardTest {
         Permanent crew = findPermanent(player1, "Setzer, Wandering Gambler");
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(blackjack), null, null);
-        harness.handlePermanentChosen(player1, crew.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, blackjack)).isTrue();
@@ -40,10 +39,8 @@ class SetzerWanderingGamblerTest extends BaseCardTest {
     void vehicleCombatDamageAndCoinFlipWinCreateTreasures() {
         castSetzer();
         Permanent blackjack = findPermanent(player1, "The Blackjack");
-        Permanent crew = findPermanent(player1, "Setzer, Wandering Gambler");
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(blackjack), null, null);
-        harness.handlePermanentChosen(player1, crew.getId());
         harness.passBothPriorities();
 
         blackjack.setSummoningSick(false);

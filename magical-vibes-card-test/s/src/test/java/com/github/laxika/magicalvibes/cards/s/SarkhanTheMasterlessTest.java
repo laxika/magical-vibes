@@ -356,6 +356,8 @@ class SarkhanTheMasterlessTest extends BaseCardTest {
     }
 
     private void createDragonTokens(int count) {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         for (int i = 0; i < count; i++) {
             if (i > 0) {
                 harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

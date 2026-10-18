@@ -45,6 +45,7 @@ class ScrutinyOfTheGuildpactTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PerpetualPowerToughnessChoice.class)
                 .validIndices()).containsExactly(0);
@@ -75,6 +76,7 @@ class ScrutinyOfTheGuildpactTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

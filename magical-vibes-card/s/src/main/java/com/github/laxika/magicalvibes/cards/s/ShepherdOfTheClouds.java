@@ -39,6 +39,7 @@ public class ShepherdOfTheClouds extends Card {
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                         .filter(permanentWithManaValueThreeOrLess)
                                         .targetGraveyard(true)
+                                        .chooseAuraAttachment(true)
                                         .build()),
                         ConditionalEffect.unless(
                                 new NotCondition(controlsMount),

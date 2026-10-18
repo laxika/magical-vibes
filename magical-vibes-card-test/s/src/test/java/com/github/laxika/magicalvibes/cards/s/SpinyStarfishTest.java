@@ -157,8 +157,10 @@ class SpinyStarfishTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new GuerrillaTactics()));
         harness.addMana(player2, ManaColor.RED, 2);
-        harness.castAndResolveInstant(player2, 0, starfish.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castAndResolveInstant(player2, 0, starfish.getId());
+            resolveAllTriggers();
+        });
 
         harness.assertOnBattlefield(player1, "Spiny Starfish");
         assertThat(starfish.getTimesRegeneratedThisTurn()).isEqualTo(1);
@@ -174,7 +176,9 @@ class SpinyStarfishTest extends BaseCardTest {
         advanceToEndStepAndResolve();
         assertThat(countStarfishTokens()).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(starfish.getTimesRegeneratedThisTurn()).isZero();
         advanceToEndStepAndResolve(player2);
 

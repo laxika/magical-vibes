@@ -166,8 +166,8 @@ class ShamansTranceTest extends BaseCardTest {
         prepareMainPhase(player1);
         harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> gs.playFlashbackSpell(

@@ -132,6 +132,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                                 ? "seeks and cloaks a card onto the battlefield."
                                 : "seeks and puts " + chosen.getName() + " onto the battlefield.").build());
             } else if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
+                triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                        gameData, controllerId, chosen);
                 if (seek.faceDown()) {
                     exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);
                 } else {

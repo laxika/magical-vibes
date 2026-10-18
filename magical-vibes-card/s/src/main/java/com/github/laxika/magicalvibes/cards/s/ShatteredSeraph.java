@@ -22,7 +22,7 @@ import java.util.Set;
 public class ShatteredSeraph extends Card {
 
     public ShatteredSeraph() {
-        addCastingOption(new ExileCast());
+        addCastingOption(new ExileCast(true));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
 
         ActivatedAbility landManaAbility = new ActivatedAbility(

@@ -103,7 +103,7 @@ class SquareUpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SquareUp(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();

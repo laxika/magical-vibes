@@ -171,6 +171,8 @@ class SpinneretAndSpiderlingTest extends BaseCardTest {
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent spinneret = addCreatureReady(player1, new SpinneretAndSpiderling());
         spinneret.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         spinneret.setAttacking(true);
@@ -180,11 +182,11 @@ class SpinneretAndSpiderlingTest extends BaseCardTest {
         harness.resolveCombatDamage();
         resolveAllTriggers();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -109,7 +110,12 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         List<UUID> destroyedControllerIds = new ArrayList<>();
         List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
         List<Integer> destroyedManaValues = new ArrayList<>();
-        for (Permanent perm : destroyed) {
+        // "The controller of each of those artifacts gains life" (Seeds of Innocence) covers every
+        // artifact the instruction applied to, including indestructible ones that survived.
+        List<Permanent> riderPermanents =
+                e.thenEffect() instanceof EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect
+                        ? toDestroy : destroyed;
+        for (Permanent perm : riderPermanents) {
             UUID controllerId = controllerByPermanentId.get(perm.getId());
             if (controllerId == null) {
                 continue;

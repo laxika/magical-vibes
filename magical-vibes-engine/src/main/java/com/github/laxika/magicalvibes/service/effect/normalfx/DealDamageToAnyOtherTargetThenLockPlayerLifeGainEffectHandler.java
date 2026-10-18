@@ -31,10 +31,15 @@ public class DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffectHandler
 
         dealDamageHandler.resolve(gameData, entry, new DealDamageToAnyTargetEffect(damageEffect.damage()));
 
-        gameData.damageDealtToPlayersThisTurn.forEach((playerId, damageAfter) -> {
-            if (damageAfter > damageBefore.getOrDefault(playerId, 0)) {
-                lifeGainLockHandler.resolveForPlayer(gameData, playerId);
-            }
-        });
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null) {
+            return;
+        }
+        // Only the player this ability dealt damage to is locked; damage that other effects deal in
+        // response to it (Eye for an Eye's copy to the source's controller) is not "dealt this way".
+        int damageAfter = gameData.damageDealtToPlayersThisTurn.getOrDefault(targetPlayerId, 0);
+        if (damageAfter > damageBefore.getOrDefault(targetPlayerId, 0)) {
+            lifeGainLockHandler.resolveForPlayer(gameData, targetPlayerId);
+        }
     }
 }

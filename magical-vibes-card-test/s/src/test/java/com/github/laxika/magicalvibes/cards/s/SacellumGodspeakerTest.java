@@ -24,9 +24,12 @@ class SacellumGodspeakerTest extends BaseCardTest {
         addCreatureReady(player1, new SacellumGodspeaker());
 
         // Two 8/8 creatures qualify (power >= 5).
-        harness.setHand(player1, List.of(new AvatarOfMight(), new AvatarOfMight()));
+        AvatarOfMight first = new AvatarOfMight();
+        AvatarOfMight second = new AvatarOfMight();
+        harness.setHand(player1, List.of(first, second));
 
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
@@ -37,9 +40,11 @@ class SacellumGodspeakerTest extends BaseCardTest {
         addCreatureReady(player1, new SacellumGodspeaker());
 
         // One qualifying 8/8, one 2/2 (power < 5), one instant.
-        harness.setHand(player1, List.of(new AvatarOfMight(), new GrizzlyBears(), new Shock()));
+        AvatarOfMight avatar = new AvatarOfMight();
+        harness.setHand(player1, List.of(avatar, new GrizzlyBears(), new Shock()));
 
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(avatar.getId()));
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
@@ -63,6 +68,7 @@ class SacellumGodspeakerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new AvatarOfMight()));
 
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();

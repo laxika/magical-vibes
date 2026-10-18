@@ -17,6 +17,8 @@ class SoldiersOfTheWatchTest extends BaseCardTest {
 
     @Test
     void attackConjuresDistinctDuplicateAndBothLoseDoubleTeam() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent soldiers = addCreatureReady(player1, new SoldiersOfTheWatch());
 
         declareAttackers(List.of(0));
@@ -33,6 +35,8 @@ class SoldiersOfTheWatchTest extends BaseCardTest {
 
     @Test
     void originalAndCastDuplicateCannotConjureOnLaterAttack() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent original = addCreatureReady(player1, new SoldiersOfTheWatch());
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -56,6 +60,8 @@ class SoldiersOfTheWatchTest extends BaseCardTest {
 
     @Test
     void eachAttackerConjuresItsOwnDuplicate() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent first = addCreatureReady(player1, new SoldiersOfTheWatch());
         Permanent second = addCreatureReady(player1, new SoldiersOfTheWatch());
 
@@ -77,6 +83,8 @@ class SoldiersOfTheWatchTest extends BaseCardTest {
 
     @Test
     void opponentsAttackConjuresIntoTheirOwnHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent soldiers = addCreatureReady(player2, new SoldiersOfTheWatch());
 
         declareAttackers(player2, List.of(0));

@@ -127,6 +127,7 @@ class SmaugWickedWormTest extends BaseCardTest {
         addTreasureToken(player2);
         Card drawnCard = new WellWornSpatula();
         harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new SmaugsFury()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);

@@ -125,14 +125,16 @@ class StormTheVaultTest extends BaseCardTest {
     void treasureTriggerResolvesAfterStormLeavesBattlefield() {
         Permanent storm = addReadyStorm(player1);
         addReadyAttacker(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(gd.stack).hasSize(1);
-        gd.playerBattlefields.get(player1.getId()).remove(storm);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(1);
+            gd.playerBattlefields.get(player1.getId()).remove(storm);
 
-        harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(treasureCount(player1)).isEqualTo(1);
     }

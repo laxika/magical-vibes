@@ -207,7 +207,6 @@ class SafeHavenTest extends BaseCardTest {
         harness.setHand(player2, java.util.List.of(new Fissure()));
         harness.addMana(player2, ManaColor.RED, 5);
         harness.castAndResolveInstant(player2, 0, haven.getId());
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Safe Haven");
         harness.assertNotOnBattlefield(player1, "Goblin Hero");

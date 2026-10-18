@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -83,7 +84,7 @@ class SkitterOfLizardsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(findSkitter().isAttacking()).isTrue();
     }

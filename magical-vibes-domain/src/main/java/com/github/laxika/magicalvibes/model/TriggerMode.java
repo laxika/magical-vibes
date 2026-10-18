@@ -9,6 +9,7 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #ONCE_PER_BLOCK} — fires once for a block declaration, even when the source blocks multiple creatures</li>
  *   <li>{@link #ONCE_PER_BATCH} — fires once when several matching objects are processed as one event</li>
  *   <li>{@link #PER_TOKEN} — fires separately for each token entering in a token-creation event</li>
+ *   <li>{@link #TOKEN_CREATION} — a token-creation event ("whenever you create one or more tokens"), not an enter-the-battlefield trigger</li>
  * </ul>
  */
 public enum TriggerMode {
@@ -21,5 +22,11 @@ public enum TriggerMode {
     /** Fires separately for each individual counter placed in a counter-placement event. */
     PER_COUNTER,
     /** Fires separately for each token entering in a token-creation event (e.g. "whenever a token enters"). */
-    PER_TOKEN
+    PER_TOKEN,
+    /**
+     * Fires once per event in which its controller creates tokens. The ability is caused by the
+     * creation, not by a permanent entering, so effects that double or suppress enter triggers
+     * (Elesh Norn, Mother of Machines) do not apply.
+     */
+    TOKEN_CREATION
 }

@@ -16,7 +16,7 @@ public class Scrapheap extends Card {
 
     public Scrapheap() {
         // Whenever an artifact or enchantment is put into your graveyard from the battlefield, you gain 1 life.
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addEffect(EffectSlot.ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

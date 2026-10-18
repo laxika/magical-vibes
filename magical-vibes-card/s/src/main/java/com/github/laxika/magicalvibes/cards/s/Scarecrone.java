@@ -38,6 +38,7 @@ public class Scarecrone extends Card {
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.CREATURE))))
+                        .targetGraveyard(true)
                         .build()),
                 "{4}, {T}: Return target artifact creature card from your graveyard to the battlefield."
         ));

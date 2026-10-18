@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachPlayerThenMayExileMilledCreatureAndBecomeCopyEffect;
@@ -16,6 +19,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -55,6 +59,24 @@ public class MillEachPlayerThenMayExileMilledCreatureAndBecomeCopyChoiceHandler
         }
 
         List<Integer> validIndices = IntStream.range(0, candidates.size()).boxed().toList();
+        List<CardEffect> exileEffects = List.of(new ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect(
+                EffectSlot.UPKEEP_TRIGGERED));
+        // The exile and the copy are part of this ability's own resolution, so the chosen card is
+        // applied to a resolving entry instead of creating another stack object.
+        gameData.resolvedMayTargetingEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ability.sourceCard(),
+                ability.controllerId(),
+                ability.sourceCard().getName() + "'s ability",
+                new ArrayList<>(exileEffects),
+                0,
+                null,
+                ability.sourcePermanentId(),
+                null,
+                Zone.GRAVEYARD,
+                null,
+                null);
+        gameData.pendingEffectResolutionIndex = 0;
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                 .builder(ability.controllerId(), validIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
                         "Choose a creature card milled this way to exile.")
@@ -62,8 +84,7 @@ public class MillEachPlayerThenMayExileMilledCreatureAndBecomeCopyChoiceHandler
                 .mayAbilityContext(
                         ability.sourceCard(),
                         ability.controllerId(),
-                        List.of(new ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect(
-                                EffectSlot.UPKEEP_TRIGGERED)),
+                        exileEffects,
                         ability.sourcePermanentId())
                 .build());
     }

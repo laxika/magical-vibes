@@ -181,11 +181,11 @@ class SparkElementalTest extends BaseCardTest {
     void bouncedSourceDoesNotSacrificeNewCopy() {
         Permanent original = harness.addToBattlefieldAndReturn(player1, new SparkElemental());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0, original.getId());

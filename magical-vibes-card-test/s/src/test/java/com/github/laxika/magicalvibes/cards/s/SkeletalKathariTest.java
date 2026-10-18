@@ -111,7 +111,6 @@ class SkeletalKathariTest extends BaseCardTest {
         assertThat(kathari.getRegenerationShield()).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, kathari.getId());
 
         harness.assertNotOnBattlefield(player1, "Skeletal Kathari");
         harness.assertInGraveyard(player1, "Skeletal Kathari");

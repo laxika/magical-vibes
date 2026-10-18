@@ -13,11 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link RemoveAllCountersAndLockPlayerEffect} (Suncleanser): clears the target player's
- * poison counters — the only player counter the engine tracks — then records that player under the
- * source permanent's id in {@code GameData.countersLockedPlayersWhileSourceOnBattlefield} so
- * {@code GameQueryService.canPlayerGetPoisonCounters} refuses further counters while the source
- * remains on the battlefield.
+ * Resolves {@link RemoveAllCountersAndLockPlayerEffect} (Suncleanser): clears every player counter
+ * type the engine tracks (poison, energy, experience, rad, spark) from the target player, then records
+ * that player under the source permanent's id in {@code GameData.countersLockedPlayersWhileSourceOnBattlefield}
+ * so the counter-gain paths (e.g. {@code GameQueryService.canPlayerGetPoisonCounters} and
+ * {@code GameQueryService.replaceEnergyCounters}) refuse further counters while the source remains on the battlefield.
  */
 @Slf4j
 @Component
@@ -39,6 +39,10 @@ public class RemoveAllCountersAndLockPlayerEffectHandler implements NormalEffect
         }
 
         gameData.playerPoisonCounters.remove(targetPlayerId);
+        gameData.playerEnergyCounters.remove(targetPlayerId);
+        gameData.playerExperienceCounters.remove(targetPlayerId);
+        gameData.playerRadCounters.remove(targetPlayerId);
+        gameData.playerSparkCounters.remove(targetPlayerId);
 
         UUID sourceId = entry.getSourcePermanentId();
         if (sourceId != null) {

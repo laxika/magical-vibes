@@ -121,6 +121,7 @@ class StealTheShowTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Shock(), new Divination()));
         harness.addToBattlefield(player2, new ChandraPyromaster());
         var target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        target.setCounterCount(CounterType.LOYALTY, 4);
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1},
@@ -141,6 +142,7 @@ class StealTheShowTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new Shock(), new Divination()));
         harness.addToBattlefield(player2, new ChandraPyromaster());
         var target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        target.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new StealTheShow()));
         harness.addMana(player1, ManaColor.RED, 3);
 

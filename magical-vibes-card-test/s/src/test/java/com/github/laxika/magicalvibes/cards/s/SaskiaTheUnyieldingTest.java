@@ -57,7 +57,7 @@ class SaskiaTheUnyieldingTest extends BaseCardTest {
         saskia.setAttacking(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
 
         harness.assertLife(player2, 17);
@@ -75,7 +75,7 @@ class SaskiaTheUnyieldingTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
         harness.setLife(player2, 20);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(saskia);
@@ -127,7 +127,7 @@ class SaskiaTheUnyieldingTest extends BaseCardTest {
         bears.setAttacking(true);
         harness.setLife(player1, 10);
         harness.setLife(player2, 30);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
 
         harness.assertLife(player1, 15);
@@ -137,7 +137,7 @@ class SaskiaTheUnyieldingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.ensurePriority(player2);
         harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertLife(player2, 20);

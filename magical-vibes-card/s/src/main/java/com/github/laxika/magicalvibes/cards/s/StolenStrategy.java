@@ -22,6 +22,6 @@ public class StolenStrategy extends Card {
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
                 true,
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                false, false, 0, null, false, true, false));
+                false, false, 0, null, false, true, false, true));
     }
 }

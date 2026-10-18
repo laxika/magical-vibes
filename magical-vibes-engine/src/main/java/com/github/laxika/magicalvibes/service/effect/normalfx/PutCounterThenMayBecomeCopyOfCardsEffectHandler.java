@@ -35,6 +35,9 @@ public class PutCounterThenMayBecomeCopyOfCardsEffectHandler implements NormalEf
             return;
         }
 
+        putCountersOnSourceEffectHandler.resolve(
+                gameData, entry, new PutCountersOnSourceEffect(1, 1, 1));
+
         List<Card> cards = ((PutCounterThenMayBecomeCopyOfCardsEffect) effect).triggeringCards().stream()
                 .filter(card -> !card.isToken()
                         && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE)))
@@ -43,8 +46,6 @@ public class PutCounterThenMayBecomeCopyOfCardsEffectHandler implements NormalEf
             return;
         }
 
-        putCountersOnSourceEffectHandler.resolve(
-                gameData, entry, new PutCountersOnSourceEffect(1, 1, 1));
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 entry.getCard(),
                 entry.getControllerId(),

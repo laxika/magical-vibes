@@ -136,13 +136,13 @@ class SkinInvasionTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new DevilthornFox(), new DevilthornFox(), new DevilthornFox()));
         harness.setHand(player1, List.of(new FieryTemper(), new Reclaim()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.assertInGraveyard(player1, "Skin Invasion");
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, aura.getOriginalCard().getId());
         harness.assertNotInGraveyard(player1, "Skin Invasion");
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Skin Invasion");

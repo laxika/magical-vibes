@@ -130,12 +130,12 @@ class SixthSenseTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The creature controller chooses and draws when the Aura has a different controller")
-    void creatureControllerReceivesDrawChoice() {
+    @DisplayName("The Aura controller chooses and draws when the enchanted creature has a different controller")
+    void auraControllerReceivesDrawChoice() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachSixthSense(player2, creature);
         creature.setAttacking(true);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
         int creatureControllerHandSize = gd.playerHands.get(player1.getId()).size();
         int auraControllerHandSize = gd.playerHands.get(player2.getId()).size();
 
@@ -145,11 +145,11 @@ class SixthSenseTest extends BaseCardTest {
         PendingInteraction.MayAbilityChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.playerId()).isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(creatureControllerHandSize + 1);
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(auraControllerHandSize);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(creatureControllerHandSize);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(auraControllerHandSize + 1);
     }
 
     @Test

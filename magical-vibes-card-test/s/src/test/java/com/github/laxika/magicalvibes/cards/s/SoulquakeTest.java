@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SoulquakeTest extends BaseCardTest {
 
     private void castSoulquake() {
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new Soulquake(), "{3}{U}{U}{B}{B}");

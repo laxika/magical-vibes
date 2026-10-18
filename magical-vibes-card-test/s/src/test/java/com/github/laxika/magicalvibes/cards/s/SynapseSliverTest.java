@@ -117,6 +117,7 @@ class SynapseSliverTest extends BaseCardTest {
     void opposingCombatDamageTriggerBelongsToSynapseSliver() {
         Permanent synapse = addCreatureReady(player1, new SynapseSliver());
         addAttackingCreature(player2, new CryptSliver());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player2, List.of(new EnormousBaloth()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
@@ -141,6 +142,7 @@ class SynapseSliverTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new EnormousBaloth());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new EnormousBaloth()));
 
         resolveCombat();

@@ -23,6 +23,6 @@ public class SlaveOfBolas extends Card {
                 .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.PERMANENT))
                 .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect());
+                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect(false, true));
     }
 }

@@ -1343,17 +1343,17 @@ public class AmountEvaluationService {
         if (ctx.targetPermanentId() == null) return 0;
         for (StackEntry se : gameData.stack) {
             if (se.getTargetableId().equals(ctx.targetPermanentId())) {
-                return spellPowerForController(gameData, se.getCard(), se.getControllerId());
+                return characteristicPowerForController(gameData, se.getCard(), se.getControllerId());
             }
         }
         StackEntry resolving = ctx.stackEntry();
         Card lastKnown = resolving == null ? null : resolving.lastKnownPermanentCard(ctx.targetPermanentId());
         if (lastKnown == null) return 0;
-        return spellPowerForController(gameData, lastKnown, resolving.getCounteredSpellControllerId());
+        return characteristicPowerForController(gameData, lastKnown, resolving.getCounteredSpellControllerId());
     }
 
-    /** A spell's power with its characteristic-defining P/T evaluated for the given controller. */
-    private int spellPowerForController(GameData gameData, Card card, UUID controllerId) {
+    /** A card's power with its characteristic-defining P/T evaluated for the given controller, in any zone (CR 604.3). */
+    public int characteristicPowerForController(GameData gameData, Card card, UUID controllerId) {
         for (var effect : card.getEffects(EffectSlot.STATIC)) {
             if (effect instanceof SetPowerToughnessToAmountEffect cda) {
                 int power = evaluate(gameData, cda.power(),
@@ -2245,7 +2245,13 @@ public class AmountEvaluationService {
             return 0;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
-        return target == null ? 0 : target.getCounterCount(count.counterType());
+        if (target == null) {
+            return 0;
+        }
+        if (count.counterType() == null) {
+            return target.getCounters().values().stream().mapToInt(Integer::intValue).filter(n -> n > 0).sum();
+        }
+        return target.getCounterCount(count.counterType());
     }
 
     private int distinctCountersOnSource(AmountContext ctx) {
@@ -2386,7 +2392,7 @@ public class AmountEvaluationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null) continue;
             for (Card card : hand) {
-                if (predicateEvaluationService.matchesCardPredicate(card, count.predicate(), sourceCardId)) {
+                if (predicateEvaluationService.matchesCardPredicate(card, count.predicate(), sourceCardId, gameData, playerId)) {
                     total++;
                 }
             }
@@ -2414,7 +2420,7 @@ public class AmountEvaluationService {
             List<Card> deck = gameData.playerDecks.get(playerId);
             if (deck == null) continue;
             for (Card card : deck) {
-                if (predicateEvaluationService.matchesCardPredicate(card, count.predicate(), sourceCardId)) {
+                if (predicateEvaluationService.matchesCardPredicate(card, count.predicate(), sourceCardId, gameData, playerId)) {
                     total++;
                 }
             }
@@ -3518,7 +3524,7 @@ public class AmountEvaluationService {
     private int countLandsMatchingImprintedName(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
         Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
-        if (imprinted == null) return 0;
+        if (imprinted == null || gameData.findExiledCard(imprinted.getId()) == null) return 0;
         String imprintedName = imprinted.getName();
         final int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {

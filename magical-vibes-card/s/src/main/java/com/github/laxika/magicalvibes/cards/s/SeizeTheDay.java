@@ -21,7 +21,7 @@ public class SeizeTheDay extends Card {
     public SeizeTheDay() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1));
+                .addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1, null, true));
         addCastingOption(new FlashbackCast("{2}{R}"));
     }
 }

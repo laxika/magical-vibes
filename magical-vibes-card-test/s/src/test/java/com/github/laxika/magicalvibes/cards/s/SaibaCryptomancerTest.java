@@ -76,9 +76,10 @@ class SaibaCryptomancerTest extends BaseCardTest {
         Permanent hawker = harness.addToBattlefieldAndReturn(player1, new OmenHawker());
         gd.activePlayerId = player2.getId();
         harness.forceStep(TurnStep.END_STEP);
-        castSaibaCryptomancer();
-
-        resolveEtbTargeting(hawker);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            castSaibaCryptomancer();
+            resolveEtbTargeting(hawker);
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof SaibaCryptomancer);

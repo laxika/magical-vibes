@@ -57,7 +57,7 @@ class SplinterLeoFatherSonTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds())
+        assertThat(choice.validPlayerIds())
                 .contains(player2.getId())
                 .doesNotContain(player1.getId());
     }

@@ -20,7 +20,8 @@ import java.util.Set;
 public class SaprolingSymbiosis extends Card {
 
     public SaprolingSymbiosis() {
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{G}")), null, true));
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{G}")), null, true)
+                .withFlashAdditionalGenericCost(2));
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 "Saproling", 1, 1, CardColor.GREEN,

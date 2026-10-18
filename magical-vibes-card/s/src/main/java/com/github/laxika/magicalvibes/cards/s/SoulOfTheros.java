@@ -20,8 +20,7 @@ public class SoulOfTheros extends Card {
     public SoulOfTheros() {
         List<CardEffect> abilityEffects = List.of(
                 new BoostAllOwnCreaturesEffect(2, 2),
-                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), GrantScope.OWN_CREATURES),
-                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), GrantScope.SELF)
+                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES)
         );
 
         // {4}{W}{W}: Creatures you control get +2/+2 and gain first strike and lifelink until end of turn.
@@ -40,7 +39,7 @@ public class SoulOfTheros extends Card {
                 List.of(
                         new ExileSelfFromGraveyardCost(),
                         new BoostAllOwnCreaturesEffect(2, 2),
-                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES)
                 ),
                 "{4}{W}{W}, Exile this card from your graveyard: Creatures you control get +2/+2 and gain first strike and lifelink until end of turn."
         ));

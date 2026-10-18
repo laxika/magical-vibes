@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -22,7 +23,8 @@ public class SilvanReveler extends Card {
                 null,
                 new ReturnDiscardedCardFromGraveyardToBattlefieldEffect(true),
                 "a card",
-                new CardTypePredicate(CardType.LAND)));
+                new CardTypePredicate(CardType.LAND),
+                false, null, null, DiscardRecipient.CONTROLLER, true));
 
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new MayPayManaEffect("{1}{G}{U}",

@@ -105,6 +105,7 @@ class ShipwreckSentryTest extends BaseCardTest {
     void previousTurnArtifactDoesNotCount() {
         Permanent sentry = addCreatureReady(player1, new ShipwreckSentry());
         harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

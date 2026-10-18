@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 public class SharpEyedRookie extends Card {
 
     public SharpEyedRookie() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new EvolveTriggerEffect());
-        addEffect(EffectSlot.ON_SELF_EVOLVES, CreateTokenEffect.ofClueToken(1));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new EvolveTriggerEffect(CreateTokenEffect.ofClueToken(1)));
     }
 }

@@ -17,7 +17,8 @@ public class SaprolingInfestation extends Card {
     public SaprolingInfestation() {
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new KickedSpellCastTriggerEffect(
                 List.of(new CreateTokenEffect("Saproling", 1, 1,
-                        CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of()))
+                        CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of())),
+                true
         ));
     }
 }

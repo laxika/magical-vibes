@@ -21,6 +21,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class ConjureCardIntoControllerLibraryEffectHandler implements NormalEffectHandlerBean {
 
+    private static final int TOP_CARDS_DEPTH = 15;
+
     private final CardCatalog cardCatalog;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
@@ -51,21 +53,10 @@ public class ConjureCardIntoControllerLibraryEffectHandler implements NormalEffe
         if (library == null) {
             return;
         }
-        library.add(0, conjuredCard);
-        shuffleTopCards(library, 15);
+        library.add(ThreadLocalRandom.current().nextInt(Math.min(TOP_CARDS_DEPTH, library.size() + 1)), conjuredCard);
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a " + conjuredCard.getName() + " card into the top fifteen cards of their library."));
         triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
-    }
-
-    private void shuffleTopCards(java.util.List<Card> library, int depth) {
-        int shuffleSize = Math.min(depth, library.size());
-        for (int i = shuffleSize - 1; i > 0; i--) {
-            int swapIndex = ThreadLocalRandom.current().nextInt(i + 1);
-            Card card = library.get(i);
-            library.set(i, library.get(swapIndex));
-            library.set(swapIndex, card);
-        }
     }
 }

@@ -25,8 +25,8 @@ public class Skinshifter extends Card {
 
     public Skinshifter() {
         // "{G}: Choose one. Activate only once each turn." Each mode replaces the source's creature
-        // types (SourceBecomesSubtypeUntilEndOfTurnEffect) and sets its base P/T until end of turn;
-        // none of the modes targets, so the mode is picked as the ability resolves.
+        // types (SourceBecomesSubtypeUntilEndOfTurnEffect) and sets its base P/T until end of turn.
+        // The mode is announced while the ability is activated (CR 602.2b via CR 601.2b).
         addActivatedAbility(new ActivatedAbility(false, "{G}", List.of(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(RHINO_MODE, List.of(
                         new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.RHINO),
@@ -39,6 +39,6 @@ public class Skinshifter extends Card {
                 new ChooseOneEffect.ChooseOneOption(PLANT_MODE, List.of(
                         new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.PLANT),
                         new SetBasePowerToughnessEffect(0, 8, GrantScope.SELF)))))),
-                "{G}: Choose one. Activate only once each turn.", 1));
+                "{G}: Choose one. Activate only once each turn.", 1).withModalChoiceAtActivation());
     }
 }

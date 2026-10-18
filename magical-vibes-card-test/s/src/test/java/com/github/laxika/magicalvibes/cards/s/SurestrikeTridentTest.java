@@ -147,7 +147,7 @@ class SurestrikeTridentTest extends BaseCardTest {
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setHand(player1, List.of(new BarbedLightning()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castModalInstant(player1, 0, 0, List.of(creature.getId()));
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of(creature.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Crazed Goblin");

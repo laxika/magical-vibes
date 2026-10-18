@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
@@ -23,7 +24,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Set;
 
 public class TheTrueScriptures extends Card {
 
@@ -35,9 +35,9 @@ public class TheTrueScriptures extends Card {
                                 new PermanentIsPlaneswalkerPredicate())),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a creature or planeswalker an opponent controls.");
-        target(chapterOneTarget, 0, 99)
-                .addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyEachTargetPermanentEffect());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(chapterOneTarget));
+        addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyEachTargetPermanentEffect());
+        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I,
+                List.of(new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardEffect(3, DiscardRecipient.EACH_OPPONENT));

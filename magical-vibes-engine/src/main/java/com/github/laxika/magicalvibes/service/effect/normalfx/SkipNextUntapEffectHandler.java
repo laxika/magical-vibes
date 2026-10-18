@@ -39,6 +39,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             case TARGET -> resolveTarget(gameData, entry, e);
             case SELF -> resolveSelf(gameData, entry, e);
             case ENCHANTED -> resolveEnchanted(gameData, entry, e);
+            case TRIGGERING -> resolveTriggering(gameData, entry, e);
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
@@ -72,7 +73,17 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        lockTarget(gameData, host, e.untapSteps());
+        lockTarget(gameData, host, e.untapSteps(), e.controllerStepOnly() ? entry.getControllerId() : null);
+    }
+
+    private void resolveTriggering(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
+        UUID triggeringId = entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getTargetId();
+        Permanent triggering = triggeringId == null ? null : gameQueryService.findPermanentById(gameData, triggeringId);
+        if (triggering == null) {
+            return;
+        }
+        lockTarget(gameData, triggering, e.untapSteps(), e.controllerStepOnly() ? entry.getControllerId() : null);
     }
 
     private void resolveTarget(GameData gameData, StackEntry entry, SkipNextUntapEffect effect) {
@@ -87,7 +98,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
                 if (target == null) {
                     continue;
                 }
-                lockTarget(gameData, target, effect.untapSteps());
+                lockTarget(gameData, target, effect.untapSteps(), effect.controllerStepOnly() ? entry.getControllerId() : null);
             }
             return;
         }
@@ -98,11 +109,12 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        lockTarget(gameData, target, effect.untapSteps());
+        lockTarget(gameData, target, effect.untapSteps(), effect.controllerStepOnly() ? entry.getControllerId() : null);
     }
 
-    private void lockTarget(GameData gameData, Permanent target, int untapSteps) {
+    private void lockTarget(GameData gameData, Permanent target, int untapSteps, UUID controllerStepOwnerId) {
         target.setSkipUntapCount(Math.max(target.getSkipUntapCount(), untapSteps));
+        if (controllerStepOwnerId != null) target.setSkipUntapControllerId(controllerStepOwnerId);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set", gameData.id, target.getCard().getName());
@@ -160,6 +172,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
 
             if (!e.matchAtUntap()) {
                 p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
+                p.setSkipUntapControllerId(targetPlayerId);
             }
             count++;
         }

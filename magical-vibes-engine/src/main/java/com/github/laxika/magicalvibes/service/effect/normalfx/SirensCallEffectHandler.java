@@ -38,20 +38,8 @@ public class SirensCallEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var call = (SirensCallEffect) effect;
         UUID activePlayerId = gameData.activePlayerId;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                // "if able" is enforced by combat: the must-attack requirement only applies to
-                // creatures that can legally attack, so setting the flag on summoning-sick creatures
-                // is harmless.
-                if (gameQueryService.isCreature(gameData, permanent)
-                        && (!call.excludeWallsFromAttack() || !gameQueryService.hasEffectiveSubtype(gameData, permanent,
-                        com.github.laxika.magicalvibes.model.CardSubtype.WALL))) {
-                    permanent.setMustAttackThisTurn(true);
-                }
-            }
-        }
-
+        // The must-attack requirement is read from the delayed destruction action for every creature the
+        // player controls (CR 611.2c: a rules-modifying effect also covers creatures that arrive later).
         gameData.queueDelayedAction(new DestroyNonAttackersAtEndStep(activePlayerId, entry.getCard(),
                 call.excludeWallsFromAttack(), call.excludeSummoningSickFromDestruction(),
                 entry.getControllerId()));

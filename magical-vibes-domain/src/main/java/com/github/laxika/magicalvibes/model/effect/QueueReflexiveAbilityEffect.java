@@ -14,7 +14,7 @@ import java.util.Objects;
 public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
                                            boolean useEventValueAsX,
                                            boolean useEntryTargetAsTriggeringPermanent)
-        implements CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
         this(effect, false, false, false);
@@ -36,6 +36,15 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
     @Override
     public boolean targetsChosenByReflexiveAbility() {
         return true;
+    }
+
+    @Override
+    public CardEffect snapshotTriggeringSpellManaValue(int manaValue) {
+        CardEffect snapshot = effect instanceof TriggeringSpellManaValueEffect manaAware
+                ? manaAware.snapshotTriggeringSpellManaValue(manaValue)
+                : effect;
+        return new QueueReflexiveAbilityEffect(snapshot, optionalTarget, useEventValueAsX,
+                useEntryTargetAsTriggeringPermanent);
     }
 
     /** A combat-damage trigger needs the context of the reflexive effect it queues ("that player"). */

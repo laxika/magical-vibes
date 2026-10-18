@@ -37,8 +37,12 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MayPayManaEffect) effect;
 
-        if (e.payer() == MayPayPayer.ANY_PLAYER || e.payer() == MayPayPayer.ANY_OTHER_PLAYER) {
+        if (e.payer() == MayPayPayer.ANY_PLAYER || e.payer() == MayPayPayer.ANY_OTHER_PLAYER
+                || e.payer() == MayPayPayer.ANY_OPPONENT) {
             List<UUID> order = apnapOrder(gameData);
+            if (e.payer() == MayPayPayer.ANY_OPPONENT) {
+                order.removeIf(entry.getControllerId()::equals);
+            }
             if (e.payer() == MayPayPayer.ANY_OTHER_PLAYER && entry.getActivePlayerId() != null) {
                 order.removeIf(entry.getActivePlayerId()::equals);
             }
@@ -72,7 +76,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             case TRIGGERING_SPELL_CONTROLLER -> entry.getTargetId();
             case ACTIVE_PLAYER -> entry.getActivePlayerId() != null
                     ? entry.getActivePlayerId() : gameData.activePlayerId;
-            case ANY_PLAYER, ANY_OTHER_PLAYER -> null;
+            case ANY_PLAYER, ANY_OTHER_PLAYER, ANY_OPPONENT -> null;
         };
         if (payer == null) {
             return;
@@ -122,7 +126,9 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 entry.getEventValue(),
                 entry.getTriggeringPermanentId(),
                 null,
-                null
+                null,
+                null,
+                entry.getTriggeringCardGraveyardEntryVersion()
         ));
 
     }

@@ -27,6 +27,6 @@ public class Soulshriek extends Card {
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(
                         new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                         new Fixed(0)))
-                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect());
+                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect(false, true));
     }
 }

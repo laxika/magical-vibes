@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -76,6 +77,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -116,6 +118,7 @@ public class TriggeredAbilityQueueService {
     private final AmountEvaluationService amountEvaluationService;
     @Lazy private final ETBTokenTargetService etbTokenTargetService;
     @Lazy private final GraveyardTargetingService graveyardTargetingService;
+    private final ObjectProvider<TriggerCollectionService> triggerCollectionServiceProvider;
 
     @Autowired
     void setReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler(
@@ -1644,6 +1647,12 @@ public class TriggeredAbilityQueueService {
                 }
             }
 
+            if (!validPermanentTargets.isEmpty()
+                    && pending.effects().stream().anyMatch(CardEffect::targetChosenAtRandom)) {
+                pushRandomlyTargetedSpellTargetTrigger(gameData, pending, validPermanentTargets);
+                continue;
+            }
+
             List<UUID> validPlayerTargets;
             if (pending.nonTargeting()) {
                 if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter anyFilter) {
@@ -1728,6 +1737,41 @@ public class TriggeredAbilityQueueService {
             return;
         }
         beginTriggerOrder(gameData);
+    }
+
+    /**
+     * Puts a trigger whose target is "chosen at random" onto the stack (CR 603.3d): the target is
+     * drawn uniformly from the legal permanents as the ability is put on the stack, not chosen by
+     * a player, and the usual becomes-the-target and crime triggers fire for it.
+     */
+    private void pushRandomlyTargetedSpellTargetTrigger(GameData gameData,
+                                                        PermanentChoiceContext.SpellTargetTriggerAnyTarget pending,
+                                                        List<UUID> validPermanentTargets) {
+        UUID targetId = validPermanentTargets.get(ThreadLocalRandom.current().nextInt(validPermanentTargets.size()));
+        gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                pending.sourceCard(),
+                pending.controllerId(),
+                pending.sourceCard().getName() + "'s ability",
+                new ArrayList<>(pending.effects()),
+                targetId,
+                pending.sourcePermanentId());
+        entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+        entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
+        if (pending.targetFilter() != null) {
+            entry.setTargetFilter(pending.targetFilter());
+        }
+        gameData.stack.add(entry);
+        TriggerCollectionService triggerCollectionService = triggerCollectionServiceProvider.getObject();
+        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+        triggerCollectionService.checkCrimeTriggers(gameData, entry);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        gameLogService.append(gameData, GameLog.builder().card(pending.sourceCard())
+                .text("'s triggered ability randomly targets "
+                        + (target == null ? "a permanent" : target.getCard().getName()) + ".").build());
+        log.info("Game {} - {} spell-target trigger randomly targets {}",
+                gameData.id, pending.sourceCard().getName(), targetId);
     }
 
     /**
@@ -1924,7 +1968,11 @@ public class TriggeredAbilityQueueService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.isCreature(gameData, p)
+                        boolean permanentTypeAllowed = gameQueryService.isCreature(gameData, p)
+                                || (!pending.creaturesOnly()
+                                && (gameQueryService.isPlaneswalker(gameData, p)
+                                || gameQueryService.isBattle(gameData, p)));
+                        if (permanentTypeAllowed
                                 && !gameQueryService.hasKeyword(gameData, p, Keyword.SHROUD)
                                 && (!gameQueryService.hasKeyword(gameData, p, Keyword.HEXPROOF)
                                 || pid.equals(pending.controllerId()))

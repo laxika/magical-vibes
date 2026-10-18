@@ -21,6 +21,7 @@ public class SummonUndead extends Card {
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
+                .mandatory(true)
                 .build());
     }
 }

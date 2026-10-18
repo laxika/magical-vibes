@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.d.DestroyEvil;
 import com.github.laxika.magicalvibes.cards.e.EchoingDeeps;
 import com.github.laxika.magicalvibes.cards.e.EssenceScatter;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -272,11 +273,12 @@ class SerraParagonTest extends BaseCardTest {
     void landWithCopyChoiceRetainsGrantedTrigger(boolean copy) {
         harness.addToBattlefield(player1, new SerraParagon());
         harness.setGraveyard(player1, List.of(new EchoingDeeps()));
-        harness.setGraveyard(player2, List.of(new Forest()));
+        Card graveyardForest = new Forest();
+        harness.setGraveyard(player2, List.of(graveyardForest));
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.playGraveyardLand(player1, 0));
         harness.handleMayAbilityChosen(player1, copy);
         if (copy) {
-            harness.handleGraveyardCardChosen(player1, 0);
+            harness.handleMultipleCardsChosen(player1, List.of(graveyardForest.getId()));
         }
 
         harness.setHand(player1, List.of(new StoneRain()));
@@ -331,7 +333,7 @@ class SerraParagonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Spectral Sailor").getId());
         assertThat(gd.stack).hasSize(1);
-        harness.castFromGraveyard(player1, 0);
+        harness.castFromGraveyard(player1, gd.playerGraveyards.get(player1.getId()).indexOf(sailor));
         if (counterRecast) {
             harness.setHand(player2, List.of(new EssenceScatter()));
             harness.addMana(player2, ManaColor.BLUE, 2);

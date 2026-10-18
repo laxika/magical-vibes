@@ -49,8 +49,7 @@ public class SilkWebWeaver extends Card {
                 "{3}{G}{W}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)),
                 "{3}{G}{W}: Creatures you control get +2/+2 and gain vigilance until end of turn."));
     }
 }

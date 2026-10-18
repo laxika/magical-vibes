@@ -169,8 +169,6 @@ class SigilTracerTest extends BaseCardTest {
         harness.passPriority(player1);
 
         harness.activateAbility(player2, 0, null, counsel.getId());
-        harness.handlePermanentChosen(player2, tracer.getId());
-        harness.handlePermanentChosen(player2, wizard.getId());
         harness.passBothPriorities();
 
         assertThat(tracer.isTapped()).isTrue();

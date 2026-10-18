@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SeekToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
@@ -48,8 +46,6 @@ public class SeekToBattlefieldEffectHandler implements NormalEffectHandlerBean {
         List<Card> matchingCards = library.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, seekEffect.predicate(), sourceCardId, gameData, controllerId))
-                .filter(card -> !gameQueryService.isCardBlockedFromEnteringFromZone(
-                        gameData, card, Zone.LIBRARY))
                 .toList();
         if (matchingCards.isEmpty()) {
             return;

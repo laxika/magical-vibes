@@ -177,6 +177,7 @@ class SparasAdjudicatorsTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, harness.getPermanentId(player1, "Island"));
         harness.passBothPriorities();
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "GREEN");
@@ -205,6 +206,7 @@ class SparasAdjudicatorsTest extends BaseCardTest {
     void combatRestrictionExpiresAtTheBeginningOfControllersNextTurn() {
         harness.addToBattlefield(player2, new CivilServant());
         Permanent creature = castAdjudicators();
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         declareAttack(creature);

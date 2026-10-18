@@ -21,7 +21,7 @@ public class SanctuaryLockdown extends Card {
     public SanctuaryLockdown() {
         var humanFilter = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, humanFilter));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, humanFilter));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

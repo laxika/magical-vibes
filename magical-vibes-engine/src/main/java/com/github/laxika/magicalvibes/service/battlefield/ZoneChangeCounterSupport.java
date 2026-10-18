@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardsLoseAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreserveCountersOnZoneChangeEffect;
 
 import java.util.EnumMap;
@@ -49,6 +50,13 @@ public final class ZoneChangeCounterSupport {
         if (!hasPersistenceAbility(card)
                 || enteredFromZone == Zone.HAND
                 || enteredFromZone == Zone.LIBRARY) {
+            return;
+        }
+        if (enteredFromZone == Zone.GRAVEYARD && gameData.anyPermanentMatches(source -> !source.isFaceDown()
+                && !source.isLosesAllAbilitiesUntilEndOfTurn()
+                && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance))) {
+            // Cards in graveyards have no abilities, so the card has no ability to retain its counters.
             return;
         }
         counters.forEach((counterType, count) -> permanent.setCounterCount(

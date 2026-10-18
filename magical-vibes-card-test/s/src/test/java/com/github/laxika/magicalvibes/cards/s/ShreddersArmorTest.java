@@ -99,7 +99,6 @@ class ShreddersArmorTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(armor.getAttachedTo()).isNull();
@@ -166,6 +165,7 @@ class ShreddersArmorTest extends BaseCardTest {
         Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, 0, null, firstTarget.getId());
         harness.handlePermanentChosen(player1, firstSacrifice.getId());

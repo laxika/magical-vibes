@@ -7,8 +7,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -95,7 +100,7 @@ class SemestersEndTest extends BaseCardTest {
     void returnsPermanentsWithDifferentOwnersInOneResolution() {
         Permanent owned = harness.addToBattlefieldAndReturn(player1, new AgelessGuardian());
         Permanent borrowed = harness.addToBattlefieldAndReturn(player1, new AgelessGuardian());
-        gd.stolenCreatures.put(borrowed.getId(), player2.getId());
+        setOwnerAndController(borrowed, player2, player1);
         harness.setHand(player1, List.of(new SemestersEnd()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -124,6 +129,10 @@ class SemestersEndTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(changed);
         gd.playerBattlefields.get(player2.getId()).add(changed);
         gd.stolenCreatures.put(changed.getId(), player1.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), changed,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test Control Effect"));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

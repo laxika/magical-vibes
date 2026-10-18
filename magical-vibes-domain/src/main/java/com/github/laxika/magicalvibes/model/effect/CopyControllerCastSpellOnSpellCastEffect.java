@@ -211,6 +211,14 @@ public record CopyControllerCastSpellOnSpellCastEffect(
                 Set.of(), false, true, false, false, null);
     }
 
+    /** "Whenever you cast your first [filter] spell from [zone] each turn, copy that spell" (Sevinne, the Chronoclasm). */
+    public static CopyControllerCastSpellOnSpellCastEffect firstFromZoneEachTurn(
+            CardPredicate spellFilter, Zone requiredCastZone) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                spellFilter, null, null, requiredCastZone, null, Set.of(), null, false,
+                Set.of(), false, true, false, false, null, List.of(spellFilter), null);
+    }
+
     public static CopyControllerCastSpellOnSpellCastEffect withCastTargetCondition(
             CardPredicate spellFilter, StackEntryPredicate castSpellTargetCondition,
             Set<Keyword> grantedKeywords) {

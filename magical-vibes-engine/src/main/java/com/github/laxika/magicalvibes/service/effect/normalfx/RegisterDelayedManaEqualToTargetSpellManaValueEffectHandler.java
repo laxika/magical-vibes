@@ -41,12 +41,16 @@ public class RegisterDelayedManaEqualToTargetSpellManaValueEffectHandler impleme
                 break;
             }
         }
-        if (targetEntry == null) {
+        int manaValue;
+        if (targetEntry != null) {
+            manaValue = targetEntry.getSpellManaValue();
+        } else if (entry.getEventValue() > 0) {
+            // The spell was already countered earlier in this resolution; the counter effect recorded its mana value.
+            manaValue = entry.getEventValue();
+        } else {
             log.info("Game {} - Clash reward target no longer on stack, no delayed mana scheduled", gameData.id);
             return;
         }
-
-        int manaValue = targetEntry.getSpellManaValue();
         if (manaValue <= 0) return;
 
         UUID controllerId = entry.getControllerId();

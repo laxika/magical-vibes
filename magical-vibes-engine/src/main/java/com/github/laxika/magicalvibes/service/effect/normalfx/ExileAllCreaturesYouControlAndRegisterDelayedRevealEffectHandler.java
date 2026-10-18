@@ -43,12 +43,6 @@ public class ExileAllCreaturesYouControlAndRegisterDelayedRevealEffectHandler
                         .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                         .toList());
 
-        if (creatures.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    controllerName + " controls no creatures — no creatures are exiled."));
-            return;
-        }
-
         int exiledCount = 0;
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
@@ -63,10 +57,11 @@ public class ExileAllCreaturesYouControlAndRegisterDelayedRevealEffectHandler
             permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
-
-        if (exiledCount == 0) {
-            return;
+        if (creatures.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    controllerName + " controls no creatures — no creatures are exiled."));
         }
+
         gameData.queueDelayedAction(new DelayedRevealCreatureCardsToBattlefield(
                 controllerId, entry.getCard(), exiledCount));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),

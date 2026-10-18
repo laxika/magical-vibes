@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -29,7 +30,7 @@ public class StarforgedSword extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new GiftPromised(),
-                TargetOpponentCreatesTokenEffect.gift(fishToken())));
+                TargetOpponentCreatesTokenEffect.gift(fishToken())), TriggerMode.INDEPENDENT);
 
         targetWhenGiftPromised(TargetFilters.creatureYouControl(), 0, 1, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

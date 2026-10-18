@@ -35,7 +35,7 @@ class SkyclaveSquidTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(squid.isAttacking()).isTrue();
     }
@@ -117,7 +117,7 @@ class SkyclaveSquidTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
         assertThat(laterSquid.isAttacking()).isFalse();
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         assertThat(originalSquid.isAttacking()).isTrue();
     }
 }

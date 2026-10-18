@@ -50,7 +50,8 @@ public class SeasonOfTheWitchEffectHandler implements NormalEffectHandlerBean {
         }
         List<Permanent> toDestroy = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            if (ableToAttack.contains(permanent.getId()) && !permanent.isAttackedThisTurn()) {
+            if (!permanent.isTapped() && ableToAttack.contains(permanent.getId())
+                    && !permanent.isAttackedThisTurn()) {
                 toDestroy.add(permanent);
             }
         }

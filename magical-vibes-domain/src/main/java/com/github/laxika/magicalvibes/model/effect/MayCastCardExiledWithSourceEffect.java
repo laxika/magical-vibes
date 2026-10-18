@@ -18,7 +18,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
                                                 boolean random, boolean withoutPayingManaCost,
-                                                DynamicAmount genericCostReduction, boolean ownOnly) implements CardEffect {
+                                                DynamicAmount genericCostReduction, boolean ownOnly,
+                                                boolean returnSourceToHandIfCast) implements CardEffect {
+
+    public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
+                                            boolean random, boolean withoutPayingManaCost,
+                                            DynamicAmount genericCostReduction, boolean ownOnly) {
+        this(manaValue, filter, random, withoutPayingManaCost, genericCostReduction, ownOnly, false);
+    }
 
     public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
                                             boolean random, boolean withoutPayingManaCost,
@@ -44,6 +51,11 @@ public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPre
 
     public MayCastCardExiledWithSourceEffect(boolean random) {
         this(null, null, random, true, null);
+    }
+
+    /** "You may cast the exiled card without paying its mana cost. If you do, return this permanent to its owner's hand." */
+    public static MayCastCardExiledWithSourceEffect returningSourceToHandIfCast() {
+        return new MayCastCardExiledWithSourceEffect(null, null, false, true, null, false, true);
     }
 
     public static MayCastCardExiledWithSourceEffect randomSelection() {

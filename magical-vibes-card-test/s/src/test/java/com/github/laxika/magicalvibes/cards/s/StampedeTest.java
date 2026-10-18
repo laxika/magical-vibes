@@ -22,7 +22,7 @@ class StampedeTest extends BaseCardTest {
         Permanent p1Attacker = addCreatureReady(player1, new BalduvianBears());
         Permanent secondAttacker = addCreatureReady(player1, new BalduvianBears());
         Permanent p1Idle = addCreatureReady(player1, new BalduvianBears());
-        declareAttackers(List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0, 1)));
 
         castStampede();
 
@@ -112,10 +112,11 @@ class StampedeTest extends BaseCardTest {
     @DisplayName("Two Stampedes stack their power boosts until end of turn")
     void multipleStampedesStack() {
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
-        declareAttackers(List.of(0));
-
-        castStampede();
-        castStampede();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            castStampede();
+            castStampede();
+        });
 
         assertThat(attacker.getEffectivePower()).isEqualTo(4);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);

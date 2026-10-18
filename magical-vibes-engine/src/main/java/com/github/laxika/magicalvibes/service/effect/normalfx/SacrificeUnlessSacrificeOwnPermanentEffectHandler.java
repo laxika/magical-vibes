@@ -49,7 +49,9 @@ public class SacrificeUnlessSacrificeOwnPermanentEffectHandler implements Normal
         boolean hasValidPermanent = false;
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard().getId().equals(sourceCard.getId())) {
+                if (entry.getSourcePermanentId() != null
+                        ? p.getId().equals(entry.getSourcePermanentId())
+                        : p.getCard().getId().equals(sourceCard.getId())) {
                     sourcePermanent = p;
                 }
                 if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) {
@@ -75,7 +77,7 @@ public class SacrificeUnlessSacrificeOwnPermanentEffectHandler implements Normal
                 ? "Sacrifice " + e.description() + "? If you don't, " + sourceCard.getName() + " will be sacrificed."
                 : sourceCard.getName() + " is no longer on the battlefield. Sacrifice " + e.description() + " anyway?";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                sourceCard, controllerId, List.of(e), prompt
+                sourceCard, controllerId, List.of(e), prompt, null, null, entry.getSourcePermanentId()
         ));
     }
 }

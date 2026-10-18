@@ -92,7 +92,7 @@ class SlumberingToraTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, tora)).isTrue();
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, tora)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, tora, CardSubtype.CAT)).isFalse();

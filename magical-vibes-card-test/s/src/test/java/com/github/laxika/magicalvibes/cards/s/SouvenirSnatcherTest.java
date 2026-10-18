@@ -128,8 +128,7 @@ class SouvenirSnatcherTest extends BaseCardTest {
         triggerMutation(snatcher);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Phyrexian Hulk");
         harness.assertNotOnBattlefield(player1, "Phyrexian Hulk");
     }

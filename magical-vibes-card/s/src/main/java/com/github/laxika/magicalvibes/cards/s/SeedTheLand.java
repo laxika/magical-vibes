@@ -17,8 +17,9 @@ public class SeedTheLand extends Card {
     public SeedTheLand() {
         CreateTokenEffect snake = new CreateTokenEffect(
                 "Snake", 1, 1, CardColor.GREEN, List.of(CardSubtype.SNAKE), Set.of(), Set.of());
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, snake);
+        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+                new CreateTokenForTriggeringPlayerEffect(snake, false, true));
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
-                new CreateTokenForTriggeringPlayerEffect(snake));
+                new CreateTokenForTriggeringPlayerEffect(snake, false, true));
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +46,8 @@ class ScalpelexisTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(
                 new GrizzlyBears(), new SerraAngel(), new SuntailHawk(), new SamiteHealer()));
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(scalpelexis);

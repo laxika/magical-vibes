@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -141,9 +142,10 @@ class SongOfCreationTest extends BaseCardTest {
 
     @Test
     void discardAffectsEntireCurrentHandAndOnlyController() {
+        Card opponentForest = new Forest();
         harness.addToBattlefield(player1, new SongOfCreation());
         harness.setHand(player1, List.of(new Forest()));
-        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(opponentForest));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
@@ -152,7 +154,8 @@ class SongOfCreationTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentForest);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
 }

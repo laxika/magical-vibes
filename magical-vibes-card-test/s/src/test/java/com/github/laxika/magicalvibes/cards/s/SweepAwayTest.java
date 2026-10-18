@@ -118,7 +118,7 @@ class SweepAwayTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Blinding Drone");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

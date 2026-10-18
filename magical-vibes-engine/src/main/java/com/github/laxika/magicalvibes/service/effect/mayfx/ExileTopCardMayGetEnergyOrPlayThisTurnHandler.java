@@ -37,7 +37,7 @@ public class ExileTopCardMayGetEnergyOrPlayThisTurnHandler implements MayEffectH
                 .findFirst()
                 .orElseThrow();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(effect.exiledCardId());
-        if (accepted && exiledEntry != null) {
+        if (accepted) {
             CardEffect energy = new EnergyCountersEffect(2);
             StackEntry energyEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

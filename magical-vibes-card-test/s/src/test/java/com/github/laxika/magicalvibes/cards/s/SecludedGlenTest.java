@@ -164,8 +164,7 @@ class SecludedGlenTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
 
-        assertThat(gd.pendingInteractions).anySatisfy(interaction ->
-                assertThat(interaction).isInstanceOf(PendingInteraction.ColorChoice.class));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "Untapped");
 
         assertThat(findLand(player1).isTapped()).isFalse();

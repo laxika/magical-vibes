@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -78,6 +79,7 @@ public class AnimationSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final LudevicCopySupport ludevicCopySupport;
+    private final CreateEmblemEffectHandler createEmblemEffectHandler;
 
     private AmountContext animationAmountContext(GameData gameData, StackEntry entry) {
         Permanent source = entry.getSourcePermanentId() == null
@@ -975,6 +977,11 @@ public class AnimationSupport {
         }
 
         Card originalCard = self.getOriginalCard();
+        // CR 701.27d: nothing happens when the face to transform into is an instant or sorcery face.
+        if (originalCard.hasType(com.github.laxika.magicalvibes.model.CardType.INSTANT)
+                || originalCard.hasType(com.github.laxika.magicalvibes.model.CardType.SORCERY)) {
+            return false;
+        }
         Card backCard = self.getCard();
         String backName = backCard.getName();
         self.setCard(originalCard);
@@ -1052,6 +1059,14 @@ public class AnimationSupport {
         for (CardEffect e : effects) {
             if (e instanceof ApplyLudevicCopyEffect) {
                 ludevicCopySupport.resolveAfterTransform(gameData, self);
+                continue;
+            }
+            if (e instanceof CreateEmblemEffect && slot == EffectSlot.ON_TRANSFORM_TO_BACK_FACE) {
+                // "As this creature transforms into X, you get an emblem" (Super Nova) is not a triggered
+                // ability: the emblem exists as the transformation happens, without using the stack.
+                createEmblemEffectHandler.resolve(gameData, new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, triggerCard, controllerId,
+                        triggerCard.getName() + "'s transform ability", List.of(e), null, self.getId()), e);
                 continue;
             }
             if (e instanceof MayEffect may

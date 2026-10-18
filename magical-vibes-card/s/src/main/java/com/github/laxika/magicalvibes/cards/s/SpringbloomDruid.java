@@ -26,7 +26,7 @@ public class SpringbloomDruid extends Card {
                         new PermanentIsLandPredicate(),
                         new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        "a land"),
+                        "a land", false, false),
                 "Sacrifice a land?"));
     }
 }

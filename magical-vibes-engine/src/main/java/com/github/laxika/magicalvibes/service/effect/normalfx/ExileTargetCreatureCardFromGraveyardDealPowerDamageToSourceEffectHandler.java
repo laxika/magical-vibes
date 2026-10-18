@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardDealPowerDamageToSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class ExileTargetCreatureCardFromGraveyardDealPowerDamageToSourceEffectHandler
         implements NormalEffectHandlerBean {
 
+    private final AmountEvaluationService amountEvaluationService;
     private final DamageSupport damageSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
@@ -42,10 +44,13 @@ public class ExileTargetCreatureCardFromGraveyardDealPowerDamageToSourceEffectHa
             return;
         }
 
-        int power = targetCard.getPower() == null ? 0 : Math.max(0, targetCard.getPower());
         if (!graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard)) {
             return;
         }
+        // The power is read after the exile: characteristic-defining P/T functions in every zone (CR 604.3),
+        // so a variable-power card such as Mortivore is evaluated from its current game state.
+        int power = amountEvaluationService.characteristicPowerForController(
+                gameData, targetCard, entry.getControllerId());
 
         gameLogService.append(gameData,
                 GameLog.textCardText(gameData.playerIdToName.get(entry.getControllerId()) + " exiles ",

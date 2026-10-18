@@ -58,8 +58,9 @@ class SavageOrderTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
     }

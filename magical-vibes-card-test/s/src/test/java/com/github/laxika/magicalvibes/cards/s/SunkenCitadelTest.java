@@ -168,6 +168,7 @@ class SunkenCitadelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SunkenCitadel()));
 
         harness.playLand(player1, 0);
+        harness.handleListChoice(player1, "Untapped");
         harness.handleListChoice(player1, "RED");
 
         Permanent citadel = findPermanent(player1, "Sunken Citadel");

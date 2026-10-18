@@ -118,7 +118,7 @@ class StarCrownedStagTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(victim.isTapped()).isFalse();
     }

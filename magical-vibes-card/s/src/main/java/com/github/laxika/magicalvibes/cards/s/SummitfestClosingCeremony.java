@@ -27,13 +27,15 @@ public class SummitfestClosingCeremony extends Card {
     public SummitfestClosingCeremony() {
         setStartingIntensity(3);
 
-        addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        SpellCastTriggerEffect covercast = new SpellCastTriggerEffect(
                 INSTANT_OR_SORCERY,
                 List.of(new ConditionalEffect(
                         new SpellManaSpentAtLeast(5),
                         new IntensifySourceCardEffect(1))
                 )
-        ));
+        );
+        addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, covercast);
+        addEffect(EffectSlot.HAND_ON_CONTROLLER_CASTS_SPELL, covercast);
         addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.BLUE, new SourceIntensity()));
         addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED, new SourceIntensity()));
         addEffect(EffectSlot.SPELL, new DrawCardEffect());

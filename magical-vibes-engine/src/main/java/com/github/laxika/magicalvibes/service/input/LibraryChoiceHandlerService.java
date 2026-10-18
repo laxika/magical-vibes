@@ -875,9 +875,7 @@ public class LibraryChoiceHandlerService {
                         graveyardLog.card(sourceCards.get(i));
                     }
                     graveyardLog.text(" into their graveyard.");
-                    for (Card card : new ArrayList<>(sourceCards)) {
-                        graveyardService.addCardToGraveyard(gameData, deckOwnerId, card, Zone.LIBRARY);
-                    }
+                    graveyardService.addCardsFromLibraryToGraveyard(gameData, deckOwnerId, new ArrayList<>(sourceCards));
                     gameLogService.append(gameData, graveyardLog.build());
                 }
                 finishSearchAndResume(gameData);
@@ -956,6 +954,15 @@ public class LibraryChoiceHandlerService {
                 }
                 gameLogService.append(gameData, GameLog.text(player.getUsername()
                         + " stops searching. Library is shuffled."));
+                finishSearchAndResume(gameData);
+                return;
+            }
+            if (destination == LibrarySearchDestination.EXILE_WITH_SOURCE) {
+                if (shuffleAfterSelection) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                    gameLogService.append(gameData, GameLog.text(player.getUsername()
+                            + " stops searching. " + player.getUsername() + "'s library is shuffled."));
+                }
                 finishSearchAndResume(gameData);
                 return;
             }
@@ -1721,7 +1728,7 @@ public class LibraryChoiceHandlerService {
         } else if (toGraveyard) {
             boolean enteredGraveyard = graveyardService.addCardToGraveyard(
                     gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
-            if (enteredGraveyard
+            if ((enteredGraveyard || gameData.findExiledCard(chosenCard.getId()) != null)
                     && librarySearch.sourcePermanentId() != null
                     && gameData.pendingEffectResolutionEntry != null) {
                 gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
@@ -4720,7 +4727,7 @@ public class LibraryChoiceHandlerService {
         }
 
         gameData.removeFromExile(chosenCard.getId());
-        castCardWithoutPaying(gameData, player, chosenCard);
+        castCardWithoutPaying(gameData, player, chosenCard, null, false, false, Zone.EXILE);
     }
 
     private void handleExileAndMayCastWithoutPayingChoice(GameData gameData, Player player,

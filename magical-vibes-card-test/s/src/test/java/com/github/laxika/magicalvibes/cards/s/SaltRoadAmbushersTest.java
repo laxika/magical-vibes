@@ -103,10 +103,11 @@ class SaltRoadAmbushersTest extends BaseCardTest {
         opponentCreature.setFaceDownAsDisguised();
         harness.setHand(player1, List.of(new ExposeTheCulprit()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of(opponentCreature.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

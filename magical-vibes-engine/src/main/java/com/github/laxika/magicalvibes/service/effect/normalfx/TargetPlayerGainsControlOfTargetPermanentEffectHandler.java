@@ -53,9 +53,8 @@ public class TargetPlayerGainsControlOfTargetPermanentEffectHandler implements N
         if (currentControllerId == null) {
             return;
         }
-        boolean controlChanged = !newControllerId.equals(currentControllerId);
-
-        creatureControlService.applyControlEffect(
+        boolean controlChanged = !newControllerId.equals(currentControllerId)
+                && creatureControlService.applyControlEffect(
                 gameData,
                 newControllerId,
                 target,

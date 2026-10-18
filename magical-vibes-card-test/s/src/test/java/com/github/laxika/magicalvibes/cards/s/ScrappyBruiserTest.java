@@ -45,6 +45,7 @@ class ScrappyBruiserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         resolveCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");

@@ -74,16 +74,19 @@ public class UntapPermanentsForAmountEffectHandler implements NormalEffectHandle
         if (requiredCount == 0) {
             return;
         }
-        if (candidates.size() <= requiredCount) {
+        if (!untapEffect.upTo() && candidates.size() <= requiredCount) {
             untapAll(gameData, entry, candidates);
             return;
         }
 
+        String choose = untapEffect.upTo()
+                ? "Choose up to " + requiredCount
+                : "Choose exactly " + requiredCount;
         playerInputService.beginMultiPermanentChoice(gameData, chooserId,
                 candidates.stream().map(Permanent::getId).toList(), requiredCount,
                 new MultiPermanentChoiceContext.UntapPermanentsForAmount(
-                        entry.getCard().getName(), requiredCount),
-                entry.getCard().getName() + " — Choose exactly " + requiredCount
+                        entry.getCard().getName(), requiredCount, untapEffect.upTo()),
+                entry.getCard().getName() + " — " + choose
                         + " permanent" + (requiredCount == 1 ? "" : "s") + " to untap.");
     }
 

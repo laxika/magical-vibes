@@ -86,9 +86,11 @@ class SalvagedManaworkerTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, "RED");
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, "RED");
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

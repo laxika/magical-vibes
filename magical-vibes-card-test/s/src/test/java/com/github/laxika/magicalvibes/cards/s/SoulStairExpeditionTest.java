@@ -257,6 +257,7 @@ class SoulStairExpeditionTest extends BaseCardTest {
     }
 
     private Permanent addExpedition() {
+        harness.setHand(player1, List.of());
         return harness.addToBattlefieldAndReturn(player1, new SoulStairExpedition());
     }
 }

@@ -212,7 +212,7 @@ class SageEyeAvengersTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInHand(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");

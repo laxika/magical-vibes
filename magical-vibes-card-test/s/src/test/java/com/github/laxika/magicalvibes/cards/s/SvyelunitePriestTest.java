@@ -167,6 +167,8 @@ class SvyelunitePriestTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
@@ -185,6 +187,8 @@ class SvyelunitePriestTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
         priest.untap();
         addAbilityMana();
 

@@ -36,7 +36,7 @@ class SkullStormTest extends BaseCardTest {
         cast();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(4);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(3);
     }
 
     @Test

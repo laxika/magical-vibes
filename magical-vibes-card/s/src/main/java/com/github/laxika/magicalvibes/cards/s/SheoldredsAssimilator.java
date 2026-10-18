@@ -14,9 +14,11 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 public class SheoldredsAssimilator extends Card {
 
     public SheoldredsAssimilator() {
-        target(new GraveyardCardPredicateTargetFilter(null, GraveyardSearchScope.ALL_GRAVEYARDS), 0, 1);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, graveyardTrigger());
-        addEffect(EffectSlot.ON_ATTACK, graveyardTrigger());
+        CardEffect graveyardTrigger = graveyardTrigger();
+        var graveyardTarget = target(
+                new GraveyardCardPredicateTargetFilter(null, GraveyardSearchScope.ALL_GRAVEYARDS), 0, 1);
+        graveyardTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, graveyardTrigger);
+        graveyardTarget.addEffect(EffectSlot.ON_ATTACK, graveyardTrigger);
     }
 
     private CardEffect graveyardTrigger() {

@@ -22,6 +22,6 @@ public class SentinelsEyes extends Card {
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
                         1, 1, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
         addCastingOption(new GraveyardCast(null, "{W}", List.of(
-                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 2))));
+                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 2)), null, false, false, true));
     }
 }

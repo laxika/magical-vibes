@@ -14,6 +14,6 @@ public class StarPupil extends Card {
     public StarPupil() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
-        addEffect(EffectSlot.ON_DEATH, new MoveDyingSourceCountersToTargetCreatureEffect(true));
+        addEffect(EffectSlot.ON_DEATH, MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true));
     }
 }

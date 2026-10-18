@@ -4,7 +4,7 @@
 
 `ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` uses `TriggerMode.PER_TOKEN` for abilities that trigger for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
 
-`MultiTargetConstraint.ONE_PER_OPPONENT` requires one legal permanent target controlled by every opponent, even when an opponent has no legal targets. Spells using it cannot be cast without satisfying every opponent's target requirement. `ONE_PER_CONTROLLER_IF_ABLE` retains its optional omission for opponents without legal targets.
+`MultiTargetConstraint.ONE_PER_OPPONENT` requires one legal permanent target controlled by every opponent, even when an opponent has no legal targets. Spells using it cannot be cast without satisfying every opponent's target requirement. `ONE_PER_CONTROLLER_IF_ABLE` retains its optional omission for opponents without legal targets. `ONE_PER_OPPONENT_IF_ABLE` is the same optional omission applied to opponents only, with the controller never required (Sylvan Primordial, "for each opponent").
 
 `ON_CONTROLLER_CASTS_SPELL` same-name graveyard casts use the dedicated `CastSameNameCardFromGraveyardOnSpellCastEffect` collector path: the cast spell's name is snapshotted, the graveyard card is chosen through `SpellGraveyardTargetTrigger`, and the existing graveyard-cast effect offers the normal-cost cast after targeting.
 
@@ -281,7 +281,7 @@ non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget`
 `ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
 `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
 `ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Liability; fires for nontoken permanents entering any player's graveyard and bakes the graveyard owner as the trigger's target),
-`ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Scrapheap; fires for any permanent, including tokens, entering the graveyard owned by the slot's controller),
+`ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD` (Scrapheap; fires for any permanent, including tokens, entering the graveyard owned by the slot's controller),
 `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (non-targeting effects use the direct stack path; `TriggeringArtifactControllerConditionalEffect` uses the spell-target pipeline),
 `ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Femeref Enchantress; fires on every permanent with the slot
 whenever an enchantment is put into a graveyard from the battlefield — checked in `PermanentRemovalService`),

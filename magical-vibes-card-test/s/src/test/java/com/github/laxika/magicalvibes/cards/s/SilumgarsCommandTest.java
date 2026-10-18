@@ -96,6 +96,7 @@ class SilumgarsCommandTest extends BaseCardTest {
     @DisplayName("A shared planeswalker target is returned before the destroy mode")
     void bounceAndDestroyCanSharePlaneswalkerTarget() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NarsetTranscendent());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new SilumgarsCommand()));
         addCommandMana(player1);
 
@@ -183,6 +184,7 @@ class SilumgarsCommandTest extends BaseCardTest {
     void counterAndDestructionUseSeparateTargets() {
         SpidersilkNet spell = new SpidersilkNet();
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new NarsetTranscendent());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player2, List.of(new SilumgarsCommand()));
         addCommandMana(player2);
         harness.castFromHand(player1, spell, "{0}");

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *       (Reverse Damage; plain: Pentagram of the Ages, the Circle of Protection cycle), while
  *       {@code preventHalfDamage} leaves half the event, rounded down (Dark Sphere).</li>
  *   <li>{@link ChosenSourcePreventionScope#NEXT_DAMAGE_TO_ANY_TARGET} — one-shot, protects
- *       whatever the source would damage next (Sanctum Guardian); {@code damageRedSourceController}
+ *       whatever the source would damage next (Circle of Despair); {@code damageRedSourceController}
  *       adds Honorable Passage's red-source rider.</li>
  *   <li>{@link ChosenSourcePreventionScope#NEXT_DAMAGE_TO_CONTROLLER_AND_CREATURES} — one-shot,
  *       protects the controller and the creatures they control; life gain applies only when the
@@ -179,7 +179,7 @@ public record PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_CONTROLLER, false, false, null, null, true, false, false, false);
     }
 
-    /** Sanctum Guardian: the chosen source's next damage to any target is prevented. */
+    /** Circle of Despair: the chosen source's next damage to any target is prevented. */
     public static PreventDamageFromChosenSourceEffect nextDamageToAnyTarget() {
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_ANY_TARGET, false, false, null, null, false, false, false, false);
@@ -220,7 +220,7 @@ public record PreventDamageFromChosenSourceEffect(
                 false, false, null, null, false, false, false, false);
     }
 
-    /** Martyr's Cause: the ability targets any target, and only the chosen source's next damage to it is prevented. */
+    /** Martyr's Cause, Sanctum Guardian: the ability targets any target, and only the chosen source's next damage to it is prevented. */
     public static PreventDamageFromChosenSourceEffect nextDamageToTarget() {
         return new PreventDamageFromChosenSourceEffect(
                 ChosenSourcePreventionScope.NEXT_DAMAGE_TO_TARGET,

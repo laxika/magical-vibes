@@ -6,8 +6,20 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record TriggeringArtifactControllerConditionalEffect(CardEffect wrapped,
                                                              boolean onlyIfNotSacrificed,
-                                                             boolean onlyIfNontoken)
+                                                             boolean onlyIfNontoken,
+                                                             boolean excludeSelf)
         implements CardEffect {
+
+    public TriggeringArtifactControllerConditionalEffect(CardEffect wrapped,
+                                                         boolean onlyIfNotSacrificed,
+                                                         boolean onlyIfNontoken) {
+        this(wrapped, onlyIfNotSacrificed, onlyIfNontoken, false);
+    }
+
+    /** "Whenever another artifact you control is put into a graveyard from the battlefield". */
+    public static TriggeringArtifactControllerConditionalEffect another(CardEffect wrapped) {
+        return new TriggeringArtifactControllerConditionalEffect(wrapped, false, false, true);
+    }
 
     public TriggeringArtifactControllerConditionalEffect(CardEffect wrapped) {
         this(wrapped, false, false);

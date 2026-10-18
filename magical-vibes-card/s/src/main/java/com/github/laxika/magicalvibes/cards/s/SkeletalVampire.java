@@ -33,7 +33,7 @@ public class SkeletalVampire extends Card {
                 false,
                 "{3}{B}{B}",
                 List.of(
-                        new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.BAT), "Sacrifice a Bat"),
+                        new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.BAT), "Sacrifice a Bat", false),
                         BAT_TOKENS),
                 "{3}{B}{B}, Sacrifice a Bat: Create two 1/1 black Bat creature tokens with flying."
         ));
@@ -42,7 +42,7 @@ public class SkeletalVampire extends Card {
                 false,
                 null,
                 List.of(
-                        new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.BAT), "Sacrifice a Bat"),
+                        new SacrificePermanentCost(new PermanentHasSubtypePredicate(CardSubtype.BAT), "Sacrifice a Bat", false),
                         new RegenerateEffect()),
                 "Sacrifice a Bat: Regenerate this creature."
         ));

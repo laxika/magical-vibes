@@ -3301,9 +3301,15 @@ public class LayerSystemService {
                                         provenanceSourceName(instance)));
                                 continue;
                             }
+                            // "your" in the granted characteristic-defining ability is the permanent's
+                            // current controller, which may differ from whoever animated it.
+                            UUID currentControllerId = currentBattlefieldController(gameData, target.permanent());
+                            AmountContext targetContext = currentControllerId == null
+                                    || currentControllerId.equals(instance.floating().controllerId())
+                                    ? context : context.withControllerId(currentControllerId);
                             entries.add(new BasePtEntry(target.permanent().getId(),
-                                    amountEvaluationService.evaluate(gameData, setPt.power(), context),
-                                    amountEvaluationService.evaluate(gameData, setPt.toughness(), context),
+                                    amountEvaluationService.evaluate(gameData, setPt.power(), targetContext),
+                                    amountEvaluationService.evaluate(gameData, setPt.toughness(), targetContext),
                                     instance.timestamp(), instance.position(),
                                     provenanceSourceName(instance)));
                         }
@@ -3379,7 +3385,12 @@ public class LayerSystemService {
                 case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored ->
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
-                                    if (harvested.isBasePTOverridden()) {
+                                    // Only planeswalkers this effect turned into creatures in layer 4 are
+                                    // affected; one an earlier effect already made a non-planeswalker is not.
+                                    boolean animatedHere = board.l4Contributions()
+                                            .getOrDefault(instance.original(), Map.of())
+                                            .containsKey(target.permanent().getId());
+                                    if (animatedHere && harvested.isBasePTOverridden()) {
                                         entries.add(new BasePtEntry(target.permanent().getId(),
                                                 harvested.getBasePowerOverride(),
                                                 harvested.getBaseToughnessOverride(),
@@ -3572,5 +3583,14 @@ public class LayerSystemService {
                     instance.effect(), harvested);
             harvest.accept(source, harvested);
         }
+    }
+
+    private static UUID currentBattlefieldController(GameData gameData, Permanent permanent) {
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            if (battlefield.getValue().stream().anyMatch(candidate -> candidate.getId().equals(permanent.getId()))) {
+                return battlefield.getKey();
+            }
+        }
+        return null;
     }
 }

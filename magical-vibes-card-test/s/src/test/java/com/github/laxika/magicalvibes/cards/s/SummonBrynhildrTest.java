@@ -68,6 +68,8 @@ class SummonBrynhildrTest extends BaseCardTest {
     void chapterICardCanBeCastOnTheChapterIITurn() {
         Shock topCard = new Shock();
         harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addSaga(0);
         advanceToNextChapter();
         resolveAllTriggers();
@@ -87,6 +89,8 @@ class SummonBrynhildrTest extends BaseCardTest {
     void chapterICardCanBeCastOnTheChapterIIITurnAfterSagaIsSacrificed() {
         Shock topCard = new Shock();
         harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addSaga(0);
         advanceToNextChapter();
         resolveAllTriggers();

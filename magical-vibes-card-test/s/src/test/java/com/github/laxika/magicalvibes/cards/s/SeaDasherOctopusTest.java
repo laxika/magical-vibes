@@ -82,6 +82,7 @@ class SeaDasherOctopusTest extends BaseCardTest {
     @Test
     @DisplayName("Draw trigger resolves for its controller after the source leaves")
     void drawTriggerSurvivesSourceLeaving() {
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         Permanent octopus = addAttacker(player2, new SeaDasherOctopus());

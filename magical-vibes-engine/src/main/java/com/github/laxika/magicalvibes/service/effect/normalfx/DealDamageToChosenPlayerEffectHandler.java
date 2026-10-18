@@ -69,6 +69,9 @@ public class DealDamageToChosenPlayerEffectHandler implements NormalEffectHandle
                 chosenPlayerId,
                 dealer == null ? null : dealer.getId());
         damageEntry.setDamageSourceCard(damageSourceCard);
+        if (dealer == null) {
+            damageEntry.setTriggeringPermanentKeywordsAtLeave(entry.getTriggeringPermanentKeywordsAtLeave());
+        }
         int amount = amountEvaluationService.evaluate(gameData, chosenPlayerEffect.damage(),
                 AmountContext.forStackEntry(entry, dealer));
         int rawDamage = amount;

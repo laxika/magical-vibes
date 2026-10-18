@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -930,9 +931,10 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapCounter(TriggerMatchContext match,
             PutCounterOnReferencedPermanentEffect e, TriggerContext ctx) {
-        // The effect re-derives the enchanted creature from the source Aura at resolution, so the
-        // trigger only needs to carry the Aura as its source permanent (like the destroy variant).
-        match.gameData().enqueueTrigger(new StackEntry(
+        // The tapped creature is recorded as the triggering permanent, so a referenced counter
+        // still lands on it if the Aura has moved by the time the trigger resolves.
+        TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -940,7 +942,9 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(e)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        entry.setTriggeringPermanentId(ept.tappedPermanent().getId());
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to put a counter on enchanted creature",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -973,9 +977,9 @@ public class MiscTriggerCollectorService {
     private boolean handleEnchantedPermanentTapForcedCost(TriggerMatchContext match,
             ForcedCostOrElseEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
-        // Seizures: enchanted controller may pay or take damage. Bake that player as targetId so
-        // payerIsEnchantedController and ENCHANTED_PERMANENT_CONTROLLER damage both see it.
-        match.gameData().enqueueTrigger(new StackEntry(
+        // Seizures: enchanted controller may pay or take damage. The tapped permanent is carried as the
+        // triggering permanent so its controller is read again when the ability resolves (CR 608.2h).
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -983,7 +987,9 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(e)),
                 ept.tappedPermanentControllerId(),
                 match.permanent().getId()
-        ));
+        );
+        entry.setTriggeringPermanentId(ept.tappedPermanent().getId());
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (pay-or-penalty) on enchanted permanent tap",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -1895,7 +1901,8 @@ public class MiscTriggerCollectorService {
         for (Card card : cardsPut.cards()) {
             if (!card.isToken() && card.hasType(CardType.LAND)) {
                 returnEffects.add(new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(
-                        card.getId(), effect.enterTapped()));
+                        card.getId(), effect.enterTapped(),
+                        match.gameData().graveyardEntryVersion(card.getId())));
             }
         }
         if (returnEffects.isEmpty()) {
@@ -2166,7 +2173,7 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -2174,7 +2181,11 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        if (SourcePermanentSnapshotRequiredEffect.isRequiredBy(effect)) {
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        }
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (creature card put into graveyard from anywhere)", gameData.id, cardName);
@@ -2620,6 +2631,13 @@ public class MiscTriggerCollectorService {
         // "Each opponent loses life" does not target, so hexproof/shroud cannot stop it; only an explicit
         // "target player" recipient is a real target.
         entry.setNonTargeting(effect.recipient() != LoseLifeRecipient.TARGET_PLAYER);
+        if (effect.recipient() == LoseLifeRecipient.TARGET_PLAYER) {
+            // "Target opponent loses that much life": a copy's new target must also be an opponent.
+            entry.setTargetFilter(new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
+                    new com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate(
+                            com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT),
+                    "Target must be an opponent"));
+        }
         // Snapshot the life gained onto the entry's event value — parallel to the spell-mana-spent
         // xValue plumbing — so the effect's EventValue amount ("equal to the life gained") reads it
         // back at resolution.
@@ -2787,6 +2805,9 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setEventValue(milled.nonlandCardCount());
+        if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+            entry.setMarkSourceOncePerTurnOnAcceptance(true);
+        }
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on nonland cards milled (create tokens)",

@@ -222,7 +222,8 @@ class ShelteringLightTest extends BaseCardTest {
     void survivesLethalDamage() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new RaptorCompanion());
         harness.setHand(player1, List.of(new LightningStrike(), new ShelteringLight()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player1, 0, creature.getId());
         harness.castAndResolveInstant(player1, 0, creature.getId());

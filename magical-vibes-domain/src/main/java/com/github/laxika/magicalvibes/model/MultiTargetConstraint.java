@@ -60,6 +60,8 @@ public enum MultiTargetConstraint {
     ONE_PER_CONTROLLER_IF_ABLE,
     /** Exactly one permanent controlled by each opponent must be targeted. */
     ONE_PER_OPPONENT,
+    /** One permanent controlled by each opponent who controls a legal target must be targeted (Sylvan Primordial). */
+    ONE_PER_OPPONENT_IF_ABLE,
     /** At most one chosen graveyard card may be an instant and at most one may be a sorcery. */
     AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
     /** At most one chosen graveyard card may be a creature and at most one may be a land. */

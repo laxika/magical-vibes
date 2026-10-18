@@ -43,7 +43,8 @@ public class EnteringCreatureSourcePowerBranchEffectHandler implements NormalEff
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         int sourcePower = sourcePermanent == null
-                ? entry.getSourcePermanentSnapshot() == null
+                ? entry.getSourcePowerAtTrigger() != null ? entry.getSourcePowerAtTrigger()
+                : entry.getSourcePermanentSnapshot() == null
                         ? Integer.MIN_VALUE
                         : entry.getSourcePermanentSnapshot().getEffectivePower()
                 : gameQueryService.getEffectivePower(gameData, sourcePermanent);

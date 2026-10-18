@@ -87,7 +87,7 @@ class SilverstrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         harness.assertOnBattlefield(player1, "Devilthorn Fox");
         harness.assertNotInGraveyard(player1, "Devilthorn Fox");

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +34,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private EffectResolutionService effectResolutionService;
@@ -107,6 +109,13 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             return;
         }
 
+        if (gameData.eachPlayerPutsCardFromHandOnTopOfLibrary.active
+                && interaction.placement() == HandToLibraryPlacement.TOP && validated.size() == 1) {
+            gameData.eachPlayerPutsCardFromHandOnTopOfLibrary.chosen.put(player.getId(), validated.get(0));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         putOnLibrary(gameData, player, validated, interaction.placement() == HandToLibraryPlacement.TOP);
         if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
             Card sourceCard = interaction.thenEffectSourceCard();
@@ -147,9 +156,10 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     }
 
     /**
-     * Scroll Rack: the chosen hand cards are set aside, that many cards are moved from the top of
-     * the library into the hand (a move, not a draw — no draw triggers or replacements), and the
-     * set-aside cards go back on top through the "in any order" reorder prompt. A single set-aside
+     * Scroll Rack: the chosen hand cards are exiled face down (firing exile-from-hand triggers
+     * once for the batch), that many cards are moved from the top of the library into the hand (a
+     * move, not a draw, so no draw triggers or replacements, but library-to-hand triggers fire), and
+     * the exiled cards go back on top through the "in any order" reorder prompt. A single set-aside
      * card has only one legal order, so it skips straight back on top.
      */
     private void swapWithLibraryTop(GameData gameData, Player player, List<UUID> chosenCardIds) {
@@ -166,9 +176,17 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             }
         }
 
+        if (!setAside.isEmpty()) {
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
+                    gameData, playerId, setAside.size());
+        }
+
         int moved = Math.min(setAside.size(), deck.size());
         for (int i = 0; i < moved; i++) {
-            hand.add(deck.remove(0));
+            Card fromLibrary = deck.remove(0);
+            gameData.addCardToHand(playerId, fromLibrary);
+            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                    gameData, playerId, fromLibrary);
         }
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " sets aside " + setAside.size()

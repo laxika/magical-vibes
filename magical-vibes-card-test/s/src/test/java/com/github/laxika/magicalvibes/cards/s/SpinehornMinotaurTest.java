@@ -67,8 +67,10 @@ class SpinehornMinotaurTest extends BaseCardTest {
         draw(player1);
         assertThat(gqs.hasKeyword(gd, minotaur, Keyword.DOUBLE_STRIKE)).isTrue();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, minotaur, Keyword.DOUBLE_STRIKE)).isFalse();
     }

@@ -46,7 +46,7 @@ class SuChiCaveGuardTest extends BaseCardTest {
     void vigilanceKeepsAttackerUntapped() {
         Permanent guard = addCreatureReady(player1, new SuChiCaveGuard());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(guard.isAttacking()).isTrue();
         assertThat(guard.isTapped()).isFalse();

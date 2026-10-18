@@ -53,6 +53,7 @@ public class MakeTargetCopyOfTargetCreatureUntilNextTurnEffectHandler implements
         permanentCopierService.applyCloneCopy(shapeshifter, creature, null, null);
         shapeshifter.setCopyUntilControllerNextTurn(true);
         shapeshifter.setCopyUntilNextTurnControllerId(entry.getControllerId());
+        shapeshifter.pushUntilNextTurnCopyLayer(entry.getControllerId());
         // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card
         // swap above stores the copiable values; the floating effect carries the CR 613.7
         // timestamp and drives the revert when it expires at the ability controller's turn start.

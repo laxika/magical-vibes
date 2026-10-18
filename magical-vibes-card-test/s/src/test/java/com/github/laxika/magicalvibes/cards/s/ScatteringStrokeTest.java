@@ -162,10 +162,15 @@ class ScatteringStrokeTest extends BaseCardTest {
     }
 
     private void keepClashCardsOnTop() {
-        gs.handleInteractionAnswer(gd, player2,
-                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        answerClashPlacementsInApnapOrder(List.of(0), List.of());
+    }
+
+    private void answerClashPlacementsInApnapOrder(List<Integer> topOrder, List<Integer> bottomOrder) {
+        boolean player1Decides = gd.activePlayerId.equals(player1.getId());
+        gs.handleInteractionAnswer(gd, player1Decides ? player1 : player2,
+                new InteractionAnswer.ScryOrder(topOrder, bottomOrder));
+        gs.handleInteractionAnswer(gd, player1Decides ? player2 : player1,
+                new InteractionAnswer.ScryOrder(topOrder, bottomOrder));
     }
 
     @Test
@@ -195,10 +200,7 @@ class ScatteringStrokeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, merrow.getId());
-        gs.handleInteractionAnswer(gd, player2,
-                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        answerClashPlacementsInApnapOrder(List.of(), List.of(0));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentNext, opponentTop);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(casterNext, casterTop);

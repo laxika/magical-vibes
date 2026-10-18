@@ -52,6 +52,6 @@ public class SmokeSpiritsAid extends Card {
                 false,
                 false,
                 0,
-                Set.of());
+                Set.of()).withTokenTargetFilter(TargetFilters.creature());
     }
 }

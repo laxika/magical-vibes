@@ -9,9 +9,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -215,8 +220,10 @@ class SeraphTest extends BaseCardTest {
         seraphKillsBearsInCombat();
         Permanent seraph = findPermanent(player1, "Seraph");
         Permanent bears = findPermanent(player1, "Balduvian Bears");
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), bears,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
         gd.playerBattlefields.get(player1.getId()).remove(seraph);
         gd.playerBattlefields.get(player2.getId()).add(seraph);
         harness.runStateBasedActions();

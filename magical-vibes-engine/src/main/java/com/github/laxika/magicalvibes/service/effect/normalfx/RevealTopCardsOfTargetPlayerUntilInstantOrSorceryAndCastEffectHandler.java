@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -67,9 +66,6 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
         }
 
         if (hit == null) {
-            exiled.removeIf(card -> !gameData.removeFromExile(card.getId()));
-            Collections.shuffle(exiled);
-            deck.addAll(exiled);
             return;
         }
 
@@ -80,7 +76,7 @@ public class RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffectHandl
                         .reveals(true)
                         .canFailToFind(true)
                         .sourceCards(exiled)
-                        .reorderRemainingToBottom(true)
+                        .restToExile(true)
                         .shuffleAfterSelection(false)
                         .grantHaste(typedEffect.grantHaste())
                         .sacrificeAtEndStep(typedEffect.sacrificeAtEndStep())

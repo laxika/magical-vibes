@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 public class SelectiveSnare extends Card {
 
     public SelectiveSnare() {
-        targetX(TargetFilters.creature(), 100)
+        targetExactlyX(TargetFilters.creature(), 100)
                 .addEffect(EffectSlot.SPELL, ReturnToHandEffect.targetCreaturesOfChosenType());
     }
 }

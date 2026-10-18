@@ -3,28 +3,24 @@ package com.github.laxika.magicalvibes.service.effect.manafx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
-/** Resolves a controller mill rider on a mana ability ("When you do, mill N cards"). */
+/**
+ * Queues a controller mill rider on a mana ability ("Add {C}. When you do, mill two cards") as a
+ * reflexive triggered ability. A triggered ability that can't add mana is not a mana ability, so
+ * the mill waits for the stack (CR 605.5a) instead of resolving with the mana.
+ */
 @Component
 public class MillControllerManaAbilityEffectHandler implements ManaAbilityEffectHandler {
-
-    private final AmountEvaluationService amountEvaluationService;
-    private final GraveyardService graveyardService;
-
-    public MillControllerManaAbilityEffectHandler(AmountEvaluationService amountEvaluationService,
-                                                  GraveyardService graveyardService) {
-        this.amountEvaluationService = amountEvaluationService;
-        this.graveyardService = graveyardService;
-    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,8 +35,8 @@ public class MillControllerManaAbilityEffectHandler implements ManaAbilityEffect
             return;
         }
 
-        int count = amountEvaluationService.evaluate(gameData, mill.count(),
-                AmountContext.forManaAbility(permanent, playerId));
-        graveyardService.resolveMillPlayer(gameData, playerId, Math.max(0, count));
+        gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                permanent.getCard(), playerId, permanent.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(mill)), null, permanent.getId()));
     }
 }

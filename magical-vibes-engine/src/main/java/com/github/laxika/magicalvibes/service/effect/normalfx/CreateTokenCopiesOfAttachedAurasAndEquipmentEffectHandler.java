@@ -9,9 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfAttachedAurasAndEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,9 +26,7 @@ public class CreateTokenCopiesOfAttachedAurasAndEquipmentEffectHandler implement
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
-    private final AuraAttachmentService auraAttachmentService;
     private final EquipSupport equipSupport;
-    private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -64,39 +60,30 @@ public class CreateTokenCopiesOfAttachedAurasAndEquipmentEffectHandler implement
             return;
         }
 
-        List<UUID> copiedIds = tokenCopySupport.createTokenCopies(
+        List<UUID> copiedIds = tokenCopySupport.createTokenCopiesAttachedTo(
                 gameData,
                 entry,
                 attached.stream().map(Permanent::getCard).toList(),
                 source,
                 entry.getControllerId(),
-                new CreateTokenCopyOfTargetPermanentEffect());
+                new CreateTokenCopyOfTargetPermanentEffect(),
+                host);
 
-        int copyCount = Math.min(attached.size(), copiedIds.size());
-        for (int i = 0; i < copyCount; i++) {
-            Permanent copy = gameQueryService.findPermanentById(gameData, copiedIds.get(i));
+        for (UUID copiedId : copiedIds) {
+            Permanent copy = gameQueryService.findPermanentById(gameData, copiedId);
             if (copy == null) {
                 continue;
             }
             if (copy.getCard().isAura()) {
-                attachAura(gameData, copy, host, entry.getControllerId());
+                if (host.getId().equals(copy.getAttachedTo())) {
+                    logAttachment(gameData, copy, host);
+                }
             } else if (copy.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                 if (equipSupport.attachEquipment(gameData, copy, host)) {
                     logAttachment(gameData, copy, host);
                 }
             }
         }
-    }
-
-    private void attachAura(GameData gameData, Permanent aura, Permanent host, UUID controllerId) {
-        if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), controllerId, host)) {
-            return;
-        }
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
-        aura.setAttachedTo(host.getId());
-        aura.setTimestamp(gameData.nextTimestamp());
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, host.getId());
-        logAttachment(gameData, aura, host);
     }
 
     private void logAttachment(GameData gameData, Permanent attachment, Permanent host) {

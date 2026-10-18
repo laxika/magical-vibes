@@ -107,11 +107,11 @@ class SuspendedSentenceTest extends BaseCardTest {
     void canSuspendDuringOpponentsCombatWithoutALegalCreatureTarget() {
         SuspendedSentence card = new SuspendedSentence();
         harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateHandAbility(player1, 0, null);
 

@@ -166,7 +166,9 @@ public class UntapStepService {
             if (ownBattlefield != null) {
                 ownBattlefield.forEach(p -> {
                     // A wholly skipped step does not consume a restriction on the next untap step.
-                    p.setSummoningSick(false);
+                    if (!gameData.additionalBeginningPhaseUntapInProgress) {
+                        p.setSummoningSick(false);
+                    }
                     p.setLoyaltyActivationsThisTurn(0);
                     p.setExtraLoyaltyActivationsThisTurn(0);
                 });
@@ -300,7 +302,10 @@ public class UntapStepService {
                         untappedDuringStep.add(p);
                     }
                 }
-                p.setSummoningSick(false);
+                // An additional beginning phase is not a new turn, so it does not end summoning sickness.
+                if (!gameData.additionalBeginningPhaseUntapInProgress) {
+                    p.setSummoningSick(false);
+                }
                 p.setLoyaltyActivationsThisTurn(0);
                 p.setExtraLoyaltyActivationsThisTurn(0);
             });
@@ -586,8 +591,9 @@ public class UntapStepService {
      * Returns the ids of the active player's permanents that would untap during a normal untap step
      * and that match the given restriction's {@code filter} — the pool the player picks up to the
      * cap from when the restriction applies. Permanents that would not untap anyway (self/attached
-     * "doesn't untap", untap locks, a pending skip, a global "doesn't untap" lock, or a "may not
-     * untap" choice), or that the filter excludes, never count against the cap and are omitted.
+     * "doesn't untap", untap locks, a pending skip, or a global "doesn't untap" lock), or that the
+     * filter excludes, never count against the cap and are omitted. A permanent with a "you may
+     * choose not to untap" ability still counts: the player may pick it, then makes that choice.
      */
     public List<UUID> staticOrbUntapCandidates(GameData gameData, UUID activePlayerId,
                                                StaticOrbEffect effect, PermanentPredicate restrictPredicate) {
@@ -613,14 +619,12 @@ public class UntapStepService {
             }
             boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
             boolean hasSelfDoesntUntap = untapPreventionSupport.hasActiveSelfDoesntUntap(gameData, p);
-            boolean hasMayNotUntap = gameQueryService.hasActiveStaticEffect(
-                    gameData, p, MayNotUntapDuringUntapStepEffect.class);
             boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                     || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
             boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
             boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
-            if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
+            if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap
                     && !hasUntapLock && !hasMatchingDoesntUntap
                     && !hasCounterLock && !cannotBecomeUntapped) {
                 candidates.add(p.getId());
