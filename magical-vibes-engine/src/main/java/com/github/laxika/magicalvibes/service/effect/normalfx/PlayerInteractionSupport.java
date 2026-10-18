@@ -166,6 +166,10 @@ public class PlayerInteractionSupport {
                 if (!additionalFilter.test(handCard)) {
                     continue;
                 }
+                if (gameData.heldHandBattlefieldPuts.stream()
+                        .anyMatch(held -> held.card().getId().equals(handCard.getId()))) {
+                    continue;
+                }
                 // Mind into Matter: "mana value X or less".
                 if (effect.maxManaValueBoundedByX() && handCard.getManaValue() > xValue) {
                     continue;

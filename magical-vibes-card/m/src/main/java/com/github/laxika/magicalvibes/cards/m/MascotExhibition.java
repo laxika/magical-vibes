@@ -15,15 +15,16 @@ import java.util.Set;
 public class MascotExhibition extends Card {
 
     public MascotExhibition() {
+        // The three tokens are created by one instruction, so they are one creation event.
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 1, "Inkling", 2, 1, CardColor.WHITE,
                 Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),
-                Set.of(Keyword.FLYING), Set.of()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
-                "Spirit", 3, 2, CardColor.RED,
-                Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.SPIRIT)));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
-                "Elemental", 4, 4, CardColor.BLUE,
-                Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)));
+                Set.of(Keyword.FLYING), Set.of()).withSimultaneousTokens(List.of(
+                new CreateTokenEffect(
+                        "Spirit", 3, 2, CardColor.RED,
+                        Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.SPIRIT)),
+                new CreateTokenEffect(
+                        "Elemental", 4, 4, CardColor.BLUE,
+                        Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)))));
     }
 }

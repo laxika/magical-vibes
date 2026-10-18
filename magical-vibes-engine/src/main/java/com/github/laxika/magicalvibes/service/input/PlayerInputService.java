@@ -3287,6 +3287,7 @@ public class PlayerInputService {
                 && !followUp.eachPlayerQueue()
                 && !followUp.plaguecrafter()
                 && !gameData.creepingDread.active
+                && !playerId.equals(gameData.deferredDiscardChooserId)
                 && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
             if (gameData.discardEventPlayerId == null) {
                 gameData.discardEventPlayerId = playerId;

@@ -198,39 +198,6 @@ Implement CR 616.1 ordering for competing "if a creature would die, exile it ins
 
 ---
 
-## 32. Simultaneous batches: "one or more" events and APNAP choices
-
-**Status:** open · **Found:** 2026-10-17, while fixing M-card tests
-
-**Failing tests:**
-- `MascotExhibitionTest` — Esix must replace all three tokens of one creation event, not each `CreateTokenEffect` separately
-- `MythweaverPoqTest.simultaneousLandsEachReceiveADuplicate` — "one or more nontoken lands … for each of them", once each turn
-- `MichelangeloImproviserTest` — a creature and a land must enter as one simultaneous batch
-- `MogMoogleWarriorTest` — each player's discard choice must stay hidden until all players have chosen
-- `MindSwordsTest` — each player's exile-from-hand choice must happen before any card is exiled
-
-**What the rules require.** CR 101.4: when several players make choices at the same time, they choose in
-APNAP order, then the actions happen simultaneously. CR 603.2c: an ability triggers once per event unless one
-event contains multiple occurrences, so "one or more" triggers need to see one grouped event. The engine
-creates tokens and moves cards one effect (or one player) at a time, so these triggers and replacements see
-several separate events, and later players can see earlier players' choices.
-
-**Why it's large.** It needs a shared "event batch" concept spanning token creation, battlefield entry,
-discard and exile-from-hand choices, plus the replacement (Esix) and trigger collectors that read those
-batches. Regression risk is high across token, landfall and discard cards.
-
-**Prompt to start it:**
-
-```
-Add simultaneous event batching to the engine (missing-features-to-do.md entry 32): one token-creation event
-for multi-token effects (Esix), grouped "one or more lands/permanents enter" triggers, and APNAP choose-then-act
-for each-player discard/exile choices (CR 101.4). Start with the five listed M-card tests, verify CR numbers with
-the rules MCP, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

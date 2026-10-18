@@ -306,12 +306,25 @@ public class BattlefieldEntryBatchSupport {
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
-        for (Permanent permanent : entered) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-            if (controllerId != null && permanent.isFaceDown()) {
-                battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, permanent.getCard());
-            } else if (controllerId != null) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, permanent.getCard(), null, false);
+        // The batch is one event, so a "one or more … enter" ability triggers once for all of it.
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
+        if (!alreadyCollectingEntries) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
+        try {
+            for (Permanent permanent : entered) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                if (controllerId != null && permanent.isFaceDown()) {
+                    battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, permanent.getCard());
+                } else if (controllerId != null) {
+                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, permanent.getCard(), null, false);
+                }
+            }
+        } finally {
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
             }
         }
         for (UUID controllerId : gameData.orderedPlayerIds) {

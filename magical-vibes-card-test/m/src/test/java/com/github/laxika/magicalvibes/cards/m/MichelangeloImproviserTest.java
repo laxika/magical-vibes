@@ -37,8 +37,9 @@ class MichelangeloImproviserTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        // The chosen creature waits in hand until the land is chosen, so the land is still index 1.
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(extraCreature);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -161,8 +162,9 @@ class MichelangeloImproviserTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        // The chosen creature waits in hand until the land is chosen, so the land is still index 1.
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();

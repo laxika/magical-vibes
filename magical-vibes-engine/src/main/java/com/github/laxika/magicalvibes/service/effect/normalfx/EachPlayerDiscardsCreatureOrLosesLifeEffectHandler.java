@@ -8,19 +8,30 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsCreatureOrLosesLifeEffect;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Resolves an APNAP discard flow followed by life loss for noncreature discards. */
+/**
+ * Resolves an APNAP discard flow followed by life loss for noncreature discards. The chosen cards are
+ * discarded together once every player has chosen (CR 101.4).
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerDiscardsCreatureOrLosesLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
+
+    @Autowired
+    @Lazy
+    private CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,13 +48,10 @@ public class EachPlayerDiscardsCreatureOrLosesLifeEffectHandler implements Norma
             state.active = true;
             state.currentPlayerId = null;
             state.remaining.clear();
-            state.playersWhoDiscardedCreature.clear();
             addInApnapOrder(gameData, state.remaining);
         } else if (state.currentPlayerId != null) {
-            if (gameData.lastDiscardedCardTypes.contains(CardType.CREATURE)) {
-                state.playersWhoDiscardedCreature.add(state.currentPlayerId);
-            }
             state.currentPlayerId = null;
+            gameData.deferredDiscardChooserId = null;
             gameData.rerunCurrentEffectAfterInteraction = false;
         }
 
@@ -64,12 +72,14 @@ public class EachPlayerDiscardsCreatureOrLosesLifeEffectHandler implements Norma
 
             gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
             gameData.rerunCurrentEffectAfterInteraction = true;
+            gameData.deferredDiscardChooserId = playerId;
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, DiscardFollowUp.NONE);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
 
             state.currentPlayerId = null;
+            gameData.deferredDiscardChooserId = null;
             gameData.rerunCurrentEffectAfterInteraction = false;
         }
 
@@ -79,9 +89,12 @@ public class EachPlayerDiscardsCreatureOrLosesLifeEffectHandler implements Norma
     private void finish(GameData gameData, StackEntry entry,
                         EachPlayerDiscardsCreatureOrLosesLifeEffect effect,
                         EachPlayerDiscardsCreatureOrLosesLifeState state) {
+        Map<UUID, List<Card>> discarded =
+                cardChoiceHandlerService.discardDeferredSelections(gameData, entry.getControllerId());
         List<UUID> lifeLossPlayers = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!state.playersWhoDiscardedCreature.contains(playerId)) {
+            if (discarded.getOrDefault(playerId, List.of()).stream()
+                    .noneMatch(card -> card.hasType(CardType.CREATURE))) {
                 lifeLossPlayers.add(playerId);
             }
         }

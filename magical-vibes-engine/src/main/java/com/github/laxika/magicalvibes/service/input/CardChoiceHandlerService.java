@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -684,6 +685,14 @@ public class CardChoiceHandlerService {
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
                 return;
             }
+            // The card waits in hand and enters with the other held cards once every step has chosen.
+            if (!isTargeted && gameData.holdingHandBattlefieldPuts) {
+                gameData.heldHandBattlefieldPuts.add(new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                        playerId, playerId, selectedCard, Zone.HAND, null).withTapped(enterTapped));
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses ", selectedCard, "."));
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                return;
+            }
             // CR 303.4f: the player putting an Aura onto the battlefield chooses what it enchants.
             if (!isTargeted && selectedCard.isAura() && !selectedCard.isEnchantZone()
                     && thenEffect == null && returnSourcePermanentId == null && attachEquipmentCardId == null) {
@@ -963,6 +972,10 @@ public class CardChoiceHandlerService {
             handlePlaguecrafterDiscardCardChosen(gameData, player, cardIndex, discardChoice);
             return;
         }
+        if (player.getId().equals(gameData.deferredDiscardChooserId)) {
+            handleDeferredDiscardCardChosen(gameData, player, cardIndex, discardChoice);
+            return;
+        }
         if (gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards
                 && player.getId().equals(gameData.eachPlayerRummage.currentPlayerId)) {
             handleDeferredEachPlayerDiscardCardChosen(gameData, player, cardIndex, discardChoice);
@@ -1236,6 +1249,40 @@ public class CardChoiceHandlerService {
     }
 
     /**
+     * Records one pick for {@link GameData#deferredDiscardChooserId} without moving the card, then
+     * resumes the resolving effect, which discards every player's picks together (CR 101.4). Picks
+     * index the real hand, so already-chosen cards drop out of the valid indices.
+     */
+    private void handleDeferredDiscardCardChosen(GameData gameData, Player player, int cardIndex,
+            PendingInteraction.DiscardChoice discardChoice) {
+        List<Card> hand = gameData.playerHands.getOrDefault(player.getId(), List.of());
+        if (cardIndex == -1 && discardChoice.declinable()) {
+            gameData.interaction.clearAwaitingInput();
+            resumeRemainingEffectsAfterDiscard(gameData);
+            return;
+        }
+        if (!discardChoice.validIndices().contains(cardIndex) || cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid discard card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.deferredDiscardSelections.add(new EachPlayerRummageState.SelectedDiscard(
+                player.getId(), hand.get(cardIndex).getId()));
+        int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
+        List<Integer> remainingValidIndices = discardChoice.validIndices().stream()
+                .filter(index -> index != cardIndex)
+                .toList();
+        if (remainingDiscards > 0 && !remainingValidIndices.isEmpty()) {
+            inputCompletionService.publishStateAfterInput(gameData);
+            playerInputService.beginDiscardChoice(gameData, player.getId(), remainingValidIndices,
+                    discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
+                    discardChoice.stopAfterDiscardingType(), false);
+            return;
+        }
+        resumeRemainingEffectsAfterDiscard(gameData);
+    }
+
+    /**
      * Records one pick of a deferred {@code EachPlayerRummageState} discard without moving the card.
      * Picks index the real hand, so already-chosen cards simply drop out of the valid indices.
      */
@@ -1354,6 +1401,27 @@ public class CardChoiceHandlerService {
                         selection.playerId(), selection.cardId()))
                 .toList();
         discardCollectedCards(gameData, selected, state.sourceControllerId);
+    }
+
+    /**
+     * Discards every pick recorded in {@link GameData#deferredDiscardSelections} as one batch, once
+     * each player of an each-player discard has chosen (CR 101.4), and clears the chooser. Returns the
+     * cards that left their owners' hands this way, keyed by player in the order they were chosen.
+     */
+    public Map<UUID, List<Card>> discardDeferredSelections(GameData gameData, UUID sourceControllerId) {
+        List<EachPlayerRummageState.SelectedDiscard> selected = List.copyOf(gameData.deferredDiscardSelections);
+        gameData.deferredDiscardSelections.clear();
+        gameData.deferredDiscardChooserId = null;
+        Map<UUID, List<Card>> discarded = new java.util.LinkedHashMap<>();
+        for (EachPlayerRummageState.SelectedDiscard selection : selected) {
+            gameData.playerHands.getOrDefault(selection.playerId(), List.of()).stream()
+                    .filter(card -> card.getId().equals(selection.cardId()))
+                    .findFirst()
+                    .ifPresent(card -> discarded.computeIfAbsent(selection.playerId(), ignored -> new ArrayList<>())
+                            .add(card));
+        }
+        discardCollectedCards(gameData, selected, sourceControllerId);
+        return discarded;
     }
 
     public Map<UUID, Integer> discardCollectedCards(GameData gameData,
@@ -1889,6 +1957,79 @@ public class CardChoiceHandlerService {
         UUID sourcePermanentId = exileChoice.sourcePermanentId();
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.remove(cardIndex);
+        // Players of an each-player exile choose in APNAP order, then the cards are exiled together.
+        boolean simultaneous = !exileChoice.remainingChoosers().isEmpty() || !gameData.stagedHandExiles.isEmpty();
+        if (simultaneous) {
+            gameData.stagedHandExiles.add(new StagedHandExile(playerId, card, exileChoice));
+        } else {
+            exileChosenHandCard(gameData, playerId, card, exileChoice);
+        }
+
+        int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
+        if (!simultaneous && (remainingExiles == 0 || hand.isEmpty())) {
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
+                    gameData, playerId, exileChoice.exiledCount() + 1);
+        }
+
+        if (remainingExiles > 0 && !hand.isEmpty()) {
+            inputCompletionService.publishStateAfterInput(gameData);
+            playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
+                    exileChoice.playPermissionControllerId(), remainingExiles,
+                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
+                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
+                    exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect(), exileChoice.exiledCount() + 1);
+        } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
+            // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
+            UUID next = exileChoice.remainingChoosers().getFirst();
+            List<UUID> rest = exileChoice.remainingChoosers().size() > 1
+                    ? List.copyOf(exileChoice.remainingChoosers().subList(1, exileChoice.remainingChoosers().size()))
+                    : List.of();
+            inputCompletionService.publishStateAfterInput(gameData);
+            playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
+                    exileChoice.playPermissionToChooser() ? null : exileChoice.playPermissionControllerId(),
+                    exileChoice.cardsPerPlayer(), rest,
+                    exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
+                    exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
+                    exileChoice.chosenCardThenEffect(), 0);
+        } else {
+            gameData.interaction.clearAwaitingInput();
+            if (simultaneous) {
+                exileStagedHandCards(gameData);
+            }
+
+            if (gameData.pendingGemstoneCavernsChoice != null) {
+                mulliganService.completeGemstoneCavernsExile(gameData, playerId);
+                return;
+            }
+
+            if (exileChoice.untapPermanentId() != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, exileChoice.untapPermanentId());
+                if (source != null && tapUntapSupport.untapPermanent(gameData, source)) {
+                    gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
+                }
+            }
+
+            // Resume resolving remaining effects
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
+            }
+
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
+    }
+
+    /** Exiles one card chosen from {@code playerId}'s hand with the options of the prompt it was chosen from. */
+    private void exileChosenHandCard(GameData gameData, UUID playerId, Card card,
+                                     PendingInteraction.ExileFromHandChoice exileChoice) {
+        UUID sourcePermanentId = exileChoice.sourcePermanentId();
+        String playerName = gameData.playerIdToName.get(playerId);
 
         // Add to player's exile zone, tracked with source permanent if available (e.g. Karn Liberated)
         if (sourcePermanentId != null && exileChoice.faceDown()) {
@@ -1932,12 +2073,12 @@ public class CardChoiceHandlerService {
         // A face-down exile must not name the card in the shared log (Gustha's Scepter).
         if (exileChoice.faceDown()) {
             gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " exiles a card from hand face down."));
+                    playerName + " exiles a card from hand face down."));
         } else {
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " exiles ", card, " from hand."));
+                    playerName + " exiles ", card, " from hand."));
         }
-        log.info("Game {} - {} exiles {} from hand", gameData.id, player.getUsername(), card.getName());
+        log.info("Game {} - {} exiles {} from hand", gameData.id, playerName, card.getName());
 
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null && exileChoice.chosenCardThenEffect() != null) {
@@ -1945,62 +2086,23 @@ public class CardChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex,
                     List.of(exileChoice.chosenCardThenEffect().withChosenCard(card)));
         }
+    }
 
-        int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
-        if (remainingExiles == 0 || hand.isEmpty()) {
-            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
-                    gameData, playerId, exileChoice.exiledCount() + 1);
+    /**
+     * Exiles every card staged in {@link GameData#stagedHandExiles} once the last player of an
+     * each-player exile has chosen, then fires each player's "cards exiled from your hand" triggers
+     * once for the whole batch.
+     */
+    private void exileStagedHandCards(GameData gameData) {
+        List<StagedHandExile> staged = List.copyOf(gameData.stagedHandExiles);
+        gameData.stagedHandExiles.clear();
+        Map<UUID, Integer> exiledCounts = new java.util.LinkedHashMap<>();
+        for (StagedHandExile exile : staged) {
+            exileChosenHandCard(gameData, exile.playerId(), exile.card(), exile.choice());
+            exiledCounts.merge(exile.playerId(), 1, Integer::sum);
         }
-
-        if (remainingExiles > 0 && !hand.isEmpty()) {
-            inputCompletionService.publishStateAfterInput(gameData);
-            playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
-                    exileChoice.playPermissionControllerId(), remainingExiles,
-                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
-                    exileChoice.playPermissionToChooser(),
-                    exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
-                    exileChoice.chosenCardThenEffect(), exileChoice.exiledCount() + 1);
-        } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
-            // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
-            UUID next = exileChoice.remainingChoosers().getFirst();
-            List<UUID> rest = exileChoice.remainingChoosers().size() > 1
-                    ? List.copyOf(exileChoice.remainingChoosers().subList(1, exileChoice.remainingChoosers().size()))
-                    : List.of();
-            inputCompletionService.publishStateAfterInput(gameData);
-            playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
-                    exileChoice.playPermissionToChooser() ? null : exileChoice.playPermissionControllerId(),
-                    exileChoice.cardsPerPlayer(), rest,
-                    exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
-                    exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
-                    exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
-                    exileChoice.chosenCardThenEffect(), 0);
-        } else {
-            gameData.interaction.clearAwaitingInput();
-
-            if (gameData.pendingGemstoneCavernsChoice != null) {
-                mulliganService.completeGemstoneCavernsExile(gameData, playerId);
-                return;
-            }
-
-            if (exileChoice.untapPermanentId() != null) {
-                Permanent source = gameQueryService.findPermanentById(gameData, exileChoice.untapPermanentId());
-                if (source != null && tapUntapSupport.untapPermanent(gameData, source)) {
-                    gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-                }
-            }
-
-            // Resume resolving remaining effects
-            if (gameData.pendingEffectResolutionEntry != null) {
-                effectResolutionService.resolveEffectsFrom(gameData,
-                        gameData.pendingEffectResolutionEntry,
-                        gameData.pendingEffectResolutionIndex);
-            }
-
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
+        exiledCounts.forEach((playerId, count) ->
+                triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, count));
     }
 
     /** Answers the Nexus of Becoming hand-card choice and queues the copy of the selected card. */

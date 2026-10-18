@@ -5,17 +5,21 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
+import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -277,6 +281,32 @@ class GameDataDeepCopyTest {
                 .containsExactly(effect);
         copy.simultaneousDyingGrantedCreatureDeathEffects.clear();
         assertThat(gd.simultaneousDyingGrantedCreatureDeathEffects).containsKey(permanentId);
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves held simultaneous discard, exile and hand-put choices independently")
+    void deepCopyPreservesHeldSimultaneousChoices() {
+        UUID playerId = UUID.randomUUID();
+        Card card = new GrizzlyBears();
+        gd.deferredDiscardChooserId = playerId;
+        gd.deferredDiscardSelections.add(new EachPlayerRummageState.SelectedDiscard(playerId, card.getId()));
+        gd.stagedHandExiles.add(new StagedHandExile(playerId, card, null));
+        gd.holdingHandBattlefieldPuts = true;
+        gd.heldHandBattlefieldPuts.add(new BattlefieldEntryCard(playerId, playerId, card, Zone.HAND, null));
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.deferredDiscardChooserId).isEqualTo(playerId);
+        assertThat(copy.deferredDiscardSelections).containsExactlyElementsOf(gd.deferredDiscardSelections);
+        assertThat(copy.stagedHandExiles).containsExactlyElementsOf(gd.stagedHandExiles);
+        assertThat(copy.holdingHandBattlefieldPuts).isTrue();
+        assertThat(copy.heldHandBattlefieldPuts).containsExactlyElementsOf(gd.heldHandBattlefieldPuts);
+        copy.deferredDiscardSelections.clear();
+        copy.stagedHandExiles.clear();
+        copy.heldHandBattlefieldPuts.clear();
+        assertThat(gd.deferredDiscardSelections).hasSize(1);
+        assertThat(gd.stagedHandExiles).hasSize(1);
+        assertThat(gd.heldHandBattlefieldPuts).hasSize(1);
     }
 
     @Test

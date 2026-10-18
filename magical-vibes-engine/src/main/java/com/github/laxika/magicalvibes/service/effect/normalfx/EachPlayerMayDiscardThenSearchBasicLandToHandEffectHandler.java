@@ -10,18 +10,28 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardThenSearchBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Resolves Borderland Explorer's discard choices and conditional basic-land searches. */
+/**
+ * Resolves Borderland Explorer's discard choices and conditional basic-land searches. Players choose
+ * in APNAP order and the chosen cards are discarded together once everyone has chosen (CR 101.4).
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerMayDiscardThenSearchBasicLandToHandEffectHandler
         implements NormalEffectHandlerBean {
 
     private final BasicLandSearchQueueSupport basicLandSearchQueueSupport;
+
+    @Autowired
+    @Lazy
+    private CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,18 +50,15 @@ public class EachPlayerMayDiscardThenSearchBasicLandToHandEffectHandler
             state.controllerId = entry.getControllerId();
             addApnapPlayers(gameData, state);
         } else if (state.currentPlayerId != null) {
-            int discardedAfter = gameData.cardsDiscardedThisTurn
-                    .getOrDefault(state.currentPlayerId, 0);
-            if (discardedAfter > state.currentDiscardCountBefore) {
-                state.playersWhoDiscarded.add(state.currentPlayerId);
-            }
             state.currentPlayerId = null;
+            gameData.deferredDiscardChooserId = null;
             entry.setTargetId(null);
         }
 
         beginNextPlayer(gameData, entry, discardEffect, state);
         if (!state.active) {
-            List<LibrarySearchFollowUp.BasicLandsPick> picks = state.playersWhoDiscarded.stream()
+            List<LibrarySearchFollowUp.BasicLandsPick> picks = cardChoiceHandlerService
+                    .discardDeferredSelections(gameData, state.controllerId).keySet().stream()
                     .map(playerId -> new LibrarySearchFollowUp.BasicLandsPick(playerId, 1, false))
                     .toList();
             state.reset();
@@ -84,7 +91,7 @@ public class EachPlayerMayDiscardThenSearchBasicLandToHandEffectHandler
             }
 
             state.currentPlayerId = playerId;
-            state.currentDiscardCountBefore = gameData.cardsDiscardedThisTurn.getOrDefault(playerId, 0);
+            gameData.deferredDiscardChooserId = playerId;
             gameData.discardCausedByOpponent = !playerId.equals(state.controllerId);
             entry.setTargetId(playerId);
 

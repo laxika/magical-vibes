@@ -70,6 +70,18 @@ class PlayerInputServiceTest {
                 .isEqualTo(PLAYER2_ID);
     }
 
+    @Test
+    void deferredDiscardChooserDoesNotOpenDiscardEvent() {
+        gd.deferredDiscardChooserId = PLAYER1_ID;
+        gd.playerHands.get(PLAYER1_ID).add(createCreature("First card"));
+
+        svc.beginDiscardChoice(gd, PLAYER1_ID, 1);
+
+        assertThat(gd.discardEventPlayerId).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(PLAYER1_ID);
+    }
+
     @Mock private CardViewFactory cardViewFactory;
 
     private PlayerInputService svc;

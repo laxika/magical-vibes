@@ -16879,6 +16879,7 @@ public class TriggerCollectionService {
 
             List<CardEffect> resolvedEffects = new ArrayList<>();
             List<OncePerTurnTriggerEffect> oncePerTurnEffects = new ArrayList<>();
+            boolean oncePerBatch = false;
             for (CardEffect effect : effects) {
                 CardEffect resolved = unwrapEnteringCardSubtypeConditional(effect, enteringLand, gameData, landControllerId);
                 if (resolved == null) continue;
@@ -16898,6 +16899,19 @@ public class TriggerCollectionService {
                 if (resolved instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
                         && atTriggerTime.maximumChoices() == null) {
                     resolved = atTriggerTime.choice();
+                }
+                // "Whenever one or more lands enter": a land entering in the same event as one this
+                // ability already triggered for joins that trigger instead of triggering again.
+                if (isOncePerBatchAllyLandTrigger(perm, effect)) {
+                    oncePerBatch = true;
+                    if (gameData.collectingSimultaneousCreatureEntryTriggers
+                            && !gameData.simultaneousCreatureEntryTriggers
+                            .computeIfAbsent(perm.getId(), ignored -> new HashSet<>()).add(effect)) {
+                        addLandToBatchedEntryGroup(gameData, perm,
+                                resolved instanceof OncePerTurnTriggerEffect once ? once.wrapped() : resolved,
+                                enteringPermanentId, enteringLand);
+                        continue;
+                    }
                 }
                 CardEffect dispatchEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(
                         gameData, perm, resolved);
@@ -17020,6 +17034,10 @@ public class TriggerCollectionService {
                 entry.setTriggeringCardId(enteringLand.getId());
                 entry.setTriggeringPermanentId(enteringPermanentId);
                 entry.setTriggeringPermanentControllerId(landControllerId);
+                if (oncePerBatch && enteringPermanentId != null) {
+                    entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
+                    entry.rememberLastKnownPermanentCard(enteringPermanentId, enteringLand);
+                }
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
@@ -17644,6 +17662,34 @@ public class TriggerCollectionService {
                 }
             }
         });
+    }
+
+    private boolean isOncePerBatchAllyLandTrigger(Permanent source, CardEffect effect) {
+        return source.getCard().getEffectRegistrations(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).stream()
+                .anyMatch(registration -> registration.effect().equals(effect)
+                        && registration.triggerMode() == TriggerMode.ONCE_PER_BATCH);
+    }
+
+    /**
+     * Adds a land that entered simultaneously with one already covered by this source's "one or more
+     * lands enter" trigger to that trigger's group, remembering the land as it entered.
+     */
+    private void addLandToBatchedEntryGroup(GameData gameData, Permanent source, CardEffect effect,
+                                            UUID enteringPermanentId, Card enteringLand) {
+        if (enteringPermanentId == null) {
+            return;
+        }
+        for (StackEntry existing : gameData.stack) {
+            if (existing.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                    && source.getId().equals(existing.getSourcePermanentId())
+                    && existing.getEffectsToResolve().contains(effect)
+                    && !existing.getTriggeringPermanentIds().contains(enteringPermanentId)) {
+                List<UUID> group = new ArrayList<>(existing.getTriggeringPermanentIds());
+                group.add(enteringPermanentId);
+                existing.setTriggeringPermanentIds(group);
+                existing.rememberLastKnownPermanentCard(enteringPermanentId, enteringLand);
+            }
+        }
     }
 
     /**

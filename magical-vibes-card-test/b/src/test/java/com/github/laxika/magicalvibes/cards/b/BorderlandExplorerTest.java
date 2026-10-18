@@ -88,6 +88,33 @@ class BorderlandExplorerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(opponentDiscard);
     }
 
+    @Test
+    void discardChoicesStayHiddenUntilEveryPlayerHasChosen() {
+        BorderlandExplorer explorer = new BorderlandExplorer();
+        GrizzlyBears controllerDiscard = new GrizzlyBears();
+        GrizzlyBears opponentDiscard = new GrizzlyBears();
+        harness.setHand(player1, List.of(explorer, controllerDiscard));
+        harness.setHand(player2, List.of(opponentDiscard));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Plains()));
+        addMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerDiscard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(controllerDiscard);
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(controllerDiscard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentDiscard);
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

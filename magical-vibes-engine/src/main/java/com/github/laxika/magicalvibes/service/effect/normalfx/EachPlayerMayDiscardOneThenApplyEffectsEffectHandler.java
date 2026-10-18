@@ -11,19 +11,29 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardOneThenApplyEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Resolves each player's optional discard and the shared discard-type riders. */
+/**
+ * Resolves each player's optional discard and the shared discard-type riders. Players choose in APNAP
+ * order and the chosen cards are discarded together once everyone has chosen (CR 101.4).
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerMayDiscardOneThenApplyEffectsEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
+
+    @Autowired
+    @Lazy
+    private CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,8 +52,8 @@ public class EachPlayerMayDiscardOneThenApplyEffectsEffectHandler implements Nor
             state.controllerId = entry.getControllerId();
             addApnapPlayers(gameData, state);
         } else if (state.currentPlayerId != null) {
-            recordDiscard(gameData, state);
             state.currentPlayerId = null;
+            gameData.deferredDiscardChooserId = null;
             entry.setTargetId(null);
         }
 
@@ -75,7 +85,7 @@ public class EachPlayerMayDiscardOneThenApplyEffectsEffectHandler implements Nor
             }
 
             state.currentPlayerId = playerId;
-            state.currentDiscardCountBefore = gameData.cardsDiscardedThisTurn.getOrDefault(playerId, 0);
+            gameData.deferredDiscardChooserId = playerId;
             gameData.discardCausedByOpponent = !playerId.equals(state.controllerId);
             entry.setTargetId(playerId);
 
@@ -91,30 +101,27 @@ public class EachPlayerMayDiscardOneThenApplyEffectsEffectHandler implements Nor
         state.active = false;
     }
 
-    private void recordDiscard(GameData gameData, EachPlayerMayDiscardOneThenApplyEffectsState state) {
-        UUID playerId = state.currentPlayerId;
-        int discardedAfter = gameData.cardsDiscardedThisTurn.getOrDefault(playerId, 0);
-        if (discardedAfter <= state.currentDiscardCountBefore) {
-            return;
-        }
-
-        state.playersWhoDiscarded.add(playerId);
-        Set<CardType> discardedTypes = gameData.lastDiscardedCardTypes;
-        state.creatureCardDiscarded |= discardedTypes.contains(CardType.CREATURE);
-        state.nonCreatureCardDiscarded |= !discardedTypes.contains(CardType.CREATURE);
-    }
-
     private void finish(GameData gameData, StackEntry entry,
                         EachPlayerMayDiscardOneThenApplyEffectsEffect discardEffect,
                         EachPlayerMayDiscardOneThenApplyEffectsState state) {
-        List<CardEffect> followUps = new ArrayList<>();
-        for (UUID playerId : state.playersWhoDiscarded) {
+        Map<UUID, List<Card>> discarded =
+                cardChoiceHandlerService.discardDeferredSelections(gameData, state.controllerId);
+        boolean creatureCardDiscarded = false;
+        boolean nonCreatureCardDiscarded = false;
+        for (List<Card> cards : discarded.values()) {
+            for (Card card : cards) {
+                creatureCardDiscarded |= card.hasType(CardType.CREATURE);
+                nonCreatureCardDiscarded |= !card.hasType(CardType.CREATURE);
+            }
+        }
+        for (UUID playerId : discarded.keySet()) {
             playerInteractionSupport.applyDrawCards(gameData, playerId, 1);
         }
-        if (state.creatureCardDiscarded) {
+        List<CardEffect> followUps = new ArrayList<>();
+        if (creatureCardDiscarded) {
             followUps.add(discardEffect.creatureDiscardEffect());
         }
-        if (state.nonCreatureCardDiscarded) {
+        if (nonCreatureCardDiscarded) {
             followUps.add(discardEffect.nonCreatureDiscardEffect());
         }
 

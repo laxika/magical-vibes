@@ -1036,6 +1036,13 @@ public class GameData {
      * all enter in one batch.
      */
     public final List<UUID> pendingAnyNumberHandPutCardIds = new ArrayList<>();
+    /**
+     * While a {@code PutCardsOntoBattlefieldTogetherEffect} resolves its steps, hand cards chosen to be
+     * put onto the battlefield are held in {@link #heldHandBattlefieldPuts} (still in hand) instead of
+     * entering, so they all enter together once every step has chosen.
+     */
+    public boolean holdingHandBattlefieldPuts;
+    public final List<BattlefieldEntryCard> heldHandBattlefieldPuts = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /**
@@ -1143,6 +1150,20 @@ public class GameData {
             new EachPlayerMayExileGraveyardCardsState();
     /** Progress state for Creeping Dread's each-player discard comparison. */
     public final CreepingDreadState creepingDread = new CreepingDreadState();
+    /**
+     * Player whose next discard choice is only recorded in {@link #deferredDiscardSelections} instead
+     * of discarding the card. Each-player discard effects set it for the current chooser so that every
+     * player chooses before any card is discarded (CR 101.4); the effect discards the batch itself.
+     */
+    public UUID deferredDiscardChooserId;
+    /** Discard picks recorded for {@link #deferredDiscardChooserId}, in the order they were chosen. */
+    public final List<EachPlayerRummageState.SelectedDiscard> deferredDiscardSelections = new ArrayList<>();
+    /**
+     * Cards chosen so far in an each-player exile from hand (Mind Swords). They leave the hand when
+     * chosen so later picks index the remaining cards, but stay hidden and are exiled together once
+     * the last player has chosen (CR 101.4).
+     */
+    public final List<StagedHandExile> stagedHandExiles = new ArrayList<>();
     /** Progress state for each-player may-discard effects with discard-type riders. */
     public final EachPlayerMayDiscardOneThenApplyEffectsState eachPlayerMayDiscardOneThenApplyEffects =
             new EachPlayerMayDiscardOneThenApplyEffectsState();
@@ -7514,8 +7535,6 @@ public class GameData {
         copy.eachPlayerDiscardsCreatureOrLosesLife.active = this.eachPlayerDiscardsCreatureOrLosesLife.active;
         copy.eachPlayerDiscardsCreatureOrLosesLife.currentPlayerId = this.eachPlayerDiscardsCreatureOrLosesLife.currentPlayerId;
         copy.eachPlayerDiscardsCreatureOrLosesLife.remaining.addAll(this.eachPlayerDiscardsCreatureOrLosesLife.remaining);
-        copy.eachPlayerDiscardsCreatureOrLosesLife.playersWhoDiscardedCreature
-                .addAll(this.eachPlayerDiscardsCreatureOrLosesLife.playersWhoDiscardedCreature);
         copy.eachPlayerDiscardsNonlandCard.active = this.eachPlayerDiscardsNonlandCard.active;
         copy.eachPlayerDiscardsNonlandCard.controllerId = this.eachPlayerDiscardsNonlandCard.controllerId;
         copy.eachPlayerDiscardsNonlandCard.currentPlayerId = this.eachPlayerDiscardsNonlandCard.currentPlayerId;
@@ -7523,6 +7542,9 @@ public class GameData {
         copy.eachPlayerMayExileGraveyardCards.active = this.eachPlayerMayExileGraveyardCards.active;
         copy.eachPlayerMayExileGraveyardCards.currentPlayerId = this.eachPlayerMayExileGraveyardCards.currentPlayerId;
         copy.eachPlayerMayExileGraveyardCards.remaining.addAll(this.eachPlayerMayExileGraveyardCards.remaining);
+        copy.deferredDiscardChooserId = this.deferredDiscardChooserId;
+        copy.deferredDiscardSelections.addAll(this.deferredDiscardSelections);
+        copy.stagedHandExiles.addAll(this.stagedHandExiles);
         copy.creepingDread.active = this.creepingDread.active;
         copy.creepingDread.controllerId = this.creepingDread.controllerId;
         copy.creepingDread.currentPlayerId = this.creepingDread.currentPlayerId;
@@ -7536,28 +7558,16 @@ public class GameData {
                 this.eachPlayerMayDiscardOneThenApplyEffects.controllerId;
         copy.eachPlayerMayDiscardOneThenApplyEffects.currentPlayerId =
                 this.eachPlayerMayDiscardOneThenApplyEffects.currentPlayerId;
-        copy.eachPlayerMayDiscardOneThenApplyEffects.currentDiscardCountBefore =
-                this.eachPlayerMayDiscardOneThenApplyEffects.currentDiscardCountBefore;
-        copy.eachPlayerMayDiscardOneThenApplyEffects.creatureCardDiscarded =
-                this.eachPlayerMayDiscardOneThenApplyEffects.creatureCardDiscarded;
-        copy.eachPlayerMayDiscardOneThenApplyEffects.nonCreatureCardDiscarded =
-                this.eachPlayerMayDiscardOneThenApplyEffects.nonCreatureCardDiscarded;
         copy.eachPlayerMayDiscardOneThenApplyEffects.remaining.addAll(
                 this.eachPlayerMayDiscardOneThenApplyEffects.remaining);
-        copy.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded.addAll(
-                this.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded);
         copy.eachPlayerMayDiscardThenSearchBasicLand.active =
                 this.eachPlayerMayDiscardThenSearchBasicLand.active;
         copy.eachPlayerMayDiscardThenSearchBasicLand.controllerId =
                 this.eachPlayerMayDiscardThenSearchBasicLand.controllerId;
         copy.eachPlayerMayDiscardThenSearchBasicLand.currentPlayerId =
                 this.eachPlayerMayDiscardThenSearchBasicLand.currentPlayerId;
-        copy.eachPlayerMayDiscardThenSearchBasicLand.currentDiscardCountBefore =
-                this.eachPlayerMayDiscardThenSearchBasicLand.currentDiscardCountBefore;
         copy.eachPlayerMayDiscardThenSearchBasicLand.remaining.addAll(
                 this.eachPlayerMayDiscardThenSearchBasicLand.remaining);
-        copy.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded.addAll(
-                this.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded);
         copy.scytheSpecter.active = this.scytheSpecter.active;
         copy.scytheSpecter.controllerId = this.scytheSpecter.controllerId;
         copy.scytheSpecter.currentPlayerId = this.scytheSpecter.currentPlayerId;
@@ -8746,6 +8756,8 @@ public class GameData {
                 copy.pendingBattlefieldEntryRequests.put(id, request.deepCopy()));
         this.pendingEntryCopyChoices.forEach(choice -> copy.pendingEntryCopyChoices.add(choice.deepCopy()));
         copy.pendingAnyNumberHandPutCardIds.addAll(this.pendingAnyNumberHandPutCardIds);
+        copy.holdingHandBattlefieldPuts = this.holdingHandBattlefieldPuts;
+        copy.heldHandBattlefieldPuts.addAll(this.heldHandBattlefieldPuts);
         copy.cloneOperation.physicalCard = this.cloneOperation.physicalCard;
         copy.cloneOperation.preparedPermanent = this.cloneOperation.preparedPermanent == null
                 ? null : new Permanent(this.cloneOperation.preparedPermanent);
