@@ -1,6 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.a.Annihilate;
+import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.f.FlayingTendrils;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GisaGloriousResurrector;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LiesaForgottenArchangel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SlaughterDrone;
 import com.github.laxika.magicalvibes.cards.t.TarSnare;
@@ -12,6 +19,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -112,6 +120,154 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(countTokens(player1, "Zombie")).isZero();
+    }
+
+    @Test
+    void choosingKalitasReplacementExilesAndCreatesZombie() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent drone = harness.addToBattlefieldAndReturn(player2, new SlaughterDrone());
+        harness.castFromHand(player1, new FlayingTendrils(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.findExiledCard(drone.getCard().getId())).isNotNull();
+        harness.assertNotInGraveyard(player2, "Slaughter Drone");
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+    }
+
+    @Test
+    void choosingFlayingTendrilsReplacementExilesWithoutZombie() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent drone = harness.addToBattlefieldAndReturn(player2, new SlaughterDrone());
+        harness.castFromHand(player1, new FlayingTendrils(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player2, "Exile it");
+
+        assertThat(gd.findExiledCard(drone.getCard().getId())).isNotNull();
+        harness.assertNotInGraveyard(player2, "Slaughter Drone");
+        harness.assertNotOnBattlefield(player2, "Slaughter Drone");
+        assertThat(countTokens(player1, "Zombie")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void stateBasedDeathAsksBeforeTheCreatureLeaves() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent drone = harness.addToBattlefieldAndReturn(player2, new SlaughterDrone());
+        harness.castFromHand(player1, new FlayingTendrils(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertOnBattlefield(player2, "Slaughter Drone");
+        assertThat(gd.findExiledCard(drone.getCard().getId())).isNull();
+    }
+
+    @Test
+    @CardUsed({LiesaForgottenArchangel.class, DiabolicEdict.class, GrizzlyBears.class})
+    void sacrificedCreatureLeavesBeforeItsControllerChoosesTheReplacement() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new LiesaForgottenArchangel());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DiabolicEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({LiesaForgottenArchangel.class, Annihilate.class, GrizzlyBears.class, Forest.class})
+    void laterEffectsOfTheSpellWaitForTheReplacementChoice() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new LiesaForgottenArchangel());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Annihilate()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({GisaGloriousResurrector.class, GrizzlyBears.class})
+    void simultaneousDeathsChooseInApnapOrderThenLeaveTogether() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GisaGloriousResurrector());
+        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new FlayingTendrils(), "{1}{B}{B}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleListChoice(player1, "Exile it");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.findExiledCard(ownBears.getCard().getId())).isNull();
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.findExiledCard(ownBears.getCard().getId()).sourcePermanentId()).isNull();
+        assertThat(gd.findExiledCard(opposingBears.getCard().getId())).isNotNull();
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, GrizzlyBears.class})
+    void creatureWithLibraryReplacementChoosesBeforeTheStateBasedBatchDies() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new FlayingTendrils(), "{1}{B}{B}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .contains("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.handleListChoice(player2, "Put it into its owner's library");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.handleListChoice(player2, "Exile it");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        assertThat(countTokens(player1, "Zombie")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class})
+    void choosingKalitasOverOwnLibraryReplacementExilesAndCreatesZombie() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+
+        destroyCreature(player1, gravebane);
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.findExiledCard(gravebane.getCard().getId())).isNotNull();
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
     }
 
     @Test

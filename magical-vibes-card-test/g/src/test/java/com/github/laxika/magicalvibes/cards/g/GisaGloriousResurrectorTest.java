@@ -153,6 +153,37 @@ class GisaGloriousResurrectorTest extends BaseCardTest {
     }
 
     @Test
+    void choosingGisaReplacementExilesWithGisa() {
+        Permanent gisa = harness.addToBattlefieldAndReturn(player1, new GisaGloriousResurrector());
+        harness.addToBattlefield(player1, new LiesaForgottenArchangel());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyCreature(player2, bears.getId());
+
+        harness.handleListChoice(player2, "Gisa, Glorious Resurrector");
+
+        assertThat(gd.findExiledCard(bears.getCard().getId()).sourcePermanentId()).isEqualTo(gisa.getId());
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void choosingLiesaReplacementExilesWithoutGisaTracking() {
+        harness.addToBattlefield(player1, new GisaGloriousResurrector());
+        harness.addToBattlefield(player1, new LiesaForgottenArchangel());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyCreature(player2, bears.getId());
+
+        harness.handleListChoice(player2, "Exile it");
+
+        assertThat(gd.findExiledCard(bears.getCard().getId()).sourcePermanentId()).isNull();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+
+        triggerUpkeep(player1);
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
     void returnedAttackerIsSacrificedAtEndOfCombat() {
         harness.addToBattlefield(player1, new GisaGloriousResurrector());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

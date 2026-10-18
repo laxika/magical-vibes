@@ -518,6 +518,12 @@ public class StateBasedActionService {
             }
         }
         if (graveyardService.hasPendingRegenerationChoice(gameData)) return false;
+        // CR 616.1: competing death replacements are chosen before anything in the batch leaves,
+        // so the batch still dies together, each creature with the replacement its controller chose.
+        if (permanentRemovalService.awaitStateBasedDeathReplacementChoices(gameData,
+                toDie.stream().map(DeathEntry::permanent).toList())) {
+            return false;
+        }
 
         // CR 704.5h spans "since the last state-based check" and this pass is that check:
         // consume the deathtouch memory so survivors (indestructible, regenerated) aren't
@@ -526,6 +532,7 @@ public class StateBasedActionService {
             p.setDamagedByDeathtouch(false);
         }
 
+        permanentRemovalService.beginDeathReplacementChoiceBatch(gameData);
         try {
             for (DeathEntry entry : toDie) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
@@ -610,6 +617,7 @@ public class StateBasedActionService {
             gameData.simultaneousDyingTriggerKeywordInstances.clear();
             gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
             gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
+            permanentRemovalService.endDeathReplacementChoiceBatch(gameData);
         }
 
         if (!toDie.isEmpty()) {

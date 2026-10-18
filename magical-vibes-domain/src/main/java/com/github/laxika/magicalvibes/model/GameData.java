@@ -2645,6 +2645,26 @@ public class GameData {
     public final Map<UUID, UUID> permanentLeaveBatchPendingCreatures = new ConcurrentHashMap<>();
     /** Permanents that left during a battlefield-leave batch, keyed by permanent and controller. */
     public final Map<UUID, UUID> permanentLeaveBatchPendingPermanents = new ConcurrentHashMap<>();
+    /**
+     * Depth counter for a group of simultaneous deaths. While it is positive, CR 616.1 death
+     * replacement prompts wait in {@link #deferredDeathReplacementChoices} and are opened in APNAP
+     * order when the outermost group ends.
+     */
+    public int deathReplacementChoiceBatchDepth;
+    /** Death replacement prompts raised inside the current group of simultaneous deaths. */
+    public final List<PendingInteraction.ColorChoice> deferredDeathReplacementChoices = new ArrayList<>();
+    /**
+     * Death replacements chosen ahead of a state-based-action batch, by dying permanent. The batch
+     * waits until every choice is made, then applies each while performing the deaths together.
+     */
+    public final Map<UUID, ChoiceContext.DeathExileReplacement> chosenStateBasedDeathReplacements =
+            new ConcurrentHashMap<>();
+    /**
+     * Dying permanents of a pending state-based-action batch whose "you may put it on top of its
+     * owner's library instead" is being asked ahead of the batch; the answer is recorded in
+     * {@link #chosenStateBasedDeathReplacements}.
+     */
+    public final Set<UUID> stateBasedMayLibraryChoices = ConcurrentHashMap.newKeySet();
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
@@ -9112,6 +9132,10 @@ public class GameData {
         copy.permanentLeaveBatchWatcherControllers.putAll(this.permanentLeaveBatchWatcherControllers);
         copy.permanentLeaveBatchPendingCreatures.putAll(this.permanentLeaveBatchPendingCreatures);
         copy.permanentLeaveBatchPendingPermanents.putAll(this.permanentLeaveBatchPendingPermanents);
+        copy.deathReplacementChoiceBatchDepth = this.deathReplacementChoiceBatchDepth;
+        copy.deferredDeathReplacementChoices.addAll(this.deferredDeathReplacementChoices);
+        copy.chosenStateBasedDeathReplacements.putAll(this.chosenStateBasedDeathReplacements);
+        copy.stateBasedMayLibraryChoices.addAll(this.stateBasedMayLibraryChoices);
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->

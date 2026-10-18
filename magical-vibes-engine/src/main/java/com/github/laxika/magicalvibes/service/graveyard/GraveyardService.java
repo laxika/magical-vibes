@@ -1595,6 +1595,127 @@ public class GraveyardService {
     }
 
     /**
+     * True when a graveyard replacement with no further effect (Rest in Peace, Leyline of the
+     * Void, Forbidden Crypt, ...) would exile {@code card} as it moves from the battlefield to
+     * {@code ownerId}'s graveyard. Changes nothing. Replacements that track the exiled card with
+     * their source or add counters to it are not plain and are not reported.
+     */
+    public boolean exilesBattlefieldCardPlainlyInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card,
+                                                                  UUID battlefieldControllerId,
+                                                                  Permanent battlefieldSnapshot) {
+        if (appliesExileInsteadOfGraveyard(battlefieldSnapshot.getCard(), Zone.BATTLEFIELD)
+                && !gameQueryService.hasLostPrintedAbilities(gameData, battlefieldSnapshot)) {
+            return true;
+        }
+        boolean token = isToken(gameData, card);
+        if (!token && gameData.playersExilingCardsInsteadOfGraveyardThisTurn.contains(ownerId)) {
+            return true;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (gameQueryService.hasLostPrintedAbilities(gameData, p)) continue;
+                if (exilesPermanentPlainly(gameData, p, battlefieldSnapshot)) {
+                    return true;
+                }
+            }
+        }
+        OpponentExileReplacement opponentReplacement = opponentHasExileReplacementEffect(gameData, ownerId);
+        if (!token && opponentReplacement != null && !opponentReplacement.effect().addVoidCounter()
+                && !opponentReplacement.effect().trackWithSource()) {
+            return true;
+        }
+        return shouldExileOwnCardInsteadOfGraveyard(
+                gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot);
+    }
+
+    /**
+     * The kind of the dying creature's own "if this would die, ... instead" replacement that
+     * {@link #addCardToGraveyard} would apply to its card — an extra-turn exile, an egg-counter exile
+     * or a mandatory library move — or {@code null} when it has none. Changes nothing.
+     */
+    public ChoiceContext.DeathExileReplacement.Kind ownDeathReplacementKind(GameData gameData, Permanent dying) {
+        Card card = dying.getCard();
+        if (hasExileAndTakeExtraTurnReplacementEffect(card)) {
+            return ChoiceContext.DeathExileReplacement.Kind.EXTRA_TURN;
+        }
+        if (gameQueryService.hasLostPrintedAbilities(gameData, dying)) {
+            return null;
+        }
+        if (hasExileWithEggCountersReplacementEffect(card)) {
+            return ChoiceContext.DeathExileReplacement.Kind.EGG_COUNTERS;
+        }
+        return getDyingCreatureLibraryReplacementEffect(card) != null
+                ? ChoiceContext.DeathExileReplacement.Kind.LIBRARY : null;
+    }
+
+    /**
+     * Applies the rider of the dying creature's own exile replacement after its card {@code card}
+     * was already exiled in its place: egg counters, or an extra turn for {@code controllerId}.
+     */
+    public void applyOwnDeathExileRider(GameData gameData, ChoiceContext.DeathExileReplacement.Kind kind,
+                                        Card card, UUID controllerId) {
+        if (kind == ChoiceContext.DeathExileReplacement.Kind.EGG_COUNTERS) {
+            int count = getExileWithEggCountersReplacementEffect(card).count();
+            gameData.exiledCardEggCounters.put(card.getId(), count);
+            gameLogService.append(gameData, GameLog.cardThen(card, " gets " + count + " egg counters."));
+        } else if (kind == ChoiceContext.DeathExileReplacement.Kind.EXTRA_TURN) {
+            gameData.queueExtraTurnFirst(controllerId, false);
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(controllerId) + " takes an extra turn after this one."));
+        }
+    }
+
+    /**
+     * The permanents whose graveyard replacement would exile {@code battlefieldSnapshot}'s card with
+     * them (Void Maw), including members of a simultaneous group that already left. Changes nothing.
+     */
+    public List<Permanent> exilesBattlefieldCardWithSources(GameData gameData, Permanent battlefieldSnapshot) {
+        List<Permanent> sources = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (!gameQueryService.hasLostPrintedAbilities(gameData, p)
+                        && exilesPermanentWithSource(gameData, p, battlefieldSnapshot)) {
+                    sources.add(p);
+                }
+            }
+        }
+        for (Permanent p : gameData.simultaneousDyingPermanents.values()) {
+            if (!p.isFaceDown() && !p.isLosesAllAbilitiesUntilEndOfTurn()
+                    && gameQueryService.findPermanentById(gameData, p.getId()) == null
+                    && exilesPermanentWithSource(gameData, p, battlefieldSnapshot)) {
+                sources.add(p);
+            }
+        }
+        return sources;
+    }
+
+    private boolean exilesPermanentWithSource(GameData gameData, Permanent source, Permanent battlefieldSnapshot) {
+        for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
+                    && replacement.trackWithSource()
+                    && !(replacement.excludeSource() && source.getId().equals(battlefieldSnapshot.getId()))
+                    && (replacement.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, battlefieldSnapshot, replacement.filter()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean exilesPermanentPlainly(GameData gameData, Permanent source, Permanent battlefieldSnapshot) {
+        for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
+                    && !replacement.trackWithSource()
+                    && !(replacement.excludeSource() && source.getId().equals(battlefieldSnapshot.getId()))
+                    && (replacement.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, battlefieldSnapshot, replacement.filter()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * True when the card's exile-instead replacement applies to a move from {@code sourceZone}.
      * A {@code dyingOnly} variant ("if this creature would die, exile it instead") applies only
      * from the battlefield; the plain variant applies from anywhere.

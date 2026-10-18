@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.ChoiceContext.DeathExileReplacement;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -226,6 +229,7 @@ public class PermanentRemovalService {
         Map<UUID, Integer> oldPowers = new java.util.HashMap<>(gameData.simultaneousDyingPowers);
         Map<UUID, List<CardEffect>> oldGranted = new java.util.HashMap<>(gameData.simultaneousDyingGrantedCreatureDeathEffects);
         Map<UUID, List<CardEffect>> oldGrantedSelfDeath = new java.util.HashMap<>(gameData.simultaneousDyingGrantedSelfDeathEffects);
+        beginDeathReplacementChoiceBatch(gameData);
         try {
             for (Permanent permanent : permanents) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -267,6 +271,7 @@ public class PermanentRemovalService {
             gameData.simultaneousDyingGrantedCreatureDeathEffects.putAll(oldGranted);
             gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
             gameData.simultaneousDyingGrantedSelfDeathEffects.putAll(oldGrantedSelfDeath);
+            endDeathReplacementChoiceBatch(gameData);
         }
     }
 
@@ -355,18 +360,69 @@ public class PermanentRemovalService {
                                                boolean destroyedBySpellOrAbility,
                                                boolean ignoreMayLibraryReplacement, UUID destinationPlayerId,
                                                boolean wasSacrificed) {
+        return removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility,
+                ignoreMayLibraryReplacement, destinationPlayerId, wasSacrificed, null);
+    }
+
+    /**
+     * @param chosenReplacement the death replacement the dying creature's controller already chose
+     *                          (CR 616.1), or {@code null} when none has been chosen
+     */
+    private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
+                                               boolean destroyedBySpellOrAbility,
+                                               boolean ignoreMayLibraryReplacement, UUID destinationPlayerId,
+                                               boolean wasSacrificed, DeathExileReplacement chosenReplacement) {
         markDynamicToken(gameData, target);
-        // Replacement effect: exile instead of going to graveyard (CR 614.6)
-        if (tryApplyExileReplacementEffect(gameData, target, true, "going to the graveyard")) {
-            return true;
+        if (chosenReplacement == null) {
+            chosenReplacement = gameData.chosenStateBasedDeathReplacements.remove(target.getId());
+        }
+        boolean declinedMayLibrary = chosenReplacement != null
+                && chosenReplacement.kind() == DeathExileReplacement.Kind.NO_REPLACEMENT;
+        if (declinedMayLibrary) {
+            chosenReplacement = null;
+            ignoreMayLibraryReplacement = true;
+        }
+        List<DeathExileReplacement> riderOptions = null;
+        if (chosenReplacement == null && !declinedMayLibrary) {
+            if (isDeathExileReplacementChoicePending(gameData, target.getId())) {
+                return false;
+            }
+            List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, target);
+            if (options.size() > 1) {
+                if (options.stream().allMatch(option -> option.kind().exiles())) {
+                    // Every option exiles it, so it leaves with its event; the choice only picks the rider.
+                    riderOptions = options;
+                } else {
+                    promptDeathExileReplacement(gameData, target, options, destroyedBySpellOrAbility,
+                            wasSacrificed, destinationPlayerId, false);
+                    return false;
+                }
+            }
         }
 
-        if (tryApplyDyingCreatureReturnToHandReplacement(gameData, target)) {
-            return true;
-        }
+        if (riderOptions == null) {
+            DeathExileReplacement.Kind chosenKind = chosenReplacement == null ? null : chosenReplacement.kind();
+            // Replacement effect: exile instead of going to graveyard (CR 614.6)
+            if ((chosenKind == null || chosenKind == DeathExileReplacement.Kind.TRACKED)
+                    && tryApplyExileReplacementEffect(gameData, target, true, "going to the graveyard")) {
+                return true;
+            }
 
-        if (!ignoreMayLibraryReplacement && offerMayLibraryReplacement(gameData, target)) {
-            return false;
+            if ((chosenKind == null || chosenKind == DeathExileReplacement.Kind.RETURN_TO_HAND)
+                    && tryApplyDyingCreatureReturnToHandReplacement(gameData, target)) {
+                return true;
+            }
+
+            // A granted "may" (Pulmonic Sliver) was chosen while it applied; it still applies if its
+            // source left in the same batch.
+            if (chosenKind == DeathExileReplacement.Kind.LIBRARY
+                    && graveyardService.ownDeathReplacementKind(gameData, target) != DeathExileReplacement.Kind.LIBRARY) {
+                return removePermanentToLibraryTop(gameData, target);
+            }
+
+            if (chosenKind == null && !ignoreMayLibraryReplacement && offerMayLibraryReplacement(gameData, target)) {
+                return false;
+            }
         }
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
@@ -420,9 +476,380 @@ public class PermanentRemovalService {
                 wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, controllerId, ownerId,
                 destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath,
                 dyingToughnessAtDeath, selfGraveyardTriggerSuppressed, creatureDeathTriggersSuppressed,
-                wasSacrificed, removed.get().hadPrintedAbilities());
+                wasSacrificed, removed.get().hadPrintedAbilities(), chosenReplacement, riderOptions);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
+    }
+
+    /**
+     * The "if it would die, ... instead" replacements that currently apply to the creature
+     * {@code target}, one option per distinct outcome. Replacements that only exile it collapse
+     * into a single {@link DeathExileReplacement.Kind#PLAIN} option. Options that keep the card
+     * (hand, library) come first, then the plain exile, then exiles with riders. Changes nothing.
+     */
+    private List<DeathExileReplacement> deathExileReplacementOptions(GameData gameData, Permanent target) {
+        if (!gameQueryService.isCreature(gameData, target)) {
+            return List.of();
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) {
+            return List.of();
+        }
+        UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
+        boolean plain = false;
+        List<DeathExileReplacement> riders = new ArrayList<>();
+
+        if (exileReplacementApplies(gameData, target, true)) {
+            UUID trackingSourceId = target.isExileInsteadOfDieThisTurn()
+                    ? target.getExileInsteadOfDieSourcePermanentId() : null;
+            if (trackingSourceId == null) {
+                plain = true;
+            } else {
+                Permanent source = gameQueryService.findPermanentById(gameData, trackingSourceId);
+                riders.add(new DeathExileReplacement(
+                        "Exile it with " + (source != null ? source.getCard().getName() : "its source"),
+                        DeathExileReplacement.Kind.TRACKED, null, source != null ? source.getCard() : null,
+                        null, trackingSourceId));
+            }
+        }
+
+        boolean nontoken = !isToken(gameData, target.getCard());
+        NontokenCreatureDyingExileReplacement bloodCounter = nontoken
+                ? nontokenCreatureDyingExileReplacement(gameData, target) : null;
+        if (bloodCounter != null) {
+            riders.add(new DeathExileReplacement(
+                    "Exile it with a blood counter (" + bloodCounter.sourceCard().getName() + ")",
+                    DeathExileReplacement.Kind.BLOOD_COUNTER, null, bloodCounter.sourceCard(), null,
+                    bloodCounter.sourcePermanentId()));
+        }
+
+        List<OpponentDyingCreatureExileReplacement> opponentReplacements =
+                opponentDyingCreatureExileReplacements(gameData, controllerId, target.getCard());
+        for (OpponentDyingCreatureExileReplacement replacement : opponentReplacements) {
+            ExileOpponentCreaturesInsteadOfDyingEffect effect = replacement.effect();
+            if (!effect.addIceCounter() && effect.whenExiledEffect() == null && !effect.trackWithSource()
+                    && effect.lifeGainOnExile() == 0) {
+                plain = true;
+                continue;
+            }
+            boolean sameOutcomeOffered = !effect.trackWithSource() && riders.stream()
+                    .anyMatch(offered -> effect.equals(offered.effect())
+                            && replacement.controllerId().equals(offered.sourceControllerId()));
+            if (!sameOutcomeOffered) {
+                riders.add(new DeathExileReplacement(replacement.sourceCard().getName(),
+                        DeathExileReplacement.Kind.OPPONENT, effect, replacement.sourceCard(),
+                        replacement.controllerId(), replacement.sourcePermanentId()));
+            }
+        }
+
+        for (Permanent source : graveyardService.exilesBattlefieldCardWithSources(gameData, target)) {
+            riders.add(new DeathExileReplacement("Exile it with " + source.getCard().getName(),
+                    DeathExileReplacement.Kind.EXILED_WITH_PERMANENT, null, source.getCard(), null,
+                    source.getId()));
+        }
+
+        PlanarCreatureExileReplacement planar = planarCreatureExileReplacement(gameData);
+        if (planar != null) {
+            riders.add(new DeathExileReplacement(planar.sourceCard().getName(),
+                    DeathExileReplacement.Kind.PLANAR, null, planar.sourceCard(), null, null));
+        }
+        if (gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn.contains(controllerId)) {
+            riders.add(new DeathExileReplacement("Exile it and return it at the beginning of the next end step",
+                    DeathExileReplacement.Kind.RETURN_AT_END_STEP, null, null, null, null));
+        }
+
+        plain = plain
+                || (!gameQueryService.hasLostPrintedAbilities(gameData, target)
+                        && GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()))
+                || ownSubtypeExileReplacement(gameData, target, controllerId,
+                        effectiveCreatureSubtypesAtDeath(gameData, target))
+                || opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard())
+                || damagerExilesDyingCreature(gameData, target)
+                || !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty()
+                || gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
+                        .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId))
+                || graveyardService.exilesBattlefieldCardPlainlyInsteadOfGraveyard(
+                        gameData, ownerId, target.getCard(), controllerId, target);
+
+        List<DeathExileReplacement> options = new ArrayList<>();
+        ReturnToHandReplacement returnToHand = findReturnToHandReplacement(gameData, target);
+        if (returnToHand != null) {
+            options.add(new DeathExileReplacement(
+                    "Return it to its owner's hand (" + returnToHand.source().getCard().getName() + ")",
+                    DeathExileReplacement.Kind.RETURN_TO_HAND, null, returnToHand.source().getCard(), null,
+                    returnToHand.source().getId()));
+        }
+        DeathExileReplacement.Kind ownKind = graveyardService.ownDeathReplacementKind(gameData, target);
+        if (ownKind == DeathExileReplacement.Kind.LIBRARY || findMayLibraryReplacement(gameData, target) != null) {
+            options.add(new DeathExileReplacement("Put it into its owner's library",
+                    DeathExileReplacement.Kind.LIBRARY, null, null, null, null));
+        } else if (ownKind == DeathExileReplacement.Kind.EGG_COUNTERS) {
+            riders.add(new DeathExileReplacement("Exile it with egg counters",
+                    DeathExileReplacement.Kind.EGG_COUNTERS, null, target.getCard(), null, null));
+        } else if (ownKind == DeathExileReplacement.Kind.EXTRA_TURN) {
+            riders.add(new DeathExileReplacement("Exile it and take an extra turn",
+                    DeathExileReplacement.Kind.EXTRA_TURN, null, target.getCard(), null, null));
+        }
+        if (plain) {
+            options.add(new DeathExileReplacement("Exile it", DeathExileReplacement.Kind.PLAIN,
+                    null, null, null, null));
+        }
+        options.addAll(riders);
+        return withUniqueLabels(options);
+    }
+
+    private static List<DeathExileReplacement> withUniqueLabels(List<DeathExileReplacement> options) {
+        Map<String, Integer> totals = new java.util.HashMap<>();
+        options.forEach(option -> totals.merge(option.label(), 1, Integer::sum));
+        Map<String, Integer> seen = new java.util.HashMap<>();
+        List<DeathExileReplacement> unique = new ArrayList<>(options.size());
+        for (DeathExileReplacement option : options) {
+            if (totals.get(option.label()) == 1) {
+                unique.add(option);
+                continue;
+            }
+            int index = seen.merge(option.label(), 1, Integer::sum);
+            unique.add(new DeathExileReplacement(option.label() + " (" + index + ")", option.kind(),
+                    option.effect(), option.sourceCard(), option.sourceControllerId(), option.sourcePermanentId()));
+        }
+        return unique;
+    }
+
+    private boolean isDeathExileReplacementChoicePending(GameData gameData, UUID permanentId) {
+        PendingInteraction.ColorChoice active = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        return isDeathExileReplacementChoiceFor(active, permanentId)
+                || gameData.pendingInteractions.stream()
+                        .anyMatch(pending -> isDeathExileReplacementChoiceFor(pending, permanentId))
+                || gameData.deferredDeathReplacementChoices.stream()
+                        .anyMatch(pending -> isDeathExileReplacementChoiceFor(pending, permanentId));
+    }
+
+    private static boolean isDeathExileReplacementChoiceFor(PendingInteraction interaction, UUID permanentId) {
+        return interaction instanceof PendingInteraction.ColorChoice choice
+                && choice.context() instanceof ChoiceContext.DeathExileReplacementChoice context
+                && (permanentId == null ? context.stateBased() : context.permanentId().equals(permanentId));
+    }
+
+    /**
+     * CR 616.1: asks the dying creature's controller which of {@code options} applies, before it
+     * leaves the battlefield. Outside state-based actions the creature stays put until
+     * {@link #resolveDeathExileReplacementChoice} resumes its removal.
+     */
+    private void promptDeathExileReplacement(GameData gameData, Permanent target,
+                                             List<DeathExileReplacement> options,
+                                             boolean destroyedBySpellOrAbility, boolean wasSacrificed,
+                                             UUID destinationPlayerId, boolean stateBased) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        openDeathReplacementChoice(gameData, new PendingInteraction.ColorChoice(
+                controllerId, target.getId(), null,
+                new ChoiceContext.DeathExileReplacementChoice(target.getId(), options,
+                        destroyedBySpellOrAbility, wasSacrificed, destinationPlayerId, stateBased),
+                options.stream().map(DeathExileReplacement::label).toList(),
+                "Choose which replacement effect applies to " + target.getCard().getName() + " dying."));
+    }
+
+    /**
+     * Opens a death replacement prompt, or holds it until the current group of simultaneous deaths
+     * ends so that every group's prompts open in APNAP order (CR 616.1, CR 101.4).
+     */
+    private void openDeathReplacementChoice(GameData gameData, PendingInteraction.ColorChoice choice) {
+        if (gameData.deathReplacementChoiceBatchDepth > 0) {
+            gameData.deferredDeathReplacementChoices.add(choice);
+        } else if (gameData.interaction.isAwaitingInput()) {
+            gameData.queueInteraction(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
+    }
+
+    /** Starts a group of simultaneous deaths whose CR 616.1 prompts open together in APNAP order. */
+    public void beginDeathReplacementChoiceBatch(GameData gameData) {
+        gameData.deathReplacementChoiceBatchDepth++;
+    }
+
+    /** Ends a group started by {@link #beginDeathReplacementChoiceBatch}, opening its prompts in APNAP order. */
+    public void endDeathReplacementChoiceBatch(GameData gameData) {
+        if (gameData.deathReplacementChoiceBatchDepth <= 0 || --gameData.deathReplacementChoiceBatchDepth > 0) {
+            return;
+        }
+        List<PendingInteraction.ColorChoice> choices = new ArrayList<>(gameData.deferredDeathReplacementChoices);
+        gameData.deferredDeathReplacementChoices.clear();
+        int playerCount = gameData.orderedPlayerIds.size();
+        int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
+        choices.sort(java.util.Comparator.comparingInt(choice ->
+                Math.floorMod(gameData.orderedPlayerIds.indexOf(choice.playerId()) - activeIndex, playerCount)));
+        choices.forEach(choice -> openDeathReplacementChoice(gameData, choice));
+    }
+
+    /**
+     * CR 616.1 for a state-based-action batch: before anything in {@code dying} leaves, asks each
+     * controller whose creature has competing death replacements with different outcomes which one
+     * applies, in APNAP order. Returns {@code true} while the batch must wait for those answers; the
+     * chosen options are then applied as the batch performs every death together.
+     */
+    public boolean awaitStateBasedDeathReplacementChoices(GameData gameData, List<Permanent> dying) {
+        if (isDeathExileReplacementChoicePending(gameData, null) || !gameData.stateBasedMayLibraryChoices.isEmpty()) {
+            return true;
+        }
+        boolean prompted = false;
+        int playerCount = gameData.orderedPlayerIds.size();
+        int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
+        List<Permanent> apnapOrder = new ArrayList<>(dying);
+        apnapOrder.sort(java.util.Comparator.comparingInt(permanent -> Math.floorMod(gameData.orderedPlayerIds
+                .indexOf(gameQueryService.findPermanentController(gameData, permanent.getId())) - activeIndex,
+                playerCount)));
+        beginDeathReplacementChoiceBatch(gameData);
+        try {
+            for (Permanent permanent : apnapOrder) {
+                if (gameData.chosenStateBasedDeathReplacements.containsKey(permanent.getId())) {
+                    continue;
+                }
+                List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, permanent);
+                if (options.size() > 1) {
+                    promptDeathExileReplacement(gameData, permanent, options, false, false, null, true);
+                    prompted = true;
+                } else if (findMayLibraryReplacement(gameData, permanent) != null) {
+                    // Its only replacement is a "may": asked through the usual prompt, recorded for the batch.
+                    gameData.stateBasedMayLibraryChoices.add(permanent.getId());
+                    offerMayLibraryReplacement(gameData, permanent);
+                    prompted = true;
+                }
+            }
+        } finally {
+            endDeathReplacementChoiceBatch(gameData);
+        }
+        return prompted;
+    }
+
+    /**
+     * Records the answer to a "you may put it on top of its owner's library instead" asked ahead of
+     * a state-based-action batch. Returns {@code false} when {@code target}'s choice was not asked
+     * that way, so the caller moves it at once.
+     */
+    public boolean recordStateBasedMayLibraryChoice(GameData gameData, Permanent target, boolean accepted) {
+        if (!gameData.stateBasedMayLibraryChoices.remove(target.getId())) {
+            return false;
+        }
+        gameData.chosenStateBasedDeathReplacements.put(target.getId(), accepted
+                ? new DeathExileReplacement("Put it into its owner's library",
+                        DeathExileReplacement.Kind.LIBRARY, null, null, null, null)
+                : new DeathExileReplacement("Put it into its owner's graveyard",
+                        DeathExileReplacement.Kind.NO_REPLACEMENT, null, null, null, null));
+        return true;
+    }
+
+    /**
+     * Applies the replacement the creature's controller chose from {@code choice}: recorded for the
+     * pending state-based batch, or resuming the creature's removal with it.
+     */
+    public void resolveDeathExileReplacementChoice(GameData gameData,
+                                                   ChoiceContext.DeathExileReplacementChoice choice,
+                                                   String label) {
+        DeathExileReplacement chosen = chosenOption(choice.options(), label);
+        Permanent target = gameQueryService.findPermanentById(gameData, choice.permanentId());
+        if (target == null) {
+            return;
+        }
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                ": its controller chooses \"" + chosen.label() + "\" as the replacement effect."));
+        if (choice.stateBased()) {
+            gameData.chosenStateBasedDeathReplacements.put(target.getId(), chosen);
+            return;
+        }
+        removePermanentToGraveyard(gameData, target, choice.destroyedBySpellOrAbility(), true,
+                choice.destinationPlayerId(), choice.wasSacrificed(), chosen);
+        removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Applies the rider of the exile replacement the controller chose from {@code choice} to the
+     * cards already exiled in place of the creature dying.
+     */
+    public void resolveDeathExileRiderChoice(GameData gameData, ChoiceContext.DeathExileRiderChoice choice,
+                                             String label) {
+        DeathExileReplacement chosen = chosenOption(choice.options(), label);
+        gameLogService.append(gameData, GameLog.cardThen(choice.mainCard(),
+                " was exiled by \"" + chosen.label() + "\"."));
+        List<Card> stillExiled = choice.exiledCardIds().stream()
+                .map(gameData::findExiledCard)
+                .filter(Objects::nonNull)
+                .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
+                .toList();
+        UUID mainCardId = choice.mainCard().getId();
+        switch (chosen.kind()) {
+            case OPPONENT -> {
+                OpponentDyingCreatureExileReplacement replacement = new OpponentDyingCreatureExileReplacement(
+                        chosen.effect(), chosen.sourceCard(), chosen.sourceControllerId(), chosen.sourcePermanentId());
+                for (Card card : stillExiled) {
+                    if (chosen.effect().trackWithSource()) {
+                        gameData.associateExiledCardWithSource(card.getId(), chosen.sourcePermanentId());
+                    }
+                    if (chosen.effect().addIceCounter()) {
+                        gameData.exiledCardsWithIceCounters.add(card.getId());
+                    }
+                }
+                applyOpponentExileReplacementRiders(gameData, replacement, true, true, choice.dyingPower());
+            }
+            case TRACKED, EXILED_WITH_PERMANENT -> stillExiled.forEach(card ->
+                    gameData.associateExiledCardWithSource(card.getId(), chosen.sourcePermanentId()));
+            case BLOOD_COUNTER -> {
+                if (gameData.associateExiledCardWithSource(mainCardId, chosen.sourcePermanentId())) {
+                    gameData.exiledCardsWithBloodCounters.add(mainCardId);
+                }
+            }
+            case PLANAR -> chosen.sourceCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::isInstance)
+                    .map(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::cast)
+                    .findFirst()
+                    .ifPresent(effect -> lifeSupport.applyLifeLoss(gameData, choice.controllerId(),
+                            effect.lifeLoss(), chosen.sourceCard().getName()));
+            case RETURN_AT_END_STEP -> stillExiled.stream()
+                    .filter(card -> !isToken(gameData, card))
+                    .forEach(card -> gameData.queueDelayedAction(new DelayedEndStepTrigger(
+                            choice.controllerId(), card, null, null,
+                            new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(card.getId()))));
+            case EGG_COUNTERS, EXTRA_TURN -> {
+                if (gameData.findExiledCard(mainCardId) != null) {
+                    graveyardService.applyOwnDeathExileRider(gameData, chosen.kind(), choice.mainCard(),
+                            choice.controllerId());
+                }
+            }
+            case PLAIN, RETURN_TO_HAND, LIBRARY, NO_REPLACEMENT -> {
+            }
+        }
+    }
+
+    private static DeathExileReplacement chosenOption(List<DeathExileReplacement> options, String label) {
+        return options.stream()
+                .filter(option -> option.label().equals(label))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid replacement effect: " + label));
+    }
+
+    /**
+     * Applies the parts of an opponent's "exile it instead" replacement that follow the exile: the
+     * replacement controller's life gain, and its rider once a card was actually exiled.
+     */
+    private void applyOpponentExileReplacementRiders(GameData gameData,
+                                                     OpponentDyingCreatureExileReplacement replacement,
+                                                     boolean exiled, boolean creatureExiled, int dyingPower) {
+        if (replacement.effect().lifeGainOnExile() > 0) {
+            lifeSupport.applyGainLife(gameData, replacement.controllerId(),
+                    replacement.effect().lifeGainOnExile(), replacement.sourceCard().getName());
+        }
+        if (!exiled) {
+            return;
+        }
+        CardEffect whenExiledEffect = replacement.effect().whenExiledEffect();
+        if (whenExiledEffect instanceof MayPayManaEffect mayPay) {
+            gameData.queueMayAbility(replacement.sourceCard(), replacement.controllerId(),
+                    mayPay, null, replacement.sourcePermanentId());
+        } else if (whenExiledEffect instanceof MayEffect may) {
+            gameData.queueMayAbility(replacement.sourceCard(), replacement.controllerId(),
+                    may, null, replacement.sourcePermanentId());
+        } else if (whenExiledEffect != null) {
+            resolveMandatoryOpponentExileRider(gameData, replacement, whenExiledEffect, creatureExiled, dyingPower);
+        }
     }
 
     /** Uses the abilities present before the first member of a simultaneous event left the battlefield. */
@@ -457,17 +884,37 @@ public class PermanentRemovalService {
     }
 
     private boolean tryApplyDyingCreatureReturnToHandReplacement(GameData gameData, Permanent target) {
-        if (!gameQueryService.isCreature(gameData, target)) {
+        ReturnToHandReplacement found = findReturnToHandReplacement(gameData, target);
+        if (found == null) {
             return false;
+        }
+        UUID dyingCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), dyingCreatureControllerId);
+        boolean removed = removePermanentToHand(gameData, target);
+        if (removed && found.replacement().revealsReturnedCardUntilOwnerNextTurn()) {
+            markCardsRevealedInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
+        }
+        if (removed && found.replacement().preventsPlayingReturnedCardUntilOwnerNextTurn()) {
+            markCardsUnplayableInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
+        }
+        return removed;
+    }
+
+    private record ReturnToHandReplacement(Permanent source, DyingCreatureReturnToHandReplacementEffect replacement) {}
+
+    /** The first "return it to its owner's hand instead" replacement that applies to the dying {@code target}. */
+    private ReturnToHandReplacement findReturnToHandReplacement(GameData gameData, Permanent target) {
+        if (!gameQueryService.isCreature(gameData, target)) {
+            return null;
         }
 
         UUID dyingCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (dyingCreatureControllerId == null) {
-            return false;
+            return null;
         }
 
         boolean dyingCreatureIsEnchanted = gameQueryService.isEnchanted(gameData, target);
-        List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) {
@@ -478,26 +925,15 @@ public class PermanentRemovalService {
                     continue;
                 }
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (!(effect instanceof DyingCreatureReturnToHandReplacementEffect replacement)
-                            || !replacement.appliesTo(source, target, dyingCreatureIsEnchanted,
+                    if (effect instanceof DyingCreatureReturnToHandReplacementEffect replacement
+                            && replacement.appliesTo(source, target, dyingCreatureIsEnchanted,
                             sourceControllerId, dyingCreatureControllerId)) {
-                        continue;
+                        return new ReturnToHandReplacement(source, replacement);
                     }
-
-                    UUID ownerId = gameData.stolenCreatures.getOrDefault(
-                            target.getId(), dyingCreatureControllerId);
-                    boolean removed = removePermanentToHand(gameData, target);
-                    if (removed && replacement.revealsReturnedCardUntilOwnerNextTurn()) {
-                        markCardsRevealedInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
-                    }
-                    if (removed && replacement.preventsPlayingReturnedCardUntilOwnerNextTurn()) {
-                        markCardsUnplayableInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
-                    }
-                    return removed;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     private void markCardsRevealedInHandUntilOwnerNextTurn(GameData gameData, UUID ownerId,
@@ -589,7 +1025,7 @@ public class PermanentRemovalService {
         processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
                 wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, info.controllerId(), info.ownerId(), false,
                 grantedDeathEffects, dyingPowerAtDeath, dyingToughnessAtDeath, selfGraveyardTriggerSuppressed,
-                creatureDeathTriggersSuppressed, false, info.hadPrintedAbilities());
+                creatureDeathTriggersSuppressed, false, info.hadPrintedAbilities(), null, null);
         handleExileReturnOnLeave(gameData, target, info.controllerId(), info.hadPrintedAbilities());
     }
 
@@ -1607,25 +2043,7 @@ public class PermanentRemovalService {
      */
     private boolean tryApplyExileReplacementEffect(GameData gameData, Permanent target,
                                                    boolean checkExileInsteadOfDie, String destinationDescription) {
-        boolean permanentGraveyardReplacement = checkExileInsteadOfDie
-                && !gameQueryService.hasLostPrintedAbilities(gameData, target)
-                && (GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard())
-                        || GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()));
-        boolean perpetualGraveyardReplacement = !gameQueryService.hasLostAllAbilities(gameData, target)
-                && checkExileInsteadOfDie
-                && target.getOriginalCard() != null
-                && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
-        if (!(target.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, target))
-                && !(target.isExileIfLeavesBattlefieldUntilEndOfTurn()
-                        && gameQueryService.grantedAbilitySurvivesRemoval(
-                                gameData, target, target.getExileIfLeavesBattlefieldUntilEndOfTurnTimestamp()))
-                && !(checkExileInsteadOfDie && target.isExileIfDying()
-                        && gameQueryService.grantedAbilitySurvivesRemoval(
-                                gameData, target, target.getExileIfDyingTimestamp()))
-                && !(checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
-                && !(checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
-                && !permanentGraveyardReplacement
-                && !perpetualGraveyardReplacement) {
+        if (!exileReplacementApplies(gameData, target, checkExileInsteadOfDie)) {
             return false;
         }
         UUID sourcePermanentId = checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn()
@@ -1637,6 +2055,29 @@ public class PermanentRemovalService {
             removeOrphanedAuras(gameData);
         }
         return exiled;
+    }
+
+    /** Whether {@link #tryApplyExileReplacementEffect} would exile {@code target}. Changes nothing. */
+    private boolean exileReplacementApplies(GameData gameData, Permanent target, boolean checkExileInsteadOfDie) {
+        boolean permanentGraveyardReplacement = checkExileInsteadOfDie
+                && !gameQueryService.hasLostPrintedAbilities(gameData, target)
+                && (GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard())
+                        || GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()));
+        boolean perpetualGraveyardReplacement = !gameQueryService.hasLostAllAbilities(gameData, target)
+                && checkExileInsteadOfDie
+                && target.getOriginalCard() != null
+                && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
+        return (target.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, target))
+                || (target.isExileIfLeavesBattlefieldUntilEndOfTurn()
+                        && gameQueryService.grantedAbilitySurvivesRemoval(
+                                gameData, target, target.getExileIfLeavesBattlefieldUntilEndOfTurnTimestamp()))
+                || (checkExileInsteadOfDie && target.isExileIfDying()
+                        && gameQueryService.grantedAbilitySurvivesRemoval(
+                                gameData, target, target.getExileIfDyingTimestamp()))
+                || (checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
+                || (checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
+                || permanentGraveyardReplacement
+                || perpetualGraveyardReplacement;
     }
 
     private record RemovedPermanentInfo(UUID controllerId, UUID ownerId, boolean hadPrintedAbilities, Card lastKnownCard) {}
@@ -2015,6 +2456,15 @@ public class PermanentRemovalService {
      */
     private OpponentDyingCreatureExileReplacement opponentDyingCreatureExileReplacement(
             GameData gameData, UUID controllerId, Card dyingCard) {
+        List<OpponentDyingCreatureExileReplacement> replacements =
+                opponentDyingCreatureExileReplacements(gameData, controllerId, dyingCard);
+        return replacements.isEmpty() ? null : replacements.getFirst();
+    }
+
+    /** Every applicable "exile it instead" replacement controlled by an opponent of {@code controllerId}. */
+    private List<OpponentDyingCreatureExileReplacement> opponentDyingCreatureExileReplacements(
+            GameData gameData, UUID controllerId, Card dyingCard) {
+        List<OpponentDyingCreatureExileReplacement> replacements = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
                 continue;
@@ -2027,36 +2477,31 @@ public class PermanentRemovalService {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                     continue;
                 }
-                ExileOpponentCreaturesInsteadOfDyingEffect effect = permanent.getCard()
-                        .getEffects(EffectSlot.STATIC).stream()
+                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)
                         .map(ExileOpponentCreaturesInsteadOfDyingEffect.class::cast)
                         .filter(candidate -> !candidate.nontokenOnly() || !isToken(gameData, dyingCard))
-                        .findFirst().orElse(null);
-                if (effect != null) {
-                    return new OpponentDyingCreatureExileReplacement(
-                            effect, permanent.getCard(), playerId, permanent.getId());
-                }
+                        .findFirst()
+                        .ifPresent(effect -> replacements.add(new OpponentDyingCreatureExileReplacement(
+                                effect, permanent.getCard(), playerId, permanent.getId())));
             }
         }
         for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingPermanents.entrySet()) {
             UUID sourceControllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
-            if (sourceControllerId == null || sourceControllerId.equals(controllerId)) {
+            if (sourceControllerId == null || sourceControllerId.equals(controllerId)
+                    || gameQueryService.findPermanentById(gameData, entry.getKey()) != null) {
                 continue;
             }
             Permanent permanent = entry.getValue();
-            ExileOpponentCreaturesInsteadOfDyingEffect effect = permanent.getCard()
-                    .getEffects(EffectSlot.STATIC).stream()
+            permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)
                     .map(ExileOpponentCreaturesInsteadOfDyingEffect.class::cast)
-                        .filter(candidate -> !candidate.nontokenOnly() || !isToken(gameData, dyingCard))
-                    .findFirst().orElse(null);
-            if (effect != null) {
-                return new OpponentDyingCreatureExileReplacement(
-                        effect, permanent.getCard(), sourceControllerId, permanent.getId());
-            }
+                    .filter(candidate -> !candidate.nontokenOnly() || !isToken(gameData, dyingCard))
+                    .findFirst()
+                    .ifPresent(effect -> replacements.add(new OpponentDyingCreatureExileReplacement(
+                            effect, permanent.getCard(), sourceControllerId, permanent.getId())));
         }
-        return null;
+        return replacements;
     }
 
     private record OpponentDyingCreatureExileReplacement(
@@ -2291,7 +2736,9 @@ public class PermanentRemovalService {
                                               boolean selfGraveyardTriggerSuppressed,
                                               boolean creatureDeathTriggersSuppressed,
                                               boolean wasSacrificed,
-                                              boolean hadPrintedAbilitiesAtDeparture) {
+                                              boolean hadPrintedAbilitiesAtDeparture,
+                                              DeathExileReplacement chosenReplacement,
+                                              List<DeathExileReplacement> riderOptions) {
         Permanent graveyardSnapshot = new Permanent(target);
         graveyardSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilitiesAtDeparture);
         boolean wentToGraveyard = false;
@@ -2325,6 +2772,43 @@ public class PermanentRemovalService {
                 || (wasCreature && gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
                         .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId)))
                 || controlledPermanentExileReplacement;
+        if (riderOptions != null) {
+            // CR 616.1: it is exiled now; its controller then picks which replacement this was.
+            exileInstead = true;
+            bloodCounterReplacement = null;
+            opponentExileReplacement = null;
+            planarExileReplacement = null;
+            controlledPermanentExileReplacement = false;
+        } else if (chosenReplacement != null && EnumSet.of(DeathExileReplacement.Kind.LIBRARY,
+                DeathExileReplacement.Kind.EGG_COUNTERS, DeathExileReplacement.Kind.EXTRA_TURN)
+                .contains(chosenReplacement.kind())) {
+            // The card's own replacement was chosen; it applies as the card heads to the graveyard.
+            exileInstead = false;
+            bloodCounterReplacement = null;
+            opponentExileReplacement = null;
+            planarExileReplacement = null;
+            controlledPermanentExileReplacement = false;
+        } else if (chosenReplacement != null && chosenReplacement.kind().exiles()
+                && chosenReplacement.kind() != DeathExileReplacement.Kind.TRACKED) {
+            // CR 616.1: only the replacement the creature's controller chose applies.
+            DeathExileReplacement.Kind kind = chosenReplacement.kind();
+            exileInstead = true;
+            if (kind != DeathExileReplacement.Kind.BLOOD_COUNTER) {
+                bloodCounterReplacement = null;
+            } else if (bloodCounterReplacement == null) {
+                bloodCounterReplacement = new NontokenCreatureDyingExileReplacement(
+                        chosenReplacement.sourceCard(), chosenReplacement.sourcePermanentId());
+            }
+            opponentExileReplacement = kind == DeathExileReplacement.Kind.OPPONENT
+                    ? new OpponentDyingCreatureExileReplacement(chosenReplacement.effect(),
+                            chosenReplacement.sourceCard(), chosenReplacement.sourceControllerId(),
+                            chosenReplacement.sourcePermanentId())
+                    : null;
+            if (kind != DeathExileReplacement.Kind.PLANAR) {
+                planarExileReplacement = null;
+            }
+            controlledPermanentExileReplacement = kind == DeathExileReplacement.Kind.RETURN_AT_END_STEP;
+        }
         if (exileInstead && wasCreature) {
             gameData.creatureExileCountThisTurn.merge(controllerId, 1, Integer::sum);
         }
@@ -2335,6 +2819,7 @@ public class PermanentRemovalService {
         }
         int mergedComponentsInGraveyard = 0;
         int mergedArtifactComponentsInGraveyard = 0;
+        List<UUID> exiledLeavingCardIds = new ArrayList<>();
         for (Card leaving : leavingCards) {
             UUID leavingOwnerId = target.isMergedByMutation() || (werewhatCompanion != null
                     && werewhatCompanion.getId().equals(leaving.getId()))
@@ -2346,6 +2831,11 @@ public class PermanentRemovalService {
                     exileService.exileCard(gameData, leavingOwnerId, leaving,
                             bloodCounterReplacement.sourcePermanentId());
                     gameData.exiledCardsWithBloodCounters.add(leaving.getId());
+                } else if (chosenReplacement != null
+                        && chosenReplacement.kind() == DeathExileReplacement.Kind.EXILED_WITH_PERMANENT
+                        && leaving.getId().equals(target.getCard().getId())) {
+                    exileService.exileCard(gameData, leavingOwnerId, leaving,
+                            chosenReplacement.sourcePermanentId());
                 } else if (opponentExileReplacement != null
                         && opponentExileReplacement.effect().trackWithSource()) {
                     exileService.exileCard(gameData, leavingOwnerId, leaving,
@@ -2353,6 +2843,7 @@ public class PermanentRemovalService {
                 } else {
                     exileService.exileCard(gameData, leavingOwnerId, leaving);
                 }
+                exiledLeavingCardIds.add(leaving.getId());
                 if (!isToken(gameData, leaving) && leaving.hasType(CardType.CREATURE)) {
                     exiledCreatureCards.add(leaving);
                 }
@@ -2403,31 +2894,22 @@ public class PermanentRemovalService {
             }
             queueMutationComponentOrders(gameData, target, ownerId, Zone.GRAVEYARD, null);
         }
-        if (opponentExileReplacement != null
-                && opponentExileReplacement.effect().lifeGainOnExile() > 0) {
-            lifeSupport.applyGainLife(gameData, opponentExileReplacement.controllerId(),
-                    opponentExileReplacement.effect().lifeGainOnExile(),
-                    opponentExileReplacement.sourceCard().getName());
+        if (opponentExileReplacement != null) {
+            applyOpponentExileReplacementRiders(gameData, opponentExileReplacement,
+                    exiledFromBattlefield > 0, wasCreature && exiledFromBattlefield > 0, dyingPowerAtDeath);
         }
         if (planarExileReplacement != null && exiledFromBattlefield > 0) {
             lifeSupport.applyLifeLoss(gameData, controllerId,
                     planarExileReplacement.effect().lifeLoss(),
                     planarExileReplacement.sourceCard().getName());
         }
-        if (opponentExileReplacement != null && exiledFromBattlefield > 0) {
-            CardEffect whenExiledEffect = opponentExileReplacement.effect().whenExiledEffect();
-            if (whenExiledEffect instanceof MayPayManaEffect mayPay) {
-                gameData.queueMayAbility(
-                        opponentExileReplacement.sourceCard(), opponentExileReplacement.controllerId(),
-                        mayPay, null, opponentExileReplacement.sourcePermanentId());
-            } else if (whenExiledEffect instanceof MayEffect may) {
-                gameData.queueMayAbility(
-                        opponentExileReplacement.sourceCard(), opponentExileReplacement.controllerId(),
-                        may, null, opponentExileReplacement.sourcePermanentId());
-            } else if (whenExiledEffect != null) {
-                resolveMandatoryOpponentExileRider(gameData, opponentExileReplacement, whenExiledEffect,
-                        wasCreature && exiledFromBattlefield > 0, dyingPowerAtDeath);
-            }
+        if (riderOptions != null && !exiledLeavingCardIds.isEmpty()) {
+            openDeathReplacementChoice(gameData, new PendingInteraction.ColorChoice(
+                    controllerId, null, null,
+                    new ChoiceContext.DeathExileRiderChoice(controllerId, ownerId, target.getCard(),
+                            exiledLeavingCardIds, dyingPowerAtDeath, riderOptions),
+                    riderOptions.stream().map(DeathExileReplacement::label).toList(),
+                    target.getCard().getName() + " was exiled instead of dying. Choose which replacement effect applied."));
         }
         graveyardService.notifyCardsExiledFromBattlefield(
                 gameData, exiledFromBattlefield, controllerId,
@@ -2622,23 +3104,7 @@ public class PermanentRemovalService {
     }
 
     private boolean offerMayLibraryReplacement(GameData gameData, Permanent target) {
-        DyingCreatureLibraryReplacementEffect replacement = target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
-                .map(DyingCreatureLibraryReplacementEffect.class::cast)
-                .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
-                .findFirst()
-                .orElseGet(() -> {
-                    var bonus = gameQueryService.computeStaticBonus(gameData, target);
-                    if (bonus == null) {
-                        return null;
-                    }
-                    return bonus.grantedEffects().stream()
-                            .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
-                            .map(DyingCreatureLibraryReplacementEffect.class::cast)
-                            .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
-                            .findFirst()
-                            .orElse(null);
-                });
+        DyingCreatureLibraryReplacementEffect replacement = findMayLibraryReplacement(gameData, target);
         if (replacement == null) {
             return false;
         }
@@ -2665,6 +3131,27 @@ public class PermanentRemovalService {
             playerInputService.processNextMayAbility(gameData);
         }
         return true;
+    }
+
+    /** The dying creature's own or granted "you may put it on top of its owner's library instead" replacement. */
+    private DyingCreatureLibraryReplacementEffect findMayLibraryReplacement(GameData gameData, Permanent target) {
+        return target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
+                .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
+                .findFirst()
+                .orElseGet(() -> {
+                    var bonus = gameQueryService.computeStaticBonus(gameData, target);
+                    if (bonus == null) {
+                        return null;
+                    }
+                    return bonus.grantedEffects().stream()
+                            .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
+                            .map(DyingCreatureLibraryReplacementEffect.class::cast)
+                            .filter(DyingCreatureLibraryReplacementEffect::mayChoose)
+                            .findFirst()
+                            .orElse(null);
+                });
     }
 
     private boolean selfGraveyardTriggerSuppressed(GameData gameData, Permanent target) {

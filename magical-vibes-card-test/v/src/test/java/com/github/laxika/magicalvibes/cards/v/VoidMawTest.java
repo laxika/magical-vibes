@@ -190,7 +190,22 @@ class VoidMawTest extends BaseCardTest {
         removeToGraveyard(victim);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        assertThat(gd.findExiledCard(victim.getCard().getId())).isNull();
+        assertThat(gd.findExiledCard(victim.getCard().getId()).sourcePermanentId()).isNull();
+    }
+
+    @Test
+    void chosenVoidMawExilesTheDyingCreature() {
+        addMaw();
+        Permanent ownMaw = harness.addToBattlefieldAndReturn(player2, new VoidMaw());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        removeToGraveyard(victim);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, "Exile it with Void Maw (2)");
+
+        assertThat(gd.findExiledCard(victim.getCard().getId()).sourcePermanentId()).isEqualTo(ownMaw.getId());
+        harness.assertNotOnBattlefield(player2, "Krovikan Scoundrel");
     }
 
     @Test

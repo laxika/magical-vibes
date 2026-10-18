@@ -56,10 +56,6 @@ trigger condition, a lost-ability or LKI case) rather than test setup. Each need
 - `GreenSunsTwilightTest` — at X ≥ 5 the hand/battlefield choice is made after the reveal and the
   card choice; the card uses a cast-time `ChooseOneEffect`. The reveal effect needs a
   "choose the destination after choosing cards" option.
-- `GisaGloriousResurrectorTest.opposingControllerChoosesBetweenCompetingExileReplacements` — with
-  Gisa and Liesa both out, the dying creature's controller must choose which "exile it instead"
-  applies (CR 616.1). `PermanentRemovalService.opponentDyingCreatureExileReplacement` just takes the
-  first match; the death pipeline has no pause point for that choice. The class's other tests pass.
 - `GlintWeaverTest.choosesTargetsWhenTriggerGoesOnStack` — the same gap as entry 22: an ETB
   "distribute counters among targets" trigger that wasn't cast goes on the stack with no targets or
   division instead of asking for them.
@@ -179,21 +175,50 @@ Don't commit until I say so.
 
 ---
 
-## 31. Ordering competing "dies → exile instead" replacements
+## 34. Asking death replacements before the creature leaves, outside state-based actions
 
-**Status:** open · **Found:** 2026-10-16, `K` test batch
+**Status:** open · **Found:** 2026-10-18, while implementing CR 616.1 death replacement ordering
 
 **Failing tests:**
-- `KalitasTraitorOfGhetTest.opponentChoosesBetweenKalitasAndFlayingTendrilsReplacements()`
+- None yet. Write one first: Kalitas, Traitor of Ghet on one side, Gravebane Zombie on the other, and
+  Murder (or Diabolic Edict) on the Zombie. Expect the Zombie's controller to be asked "library or
+  Kalitas" while the Murder is still resolving, with the Zombie leaving inside the Murder's event.
 
-**What the rules require.** CR 616.1: when two or more replacement effects try to modify the same event, the affected object's controller chooses one to apply. With Kalitas, Traitor of Ghet ("exile it instead … create a 2/2 Zombie") and Flaying Tendrils ("exile it instead") both applying to an opponent's dying creature, that creature's controller picks which applies. The engine's `PermanentRemovalService` / `tryApplyExileReplacementEffect` just applies the exile replacements in a fixed order with no prompt, so Kalitas's Zombie rider can be lost.
+**What the rules require.** CR 616.1: when several replacement effects would modify how a creature
+dies, its controller chooses one, and the event then happens with that choice. State-based deaths do
+this already (`PermanentRemovalService.awaitStateBasedDeathReplacementChoices` asks first, then the
+batch dies together). Outside state-based actions, a death whose options all exile leaves at once and
+the controller picks the rider afterwards (`DeathExileRiderChoice`), which gives the same outcome.
+The remaining gaps:
+- When one option keeps the card (Firestorm Phoenix's return to hand, Gravebane Zombie's library,
+  Pulmonic Sliver's "may"), the creature stays on the battlefield until its controller answers
+  (`DeathExileReplacementChoice` with `stateBased = false`). Meanwhile the resolving effect carries
+  on: a sacrifice reports failure (cost payment, "sacrifice, then…" handlers), "destroy, then…"
+  steps run with the creature still there, and creatures dying with it lose CR 603.10a look-back.
+- A rider chosen during resolution is applied after the rest of the *same* effect handler. Later
+  effects of the spell already wait (`EffectResolutionService` parks them).
 
-**Why it's large.** Creature death goes through `removePermanentToGraveyard` from many callers that expect a synchronous result. A prompt needs a dying-creature `ReplacementEvent` listing candidate sources, plus a resume path through every caller, including simultaneous-death batches.
+**Why it's large.** Doing it right means asking before the creature leaves, inside a running effect
+handler or a cost payment, and the engine can't pause a handler partway through. Approaches looked at:
+- Leave the battlefield now and choose the destination later: the hand, library and graveyard
+  pipelines fire different leave-the-battlefield triggers depending on the destination, so delaying
+  them loses their look-back.
+- Simulate the effect on a copy of `GameData` first, collect the death questions, ask them, then
+  resolve for real with the answers: needs engine services to run on a copy mid-resolution, and
+  still misses deaths that come after another prompt inside the effect.
+- A death journal like `DamageJournal`, re-running the effect after the answer: every handler would
+  need to be safe to re-run (choices, tokens, life changes made before the death replay correctly).
 
 **Prompt to start it:**
 
 ```
-Implement CR 616.1 ordering for competing "if a creature would die, exile it instead" replacement effects (Kalitas, Traitor of Ghet; Flaying Tendrils; Rest in Peace-style effects with riders). When two or more apply to the same dying creature and their outcomes differ, prompt the creature's controller to choose which applies, then resume the removal. Start from PermanentRemovalService.tryApplyExileReplacementEffect and the existing ReplacementOrderService. Make KalitasTraitorOfGhetTest.opponentChoosesBetweenKalitasAndFlayingTendrilsReplacements pass without breaking other death-replacement tests.
+Implement missing-features-to-do.md entry 34: outside state-based actions, competing death
+replacements where one option keeps the card (hand/library) must be chosen before the creature
+leaves, without leaving it on the battlefield while the effect keeps resolving. Start from
+PermanentRemovalService.removePermanentToGraveyard (the DeathExileReplacementChoice path with
+stateBased = false) and EffectResolutionService's rerunCurrentEffectAfterInteraction. Write the
+Kalitas + Gravebane Zombie + Murder test first. Don't run the full test suite; ask me.
+Don't commit until I say so.
 ```
 
 ---

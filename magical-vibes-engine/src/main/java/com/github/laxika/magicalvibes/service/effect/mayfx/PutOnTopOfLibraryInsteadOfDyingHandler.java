@@ -29,7 +29,7 @@ public class PutOnTopOfLibraryInsteadOfDyingHandler implements MayEffectHandlerB
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Permanent target = ability.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-        if (target != null) {
+        if (target != null && !permanentRemovalService.recordStateBasedMayLibraryChoice(gameData, target, accepted)) {
             if (accepted) {
                 permanentRemovalService.removePermanentToLibraryTop(gameData, target);
             } else {

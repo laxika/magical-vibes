@@ -67,6 +67,15 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.DeathExileReplacementChoice
+                || context instanceof ChoiceContext.DeathExileRiderChoice) {
+            // Options keeping the card come first, then the plain exile that gives no rider to anyone.
+            String chosen = interaction.options().getFirst();
+            log.info("AI: Choosing death replacement \"{}\" in game {}", chosen, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
         if (context instanceof ChoiceContext.SplitFreeCastMoreTargetsChoice) {
             // Optional extra targets of a free split half: cast with the targets already chosen.
             String done = interaction.options().getLast();

@@ -427,6 +427,24 @@ public class ChoiceHandlerService {
             }
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.DeathExileReplacementChoice choice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid replacement effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            permanentRemovalService.resolveDeathExileReplacementChoice(gameData, choice, colorName);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.DeathExileRiderChoice choice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid replacement effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            permanentRemovalService.resolveDeathExileRiderChoice(gameData, choice, colorName);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CounterReplacementOrder order) {
             if (!colorChoice.options().contains(colorName)) {
                 throw new IllegalArgumentException("Invalid counter replacement effect");

@@ -98,6 +98,26 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
+    @DisplayName("Competing death exile riders pick the plain exile listed first")
+    void deathExileReplacementChoicePicksFirstOption() {
+        List<ChoiceContext.DeathExileReplacement> options = List.of(
+                new ChoiceContext.DeathExileReplacement("Exile it",
+                        ChoiceContext.DeathExileReplacement.Kind.PLAIN, null, null, null, null),
+                new ChoiceContext.DeathExileReplacement("Kalitas, Traitor of Ghet",
+                        ChoiceContext.DeathExileReplacement.Kind.OPPONENT, null, null, null, null));
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(aiPlayerId, null, null,
+                new ChoiceContext.DeathExileRiderChoice(aiPlayerId, aiPlayerId, null, List.of(), 0, options),
+                List.of("Exile it", "Kalitas, Traitor of Ghet"), "Choose");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Exile it"));
+    }
+
+    @Test
     @DisplayName("Spell creature type choice answers with an offered creature type")
     void answersSpellCreatureTypeChoiceWithOfferedSubtype() throws Exception {
         PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(

@@ -154,6 +154,89 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * One "if it would die, ... instead" replacement offered to a dying creature's controller.
+     * Effects whose outcomes are identical are offered as a single {@link Kind#PLAIN} option.
+     *
+     * @param label              unique text shown to the choosing player
+     * @param kind               what the replacement does instead of putting the creature into a graveyard
+     * @param effect             the opponent-controlled replacement, for {@link Kind#OPPONENT}
+     * @param sourceCard         the card generating the replacement, when it matters to the outcome
+     * @param sourceControllerId the player controlling that card, for {@link Kind#OPPONENT}
+     * @param sourcePermanentId  the permanent generating the replacement, when it matters to the outcome
+     */
+    record DeathExileReplacement(String label, Kind kind,
+                                 com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect effect,
+                                 Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId) {
+
+        public enum Kind {
+            /** Another replacement returns it to its owner's hand (Firestorm Phoenix). */
+            RETURN_TO_HAND,
+            /** Its own replacement puts it into its owner's library (Gravebane Zombie). */
+            LIBRARY,
+            /** Exiles the creature with no further effect. */
+            PLAIN,
+            /** An opponent's replacement with a rider (Kalitas's Zombie, Gisa's tracking, ...). */
+            OPPONENT,
+            /** A spell's "exile it instead" that links the exiled card to its source. */
+            TRACKED,
+            /** A permanent's graveyard replacement that exiles the card with it (Void Maw). */
+            EXILED_WITH_PERMANENT,
+            /** Exiles the card with a blood counter. */
+            BLOOD_COUNTER,
+            /** A face-up plane's exile replacement that also costs its controller life. */
+            PLANAR,
+            /** Exiles the permanent and returns it at the beginning of the next end step. */
+            RETURN_AT_END_STEP,
+            /** Its own replacement exiles it with egg counters (Darigaaz Reincarnated). */
+            EGG_COUNTERS,
+            /** Its own replacement exiles it and gives its controller an extra turn. */
+            EXTRA_TURN,
+            /** Its controller declined its only replacement, a "may" (Pulmonic Sliver); it dies normally. */
+            NO_REPLACEMENT;
+
+            /** Whether choosing it leaves the card in exile, so only its rider depends on the choice. */
+            public boolean exiles() {
+                return this != RETURN_TO_HAND && this != LIBRARY && this != NO_REPLACEMENT;
+            }
+        }
+    }
+
+    /**
+     * CR 616.1: the controller of the dying creature {@code permanentId} picks which of
+     * {@code options} applies before the creature leaves the battlefield. For a state-based death
+     * ({@code stateBased}) the choice is recorded and the whole state-based batch is performed once
+     * every such choice is made. Elsewhere this is only asked when an option sends the creature
+     * somewhere other than exile; its removal then resumes with the chosen option and the removal's
+     * original flags.
+     */
+    record DeathExileReplacementChoice(UUID permanentId, List<DeathExileReplacement> options,
+                                       boolean destroyedBySpellOrAbility, boolean wasSacrificed,
+                                       UUID destinationPlayerId, boolean stateBased) implements ChoiceContext {
+        public DeathExileReplacementChoice {
+            options = List.copyOf(options);
+        }
+    }
+
+    /**
+     * CR 616.1: a dying creature was exiled in place of dying while several exile replacements with
+     * different riders applied; every one of them exiles it, so it left with its event and its
+     * controller now picks which replacement it was. Only the chosen one's rider is applied.
+     *
+     * @param controllerId   the creature's controller when it left, who chooses
+     * @param ownerId        the owner of its main card
+     * @param mainCard       the creature's main card
+     * @param exiledCardIds  every card the creature left as that was exiled
+     * @param dyingPower     its last known power
+     */
+    record DeathExileRiderChoice(UUID controllerId, UUID ownerId, Card mainCard, List<UUID> exiledCardIds,
+                                 int dyingPower, List<DeathExileReplacement> options) implements ChoiceContext {
+        public DeathExileRiderChoice {
+            exiledCardIds = List.copyOf(exiledCardIds);
+            options = List.copyOf(options);
+        }
+    }
+
+    /**
      * CR 616.1: the event's chooser picks which of {@code options} — the replacement and/or
      * prevention effects that currently apply to {@code event} — to apply next. {@code previews}
      * summarizes, per option, what choosing it can still lead to (empty when not computed).
