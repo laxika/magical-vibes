@@ -2108,6 +2108,11 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameData.playerSourceDamagePreventionIds
                     .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                     .add(permanentId);
+            if (!preventSource.requiredColors().isEmpty()) {
+                gameData.playerSourceDamagePreventionRequiredColors
+                        .computeIfAbsent(controllerId, k -> new java.util.concurrent.ConcurrentHashMap<>())
+                        .put(permanentId, preventSource.requiredColors());
+            }
             if (preventSource.gainLifeForBlackOrRedSource()) {
                 gameData.playerSourceDamagePreventionLifeGainIds
                         .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
@@ -2456,10 +2461,11 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(ctx.damageRedSourceController()
+        gameData.sourceNextDamageToAnyTargetShields.add((ctx.damageRedSourceController()
                 ? new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(
                         permanentId, true, ctx.passageCard(), ctx.controllerId())
-                : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId));
+                : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId))
+                .withRequiredSourceFilter(ctx.requiredSourceFilter()));
 
         String sourceName = chosenSource.getName();
         String logEntry = ctx.damageRedSourceController()
@@ -3107,7 +3113,11 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleTormentSacrifice(GameData gameData, UUID permanentId,
                                        PermanentChoiceContext.TormentSacrifice ctx) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
-        if (toSacrifice != null) {
+        var eachPlayerState = gameData.eachPlayerSacrificeOrDiscard;
+        if (toSacrifice != null && eachPlayerState.active && eachPlayerState.deferSacrifices
+                && ctx.playerId().equals(eachPlayerState.currentPlayerId)) {
+            eachPlayerState.chosenSacrifices.add(permanentId);
+        } else if (toSacrifice != null) {
             destructionSupport.sacrificeAndLog(gameData, toSacrifice, ctx.playerId());
         }
 
@@ -3404,6 +3414,25 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
             return;
         }
+        if (context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(
+                com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect.class::isInstance)) {
+            if (chosen == null || !context.controllerId().equals(
+                    gameQueryService.findPermanentController(gameData, chosenPermanentId))
+                    || !gameQueryService.isArtifact(gameData, chosen)) {
+                throw new IllegalStateException("Chosen permanent is not an artifact you control");
+            }
+            permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData,
+                    new StackEntry(context.card(), context.controllerId()), chosen,
+                    com.github.laxika.magicalvibes.model.CounterType.PHYLACTERY, 1, context.controllerId());
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, context.controllerId(), context.card(), context.targetId(), context.wasCastFromHand(),
+                    context.etbMode(), context.xValue(), context.kicked(), context.targetIds(),
+                    context.repeatedAdditionalCosts(), context.convokeCreatureIds());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (chosenPermanentId.equals(context.controllerId())) {
             battlefieldEntryService.processCreatureETBEffects(
                     gameData, context.controllerId(), context.card(), context.targetId(), context.wasCastFromHand(),
@@ -3543,6 +3572,16 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, auraControllerId, auraCard, null, false);
             if (auraGraveyardReturn != null) {
+                if (auraGraveyardReturn.enterWithCounters() != null) {
+                    for (com.github.laxika.magicalvibes.model.CounterType counterType : auraGraveyardReturn.enterWithCounters()) {
+                        int placed = gameQueryService.replaceCounters(
+                                gameData, auraPerm, auraControllerId, counterType, 1, auraControllerId);
+                        if (placed > 0) {
+                            auraPerm.setCounterCount(counterType, auraPerm.getCounterCount(counterType) + placed);
+                            auraPerm.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                        }
+                    }
+                }
                 if (auraGraveyardReturn.grantHaste()) {
                     auraPerm.getPersistentGrantedKeywords().add(Keyword.HASTE);
                 }

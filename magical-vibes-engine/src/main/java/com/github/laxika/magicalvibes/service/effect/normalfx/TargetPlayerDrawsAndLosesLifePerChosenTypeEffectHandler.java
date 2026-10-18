@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDrawsAndLosesLifePerChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -60,10 +62,19 @@ public class TargetPlayerDrawsAndLosesLifePerChosenTypeEffectHandler implements 
 
             int count = gameQueryService.countControlledPermanentsMatching(
                     gameData, targetPlayerId, creatureOfChosenType);
-            for (int i = 0; i < count; i++) {
-                drawService.resolveDrawCard(gameData, targetPlayerId);
+            if (count <= 0) {
+                continue;
             }
-            lifeSupport.applyLifeLoss(gameData, targetPlayerId, count, entry.getCard().getName());
+            // The draw is one instruction (so "two or more cards" replacements such as Alms Collector
+            // apply), and the life loss follows it so a paused draw (e.g. a draw replacement choice)
+            // finishes before the player loses life.
+            drawService.resolveDrawCards(gameData, targetPlayerId, count);
+            if (targetPlayerIds.size() == 1) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                        List.of(new LoseLifeEffect(count, LoseLifeRecipient.TARGET_PLAYER)));
+            } else {
+                lifeSupport.applyLifeLoss(gameData, targetPlayerId, count, entry.getCard().getName());
+            }
         }
     }
 }

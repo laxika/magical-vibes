@@ -35,6 +35,7 @@ import java.util.List;
 public class ProfaneCommand extends Card {
 
     public ProfaneCommand() {
+        setAllowSharedTargets(true);
         // Choose two — X is paid once and applies to every chosen mode. Modes 0/2 declare a
         // single target slot; mode 1 uses intrinsic graveyard targeting (targetId); mode 3 is
         // an X-scaled "up to X" creature group (must stay last in card-text order so flat
@@ -68,7 +69,7 @@ public class ProfaneCommand extends Card {
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Targets must be creatures"),
-                        100)
+                        Integer.MAX_VALUE)
         ), 2));
     }
 }

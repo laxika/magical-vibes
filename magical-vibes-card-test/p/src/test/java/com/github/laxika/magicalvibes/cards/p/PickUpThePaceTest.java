@@ -118,6 +118,7 @@ class PickUpThePaceTest extends BaseCardTest {
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();

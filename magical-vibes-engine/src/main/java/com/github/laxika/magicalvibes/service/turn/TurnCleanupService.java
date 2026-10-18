@@ -270,7 +270,7 @@ public class TurnCleanupService {
 
         List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (!p.isLosesAllAbilitiesUntilEndOfTurn()
+            if (!gameQueryService.hasLostPrintedAbilities(gameData, p)
                     && p.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(OpponentCreatureDamagePersistenceEffect.class::isInstance)) {
                 controllersWithOpponentDamagePersistence.add(playerId);
@@ -359,6 +359,7 @@ public class TurnCleanupService {
         gameData.colorDamagePreventionUntilEndOfTurn.clear();
         gameData.colorlessDamagePreventionUntilEndOfTurn.clear();
         gameData.playerSourceDamagePreventionIds.clear();
+        gameData.playerSourceDamagePreventionRequiredColors.clear();
         gameData.playerSourceDamagePreventionLifeGainIds.clear();
         gameData.playerSourceNextDamageShields.clear();
         gameData.sourceNextDamageToAnyTargetShields.clear();
@@ -570,6 +571,7 @@ public class TurnCleanupService {
         gameData.temporaryChosenSubtypePermanentIds.clear();
         gameData.chosenSubtypeActivationCopiesThisTurn.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
+        gameData.pendingNextExhaustAbilityCopySourcesThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.untapAttackedCreaturesEachCombatThisTurnSources.clear();
         gameData.conspiredSpellIds.clear();

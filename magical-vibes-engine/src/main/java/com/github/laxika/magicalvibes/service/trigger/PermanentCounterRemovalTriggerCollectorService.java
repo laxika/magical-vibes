@@ -41,6 +41,31 @@ public class PermanentCounterRemovalTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED)
+    private boolean handleSelfPlusOnePlusOneCounterRemoved(TriggerMatchContext match, CardEffect effect,
+                                                           TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.PlusOnePlusOneCountersRemoved removed)
+                || removed.amount() <= 0
+                || match.permanent() == null
+                || !match.permanent().getId().equals(removed.permanent().getId())) {
+            return false;
+        }
+
+        GameData gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < removed.amount(); i++) {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    match.permanent().getId()));
+        }
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED)
     private boolean handleSelfTimeCountersRemoved(TriggerMatchContext match, CardEffect effect,
                                                   TriggerContext ctx) {

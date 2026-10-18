@@ -60,6 +60,7 @@ public class D20RollService {
                 ? null : gameData.playerBattlefields.get(rollingPlayerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
+                if (gameQueryService != null && gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof RollWithAdvantageEffect) {
                         diceCount++;

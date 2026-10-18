@@ -62,7 +62,7 @@ class PolymorphousRushTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosenCreature.getId());
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(target.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -112,7 +113,7 @@ class PrimordialGnawerTest extends BaseCardTest {
     @Test
     @DisplayName("A spell cast by discover triggers Quintorius Kand")
     void discoveredSpellIsCastFromExile() {
-        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefieldAndReturn(player1, new QuintoriusKand()).setCounterCount(CounterType.LOYALTY, 4);
         setUpDeathTrigger(new PrimordialGnawer(), List.of(new GrizzlyBears()));
 
         resolveDeathTrigger();

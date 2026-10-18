@@ -53,17 +53,18 @@ public class PossibilityStormExileAndCastEffectHandler implements NormalEffectHa
             }
         }
 
-        if (originalSpell == null) {
-            // The spell already left the stack (countered, or exiled by another Possibility Storm).
+        Card originalCard = typedEffect.originalSpellCard();
+        if (originalSpell != null) {
+            originalCard = originalSpell.getCard();
+            gameData.stack.remove(originalSpell);
+            exileService.exileCard(gameData, castingPlayerId, originalCard, sourcePermanentId);
+            gameLogService.append(gameData,
+                    GameLog.textCardText(playerName + " exiles ", originalCard, " (Possibility Storm)."));
+        } else {
+            // The spell already left the stack (countered, or exiled by another Possibility Storm): the
+            // ability still searches, using the card types the spell had on the stack.
             log.info("Game {} - Possibility Storm's trigger finds no spell on the stack", gameData.id);
-            return;
         }
-
-        Card originalCard = originalSpell.getCard();
-        gameData.stack.remove(originalSpell);
-        exileService.exileCard(gameData, castingPlayerId, originalCard, sourcePermanentId);
-        gameLogService.append(gameData,
-                GameLog.textCardText(playerName + " exiles ", originalCard, " (Possibility Storm)."));
 
         EnumSet<CardType> spellTypes = EnumSet.of(originalCard.getType());
         spellTypes.addAll(originalCard.getAdditionalTypes());

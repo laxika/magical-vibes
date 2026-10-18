@@ -46,6 +46,7 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
         if (!state.active) {
             state.reset();
             state.active = true;
+            state.deferSacrifices = !sacrificeEffect.repeatForEachCardDrawn();
             if (sacrificeEffect.repeatForEachCardDrawn()) {
                 for (int i = 0; i < entry.getDrawnCardIdsThisResolution().size(); i++) {
                     state.remaining.add(entry.getControllerId());
@@ -81,7 +82,11 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
             if (!hasPermanent && !hasCard) {
                 continue;
             }
-            if (hasPermanent && hasCard) {
+            // "Sacrifice a permanent unless you discard a card": discarding is optional, so a player
+            // with a card but no permanent may still keep it. When the discard is the
+            // default ("discard unless you sacrifice"), a player with nothing to sacrifice must discard.
+            boolean discardIsOptional = !repeatsPerCardDrawn(entry);
+            if (hasCard && (hasPermanent || discardIsOptional)) {
                 gameData.rerunCurrentEffectAfterInteraction = true;
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null,
@@ -103,7 +108,17 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
         }
 
         gameData.rerunCurrentEffectAfterInteraction = false;
+        List<UUID> sacrifices = List.copyOf(state.chosenSacrifices);
         state.reset();
+        if (!sacrifices.isEmpty()) {
+            destructionSupport.performSimultaneousSacrifice(gameData, sacrifices);
+        }
+    }
+
+    private static boolean repeatsPerCardDrawn(StackEntry entry) {
+        return entry.getEffectsToResolve().stream().anyMatch(effect ->
+                effect instanceof EachPlayerSacrificesPermanentUnlessDiscardEffect sacrifice
+                        && sacrifice.repeatForEachCardDrawn());
     }
 
     private void applyMode(GameData gameData, StackEntry entry, String sourceName, String mode) {
@@ -121,7 +136,9 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
                         .filter(candidate -> candidate.getId().equals(ids.getFirst()))
                         .findFirst()
                         .orElse(null);
-                if (permanent != null) {
+                if (permanent != null && state.deferSacrifices) {
+                    state.chosenSacrifices.add(permanent.getId());
+                } else if (permanent != null) {
                     destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
                 }
                 advance(gameData, entry, sourceName);

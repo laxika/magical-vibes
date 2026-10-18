@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -139,6 +145,7 @@ class PeelFromRealityTest extends BaseCardTest {
         gd.playerBattlefields.get(originalController.getId()).remove(changed);
         gd.playerBattlefields.get(newController.getId()).add(changed);
         gd.stolenCreatures.put(changed.getId(), originalController.getId());
+        gainControl(changed, newController);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(newController,
@@ -155,6 +162,8 @@ class PeelFromRealityTest extends BaseCardTest {
         Permanent drake = harness.addToBattlefieldAndReturn(player2, new SnappingDrake());
         gd.stolenCreatures.put(wolf.getId(), player2.getId());
         gd.stolenCreatures.put(drake.getId(), player1.getId());
+        gainControl(wolf, player1);
+        gainControl(drake, player2);
         harness.setHand(player1, List.of(new PeelFromReality()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -166,5 +175,12 @@ class PeelFromRealityTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Snapping Drake");
         harness.assertNotOnBattlefield(player1, "Watchwolf");
         harness.assertNotOnBattlefield(player2, "Snapping Drake");
+    }
+
+    private void gainControl(Permanent permanent, Player controller) {
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, controller.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanent.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
     }
 }

@@ -25,7 +25,7 @@ public class PackGuardian extends Card {
         // Wolf creature token.
         // (Flash is loaded from Scryfall.)
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(
+                DiscardCardThenEffect.continuing(
                         new CardTypePredicate(CardType.LAND),
                         new CreateTokenEffect("Wolf", 2, 2,
                                 CardColor.GREEN, List.of(CardSubtype.WOLF),

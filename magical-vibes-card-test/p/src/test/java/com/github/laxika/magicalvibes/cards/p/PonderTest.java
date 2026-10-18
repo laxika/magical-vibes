@@ -198,7 +198,7 @@ class PonderTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses not to shuffle"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 
     @Test
@@ -232,7 +232,6 @@ class PonderTest extends BaseCardTest {
 
         harness.castFromHand(player1, new Ponder(), "{U}");
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);

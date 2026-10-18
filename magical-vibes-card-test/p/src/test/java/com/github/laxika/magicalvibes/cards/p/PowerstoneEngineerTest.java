@@ -100,7 +100,7 @@ class PowerstoneEngineerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana");
+                .hasMessageContaining("not playable");
         harness.assertInHand(player1, "Powerstone Engineer");
         harness.assertNotOnBattlefield(player1, "Powerstone Engineer");
     }

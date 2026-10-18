@@ -2065,7 +2065,7 @@ public class MultiPermanentChoiceHandlerService {
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null && playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
-                    && permanentRemovalService.removePermanentToHand(gameData, permanent)) {
+                    && permanentRemovalService.removePermanentToHand(gameData, permanent, true)) {
                 bouncedCards.add(permanent.getCard());
             }
         }

@@ -17,13 +17,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class PoisonTheWell extends Card {
 
     public PoisonTheWell() {
-        // Deal the damage while the land is still on the battlefield so its controller resolves,
-        // then destroy it.
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(),
                 "Target must be a land."
         ))
-                .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

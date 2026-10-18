@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleCardFromControllerGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "48")
 public class PutAway extends Card {
 
     public PutAway() {
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new ShuffleCardFromControllerGraveyardIntoLibraryEffect(null));
+        addEffect(EffectSlot.SPELL, ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.optionalWhenTargeted(null, 1));
     }
 }

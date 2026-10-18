@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
-import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import lombok.RequiredArgsConstructor;
@@ -819,12 +818,6 @@ public class StateBasedActionService {
                 int cancelled = Math.min(plus, minus);
                 p.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, plus - cancelled);
                 p.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, minus - cancelled);
-                // Protean Hydra ruling: "its last ability triggers whenever a +1/+1 counter is removed
-                // from it for any reason" — SBA counter annihilation triggers regrowth
-                if (p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
-                    gameData.addDelayedPlusOneCounters(p.getId(), cancelled * 2);
-                }
             }
         });
         return anyCancelled[0];

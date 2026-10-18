@@ -86,7 +86,7 @@ class PurphorosBronzeBloodedTest extends BaseCardTest {
         Permanent ornithopter = findPermanent(player1, "Ornithopter");
         assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Ornithopter");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();

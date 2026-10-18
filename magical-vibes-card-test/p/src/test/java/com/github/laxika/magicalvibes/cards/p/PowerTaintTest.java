@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.o.OpalCaryatid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -160,8 +161,10 @@ class PowerTaintTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+        });
 
         harness.assertLife(player2, lifeBefore - 2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);

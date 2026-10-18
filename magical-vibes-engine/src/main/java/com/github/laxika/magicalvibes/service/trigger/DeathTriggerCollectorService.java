@@ -1789,7 +1789,14 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect))
         );
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        if (dyingCardId != null) {
+        if (dyingCardId != null && effect instanceof ReturnEnchantedCreatureToOwnerHandOnDeathEffect returnToHand
+                && returnToHand.followUpManaCost() != null) {
+            // The follow-up returns the aura from its own graveyard stay, which the triggering-card
+            // version tracks; the dying creature's stay is recorded per card.
+            entry.getEventCardGraveyardEntryVersions().put(dyingCardId,
+                    match.gameData().graveyardEntryVersion(dyingCardId));
+            entry.setTriggeringCardId(match.permanent().getCard().getId());
+        } else if (dyingCardId != null) {
             entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(dyingCardId));
         } else if (returnsSourceCardFromGraveyard(effect)) {
             // The aura is still on the battlefield while this is queued and enters the graveyard in the
@@ -1989,7 +1996,8 @@ public class DeathTriggerCollectorService {
             ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect effect, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard artifactGraveyard = (TriggerContext.ArtifactGraveyard) ctx;
         Card artifactCard = artifactGraveyard.artifactCard();
-        if (artifactCard == null || artifactCard.isToken()) {
+        if (artifactCard == null || artifactCard.isToken()
+                || !match.controllerId().equals(artifactGraveyard.graveyardOwnerId())) {
             return false;
         }
 

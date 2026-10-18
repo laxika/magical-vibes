@@ -73,8 +73,13 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
             playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
         }
 
-        gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
+        List<Card> newlyDrawn = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .filter(card -> !cardsInHandBeforeDraw.contains(card.getId()))
-                .forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
+                .toList();
+        // More cards than instructed means a draw was replaced by drawing extra cards (e.g. Alhammarret's
+        // Archive); those cards were not drawn by this effect's instruction, so "that card" does not exist.
+        if (newlyDrawn.size() <= amount) {
+            newlyDrawn.forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
+        }
     }
 }

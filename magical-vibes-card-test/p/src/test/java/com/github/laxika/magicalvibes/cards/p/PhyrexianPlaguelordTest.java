@@ -241,7 +241,7 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
         assertThat(plaguelord.getToughnessModifier()).isEqualTo(-1);
         harness.assertOnBattlefield(player1, "Phyrexian Plaguelord");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(plaguelord.getPowerModifier()).isZero();
         assertThat(plaguelord.getToughnessModifier()).isZero();

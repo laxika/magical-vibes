@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
 import com.github.laxika.magicalvibes.cards.n.NefariousImp;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -134,6 +135,7 @@ class PlanarOverlayTest extends BaseCardTest {
     void leavesUntypedLandsOnBattlefield() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new IsolatedChapel());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new IsolatedChapel());
+        List<Card> player2HandBefore = List.copyOf(gd.playerHands.get(player2.getId()));
 
         harness.castFromHand(player1, new PlanarOverlay(), "{2}{U}");
         harness.passBothPriorities();
@@ -142,7 +144,7 @@ class PlanarOverlayTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(second);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(player2HandBefore);
         harness.assertInGraveyard(player1, "Planar Overlay");
     }
 

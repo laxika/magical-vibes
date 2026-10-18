@@ -89,6 +89,7 @@ class PrivateEyeTest extends BaseCardTest {
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
         Permanent eye = harness.addToBattlefieldAndReturn(player1, new PrivateEye());
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new SanitationAutomaton(), new SanitationAutomaton(),
                 new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton(), new SanitationAutomaton()));
         harness.setLibrary(player2, List.of(new SanitationAutomaton(), new SanitationAutomaton()));

@@ -32,7 +32,7 @@ class PugnaciousPugilistTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(devil.isTapped()).isTrue();
-        assertThat(devil.isAttackedThisTurn()).isTrue();
+        assertThat(devil.isAttacking()).isTrue();
     }
 
     @Test
@@ -72,7 +72,6 @@ class PugnaciousPugilistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent pugilist = findPermanent(player1, "Pugnacious Pugilist");

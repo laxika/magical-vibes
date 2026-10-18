@@ -42,6 +42,7 @@ public class BecomeCopyOfExiledCreatureWithManaValueEffectHandler implements Nor
 
         List<Card> matching = gameData.exiledCards.stream()
                 .filter(exiled -> sourcePermanentId.equals(exiled.sourcePermanentId()))
+                .filter(exiled -> exiled.abilityLink() == null)
                 .map(ExiledCardEntry::card)
                 .filter(card -> card.hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE))
                 .filter(card -> card.getManaValue() == entry.getXValue())

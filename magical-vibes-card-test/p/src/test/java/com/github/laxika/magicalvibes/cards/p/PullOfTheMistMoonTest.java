@@ -86,7 +86,7 @@ class PullOfTheMistMoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         Permanent source = findPermanent(player1, "Pull of the Mist Moon");
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getCardsExiledByPermanent(source.getId())).isEmpty();
@@ -102,7 +102,7 @@ class PullOfTheMistMoonTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())

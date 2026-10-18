@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,6 +67,10 @@ class PowerFistTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 2
+        ));
         resolveAllTriggers();
 
         harness.assertLife(player2, 18);
@@ -99,7 +106,7 @@ class PowerFistTest extends BaseCardTest {
         powerFist.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         powerFist.setAttachedTo(other.getId());
         resolveAllTriggers();
@@ -117,7 +124,7 @@ class PowerFistTest extends BaseCardTest {
         powerFist.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         powerFist.setAttachedTo(null);
         resolveAllTriggers();
@@ -132,7 +139,7 @@ class PowerFistTest extends BaseCardTest {
         powerFist.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());

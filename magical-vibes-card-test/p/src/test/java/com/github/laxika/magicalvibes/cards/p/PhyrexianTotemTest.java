@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -187,7 +189,11 @@ class PhyrexianTotemTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 5));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

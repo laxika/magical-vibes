@@ -1610,6 +1610,10 @@ public class GameActionAvailabilityService {
                     && !castingPermissionService.canUseFlashback(gameData, playerId, flashback.get())) {
                 flashback = Optional.empty();
             }
+            if (flashback.isPresent() && castingCostService.grantedFlashbackStandsInForPrinted(
+                    gameData, playerId, card, flashback.get())) {
+                flashback = Optional.empty();
+            }
             var disturb = graveyardAbilitiesSuppressed
                     ? Optional.<DisturbCast>empty()
                     : card.getCastingOption(DisturbCast.class);

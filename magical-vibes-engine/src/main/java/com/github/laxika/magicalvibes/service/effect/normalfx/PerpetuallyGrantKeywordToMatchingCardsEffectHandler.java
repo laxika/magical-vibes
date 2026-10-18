@@ -45,7 +45,7 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
 
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of());
         for (Permanent permanent : battlefield) {
-            if (permanent.getId().equals(sourcePermanentId)
+            if (permanent.getId().equals(sourcePermanentId) && !perpetual.keywords().contains(Keyword.TOXIC)
                     || !predicateEvaluationService.matchesPermanentPredicate(
                     permanent, perpetual.permanentFilter(), filterContext)) {
                 continue;
@@ -97,6 +97,9 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
     }
 
     private void addPerpetualKeywords(GameData gameData, UUID cardId, Set<Keyword> keywords) {
+        if (keywords.contains(Keyword.TOXIC)) {
+            gameData.perpetualToxicValues.merge(cardId, 1, Integer::sum);
+        }
         gameData.perpetualKeywords.merge(cardId, Set.copyOf(keywords), (existing, added) -> {
             Set<Keyword> merged = EnumSet.noneOf(Keyword.class);
             merged.addAll(existing);

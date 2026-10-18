@@ -12,10 +12,11 @@ import java.util.UUID;
  * (Plague of Vermin). The flow is driven one player at a time by
  * {@code EachPlayerPaysAnyLifeForTokensEffectHandler}, which re-runs on each X-value choice.
  *
- * <p>Players are prompted round-robin in turn order starting with the controller. Each pass a
- * player pays 0 increments {@link #consecutivePasses}; any non-zero payment resets it. When a
- * full round of consecutive passes has elapsed ({@code consecutivePasses == order.size()}) the
- * process ends and each player creates that many tokens.
+ * <p>Players are prompted round-robin in turn order starting with the controller; one full round is
+ * one iteration of the process. {@link #playersActedThisRound} counts the players who have chosen in
+ * the current round and {@link #paidThisRound} records whether any of them paid life. When a round
+ * ends ({@code playersActedThisRound == order.size()}) without a payment the process ends and each
+ * player creates that many tokens; otherwise a new round starts.
  */
 public class EachPlayerPayLifeState {
 
@@ -25,8 +26,10 @@ public class EachPlayerPayLifeState {
     public final List<UUID> order = new ArrayList<>();
     /** Pointer into {@link #order} for the player currently choosing. */
     public int index;
-    /** Consecutive players (across the rolling round-robin) who have paid 0 life. */
-    public int consecutivePasses;
+    /** Players who have made their choice in the current round. */
+    public int playersActedThisRound;
+    /** Whether any player has paid life in the current round. */
+    public boolean paidThisRound;
     /** Total life paid so far per player; token count at the end. */
     public final Map<UUID, Integer> lifePaid = new LinkedHashMap<>();
     /** The player currently choosing how much life to pay. */
@@ -38,7 +41,8 @@ public class EachPlayerPayLifeState {
         active = false;
         order.clear();
         index = 0;
-        consecutivePasses = 0;
+        playersActedThisRound = 0;
+        paidThisRound = false;
         lifePaid.clear();
         currentPlayerId = null;
         sourceSetCode = null;

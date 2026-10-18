@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -41,6 +42,7 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
         String sourceName = entry.getCard().getName();
         List<UUID> castableSpellIds = new ArrayList<>();
         List<UUID> nonlandCardIds = new ArrayList<>();
+        List<UUID> adventureLandIds = new ArrayList<>();
 
         for (UUID playerId : exilingPlayers(gameData, entry, exileEffect.libraryScope())) {
             List<Card> library = gameData.playerDecks.get(playerId);
@@ -53,6 +55,9 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
                         .text(" from the top of their library (" + sourceName + ").")
                         .build());
 
+                if (card.hasType(CardType.LAND) && card.getCastingOption(AdventureCast.class).isPresent()) {
+                    adventureLandIds.add(card.getId());
+                }
                 if (!card.hasType(CardType.LAND)) {
                     nonlandCardIds.add(card.getId());
                     if (isSpell(card)) {
@@ -72,15 +77,17 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
                     .toList();
             if (opponentIds.size() == 1) {
                 beginOpponentCardChoice(gameData, controllerId, opponentIds.getFirst(), nonlandCardIds,
-                        exileEffect.maxCastCount());
+                        exileEffect.maxCastCount(), adventureLandIds);
             } else {
                 interactionHandlerRegistry.begin(gameData,
                         new PendingInteraction.PlarggAndNassariOpponentChoice(
-                                controllerId, opponentIds, nonlandCardIds, exileEffect.maxCastCount()));
+                                controllerId, opponentIds, nonlandCardIds, exileEffect.maxCastCount(),
+                                adventureLandIds));
             }
             return;
         }
 
+        castableSpellIds.addAll(adventureLandIds);
         if (castableSpellIds.isEmpty()) {
             log.info("Game {} - {} found no castable spells among the exiled cards",
                     gameData.id, sourceName);
@@ -96,10 +103,11 @@ public class EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler
     }
 
     private void beginOpponentCardChoice(GameData gameData, UUID controllerId, UUID opponentId,
-                                         List<UUID> nonlandCardIds, int maxCastCount) {
+                                         List<UUID> nonlandCardIds, int maxCastCount,
+                                         List<UUID> adventureLandIds) {
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PlarggAndNassariCardChoice(
-                        opponentId, controllerId, nonlandCardIds, maxCastCount));
+                        opponentId, controllerId, nonlandCardIds, maxCastCount, adventureLandIds));
     }
 
     private static List<UUID> exilingPlayers(GameData gameData, StackEntry entry,

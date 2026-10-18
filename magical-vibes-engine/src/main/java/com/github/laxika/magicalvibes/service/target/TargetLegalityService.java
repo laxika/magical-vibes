@@ -1561,6 +1561,23 @@ public class TargetLegalityService {
                 controllerId, xValue, kicked, firstGroupIndex);
     }
 
+    /**
+     * Applies the Flagbearer requirement to a spell whose targets are chosen as divided amounts
+     * (keys of {@code assignments}) rather than through the ordinary target lists.
+     */
+    public void validateFlagbearerTargetChoiceForDividedAssignments(GameData gameData, Card card,
+                                                                     List<CardEffect> spellEffects,
+                                                                     java.util.Collection<UUID> assignedTargetIds,
+                                                                     UUID controllerId) {
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)
+                || containsFlagbearer(gameData, null, List.copyOf(assignedTargetIds))) {
+            return;
+        }
+        if (hasLegalFlagbearerSpellTarget(gameData, card, spellEffects, controllerId, 0, null)) {
+            throw new IllegalStateException("Must target a Flagbearer if able");
+        }
+    }
+
     private boolean containsFlagbearer(GameData gameData, UUID targetId, List<UUID> targetIds) {
         return java.util.stream.Stream.concat(
                         targetId == null ? java.util.stream.Stream.empty() : java.util.stream.Stream.of(targetId),

@@ -70,6 +70,15 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
             if (lock.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED && !source.isTapped()) {
                 return;
             }
+            if (lock.endsWhenSourceControllerChanges()) {
+                UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+                Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+                if (sourceController == null || !sourceController.equals(entry.getControllerId())
+                        || sourceSnapshot != null
+                        && source.getControlChangeSequence() != sourceSnapshot.getControlChangeSequence()) {
+                    return;
+                }
+            }
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {

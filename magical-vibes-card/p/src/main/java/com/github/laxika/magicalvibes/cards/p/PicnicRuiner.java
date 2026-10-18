@@ -23,7 +23,7 @@ public class PicnicRuiner extends Card {
         setBackFaceCard(new StolenGoodies());
         addCastingOption(new AdventureCast("{3}{G}"));
 
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4)))),

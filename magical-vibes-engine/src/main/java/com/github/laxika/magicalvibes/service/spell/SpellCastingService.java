@@ -438,6 +438,16 @@ public class SpellCastingService {
         }
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
+            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
+            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
+            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
+            int unusedReduction = Math.max(0,
+                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
+            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
+                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
+                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
+                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
+            }
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             int before = pool.getTotalAllMana();
             if (!extra.canPay(pool)) {
@@ -4835,6 +4845,17 @@ public class SpellCastingService {
             throw new IllegalStateException("Spell requires a target");
         }
 
+        if (!castingFaceDown && !targetingSpellOnStack) {
+            PreventDividedDamageEffect earlyPreventDivided = targetingSpellEffects.stream()
+                    .filter(PreventDividedDamageEffect.class::isInstance)
+                    .map(PreventDividedDamageEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (earlyPreventDivided != null) {
+                validateDividedPreventionAssignments(gameData, card, playerId,
+                        damageAssignments == null ? Map.of() : damageAssignments, earlyPreventDivided);
+            }
+        }
+
         UUID validatedTargetId = targetId;
 
         // Validate target if specified (can be a permanent or a player)
@@ -6748,10 +6769,11 @@ public class SpellCastingService {
 
                     if (dividedEffect != null && dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
                         // Fixed-damage divided damage spell (e.g. Ignite Disorder, Pyrotechnics).
-                        // "Any number of targets" (unbounded) may choose zero targets, which deals nothing.
+                        // A fixed amount must be divided among at least one target (Pyrotechnics ruling
+                        // 2014-11-24); only an X-scaled target count with X = 0 allows choosing none.
                         boolean zeroTargetsChosen = damageAssignments.isEmpty() && dividedEffect.maxTargets() == 0
-                                && (card.getMinTargets() == 0 || resolvedXValue == 0
-                                && card.getSpellTargets().stream().anyMatch(st -> st.isXScaled()));
+                                && resolvedXValue == 0
+                                && card.getSpellTargets().stream().anyMatch(st -> st.isXScaled());
                         if (totalDamage != fixedTotal.value() && !zeroTargetsChosen) {
                             throw new IllegalStateException("Damage assignments must sum to " + fixedTotal.value());
                         }
@@ -8269,6 +8291,16 @@ public class SpellCastingService {
         }
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
+            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
+            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
+            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
+            int unusedReduction = Math.max(0,
+                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
+            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
+                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
+                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
+                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
+            }
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             int before = pool.getTotalAllMana();
             if (!extra.canPay(pool)) {
@@ -8535,6 +8567,16 @@ public class SpellCastingService {
         }
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
+            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
+            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
+            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
+            int unusedReduction = Math.max(0,
+                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
+            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
+                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
+                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
+                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
+            }
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             int before = pool.getTotalAllMana();
             if (!extra.canPay(pool)) {
@@ -8582,6 +8624,16 @@ public class SpellCastingService {
         }
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
+            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
+            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
+            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
+            int unusedReduction = Math.max(0,
+                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
+            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
+                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
+                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
+                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
+            }
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             int before = pool.getTotalAllMana();
             if (!extra.canPay(pool)) {
@@ -8621,6 +8673,16 @@ public class SpellCastingService {
         }
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
+            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
+            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
+            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
+            int unusedReduction = Math.max(0,
+                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
+            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
+                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
+                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
+                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
+            }
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             int before = pool.getTotalAllMana();
             if (!extra.canPay(pool)) {
@@ -8656,6 +8718,16 @@ public class SpellCastingService {
         }
         try {
             ManaCost extra = new ManaCost(cost.manaCost());
+            // CR 601.2f: cost reductions apply to the total cost, so any generic reduction the spell's own
+            // mana cost cannot absorb also reduces the alternative generic mana of this additional cost.
+            int baseGeneric = card.getParsedManaCost() != null ? card.getParsedManaCost().getGenericCost() : 0;
+            int unusedReduction = Math.max(0,
+                    -castingCostService.getCastCostModifier(gameData, player.getId(), card) - baseGeneric);
+            if (unusedReduction > 0 && extra.getGenericCost() > 0) {
+                int reducedGeneric = Math.max(0, extra.getGenericCost() - unusedReduction);
+                extra = new ManaCost(extra.toManaCostString().replaceFirst("\\{\\d+\\}",
+                        reducedGeneric > 0 ? "{" + reducedGeneric + "}" : ""));
+            }
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             int before = pool.getTotalAllMana();
             if (!extra.canPay(pool)) {
@@ -9596,16 +9668,10 @@ public class SpellCastingService {
         }
         // A flashback granted until end of turn (Lost in Memories) uses the card's mana cost, so it
         // stands in for the printed flashback cost when that cost (mana or life) can't be paid.
-        if (flashbackOpt.isPresent() && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())) {
-            Optional<ManaCastingCost> printedFlashbackManaCost = flashbackOpt.get().getCost(ManaCastingCost.class);
-            boolean printedManaUnpayable = printedFlashbackManaCost.isPresent()
-                    && !new ManaCost(printedFlashbackManaCost.get().manaCost())
-                    .canPayFlashbackFromGraveyard(gameData.playerManaPools.get(playerId), 0);
-            boolean printedLifeUnpayable = flashbackOpt.get().getCost(LifeCastingCost.class).isPresent()
-                    && !castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashbackOpt.get());
-            if (printedManaUnpayable || printedLifeUnpayable) {
-                flashbackOpt = Optional.empty();
-            }
+        if (flashbackOpt.isPresent() && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())
+                && castingCostService.grantedFlashbackStandsInForPrinted(
+                gameData, playerId, card, flashbackOpt.get())) {
+            flashbackOpt = Optional.empty();
         }
         Card castHalf = flashbackOpt.isPresent() ? card.graveyardCastHalf() : card;
         var disturbOpt = graveyardAbilitiesSuppressed
@@ -11253,13 +11319,17 @@ public class SpellCastingService {
             throw new IllegalStateException("No creature can pay the sacrifice cost");
         }
         boolean freeCastSkipsDelve = additionalCosts.delveCost() != null && playWithoutPaying;
-        if ((additionalCosts.any() && !freeCastSkipsDelve && additionalCosts.chooseXValueCost() == null
+        boolean delveWithoutExilingCards = additionalCosts.delveCost() != null && !playWithoutPaying
+                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                .allMatch(cost -> cost instanceof DelveCost || cost instanceof ChooseXValueCost);
+        if ((additionalCosts.any() && !freeCastSkipsDelve && !delveWithoutExilingCards
+                && additionalCosts.chooseXValueCost() == null
                 && !supportedAdditionalManaCost && !supportedAdditionalDiscardCost
                 && !supportedDeclinedExileFromHandCost
                 && !supportedOptionalTeamworkCost && !supportedBeholdCost && !supportedOptionalEvidenceCost
                 && !supportedSacrificePermanentCost && !supportedSacrificeCreatureCost
                 && !supportedDeclinedOptionalPutCounterCost && !supportedDeclinedSacrificeAnyNumberCost)
-                || (additionalCosts.delveCost() != null && !playWithoutPaying)) {
+                || (additionalCosts.delveCost() != null && !playWithoutPaying && !delveWithoutExilingCards)) {
             throw new IllegalStateException("Cannot cast " + card.getName()
                     + " from exile — paying its additional cast cost is not supported from this zone");
         }
@@ -14067,6 +14137,8 @@ public class SpellCastingService {
         if (damageAssignments.size() > expectedPrevention) {
             throw new IllegalStateException("Too many targets");
         }
+        targetLegalityService.validateFlagbearerTargetChoiceForDividedAssignments(
+                gameData, card, List.of(preventDivided), damageAssignments.keySet(), playerId);
         PermanentPredicate assignmentRestriction = preventDivided.targetSpec().targetPredicate()
                 .permanentRestriction().orElseThrow();
         FilterContext assignmentContext = new FilterContext(gameData, card.getId(), playerId, null, null);
@@ -16459,7 +16531,7 @@ public class SpellCastingService {
                 if (manaCostOpt.get().treasureManaOnly()) {
                     pool.payWithTreasureManaAfterReduction(cost, sacrificedManaCost);
                 } else {
-                    cost.payAfterReduction(pool, sacrificedManaCost);
+                    cost.payAfterReduction(pool, sacrificedManaCost, alternateCostModifier);
                 }
             } else {
                 int faceDownCostReduction = card.getMorphCost() != null

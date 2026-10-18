@@ -28,7 +28,7 @@ class PieceItTogetherTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherCopy, drawn);
         assertThat(gd.getCardIntensity(spell.getId())).isEqualTo(2);
-        assertThat(gd.getCardIntensity(otherCopy.getId())).isEqualTo(1);
+        assertThat(gd.getCardIntensity(otherCopy.getId())).isEqualTo(2);
         assertThat(gd.extraTurns).isEmpty();
     }
 
@@ -46,12 +46,12 @@ class PieceItTogetherTest extends BaseCardTest {
         }
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        assertThat(gd.getCardIntensity(spells.get(4).getId())).isEqualTo(5);
+        assertThat(gd.getCardIntensity(spells.get(4).getId())).isEqualTo(6);
 
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        assertThat(gd.getCardIntensity(spells.get(5).getId())).isEqualTo(6);
+        assertThat(gd.getCardIntensity(spells.get(5).getId())).isEqualTo(7);
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesFractionRoundedDownEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class EachPlayerSacrificesFractionRoundedDownEffectHandler implements Nor
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +42,8 @@ public class EachPlayerSacrificesFractionRoundedDownEffectHandler implements Nor
 
         for (UUID playerId : orderedApnap(gameData)) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null || battlefield.isEmpty()) {
+            if (battlefield == null || battlefield.isEmpty()
+                    || !gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId())) {
                 continue;
             }
 
@@ -52,11 +55,14 @@ public class EachPlayerSacrificesFractionRoundedDownEffectHandler implements Nor
             if (count <= 0) {
                 continue;
             }
-            if (matching.size() <= count) {
-                matching.stream().map(Permanent::getId).forEach(autoSacrificeIds::add);
+            List<UUID> sacrificable = matching.stream()
+                    .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            if (sacrificable.size() <= count) {
+                autoSacrificeIds.addAll(sacrificable);
             } else {
-                choosers.add(new PendingForcedSacrifice(playerId, count,
-                        matching.stream().map(Permanent::getId).toList()));
+                choosers.add(new PendingForcedSacrifice(playerId, count, sacrificable));
             }
         }
 

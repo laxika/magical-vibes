@@ -16,7 +16,7 @@ public class PrismaticBoon extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 100)
+        ), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new GrantProtectionChoiceUntilEndOfTurnEffect());
     }
 }

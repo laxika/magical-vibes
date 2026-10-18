@@ -78,6 +78,16 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
             return;
         }
 
+        if (card.isAura()) {
+            // An Aura put onto the battlefield without being cast is attached to an object its new
+            // controller chooses (CR 303.4f).
+            Permanent prepared = new Permanent(card);
+            prepared.setEnteredFromGraveyardOwnerId(ownerId);
+            graveyardReturnSupport.returnPreparedPermanentsWithAuraChoices(
+                    gameData, controllerId, List.of(prepared), null);
+            return;
+        }
+
         permanentRemovalService.removeCardFromGraveyardById(gameData, dyingCardId);
         Permanent permanent = new Permanent(card);
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);

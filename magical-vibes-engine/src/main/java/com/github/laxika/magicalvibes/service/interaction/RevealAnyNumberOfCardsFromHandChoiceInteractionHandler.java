@@ -172,6 +172,7 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
             throw new IllegalStateException("No effect resolution is waiting for this choice");
         }
         entry.setEventValue(selectedCards.size());
+        entry.setEventCardIds(selectedCards.stream().map(Card::getId).toList());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

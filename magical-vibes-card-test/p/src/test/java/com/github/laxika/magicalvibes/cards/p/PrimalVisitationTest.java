@@ -111,7 +111,7 @@ class PrimalVisitationTest extends BaseCardTest {
         Permanent host = enchantedBears();
         host.setSummoningSick(true);
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(host.isAttacking()).isTrue();
     }

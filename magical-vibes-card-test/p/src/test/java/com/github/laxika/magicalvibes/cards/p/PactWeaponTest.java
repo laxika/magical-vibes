@@ -195,6 +195,7 @@ class PactWeaponTest extends BaseCardTest {
         Permanent weapon = harness.addToBattlefieldAndReturn(player1, new PactWeapon());
         weapon.setAttachedTo(creature.getId());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

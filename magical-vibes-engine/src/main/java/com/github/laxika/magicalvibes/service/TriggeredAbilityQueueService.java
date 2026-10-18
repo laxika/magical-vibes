@@ -1669,6 +1669,10 @@ public class TriggeredAbilityQueueService {
                             gameData.id, pending.sourceCard().getName());
                     continue;
                 }
+                if (pending.optionalTarget() && !validPlayerTargets.contains(pending.controllerId())) {
+                    validPlayerTargets = new ArrayList<>(validPlayerTargets);
+                    validPlayerTargets.add(pending.controllerId());
+                }
             } else if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter) {
                 validPlayerTargets = validTargetService.filterValidPlayerTargets(
                         gameData, pending.targetFilter(), gameData.orderedPlayerIds, pending.controllerId());

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilS
 public class Portcullis extends Card {
 
     public Portcullis() {
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new ExileTriggeringCreatureUntilSourceLeavesEffect(2));
     }
 }

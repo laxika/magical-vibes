@@ -208,6 +208,7 @@ class PhthisisTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        resolveAllTriggers();
     }
 
     private void castPhthisis() {

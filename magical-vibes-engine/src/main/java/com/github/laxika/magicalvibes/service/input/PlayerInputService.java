@@ -3252,6 +3252,7 @@ public class PlayerInputService {
         if (remainingCount > 0 && !validIndices.isEmpty()
                 && !followUp.targetOpponentsDiscardThenDraw()
                 && !followUp.eachPlayerQueue()
+                && !followUp.plaguecrafter()
                 && !gameData.creepingDread.active
                 && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
             if (gameData.discardEventPlayerId == null) {

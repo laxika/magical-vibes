@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "36")
 @CardRegistration(set = "CMD", collectorNumber = "26")
@@ -23,7 +22,7 @@ public class PollenLullaby extends Card {
         // on a won clash keep every creature not controlled by the caster tapped through its next
         // untap step.)
         addEffect(EffectSlot.SPELL, new ClashEffect(
-                new SkipNextUntapEffect(TapUntapScope.ALL_CREATURES,
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
+                new SkipNextUntapEffect(TapUntapScope.OPPONENTS_PERMANENTS,
+                        new PermanentIsCreaturePredicate(), 1, true)));
     }
 }

@@ -98,6 +98,8 @@ class PathsOfTuinvaleTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
                 List.of(ownTarget.getId(), opposingTarget.getId()));
         harness.passBothPriorities();
+        harness.setHand(player1, List.of(ownTarget.getCard()));
+        harness.setHand(player2, List.of(opposingTarget.getCard()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -148,6 +150,7 @@ class PathsOfTuinvaleTest extends BaseCardTest {
     void repeatedIncreasesAccumulateAfterRecastingTheCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FirstLittlePig());
         castPaths(player1, 1, target);
+        harness.setHand(player2, List.of(target.getCard()));
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -161,6 +164,7 @@ class PathsOfTuinvaleTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(target.getCard().getId()))
                 .findFirst().orElseThrow();
         castPaths(player1, 1, recastTarget);
+        harness.setHand(player2, List.of(target.getCard()));
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.GREEN, 1);

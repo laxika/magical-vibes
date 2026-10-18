@@ -142,7 +142,7 @@ class PyreSledgeArsonistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

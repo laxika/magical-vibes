@@ -180,8 +180,10 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         CardEffect optionalAction = e.wrapped() instanceof SequenceEffect sequence
                 && !sequence.steps().isEmpty() ? sequence.steps().getFirst() : e.wrapped();
         if (optionalAction instanceof DrawCardEffect
-                && drawService.isDrawPrevented(gameData, choicePlayerId)) {
+                && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
+            // The ability's controller is the one who would draw, whoever makes the choice.
             gameData.resolvingMayEffectFromStack = false;
+            insertElseEffect(entry, e);
             return;
         }
         boolean cannotSacrifice = e.wrapped() instanceof SacrificeEnchantedCreatureEffect

@@ -493,6 +493,21 @@ public class BattlefieldPlacementService {
                                     permanent.getId(), shield.requiredColors())
                             : shield);
         }
+        UUID spellCardId = permanent.getCard().getId();
+        gameData.playerSourceDamagePreventionIds.forEach((playerId, sourceIds) -> {
+            if (sourceIds.contains(spellCardId)) {
+                sourceIds.add(permanent.getId());
+                Map<UUID, Set<CardColor>> requiredBySource =
+                        gameData.playerSourceDamagePreventionRequiredColors.get(playerId);
+                if (requiredBySource != null && requiredBySource.containsKey(spellCardId)) {
+                    requiredBySource.put(permanent.getId(), requiredBySource.get(spellCardId));
+                }
+                Set<UUID> lifeGainIds = gameData.playerSourceDamagePreventionLifeGainIds.get(playerId);
+                if (lifeGainIds != null && lifeGainIds.contains(spellCardId)) {
+                    lifeGainIds.add(permanent.getId());
+                }
+            }
+        });
         if (echoHandler != null) echoHandler.registerOnEntry(gameData, permanent);
         if (permanent.getCard().isToken()) {
             gameData.playersWhoCreatedTokensThisTurn.add(puttingPlayerId);
@@ -1040,7 +1055,9 @@ public class BattlefieldPlacementService {
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         try {
             if (!isCreatureAsEntering(gameData, controllerId, permanent)) return false;
-            boolean selfReplacementApplies = UncastEnteringCreatureExileSupport.hasSelfEntryReplacement(permanent);
+            boolean selfReplacementApplies = UncastEnteringCreatureExileSupport.hasSelfEntryReplacement(permanent)
+                    && !hasLostAbilitiesAsEntering(gameData, controllerId, permanent)
+                    && enterAsCopyCandidates(gameData, controllerId, permanent).isEmpty();
             applies = selfReplacementApplies
                     || (!permanent.isCast() && (!gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
                     || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty())
@@ -1059,6 +1076,22 @@ public class BattlefieldPlacementService {
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of entering the battlefield."));
         log.info("Game {} - {} exiled instead of entering due to an entry replacement", gameData.id, card.getName());
         return true;
+    }
+
+    /** Whether continuous effects (e.g. Humility) would strip the entering permanent of its abilities as it enters. */
+    private boolean hasLostAbilitiesAsEntering(GameData gameData, UUID controllerId, Permanent permanent) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        List<Permanent> preview = new ArrayList<>(battlefield);
+        preview.add(permanent);
+        Object previousBoardCache = gameData.layeredBoardCache;
+        gameData.playerBattlefields.put(controllerId, preview);
+        try {
+            return gameQueryService.withFreshQueryScope(gameData,
+                    () -> gameQueryService.hasLostAllAbilities(gameData, permanent));
+        } finally {
+            gameData.playerBattlefields.put(controllerId, battlefield);
+            gameData.layeredBoardCache = previousBoardCache;
+        }
     }
 
     /** Evaluates the creature's characteristics in isolation as though it were on the battlefield. */

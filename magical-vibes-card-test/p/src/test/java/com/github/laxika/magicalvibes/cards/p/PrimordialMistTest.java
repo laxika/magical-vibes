@@ -112,6 +112,7 @@ class PrimordialMistTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -142,6 +143,7 @@ class PrimordialMistTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.PartyAlwaysFullEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -53,7 +54,7 @@ import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanentsAndSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
-import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
+import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInRevealedCards;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.CompletedDungeonsCount;
@@ -611,8 +612,8 @@ public class AmountEvaluationService {
                     countColorsAmongControlledPermanentsAndSpellsCastThisTurn(gameData, ctx);
             case ColorManaSymbolsInGraveyard c ->
                     countColorManaSymbolsInGraveyard(gameData, c, ctx);
-            case ColorManaSymbolsInHand c ->
-                    countColorManaSymbolsInHand(gameData, c, ctx);
+            case ColorManaSymbolsInRevealedCards c ->
+                    countColorManaSymbolsInRevealedCards(gameData, c, ctx);
             case CountersOnSource c ->
                     countersOnSource(gameData, c, ctx);
             case AllCountersOnSource ignored ->
@@ -1263,7 +1264,12 @@ public class AmountEvaluationService {
     private int targetEffectivePowerPlusToughness(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
-        if (target == null) return 0;
+        if (target == null) {
+            StackEntry entry = ctx.stackEntry();
+            if (entry == null) return 0;
+            return entry.getLastKnownPermanentPowers().getOrDefault(ctx.targetPermanentId(), 0)
+                    + entry.getLastKnownPermanentToughnesses().getOrDefault(ctx.targetPermanentId(), 0);
+        }
         return gameQueryService.getEffectivePower(gameData, target)
                 + gameQueryService.getEffectiveToughness(gameData, target);
     }
@@ -2332,12 +2338,14 @@ public class AmountEvaluationService {
                         .orElse(null));
     }
 
-    private int countColorManaSymbolsInHand(
-            GameData gameData, ColorManaSymbolsInHand amount, AmountContext ctx) {
+    private int countColorManaSymbolsInRevealedCards(
+            GameData gameData, ColorManaSymbolsInRevealedCards amount, AmountContext ctx) {
         List<Card> hand = gameData.playerHands.get(ctx.controllerId());
-        if (hand == null) return 0;
+        if (hand == null || ctx.stackEntry() == null) return 0;
+        List<UUID> revealedIds = ctx.stackEntry().getEventCardIds();
         int total = 0;
         for (Card card : hand) {
+            if (!revealedIds.contains(card.getId())) continue;
             ManaCost cost = card.getParsedManaCost();
             if (cost != null) {
                 total += cost.countColorSymbols(amount.color());
@@ -2715,6 +2723,12 @@ public class AmountEvaluationService {
                 types.addAll(PARTY_ROLES);
             }
             creatureTypes.add(types);
+        }
+        boolean partyIsEveryCreature = battlefield.stream()
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PartyAlwaysFullEffect.class::isInstance));
+        if (partyIsEveryCreature) {
+            return creatureTypes.size();
         }
         return maximumPartySize(creatureTypes, 0, new HashSet<>());
     }

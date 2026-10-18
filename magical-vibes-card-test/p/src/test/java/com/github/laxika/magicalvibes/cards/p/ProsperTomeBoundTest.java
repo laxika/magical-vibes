@@ -135,6 +135,8 @@ class ProsperTomeBoundTest extends BaseCardTest {
     @Test
     void endStepPermissionAllowsLandPlayAfterProsperLeavesBattlefield() {
         Permanent prosper = addProsper();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Forest land = new Forest();
         harness.setLibrary(player1, List.of(land, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
@@ -154,6 +156,8 @@ class ProsperTomeBoundTest extends BaseCardTest {
     @Test
     void permissionExpiresAtEndOfControllersNextTurnAndCardRemainsExiled() {
         addProsper();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Forest land = new Forest();
         harness.setLibrary(player1, List.of(land, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));

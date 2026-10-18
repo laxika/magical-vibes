@@ -2443,12 +2443,13 @@ public class CastingCostService {
                     : applyColoredManaCostReductions(gameData, playerId, card, printedAlternativeCost);
             if (altCast.reduceManaBySacrificedManaCost() && sacCost.isPresent() && battlefield != null
                     && sacCost.get().count() == 1) {
+                int reducedCostModifier = getAlternateHandCastCostModifier(gameData, playerId, card, altCast.blitz());
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
                         .map(this::manaCostOf)
                         .anyMatch(reduction -> manaCost.get().treasureManaOnly()
                                 ? pool.canPayWithTreasureManaAfterReduction(cost, reduction)
-                                : cost.canPayAfterReduction(pool, reduction));
+                                : cost.canPayAfterReduction(pool, reduction, reducedCostModifier));
             }
             // Emerge: optimistically reduce by the highest mana value among sacrificeable permanents.
             int emergeReduction = 0;
@@ -2967,6 +2968,39 @@ public class CastingCostService {
         return lifeCost.isEmpty()
                 || (gameQueryService.canPayLifeForCosts(gameData)
                 && gameData.getLife(playerId) >= lifeCost.get().amount());
+    }
+
+    /**
+     * Whether a flashback granted until end of turn (Lost in Memories, Past in Flames) is the one to use
+     * instead of the card's printed flashback. The granted flashback is used when the printed cost can't
+     * be paid, and when it is a payable, strictly cheaper mana-only alternative to a mana-only printed
+     * cost; otherwise the printed flashback stands.
+     */
+    public boolean grantedFlashbackStandsInForPrinted(GameData gameData, UUID playerId, Card card,
+                                                      FlashbackCast printed) {
+        if (!gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())) {
+            return false;
+        }
+        var printedMana = printed.getCost(ManaCastingCost.class);
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        boolean printedManaUnpayable = printedMana.isPresent()
+                && !new ManaCost(printedMana.get().manaCost()).canPayFlashbackFromGraveyard(pool, 0);
+        if (printedManaUnpayable || !canPayFlashbackLifeCost(gameData, playerId, printed)) {
+            return true;
+        }
+        if (printedMana.isEmpty() || printed.costs().size() != 1) {
+            return false;
+        }
+        String grantedCostStr = gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.get(card.getId());
+        if (grantedCostStr == null) {
+            grantedCostStr = card.getManaCost();
+        }
+        if (grantedCostStr == null) {
+            return false;
+        }
+        ManaCost grantedCost = new ManaCost(grantedCostStr);
+        return grantedCost.getManaValue() < new ManaCost(printedMana.get().manaCost()).getManaValue()
+                && grantedCost.canPayFlashbackFromGraveyard(pool, 0);
     }
 
     /** Returns whether all supported permanent components of a flashback cost can be paid. */

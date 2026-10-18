@@ -9,14 +9,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>When {@code optional} is set the shuffle is a "you may" choice made as the effect resolves,
  * after the targets were chosen; accepting shuffles the library even with no targets chosen
- * (Cathartic Parting).
+ * (Cathartic Parting). With {@code skipsWithoutTargets} the choice is not offered when no target
+ * card was chosen.
  */
 public record ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
         CardPredicate filter,
         int maxTargets,
         boolean optional,
-        boolean shufflesWithoutTargets
+        boolean shufflesWithoutTargets,
+        boolean skipsWithoutTargets
 ) implements TargetedGraveyardCardsEffect {
+
+    public ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
+            CardPredicate filter, int maxTargets, boolean optional, boolean shufflesWithoutTargets) {
+        this(filter, maxTargets, optional, shufflesWithoutTargets, false);
+    }
 
     public ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(CardPredicate filter, int maxTargets) {
         this(filter, maxTargets, false, false);
@@ -26,6 +33,15 @@ public record ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
     public static ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect optional(
             CardPredicate filter, int maxTargets) {
         return new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(filter, maxTargets, true, false);
+    }
+
+    /**
+     * Like {@link #optional}, but the "you may" is not offered when no target card was chosen
+     * (Put Away: there is nothing to shuffle).
+     */
+    public static ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect optionalWhenTargeted(
+            CardPredicate filter, int maxTargets) {
+        return new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(filter, maxTargets, true, false, true);
     }
 
     /** Sentinel for "any number of target cards" (capped only by the graveyard contents). */

@@ -1805,7 +1805,8 @@ public class DamageSupport {
 
         boolean controllersTurn = playerId.equals(gameData.activePlayerId);
         boolean hasEffect = battlefield.stream().anyMatch(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                !gameQueryService.hasLostAllAbilities(gameData, p)
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> isControllerAllDamagePreventionActive(
                                 gameData, playerId, p, e, controllersTurn)));
         return hasEffect ? damage : 0;

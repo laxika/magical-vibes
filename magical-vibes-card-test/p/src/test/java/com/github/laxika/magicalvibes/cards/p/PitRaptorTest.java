@@ -78,7 +78,8 @@ class PitRaptorTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Pit Raptor");
         harness.assertInGraveyard(player1, "Pit Raptor");
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        // The upkeep step ends once the choice is made, and unspent mana empties as a step ends (CR 500.5).
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -94,6 +95,7 @@ class PitRaptorTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Pit Raptor");
         harness.assertInGraveyard(player1, "Pit Raptor");
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        // The upkeep step ends once the choice is made, and unspent mana empties as a step ends (CR 500.5).
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

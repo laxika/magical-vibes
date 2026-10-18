@@ -96,7 +96,8 @@ class PinnacleEmissaryTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(emissary.getId())).isNotNull();
     }
@@ -199,6 +200,7 @@ class PinnacleEmissaryTest extends BaseCardTest {
 
         harness.setLibrary(player1, List.of(new Spellbook()));
         harness.setLibrary(player2, List.of(new Spellbook()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);

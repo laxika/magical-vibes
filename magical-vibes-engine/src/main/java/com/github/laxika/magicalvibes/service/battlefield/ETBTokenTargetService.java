@@ -644,6 +644,8 @@ public class ETBTokenTargetService {
         }
         for (UUID pid : gameData.orderedPlayerIds) {
             if (targetAlreadyChosen(pending, pid)) continue;
+            if (targetLegalityService.isPlayerUntargetable(
+                    gameData, pid, pending.controllerId(), pending.sourceCard())) continue;
             if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, groupFilter)) {
                 validPlayerTargets.add(pid);
             }
@@ -934,6 +936,17 @@ public class ETBTokenTargetService {
             if (sourcePermanent != null) {
                 etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 etbEntry.setAttackedTargetId(sourcePermanent.getAttackTarget());
+                if (card.isAura() && sourcePermanent.isAttached() && sourcePermanent.getAttachedTo() != null) {
+                    Permanent enchanted = gameQueryService.findPermanentById(gameData, sourcePermanent.getAttachedTo());
+                    if (enchanted != null) {
+                        etbEntry.setAttachedPermanentSnapshot(new Permanent(enchanted));
+                        etbEntry.setTriggeringPermanentId(enchanted.getId());
+                        etbEntry.setTriggeringPermanentControllerId(
+                                gameQueryService.findPermanentController(gameData, enchanted.getId()));
+                        etbEntry.setTriggeringPermanentPowerAtTrigger(
+                                gameQueryService.getEffectivePower(gameData, enchanted));
+                    }
+                }
                 // An evoked permanent's independent ETB abilities and its evoke sacrifice trigger
                 // together, so its controller may order them (CR 603.3b).
                 if (pending.triggeringCardId() == null && sourcePermanent.isEvoked()

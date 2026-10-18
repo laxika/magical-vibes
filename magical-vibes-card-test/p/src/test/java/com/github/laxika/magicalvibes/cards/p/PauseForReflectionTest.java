@@ -87,7 +87,8 @@ class PauseForReflectionTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.castAndResolveInstant(player1, 0);
-        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
     }

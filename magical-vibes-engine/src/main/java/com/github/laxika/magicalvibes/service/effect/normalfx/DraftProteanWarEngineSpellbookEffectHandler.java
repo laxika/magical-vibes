@@ -52,19 +52,22 @@ public class DraftProteanWarEngineSpellbookEffectHandler implements NormalEffect
         return DraftProteanWarEngineSpellbookEffect.class;
     }
 
+    /**
+     * The draft is made as the permanent enters (see {@code EtbTriggerService}), so it never reaches the
+     * stack as an enters-the-battlefield ability.
+     */
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTargetId() != null) {
-            return;
-        }
+        beginDraft(gameData, entry.getControllerId(), entry.getSourcePermanentId());
+    }
 
-        List<Card> spellbook = createSpellbook(entry.getControllerId());
+    /** Offers the controller three random spellbook cards; the chosen one is exiled with the source. */
+    public void beginDraft(GameData gameData, UUID controllerId, UUID sourcePermanentId) {
+        List<Card> spellbook = createSpellbook(controllerId);
         Collections.shuffle(spellbook, ThreadLocalRandom.current());
-        gameData.rerunCurrentEffectAfterInteraction = true;
         interactionHandlerRegistry.begin(gameData,
                 new com.github.laxika.magicalvibes.model.PendingInteraction.ProteanWarEngineSpellbookDraftChoice(
-                        entry.getControllerId(), entry.getSourcePermanentId(),
-                        List.copyOf(spellbook.subList(0, 3))));
+                        controllerId, sourcePermanentId, List.copyOf(spellbook.subList(0, 3))));
     }
 
     private List<Card> createSpellbook(UUID ownerId) {

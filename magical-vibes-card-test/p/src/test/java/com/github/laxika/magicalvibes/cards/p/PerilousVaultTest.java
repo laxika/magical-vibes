@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.a.AjaniSteadfast;
 import com.github.laxika.magicalvibes.cards.m.MilitaryIntelligence;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -88,7 +89,7 @@ class PerilousVaultTest extends BaseCardTest {
         addReadyVault(player1);
         harness.addToBattlefield(player1, new PerilousVault());
         harness.addToBattlefield(player2, new MilitaryIntelligence());
-        harness.addToBattlefield(player2, new AjaniSteadfast());
+        harness.addToBattlefieldAndReturn(player2, new AjaniSteadfast()).setCounterCount(CounterType.LOYALTY, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, null);

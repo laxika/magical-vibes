@@ -30,7 +30,7 @@ public class CounterUnlessDiscardsHandEffectHandler implements NormalEffectHandl
             return;
         }
 
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(gameData, targetCardId, entry);
         if (targetEntry == null) {
             return;
         }

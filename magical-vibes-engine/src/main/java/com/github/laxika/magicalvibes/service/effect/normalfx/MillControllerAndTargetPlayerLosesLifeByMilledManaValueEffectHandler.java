@@ -43,7 +43,7 @@ public class MillControllerAndTargetPlayerLosesLifeByMilledManaValueEffectHandle
 
         int count = Math.max(0, amountEvaluationService.evaluate(
                 gameData, mill.count(), AmountContext.forStackEntry(entry, source)));
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
+        List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(gameData, entry.getControllerId(), count);
         int totalManaValue = milled.stream().mapToInt(Card::getManaValue).sum();
 
         UUID targetPlayerId = entry.getTargetId();

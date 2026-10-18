@@ -57,6 +57,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                     .withSourceControllerId(entry.getControllerId())
+                    .withSourcePermanentId(entry.getSourcePermanentId())
                     .withXValue(entry.getXValue());
             int count = 0;
             for (Permanent permanent : battlefield) {

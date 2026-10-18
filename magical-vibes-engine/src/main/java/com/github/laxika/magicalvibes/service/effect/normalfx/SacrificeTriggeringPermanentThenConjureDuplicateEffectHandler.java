@@ -41,24 +41,25 @@ public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler imple
 
         Permanent triggeringPermanent = gameQueryService.findPermanentById(
                 gameData, entry.getTriggeringPermanentId());
-        if (triggeringPermanent == null) {
+        Card sourceCard = triggeringPermanent != null
+                ? triggeringPermanent.getCard() : entry.getTriggeringCardSnapshot();
+        if (sourceCard == null) {
             return;
         }
 
-        var currentControllerId = gameQueryService.findPermanentController(gameData, triggeringPermanent.getId());
-        if (currentControllerId == null || !entry.getControllerId().equals(currentControllerId)
-                || gameQueryService.cantBeSacrificed(gameData, triggeringPermanent)) {
-            return;
+        // The duplicate doesn't depend on the sacrifice: if the permanent already left or can't be
+        // sacrificed, its last known information is still conjured.
+        if (triggeringPermanent != null) {
+            var currentControllerId = gameQueryService.findPermanentController(gameData, triggeringPermanent.getId());
+            if (entry.getControllerId().equals(currentControllerId)
+                    && !gameQueryService.cantBeSacrificed(gameData, triggeringPermanent)
+                    && permanentRemovalService.sacrificePermanentToGraveyard(gameData, triggeringPermanent)) {
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                        gameData, currentControllerId, sourceCard);
+                gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is sacrificed."));
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
         }
-
-        Card sourceCard = triggeringPermanent.getCard();
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, triggeringPermanent)) {
-            return;
-        }
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                gameData, currentControllerId, sourceCard);
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is sacrificed."));
-        permanentRemovalService.removeOrphanedAuras(gameData);
 
         Card duplicateCard = TokenCopySupport.buildTokenCopyCard(sourceCard, replacement.copyProfile());
         duplicateCard.setToken(false);

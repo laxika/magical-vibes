@@ -83,6 +83,7 @@ class PurphorossInterventionTest extends BaseCardTest {
     @DisplayName("Deals twice X damage to a planeswalker, removing loyalty")
     void dealsTwiceXDamageToPlaneswalker() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new PurphorossIntervention()));
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -97,6 +98,7 @@ class PurphorossInterventionTest extends BaseCardTest {
     @DisplayName("Lethal damage puts a planeswalker into its owner's graveyard")
     void lethalDamageRemovesPlaneswalker() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new PurphorossIntervention()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -131,6 +133,7 @@ class PurphorossInterventionTest extends BaseCardTest {
     @DisplayName("X zero deals no damage to a legal planeswalker target")
     void zeroXDealsNoDamage() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ElspethSunsNemesis());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new PurphorossIntervention()));
         harness.addMana(player1, ManaColor.RED, 1);
 

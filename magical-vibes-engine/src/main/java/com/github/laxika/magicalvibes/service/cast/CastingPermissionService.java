@@ -184,6 +184,7 @@ public class CastingPermissionService {
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
         if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
+        if (isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) return false;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
@@ -778,7 +779,8 @@ public class CastingPermissionService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
+                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(LimitNonPhyrexianSpellsPerTurnEffect.class::isInstance)) return true;
             }
         }

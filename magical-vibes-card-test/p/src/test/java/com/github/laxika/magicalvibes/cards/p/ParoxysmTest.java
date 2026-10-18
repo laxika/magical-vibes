@@ -133,9 +133,9 @@ class ParoxysmTest extends BaseCardTest {
         Permanent aura = attachParoxysm(creature);
         harness.setLibrary(player2, List.of(new CityOfTraitors()));
         harness.setHand(player2, List.of(new Allay()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player2, 0, aura.getId());
         harness.assertInGraveyard(player1, "Paroxysm");
         harness.passBothPriorities();
@@ -150,9 +150,9 @@ class ParoxysmTest extends BaseCardTest {
         Permanent aura = attachParoxysm(creature);
         harness.setLibrary(player2, List.of(new RagingGoblin()));
         harness.setHand(player2, List.of(new Allay()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player2, 0, aura.getId());
         harness.assertInGraveyard(player1, "Paroxysm");
         harness.passBothPriorities();

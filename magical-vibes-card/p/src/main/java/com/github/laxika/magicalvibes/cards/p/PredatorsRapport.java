@@ -27,7 +27,7 @@ public class PredatorsRapport extends Card {
                 )),
                 "Target must be a creature you control"
         )).addEffect(EffectSlot.SPELL, new GainLifeEqualToTargetCreatureStatEffect(
-                new Sum(new TargetPower(), new TargetToughness())
+                new Sum(new TargetPower(true), new TargetToughness())
         ));
     }
 }

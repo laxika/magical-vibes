@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNameP
 public class PetrifiedHamlet extends Card {
 
     public PetrifiedHamlet() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(CardType.LAND));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameAtResolutionEffect(CardType.LAND));
         addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect());
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.COLORLESS),

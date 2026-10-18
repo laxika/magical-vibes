@@ -39,23 +39,24 @@ public class AddCounterThenPayCountersOrTapAndDamageEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (AddCounterThenPayCountersOrTapAndDamageEffect) effect;
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self == null) {
+        int x;
+        if (self != null) {
+            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), 1);
+            x = self.getCounterCount(e.counterType());
+        } else if (entry.getSourcePermanentSnapshot() != null) {
+            // The Ooze left the battlefield in response: no counter can be added, and X is the number of
+            // counters it had as it last existed on the battlefield.
+            x = entry.getSourcePermanentSnapshot().getCounterCount(e.counterType());
+        } else {
             return;
         }
-
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), 1);
-
-        int x = self.getCounterCount(e.counterType());
-        if (x <= 0) {
-            // Paying {0} would succeed trivially, so there is no penalty either — nothing to do.
-            return;
-        }
-
+        // With no counters (the new one was prevented) X is 0, but the controller still chooses whether
+        // to pay {0}; declining still taps the creature.
         // "You may pay {X}; if you don't, tap this creature and it deals X damage to you."
         ForcedCostOrElseEffect punish = new ForcedCostOrElseEffect(
-                new PayManaCost("{" + x + "}"),
+                new PayManaCost("{" + Math.max(0, x) + "}"),
                 List.of(new TapPermanentsEffect(TapUntapScope.SELF),
-                        new DealDamageToPlayersEffect(x, DamageRecipient.CONTROLLER)),
+                        new DealDamageToPlayersEffect(Math.max(0, x), DamageRecipient.CONTROLLER)),
                 true);
         forcedCostOrElseEffectHandler.resolve(gameData, entry, punish);
     }

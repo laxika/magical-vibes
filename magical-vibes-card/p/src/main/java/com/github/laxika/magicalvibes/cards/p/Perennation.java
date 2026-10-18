@@ -18,6 +18,7 @@ public class Perennation extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .enterWithCounters(Set.of(CounterType.HEXPROOF, CounterType.INDESTRUCTIBLE))
                 .build());
     }

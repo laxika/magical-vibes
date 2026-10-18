@@ -301,6 +301,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNameInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasNoNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
@@ -2942,6 +2943,10 @@ public class PredicateEvaluationService {
                                     new PermanentColorInPredicate(Set.of(gameData.chosenSpellColor)), filterContext);
             case PermanentNamedPredicate namedPredicate ->
                     namesMatch(effectiveName(permanent, filterContext), namedPredicate.cardName());
+            case PermanentHasNoNamePredicate ignored -> {
+                String name = effectiveName(permanent, filterContext);
+                yield permanent.isFaceDown() || name == null || name.isEmpty();
+            }
             case PermanentNameInPredicate nameInPredicate -> {
                 String name = effectiveName(permanent, filterContext);
                 yield name != null && nameInPredicate.cardNames().contains(name);
@@ -3130,8 +3135,7 @@ public class PredicateEvaluationService {
 
     private boolean attacksWhileSourceControllerHasMostLife(GameData gameData, Permanent permanent,
                                                              UUID sourceControllerId) {
-        if (gameData == null || sourceControllerId == null || !permanent.isAttacking()
-                || !gameData.playerIds.contains(permanent.getAttackTarget())) {
+        if (gameData == null || sourceControllerId == null || !permanent.isAttacking()) {
             return false;
         }
         int controllerLife = gameData.getLife(sourceControllerId);
@@ -3754,6 +3758,7 @@ public class PredicateEvaluationService {
             case PermanentIsTokenPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTransformedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNamedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasNoNamePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentNameInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             // Recursion-safe: asking GameQueryService.hasProtectionFrom would re-enter the
             // static-bonus assembly that is currently running for another permanent.
@@ -4736,6 +4741,8 @@ public class PredicateEvaluationService {
                     p.printedOnly() ? hasPrintedKeyword(permanent, p.keyword()) : state.hasKeyword(p.keyword());
             case PermanentNamedPredicate p ->
                     namesMatch(state.getName(), p.cardName());
+            case PermanentHasNoNamePredicate ignored ->
+                    permanent.isFaceDown() || state.getName() == null || state.getName().isEmpty();
             case PermanentNameInPredicate p ->
                     state.getName() != null && p.cardNames().contains(state.getName());
             case PermanentHasProtectionFromColorPredicate p ->

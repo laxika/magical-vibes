@@ -136,6 +136,7 @@ class PersuasiveInterrogatorsTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new PersuasiveInterrogators());
         resolveAllTriggers();
         addClueToken(player1);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new PersuasiveInterrogators(), new PersuasiveInterrogators()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

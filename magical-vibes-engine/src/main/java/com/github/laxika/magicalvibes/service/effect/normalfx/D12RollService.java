@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollWithAdvantageEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,6 +16,9 @@ import java.util.concurrent.ThreadLocalRandom;
 /** Produces a random twelve-sided die result. */
 @Component
 public class D12RollService {
+
+    @Autowired
+    private GameQueryService gameQueryService;
 
     public int roll() {
         return ThreadLocalRandom.current().nextInt(1, 13);
@@ -26,6 +31,7 @@ public class D12RollService {
                 ? null : gameData.playerBattlefields.get(rollingPlayerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
+                if (gameQueryService != null && gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof RollWithAdvantageEffect) {
                         diceCount++;

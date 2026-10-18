@@ -16,7 +16,7 @@ public class PartWater extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 100).addEffect(EffectSlot.SPELL,
+        ), 1000).addEffect(EffectSlot.SPELL,
                 new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.TARGET));
     }
 }

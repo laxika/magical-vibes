@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -18,7 +19,7 @@ import java.util.List;
 public class PrimarisEliminator extends Card {
 
     public PrimarisEliminator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature",
                         new DestroyTargetPermanentEffect(),
@@ -29,6 +30,6 @@ public class PrimarisEliminator extends Card {
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player"))
-        )));
+        ))));
     }
 }

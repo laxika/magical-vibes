@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUnti
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -21,6 +22,8 @@ import java.util.List;
 public class PlagueNurse extends Card {
 
     public PlagueNurse() {
+        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
+
         var toxicOtherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentHasKeywordPredicate(Keyword.TOXIC),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())

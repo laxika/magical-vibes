@@ -101,6 +101,7 @@ class PrimarisEliminatorTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         harness.enterBattlefieldAndReturn(player1, new PrimarisEliminator());
+        gs.passPriority(gd, player1);
         chooseModeAndTarget(1, player2.getId());
         harness.passBothPriorities();
 

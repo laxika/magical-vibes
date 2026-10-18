@@ -2041,6 +2041,12 @@ public class CombatBlockService {
         trigger.setNonTargeting(true);
         trigger.setSourcePermanentSnapshot(new Permanent(attacker));
         trigger.setAttackedTargetId(attacker.getAttackTarget());
+        UUID attackedTarget = attacker.getAttackTarget();
+        if (attackedTarget != null) {
+            trigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTarget)
+                    ? attackedTarget
+                    : gameQueryService.findPermanentController(gameData, attackedTarget));
+        }
         gameData.stack.add(trigger);
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                 "'s becomes-blocked ability triggers."));

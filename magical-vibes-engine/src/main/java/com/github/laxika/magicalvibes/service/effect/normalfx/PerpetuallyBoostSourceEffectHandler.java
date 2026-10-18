@@ -39,8 +39,8 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
                 applyToGraveyardSource(gameData, sourceCard, boost);
             }
         } else {
-            Card copy = boostedCopy(source.getCard(), boost);
-            source.exchangeCard(copy);
+            PerpetualCardPowerToughnessSupport.remember(
+                    gameData, source.getCard(), boost.powerBoost(), boost.toughnessBoost());
         }
     }
 

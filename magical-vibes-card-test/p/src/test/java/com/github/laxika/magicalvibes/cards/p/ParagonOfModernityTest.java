@@ -93,7 +93,7 @@ class ParagonOfModernityTest extends BaseCardTest {
         assertThat(paragon.getPowerModifier()).isEqualTo(1);
         assertThat(paragon.getToughnessModifier()).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(paragon.getPowerModifier()).isZero();

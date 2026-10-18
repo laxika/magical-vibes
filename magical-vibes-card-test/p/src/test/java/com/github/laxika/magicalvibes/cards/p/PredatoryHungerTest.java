@@ -185,7 +185,6 @@ class PredatoryHungerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EnchantmentAlteration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, aura.getId());
-        harness.handlePermanentChosen(player1, secondHost.getId());
 
         harness.setHand(player1, List.of(new Allay()));
         harness.addMana(player1, ManaColor.WHITE, 1);

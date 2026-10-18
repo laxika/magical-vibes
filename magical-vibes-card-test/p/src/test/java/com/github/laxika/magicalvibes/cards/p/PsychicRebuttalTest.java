@@ -108,8 +108,8 @@ class PsychicRebuttalTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
     @Test
-    @DisplayName("The countered owned spell supplies the second card for spell mastery")
-    void counteredOwnedSpellEnablesSpellMastery() {
+    @DisplayName("The countered spell itself does not count toward spell mastery")
+    void counteredOwnedSpellDoesNotEnableSpellMastery() {
         ExquisiteFirecraft firecraft = new ExquisiteFirecraft();
         harness.setHand(player1, List.of(firecraft, new PsychicRebuttal()));
         harness.setGraveyard(player1, List.of(new PsychicRebuttal()));
@@ -120,12 +120,10 @@ class PsychicRebuttalTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.castInstant(player1, 0, firecraft.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Exquisite Firecraft");
-        harness.assertLife(player1, 16);
+        harness.assertLife(player1, 20);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BloodlineKeeper;
 import com.github.laxika.magicalvibes.cards.l.LordOfLineage;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.cards.h.HeadwaterSentries;
@@ -215,6 +219,10 @@ class PerilousVoyageTest extends BaseCardTest {
     void returnsOpponentControlledPermanentToItsOwner() {
         var target = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
         gd.stolenCreatures.put(target.getId(), player1.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, player2.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), target.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.setHand(player1, List.of(new PerilousVoyage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -239,6 +247,10 @@ class PerilousVoyageTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         gd.playerBattlefields.get(player1.getId()).add(target);
         gd.stolenCreatures.put(target.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, player1.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), target.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Raptor Companion");

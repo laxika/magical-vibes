@@ -30,6 +30,6 @@ public class PrintlifterOoze extends Card {
                         new CreateTokenEffect(
                                 "Ooze", 0, 0, CardColor.GREEN,
                                 List.of(CardSubtype.OOZE), Set.of(Keyword.TRAMPLE), Set.of()),
-                        otherCreatures, CounterType.PLUS_ONE_PLUS_ONE));
+                        otherCreatures, CounterType.PLUS_ONE_PLUS_ONE, true));
     }
 }

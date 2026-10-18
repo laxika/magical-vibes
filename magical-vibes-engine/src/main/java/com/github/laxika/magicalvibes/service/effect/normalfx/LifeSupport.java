@@ -111,17 +111,17 @@ public class LifeSupport {
             }
             return;
         }
-        // Tainted Remedy and Rain of Gore turn the whole gain event into an equal life loss.
-        if (amount > 0 && (gameQueryService.lifeGainBecomesLifeLoss(gameData, controllerId)
-                || gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
-                        gameData, controllerId, sourceControllerId))) {
+        // Rain of Gore turns the whole gain event into an equal life loss. Tainted Remedy and Plague Drone
+        // do the same as an ordered life-gain replacement below.
+        if (amount > 0 && gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
+                gameData, controllerId, sourceControllerId)) {
             applyLifeLoss(gameData, controllerId, amount, source != null ? source : "replaced life gain");
             return;
         }
         // Life-gain replacement effects (Heron of Hope, Boon Reflection) replace the amount before it is
         // applied, in the order the gaining player chooses when that order matters (CR 616.1).
         ReplacementOrderService.Outcome<LifeGainEvent> outcome = replacementOrderService.run(gameData,
-                new LifeGainEvent(controllerId, amount, Set.of(), source, sourceCard, sourceEntryType, false));
+                new LifeGainEvent(controllerId, amount, Set.of(), source, sourceCard, sourceEntryType, false, false));
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<LifeGainEvent> completed) {
             completeGainLife(gameData, completed.event());
         }
@@ -138,6 +138,10 @@ public class LifeSupport {
             for (int i = 0; i < amount; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);
             }
+            return;
+        }
+        if (event.loseInstead()) {
+            applyLifeLoss(gameData, controllerId, amount, source != null ? source : "replaced life gain");
             return;
         }
         int currentLife = gameData.getLife(controllerId);

@@ -2665,7 +2665,8 @@ public class LibraryChoiceHandlerService {
         List<UUID> castableIds = selectedCards.stream()
                 .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)
                         || card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT)
-                        || card.hasType(CardType.ENCHANTMENT) || card.hasType(CardType.PLANESWALKER))
+                        || card.hasType(CardType.ENCHANTMENT) || card.hasType(CardType.PLANESWALKER)
+                        || card.hasType(CardType.BATTLE))
                 .map(Card::getId)
                 .toList();
         if (castableIds.isEmpty()) {

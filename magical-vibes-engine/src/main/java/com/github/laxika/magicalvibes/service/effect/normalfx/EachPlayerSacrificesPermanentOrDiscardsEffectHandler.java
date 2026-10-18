@@ -89,7 +89,8 @@ public class EachPlayerSacrificesPermanentOrDiscardsEffectHandler implements Nor
             return List.of();
         }
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter));
+                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter));
     }
 
     private void beginDiscardPhase(GameData gameData, StackEntry entry) {

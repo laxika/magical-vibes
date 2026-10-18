@@ -182,7 +182,7 @@ class ProteanHydraTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage: Bears deal 2, remove 2 counters
 
         // Hydra has 3 counters after combat damage prevention
-        Permanent survivingHydra = findHydra(player1);
+        Permanent survivingHydra = findHydra(player2);
         assertThat(survivingHydra).isNotNull();
         assertThat(survivingHydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
@@ -191,7 +191,7 @@ class ProteanHydraTest extends BaseCardTest {
         resolveAllDelayedTriggers();
 
         // 2 counters removed → 4 counters added, total = 3 + 4 = 7
-        assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+        assertThat(findHydra(player2).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
     }
 
     @Test

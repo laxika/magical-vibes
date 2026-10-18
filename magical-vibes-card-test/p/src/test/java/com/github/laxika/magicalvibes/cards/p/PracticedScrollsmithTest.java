@@ -124,6 +124,8 @@ class PracticedScrollsmithTest extends BaseCardTest {
 
     @Test
     void permissionSurvivesOpponentsTurnAndExpiresAfterYourNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Shock shock = exileShock();
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island()));
@@ -156,6 +158,8 @@ class PracticedScrollsmithTest extends BaseCardTest {
 
     @Test
     void canCastExiledCardAtEndOfYourNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Shock shock = exileShock();
         harness.setLibrary(player1, List.of(new Island()));
         harness.setLibrary(player2, List.of(new Island()));

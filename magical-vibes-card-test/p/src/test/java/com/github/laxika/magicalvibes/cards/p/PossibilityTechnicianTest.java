@@ -141,6 +141,8 @@ class PossibilityTechnicianTest extends BaseCardTest {
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.enterBattlefieldAndReturn(player1, new PossibilityTechnician());
         harness.passBothPriorities();
 
@@ -163,6 +165,7 @@ class PossibilityTechnicianTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, new Forest(), laterTopCard, new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of(technician));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castWithAlternateCost(player1, 0, List.of());

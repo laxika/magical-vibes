@@ -94,7 +94,7 @@ public class ProtectionRacketEffectHandler implements NormalEffectHandlerBean {
     }
 
     public boolean canPayLife(GameData gameData, UUID playerId, int amount) {
-        return amount == 0 || (gameQueryService.canPlayerLifeChange(gameData, playerId)
+        return amount == 0 || (gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= amount);
     }
 

@@ -25,9 +25,12 @@ class PhosphorescentFeastTest extends BaseCardTest {
     void gainsTwoLifePerGreenSymbol() {
         pay(player1);
         // Feast at index 0 leaves hand on cast; the two Tarmogoyfs ({1}{G} each) stay behind.
-        harness.setHand(player1, List.of(new PhosphorescentFeast(), new Tarmogoyf(), new Tarmogoyf()));
+        Tarmogoyf first = new Tarmogoyf();
+        Tarmogoyf second = new Tarmogoyf();
+        harness.setHand(player1, List.of(new PhosphorescentFeast(), first, second));
 
         harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
 
         harness.assertLife(player1, 24);
     }
@@ -36,9 +39,11 @@ class PhosphorescentFeastTest extends BaseCardTest {
     @DisplayName("Counts multiple green mana symbols on one card")
     void countsMultipleGreenSymbolsOnOneCard() {
         pay(player1);
-        harness.setHand(player1, List.of(new PhosphorescentFeast(), new PhosphorescentFeast()));
+        PhosphorescentFeast other = new PhosphorescentFeast();
+        harness.setHand(player1, List.of(new PhosphorescentFeast(), other));
 
         harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(other.getId()));
 
         harness.assertLife(player1, 26);
     }
@@ -47,9 +52,11 @@ class PhosphorescentFeastTest extends BaseCardTest {
     @DisplayName("Cards with no green mana symbols contribute no life")
     void noGreenSymbolsGainsZero() {
         pay(player1);
-        harness.setHand(player1, List.of(new PhosphorescentFeast(), new PactOfNegation()));
+        PactOfNegation pact = new PactOfNegation();
+        harness.setHand(player1, List.of(new PhosphorescentFeast(), pact));
 
         harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(pact.getId()));
 
         harness.assertLife(player1, 20);
     }

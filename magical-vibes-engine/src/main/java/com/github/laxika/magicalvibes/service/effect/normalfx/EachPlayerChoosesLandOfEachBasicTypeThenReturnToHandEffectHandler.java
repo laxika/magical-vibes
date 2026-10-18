@@ -105,17 +105,22 @@ public class EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandEffectHandler
     }
 
     private void returnSelectedLands(GameData gameData, List<UUID> selectedIds, String sourceName) {
-        for (UUID selectedId : selectedIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, selectedId);
-            if (permanent == null) {
-                continue;
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (UUID selectedId : selectedIds) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, selectedId);
+                if (permanent == null) {
+                    continue;
+                }
+                Card card = permanent.getCard();
+                if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
+                    gameLogService.append(gameData, GameLog.cardThen(card, " is returned to its owner's hand."));
+                    log.info("Game {} - {} returns {} to its owner's hand", gameData.id, sourceName,
+                            card.getName());
+                }
             }
-            Card card = permanent.getCard();
-            if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
-                gameLogService.append(gameData, GameLog.cardThen(card, " is returned to its owner's hand."));
-                log.info("Game {} - {} returns {} to its owner's hand", gameData.id, sourceName,
-                        card.getName());
-            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
     }
 

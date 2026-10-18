@@ -32,6 +32,7 @@ class PeemaTrailblazerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         gd.playerEnergyCounters.put(player1.getId(), 6);
+        harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

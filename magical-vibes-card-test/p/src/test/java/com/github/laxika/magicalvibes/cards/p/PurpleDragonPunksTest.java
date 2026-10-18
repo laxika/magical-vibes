@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AmbassadorLaquatus;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.c.CoolButRude;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -124,7 +123,7 @@ class PurpleDragonPunksTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rude.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertThat(rude.getClassLevel()).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.RED))
                 .isZero();
     }

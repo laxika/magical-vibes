@@ -2737,23 +2737,24 @@ public class AdditionalSpellCostService {
      */
     public Permanent validatePutCounterOnControlledCreatureCost(GameData gameData, Player player, Card card,
                                                                 PutCounterOnControlledCreatureCost cost, UUID creatureId) {
-        return validateControlledCreatureForCounterCost(gameData, player, card, creatureId);
+        return validateControlledCreatureForCounterCost(gameData, player, card, creatureId, cost.counterType());
     }
 
     /** Validates the creature choice for a blight additional cast cost. */
     public Permanent validateBlightCost(GameData gameData, Player player, Card card, UUID creatureId) {
-        return validateControlledCreatureForCounterCost(gameData, player, card, creatureId);
+        return validateControlledCreatureForCounterCost(gameData, player, card, creatureId,
+                CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     /** Validates the counter-payment option of a counter-or-mana additional cast cost. */
     public Permanent validatePutCountersOnControlledCreatureOrPayManaCost(
             GameData gameData, Player player, Card card,
             PutCountersOnControlledCreatureOrPayManaCost cost, UUID creatureId) {
-        return validateControlledCreatureForCounterCost(gameData, player, card, creatureId);
+        return validateControlledCreatureForCounterCost(gameData, player, card, creatureId, cost.counterType());
     }
 
     private Permanent validateControlledCreatureForCounterCost(GameData gameData, Player player, Card card,
-                                                               UUID creatureId) {
+                                                               UUID creatureId, CounterType counterType) {
         if (creatureId == null) {
             throw new IllegalStateException("Must put a counter on a creature you control to cast " + card.getName());
         }
@@ -2768,7 +2769,19 @@ public class AdditionalSpellCostService {
         if (!gameQueryService.isCreature(gameData, creature)) {
             throw new IllegalStateException("Counter target must be a creature");
         }
+        if (!canReceiveCounters(gameData, creature, counterType)) {
+            throw new IllegalStateException("Creature cannot have " + counterType + " counters put on it to cast "
+                    + card.getName());
+        }
         return creature;
+    }
+
+    private boolean canReceiveCounters(GameData gameData, Permanent creature, CounterType counterType) {
+        return !gameQueryService.cantHaveCounters(gameData, creature)
+                && (counterType != CounterType.PLUS_ONE_PLUS_ONE
+                || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, creature))
+                && (counterType != CounterType.MINUS_ONE_MINUS_ONE
+                || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, creature));
     }
 
     /**

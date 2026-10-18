@@ -366,10 +366,25 @@ public class DrawService {
         }
 
         if (isDrawSkipped(gameData, playerId)) {
-            String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
-            log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
-            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            Map<String, Permanent> competingSources = collectExileReplacementSources(gameData, playerId);
+            MaySkipDrawSource competingMaySkip = findMaySkipDrawSource(gameData, playerId);
+            Permanent skipSource = findDrawSkipSource(gameData, playerId);
+            if (skipSource != null && (!competingSources.isEmpty() || competingMaySkip != null)) {
+                Map<String, UUID> sourceIds = new LinkedHashMap<>();
+                sourceIds.put(skipSource.getCard().getName(), skipSource.getId());
+                competingSources.forEach((name, source) -> sourceIds.putIfAbsent(name, source.getId()));
+                if (competingMaySkip != null) {
+                    sourceIds.putIfAbsent(competingMaySkip.card().getName(), competingMaySkip.sourcePermanentId());
+                }
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null,
+                        new com.github.laxika.magicalvibes.model.ChoiceContext.DrawReplacementSourceChoice(
+                                playerId, sourceIds),
+                        List.copyOf(sourceIds.keySet()),
+                        "Choose which replacement effect to apply to this draw."));
+                return;
+            }
+            skipDraw(gameData, playerId);
             return;
         }
 
@@ -413,28 +428,7 @@ public class DrawService {
             return;
         }
 
-        Map<String, Permanent> exileReplacementSources = new LinkedHashMap<>();
-        Permanent sharedFateSource = findSharedFateSource(gameData);
-        if (sharedFateSource != null) {
-            exileReplacementSources.putIfAbsent(sharedFateSource.getCard().getName(), sharedFateSource);
-        }
-        Permanent exileTopCardsSource = findExileTopCardsMayPlayThisTurnDrawReplacementSource(gameData, playerId);
-        if (exileTopCardsSource != null) {
-            exileReplacementSources.putIfAbsent(exileTopCardsSource.getCard().getName(), exileTopCardsSource);
-        }
-        Permanent exileTopCardSource = findExileTopCardFaceDownInsteadOfDrawSource(gameData, playerId);
-        if (exileTopCardSource != null) {
-            exileReplacementSources.putIfAbsent(exileTopCardSource.getCard().getName(), exileTopCardSource);
-        }
-        if (!exileReplacementSources.isEmpty()) {
-            List<Card> libraryBeforeDraw = gameData.playerDecks.get(playerId);
-            Permanent winOnEmptyLibrarySource = libraryBeforeDraw == null || libraryBeforeDraw.isEmpty()
-                    ? findWinOnEmptyLibraryDrawSource(gameData, playerId) : null;
-            if (winOnEmptyLibrarySource != null) {
-                exileReplacementSources.putIfAbsent(
-                        winOnEmptyLibrarySource.getCard().getName(), winOnEmptyLibrarySource);
-            }
-        }
+        Map<String, Permanent> exileReplacementSources = collectExileReplacementSources(gameData, playerId);
         MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (exileReplacementSources.size() > 1
                 || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)) {
@@ -744,14 +738,14 @@ public class DrawService {
         }
 
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
-        if (replacementController != null) {
+        if (replacementController != null && !gameData.drawRedirectsAppliedToCurrentDraw.contains(playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
             String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - Draw redirect: {}'s draw goes to {} instead",
                     gameData.id, playerName, controllerName);
-            performDrawCard(gameData, replacementController);
+            redirectDraw(gameData, playerId, replacementController);
             return;
         }
 
@@ -809,6 +803,23 @@ public class DrawService {
         }
     }
 
+    /**
+     * Makes {@code controllerId} draw instead of {@code playerId} (Plagiarize). The replacement draw is
+     * itself a draw, so the new drawer's other replacement effects apply to it, but this redirect never
+     * applies again to the same draw (CR 614.5).
+     */
+    private void redirectDraw(GameData gameData, UUID playerId, UUID controllerId) {
+        boolean outermost = gameData.drawRedirectsAppliedToCurrentDraw.isEmpty();
+        gameData.drawRedirectsAppliedToCurrentDraw.add(playerId);
+        try {
+            resolveDrawCard(gameData, controllerId);
+        } finally {
+            if (outermost) {
+                gameData.drawRedirectsAppliedToCurrentDraw.clear();
+            }
+        }
+    }
+
     private List<UUID> opponentsInApnapOrder(GameData gameData, UUID controllerId) {
         List<UUID> opponents = new ArrayList<>();
         UUID activePlayerId = gameData.activePlayerId;
@@ -852,7 +863,7 @@ public class DrawService {
         }
 
         UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
-        if (replacementController != null) {
+        if (replacementController != null && !gameData.drawRedirectsAppliedToCurrentDraw.contains(playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
             String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
@@ -863,7 +874,7 @@ public class DrawService {
             if (replacementController.equals(playerId)) {
                 performDrawCard(gameData, replacementController);
             } else {
-                resolveDrawCard(gameData, replacementController);
+                redirectDraw(gameData, playerId, replacementController);
             }
             return;
         }
@@ -1039,6 +1050,58 @@ public class DrawService {
             }
         }
         return count;
+    }
+
+    /** The mandatory exile-style replacements that currently compete for this player's draw, keyed by card name. */
+    private Map<String, Permanent> collectExileReplacementSources(GameData gameData, UUID playerId) {
+        Map<String, Permanent> exileReplacementSources = new LinkedHashMap<>();
+        Permanent sharedFateSource = findSharedFateSource(gameData);
+        if (sharedFateSource != null) {
+            exileReplacementSources.putIfAbsent(sharedFateSource.getCard().getName(), sharedFateSource);
+        }
+        Permanent exileTopCardsSource = findExileTopCardsMayPlayThisTurnDrawReplacementSource(gameData, playerId);
+        if (exileTopCardsSource != null) {
+            exileReplacementSources.putIfAbsent(exileTopCardsSource.getCard().getName(), exileTopCardsSource);
+        }
+        Permanent exileTopCardSource = findExileTopCardFaceDownInsteadOfDrawSource(gameData, playerId);
+        if (exileTopCardSource != null) {
+            exileReplacementSources.putIfAbsent(exileTopCardSource.getCard().getName(), exileTopCardSource);
+        }
+        if (!exileReplacementSources.isEmpty()) {
+            List<Card> libraryBeforeDraw = gameData.playerDecks.get(playerId);
+            Permanent winOnEmptyLibrarySource = libraryBeforeDraw == null || libraryBeforeDraw.isEmpty()
+                    ? findWinOnEmptyLibraryDrawSource(gameData, playerId) : null;
+            if (winOnEmptyLibrarySource != null) {
+                exileReplacementSources.putIfAbsent(
+                        winOnEmptyLibrarySource.getCard().getName(), winOnEmptyLibrarySource);
+            }
+        }
+        return exileReplacementSources;
+    }
+
+    private Permanent findDrawSkipSource(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        boolean libraryEmpty = library == null || library.isEmpty();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effect ->
+                        effect instanceof SkipDrawReplacementEffect
+                                || (libraryEmpty
+                                && pid.equals(playerId)
+                                && effect instanceof SkipDrawIfEmptyLibraryReplacementEffect));
+                if (skips) return permanent;
+            }
+        }
+        return null;
+    }
+
+    private void skipDraw(GameData gameData, UUID playerId) {
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
+        log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
+        gameData.chainsDrawReplacementsApplied.remove(playerId);
     }
 
     private boolean isDrawSkipped(GameData gameData, UUID playerId) {
@@ -1958,6 +2021,11 @@ public class DrawService {
         MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (maySkipDrawSource != null && maySkipDrawSource.sourcePermanentId().equals(sourcePermanentId)) {
             queueMaySkipDrawReplacement(gameData, playerId, maySkipDrawSource);
+            return;
+        }
+        Permanent skipSource = findDrawSkipSource(gameData, playerId);
+        if (skipSource != null && skipSource.getId().equals(sourcePermanentId)) {
+            skipDraw(gameData, playerId);
             return;
         }
         applyExileDrawReplacement(gameData, playerId, source);

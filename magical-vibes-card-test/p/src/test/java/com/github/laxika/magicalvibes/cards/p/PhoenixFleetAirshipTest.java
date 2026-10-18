@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PhoenixFleetAirship.class, BottleGnomes.class})
@@ -166,6 +168,8 @@ class PhoenixFleetAirshipTest extends BaseCardTest {
     @Test
     @DisplayName("A token copy retains the sacrifice-triggered ability on a later turn")
     void tokenCopyRetainsTriggeredAbility() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new PhoenixFleetAirship());
         harness.addToBattlefield(player1, new BottleGnomes());
         harness.forceActivePlayer(player1);
@@ -209,6 +213,8 @@ class PhoenixFleetAirshipTest extends BaseCardTest {
     @Test
     @DisplayName("A sacrifice on a previous turn does not enable a later end-step trigger")
     void previousTurnSacrificeDoesNotEnableTrigger() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new PhoenixFleetAirship());
         harness.addToBattlefield(player1, new BottleGnomes());
         harness.forceActivePlayer(player1);

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.a.AmazingSpiderMan;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -32,7 +33,8 @@ public class PeterParker extends Card {
         ));
         addActivatedAbility(new ActivatedAbility(
                 false, "{1}{G}{W}{U}", List.of(new TransformSelfEffect()),
-                "{1}{G}{W}{U}: Transform Peter Parker. Activate only as a sorcery."
+                "{1}{G}{W}{U}: Transform Peter Parker. Activate only as a sorcery.",
+                ActivationTimingRestriction.SORCERY_SPEED
         ));
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Peter Parker", List.of())

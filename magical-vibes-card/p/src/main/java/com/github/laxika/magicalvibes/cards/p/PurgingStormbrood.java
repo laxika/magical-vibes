@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AbsorbEssence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.OmenCast;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,6 +15,7 @@ public class PurgingStormbrood extends Card {
     public PurgingStormbrood() {
         setBackFaceCard(new AbsorbEssence());
         addCastingOption(new OmenCast());
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(0, 2));
 
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RemoveAllCountersFromTargetPermanentEffect());

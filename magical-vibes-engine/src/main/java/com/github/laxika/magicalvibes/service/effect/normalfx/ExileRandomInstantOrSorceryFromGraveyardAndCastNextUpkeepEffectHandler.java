@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Component
@@ -37,15 +36,17 @@ public class ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
+        UUID chosenCardId = ((ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect) effect).chosenCardId();
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
-        List<Card> candidates = graveyard.stream()
+        Card exiled = graveyard.stream()
+                .filter(card -> card.getId().equals(chosenCardId))
                 .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                .toList();
-        if (candidates.isEmpty()) {
+                .findFirst()
+                .orElse(null);
+        if (exiled == null) {
             return;
         }
 
-        Card exiled = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
         exileService.exileCard(gameData, controllerId, exiled);
         gameData.exileInsteadOfGraveyard.add(exiled.getId());

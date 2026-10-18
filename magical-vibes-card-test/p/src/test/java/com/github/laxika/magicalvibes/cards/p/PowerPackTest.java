@@ -97,6 +97,7 @@ class PowerPackTest extends BaseCardTest {
     void nextUpkeepCastIsExiledAfterActualTurnTransitions() {
         Divination divination = new Divination();
         harness.setGraveyard(player1, List.of(divination));
+        harness.setHand(player2, List.of());
         addAttackingPowerPack();
         resolveCombat();
         resolveAllTriggers();

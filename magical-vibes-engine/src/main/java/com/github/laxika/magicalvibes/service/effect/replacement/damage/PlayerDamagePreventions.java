@@ -87,7 +87,8 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceColors(), ctx.combat())),
                 effect("ChosenSourcePrevented", PREVENTION,
                         ctx -> prevention.isSourceDamagePreventedForPlayer(
-                                ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.combat()),
+                                ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.combat(),
+                                ctx.damageSourceColors()),
                         ctx -> "Prevent damage from the chosen source " + ctx.source().getName(),
                         ctx -> {
                             prevention.applySourceDamagePreventionForPlayer(ctx.gameData(), ctx.playerId(),
@@ -341,7 +342,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
 
     private int opponentSourceReduction(PlayerDamageContext ctx) {
         return prevention.applyOpponentSourceDamageReduction(
-                ctx.gameData(), ctx.playerId(), ctx.entry().getControllerId(), ctx.amount(), ctx.combat());
+                ctx.gameData(), ctx.playerId(), ctx.sourceControllerId(), ctx.amount(), ctx.combat());
     }
 
     private int controllerAndCreaturesPrevented(PlayerDamageContext ctx) {

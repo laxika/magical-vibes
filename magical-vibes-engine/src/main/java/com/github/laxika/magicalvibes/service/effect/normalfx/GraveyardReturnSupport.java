@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -369,7 +370,8 @@ public class GraveyardReturnSupport {
                             permanent.setEnteredFromGraveyardOwnerId(targetOwnerId);
                             if (effect.battlefieldEffectGrants() != null) {
                                 for (CardEffect grant : effect.battlefieldEffectGrants()) {
-                                    if (grant instanceof GrantColorEffect || grant instanceof SetCardTypesEffect) {
+                                    if (grant instanceof GrantColorEffect || grant instanceof SetCardTypesEffect
+                                            || grant instanceof GrantCardTypeEffect) {
                                         gameData.addFloatingEffect(new FloatingContinuousEffect(
                                                 UUID.randomUUID(), entry.getCard().getName(),
                                                 entry.getSourcePermanentId(), entry.getControllerId(), grant,
@@ -747,7 +749,8 @@ public class GraveyardReturnSupport {
                 String sourceCardName = entry == null ? card.getName() : entry.getCard().getName();
                 UUID sourcePermanentId = entry == null ? null : entry.getSourcePermanentId();
                 for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
-                    if ((grantedEffect instanceof GrantColorEffect || grantedEffect instanceof SetCardTypesEffect)
+                    if ((grantedEffect instanceof GrantColorEffect || grantedEffect instanceof SetCardTypesEffect
+                            || grantedEffect instanceof GrantCardTypeEffect)
                             && gameData.floatingEffects.stream().anyMatch(floating ->
                             grantedEffect.equals(floating.effect())
                                     && p.getId().equals(floating.affectedPermanentId())
@@ -902,6 +905,11 @@ public class GraveyardReturnSupport {
             String sourceLabel;
             if (effect.discardedByOpponentThisTurn()) {
                 trackedIds = gameData.cardsDiscardedByOpponentThisTurn.getOrDefault(controllerId, Set.of());
+                if (!entry.getEventCardIds().isEmpty()) {
+                    // "Return those cards": only the cards discarded in the event that triggered this.
+                    trackedIds = trackedIds.stream().filter(entry.getEventCardIds()::contains)
+                            .collect(java.util.stream.Collectors.toCollection(HashSet::new));
+                }
                 sourceLabel = "because of an opponent's spell or ability";
             } else if (effect.discardedOrCycledThisTurn()) {
                 trackedIds = gameData.cardsDiscardedOrCycledThisTurn.getOrDefault(controllerId, Set.of());

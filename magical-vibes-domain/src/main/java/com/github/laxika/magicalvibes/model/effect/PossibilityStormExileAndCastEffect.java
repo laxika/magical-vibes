@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 import java.util.UUID;
 
 /**
@@ -12,9 +14,14 @@ import java.util.UUID;
  * player who cast the spell, so {@code castingPlayerId} tracks them separately. The ability still
  * works if the enchantment has left the battlefield by the time it resolves — the exile tracking is
  * keyed by {@code sourcePermanentId} alone.</p>
+ *
+ * <p>{@code originalSpellCard} is the spell as it was cast. If the spell has already left the stack when
+ * the ability resolves (another Possibility Storm exiled it first), its card types are still used for
+ * the library search.</p>
  */
 public record PossibilityStormExileAndCastEffect(
         UUID originalSpellCardId,
+        Card originalSpellCard,
         UUID sourcePermanentId,
         UUID castingPlayerId
 ) implements CardEffect {

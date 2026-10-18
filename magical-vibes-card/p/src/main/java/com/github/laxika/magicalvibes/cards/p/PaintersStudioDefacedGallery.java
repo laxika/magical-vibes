@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -27,7 +29,8 @@ public class PaintersStudioDefacedGallery extends Card {
         addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggeringRoomDoorConditionalEffect(0,
                         new ExileTopCardsMayPlayUntilNextTurnEffect(2)));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                new BoostAllOwnCreaturesEffect(1, 0, new PermanentIsAttackingPredicate()));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+                new SourceRoomDoorUnlocked(1),
+                new BoostAllOwnCreaturesEffect(1, 0, new PermanentIsAttackingPredicate())));
     }
 }

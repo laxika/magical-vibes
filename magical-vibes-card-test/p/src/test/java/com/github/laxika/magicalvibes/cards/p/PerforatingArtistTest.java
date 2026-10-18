@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -89,7 +90,8 @@ class PerforatingArtistTest extends BaseCardTest {
     void opponentMayDeclineBothAlternatives() {
         harness.addToBattlefield(player1, new PerforatingArtist());
         harness.addToBattlefield(player2, new LlanowarElves());
-        harness.setHand(player2, List.of(new LlanowarElves()));
+        Card handElves = new LlanowarElves();
+        harness.setHand(player2, List.of(handElves));
         harness.setLife(player2, 20);
 
         markAttackedThisTurn();
@@ -99,7 +101,7 @@ class PerforatingArtistTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         harness.assertOnBattlefield(player2, "Llanowar Elves");
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).contains(handElves);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1815,6 +1815,10 @@ public class PermanentRemovalService {
                     if (target.getId().equals(entry.getTargetId())
                             || entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.rememberRemovedPermanentController(target.getId(), playerId);
+                        entry.getLastKnownPermanentPowers().put(target.getId(),
+                                gameQueryService.getEffectivePower(gameData, target));
+                        entry.getLastKnownPermanentToughnesses().put(target.getId(),
+                                gameQueryService.getEffectiveToughness(gameData, target));
                     }
                     if (target.getId().equals(entry.getAttackedTargetId())) {
                         if (gameQueryService.isBattle(gameData, target)) {
@@ -2828,6 +2832,18 @@ public class PermanentRemovalService {
                 pendingReturns = remaining.isEmpty() ? null : remaining;
             }
         }
+        if (pendingReturns != null && removedPermanent.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
+                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect.class::isInstance)) {
+            // Portcullis: each exile created its own delayed "return that card when this leaves the
+            // battlefield" ability, so every exiled card returns through its own triggered ability.
+            for (PendingExileReturn delayed : pendingReturns) {
+                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, removedPermanent.getCard(),
+                        controllerId, removedPermanent.getCard().getName() + "'s delayed return ability",
+                        new ArrayList<>(List.of(new ResolvePendingExileReturnEffect(delayed,
+                                gameData.exileEntryVersions.getOrDefault(delayed.card().getId(), 0L))))));
+            }
+            pendingReturns = null;
+        }
         boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
                 .stream()
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
@@ -3000,6 +3016,15 @@ public class PermanentRemovalService {
             return null;
         }
 
+        if (currentExileEntry != null && returnsAuraThroughHostChoice(pending)) {
+            // CR 303.4f: an Aura entering without being cast is put onto an object its controller chooses
+            // as it enters; if none can be enchanted it stays in exile (CR 303.4g).
+            battlefieldEntryBatchSupport.begin(gameData, List.of(new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                    ownerId, currentExileEntry.ownerId(), exiledCard, Zone.EXILE, null)
+                    .withTapped(pending.returnTapped())));
+            return null;
+        }
+
         if (gameData.removeFromExile(exiledCard.getId())) {
             String playerName = gameData.playerIdToName.get(ownerId);
 
@@ -3022,6 +3047,15 @@ public class PermanentRemovalService {
             log.info("Game {} - Exiled card {} no longer in exile zone, return skipped", gameData.id, exiledCard.getName());
         }
         return null;
+    }
+
+    private static boolean returnsAuraThroughHostChoice(PendingExileReturn pending) {
+        Card card = pending.card();
+        return !pending.returnToGraveyard() && !pending.returnToHand()
+                && card.isAura() && !card.isEnchantZone()
+                && pending.additionalCards().isEmpty() && pending.cardsToAttachToPrimary().isEmpty()
+                && pending.plusOnePlusOneCounters() == 0 && pending.counterAmountOnReturn() == 0
+                && pending.countersOnReturn().isEmpty() && !pending.grantHaste();
     }
 
     private UUID returnExiledCardsToBattlefield(GameData gameData, UUID ownerId,

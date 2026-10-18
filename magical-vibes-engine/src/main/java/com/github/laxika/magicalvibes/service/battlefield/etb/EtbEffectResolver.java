@@ -169,6 +169,10 @@ public class EtbEffectResolver {
                 case CastForMadnessCost ignored -> ctx.madness() ? conditional.wrapped() : null;
                 // CR 702.152a: blitz's end-step sacrifice is a delayed trigger queued by StackResolutionService.
                 case CastForAlternateCost ignored when conditional.wrapped() instanceof SacrificeSelfAtEndStepEffect -> null;
+                // CR 702.152a: blitz's haste is a static ability granted by StackResolutionService as the spell resolves.
+                case CastForAlternateCost ignored when conditional.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect grant
+                        && grant.scope() == com.github.laxika.magicalvibes.model.effect.GrantScope.SELF
+                        && grant.keywords().equals(java.util.Set.of(com.github.laxika.magicalvibes.model.Keyword.HASTE)) -> null;
                 case CastForAlternateCost ignored -> ctx.alternateCost() ? conditional.wrapped() : null;
                 // Spectacle branch selection is fixed when the permanent enters.
                 case CastForSpectacleCost ignored ->

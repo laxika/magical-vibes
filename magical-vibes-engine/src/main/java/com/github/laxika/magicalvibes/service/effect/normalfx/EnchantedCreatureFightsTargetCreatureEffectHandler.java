@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +14,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EnchantedCreatureFightsTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final DamageSupport damageSupport;
+    private final FightSupport fightSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,26 +46,6 @@ public class EnchantedCreatureFightsTargetCreatureEffectHandler implements Norma
             return;
         }
 
-        // Enchanted creature deals damage equal to its power to the target creature.
-        int enchantedPower = gameQueryService.getPowerBasedDamage(gameData, enchanted);
-        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, enchanted)) {
-            gameLogService.append(gameData, GameLog.cardThen(enchanted.getCard(), "'s damage is prevented."));
-        } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, enchanted)) {
-            gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " has protection — damage from ", enchanted.getCard(), " prevented."));
-        } else {
-            int damage = enchantedPower;
-            damageSupport.dealCreatureDamage(gameData, entry, target, damage, enchanted);
-        }
-
-        // Target creature deals damage equal to its power back to the enchanted creature.
-        int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
-        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, target)) {
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), "'s damage is prevented."));
-        } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, enchanted, target)) {
-            gameLogService.append(gameData, GameLog.cardTextCard(enchanted.getCard(), " has protection — damage from ", target.getCard(), " prevented."));
-        } else {
-            int damage = targetPower;
-            damageSupport.dealCreatureDamage(gameData, entry, enchanted, damage, target);
-        }
+        fightSupport.fight(gameData, entry, enchanted, target);
     }
 }

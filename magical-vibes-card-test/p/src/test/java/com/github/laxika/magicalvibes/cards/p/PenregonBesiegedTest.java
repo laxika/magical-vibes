@@ -81,6 +81,7 @@ class PenregonBesiegedTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Card creature(String name, int power, int toughness) {

@@ -402,6 +402,8 @@ public sealed interface TriggerContext {
     /** Context for time-counter-removal triggers. */
     record TimeCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
 
+    record PlusOnePlusOneCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
     /** Context for counters being removed from a permanent controlled by the watcher. */
     record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
 

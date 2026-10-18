@@ -16,6 +16,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * restriction and evaluate matching permanents during that player's upcoming untap steps, including
  * later arrivals (the affected set is not fixed at resolution, CR 611.2c).
  *
+ * The {@link TapUntapScope#OPPONENTS_PERMANENTS} scope marks the matching permanents each opponent of
+ * the controller currently controls and, when {@code matchAtUntap} is true, also registers the
+ * restriction for each opponent's next untap step so permanents arriving later are held too
+ * (Pollen Lullaby, CR 611.2c).
+ *
  * <p>Also a {@link CombatOpponentReferencingEffect}: when placed on the {@code ON_BLOCK} slot of an
  * attached permanent (aura/equipment) with {@link TapUntapScope#TARGET}, {@code CombatTriggerService}
  * auto-targets the equipped/enchanted creature's combat opponent (the blocked attacker) — e.g. Shield
@@ -71,7 +76,7 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
 
     public SkipNextUntapEffect {
         if (matchAtUntap && scope != TapUntapScope.TARGET_PLAYERS_PERMANENTS
-                && scope != TapUntapScope.CONTROLLED) {
+                && scope != TapUntapScope.CONTROLLED && scope != TapUntapScope.OPPONENTS_PERMANENTS) {
             throw new IllegalArgumentException("Matching at untap requires a target player");
         }
         if (allPlayersAtUntap && !matchAtUntap) {

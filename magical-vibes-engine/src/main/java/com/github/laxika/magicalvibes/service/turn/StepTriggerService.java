@@ -5217,7 +5217,9 @@ public class StepTriggerService {
                 int totalCountersToAdd = counterEntry.totalCounters();
                 Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
                 if (perm == null) continue;
-                UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
+                UUID controllerId = counterEntry.controllerId() != null
+                        ? counterEntry.controllerId()
+                        : gameQueryService.findPermanentController(gameData, permanentId);
                 if (controllerId == null) continue;
 
                 int triggerCount = totalCountersToAdd / 2; // each trigger adds 2 counters
@@ -6672,7 +6674,7 @@ public class StepTriggerService {
                         continue;
                     }
 
-                    gameData.stack.add(new StackEntry(
+                    StackEntry opponentEndStepTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             playerId,
@@ -6680,7 +6682,10 @@ public class StepTriggerService {
                             new ArrayList<>(List.of(effect)),
                             activePlayerId,
                             perm.getId()
-                    ));
+                    );
+                    // The end-step player is only a reference for "that player", never a target.
+                    opponentEndStepTrigger.setNonTargeting(true);
+                    gameData.stack.add(opponentEndStepTrigger);
 
                     gameLogService.append(gameData,
                             GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));

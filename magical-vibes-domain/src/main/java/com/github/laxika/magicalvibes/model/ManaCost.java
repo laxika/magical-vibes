@@ -287,12 +287,28 @@ public class ManaCost {
 
     /** Whether this cost can be paid after applying a mana-cost reduction. */
     public boolean canPayAfterReduction(ManaPool pool, ManaCost reduction) {
-        return reducedBy(reduction).canPay(pool);
+        return canPayAfterReduction(pool, reduction, 0);
+    }
+
+    /**
+     * Checks this cost after applying a mana-cost reduction and then adding {@code additionalGeneric}
+     * generic mana (a cost increase such as Sphere of Resistance's {1}, applied to the reduced total).
+     */
+    public boolean canPayAfterReduction(ManaPool pool, ManaCost reduction, int additionalGeneric) {
+        return reducedBy(reduction).canPay(pool, additionalGeneric);
     }
 
     /** Pays this cost after applying a mana-cost reduction. */
     public void payAfterReduction(ManaPool pool, ManaCost reduction) {
-        reducedBy(reduction).pay(pool);
+        payAfterReduction(pool, reduction, 0);
+    }
+
+    /**
+     * Pays this cost after applying a mana-cost reduction and then adding {@code additionalGeneric}
+     * generic mana.
+     */
+    public void payAfterReduction(ManaPool pool, ManaCost reduction, int additionalGeneric) {
+        reducedBy(reduction).pay(pool, additionalGeneric);
     }
 
     public boolean hasX() {

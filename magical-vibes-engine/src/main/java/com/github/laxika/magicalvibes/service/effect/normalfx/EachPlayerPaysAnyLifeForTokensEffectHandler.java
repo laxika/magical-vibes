@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyLifeForTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,8 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
-    private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
+    private final PermanentControlSupport permanentControlSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,11 +74,11 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
             if (amount > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, cardName);
                 state.lifePaid.merge(playerId, amount, Integer::sum);
-                state.consecutivePasses = 0;
+                state.paidThisRound = true;
             } else {
                 gameLogService.append(gameData, GameLog.text(playerName + " pays no life for " + cardName + "."));
-                state.consecutivePasses++;
             }
+            state.playersActedThisRound++;
             state.index = (state.index + 1) % state.order.size();
             promptOrFinish(gameData, payEffect, cardName);
         }
@@ -84,16 +86,24 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
 
     /**
      * Prompts the next player who can pay life, skipping (as an automatic pass) any player whose
-     * life total is 0 or less. When a full round of consecutive passes has elapsed, finishes by
-     * creating each player's tokens and clearing the flow.
+     * life total is 0 or less or can't change. When a full round has elapsed with no one paying, finishes by
+     * creating each player's tokens and clearing the flow; otherwise a new round begins.
      */
     private void promptOrFinish(GameData gameData, EachPlayerPaysAnyLifeForTokensEffect effect, String cardName) {
         EachPlayerPayLifeState state = gameData.eachPlayerPayLife;
-        while (state.consecutivePasses < state.order.size()) {
+        while (true) {
+            if (state.playersActedThisRound >= state.order.size()) {
+                if (!state.paidThisRound) {
+                    finish(gameData, effect, cardName);
+                    return;
+                }
+                state.playersActedThisRound = 0;
+                state.paidThisRound = false;
+            }
             UUID playerId = state.order.get(state.index);
             int life = gameData.getLife(playerId);
-            if (life <= 0) {
-                state.consecutivePasses++;
+            if (life <= 0 || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                state.playersActedThisRound++;
                 state.index = (state.index + 1) % state.order.size();
                 continue;
             }
@@ -104,7 +114,6 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
                     new PendingInteraction.XValueChoice(playerId, life, prompt, cardName));
             return;
         }
-        finish(gameData, effect, cardName);
     }
 
     /** Creates each player's Rat tokens (one per life paid) and clears the flow. */
@@ -112,8 +121,8 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
         EachPlayerPayLifeState state = gameData.eachPlayerPayLife;
         for (UUID playerId : state.order) {
             int count = state.lifePaid.getOrDefault(playerId, 0);
-            for (int i = 0; i < count; i++) {
-                destructionSupport.createTokenForPlayer(gameData, playerId, effect.token(), cardName,
+            if (count > 0) {
+                permanentControlSupport.applyCreateToken(gameData, playerId, effect.token(), count,
                         state.sourceSetCode);
             }
         }

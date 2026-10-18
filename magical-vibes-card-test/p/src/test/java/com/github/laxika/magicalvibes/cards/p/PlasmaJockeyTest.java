@@ -71,7 +71,6 @@ class PlasmaJockeyTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent jockey = gd.playerBattlefields.get(player1.getId()).getLast();
         assertThat(gqs.hasKeyword(gd, jockey, Keyword.HASTE)).isTrue();

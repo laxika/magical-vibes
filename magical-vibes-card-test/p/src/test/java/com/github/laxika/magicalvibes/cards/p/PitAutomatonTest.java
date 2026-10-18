@@ -111,7 +111,7 @@ class PitAutomatonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -125,7 +125,7 @@ class PitAutomatonTest extends BaseCardTest {
     @Test
     void copiesOnlyTheNextQualifyingAbility() {
         addReady(new PitAutomaton());
-        addReady(new LootThePathfinder());
+        Permanent loot = addReady(new LootThePathfinder());
         harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setLife(player2, 20);
@@ -140,6 +140,7 @@ class PitAutomatonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        loot.untap();
         harness.activateAbility(player1, 1, 2, null, player2.getId());
         harness.passBothPriorities();
 

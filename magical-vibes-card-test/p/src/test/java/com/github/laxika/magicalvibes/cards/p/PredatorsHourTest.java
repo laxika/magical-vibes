@@ -93,7 +93,6 @@ class PredatorsHourTest extends BaseCardTest {
 
         laterCreature.setAttacking(true);
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
@@ -115,8 +114,6 @@ class PredatorsHourTest extends BaseCardTest {
         first.setAttacking(true);
         second.setAttacking(true);
         resolveCombat();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(firstCard.getId())).isNotNull();
         assertThat(gd.findExiledCard(secondCard.getId())).isNotNull();
@@ -174,7 +171,6 @@ class PredatorsHourTest extends BaseCardTest {
         harness.clearPriorityPassed();
         attacker.setAttacking(true);
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);

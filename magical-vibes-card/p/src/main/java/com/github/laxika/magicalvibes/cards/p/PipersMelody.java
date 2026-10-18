@@ -12,6 +12,7 @@ public class PipersMelody extends Card {
 
     public PipersMelody() {
         addEffect(EffectSlot.SPELL, new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
-                new CardTypePredicate(CardType.CREATURE)));
+                new CardTypePredicate(CardType.CREATURE),
+                ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.ANY_NUMBER, false, true));
     }
 }

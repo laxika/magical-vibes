@@ -61,7 +61,7 @@ public sealed interface DynamicAmount permits
         ColorsAmongControlledPermanents,
         ColorsAmongControlledPermanentsAndSpellsCastThisTurn,
         ColorManaSymbolsInGraveyard,
-        ColorManaSymbolsInHand,
+        ColorManaSymbolsInRevealedCards,
         ColorsAmongCardsExiledWithSource,
         CardsInHand,
         ConvokeCreatureCount,

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToControllerShield;
 import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSorceryDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
@@ -41,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAttachedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
@@ -487,7 +487,8 @@ public class DamagePreventionService {
                     return 0;
                 }));
         steps.add(step("DamageToMinusOneCounters", "Put -1/-1 counters on it instead", replacement, false,
-                (gd, c, damage) -> damage > 0 && !gameQueryService.hasLostAllAbilities(gd, c.permanent())
+                (gd, c, damage) -> damage > 0 && preventable(gd, c)
+                        && !gameQueryService.hasLostAllAbilities(gd, c.permanent())
                         && c.permanent().getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(PreventDamageAndAddMinusCountersEffect.class::isInstance),
                 (gd, c, damage) -> {
@@ -615,8 +616,8 @@ public class DamagePreventionService {
                         && hasAttachedEquipment(gd, c.permanent()),
                 (gd, c, damage) -> preventDamageAndSacrificeAttachedEquipment(gd, c.permanent()) ? 0 : damage));
         steps.add(step("PreventAndDealThatMuch", "Prevent the damage and have it deal that much", prevention, false,
-                (gd, c, damage) -> preventable(gd, c) && c.permanent().getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(PreventDamageToSelfAndDealThatMuchDamageEffect.class::isInstance),
+                (gd, c, damage) -> preventable(gd, c) && gameQueryService.hasActiveStaticEffect(
+                        gd, c.permanent(), PreventDamageToSelfAndDealThatMuchDamageEffect.class),
                 (gd, c, damage) -> {
                     queuePhyrexianVindicatorTrigger(gd, c.permanent(), damage);
                     return 0;
@@ -761,10 +762,9 @@ public class DamagePreventionService {
         int countersToRemove = effect.removeOneOnly()
                 ? Math.min(1, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 : Math.min(damage, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE));
-        if (countersToRemove > 0 && !gameQueryService.cantHaveCounters(gameData, permanent)) {
+        if (countersToRemove > 0) {
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                     permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - countersToRemove);
-            registerDelayedRegrowth(gameData, permanent, countersToRemove);
             if (effect.dealsPreventedDamage()) {
                 queuePreventedDamageTrigger(gameData, permanent, countersToRemove, false);
             }
@@ -1281,18 +1281,6 @@ public class DamagePreventionService {
                                                 .withSourcePermanentId(source.getId()))))));
     }
 
-    /**
-     * Registers delayed +1/+1 counter regrowth triggers for Protean Hydra-style effects.
-     * Each removed counter creates a separate delayed trigger that adds 2 +1/+1 counters
-     * at the beginning of the next end step (ruling: "its last ability will trigger that many times").
-     */
-    void registerDelayedRegrowth(GameData gameData, Permanent permanent, int countersRemoved) {
-        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
-            gameData.addDelayedPlusOneCounters(permanent.getId(), countersRemoved * 2);
-        }
-    }
-
     private void giveEachPlayerRadCounters(GameData gameData, int amount) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             gameData.playerRadCounters.merge(playerId, amount, Integer::sum);
@@ -1574,10 +1562,24 @@ public class DamagePreventionService {
 
     public boolean isSourceDamagePreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                                      boolean combatDamage) {
+        return isSourceDamagePreventedForPlayer(gameData, playerId, sourcePermanentId, combatDamage, null);
+    }
+
+    /**
+     * Whole-turn chosen-source prevention. A shield that required the source to share a color with mana
+     * spent on its activation rechecks the source's current colors (CR 609.7b); {@code null} colors skip
+     * the recheck.
+     */
+    public boolean isSourceDamagePreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                                     boolean combatDamage, Set<CardColor> sourceColors) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return false;
         if (sourcePermanentId == null) return false;
         Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(playerId);
-        return preventedSources != null && preventedSources.contains(sourcePermanentId);
+        if (preventedSources == null || !preventedSources.contains(sourcePermanentId)) return false;
+        Map<UUID, Set<CardColor>> requiredBySource = gameData.playerSourceDamagePreventionRequiredColors.get(playerId);
+        Set<CardColor> required = requiredBySource == null ? null : requiredBySource.get(sourcePermanentId);
+        return sourceColors == null || required == null || required.isEmpty()
+                || sourceColors.stream().anyMatch(required::contains);
     }
 
     /** Applies whole-turn chosen-source prevention to player damage and its optional color rider. */
@@ -1588,7 +1590,9 @@ public class DamagePreventionService {
 
     public int applySourceDamagePreventionForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                                     int damage, Set<CardColor> sourceColors, boolean combatDamage) {
-        if (!isSourceDamagePreventedForPlayer(gameData, playerId, sourcePermanentId, combatDamage)) return damage;
+        if (!isSourceDamagePreventedForPlayer(gameData, playerId, sourcePermanentId, combatDamage, sourceColors)) {
+            return damage;
+        }
 
         Set<UUID> lifeGainSources = gameData.playerSourceDamagePreventionLifeGainIds.get(playerId);
         if (damage > 0 && lifeGainSources != null && lifeGainSources.contains(sourcePermanentId)
@@ -1852,7 +1856,8 @@ public class DamagePreventionService {
         var it = gameData.sourceNextDamageToAnyTargetShields.iterator();
         while (it.hasNext()) {
             var shield = it.next();
-            if (!chosenSourceMatches(gameData, shield.sourceId(), sourcePermanentId)) {
+            if (!chosenSourceMatches(gameData, shield.sourceId(), sourcePermanentId)
+                    || !chosenSourceKeepsRequiredProperties(gameData, shield, sourcePermanentId, sourceEntry)) {
                 continue;
             }
             if (shield.combatOnly() && !combatDamage) {
@@ -2802,8 +2807,8 @@ public class DamagePreventionService {
         if (battlefield == null) return 0;
 
         boolean hasEffect = battlefield.stream().anyMatch(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof PreventNoncombatDamageToControllerAndGainLifeEffect));
+                gameQueryService.hasActiveStaticEffectIncludingGranted(
+                        gameData, p, PreventNoncombatDamageToControllerAndGainLifeEffect.class));
         return hasEffect ? damage : 0;
     }
 
@@ -3255,6 +3260,21 @@ public class DamagePreventionService {
      * A chosen permanent spell is also the source of damage dealt by the permanent it becomes
      * (CR 609.7a), so a shield keyed to the spell's card id matches that permanent.
      */
+    /**
+     * CR 609.7b: a shield for "a red source of your choice" rechecks the source's properties when it
+     * would deal damage; if they no longer match, the damage isn't prevented and the shield isn't used up.
+     */
+    private boolean chosenSourceKeepsRequiredProperties(GameData gameData, SourceNextDamageToAnyTargetShield shield,
+                                                       UUID sourcePermanentId, StackEntry sourceEntry) {
+        if (shield.requiredSourceFilter() == null) {
+            return true;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Card sourceCard = sourceEntry == null ? null : sourceEntry.getEffectiveDamageSourceCard();
+        return gameQueryService.matchesDamageSourcePredicate(
+                gameData, sourceEntry, sourceCard, source, shield.requiredSourceFilter());
+    }
+
     private boolean chosenSourceMatches(GameData gameData, UUID shieldSourceId, UUID sourcePermanentId) {
         if (shieldSourceId.equals(sourcePermanentId)) {
             return true;
@@ -3274,6 +3294,7 @@ public class DamagePreventionService {
         boolean preventable = gameQueryService.isDamagePreventable(gameData, combatDamage);
         return gameData.sourceNextDamageToAnyTargetShields.stream()
                 .anyMatch(shield -> chosenSourceMatches(gameData, shield.sourceId(), sourcePermanentId)
+                        && chosenSourceKeepsRequiredProperties(gameData, shield, sourcePermanentId, null)
                         && (!shield.combatOnly() || combatDamage)
                         && (!shield.playersOnly() || gameData.playerIdToName.containsKey(recipientId))
                         && (shield.combatPhase() == null || shield.combatPhase().equals(gameData.combatPhasesThisTurn))
@@ -3485,9 +3506,8 @@ public class DamagePreventionService {
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
         boolean unblockedSource = combat && isUnblockedCreatureSource(gameData, sourcePermanentId);
         Set<Permanent> absorbers = new LinkedHashSet<>();
-        Permanent enchanted = gameQueryService.findEnchantedCreatureByAuraEffect(
-                gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class);
-        if (enchanted != null) absorbers.add(enchanted);
+        absorbers.addAll(gameQueryService.findEnchantedCreaturesByAuraEffect(
+                gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class));
         if (unblockedSource && gameData.combatDamageRedirectTarget != null
                 && playerId.equals(gameData.combatDamageRedirectPlayer)) {
             Permanent chosen = gameQueryService.findPermanentById(gameData, gameData.combatDamageRedirectTarget);

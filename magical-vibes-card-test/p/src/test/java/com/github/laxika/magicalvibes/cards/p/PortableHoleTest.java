@@ -137,6 +137,7 @@ class PortableHoleTest extends BaseCardTest {
     @DisplayName("The owner chooses a legal attachment when an exiled Aura returns")
     void returningAuraChoosesAttachment() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new RayOfFrost());
         aura.setAttachedTo(bears.getId());
         castAndResolve(aura.getId());

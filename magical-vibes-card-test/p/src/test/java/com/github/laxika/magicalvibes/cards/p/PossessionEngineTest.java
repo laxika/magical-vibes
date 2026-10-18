@@ -137,6 +137,8 @@ class PossessionEngineTest extends BaseCardTest {
         castPossessionEngine(target.getId());
 
         bounce(player1, target);
+        harness.setHand(player2, List.of(gd.playerHands.get(player2.getId()).stream()
+                .filter(card -> card.getName().equals("Grizzly Bears")).findFirst().orElseThrow()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

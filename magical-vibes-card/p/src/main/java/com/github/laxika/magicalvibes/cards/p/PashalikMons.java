@@ -11,9 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -34,9 +32,7 @@ public class PashalikMons extends Card {
                 "{3}{R}",
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN))),
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                                 "Sacrifice a Goblin", false),
                         new CreateTokenEffect(
                                 2, "Goblin", 1, 1, CardColor.RED,

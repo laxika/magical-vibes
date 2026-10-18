@@ -42,7 +42,9 @@ class PutAwayTest extends BaseCardTest {
         Card creature = player1CastsCreature();
         giveP2PutAway();
 
-        harness.castAndResolveInstant(player2, 0, List.of(creature.getId(), buried.getId()));
+        harness.castInstant(player2, 0, creature.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(buried.getId()));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 
@@ -61,7 +63,9 @@ class PutAwayTest extends BaseCardTest {
         Card creature = player1CastsCreature();
         giveP2PutAway();
 
-        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.castInstant(player2, 0, creature.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Scuzzback Scrapper");
@@ -78,7 +82,9 @@ class PutAwayTest extends BaseCardTest {
         Card creature = player1CastsCreature();
         giveP2PutAway();
 
-        harness.castAndResolveInstant(player2, 0, List.of(creature.getId(), buried.getId()));
+        harness.castInstant(player2, 0, creature.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(buried.getId()));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
 

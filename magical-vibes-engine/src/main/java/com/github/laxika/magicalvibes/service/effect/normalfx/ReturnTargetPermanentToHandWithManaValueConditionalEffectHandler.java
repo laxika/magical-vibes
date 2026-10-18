@@ -38,7 +38,7 @@ public class ReturnTargetPermanentToHandWithManaValueConditionalEffectHandler im
             return;
         }
 
-        int manaValue = target.getCard().getManaValue();
+        int manaValue = gameQueryService.getPermanentManaValue(target);
 
         if (permanentRemovalService.removePermanentToHand(gameData, target)) {
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));

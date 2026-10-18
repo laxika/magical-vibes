@@ -106,7 +106,6 @@ class PonderingMageTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);

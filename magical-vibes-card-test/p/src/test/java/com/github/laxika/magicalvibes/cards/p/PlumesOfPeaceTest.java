@@ -134,7 +134,7 @@ class PlumesOfPeaceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateHandAbility(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         harness.clearMessages();
         harness.publishState();
 

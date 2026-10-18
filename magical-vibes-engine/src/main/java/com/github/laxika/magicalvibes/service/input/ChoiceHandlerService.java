@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -1562,6 +1563,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
+            if (colorChoice.disabledOptions().contains(colorName)) {
+                throw new IllegalArgumentException("Mode cannot be chosen: " + colorName);
+            }
             handleChooseModeChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -2004,6 +2008,9 @@ public class ChoiceHandlerService {
         ManaColor chosenColor = ManaColor.valueOf(colorName);
         if (chosenColor == ManaColor.COLORLESS && !options.contains(colorName)) {
             throw new IllegalArgumentException("Colorless is not a color");
+        }
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
         }
         if (ctx.fixedColorOptions() != null && !ctx.fixedColorOptions().contains(chosenColor)) {
             throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
@@ -4982,8 +4989,25 @@ public class ChoiceHandlerService {
                 : new ArrayList<>(hand.stream()
                         .filter(c -> gameQueryService.getEffectiveCardColors(gameData, c).contains(color))
                         .toList());
+        boolean nothingMatched = toDiscard.isEmpty();
         if (!toDiscard.isEmpty()) {
             gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
+            Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, targetPlayerId);
+            if (replacementSource != null) {
+                for (Card card : List.copyOf(toDiscard)) {
+                    if (card.isToken()) {
+                        continue;
+                    }
+                    toDiscard.remove(card);
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            replacementSource, targetPlayerId,
+                            List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                            "Put " + card.getName() + " on top of your library instead of into your graveyard?",
+                            card.getId(), null, null, null, 0, 0, null, null, null, null, null, null, 1));
+                }
+            }
+        }
+        if (!toDiscard.isEmpty()) {
             hand.removeAll(toDiscard);
             triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
             for (Card card : toDiscard) {
@@ -4995,7 +5019,7 @@ public class ChoiceHandlerService {
                     + " " + colorLabel.toLowerCase() + " card" + (toDiscard.size() != 1 ? "s" : "") + "."));
             log.info("Game {} - {} discards {} {} card(s) to Persecute-style effect",
                     gameData.id, targetName, toDiscard.size(), colorLabel.toLowerCase());
-        } else {
+        } else if (nothingMatched) {
             gameLogService.append(gameData, GameLog.text(targetName + " has no " + colorLabel.toLowerCase()
                     + " cards to discard."));
         }
@@ -5080,7 +5104,7 @@ public class ChoiceHandlerService {
         for (int i = 0; i < toExile; i++) {
             Card card = library.removeFirst();
             gameData.addToExile(targetPlayerId, card);
-            if (card.getColors().contains(color)) {
+            if (gameQueryService.getEffectiveCardColors(gameData, card).contains(color)) {
                 matches++;
             }
         }
@@ -5307,6 +5331,9 @@ public class ChoiceHandlerService {
         // unparseable answer must leave the prompt standing, since clearing it first destroys the
         // only thing that would resume the entry parked in pendingEffectResolutionEntry.
         CardColor chosenColor = "DONE".equals(chosenValue) ? null : CardColor.valueOf(chosenValue);
+        if (chosenColor == null && ctx.chosen().isEmpty()) {
+            throw new IllegalArgumentException("At least one color must be chosen");
+        }
 
         gameData.interaction.clearAwaitingInput();
 

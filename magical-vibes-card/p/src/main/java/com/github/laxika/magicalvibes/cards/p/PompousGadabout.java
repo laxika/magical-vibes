@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasNoNamePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "171")
 public class PompousGadabout extends Card {
@@ -18,6 +18,6 @@ public class PompousGadabout extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
-                new PermanentIsFaceDownPredicate()));
+                new PermanentHasNoNamePredicate()));
     }
 }

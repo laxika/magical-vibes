@@ -18,7 +18,7 @@ public class ProtomatterPowder extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{W}",
-                List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.BATTLEFIELD).filter(new CardTypePredicate(CardType.ARTIFACT)).build()),
+                List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.BATTLEFIELD).filter(new CardTypePredicate(CardType.ARTIFACT)).targetGraveyard(true).build()),
                 "{4}{W}, {T}, Sacrifice Protomatter Powder: Return target artifact card from your graveyard to the battlefield."
         ));
     }

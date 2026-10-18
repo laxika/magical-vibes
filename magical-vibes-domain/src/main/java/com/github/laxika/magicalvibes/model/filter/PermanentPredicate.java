@@ -184,6 +184,7 @@ public sealed interface PermanentPredicate permits
         PermanentMaxManaValueXPredicate,
         PermanentMinManaValuePredicate,
         PermanentNamedPredicate,
+        PermanentHasNoNamePredicate,
         PermanentNameInPredicate,
         PermanentNotPredicate,
         PermanentOwnedBySourceControllerPredicate,

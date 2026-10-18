@@ -25,6 +25,9 @@ public class ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffectHandler
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    /** Marks cards exiled by this activated ability so other linked abilities of the source don't count them. */
+    private static final String EXILE_ABILITY_LINK = "exile-creature-card-from-graveyard";
+
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentCounterSupport permanentCounterSupport;
 
@@ -51,6 +54,10 @@ public class ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffectHandler
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
+        }
+        synchronized (gameData.exiledCards) {
+            gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(targetCardId)
+                    ? exiled.withAbilityLink(EXILE_ABILITY_LINK) : exiled);
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());

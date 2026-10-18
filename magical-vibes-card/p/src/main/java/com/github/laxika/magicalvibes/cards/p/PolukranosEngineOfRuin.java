@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
@@ -38,7 +37,8 @@ public class PolukranosEngineOfRuin extends Card {
             List.of(CardSubtype.PHYREXIAN, CardSubtype.HYDRA),
             Set.of(Keyword.LIFELINK),
             Set.of());
-    private static final SequenceEffect CREATE_HYDRAS = SequenceEffect.of(REACH_HYDRA, LIFELINK_HYDRA);
+    private static final CreateTokenEffect CREATE_HYDRAS =
+            REACH_HYDRA.withSimultaneousTokens(List.of(LIFELINK_HYDRA));
 
     public PolukranosEngineOfRuin() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,

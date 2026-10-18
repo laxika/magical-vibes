@@ -75,6 +75,7 @@ class PowerSinkTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, lyrist.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(nonManaLand.isTapped()).isFalse();
         assertThat(manaLand.isTapped()).isTrue();
@@ -96,6 +97,7 @@ class PowerSinkTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, lyrist.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(landWithoutManaAbility.isTapped()).isFalse();
         assertThat(manaLand.isTapped()).isTrue();
@@ -190,6 +192,7 @@ class PowerSinkTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, lyrist.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Elvish Lyrist");
         assertThat(p1Land.isTapped()).isTrue();
@@ -217,6 +220,7 @@ class PowerSinkTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, scragnoth.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(land.isTapped()).isTrue();
     }
@@ -262,6 +266,7 @@ class PowerSinkTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, lyrist.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(manaCreature.isTapped()).isFalse();
         assertThat(manaLand.isTapped()).isTrue();

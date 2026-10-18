@@ -44,6 +44,11 @@ public class ExileTriggeringCardFromGraveyardEffectHandler implements NormalEffe
             return;
         }
 
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(triggeringCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
+
         permanentRemovalService.removeCardFromGraveyardById(gameData, triggeringCardId);
         exileService.exileCard(gameData, ownerId, triggeringCard);
         gameLogService.append(gameData, GameLog.cardTextCard(triggeringCard, " is exiled by ", entry.getCard(), "."));

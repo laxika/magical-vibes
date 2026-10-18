@@ -837,6 +837,9 @@ public class AbilityActivationService {
         if (permanent.isTapRestrictedUnlessAttacking()) {
             throw new IllegalStateException("Land can't become tapped unless it is attacking");
         }
+        if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
+            throw new IllegalStateException("Creature has summoning sickness");
+        }
         List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
         ManaColor overriddenManaColor = overriddenManaColors.size() == 1 ? overriddenManaColors.getFirst() : null;
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColors.isEmpty()) {
@@ -848,6 +851,15 @@ public class AbilityActivationService {
                 var before = snapshotPoolColors(pool);
                 activateAbilityInternal(gameData, player, -1, i, null, null, null,
                         null, null, null, null, permanent, null);
+                if (gameData.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice pending
+                        && pending.context() instanceof ChoiceContext.ManaColorChoice colorChoice) {
+                    gameData.interaction.clearAwaitingInput();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            pending.playerId(), pending.permanentId(), pending.etbTargetId(),
+                            new ChoiceContext.SpellOnlyManaColorChoice(colorChoice.playerId(),
+                                    colorChoice.fromCreature(), colorChoice.amount(), true),
+                            pending.options(), "Choose a color of mana to add (spells only)."));
+                }
                 for (ManaColor color : ManaColor.values()) {
                     int added = pool.get(color) - before.getOrDefault(color, 0);
                     if (added > 0) pool.addSpellOnlyMana(color, added);
@@ -2450,6 +2462,7 @@ public class AbilityActivationService {
         int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
+            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         if (!ability.isManaAbility()) {
@@ -2550,6 +2563,7 @@ public class AbilityActivationService {
         int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
+            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         if (!ability.isManaAbility()) {
@@ -6953,6 +6967,9 @@ public class AbilityActivationService {
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get());
+            if (needed > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                throw new IllegalStateException("Players can't pay life to activate abilities");
+            }
             if (needed > 0 && life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
@@ -7401,7 +7418,7 @@ public class AbilityActivationService {
                 .findFirst().orElse(null);
         if (imprintedCopyEffect != null) {
             Card imprintedCard = gameData.getImprintedCard(permanent.getCard());
-            if (imprintedCard == null) {
+            if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
                 throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());
             }
             List<Card> exiledWithSource = gameData.getCardsExiledByPermanent(permanent.getId());
@@ -10283,6 +10300,7 @@ public class AbilityActivationService {
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 if (!java.util.Objects.equals(cardName, p.getChosenName())) continue;
+                if (gameQueryService.hasLostAllAbilities(gameData, p)) continue;
                 var lockEffect = p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(e -> e instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect)
                         .map(e -> (ActivatedAbilitiesOfChosenNameCantBeActivatedEffect) e)

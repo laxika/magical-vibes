@@ -154,7 +154,7 @@ class PippinWardenOfIsengardTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.getEffectivePower(gd, gilraen)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, gilraen)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, gilraen, Keyword.HASTE)).isFalse();

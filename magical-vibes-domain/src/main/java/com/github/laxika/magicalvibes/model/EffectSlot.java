@@ -1099,6 +1099,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_SELF_LOYALTY_COUNTERS_REMOVED,
     /** Triggers whenever one or more time counters are removed from this permanent. */
     ON_SELF_TIME_COUNTERS_REMOVED,
+    /** Triggers once for each +1/+1 counter removed from this permanent (Protean Hydra). */
+    ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED,
     /** Triggers whenever one or more counters are removed from a permanent the controller controls. */
     ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT,
     /** Triggers whenever one or more loyalty counters are put on planeswalkers the controller controls. */

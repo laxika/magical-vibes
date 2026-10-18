@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
 
@@ -36,6 +37,9 @@ import java.util.UUID;
  *                                   token rider
  * @param tokenSourceSetCode           set code used to create the rider's token cards; null when
  *                                   there is no token rider
+ * @param requiredSourceFilter        properties the chosen source must still have when it would deal
+ *                                   damage (CR 609.7b: "a red source of your choice"); null when the
+ *                                   shield places no requirement on the source
  */
 public record SourceNextDamageToAnyTargetShield(
         UUID sourceId,
@@ -51,7 +55,8 @@ public record SourceNextDamageToAnyTargetShield(
         CreateTokenEffect token,
         UUID tokenControllerId,
         String tokenSourceSetCode,
-        int remainingDamage) {
+        int remainingDamage,
+        PermanentPredicate requiredSourceFilter) {
 
     /** Compatibility constructor for prevention of the whole next damage event. */
     public SourceNextDamageToAnyTargetShield(UUID sourceId,
@@ -67,12 +72,35 @@ public record SourceNextDamageToAnyTargetShield(
             CreateTokenEffect token,
             UUID tokenControllerId,
             String tokenSourceSetCode) {
-        this(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, Integer.MAX_VALUE);
+        this(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, Integer.MAX_VALUE, null);
+    }
+
+    /** Compatibility constructor without a source-property requirement. */
+    public SourceNextDamageToAnyTargetShield(UUID sourceId,
+            boolean damageRedSourceController,
+            Card passageCard,
+            UUID passageControllerId,
+            UUID recipientId,
+            int damageMultiplier,
+            UUID lifeGainPlayerId,
+            boolean combatOnly,
+            boolean playersOnly,
+            Integer combatPhase,
+            CreateTokenEffect token,
+            UUID tokenControllerId,
+            String tokenSourceSetCode,
+            int remainingDamage) {
+        this(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, remainingDamage, null);
     }
 
     /** Copy retaining the unspent amount of a fixed prevention shield. */
     public SourceNextDamageToAnyTargetShield withRemainingDamage(int amount) {
-        return new SourceNextDamageToAnyTargetShield(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, amount);
+        return new SourceNextDamageToAnyTargetShield(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, amount, requiredSourceFilter);
+    }
+
+    /** Copy that only applies while the chosen source still matches {@code filter} (CR 609.7b). */
+    public SourceNextDamageToAnyTargetShield withRequiredSourceFilter(PermanentPredicate filter) {
+        return new SourceNextDamageToAnyTargetShield(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, remainingDamage, filter);
     }
 
     public SourceNextDamageToAnyTargetShield(UUID sourceId, boolean damageRedSourceController, Card passageCard,

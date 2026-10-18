@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RalIzzetViceroy;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -90,6 +91,7 @@ class PlaguecrafterTest extends BaseCardTest {
     @DisplayName("A player may sacrifice a planeswalker instead of a creature")
     void mayChoosePlaneswalkerWhenCreatureIsAlsoAvailable() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new RalIzzetViceroy());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.addToBattlefield(player2, new Plaguecrafter());
         harness.setHand(player2, List.of(new Plaguecrafter()));
 
@@ -111,7 +113,8 @@ class PlaguecrafterTest extends BaseCardTest {
     @Test
     @DisplayName("A lone planeswalker satisfies the sacrifice requirement without discarding")
     void lonePlaneswalkerIsSacrificed() {
-        harness.addToBattlefield(player2, new RalIzzetViceroy());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new RalIzzetViceroy());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player2, List.of(new Plaguecrafter()));
 
         castPlaguecrafter();

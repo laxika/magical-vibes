@@ -19,6 +19,9 @@ public class CopyNextExhaustAbilityThisTurnEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
+        gameData.pendingNextExhaustAbilityCopySourcesThisTurn
+                .computeIfAbsent(entry.getControllerId(), ignored -> new java.util.ArrayList<>())
+                .add(new GameData.PendingCopySource(entry.getCard(), entry.getSourcePermanentId()));
         log.info("Game {} - {} will copy their next non-mana exhaust ability this turn",
                 gameData.id, entry.getControllerId());
     }

@@ -165,9 +165,12 @@ class PoeticIngenuityTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        advanceToUpkeep(player2);
-        advanceToUpkeep(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new OrazcaPuzzleDoor()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castArtifact(player1, 0);
@@ -181,10 +184,10 @@ class PoeticIngenuityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PoeticIngenuity());
         harness.setHand(player1, List.of(new GrizzlyBears(), new OrazcaPuzzleDoor()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 

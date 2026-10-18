@@ -121,7 +121,7 @@ class PredatoryFocusTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UNTAP);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

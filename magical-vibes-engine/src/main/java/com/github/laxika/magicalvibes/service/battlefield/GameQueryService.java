@@ -1223,6 +1223,10 @@ public class GameQueryService {
             return true;
         }
         if (isCreatureSubtype(subtype) && card.hasKeyword(Keyword.CHANGELING)) return true;
+        if (!isCreatureSubtype(subtype) && cardHasType(card, CardType.LAND, gameData, cardOwnerId)
+                && card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof SelfAllZoneSubtypeGrantingEffect grant
+                        && grant.grantedSubtypes().contains(subtype))) return true;
         if (cardHasType(card, CardType.CREATURE, gameData, cardOwnerId) && isCreatureSubtype(subtype)
                 && (hasSelfAllCreatureTypesEffect(card)
                 || selfAllZoneGrantedSubtypes(card).contains(subtype)
@@ -8161,8 +8165,8 @@ public class GameQueryService {
                 && entry.getSourcePermanentId() == null
                 && entry.getCard() != null
                 && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
-                && playerControlsStaticEffect(gameData, entry.getControllerId(),
-                GrantDeathtouchToControllerSpellsEffect.class);
+                && countPlayerControlledStaticEffects(gameData, entry.getControllerId(),
+                GrantDeathtouchToControllerSpellsEffect.class) > 0;
     }
 
     /** Returns whether a spell cast using artifact-produced mana should have split second. */
@@ -9120,6 +9124,9 @@ public class GameQueryService {
         int[] total = {0};
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
+                if (hasLostAllAbilities(gameData, permanent)) {
+                    continue;
+                }
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PreventFixedDamageFromSpellsEffect prevention) {
                         total[0] += prevention.amount();
@@ -10729,6 +10736,20 @@ public class GameQueryService {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
                         && p.getCard().isAura());
+    }
+
+    public List<Permanent> findEnchantedCreaturesByAuraEffect(GameData gameData, UUID playerId,
+                                                              Class<? extends CardEffect> effectClass) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return List.of();
+        List<Permanent> enchanted = new ArrayList<>();
+        for (Permanent p : bf) {
+            if (p.isAttached() && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectClass::isInstance)) {
+                Permanent creature = findPermanentById(gameData, p.getAttachedTo());
+                if (creature != null) enchanted.add(creature);
+            }
+        }
+        return enchanted;
     }
 
     /**

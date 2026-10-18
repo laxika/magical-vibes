@@ -93,16 +93,8 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
         PendingInteraction.PortentOfCalamityState portentState =
                 gameData.pollPendingInteraction(PendingInteraction.PortentOfCalamityState.class);
         if (portentState != null) {
-            Set<UUID> chosenIds = new HashSet<>(cardIds);
-            for (UUID revealedCardId : portentState.revealedCardIds()) {
-                if (chosenIds.contains(revealedCardId)) {
-                    continue;
-                }
-                ExiledCardEntry exiled = gameData.findExiledCard(revealedCardId);
-                if (exiled != null && gameData.removeFromExile(revealedCardId)) {
-                    gameData.playerHands.get(portentState.playerId()).add(exiled.card());
-                }
-            }
+            gameData.pendingExileFreeCastRemainderToHand.clear();
+            gameData.pendingExileFreeCastRemainderToHand.addAll(portentState.revealedCardIds());
         }
         exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, cardIds);
     }

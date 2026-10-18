@@ -1146,12 +1146,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Controller chooses which opponent makes Plargg and Nassari's nonland-card choice. */
     record PlarggAndNassariOpponentChoice(UUID controllerId, java.util.List<UUID> opponentIds,
-                                          java.util.List<UUID> validCardIds, int maxCastCount)
+                                          java.util.List<UUID> validCardIds, int maxCastCount,
+                                          java.util.List<UUID> adventureLandIds)
             implements PendingInteraction {
 
         public PlarggAndNassariOpponentChoice {
             opponentIds = java.util.List.copyOf(opponentIds);
             validCardIds = java.util.List.copyOf(validCardIds);
+            adventureLandIds = java.util.List.copyOf(adventureLandIds);
         }
 
         @Override
@@ -1166,13 +1168,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** An opponent chooses the nonland card that Plargg and Nassari will set aside. */
+    /**
+     * An opponent chooses the nonland card that Plargg and Nassari will set aside. The exiled land
+     * cards in {@code adventureLandIds} cannot be chosen but stay castable as their Adventure
+     * spells among the other cards.
+     */
     record PlarggAndNassariCardChoice(UUID opponentId, UUID controllerId,
-                                      java.util.List<UUID> validCardIds, int maxCastCount)
+                                      java.util.List<UUID> validCardIds, int maxCastCount,
+                                      java.util.List<UUID> adventureLandIds)
             implements PendingInteraction {
 
         public PlarggAndNassariCardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+            adventureLandIds = java.util.List.copyOf(adventureLandIds);
         }
 
         @Override

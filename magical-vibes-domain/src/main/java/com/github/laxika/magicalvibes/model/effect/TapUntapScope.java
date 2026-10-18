@@ -42,5 +42,7 @@ public enum TapUntapScope {
     /** Every permanent on every battlefield that matches the predicate (Curse of Marit Lage). */
     ALL_PERMANENTS,
     /** Every creature on every battlefield that attacked this turn. */
-    ATTACKED_CREATURES
+    ATTACKED_CREATURES,
+    /** Every permanent controlled by an opponent of the controller that matches the predicate. */
+    OPPONENTS_PERMANENTS
 }

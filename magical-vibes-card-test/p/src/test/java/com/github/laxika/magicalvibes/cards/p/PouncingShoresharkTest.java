@@ -116,7 +116,7 @@ class PouncingShoresharkTest extends BaseCardTest {
     void stolenCreatureReturnsToItsOwnersHand() {
         Permanent shark = addCreatureReady(player1, new PouncingShoreshark());
         Permanent target = addCreatureReady(player2, new AlmightyBrushwagg());
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
 
         triggerMutation(shark);
         harness.handlePermanentChosen(player1, target.getId());

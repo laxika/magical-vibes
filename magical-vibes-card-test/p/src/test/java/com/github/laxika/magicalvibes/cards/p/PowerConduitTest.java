@@ -101,7 +101,7 @@ class PowerConduitTest extends BaseCardTest {
 
         assertThat(conduit.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(conduit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.pendingInteractions).isNotEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
     @Test

@@ -23,7 +23,7 @@ public class PoliticalTriumph extends Card {
                         new ScryEffect(1),
                         new PutCountersOnSelfEffect(CounterType.PLAN)));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(4, CounterType.PLAN),
                 SequenceEffect.of(
                         new SacrificeSelfEffect(),

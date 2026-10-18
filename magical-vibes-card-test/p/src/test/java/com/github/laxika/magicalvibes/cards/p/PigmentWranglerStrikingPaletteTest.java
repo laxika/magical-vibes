@@ -103,7 +103,8 @@ class PigmentWranglerStrikingPaletteTest extends BaseCardTest {
     @DisplayName("A creature spell does not consume Striking Palette's delayed copy")
     void creatureSpellDoesNotConsumeCopy() {
         castStrikingPalette();
-        castPigmentWrangler();
+        harness.castFromHand(player1, new PigmentWranglerStrikingPalette(), "{4}{R}");
+        harness.passBothPriorities();
         harness.setHand(player1, List.of(new TomeBlast()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castSorcery(player1, 0, player2.getId());
@@ -142,6 +143,7 @@ class PigmentWranglerStrikingPaletteTest extends BaseCardTest {
         castStrikingPalette();
         harness.setLibrary(player1, List.of(new PigmentWranglerStrikingPalette()));
         harness.setLibrary(player2, List.of(new PigmentWranglerStrikingPalette()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new TomeBlast()));

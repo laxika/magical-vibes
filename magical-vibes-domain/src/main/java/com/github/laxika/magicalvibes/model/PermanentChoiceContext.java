@@ -1340,10 +1340,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  {@code damageRedSourceController} is true, prevented red damage is dealt back to the source's
      *  controller by {@code passageCard} (Honorable Passage). */
     record PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId, boolean damageRedSourceController,
-                                                        Card passageCard) implements PermanentChoiceContext {
+                                                        Card passageCard,
+                                                        com.github.laxika.magicalvibes.model.filter.PermanentPredicate requiredSourceFilter)
+            implements PermanentChoiceContext {
+        public PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId, boolean damageRedSourceController,
+                                                            Card passageCard) {
+            this(controllerId, damageRedSourceController, passageCard, null);
+        }
+
         /** Sanctum Guardian / Circle of Despair: prevention only. */
         public PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId) {
-            this(controllerId, false, null);
+            this(controllerId, false, null, null);
         }
     }
 

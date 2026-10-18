@@ -66,7 +66,7 @@ public class PizzaFaceGastromancer extends Card {
                                                         EffectDuration.PERMANENT)))));
 
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{10}",
                 List.of(new SacrificeSelfCost(), new GainLifeEffect(15)),
                 "{10}, {T}, Sacrifice Pizza Face: You gain 15 life."

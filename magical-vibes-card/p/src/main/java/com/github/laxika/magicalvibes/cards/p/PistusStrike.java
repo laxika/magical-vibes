@@ -27,6 +27,6 @@ public class PistusStrike extends Card {
                 "Target must be a creature with flying"
         ))
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                        new GivePoisonCountersEffect(1, PoisonRecipient.CONTROLLER), ThenEffectRecipient.TARGET_CONTROLLER));
+                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PERMANENT_CONTROLLER), ThenEffectRecipient.CONTROLLER));
     }
 }

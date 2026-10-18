@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -136,7 +135,7 @@ class ParkerLuckTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 
     @Test

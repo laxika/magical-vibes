@@ -112,9 +112,9 @@ class PersistentConstrictorTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
         harness.setHand(player2, List.of(new Murder()));
-        harness.addMana(player2, ManaColor.BLACK, 3);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLACK, 3);
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
         harness.castAndResolveInstant(player2, 0, bears.getId());
         resolveAllTriggers();

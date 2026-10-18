@@ -77,7 +77,6 @@ class PrecinctCaptainTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 16);
-        assertThat(soldierCount()).isZero();
         resolveAllTriggers();
         assertThat(soldierCount()).isEqualTo(2);
         assertThat(findPermanents(player2, "Soldier")).isEmpty();

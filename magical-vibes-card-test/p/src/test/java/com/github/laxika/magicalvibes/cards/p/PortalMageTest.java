@@ -36,7 +36,6 @@ class PortalMageTest extends BaseCardTest {
 
         castPortalMage(attacker.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -58,7 +57,6 @@ class PortalMageTest extends BaseCardTest {
         declareAttackers(List.of(0));
         castPortalMage(attacker.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
@@ -76,7 +74,6 @@ class PortalMageTest extends BaseCardTest {
         declareAttackers(List.of(0));
         castPortalMage(attacker.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -107,7 +104,6 @@ class PortalMageTest extends BaseCardTest {
 
         castPortalMage(attacker.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -130,7 +126,6 @@ class PortalMageTest extends BaseCardTest {
 
         castPortalMage(attacker.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, battle.getId());
@@ -149,7 +144,6 @@ class PortalMageTest extends BaseCardTest {
 
         castPortalMage(attacker.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());

@@ -129,8 +129,9 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             case NEXT_DAMAGE_TO_ANY_TARGET -> {
                 context = e.damageRedSourceController()
                         ? new PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice(
-                                controllerId, true, entry.getCard())
-                        : new PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice(controllerId);
+                                controllerId, true, entry.getCard(), sourceFilter)
+                        : new PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice(
+                                controllerId, false, null, sourceFilter);
                 prompt = e.damageRedSourceController()
                         ? "Choose a source. The next time it would deal damage to any target this turn, prevent that damage."
                                 + " If it is red, Honorable Passage deals that much damage to its controller."

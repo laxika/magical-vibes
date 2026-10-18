@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -18,8 +19,8 @@ public class Plaxmanta extends Card {
 
     public Plaxmanta() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES), TriggerMode.INDEPENDENT);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
-                new NotCondition(new ColorSpentToCast(ManaColor.GREEN)), new SacrificeSelfEffect()));
+                new NotCondition(new ColorSpentToCast(ManaColor.GREEN)), new SacrificeSelfEffect()), TriggerMode.INDEPENDENT);
     }
 }

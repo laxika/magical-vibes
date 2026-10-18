@@ -24,11 +24,12 @@ public class PathOfTheSchemer extends Card {
         // Each player mills two cards.
         addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.EACH_OPPONENT));
-        // Then put a creature card from a graveyard onto the battlefield under your control.
+        // Then put a creature card from a graveyard onto the battlefield under your control (not optional).
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardTypePredicate(CardType.CREATURE))
+                .mandatory(true)
                 .battlefieldEffectGrants(List.of(
                         new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.TARGET)))
                 .build());

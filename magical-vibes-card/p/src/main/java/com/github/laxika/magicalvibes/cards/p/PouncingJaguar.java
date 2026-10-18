@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 public class PouncingJaguar extends Card {
 
     public PouncingJaguar() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{G}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{G}"));
     }
 }

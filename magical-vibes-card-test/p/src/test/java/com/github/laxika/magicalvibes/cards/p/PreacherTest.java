@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.c.CarnivorousPlant;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -76,7 +79,7 @@ class PreacherTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, plant.getId());
         harness.passBothPriorities();
 
-        harness.performUntapStep(player1);
+        beginPlayer1UntapChoice();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(preacher.isTapped()).isFalse();
@@ -93,7 +96,7 @@ class PreacherTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, plant.getId());
         harness.passBothPriorities();
 
-        harness.performUntapStep(player1);
+        beginPlayer1UntapChoice();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(preacher.isTapped()).isTrue();
@@ -147,5 +150,14 @@ class PreacherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(preacher, plant);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(plant);
+    }
+
+    private void beginPlayer1UntapChoice() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UNTAP);
     }
 }

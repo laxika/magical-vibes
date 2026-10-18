@@ -20,6 +20,6 @@ public class Polliwallop extends Card {
 
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect(2));
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1);
+        target(TargetFilters.creatureAnOpponentControls());
     }
 }

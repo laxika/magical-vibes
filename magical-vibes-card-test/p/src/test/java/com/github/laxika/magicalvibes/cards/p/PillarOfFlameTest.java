@@ -139,6 +139,7 @@ class PillarOfFlameTest extends BaseCardTest {
     @DisplayName("Damage removes planeswalker loyalty without exiling a noncreature planeswalker")
     void planeswalkerGoesToGraveyardWhenLoyaltyRunsOut() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TamiyoTheMoonSage());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new PillarOfFlame(), new PillarOfFlame()));
         harness.addMana(player1, ManaColor.RED, 2);
 

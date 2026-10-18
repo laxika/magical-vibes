@@ -33,7 +33,7 @@ public class PepRaucousRaider extends Card {
                         null,
                         new ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect(
                                 new PerpetuallyGrantCardCharacteristicsEffect(
-                                        Set.of(CardType.ARTIFACT), Set.of(), List.of(artifactManaAbility)))));
+                                        Set.of(CardType.ARTIFACT), Set.of(), List.of()))));
         addActivatedAbility(artifactManaAbility);
     }
 }

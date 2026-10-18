@@ -57,9 +57,10 @@ class PhotonLadyOfLightTest extends BaseCardTest {
     @DisplayName("Flickering a stolen creature returns it to its owner")
     void stolenCreatureReturnsToOwner() {
         addCreatureReady(player1, new PhotonLadyOfLight());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.getCard().setOwnerId(player2.getId());
-        gd.stolenCreatures.put(bear.getId(), player2.getId());
+        GrizzlyBears stolenCard = new GrizzlyBears();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent bear = addCreatureReady(player1, stolenCard);
+        setOwnerAndController(bear, player2, player1);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, bear.getId());
@@ -96,9 +97,7 @@ class PhotonLadyOfLightTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, bear.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(bear);
-        gd.playerBattlefields.get(player2.getId()).add(bear);
-        gd.stolenCreatures.put(bear.getId(), player1.getId());
+        setOwnerAndController(bear, player1, player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);

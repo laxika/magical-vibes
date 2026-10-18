@@ -456,6 +456,13 @@ public class TriggerCollectionService {
                         new TriggerContext.TimeCountersRemoved(permanent, timeCountersRemoved));
             }
 
+            int plusOneRemoved = permanent.drainPlusOnePlusOneCountersRemovedSinceTriggerCheck();
+            if (plusOneRemoved > 0) {
+                dispatchSlot(gameData, permanent, controllerId,
+                        EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED,
+                        new TriggerContext.PlusOnePlusOneCountersRemoved(permanent, plusOneRemoved));
+            }
+
             int amount = permanent.drainLoyaltyCountersRemovedSinceTriggerCheck();
             if (amount <= 0) return;
 
@@ -1924,9 +1931,9 @@ public class TriggerCollectionService {
                         break;
                     }
                 }
-                if (spellEntry == null || spellEntry.getXValue() <= 0) continue;
+                if (spellEntry == null) continue;
 
-                int copies = spellEntry.getXValue();
+                int copies = Math.max(0, spellEntry.getXValue());
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         spellCard,
@@ -2261,7 +2268,8 @@ public class TriggerCollectionService {
             List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
             if (casterBattlefield != null) {
                 for (Permanent perm : new ArrayList<>(casterBattlefield)) {
-                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    if (perm.isLosesAllAbilitiesUntilEndOfTurn()
+                            || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                     List<CardEffect> grantEffects = perm.getCard().getEffects(
                             EffectSlot.GRANT_STORM_TO_INSTANT_OR_SORCERY);
                     if (grantEffects.isEmpty()) continue;
@@ -2521,7 +2529,7 @@ public class TriggerCollectionService {
             }
         });
 
-        if (collectTemporaryGlobalDiscardTriggers(gameData, discardingPlayerId)) {
+        if (collectTemporaryGlobalDiscardTriggers(gameData, discardingPlayerId, discardedCard)) {
             anyTriggered[0] = true;
         }
 
@@ -2663,7 +2671,8 @@ public class TriggerCollectionService {
         }
     }
 
-    private boolean collectTemporaryGlobalDiscardTriggers(GameData gameData, UUID discardingPlayerId) {
+    private boolean collectTemporaryGlobalDiscardTriggers(GameData gameData, UUID discardingPlayerId,
+                                                          Card discardedCard) {
         if (!gameData.discardCausedByOpponent) {
             return false;
         }
@@ -2683,6 +2692,9 @@ public class TriggerCollectionService {
                     new ArrayList<>(List.of(watcher.effect())));
             entry.setTargetId(discardingPlayerId);
             entry.setNonTargeting(true);
+            if (discardedCard != null) {
+                entry.setEventCardIds(List.of(discardedCard.getId()));
+            }
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary global discard trigger fires", gameData.id,
@@ -3253,13 +3265,13 @@ public class TriggerCollectionService {
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, source, EffectSlot.ON_GOADED_CREATURES_COMBAT_DAMAGE_TO_OPPONENT));
             Permanent matchingDealer = damageDealers.stream()
-                    .filter(creature -> controllerId.equals(
-                            gameQueryService.findPermanentController(gameData, creature.getId())))
+                    .filter(creature -> gameQueryService.isGoaded(gameData, creature))
                     .findFirst()
                     .orElse(null);
             if (matchingDealer == null) {
                 return;
             }
+            UUID dealerControllerId = gameQueryService.findPermanentController(gameData, matchingDealer.getId());
             for (CardEffect effect : effects) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -3271,7 +3283,7 @@ public class TriggerCollectionService {
                         source.getId());
                 entry.setNonTargeting(true);
                 int previousCopies = beginCombatDamageTriggerCopies(
-                        gameData, controllerId, source, matchingDealer, controllerId, 1);
+                        gameData, controllerId, source, matchingDealer, dealerControllerId, 1);
                 try {
                     gameData.enqueueTrigger(entry);
                     gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
@@ -5459,7 +5471,7 @@ public class TriggerCollectionService {
                         targetControllerId,
                         source.getCard().getName() + "'s triggered ability",
                         new ArrayList<>(List.of(counterEffect)),
-                        triggeringEntry.getCard().getId(),
+                        triggeringEntry.getTargetableId(),
                         Zone.STACK,
                         source.getId()
                 );
@@ -9256,18 +9268,23 @@ public class TriggerCollectionService {
         Integer pendingExhaustCopies = gameData.pendingNextExhaustAbilityCopyThisTurnCount.get(activatingPlayerId);
         if (pendingExhaustCopies != null && pendingExhaustCopies > 0 && ability.isExhaustAbility()) {
             StackEntry snapshot = new StackEntry(abilityEntry);
-            List<CardEffect> copyEffects = new ArrayList<>(pendingExhaustCopies);
+            List<GameData.PendingCopySource> sources = gameData.pendingNextExhaustAbilityCopySourcesThisTurn
+                    .getOrDefault(activatingPlayerId, List.of());
             for (int i = 0; i < pendingExhaustCopies; i++) {
-                copyEffects.add(new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId));
+                GameData.PendingCopySource source = i < sources.size() ? sources.get(i) : null;
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source != null ? source.card() : abilityEntry.getCard(),
+                        activatingPlayerId,
+                        "Copy " + abilityEntry.getCard().getName() + "'s exhaust ability",
+                        new ArrayList<>(List.of(
+                                new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId))),
+                        0,
+                        source != null ? source.sourcePermanentId() : null
+                ));
             }
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    abilityEntry.getCard(),
-                    activatingPlayerId,
-                    "Copy " + abilityEntry.getCard().getName() + "'s exhaust ability",
-                    copyEffects
-            ));
             gameData.pendingNextExhaustAbilityCopyThisTurnCount.remove(activatingPlayerId);
+            gameData.pendingNextExhaustAbilityCopySourcesThisTurn.remove(activatingPlayerId);
             gameLogService.append(gameData, GameLog.cardThen(abilityEntry.getCard(), "'s exhaust ability is copied."));
             log.info("Game {} - {} delayed exhaust-ability copy trigger(s) queued for {}",
                     gameData.id, pendingExhaustCopies, abilityEntry.getCard().getName());

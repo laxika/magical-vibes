@@ -256,6 +256,7 @@ public class AnimationSupport {
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
+        self.setAnimatedPtFromCard(effect.power() == null && effect.toughness() == null);
         self.setAnimatedColor(effect.animatedColor());
         applyAnimatedColors(self, effect);
         // Only a crew activation makes the Vehicle "crewed" (CR 702.122a); an identical triggered

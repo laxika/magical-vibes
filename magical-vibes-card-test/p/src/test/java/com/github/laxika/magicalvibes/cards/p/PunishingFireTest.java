@@ -104,7 +104,7 @@ class PunishingFireTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInHand(player1, "Punishing Fire");
     }
 
@@ -147,6 +147,7 @@ class PunishingFireTest extends BaseCardTest {
         PunishingFire first = new PunishingFire();
         PunishingFire second = new PunishingFire();
         harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new KabiraCrossroads()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceActivePlayer(player2);

@@ -43,8 +43,10 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
             return;
         }
 
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(dyingCreatureCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+        Long recordedVersion = entry.getEventCardGraveyardEntryVersions().get(dyingCreatureCardId);
+        long expectedVersion = recordedVersion != null
+                ? recordedVersion : entry.getTriggeringCardGraveyardEntryVersion();
+        if (expectedVersion >= 0 && gameData.graveyardEntryVersion(dyingCreatureCardId) != expectedVersion) {
             log.info("Game {} - {} death trigger fizzles (creature card {} has entered a graveyard again)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -158,7 +159,7 @@ class PollenbrightWingsTest extends BaseCardTest {
         attachWings(creature);
         creature.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         assertThat(gd.stack).isNotEmpty();
         creature.setPowerModifier(4);
         resolveAllTriggers();
@@ -175,7 +176,7 @@ class PollenbrightWingsTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Pollenbright Wings");
         creature.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         assertThat(gd.stack).isNotEmpty();
         harness.setHand(player1, List.of(new SunderingVitae()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

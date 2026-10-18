@@ -155,6 +155,8 @@ class PolyraptorTest extends BaseCardTest {
         firstBlocker.addBlockingTarget(0);
         secondBlocker.setBlocking(true);
         secondBlocker.addBlockingTarget(0);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
 

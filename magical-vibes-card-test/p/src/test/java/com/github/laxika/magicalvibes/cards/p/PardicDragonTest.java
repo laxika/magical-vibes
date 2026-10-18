@@ -64,7 +64,7 @@ class PardicDragonTest extends BaseCardTest {
         Permanent permanent = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getId().equals(dragon.getId()))
                 .findFirst().orElseThrow();
-        assertThat(permanent.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
     }
 
     @Test

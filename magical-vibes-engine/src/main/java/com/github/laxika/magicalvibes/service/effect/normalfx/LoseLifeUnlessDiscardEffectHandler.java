@@ -58,7 +58,7 @@ public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBe
         // Has cards — ask the target player via the may ability system
         String prompt = "Discard a card? If you don't, you lose " + e.lifeLoss() + " life. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(), targetPlayerId, List.of(e), prompt
+                entry.getCard(), targetPlayerId, List.of(e), prompt, null, entry.getControllerId()
         ));
     
     }

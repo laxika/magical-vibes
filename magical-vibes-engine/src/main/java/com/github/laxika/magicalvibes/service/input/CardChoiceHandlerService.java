@@ -1198,7 +1198,11 @@ public class CardChoiceHandlerService {
         gameData.plaguecrafter.selectedDiscards.add(new PlaguecrafterState.SelectedDiscard(
                 player.getId(), hand.get(cardIndex).getId()));
 
-        List<UUID> remainingPlayers = discardChoice.followUp().remainingEachPlayerDiscards();
+        List<UUID> remainingPlayers = new ArrayList<>(discardChoice.followUp().remainingEachPlayerDiscards());
+        while (!remainingPlayers.isEmpty()
+                && gameData.playerHands.getOrDefault(remainingPlayers.getFirst(), List.of()).isEmpty()) {
+            remainingPlayers.removeFirst();
+        }
         if (!remainingPlayers.isEmpty()) {
             gameData.rerunCurrentEffectAfterInteraction = true;
             UUID nextPlayerId = remainingPlayers.getFirst();

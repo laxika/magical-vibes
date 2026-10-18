@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "SPG", collectorNumber = "42")
 @CardRegistration(set = "MH2", collectorNumber = "96")
@@ -28,7 +27,7 @@ public class Persist extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY)))))
                 .targetGraveyard(true)
-                .enterWithCounters(Set.of(CounterType.MINUS_ONE_MINUS_ONE))
+                .enterWithCounter(CounterType.MINUS_ONE_MINUS_ONE)
                 .build());
     }
 }

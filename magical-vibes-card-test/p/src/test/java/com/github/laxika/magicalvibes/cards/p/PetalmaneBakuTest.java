@@ -24,6 +24,7 @@ class PetalmaneBakuTest extends BaseCardTest {
     void arcaneSpellAddsKiCounterWhenAccepted() {
         Permanent baku = addReadyBaku();
         harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -37,6 +38,7 @@ class PetalmaneBakuTest extends BaseCardTest {
     void spiritSpellAddsKiCounterWhenAccepted() {
         Permanent baku = addReadyBaku();
         harness.castFromHand(player1, new TeardropKami(), "{U}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -50,6 +52,7 @@ class PetalmaneBakuTest extends BaseCardTest {
     void decliningSpellTriggerAddsNoKiCounter() {
         Permanent baku = addReadyBaku();
         harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 

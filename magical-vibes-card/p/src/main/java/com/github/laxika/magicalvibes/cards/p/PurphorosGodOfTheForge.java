@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "135")
 @CardRegistration(set = "SLD", collectorNumber = "77")
@@ -29,7 +28,7 @@ public class PurphorosGodOfTheForge extends Card {
     public PurphorosGodOfTheForge() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.RED, 5)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
         addActivatedAbility(new ActivatedAbility(

@@ -143,6 +143,7 @@ class ParapetThrasherTest extends BaseCardTest {
     @DisplayName("The same mode can be chosen again on a later turn")
     void modeBecomesAvailableNextTurn() {
         addCreatureReady(player1, new ParapetThrasher());
+        harness.setHand(player1, List.of());
         declareAttackers(List.of(0));
         chooseMode(DAMAGE);
         resolveAllTriggers();

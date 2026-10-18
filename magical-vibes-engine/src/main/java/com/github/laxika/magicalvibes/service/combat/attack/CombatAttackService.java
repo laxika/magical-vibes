@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnAttackingCreatureOnAttacksYouEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
@@ -1305,7 +1306,18 @@ public class CombatAttackService {
                                 : attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
                                         ? attackedPermanent.getProtectorPlayerId()
                                         : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                        if (isTriggerTimeModal) {
+                        if (otherEffects.size() > 1
+                                && otherEffects.stream().allMatch(e -> e instanceof ChooseOneAtTriggerTimeEffect)) {
+                            Set<UUID> usedGrantingPermanents = new HashSet<>();
+                            for (CardEffect modalTrigger : otherEffects) {
+                                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                        attacker.getCard(),
+                                        grantedAbilityController(gameData, attacker, modalTrigger, playerId,
+                                                usedGrantingPermanents),
+                                        ((ChooseOneAtTriggerTimeEffect) modalTrigger).choice(), attacker.getId(),
+                                        false, false, null, null, null, false));
+                            }
+                        } else if (isTriggerTimeModal) {
                             CardEffect modalEffect = otherEffects.getFirst();
                             ChooseOneEffect modal;
                             boolean rememberLastChosenMode = false;
@@ -1322,7 +1334,9 @@ public class CombatAttackService {
                                 modal = ((ChooseOneAtTriggerTimeEffect) modalEffect).choice();
                             }
                             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                    attacker.getCard(), playerId, modal, attacker.getId(), false, false,
+                                    attacker.getCard(),
+                                    grantedAbilityController(gameData, attacker, modalEffect, playerId, new HashSet<>()),
+                                    modal, attacker.getId(), false, false,
                                     null, null, null, rememberLastChosenMode));
                         } else if (isCounterMove) {
                             gameData.queueInteraction(
@@ -2592,6 +2606,10 @@ public class CombatAttackService {
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)
+                        || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                    continue;
+                }
                 List<CardEffect> attackedTriggerEffects = new ArrayList<>();
                 List<CardEffect> candidateEffects = new ArrayList<>(
                         perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU));
@@ -4332,5 +4350,33 @@ public class CombatAttackService {
                 .map(battlefield::get)
                 .anyMatch(attacker -> gameQueryService.getEffectivePower(gameData, attacker) == chosenNumber
                         || gameQueryService.getEffectiveToughness(gameData, attacker) == chosenNumber);
+    }
+
+    /**
+     * An ability granted by an attached permanent ("Whenever equipped creature attacks ...") is
+     * controlled by the player who controls the granting permanent, not by the creature's controller
+     * (CR 603.3a). Returns that player for a granted effect, or {@code fallbackControllerId} when the
+     * effect is not granted by an attachment. {@code usedGrantingPermanents} keeps several equal
+     * grants from resolving to the same attachment.
+     */
+    private UUID grantedAbilityController(GameData gameData, Permanent attacker, CardEffect effect,
+                                          UUID fallbackControllerId, Set<UUID> usedGrantingPermanents) {
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            for (Permanent source : battlefield.getValue()) {
+                if (!source.isAttached() || !attacker.getId().equals(source.getAttachedTo())
+                        || usedGrantingPermanents.contains(source.getId())) {
+                    continue;
+                }
+                boolean grantsEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof GrantTriggeredAbilityEffect grant
+                                && grant.slot() == EffectSlot.ON_ATTACK
+                                && grant.grantedEffect().equals(effect));
+                if (grantsEffect) {
+                    usedGrantingPermanents.add(source.getId());
+                    return battlefield.getKey();
+                }
+            }
+        }
+        return fallbackControllerId;
     }
 }

@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,10 +27,13 @@ public class PainForAll extends Card {
         target(TargetFilters.creatureYouControl());
 
         TargetFilter anyTarget = new AnyTargetPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate(),
-                        new PermanentIsBattlePredicate()
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsPlaneswalkerPredicate(),
+                                new PermanentIsBattlePredicate()
+                        )),
+                        new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate())
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any other target");

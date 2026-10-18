@@ -81,7 +81,7 @@ class PlatoonDispenserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         var dispenser = findPermanent(player1, "Platoon Dispenser");
-        assertThat(dispenser.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, dispenser, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -100,8 +100,12 @@ class PlatoonDispenserTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        advanceToEndStep(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 

@@ -90,6 +90,8 @@ class PaintersStudioDefacedGalleryTest extends BaseCardTest {
         Card creature = new BashfulBeastie();
         Card land = new Forest();
         harness.setLibrary(player1, List.of(creature, land, new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         castRoom(0);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);

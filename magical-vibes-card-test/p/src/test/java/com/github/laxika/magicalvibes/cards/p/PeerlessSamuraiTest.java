@@ -155,6 +155,7 @@ class PeerlessSamuraiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PeerlessSamurai()));
         harness.setLibrary(player1, List.of(new PeerlessSamurai(), new PeerlessSamurai()));
         harness.setLibrary(player2, List.of(new PeerlessSamurai(), new PeerlessSamurai()));
+        harness.setHand(player2, List.of());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

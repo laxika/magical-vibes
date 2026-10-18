@@ -24,8 +24,10 @@ public class PlanarNexus extends Card {
                 CardSubtype.LAIR,
                 CardSubtype.LOCUS,
                 CardSubtype.MINE,
+                CardSubtype.PLANET,
                 CardSubtype.POWER_PLANT,
                 CardSubtype.SPHERE,
+                CardSubtype.TOWN,
                 CardSubtype.TOWER,
                 CardSubtype.URZAS
         )));

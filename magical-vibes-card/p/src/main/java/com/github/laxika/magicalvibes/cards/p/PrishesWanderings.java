@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -20,18 +22,18 @@ import java.util.List;
 public class PrishesWanderings extends Card {
 
     public PrishesWanderings() {
-        target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature you control"
-        ))
-                .addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
-                        new CardAnyOfPredicate(List.of(
-                                CardPredicateUtils.basicLand(),
-                                new CardSubtypePredicate(CardSubtype.TOWN)
-                        )),
-                        LibrarySearchDestination.BATTLEFIELD_TAPPED
-                ))
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+                new CardAnyOfPredicate(List.of(
+                        CardPredicateUtils.basicLand(),
+                        new CardSubtypePredicate(CardSubtype.TOWN)
+                )),
+                LibrarySearchDestination.BATTLEFIELD_TAPPED
+        ));
+        // When you search your library this way, put a +1/+1 counter on target creature you control.
+        addEffect(EffectSlot.SPELL, new QueueReflexiveAbilityEffect(
+                PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE, 1,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentControlledBySourceControllerPredicate())))));
     }
 }

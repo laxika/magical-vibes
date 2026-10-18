@@ -152,6 +152,8 @@ class PoolingVenomTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.tapPermanent(player2, 0);
+        harness.passPriority(player2);
+        assertThat(gd.stack).hasSize(1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

@@ -986,6 +986,20 @@ public class Card {
     }
 
     /**
+     * Declares a target group whose minimum and maximum are separate evaluated dynamic counts, e.g.
+     * "divided among any number of targets" with a positive X, which needs at least one target
+     * (Rolling Thunder ruling) and at most X.
+     */
+    public SpellTarget targetWithDynamicRange(DynamicAmount dynamicMinTargets,
+                                              DynamicAmount dynamicMaxTargets, TargetFilter filter, int cap) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), false,
+                dynamicMinTargets, dynamicMaxTargets);
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
      * Called by {@link SpellTarget#addEffect} to map an effect instance to its target index.
      * Wrapper effects (conditional, may) register their inner effects under the same index,
      * because resolution unwraps them before dispatching to the handler — the handler must be

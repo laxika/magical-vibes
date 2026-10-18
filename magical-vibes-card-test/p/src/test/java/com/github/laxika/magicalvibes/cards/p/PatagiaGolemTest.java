@@ -115,7 +115,7 @@ class PatagiaGolemTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
 

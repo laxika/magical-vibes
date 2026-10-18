@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -34,9 +35,10 @@ public class PrismariCharm extends Card {
                         new AnyTargetPredicateTargetFilter(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentIsPlaneswalkerPredicate())),
+                                        new PermanentIsPlaneswalkerPredicate(),
+                                        new PermanentIsBattlePredicate())),
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                                "Target must be a creature, planeswalker, or player"),
+                                "Target must be a creature, planeswalker, battle, or player"),
                         null,
                         1,
                         2,

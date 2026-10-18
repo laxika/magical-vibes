@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffect} (Phyrexian
  * Dreadnought). When the controller's other creatures cannot reach the required total power the
- * source is sacrificed straight away; otherwise they are prompted to pick any number of those
- * creatures. The selection is validated and carried out in {@code MultiPermanentChoiceHandlerService}.
+ * source is sacrificed straight away; otherwise they are prompted to pick any number of their
+ * creatures, the source included (it is a creature on the battlefield and may pay for itself). The selection is validated and carried out in {@code MultiPermanentChoiceHandlerService}.
  */
 @Component
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffectHandler im
         int availablePower = 0;
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (perm.getId().equals(sourcePermanentId) || !gameQueryService.isCreature(gameData, perm)) {
+                if (!gameQueryService.isCreature(gameData, perm)) {
                     continue;
                 }
                 eligibleIds.add(perm.getId());

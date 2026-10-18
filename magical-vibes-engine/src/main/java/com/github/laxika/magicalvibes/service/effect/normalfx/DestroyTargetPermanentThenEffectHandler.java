@@ -180,6 +180,9 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
                 entry.getDescription(), List.of(thenEffect), thenTargetId, entry.getSourcePermanentId());
         thenEntry.setEventValue(statValue);
+        if (targetControllerId != null && entry.getTargetId() != null) {
+            thenEntry.getRemovedPermanentControllers().putIfAbsent(entry.getTargetId(), targetControllerId);
+        }
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         thenEntry.setTriggeringPermanentId(entry.getTriggeringPermanentId());
         if (thenEffect instanceof SacrificePermanentsEffect && targetCardId != null) {

@@ -80,8 +80,7 @@ class PersistentMarshstalkerTest extends BaseCardTest {
         Permanent returned = findPermanents(player1, "Persistent Marshstalker").stream()
                 .filter(permanent -> permanent != rat).findFirst().orElseThrow();
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.isAttacking()).isTrue();
-        assertThat(returned.getAttackTarget()).isEqualTo(player2.getId());
+        harness.assertLife(player2, 12);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(marshstalker.getId()));
         assertThat(rat.isAttackedThisTurn()).isTrue();
@@ -105,8 +104,8 @@ class PersistentMarshstalkerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(marshstalker.getId()))
                 .findFirst().orElseThrow();
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.isAttacking()).isTrue();
-        assertThat(returned.getAttackTarget()).isEqualTo(ral.getId());
+        assertThat(gqs.findPermanentById(gd, ral.getId())).isNull();
+        harness.assertLife(player2, 16);
     }
 
     @Test

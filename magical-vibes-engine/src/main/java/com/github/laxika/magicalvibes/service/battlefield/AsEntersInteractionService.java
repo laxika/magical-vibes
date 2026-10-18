@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffec
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect;
@@ -267,6 +269,34 @@ public class AsEntersInteractionService {
             playerInputService.beginPermanentChoice(gameData, controllerId,
                     new ArrayList<>(validIds), "Choose an artifact you control to cover.");
             return;
+        }
+
+        // "As enters, put a phylactery counter on an artifact you control" (CR 614.1c). The artifact
+        // is chosen as the permanent enters; it is not a target. With no artifact the ability does nothing.
+        boolean needsPhylacteryChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(PutPhylacteryCounterOnTargetPermanentEffect.class::isInstance);
+        if (needsPhylacteryChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validIds = gameData.playerBattlefields.get(controllerId).stream()
+                    .filter(permanent -> permanent != justEntered)
+                    .filter(permanent -> gameQueryService.isArtifact(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            if (validIds.size() == 1) {
+                permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData,
+                        new StackEntry(card, controllerId),
+                        gameQueryService.findPermanentById(gameData, validIds.getFirst()),
+                        CounterType.PHYLACTERY, 1, controllerId);
+            } else if (validIds.size() > 1) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseNonlandPermanentAsEnter(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                                convokeCreatureIds));
+                playerInputService.beginPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(validIds), "Choose an artifact you control to put a phylactery counter on.");
+                return;
+            }
         }
 
         ChooseEquipmentAttachmentOnEnterEffect equipmentAttachment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()

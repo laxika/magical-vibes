@@ -436,7 +436,11 @@ public class Permanent {
      *  {@link #animatedColor}/{@link #transientSubtypes} storage as {@link #animatedUntilEndOfTurn}.
      *  Cleared by {@link #clearCombatState()} when combat ends. */
     @Setter private boolean animatedUntilEndOfCombat;
-    @Setter private int animatedPower;
+    private int animatedPower;
+    /** Whether the animation keeps the permanent's own printed power and toughness (Crew on a Vehicle)
+     *  rather than fixing them, so a copy effect that changes the card also changes the base values.
+     *  Cleared whenever {@link #setAnimatedPower(int)} fixes a value. */
+    @Setter private boolean animatedPtFromCard;
     @Setter private int animatedToughness;
     @Setter private CardColor animatedColor;
     @Setter private boolean permanentlyAnimated;
@@ -450,6 +454,7 @@ public class Permanent {
     private int countersRemovedSinceTriggerCheck;
     private int loyaltyCountersRemovedSinceTriggerCheck;
     private int timeCountersRemovedSinceTriggerCheck;
+    private int plusOnePlusOneCountersRemovedSinceTriggerCheck;
     /** Latest placement timestamp for each counter kind. Keyword counters use this to participate
      *  in layer ordering; removing counters does not remove their timestamp. */
     private final Map<CounterType, Long> counterTimestamps = new EnumMap<>(CounterType.class);
@@ -1040,6 +1045,7 @@ public class Permanent {
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
         this.animatedPower = source.animatedPower;
+        this.animatedPtFromCard = source.animatedPtFromCard;
         this.animatedToughness = source.animatedToughness;
         this.animatedColor = source.animatedColor;
         this.permanentlyAnimated = source.permanentlyAnimated;
@@ -1051,6 +1057,7 @@ public class Permanent {
         this.countersRemovedSinceTriggerCheck = source.countersRemovedSinceTriggerCheck;
         this.loyaltyCountersRemovedSinceTriggerCheck = source.loyaltyCountersRemovedSinceTriggerCheck;
         this.timeCountersRemovedSinceTriggerCheck = source.timeCountersRemovedSinceTriggerCheck;
+        this.plusOnePlusOneCountersRemovedSinceTriggerCheck = source.plusOnePlusOneCountersRemovedSinceTriggerCheck;
         this.counterTimestamps.putAll(source.counterTimestamps);
         this.countersToRemoveAtNextCleanup.putAll(source.countersToRemoveAtNextCleanup);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
@@ -1617,6 +1624,9 @@ public class Permanent {
         if (counterType == CounterType.TIME && newCount < previousCount) {
             timeCountersRemovedSinceTriggerCheck += previousCount - newCount;
         }
+        if (counterType == CounterType.PLUS_ONE_PLUS_ONE && newCount < previousCount) {
+            plusOnePlusOneCountersRemovedSinceTriggerCheck += previousCount - newCount;
+        }
         if (count <= 0) {
             counters.remove(counterType);
         } else {
@@ -1633,6 +1643,12 @@ public class Permanent {
     public int drainLoyaltyCountersRemovedSinceTriggerCheck() {
         int removed = loyaltyCountersRemovedSinceTriggerCheck;
         loyaltyCountersRemovedSinceTriggerCheck = 0;
+        return removed;
+    }
+
+    public int drainPlusOnePlusOneCountersRemovedSinceTriggerCheck() {
+        int removed = plusOnePlusOneCountersRemovedSinceTriggerCheck;
+        plusOnePlusOneCountersRemovedSinceTriggerCheck = 0;
         return removed;
     }
 
@@ -1733,6 +1749,11 @@ public class Permanent {
      * direct {@code Permanent} readers (views, last-known-information reads, predicate leaves)
      * when no layered 7b entry applies; when only one of these fields is set, the two agree.
      */
+    public void setAnimatedPower(int animatedPower) {
+        this.animatedPower = animatedPower;
+        this.animatedPtFromCard = false;
+    }
+
     public int getBasePower() {
         if (basePowerToughnessOverriddenUntilEndOfTurn) {
             return basePowerOverride;
@@ -1741,7 +1762,7 @@ public class Permanent {
             return permanentBasePowerOverride;
         }
         if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
-            return animatedPower;
+            return animatedPtFromCard ? (card.getPower() != null ? card.getPower() : 0) : animatedPower;
         }
         if (animatedUntilNextTurn) {
             return untilNextTurnAnimatedPower;
@@ -1767,7 +1788,7 @@ public class Permanent {
             return permanentBaseToughnessOverride;
         }
         if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
-            return animatedToughness;
+            return animatedPtFromCard ? (card.getToughness() != null ? card.getToughness() : 0) : animatedToughness;
         }
         if (animatedUntilNextTurn) {
             return untilNextTurnAnimatedToughness;

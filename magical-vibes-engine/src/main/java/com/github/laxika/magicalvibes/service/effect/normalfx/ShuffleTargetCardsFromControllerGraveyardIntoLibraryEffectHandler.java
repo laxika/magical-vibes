@@ -27,6 +27,10 @@ public class ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffectHandler i
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var shuffle = (ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect) effect;
         if (shuffle.optional()) {
+            if (shuffle.skipsWithoutTargets()
+                    && (entry.getTargetCardIds() == null || entry.getTargetCardIds().isEmpty())) {
+                return;
+            }
             // The "you may" is decided on resolution; the chosen targets stay on the entry
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
             entry.insertEffectsToResolve(effectIndex + 1, List.of(new MayEffect(

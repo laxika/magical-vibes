@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements Norma
     private final GameLogService gameLogService;
     private final CardRevealService cardRevealService;
     private final CastingCostService castingCostService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +59,7 @@ public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements Norma
                 List.of(topCard), controllerId);
 
         boolean matches = e.matches(topCard)
+                && gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY, controllerId)
                 && castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, topCard);
         if (!matches) {
             String noMatch = "The top card is not a castable type.";

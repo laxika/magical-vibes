@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardThenSeekWithMenaceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ public class ExileTargetCreatureCardFromGraveyardThenSeekWithMenaceEffectHandler
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -93,5 +95,6 @@ public class ExileTargetCreatureCardFromGraveyardThenSeekWithMenaceEffectHandler
         });
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(entry.getControllerId()) + " seeks a card."));
+        triggerCollectionService.checkSeekTriggers(gameData, entry.getControllerId(), List.of(soughtCard));
     }
 }

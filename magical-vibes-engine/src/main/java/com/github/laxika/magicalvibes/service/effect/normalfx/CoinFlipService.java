@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.effect.EdgarKingOfFigaroEffect;
 import com.github.laxika.magicalvibes.model.effect.KrarksThumbEffect;
 import com.github.laxika.magicalvibes.model.effect.PokeyTheScallywaggEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /** Performs one logical coin flip, including coin-flip replacement effects controlled by its player. */
@@ -18,6 +21,10 @@ import org.springframework.stereotype.Component;
 public class CoinFlipService {
 
     private final GameQueryService gameQueryService;
+
+    @Autowired
+    @Lazy
+    private TriggerCollectionService triggerCollectionService;
 
     public CoinFlipResult flip(GameData gameData, UUID playerId) {
         return flipCoins(gameData, playerId, 1).getFirst();
@@ -42,6 +49,10 @@ public class CoinFlipService {
             for (int coin = 0; coin < count; coin++) {
                 int roll = ThreadLocalRandom.current().nextInt(1, 21);
                 results.add(new CoinFlipResult(roll >= 11, 1, false, roll));
+            }
+            if (triggerCollectionService != null) {
+                triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+                        gameData, playerId, count, results.getLast().pokeyD20Result());
             }
             return results;
         }

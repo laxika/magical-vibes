@@ -177,8 +177,10 @@ class PureIntentionsTest extends BaseCardTest {
         harness.assertInHand(player1, "Pure Intentions");
         harness.assertInGraveyard(player1, "Pure Intentions");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            gs.advanceStep(gd);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Pure Intentions");

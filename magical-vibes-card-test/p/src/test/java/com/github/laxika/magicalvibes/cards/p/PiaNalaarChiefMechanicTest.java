@@ -42,6 +42,7 @@ class PiaNalaarChiefMechanicTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
         harness.handleXValueChosen(player1, 3);

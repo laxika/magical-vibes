@@ -187,6 +187,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -658,7 +659,7 @@ public class SpellCastTriggerCollectorService {
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new PossibilityStormExileAndCastEffect(
-                        sc.spellCard().getId(), match.permanent().getId(), sc.castingPlayerId())))
+                        sc.spellCard().getId(), sc.spellCard(), match.permanent().getId(), sc.castingPlayerId())))
         ));
         return true;
     }
@@ -1879,6 +1880,10 @@ public class SpellCastTriggerCollectorService {
                 entry.setTriggeringCardId(sc.spellCard().getId());
                 entry.setEventValue(triggeringSpellManaValue);
             }
+            if (resolved.stream().anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)) {
+                entry.setTargetId(sc.castingPlayerId());
+                entry.setNonTargeting(true);
+            }
             match.gameData().stack.add(entry);
         }
 
@@ -2888,10 +2893,15 @@ public class SpellCastTriggerCollectorService {
         List<CardEffect> resolved = trigger.resolvedEffects().stream()
                 .map(effect -> effect instanceof CopiedSpellReferencingEffect referencing
                         ? referencing.snapshotCopiedSpell(copiedSpellSnapshot)
+                        : effect instanceof MayEffect may && may.wrapped() instanceof CopiedSpellReferencingEffect referencing
+                        ? new MayEffect(referencing.snapshotCopiedSpell(copiedSpellSnapshot), may.prompt(),
+                        may.elseEffect(), may.choicePlayer(), may.choicePlayerId())
                         : effect)
                 .toList();
-        int copiedSpellManaValue = spellCopy.copiedSpell().getCard().getManaValue()
-                + spellCopy.copiedSpell().getXValue();
+        Card copiedCard = spellCopy.copiedSpell().getCard();
+        int copiedSpellManaValue = copiedCard.getManaValue()
+                + (copiedCard.getParsedManaCost() == null ? 0
+                : spellCopy.copiedSpell().getXValue() * copiedCard.getParsedManaCost().getXSymbolCount());
         if (trigger.targetFilter() == null
                 && resolved.size() == 1
                 && resolved.getFirst() instanceof LoseLifeEffect loseLife
@@ -3237,7 +3247,9 @@ public class SpellCastTriggerCollectorService {
                             trigger.manaCost(), e, mayPayPrompt)).toList();
             if (mayChoicePromptOnResolution != null) {
                 String prompt = mayChoicePromptOnResolution;
-                queued = queued.stream().map(e -> (CardEffect) new MayEffect(e, prompt)).toList();
+                CardEffect optionalEffect = queued.size() == 1 ? queued.getFirst()
+                        : SequenceEffect.of(queued.toArray(CardEffect[]::new));
+                queued = List.of(new MayEffect(optionalEffect, prompt));
             }
             boolean multiTarget = sourceCard.getSpellTargets().size() > 1
                     || sourceCard.getSpellTargets().stream()
@@ -3679,7 +3691,8 @@ public class SpellCastTriggerCollectorService {
                     || (may.elseEffect() != null && effectCarriesTriggeringSpellManaValue(may.elseEffect()));
         }
         if (effect instanceof ConditionalEffect conditional) {
-            return effectCarriesTriggeringSpellManaValue(conditional.wrapped());
+            return conditional.condition() instanceof EventValueAtLeast
+                    || effectCarriesTriggeringSpellManaValue(conditional.wrapped());
         }
         if (effect instanceof ConditionalReplacementEffect replacement) {
             return effectCarriesTriggeringSpellManaValue(replacement.baseEffect())

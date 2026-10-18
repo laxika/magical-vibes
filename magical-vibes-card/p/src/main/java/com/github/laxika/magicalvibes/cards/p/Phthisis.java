@@ -23,12 +23,12 @@ import java.util.List;
 public class Phthisis extends Card {
 
     public Phthisis() {
-        // Life loss resolves first so the target's power and toughness are read before destruction.
+        // The target's power and toughness are read from last-known information once it is destroyed.
         target(TargetFilters.creature())
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.SPELL, new LoseLifeEffect(
                         new Max(new Fixed(0), new TargetPowerPlusToughness()),
-                        LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                        LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

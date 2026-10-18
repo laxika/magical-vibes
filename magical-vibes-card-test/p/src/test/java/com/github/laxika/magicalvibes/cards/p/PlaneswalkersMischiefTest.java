@@ -89,7 +89,9 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
     void returnsUncastSpellAtNextEndStep() {
         addMischief();
         Singe singe = new Singe();
+        ForsakenCity drawnCard = new ForsakenCity();
         harness.setHand(player2, List.of(singe));
+        harness.setLibrary(player2, List.of(drawnCard, new ForsakenCity()));
         addAbilityMana();
 
         activateMischief();
@@ -99,7 +101,7 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(singe);
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(singe);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(singe, drawnCard);
     }
 
     @Test
@@ -202,7 +204,9 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
     void returnsUncastSpellAfterSourceLeaves() {
         Permanent mischief = addMischief();
         Singe singe = new Singe();
+        ForsakenCity drawnCard = new ForsakenCity();
         harness.setHand(player2, List.of(singe));
+        harness.setLibrary(player2, List.of(drawnCard, new ForsakenCity()));
         addAbilityMana();
 
         activateMischief();
@@ -211,7 +215,7 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(singe);
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(singe);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(singe, drawnCard);
     }
 
     private Permanent addMischief() {

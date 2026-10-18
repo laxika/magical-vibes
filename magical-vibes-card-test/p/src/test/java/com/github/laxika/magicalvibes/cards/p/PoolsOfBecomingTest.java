@@ -136,6 +136,7 @@ class PoolsOfBecomingTest extends BaseCardTest {
     void chaosLetsControllerOrderDifferentRevealedChaosAbilities() {
         List<Card> revealed = List.of(new Panopticon(), new PoolsOfBecoming(), new Panopticon());
         gd.planechase.deck.addAll(revealed);
+        harness.setAutoOrderTriggers(player1, false);
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         harness.inMutationScope(() -> planar.chaos(gd));

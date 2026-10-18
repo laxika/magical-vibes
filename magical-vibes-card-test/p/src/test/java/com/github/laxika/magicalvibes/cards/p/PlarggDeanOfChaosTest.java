@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -177,9 +178,11 @@ class PlarggDeanOfChaosTest extends BaseCardTest {
         augusta.tap();
         opponent.tap();
 
-        declareAttackers(player1, List.of(indexOf(attacker)));
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(indexOf(attacker)));
+            harness.passBothPriorities();
+            harness.handleMultiplePermanentsChosen(player1, List.of());
+        });
 
         assertThat(augusta.isTapped()).isFalse();
         assertThat(attacker.isTapped()).isFalse();

@@ -51,6 +51,8 @@ class ProteanWarEngineTest extends BaseCardTest {
 
     @Test
     void becomesTheExiledCreatureAndKeepsVehicleArtifactTypesUntilEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent engine = harness.addToBattlefieldAndReturn(player1, new ProteanWarEngine());
         engine.setSummoningSick(false);
         SerraAngel exiledCard = new SerraAngel();

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.github.laxika.magicalvibes.model.Zone;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         castTopOfLibraryWithoutPayingManaCostEffectHandler = new CastTopOfLibraryWithoutPayingManaCostEffectHandler(
-                gameLogService, cardRevealService, castingCostService);
+                gameLogService, cardRevealService, castingCostService, gameQueryService);
 
     }
 
@@ -151,6 +152,7 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
             void matchingTypeQueuesMayAbility() {
                 Card bolt = createCard("Lightning Bolt", CardType.INSTANT);
                 gd.playerDecks.get(player1Id).add(bolt);
+                when(gameQueryService.canCastSpellFromZone(gd, bolt, Zone.LIBRARY, player1Id)).thenReturn(true);
                 when(castingCostService.canPayAdditionalSpellCosts(gd, player1Id, bolt)).thenReturn(true);
 
                 CastTopOfLibraryWithoutPayingManaCostEffect effect =

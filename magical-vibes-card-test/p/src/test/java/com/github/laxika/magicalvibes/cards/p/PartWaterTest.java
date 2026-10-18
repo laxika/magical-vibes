@@ -56,6 +56,7 @@ class PartWaterTest extends BaseCardTest {
     void islandwalkWearsOffAtEndOfTurn() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new DurkwoodBoars());
         harness.setHand(player1, List.of(new PartWater()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -63,7 +64,7 @@ class PartWaterTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.ISLANDWALK)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UNTAP);
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.ISLANDWALK)).isFalse();
     }

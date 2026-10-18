@@ -42,6 +42,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
+            case OPPONENTS_PERMANENTS -> resolveOpponentsPermanents(gameData, entry, e);
             default -> throw new IllegalStateException("Unsupported skip-next-untap scope: " + e.scope());
         }
     }
@@ -165,6 +166,31 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents matching permanents from untapping during the target player's next untap step.").build());
         log.info("Game {} - {} skip next untap set on {} permanent(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    private void resolveOpponentsPermanents(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+
+        int count = 0;
+        for (UUID playerId : gameData.playerIds) {
+            if (playerId.equals(entry.getControllerId())) continue;
+            if (e.matchAtUntap()) {
+                gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
+                        playerId, id -> new ArrayList<>()).add(e);
+            }
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (e.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+
+                p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
+                count++;
+            }
+        }
+
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count + " permanent(s) from untapping during their controller's next untap step.").build());
+        log.info("Game {} - {} skip next untap set on {} opponent permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     private void resolveAllCreatures(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {

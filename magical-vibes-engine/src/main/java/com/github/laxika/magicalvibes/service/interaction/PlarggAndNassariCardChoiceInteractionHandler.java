@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /** Handles the opponent's choice and starts the controller's up-to-two free-cast choice. */
 @Component
@@ -45,12 +46,15 @@ public class PlarggAndNassariCardChoiceInteractionHandler
         }
 
         UUID excludedCardId = selected.getFirst();
-        List<UUID> castableCardIds = interaction.validCardIds().stream()
-                .filter(cardId -> !cardId.equals(excludedCardId))
-                .filter(cardId -> {
-                    var exiled = gameData.findExiledCard(cardId);
-                    return exiled != null && isSpell(exiled.card());
-                })
+        List<UUID> castableCardIds = Stream.concat(
+                        interaction.validCardIds().stream()
+                                .filter(cardId -> !cardId.equals(excludedCardId))
+                                .filter(cardId -> {
+                                    var exiled = gameData.findExiledCard(cardId);
+                                    return exiled != null && isSpell(exiled.card());
+                                }),
+                        interaction.adventureLandIds().stream()
+                                .filter(cardId -> gameData.findExiledCard(cardId) != null))
                 .toList();
 
         gameData.interaction.clearAwaitingInput();

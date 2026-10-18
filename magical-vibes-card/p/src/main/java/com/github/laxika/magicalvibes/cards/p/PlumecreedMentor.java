@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,7 +35,8 @@ public class PlumecreedMentor extends Card {
         target(targetCreatureWithoutFlying)
                 .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                         new TriggeringCardConditionalEffect(
-                                new CardKeywordPredicate(Keyword.FLYING),
+                                new CardAnyOfPredicate(List.of(
+                                        new CardIsSelfPredicate(), new CardKeywordPredicate(Keyword.FLYING))),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

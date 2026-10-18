@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -20,6 +22,8 @@ public class PainfulBond extends Card {
         addEffect(EffectSlot.SPELL, new PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect(
                 EffectSlot.ON_SELF_CAST,
                 List.of(new LoseLifeEffect(1)),
-                new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
+                new CardAllOfPredicate(List.of(
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                        new CardMaxManaValuePredicate(3)))));
     }
 }

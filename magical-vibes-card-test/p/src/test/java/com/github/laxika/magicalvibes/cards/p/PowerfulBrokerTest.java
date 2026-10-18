@@ -83,9 +83,7 @@ class PowerfulBrokerTest extends BaseCardTest {
         assertThat(broker.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        for (CounterType type : CounterType.values()) {
-            assertThat(target.getCounterCount(type)).isZero();
-        }
+        assertThat(target.getTotalCounterCount()).isZero();
     }
 
     @Test

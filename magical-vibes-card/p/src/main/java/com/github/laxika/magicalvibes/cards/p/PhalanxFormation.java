@@ -13,7 +13,7 @@ public class PhalanxFormation extends Card {
 
     public PhalanxFormation() {
         setAdditionalManaCostPerExtraTarget("{1}{W}");
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
     }
 }

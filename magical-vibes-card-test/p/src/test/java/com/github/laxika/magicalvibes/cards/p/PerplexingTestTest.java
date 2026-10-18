@@ -79,6 +79,7 @@ class PerplexingTestTest extends BaseCardTest {
         harness.addToBattlefield(player2, opposingQueen);
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent ring = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setHand(player2, List.of());
 
         cast(1);
 

@@ -37,7 +37,7 @@ class PoisonersApprenticeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(initialToughness - 4);
         harness.assertOnBattlefield(player2, "Colossus of the Blood Age");
 
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(initialPower);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(initialToughness);

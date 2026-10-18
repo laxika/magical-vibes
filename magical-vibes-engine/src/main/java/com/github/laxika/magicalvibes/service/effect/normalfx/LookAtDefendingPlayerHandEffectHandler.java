@@ -29,12 +29,12 @@ public class LookAtDefendingPlayerHandEffectHandler implements NormalEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID attackedTargetId = entry.getAttackedTargetId();
-        if (attackedTargetId == null) {
-            return;
+        UUID defendingPlayerId = entry.getDefendingPlayerId();
+        if (defendingPlayerId == null && attackedTargetId != null) {
+            defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+                    ? attackedTargetId
+                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
         }
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (defendingPlayerId != null) {
             cardRevealService.lookAtHand(gameData, entry.getControllerId(), defendingPlayerId);
         }

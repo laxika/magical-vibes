@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,8 @@ import java.util.UUID;
 public class ProteanWarEngineSpellbookDraftChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.ProteanWarEngineSpellbookDraftChoice> {
 
-    private final EffectResolutionService effectResolutionService;
+    private final GameQueryService gameQueryService;
+    private final BattlefieldEntryService battlefieldEntryService;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -49,17 +51,14 @@ public class ProteanWarEngineSpellbookDraftChoiceInteractionHandler
                 .filter(card -> card.getId().equals(chosenId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Chosen spellbook card is no longer available"));
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry == null) {
-            throw new IllegalStateException("No pending Protean War Engine spellbook effect");
-        }
 
         gameData.addToExile(player.getId(), chosen, interaction.sourcePermanentId());
         gameData.interaction.clearAwaitingInput();
-        pendingEntry.setTargetId(chosenId);
-        gameData.rerunCurrentEffectAfterInteraction = false;
-        effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
-                gameData.pendingEffectResolutionIndex);
+        Permanent source = gameQueryService.findPermanentById(gameData, interaction.sourcePermanentId());
+        if (source != null) {
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, player.getId(), source.getCard(), null, false);
+        }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }

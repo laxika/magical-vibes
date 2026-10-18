@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
 import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Life-gain replacements on permanents the gaining player controls, one option per effect
@@ -21,13 +23,15 @@ import java.util.List;
  * Reflection). Both only rewrite the amount, so they are pure; the gaining player is prompted only
  * when the order in which they apply changes the amount gained (CR 616.1). Nefarious Lich's
  * {@code draw that many cards instead} is also an option; once chosen no life is gained, so no
- * other life-gain replacement applies to the event.
+ * other life-gain replacement applies to the event. Plague Drone's and Tainted Remedy's {@code lose that
+ * much life instead} is likewise an option that ends the gain.
  */
 @Component
 public class LifeGainReplacements implements ReplacementCandidateSource<LifeGainEvent> {
 
     private static final String KEY = "LifeGain:";
     private static final String LICH_KEY = "LifeGainDraw:";
+    private static final String LOSS_KEY = "LifeGainLoss:";
 
     private final GameQueryService gameQueryService;
 
@@ -49,7 +53,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
 
     @Override
     public List<ReplacementOption> applicable(GameData gameData, LifeGainEvent event) {
-        if (event.amount() <= 0 || event.drawInstead()) {
+        if (event.amount() <= 0 || event.drawInstead() || event.loseInstead()) {
             return List.of();
         }
         List<ReplacementOption> options = new ArrayList<>();
@@ -60,6 +64,19 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
                     options.add(new ReplacementOption(LICH_KEY + source.getId() + ":" + i,
                             source.getCard().getName() + ": draw that many cards instead",
                             ReplacementOption.Kind.REPLACEMENT, true));
+                }
+            }
+        }
+        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
+            if (opponentId.equals(event.playerId())) continue;
+            for (Permanent source : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+                List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, source);
+                for (int i = 0; i < statics.size(); i++) {
+                    if (statics.get(i) instanceof OpponentLifeGainBecomesLifeLossEffect) {
+                        options.add(new ReplacementOption(LOSS_KEY + source.getId() + ":" + i,
+                                source.getCard().getName() + ": lose that much life instead",
+                                ReplacementOption.Kind.REPLACEMENT, true));
+                    }
                 }
             }
         }
@@ -79,6 +96,9 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
     public LifeGainEvent transform(GameData gameData, LifeGainEvent event, ReplacementOption option) {
         if (option.key().startsWith(LICH_KEY)) {
             return event.withDrawInstead();
+        }
+        if (option.key().startsWith(LOSS_KEY)) {
+            return event.withLoseInstead();
         }
         SourcedEffect sourced = activeEffects(gameData, event).stream()
                 .filter(candidate -> candidate.key().equals(option.key()))

@@ -159,6 +159,7 @@ class PerimeterCaptainTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(captain);
         gd.playerGraveyards.get(player1.getId()).add(captain.getCard());
+        attacker.setBlockedWithoutBlockers(true);
 
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);

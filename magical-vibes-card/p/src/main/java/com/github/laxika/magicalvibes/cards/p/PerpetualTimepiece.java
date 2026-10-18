@@ -28,7 +28,8 @@ public class PerpetualTimepiece extends Card {
                 "{2}",
                 List.of(
                         new ExileSelfCost(),
-                        new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null)
+                        new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null,
+                                ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.ANY_NUMBER, false, true)
                 ),
                 "{2}, Exile this artifact: Shuffle any number of target cards from your graveyard into your library."
         ));

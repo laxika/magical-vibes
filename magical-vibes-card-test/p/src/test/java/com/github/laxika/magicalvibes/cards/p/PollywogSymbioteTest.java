@@ -107,6 +107,7 @@ class PollywogSymbioteTest extends BaseCardTest {
     void opponentsSymbioteDoesNotTrigger() {
         harness.addToBattlefield(player2, new PollywogSymbiote());
         harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of());
 
         harness.castFromHand(player1, new DreamtailHeron(), "{4}{U}");
 

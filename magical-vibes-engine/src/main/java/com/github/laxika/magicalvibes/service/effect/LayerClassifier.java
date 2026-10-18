@@ -336,7 +336,7 @@ public final class LayerClassifier {
                                 ? new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L7B_SET_PT), false, false)
                                 : new LayerClassification(
                                         Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L7B_SET_PT), false, true)));
-        map.put(EnchantedPermanentToughnessBecomesLoyaltyEffect.class, fixed(Layer.L7B_SET_PT));
+        map.put(EnchantedPermanentToughnessBecomesLoyaltyEffect.class, fixed(Layer.L7C_MODIFY_PT));
         // All lands become creatures (Nature's Revolt): the creature type is added in layer 4;
         // the handler fills the fixed base P/T in the accumulator pass. When the effect also names
         // the colour the land becomes (Kormus Bell's "1/1 black creatures"), it is a colour-setting

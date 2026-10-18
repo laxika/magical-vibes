@@ -886,6 +886,7 @@ public class LayerSystemService {
         h = mix(h, p.getBaseToughnessOverride());
         h = mix(h, p.getAnimatedPower());
         h = mix(h, p.getAnimatedToughness());
+        h = mix(h, p.isAnimatedPtFromCard() ? 1 : 0);
         h = mix(h, enumOrdinal(p.getAnimatedColor()));
         h = mix(h, p.getPermanentAnimatedPower());
         h = mix(h, p.getPermanentAnimatedToughness());

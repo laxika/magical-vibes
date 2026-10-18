@@ -36,7 +36,7 @@ public class PestInfestation extends Card {
         targetUpTo(new XValue(), new PermanentPredicateTargetFilter(
                 artifactOrEnchantment,
                 "Target must be an artifact or enchantment"
-        ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
 
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 CardType.CREATURE, new Scaled(new XValue(), 2), "Pest", 1, 1,

@@ -94,6 +94,7 @@ class PerrieThePulverizerTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(perrie.getId(), target.getId());
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);

@@ -85,6 +85,7 @@ class PilgrimOfTheAgesTest extends BaseCardTest {
     void graveyardAbilityReturnsOnlyItsSource() {
         Card pilgrim = new PilgrimOfTheAges();
         Card otherPilgrim = new PilgrimOfTheAges();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(pilgrim, otherPilgrim));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
@@ -137,6 +138,7 @@ class PilgrimOfTheAgesTest extends BaseCardTest {
     void earlierActivationCannotReturnNewGraveyardObject() {
         Card pilgrim = new PilgrimOfTheAges();
         Card otherPilgrim = new PilgrimOfTheAges();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(pilgrim, otherPilgrim));
         harness.addToBattlefield(player1, new TorturedExistence());
         harness.addMana(player1, ManaColor.COLORLESS, 12);

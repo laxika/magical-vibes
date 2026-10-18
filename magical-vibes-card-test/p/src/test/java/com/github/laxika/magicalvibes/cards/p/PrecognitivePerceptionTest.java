@@ -109,9 +109,9 @@ class PrecognitivePerceptionTest extends BaseCardTest {
         List<Card> expected = List.copyOf(gd.playerDecks.get(player1.getId()).subList(0, 3));
         harness.setHand(player1, List.of(original, new IncreasingVengeance()));
         harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, original.getId());
         harness.passBothPriorities();
 

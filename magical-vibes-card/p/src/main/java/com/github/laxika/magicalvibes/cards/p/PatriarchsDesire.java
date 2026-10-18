@@ -14,7 +14,7 @@ public class PatriarchsDesire extends Card {
 
     public PatriarchsDesire() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, -2, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, -2, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC, new ConditionalEffect(
                         new GraveyardCardThreshold(7, null),
                         new StaticBoostEffect(2, -2, GrantScope.ENCHANTED_CREATURE)));

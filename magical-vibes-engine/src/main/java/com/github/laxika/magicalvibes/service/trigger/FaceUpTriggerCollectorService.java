@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +35,14 @@ public class FaceUpTriggerCollectorService {
 
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     public FaceUpTriggerCollectorService(GameLogService gameLogService,
-                                         PredicateEvaluationService predicateEvaluationService) {
+                                         PredicateEvaluationService predicateEvaluationService,
+                                         GameQueryService gameQueryService) {
         this.gameLogService = gameLogService;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.gameQueryService = gameQueryService;
     }
 
     @CollectsTrigger(value = DealDamageToPlayersEffect.class,
@@ -71,6 +76,16 @@ public class FaceUpTriggerCollectorService {
         return true;
     }
 
+    /**
+     * The turned-up creature's characteristics as they are now (CR 613), so a subtype granted or
+     * removed by another effect counts for "is a Detective" checks.
+     */
+    private Card effectiveTurnedCharacteristics(GameData gameData, Permanent turned) {
+        Card characteristics = turned.getCard().createRuntimeCopy();
+        characteristics.setSubtypes(new ArrayList<>(gameQueryService.getEffectiveSubtypes(gameData, turned)));
+        return characteristics;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP)
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP)
@@ -80,7 +95,8 @@ public class FaceUpTriggerCollectorService {
         CardEffect resolvedEffect = effect;
         if (effect instanceof TriggeringCardConditionalEffect conditional
                 && !predicateEvaluationService.matchesCardPredicate(
-                        faceUp.turnedPermanent().getCard(), conditional.predicate(), null,
+                        effectiveTurnedCharacteristics(match.gameData(), faceUp.turnedPermanent()),
+                        conditional.predicate(), null,
                         match.gameData(), match.controllerId())) {
             return false;
         } else if (effect instanceof TriggeringCardConditionalEffect conditional) {

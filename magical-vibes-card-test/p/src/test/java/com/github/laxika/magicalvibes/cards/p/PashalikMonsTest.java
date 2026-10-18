@@ -111,7 +111,6 @@ class PashalikMonsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, pashalik.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 

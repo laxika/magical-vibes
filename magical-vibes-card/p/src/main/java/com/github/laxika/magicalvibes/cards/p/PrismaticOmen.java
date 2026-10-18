@@ -8,8 +8,12 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,15 +31,22 @@ import java.util.List;
 public class PrismaticOmen extends Card {
 
     public PrismaticOmen() {
-        for (CardSubtype basicLandType : List.of(CardSubtype.PLAINS, CardSubtype.ISLAND,
-                CardSubtype.SWAMP, CardSubtype.MOUNTAIN, CardSubtype.FOREST)) {
+        List<CardSubtype> basicLandTypes = List.of(CardSubtype.PLAINS, CardSubtype.ISLAND,
+                CardSubtype.SWAMP, CardSubtype.MOUNTAIN, CardSubtype.FOREST);
+        for (CardSubtype basicLandType : basicLandTypes) {
             addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(basicLandType, GrantScope.OWN_LANDS));
         }
 
+        // The any-color ability stands in for the five intrinsic mana abilities, so it only applies
+        // while the land still has every basic land type; a later type-setting effect (e.g. Elsewhere
+        // Flask) leaves just the intrinsic ability of the type it sets.
+        List<PermanentPredicate> hasEveryBasicLandType = new ArrayList<>();
+        hasEveryBasicLandType.add(new PermanentIsLandPredicate());
+        basicLandTypes.forEach(type -> hasEveryBasicLandType.add(new PermanentHasSubtypePredicate(type)));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
                 GrantScope.OWN_PERMANENTS,
-                new PermanentIsLandPredicate()
+                new PermanentAllOfPredicate(hasEveryBasicLandType)
         ));
     }
 }

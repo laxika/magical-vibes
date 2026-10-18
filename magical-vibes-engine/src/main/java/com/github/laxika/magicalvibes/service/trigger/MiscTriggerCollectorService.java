@@ -2113,6 +2113,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setTriggeringCardId(triggeringCard.getId());
+        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(triggeringCard.getId()));
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to exile {} from a graveyard", gameData.id, cardName,

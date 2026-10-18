@@ -31,7 +31,7 @@ public class PinnacleStarcage extends Card {
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsCreaturePredicate()))
-                        )), false));
+                        )), false, true));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{6}{W}{W}",

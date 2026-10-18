@@ -132,9 +132,9 @@ class PhageTheUntouchableTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(phage));
         harness.setHand(player1, List.of(new BeaconOfUnrest(), new Unsummon()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveSorcery(player1, 0, 0, phage.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         Permanent permanent = findPermanent(player1, "Phage the Untouchable");
         harness.castAndResolveInstant(player1, 0, permanent.getId());
         harness.assertNotOnBattlefield(player1, "Phage the Untouchable");

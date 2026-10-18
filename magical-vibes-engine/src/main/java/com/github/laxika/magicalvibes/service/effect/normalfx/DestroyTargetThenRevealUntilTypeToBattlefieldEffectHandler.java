@@ -108,7 +108,9 @@ public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implemen
         // Handle ETB effects for creatures
         boolean isCreature = foundCard.hasType(CardType.CREATURE);
         if (isCreature) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetControllerId, foundCard, null, false);
+            UUID actualControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData,
+                    actualControllerId != null ? actualControllerId : targetControllerId, foundCard, null, false);
         }
 
         // Handle planeswalkers

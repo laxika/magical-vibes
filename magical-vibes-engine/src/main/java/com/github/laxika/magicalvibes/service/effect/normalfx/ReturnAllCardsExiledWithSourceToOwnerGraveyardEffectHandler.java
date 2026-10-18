@@ -44,10 +44,11 @@ public class ReturnAllCardsExiledWithSourceToOwnerGraveyardEffectHandler
             if (!gameData.removeFromExile(exiled.card().getId())) {
                 continue;
             }
-            graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE);
-            returnedCards++;
-            gameLogService.append(gameData,
-                    GameLog.cardThen(exiled.card(), " returns to its owner's graveyard."));
+            if (graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE)) {
+                returnedCards++;
+                gameLogService.append(gameData,
+                        GameLog.cardThen(exiled.card(), " returns to its owner's graveyard."));
+            }
         }
         entry.setEventValue(returnedCards);
     }

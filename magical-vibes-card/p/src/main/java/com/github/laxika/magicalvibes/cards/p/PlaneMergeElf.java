@@ -7,15 +7,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesCreatureTypeWithSource;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfControllersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithSourcePermanentPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -29,6 +29,7 @@ public class PlaneMergeElf extends Card {
         CreateTokenEffect elfWarrior = new CreateTokenEffect(
                 "Elf Warrior", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of());
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new LookAtTopCardOfControllersLibraryEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.unless(
                 new TopCardOfLibraryType(CardType.LAND),
                 new MayEffect(
@@ -40,8 +41,7 @@ public class PlaneMergeElf extends Card {
         // Kinfall — Whenever a creature enters under your control, if it shares a creature type
         // with Plane-Merge Elf, creatures you control get +1/+1 until end of turn.
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentSharesCreatureTypeWithSourcePermanentPredicate(),
+                new ConditionalEffect(new TriggeringPermanentSharesCreatureTypeWithSource(),
                         new BoostAllOwnCreaturesEffect(1, 1)));
     }
 }

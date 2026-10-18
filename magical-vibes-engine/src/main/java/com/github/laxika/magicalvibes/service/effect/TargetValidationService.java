@@ -476,6 +476,9 @@ public class TargetValidationService {
     }
 
     public UUID findSourcePermanentController(TargetValidationContext ctx) {
+        if (ctx.sourceControllerId() != null) {
+            return ctx.sourceControllerId();
+        }
         for (UUID playerId : ctx.gameData().orderedPlayerIds) {
             List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
             if (battlefield == null) continue;

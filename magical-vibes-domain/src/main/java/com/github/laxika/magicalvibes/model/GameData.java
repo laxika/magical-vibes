@@ -440,6 +440,8 @@ public class GameData {
             new ConcurrentHashMap<>();
     /** Perpetual keyword grants keyed by the affected card's identity. */
     public final Map<UUID, Set<Keyword>> perpetualKeywords = new ConcurrentHashMap<>();
+    /** Total toxic value perpetually gained by a card (each grant adds 1), keyed by the card's identity. */
+    public final Map<UUID, Integer> perpetualToxicValues = new ConcurrentHashMap<>();
     /** Perpetual generic cast-cost increases keyed by the affected card's identity. */
     public final Map<UUID, Integer> perpetualGenericCastCostIncreases = new ConcurrentHashMap<>();
     /** Perpetual colored mana-cost additions keyed by the affected card's identity. */
@@ -1200,6 +1202,8 @@ public class GameData {
     /** A graveyard-activated ability suspended on its "Discard a card" cost choice (Eternalize). */
     public PendingGraveyardAbilityActivation pendingGraveyardAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
+    /** Players whose draw redirect (Plagiarize) has already been applied to the draw being resolved (CR 614.5). */
+    public final Set<UUID> drawRedirectsAppliedToCurrentDraw = ConcurrentHashMap.newKeySet();
     /** Number of Chains of Mephistopheles replacements already applied to the current draw. */
     public final Map<UUID, Integer> chainsDrawReplacementsApplied = new ConcurrentHashMap<>();
     /** Player IDs that have already taken their first draw of their own draw step this turn. Used by
@@ -1391,6 +1395,9 @@ public class GameData {
     /** Exile returns keyed by the player whose opponent must become monarch. */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnOpponentBecomesMonarch = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
+    /** Colors a chosen source must still have for {@link #playerSourceDamagePreventionIds} to apply, keyed by
+     *  player and then source id; rechecked each time the source would deal damage (CR 609.7b). */
+    public final Map<UUID, Map<UUID, Set<CardColor>>> playerSourceDamagePreventionRequiredColors = new ConcurrentHashMap<>();
     /** Whole-turn chosen-source prevention entries that gain life for black or red damage prevented. */
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionLifeGainIds = new ConcurrentHashMap<>();
     /** One-shot shields (Circle of Protection cycle): prevent the next damage event from a chosen source to a player. */
@@ -2320,6 +2327,13 @@ public class GameData {
 
     /** Pending one-shot non-mana exhaust-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextExhaustAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
+
+    /**
+     * The source of each pending copy in {@link #pendingNextExhaustAbilityCopyThisTurnCount}, in the
+     * order the copies were granted, so each copy trigger keeps the object that created it.
+     */
+    public final Map<UUID, List<PendingCopySource>> pendingNextExhaustAbilityCopySourcesThisTurn =
+            new ConcurrentHashMap<>();
 
 
     /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
@@ -4608,16 +4622,22 @@ public class GameData {
      * permanent, holding the running total).
      */
     public void addDelayedPlusOneCounters(UUID permanentId, int delta) {
+        addDelayedPlusOneCounters(permanentId, null, delta);
+    }
+
+    /** As {@link #addDelayedPlusOneCounters(UUID, int)}, with the controller of the delayed trigger fixed. */
+    public void addDelayedPlusOneCounters(UUID permanentId, UUID controllerId, int delta) {
         int total = delta;
         var it = delayedActions.iterator();
         while (it.hasNext()) {
             DelayedAction action = it.next();
-            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
+            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)
+                    && java.util.Objects.equals(existing.controllerId(), controllerId)) {
                 total += existing.totalCounters();
                 it.remove();
             }
         }
-        delayedActions.add(new DelayedPlusOneCounters(permanentId, total));
+        delayedActions.add(new DelayedPlusOneCounters(permanentId, total, controllerId));
     }
 
     /**
@@ -4671,12 +4691,13 @@ public class GameData {
      * Returns the pending +1/+1 counter total scheduled for {@code permanentId} (0 if none).
      */
     public int getDelayedPlusOneCounters(UUID permanentId) {
+        int total = 0;
         for (DelayedAction action : delayedActions) {
             if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
-                return existing.totalCounters();
+                total += existing.totalCounters();
             }
         }
-        return 0;
+        return total;
     }
 
     /**
@@ -7488,7 +7509,8 @@ public class GameData {
         copy.eachPlayerPayLife.active = this.eachPlayerPayLife.active;
         copy.eachPlayerPayLife.order.addAll(this.eachPlayerPayLife.order);
         copy.eachPlayerPayLife.index = this.eachPlayerPayLife.index;
-        copy.eachPlayerPayLife.consecutivePasses = this.eachPlayerPayLife.consecutivePasses;
+        copy.eachPlayerPayLife.playersActedThisRound = this.eachPlayerPayLife.playersActedThisRound;
+        copy.eachPlayerPayLife.paidThisRound = this.eachPlayerPayLife.paidThisRound;
         copy.eachPlayerPayLife.lifePaid.putAll(this.eachPlayerPayLife.lifePaid);
         copy.eachPlayerPayLife.currentPlayerId = this.eachPlayerPayLife.currentPlayerId;
         copy.eachPlayerPayLife.sourceSetCode = this.eachPlayerPayLife.sourceSetCode;
@@ -7543,6 +7565,8 @@ public class GameData {
         copy.eachPlayerSacrificeOrDiscard.remaining.addAll(this.eachPlayerSacrificeOrDiscard.remaining);
         copy.eachPlayerSacrificeOrDiscard.currentPlayerId = this.eachPlayerSacrificeOrDiscard.currentPlayerId;
         copy.eachPlayerSacrificeOrDiscard.chosenMode = this.eachPlayerSacrificeOrDiscard.chosenMode;
+        copy.eachPlayerSacrificeOrDiscard.deferSacrifices = this.eachPlayerSacrificeOrDiscard.deferSacrifices;
+        copy.eachPlayerSacrificeOrDiscard.chosenSacrifices.addAll(this.eachPlayerSacrificeOrDiscard.chosenSacrifices);
         copy.eachPlayerSacrificeOrLoseLife.active = this.eachPlayerSacrificeOrLoseLife.active;
         copy.eachPlayerSacrificeOrLoseLife.remaining.addAll(this.eachPlayerSacrificeOrLoseLife.remaining);
         copy.eachPlayerSacrificeOrLoseLife.currentPlayerId = this.eachPlayerSacrificeOrLoseLife.currentPlayerId;
@@ -7851,6 +7875,7 @@ public class GameData {
         copy.perpetualPowerToughnessModifiers.putAll(this.perpetualPowerToughnessModifiers);
         this.perpetualKeywords.forEach((cardId, keywords) ->
                 copy.perpetualKeywords.put(cardId, Set.copyOf(keywords)));
+        copy.perpetualToxicValues.putAll(this.perpetualToxicValues);
         copy.perpetualGenericCastCostIncreases.putAll(this.perpetualGenericCastCostIncreases);
         copy.perpetualManaCostIncreases.putAll(this.perpetualManaCostIncreases);
         copyDamageBonusGrants(this.perpetualNoncombatDamageBonuses, copy.perpetualNoncombatDamageBonuses);
@@ -8049,6 +8074,7 @@ public class GameData {
                 copy.controlLossTapTriggers.put(permanentId,
                         Collections.synchronizedList(new ArrayList<>(triggers))));
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
+        copy.drawRedirectsAppliedToCurrentDraw.addAll(this.drawRedirectsAppliedToCurrentDraw);
         copy.chainsDrawReplacementsApplied.putAll(this.chainsDrawReplacementsApplied);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
         copy.firstNonDrawStepDrawReplacementsUsedThisTurn
@@ -8466,6 +8492,11 @@ public class GameData {
                 copy.playerSourceDamagePreventionIds.put(k, new HashSet<>(v)));
         this.playerSourceDamagePreventionLifeGainIds.forEach((k, v) ->
                 copy.playerSourceDamagePreventionLifeGainIds.put(k, new HashSet<>(v)));
+        this.playerSourceDamagePreventionRequiredColors.forEach((k, v) -> {
+            Map<UUID, Set<CardColor>> perSource = new ConcurrentHashMap<>();
+            v.forEach((sourceId, colors) -> perSource.put(sourceId, new HashSet<>(colors)));
+            copy.playerSourceDamagePreventionRequiredColors.put(k, perSource);
+        });
 
         // --- GraveyardTargetOperationState ---
         copy.graveyardTargetOperation.card = this.graveyardTargetOperation.card;
@@ -8875,6 +8906,8 @@ public class GameData {
         copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
         copy.chosenSubtypeActivationCopiesThisTurn.addAll(this.chosenSubtypeActivationCopiesThisTurn);
         copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
+        this.pendingNextExhaustAbilityCopySourcesThisTurn.forEach((playerId, sources) ->
+                copy.pendingNextExhaustAbilityCopySourcesThisTurn.put(playerId, new ArrayList<>(sources)));
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
         this.creatureEntersDrawSources.forEach((playerId, cards) ->

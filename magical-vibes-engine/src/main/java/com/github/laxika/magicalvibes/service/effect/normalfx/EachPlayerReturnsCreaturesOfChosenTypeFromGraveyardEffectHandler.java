@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -75,25 +76,29 @@ public class EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardEffectHandler
         Map<UUID, List<Card>> cardsToReturn = new LinkedHashMap<>();
         Map<UUID, List<String>> returnedNamesByPlayer = new LinkedHashMap<>();
 
+        // Oracle: "each player returns all creature cards of a type chosen this way" — every chosen
+        // type applies to every player's graveyard, not only the type its own chooser named.
+        List<CardPredicate> chosenTypePredicates = new ArrayList<>();
+        for (CardSubtype chosenSubtype : new LinkedHashSet<>(entry.getChosenCreatureTypes().values())) {
+            chosenTypePredicates.add(new CardSubtypePredicate(chosenSubtype));
+        }
+        chosenTypePredicates.add(new CardKeywordPredicate(Keyword.CHANGELING));
+        CardPredicate filter = new CardAllOfPredicate(List.of(
+                new CardTypePredicate(CardType.CREATURE),
+                new CardAnyOfPredicate(chosenTypePredicates)));
+
+        if (entry.getChosenCreatureTypes().isEmpty()) {
+            return;
+        }
+
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (UUID playerId : gameData.orderedPlayerIds) {
-                CardSubtype chosenSubtype = entry.getChosenCreatureTypes().get(playerId);
-                if (chosenSubtype == null) {
-                    continue;
-                }
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                 if (graveyard == null || graveyard.isEmpty()) {
                     continue;
                 }
 
-                CardPredicate filter = new CardAllOfPredicate(List.of(
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(chosenSubtype),
-                                new CardKeywordPredicate(Keyword.CHANGELING)
-                        ))
-                ));
                 List<Card> matching = new ArrayList<>();
                 for (Card card : graveyard) {
                     if (predicateEvaluationService.matchesCardPredicate(card, filter, null)) {

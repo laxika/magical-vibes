@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -36,6 +37,16 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
                 : null;
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
+        }
+        if (e.entersWithCounters() && e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+            int entryCounters = Math.max(0, amountEvaluationService.evaluate(
+                    gameData, e.counterAmount(), AmountContext.forStackEntry(entry, source)));
+            List<UUID> enteredIds = permanentControlSupport.applyCreateToken(
+                    gameData, entry.getControllerId(),
+                    e.tokenTemplate().withInitialPlusOnePlusOneCounters(entryCounters),
+                    entry.getCard().getSetCode());
+            entry.getCreatedPermanentIds().addAll(enteredIds);
+            return;
         }
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());

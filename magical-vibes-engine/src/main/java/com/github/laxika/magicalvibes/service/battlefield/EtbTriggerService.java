@@ -20,6 +20,9 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -99,6 +102,7 @@ public class EtbTriggerService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    private DraftProteanWarEngineSpellbookEffectHandler proteanWarEngineSpellbookDraft;
 
     public EtbTriggerService(GameQueryService gameQueryService,
                              GameLogService gameLogService,
@@ -122,6 +126,11 @@ public class EtbTriggerService {
         this.conditionEvaluationService = conditionEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
+    }
+
+    @Autowired
+    void setProteanWarEngineSpellbookDraft(@Lazy DraftProteanWarEngineSpellbookEffectHandler draft) {
+        this.proteanWarEngineSpellbookDraft = draft;
     }
 
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
@@ -312,6 +321,16 @@ public class EtbTriggerService {
             return;
         }
 
+        // "As this enters, draft a card from its spellbook and exile it" is made while the permanent enters
+        // (CR 614.12), not as a triggered ability, so it waits for the draft before any entry trigger.
+        if (enteringPermanent != null && !printedAbilitiesRemoved
+                && card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(DraftProteanWarEngineSpellbookEffect.class::isInstance)
+                && gameData.getCardsExiledByPermanent(enteringPermanent.getId()).isEmpty()) {
+            proteanWarEngineSpellbookDraft.beginDraft(gameData, controllerId, enteringPermanent.getId());
+            return;
+        }
+
         if (gameQueryService.areArtifactOrCreatureETBTriggersSuppressed(gameData, card)) {
             log.info("Game {} - {} ETB triggers suppressed (entering permanent triggers disabled)",
                     gameData.id, card.getName());
@@ -362,6 +381,7 @@ public class EtbTriggerService {
                 .filter(e -> !(e instanceof SubtypeChoiceOnEnterEffect))
                 // "As enters, choose a number at random" is applied while the permanent enters (Haktos).
                 .filter(e -> !(e instanceof ChooseRandomNumberOnEnterEffect))
+                .filter(e -> !(e instanceof DraftProteanWarEngineSpellbookEffect))
                 .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseIndependentModesOnEnterEffect))
                 .filter(e -> !isEntryReplacementEffect(e))

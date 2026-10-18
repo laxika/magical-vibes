@@ -62,7 +62,6 @@ import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrifice
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -823,9 +822,6 @@ public class StackResolutionService {
                 instanceof PendingInteraction.MayAbilityChoice;
         if (!perm.isFaceDown()
                 && (!gameData.interaction.isAwaitingInput() || awaitingEntryMayChoice)) {
-            if (!gameData.interaction.isAwaitingInput()) {
-                handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
-            }
             int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
             handleResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), etbMode, entry);
         } else if (perm.isFaceDown()) {
@@ -1833,37 +1829,6 @@ public class StackResolutionService {
         } else {
             plotResolvedSpell(gameData, choice.ownerId(), choice.physicalCard());
         }
-    }
-
-    private void handlePhylacteryCounterPlacement(GameData gameData, UUID controllerId, Card card, UUID targetId) {
-        boolean hasPhylacteryEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof PutPhylacteryCounterOnTargetPermanentEffect);
-        if (!hasPhylacteryEffect) return;
-
-        // Per MTG rulings: "If you control no artifacts as Phylactery Lich enters the
-        // battlefield, its ability does nothing." No target was chosen — skip placement.
-        if (targetId == null) return;
-
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) return;
-
-        // Validate the chosen permanent is an artifact controlled by the caster.
-        // This does NOT use targeting (shroud/hexproof don't prevent it per MTG rulings).
-        UUID targetController = gameQueryService.findPermanentController(gameData, targetId);
-        if (!controllerId.equals(targetController)) return;
-        if (!gameQueryService.isArtifact(gameData, target)) return;
-        if (gameQueryService.cantHaveCounters(gameData, target)) return;
-
-        int placed = gameQueryService.replaceCounters(gameData, target, CounterType.PHYLACTERY, 1,
-                controllerId);
-        if (placed <= 0) return;
-        target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + placed);
-        triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
-        permanentCounterSupport.fireYouPutCountersOnAnotherCreatureTriggers(
-                gameData, target, CounterType.PHYLACTERY, placed, controllerId);
-        gameLogService.append(gameData,
-                GameLog.cardTextCard(card, " puts a phylactery counter on ", target.getCard(), "."));
-        log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());
     }
 
     private void logEnterBattlefield(GameData gameData, Card card, UUID controllerId) {

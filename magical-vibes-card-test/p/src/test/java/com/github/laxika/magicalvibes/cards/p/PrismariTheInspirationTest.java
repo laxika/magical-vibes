@@ -191,6 +191,7 @@ class PrismariTheInspirationTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.addToBattlefield(player1, new PrismariTheInspiration());
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

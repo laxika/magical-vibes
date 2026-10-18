@@ -120,9 +120,9 @@ class PacksongPupTest extends BaseCardTest {
         Permanent pup = addCreatureReady(player1, new PacksongPup());
         Permanent other = addCreatureReady(player1, new PacksongPup());
         harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
 
         advanceToCombat(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, other.getId());
         for (int i = 0; i < 3; i++) {
             harness.passBothPriorities();

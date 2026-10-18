@@ -39,6 +39,8 @@ class PrecognitionTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(opponentLibraryNames()).containsExactly("Lowland Giant", "Forest", "Canyon Wildcat");

@@ -195,9 +195,9 @@ class PuppeteerCliqueTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Puppeteer Clique"));
         resolveAllTriggers();
+        harness.setHand(player2, List.of());
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
-        resolveAllTriggers();
-
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent stolen = findPermanent(player1, "Cinderbones");

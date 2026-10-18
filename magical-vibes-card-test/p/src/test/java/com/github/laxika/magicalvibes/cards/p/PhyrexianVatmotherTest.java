@@ -124,9 +124,9 @@ class PhyrexianVatmotherTest extends BaseCardTest {
     void upkeepTriggerResolvesAfterSourceIsDestroyed() {
         Permanent vatmother = harness.addToBattlefieldAndReturn(player1, new PhyrexianVatmother());
         harness.setHand(player1, List.of(new GoForTheThroat()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, vatmother.getId());
         harness.passBothPriorities();
 

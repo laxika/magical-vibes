@@ -57,8 +57,7 @@ class PixieIllusionistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ISLAND");
 
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-        assertThat(forest.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test

@@ -25,6 +25,7 @@ public class PrimevalsGloriousRebirth extends Card {
                         new CardIsPermanentPredicate()
                 )))
                 .returnAll(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

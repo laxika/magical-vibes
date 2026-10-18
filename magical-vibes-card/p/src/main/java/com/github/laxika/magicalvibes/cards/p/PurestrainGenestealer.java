@@ -20,9 +20,10 @@ public class PurestrainGenestealer extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new RemoveCounterFromSourceThenEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
+                        CounterType.PLUS_ONE_PLUS_ONE, 1,
                         new SearchLibraryEffect(
-                                CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED)),
+                                CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                        false, false),
                 "Remove a +1/+1 counter from Purestrain Genestealer?"));
     }
 }

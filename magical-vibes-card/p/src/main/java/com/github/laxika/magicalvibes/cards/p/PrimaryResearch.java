@@ -25,6 +25,7 @@ public class PrimaryResearch extends Card {
         // from your graveyard to the battlefield.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .targetGraveyard(true)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),

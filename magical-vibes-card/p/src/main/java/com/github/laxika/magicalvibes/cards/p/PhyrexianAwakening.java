@@ -24,7 +24,7 @@ public class PhyrexianAwakening extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorToken());
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.VIGILANCE,
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)));
     }
 

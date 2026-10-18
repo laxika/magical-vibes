@@ -25,6 +25,7 @@ class PerplexingChimeraTest extends BaseCardTest {
         preparePlayerTwoMainPhase();
 
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -41,6 +42,7 @@ class PerplexingChimeraTest extends BaseCardTest {
         preparePlayerTwoMainPhase();
 
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -58,11 +60,11 @@ class PerplexingChimeraTest extends BaseCardTest {
         preparePlayerTwoMainPhase();
 
         harness.castInstant(player2, 0, originalTarget.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, newTarget.getId());
         harness.passBothPriorities();
@@ -80,6 +82,7 @@ class PerplexingChimeraTest extends BaseCardTest {
         preparePlayerTwoMainPhase();
 
         harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -125,14 +128,13 @@ class PerplexingChimeraTest extends BaseCardTest {
         preparePlayerTwoMainPhase();
 
         harness.castInstant(player2, 0, player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Perplexing Chimera");
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -149,9 +151,9 @@ class PerplexingChimeraTest extends BaseCardTest {
         preparePlayerTwoMainPhase();
 
         harness.castCreature(player2, 0);
-        harness.handleMayAbilityChosen(player1, true);
         gd.playerBattlefields.get(player1.getId()).remove(chimera);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

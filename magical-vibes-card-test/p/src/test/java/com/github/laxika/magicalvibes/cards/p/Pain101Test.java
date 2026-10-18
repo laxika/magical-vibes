@@ -98,9 +98,7 @@ class Pain101Test extends BaseCardTest {
     void stolenCreatureReturnsToOwner() {
         Permanent creature = addCreature(player2);
         Card creatureCard = creature.getCard();
-        creatureCard.setOwnerId(player2.getId());
-        gd.playerBattlefields.get(player2.getId()).remove(creature);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        setOwnerAndController(creature, player2, player1);
 
         castOn(creature);
         destroy(player2, creature);

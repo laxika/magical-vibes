@@ -162,7 +162,7 @@ class PhoenixDownTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, 0, creature.getId(), Zone.GRAVEYARD);
         harness.setGraveyard(player1, List.of());
-        gd.getPlayerExiledCards(player1.getId()).add(creature);
+        gd.addToExile(player1.getId(), creature);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

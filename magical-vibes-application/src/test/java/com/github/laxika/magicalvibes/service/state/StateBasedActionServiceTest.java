@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -863,54 +862,22 @@ class StateBasedActionServiceTest {
     }
 
     @Nested
-    @DisplayName("Delayed +1/+1 counter regrowth (Protean Hydra ruling)")
-    class DelayedCounterRegrowth {
+    @DisplayName("+1/+1 counter removal tracking (Protean Hydra ruling)")
+    class PlusOneCounterRemovalTracking {
 
         @Test
-        @DisplayName("Counter annihilation triggers delayed regrowth for permanents with the effect")
-        void counterAnnihilationTriggersRegrowth() {
+        @DisplayName("Counter annihilation records each cancelled +1/+1 counter as removed")
+        void counterAnnihilationRecordsRemovedCounters() {
             Card card = createCreatureCard("Protean Hydra");
-            card.addEffect(EffectSlot.STATIC, new DelayedPlusOnePlusOneCounterRegrowthEffect());
             Permanent perm = new Permanent(card);
             perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+            perm.drainPlusOnePlusOneCountersRemovedSinceTriggerCheck();
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
 
-            // 3 counters cancelled => 3*2 = 6 pending regrowth counters
-            assertThat(gd.getDelayedPlusOneCounters(perm.getId())).isEqualTo(6);
-        }
-
-        @Test
-        @DisplayName("No delayed regrowth for permanents without the effect")
-        void noRegrowthWithoutEffect() {
-            Card card = createCreatureCard("Regular Creature");
-            Permanent perm = new Permanent(card);
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.performStateBasedActions(gd);
-
-            assertThat(gd.getDelayedPlusOneCounters(perm.getId())).isZero();
-        }
-
-        @Test
-        @DisplayName("Regrowth stacks with existing pending counters")
-        void regrowthStacksWithExisting() {
-            Card card = createCreatureCard("Protean Hydra");
-            card.addEffect(EffectSlot.STATIC, new DelayedPlusOnePlusOneCounterRegrowthEffect());
-            Permanent perm = new Permanent(card);
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
-            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
-            gd.playerBattlefields.get(player1Id).add(perm);
-            gd.addDelayedPlusOneCounters(perm.getId(), 4);
-
-            sut.performStateBasedActions(gd);
-
-            // existing 4 + (2 cancelled * 2) = 8
-            assertThat(gd.getDelayedPlusOneCounters(perm.getId())).isEqualTo(8);
+            assertThat(perm.drainPlusOnePlusOneCountersRemovedSinceTriggerCheck()).isEqualTo(3);
         }
     }
 

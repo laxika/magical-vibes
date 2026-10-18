@@ -45,6 +45,7 @@ public class PollutedCisternDimOubliette extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
+                                .mandatory(true)
                                 .build())));
     }
 }

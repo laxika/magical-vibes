@@ -140,6 +140,8 @@ class PhyrexianCensorTest extends BaseCardTest {
         harness.castInstant(player1, 0, censor.getId());
         harness.passBothPriorities();
 
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 

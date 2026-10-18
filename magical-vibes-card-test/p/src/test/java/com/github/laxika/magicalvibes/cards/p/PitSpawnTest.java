@@ -153,6 +153,7 @@ class PitSpawnTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Pit Spawn");
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        // The upkeep step ends once the choice is made, and unspent mana empties as a step ends (CR 500.5).
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

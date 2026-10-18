@@ -42,6 +42,6 @@ public class PlarggAndNassariOpponentChoiceInteractionHandler
         gameData.interaction.clearAwaitingInput();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PlarggAndNassariCardChoice(
                 selected.getFirst(), interaction.controllerId(), interaction.validCardIds(),
-                interaction.maxCastCount()));
+                interaction.maxCastCount(), interaction.adventureLandIds()));
     }
 }

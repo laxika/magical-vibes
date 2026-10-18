@@ -28,7 +28,7 @@ public class InitializeEnchantedPermanentToughnessAsLoyaltyEffectHandler impleme
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
-        if (target != null) {
+        if (target != null && target.getToughnessAsLoyalty() == null) {
             target.setToughnessAsLoyalty(target.getBaseToughness());
         }
     }

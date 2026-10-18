@@ -664,6 +664,9 @@ public class EnterTriggerCollectorService {
      */
     private boolean enteringCardMatches(TriggerMatchContext match, TriggerContext.PermanentEnters pe,
                                         CardPredicate predicate) {
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate anyOf) {
+            return anyOf.predicates().stream().anyMatch(sub -> enteringCardMatches(match, pe, sub));
+        }
         if (predicate instanceof CardKeywordPredicate keywordPredicate && keywordPredicate.restriction() == null) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             Permanent enteringPermanent = enteringPermanentId == null
@@ -2051,6 +2054,8 @@ public class EnterTriggerCollectorService {
 
     @CollectsTrigger(value = ExileTriggeringCreatureUntilSourceLeavesEffect.class,
             slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = ExileTriggeringCreatureUntilSourceLeavesEffect.class,
+            slot = EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureExileUntilSourceLeaves(TriggerMatchContext match,
             ExileTriggeringCreatureUntilSourceLeavesEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2720,7 +2725,7 @@ public class EnterTriggerCollectorService {
                     targetPlayerId,
                     match.permanent() == null ? null : match.permanent().getId()
             );
-            entry.setNonTargeting(!isTargeting(effect));
+            entry.setNonTargeting(!isTargeting(effect) || isPlayerFixedByEvent(effect, targetPlayerId));
             entry.setMarkSourceOncePerTurnOnAcceptance(match.rawEffect() instanceof
                     com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect once
                     && once.markOnAcceptance());
@@ -2750,6 +2755,20 @@ public class EnterTriggerCollectorService {
 
     private void logTriggered(TriggerMatchContext match) {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.sourceCard()));
+    }
+
+    /**
+     * Whether the only target-like slot of {@code effect} is a player the triggering event already
+     * fixed ("that player loses 2 life"), which is referenced rather than targeted and so ignores
+     * shroud and hexproof.
+     */
+    private static boolean isPlayerFixedByEvent(CardEffect effect, UUID fixedPlayerId) {
+        TargetSpec spec = effect.targetSpec();
+        return fixedPlayerId != null
+                && spec.admits(TargetPredicate.Kind.PLAYER)
+                && !spec.admits(TargetPredicate.Kind.PERMANENT)
+                && !spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !EffectResolution.targetsSpellOnStack(effect);
     }
 
     private static boolean isTargeting(CardEffect effect) {

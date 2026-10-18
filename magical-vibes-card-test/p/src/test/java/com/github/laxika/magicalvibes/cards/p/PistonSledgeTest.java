@@ -194,7 +194,6 @@ class PistonSledgeTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, bears.getId());
-        harness.handlePermanentChosen(player1, sledge.getId());
 
         harness.assertInGraveyard(player1, "Piston Sledge");
         harness.assertNotOnBattlefield(player1, "Piston Sledge");

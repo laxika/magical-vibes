@@ -71,7 +71,8 @@ public class SeekLibraryToBattlefieldAndPerpetuallyIncreaseSpellCostIfSoughtCard
                 .text("seeks and puts " + sought.getName() + " onto the battlefield.").build());
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(sought));
 
-        if (sought.getManaValue() < xValue) {
+        boolean enteredBattlefield = gameQueryService.findPermanentById(gameData, permanent.getId()) != null;
+        if (enteredBattlefield && sought.getManaValue() < xValue) {
             PerpetualCardCastCostSupport.rememberIncrease(
                     gameData, entry.getPhysicalCard(), seek.genericCastCostIncrease());
             entry.setReturnToHandAfterResolving(true);

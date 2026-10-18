@@ -33,7 +33,7 @@ public class SearchLibraryForCardsWithTargetCreatureNameEffectHandler implements
 
         var targetNameSearch = new SearchLibraryEffect(
                 new Fixed(((SearchLibraryForCardsWithTargetCreatureNameEffect) effect).count()),
-                new CardNamedPredicate(target.getCard().getName()),
+                new CardNamedPredicate(gameQueryService.getEffectiveName(gameData, target)),
                 LibrarySearchDestination.HAND);
         searchLibraryEffectHandler.resolve(gameData, entry, targetNameSearch);
     }

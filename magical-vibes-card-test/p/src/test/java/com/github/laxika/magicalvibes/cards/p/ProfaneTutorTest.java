@@ -37,6 +37,7 @@ class ProfaneTutorTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -96,6 +97,7 @@ class ProfaneTutorTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -116,6 +118,7 @@ class ProfaneTutorTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

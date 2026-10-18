@@ -49,7 +49,6 @@ class PitilessHordeTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent horde = findPermanent(player1, "Pitiless Horde");
         assertThat(horde.hasKeyword(Keyword.HASTE)).isTrue();

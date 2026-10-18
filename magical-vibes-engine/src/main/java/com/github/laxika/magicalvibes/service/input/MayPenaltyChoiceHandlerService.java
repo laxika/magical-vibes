@@ -521,10 +521,7 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst()
                 .orElse(null);
 
-        if (targetEntry == null
-                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
-                || gameQueryService.isProtectedFromCounterBySourceCard(
-                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+        if (targetEntry == null) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -535,6 +532,13 @@ public class MayPenaltyChoiceHandlerService {
             discardHandUnlessPaysLifeEffectHandler.discardTargetHand(
                     gameData, controllerId, controllerId, ability.sourceCard());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                        gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -904,7 +908,8 @@ public class MayPenaltyChoiceHandlerService {
             }
 
             if (!validIndices.isEmpty()) {
-                gameData.discardCausedByOpponent = false;
+                gameData.discardCausedByOpponent = ability.sourceControllerId() != null
+                        && !ability.sourceControllerId().equals(targetPlayerId);
                 playerInputService.beginDiscardChoice(gameData, targetPlayerId, validIndices,
                         "Choose a card to discard.", 1);
 

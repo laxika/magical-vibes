@@ -116,7 +116,7 @@ class PlaneswalkerificateTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, shock.getId(), player2.getId()))
@@ -178,7 +178,7 @@ class PlaneswalkerificateTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -198,7 +198,7 @@ class PlaneswalkerificateTest extends BaseCardTest {
         harness.assertLife(player2, 16);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Planeswalkerificate");

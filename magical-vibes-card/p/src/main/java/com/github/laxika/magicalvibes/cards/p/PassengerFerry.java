@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +32,7 @@ public class PassengerFerry extends Card {
                 "Target must be another attacking creature"
         )).addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
                 "{U}",
-                new MakeCreatureUnblockableEffect(),
+                new QueueReflexiveAbilityEffect(new MakeCreatureUnblockableEffect()),
                 "Pay {U} to make another attacking creature unblockable?"
         ));
 

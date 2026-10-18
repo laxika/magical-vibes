@@ -467,6 +467,7 @@ import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesCreatureTypeWithSource;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanEachOtherCreature;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
@@ -1900,6 +1901,13 @@ public class ConditionEvaluationService {
                         ? gameQueryService.getEffectivePower(gameData, triggeringPermanent)
                         : ctx.triggeringPermanentPowerAtTrigger();
                 yield power != null && power >= c.threshold();
+            }
+            case TriggeringPermanentSharesCreatureTypeWithSource ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                yield source != null && triggeringPermanent != null
+                        && gameQueryService.shareCreatureType(gameData, triggeringPermanent, source);
             }
             case TriggeringPermanentHasSubtype c -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
