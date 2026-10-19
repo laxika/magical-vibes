@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEff
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -147,6 +148,7 @@ public class ChoiceHandlerService {
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService> gameServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport> exileFreeCastSupportProvider;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.mayfx.ExileTargetCardFromGraveyardAndMayCastCopyHandler> exileCopyCastHandlerProvider;
     private final org.springframework.beans.factory.ObjectProvider<MayCastHandlerService> mayCastHandlerServiceProvider;
 
     private final GameQueryService gameQueryService;
@@ -356,6 +358,18 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             stackResolutionService.resolveReboundOrPlotChoice(gameData, choice, "REBOUND".equals(colorName));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SpellExileSourceChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid exile replacement choice");
+            }
+            gameData.interaction.clearAwaitingInput();
+            stackResolutionService.resolveSpellExileSourceChoice(gameData, choice, UUID.fromString(colorName));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -768,6 +782,10 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.LibraryFreeCastModeChoice ctx) {
             mayCastHandlerServiceProvider.getObject().completeLibraryFreeCastModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ExileCopyCastModeChoice ctx) {
+            exileCopyCastHandlerProvider.getObject().completeModeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ExileFreeCastFaceChoice ctx) {
@@ -6162,11 +6180,7 @@ public class ChoiceHandlerService {
 
         if (nextTargetIndex < ctx.targetIds().size()) {
             gameData.interaction.clearAwaitingInput();
-            ChoiceContext.CounterDistributionAssignment next =
-                    new ChoiceContext.CounterDistributionAssignment(
-                            ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
-                            ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex,
-                            ctx.allowsPartialDistribution(), ctx.spellCast(), ctx.stackEntryId());
+            ChoiceContext.CounterDistributionAssignment next = ctx.withProgress(assignments, nextTargetIndex);
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
@@ -6203,7 +6217,10 @@ public class ChoiceHandlerService {
                 assignments,
                 null,
                 List.of(),
-                ctx.targetIds());
+                ctx.entryTargetIds() != null ? ctx.entryTargetIds() : ctx.targetIds());
+        if (ctx.entryTargetGroupSizes() != null) {
+            entry.setTargetGroupSizes(ctx.entryTargetGroupSizes());
+        }
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (source != null) {
             Permanent snapshot = new Permanent(source);
@@ -6456,9 +6473,9 @@ public class ChoiceHandlerService {
                     placed = accepted;
                 }
                 if (placed > 0) {
-                    from.setCounterCount(counterType, from.getCounterCount(counterType) - placed);
+                    from.setCounterCount(counterType, from.getCounterCount(counterType) - available);
                     if (counterType == CounterType.OIL) {
-                        gameData.recordOilCounterRemoved(from, placed);
+                        gameData.recordOilCounterRemoved(from, available);
                     }
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " moves " + placed + " counter"
@@ -6856,7 +6873,7 @@ public class ChoiceHandlerService {
                 if (!permanent.getCard().hasType(CardType.LAND)) {
                     continue;
                 }
-                if (!gameQueryService.effectiveBasicLandTypes(gameData, permanent).contains(fromType)) {
+                if (!gameQueryService.effectiveLandTypes(gameData, permanent).contains(fromType)) {
                     continue;
                 }
                 GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
@@ -8371,14 +8388,16 @@ public class ChoiceHandlerService {
             exiledCount += toExile.size();
         }
 
-        // Always shuffle target player's library
-        if (library != null) {
+        // Shuffle the target player's library, unless the resolving spell shuffles it itself afterwards
+        // (Reap Intellect), so that player shuffles only once.
+        boolean shuffledLaterByEffect = isTargetPlayerShuffleStillPending(gameData);
+        if (library != null && !shuffledLaterByEffect) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
         }
 
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
-                + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library. "
-                + targetName + " shuffles their library.";
+                + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library."
+                + (shuffledLaterByEffect ? "" : " " + targetName + " shuffles their library.");
         gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
@@ -8401,6 +8420,16 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean isTargetPlayerShuffleStillPending(GameData gameData) {
+        StackEntry pending = gameData.pendingEffectResolutionEntry;
+        if (pending == null) {
+            return false;
+        }
+        List<CardEffect> effects = pending.getEffectsToResolve();
+        return effects.subList(Math.min(gameData.pendingEffectResolutionIndex, effects.size()), effects.size())
+                .stream().anyMatch(effect -> effect instanceof ShuffleLibraryEffect shuffle && shuffle.targetPlayer());
     }
 
     private void addSelectedMultiZoneExileCard(GameData gameData,

@@ -82,6 +82,11 @@ public class Permanent {
     /** Number of times this permanent has attacked during this game. */
     @Setter private int attacksThisGame;
     private boolean attackedThisCombat;
+    /**
+     * Whether another effect reselected which player or planeswalker this creature is attacking. It is
+     * still considered to have attacked what it was declared to attack, not the new defender.
+     */
+    @Setter private boolean attackTargetReselected;
     /** Player or permanent IDs this creature attacked during the current combat. */
     private final Set<UUID> playersAttackedThisCombat = new HashSet<>();
     /** Player or permanent IDs this creature attacked during its immediately preceding combat. */
@@ -946,6 +951,7 @@ public class Permanent {
         this.attacksThisTurn = source.attacksThisTurn;
         this.attacksThisGame = source.attacksThisGame;
         this.attackedThisCombat = source.attackedThisCombat;
+        this.attackTargetReselected = source.attackTargetReselected;
         this.playersAttackedThisCombat.addAll(source.playersAttackedThisCombat);
         this.playersAttackedLastCombat.addAll(source.playersAttackedLastCombat);
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
@@ -1551,6 +1557,7 @@ public class Permanent {
         playersAttackedLastCombat.clear();
         playersAttackedLastCombat.addAll(playersAttackedThisCombat);
         playersAttackedThisCombat.clear();
+        attackTargetReselected = false;
     }
 
     /**

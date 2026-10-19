@@ -25,7 +25,8 @@ public class RadiantGrace extends Card {
                         GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC,
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect());
+        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                new ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect());
     }
 
     @Override

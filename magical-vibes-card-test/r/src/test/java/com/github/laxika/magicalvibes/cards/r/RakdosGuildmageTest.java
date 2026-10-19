@@ -150,19 +150,23 @@ class RakdosGuildmageTest extends BaseCardTest {
     @DisplayName("A token created during an end step survives until the following end step")
     void tokenCreatedDuringEndStepWaitsForFollowingEndStep() {
         addCreatureReady(player1, new RakdosGuildmage());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 0, 1, null, null);
+            harness.passBothPriorities();
+        });
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);

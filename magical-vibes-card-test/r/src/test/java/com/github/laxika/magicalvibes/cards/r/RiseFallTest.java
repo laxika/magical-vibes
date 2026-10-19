@@ -120,6 +120,7 @@ class RiseFallTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(graveyardCreature));
         Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player2, new AzoriusFirstWing());
         harness.setHand(player1, List.of(new RiseFall()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -172,6 +173,7 @@ class RiseFallTest extends BaseCardTest {
         Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player2, new AzoriusFirstWing());
         RiseFall spell = new RiseFall();
         harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

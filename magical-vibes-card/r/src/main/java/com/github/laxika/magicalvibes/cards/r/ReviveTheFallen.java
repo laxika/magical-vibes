@@ -15,15 +15,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 public class ReviveTheFallen extends Card {
 
     public ReviveTheFallen() {
-        // Return target creature card from a graveyard to its owner's hand.
-        // The clash resolves first so its won-clash return-to-hand flag is set before the
-        // graveyard return runs (mirrors Redeem the Lost's ordering).
-        addEffect(EffectSlot.SPELL, new ClashEffect(ReturnToHandEffect.selfSpell()));
+        // Return target creature card from a graveyard to its owner's hand, then clash. The return
+        // happens before the clash choices are made.
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .build());
+        addEffect(EffectSlot.SPELL, new ClashEffect(ReturnToHandEffect.selfSpell()));
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +21,10 @@ class ResearchThiefTest extends BaseCardTest {
         Permanent permanent = addCreatureReady(player1, card);
         permanent.setAttacking(true);
         return permanent;
+    }
+
+    private void stopAtCombatDamage() {
+        gd.playerAutoStopSteps.put(player1.getId(), new java.util.HashSet<>(List.of(TurnStep.COMBAT_DAMAGE)));
     }
 
     @Test
@@ -61,6 +66,7 @@ class ResearchThiefTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(draw));
 
+        stopAtCombatDamage();
         resolveCombat();
 
         assertThat(gd.stack).hasSize(1);
@@ -80,6 +86,7 @@ class ResearchThiefTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(draw));
         harness.setLibrary(player2, List.of(new ResearchThief()));
 
+        stopAtCombatDamage();
         resolveCombat();
 
         assertThat(gd.stack).hasSize(1);
@@ -98,6 +105,7 @@ class ResearchThiefTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
 
+        stopAtCombatDamage();
         resolveCombat();
 
         assertThat(gd.stack).hasSize(2);

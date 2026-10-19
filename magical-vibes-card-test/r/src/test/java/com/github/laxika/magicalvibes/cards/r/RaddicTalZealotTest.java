@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.v.ValiantKnight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -40,23 +41,25 @@ class RaddicTalZealotTest extends BaseCardTest {
         addCreatureReady(player1, new RaddicTalZealot());
         Permanent knight = addCreatureReady(player1, new KnightOfTheEbonLegion());
 
-        declareAttackers(List.of(1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            resolveAllTriggers();
 
-        PendingInteraction.SpellbookCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
-        assertThat(choice.cards()).hasSize(3);
-        assertThat(choice.cards()).extracting(Card::getName).allMatch(Set.of(
-                "Midnight Reaper", "Guardian of Faith", "Knight of the Ebon Legion", "Cavalier of Dawn",
-                "Cavalier of Night", "Benalish Marshal", "Murderous Rider", "Order of Midnight",
-                "Acclaimed Contender", "Dauntless Bodyguard", "Valiant Knight", "Smitten Swordmaster",
-                "Blacklance Paragon", "History of Benalia", "The Circle of Loyalty")::contains);
+            PendingInteraction.SpellbookCardChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+            assertThat(choice.cards()).hasSize(3);
+            assertThat(choice.cards()).extracting(Card::getName).allMatch(Set.of(
+                    "Midnight Reaper", "Guardian of Faith", "Knight of the Ebon Legion", "Cavalier of Dawn",
+                    "Cavalier of Night", "Benalish Marshal", "Murderous Rider", "Order of Midnight",
+                    "Acclaimed Contender", "Dauntless Bodyguard", "Valiant Knight", "Smitten Swordmaster",
+                    "Blacklance Paragon", "History of Benalia", "The Circle of Loyalty")::contains);
 
-        Card drafted = choice.cards().getFirst();
-        harness.handleMultipleCardsChosen(player1, List.of(choice.validCardIds().getFirst()));
+            Card drafted = choice.cards().getFirst();
+            harness.handleMultipleCardsChosen(player1, List.of(choice.validCardIds().getFirst()));
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
-        assertThat(knight.isAttacking()).isTrue();
+            assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
+            assertThat(knight.isAttacking()).isTrue();
+        });
     }
 
     @Test

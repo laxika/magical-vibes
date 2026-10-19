@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LethalDamageModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.RequireFlagbearerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -311,6 +312,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
@@ -975,6 +977,37 @@ public class GameQueryService {
      *
      * @return the permanent, or {@code null} if not found
      */
+    /**
+     * True when {@code playerId} was attacked this turn by an attacker that {@code controllerId}
+     * controlled and that had {@code subtype} when it was declared as an attacker, so later changes
+     * of control, subtypes or death do not undo the attack. An attack with no declaration snapshot
+     * is judged by the attacker's current state.
+     */
+    public boolean wasPlayerAttackedByControlledSubtypeThisTurn(GameData gameData, UUID playerId,
+                                                                UUID controllerId, CardSubtype subtype) {
+        for (var attack : gameData.playersAttackedThisTurn.entrySet()) {
+            if (!attack.getValue().contains(playerId)) {
+                continue;
+            }
+            Set<GameData.DeclaredAttackerSnapshot> snapshots =
+                    gameData.declaredAttackerSnapshotsThisTurn.get(attack.getKey());
+            if (snapshots != null && !snapshots.isEmpty()) {
+                if (snapshots.stream().anyMatch(snapshot -> controllerId.equals(snapshot.controllerId())
+                        && snapshot.subtypes().contains(subtype))) {
+                    return true;
+                }
+                continue;
+            }
+            Permanent attacker = findPermanentById(gameData, attack.getKey());
+            if (attacker != null
+                    && controllerId.equals(findPermanentController(gameData, attacker.getId()))
+                    && hasEffectiveSubtype(gameData, attacker, subtype)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Permanent findPermanentById(GameData gameData, UUID permanentId) {
         return findInBattlefields(gameData, permanentId, (playerId, p) -> p);
     }
@@ -3495,8 +3528,12 @@ public class GameQueryService {
             if (fromHandOnly && !gameData.wasSpellCastFromHandThisTurn(spell.getId())) {
                 continue;
             }
+            // A spell's mana value on the stack includes the X it was cast with (CR 202.3e).
+            int xSymbols = spell.getParsedManaCost() == null ? 0 : spell.getParsedManaCost().getXSymbolCount();
+            Integer castX = xSymbols > 0
+                    ? (gameData.getSpellCastStackManaValue(spell) - spell.getManaValue()) / xSymbols : null;
             if (predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId(),
-                    gameData, controllerId)) {
+                    gameData, controllerId, null, null, castX)) {
                 return true;
             }
         }
@@ -3772,6 +3809,17 @@ public class GameQueryService {
      * Keyword check against a pre-computed static bonus, for callers that read many keywords
      * off the same permanent (mirrors {@link #getEffectivePower(Permanent, StaticBonus)}).
      */
+    /**
+     * Returns {@code true} when a floating "loses all abilities" effect on the permanent is stamped
+     * after the given timestamp, so abilities granted at that timestamp are removed by it (CR 613.7).
+     */
+    private boolean hasLaterLosesAllAbilitiesEffect(GameData gameData, UUID permanentId, long timestamp) {
+        return gameData.floatingEffects.stream()
+                .anyMatch(other -> other.effect() instanceof LosesAllAbilitiesEffect
+                        && permanentId.equals(other.affectedPermanentId())
+                        && other.timestamp() > timestamp);
+    }
+
     public boolean hasKeyword(Permanent permanent, StaticBonus bonus, Keyword keyword) {
         if (bonus == StaticBonus.NONE) {
             return permanent.hasKeyword(keyword);
@@ -5555,7 +5603,8 @@ public class GameQueryService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (perm.isAttacking() && perm.isAttackedThisCombat() && playerId.equals(perm.getAttackTarget())) {
+                if (perm.isAttacking() && perm.isAttackedThisCombat() && !perm.isAttackTargetReselected()
+                        && playerId.equals(perm.getAttackTarget())) {
                     return true;
                 }
             }
@@ -6574,7 +6623,9 @@ public class GameQueryService {
                         && target.getId().equals(floating.affectedPermanentId())) {
                     accumulator.addPower(buff.powerBoost());
                     accumulator.addToughness(buff.toughnessBoost());
-                    accumulator.addKeywords(buff.keywords());
+                    if (!hasLaterLosesAllAbilitiesEffect(gameData, target.getId(), floating.timestamp())) {
+                        accumulator.addKeywords(buff.keywords());
+                    }
                 }
             }
         }
@@ -7353,6 +7404,9 @@ public class GameQueryService {
                 && !hasLostPrintedAbilities(gameData, target)) {
             return true;
         }
+        if (hasProtectionFromSourceSupertypes(gameData, target, sourceCard)) {
+            return true;
+        }
         return computeStaticBonus(gameData, target).grantedEffects().stream()
                 .filter(ProtectionGrantingEffect.class::isInstance)
                 .map(ProtectionGrantingEffect.class::cast)
@@ -7360,6 +7414,20 @@ public class GameQueryService {
                         || protection.protectionFromCardTypes().contains(sourceCard.getType())
                         || sourceCard.getAdditionalTypes().stream()
                                 .anyMatch(protection.protectionFromCardTypes()::contains));
+    }
+
+    private boolean hasProtectionFromSourceSupertypes(GameData gameData, Permanent target, Card sourceCard) {
+        Set<CardSupertype> supertypes = sourceCard.getSupertypes();
+        if (supertypes == null || supertypes.isEmpty()) {
+            return false;
+        }
+        List<CardEffect> effects = new ArrayList<>(computeStaticBonus(gameData, target).grantedEffects());
+        if (!target.isFaceDown() && !hasLostPrintedAbilities(gameData, target)) {
+            effects.addAll(target.getCard().getEffects(EffectSlot.STATIC));
+        }
+        return effects.stream().anyMatch(effect -> effect instanceof ProtectionFromPermanentsMatchingEffect protection
+                && protection.predicate() instanceof PermanentHasSupertypePredicate supertype
+                && supertypes.contains(supertype.supertype()));
     }
 
     public boolean hasProtectionFromMulticolored(GameData gameData, Permanent target, Card sourceCard) {
@@ -8974,6 +9042,7 @@ public class GameQueryService {
         }
         for (Permanent perm : bf) {
             if (cardName.equals(perm.getChosenName())
+                    && !hasLostAllAbilities(gameData, perm)
                     && perm.getCard().getEffects(EffectSlot.STATIC).stream()
                             .anyMatch(PlayerHasProtectionFromChosenNameEffect.class::isInstance)) {
                 return true;
@@ -9101,6 +9170,31 @@ public class GameQueryService {
             return false;
         }
         return playerBattlefieldHasStaticEffect(gameData, recipientControllerId, SpellDamagePreventionEffect.class);
+    }
+
+    /**
+     * Returns whether a spell's damage to a permanent is prevented by a spell-damage prevention effect on
+     * another permanent its controller controls. The protected permanent itself does not count as the
+     * "another permanent" a prevention effect names (e.g. Rem Karolus, Stalwart Slayer).
+     */
+    public boolean isSpellDamageToPermanentPrevented(GameData gameData, StackEntry entry, Permanent recipient) {
+        if (!isDamagePreventable(gameData) || entry == null || recipient == null
+                || !isSpellStackEntry(entry.getEntryType())) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, recipient.getId());
+        List<Permanent> bf = controllerId == null ? null : gameData.playerBattlefields.get(controllerId);
+        if (bf == null) return false;
+        for (Permanent perm : bf) {
+            if (perm.getId().equals(recipient.getId())) continue;
+            if (!perm.isFaceDown()
+                    && !perm.isLosesAllAbilitiesUntilEndOfTurn()
+                    && staticEffectsIncludingTemporary(gameData, perm, controllerId).stream()
+                    .anyMatch(SpellDamagePreventionEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Returns the first turn-scoped damage-prevention shield matching the targeted spell. */
@@ -10088,8 +10182,12 @@ public class GameQueryService {
     public int getMaxBlockersAllowed(GameData gameData, Permanent attacker) {
         int maxBlockers = Integer.MAX_VALUE;
         UUID attackerControllerId = findPermanentController(gameData, attacker.getId());
-        maxBlockers = Math.min(maxBlockers,
-                maxBlockersFromStaticEffects(gameData, attacker, attackerControllerId));
+        // An Equipment's "equipped creature can't be blocked by more than N" static belongs to the creature
+        // it is attached to (picked up below); it does not restrict the Equipment itself while animated.
+        if (!attacker.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            maxBlockers = Math.min(maxBlockers,
+                    maxBlockersFromStaticEffects(gameData, attacker, attackerControllerId));
+        }
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -10580,6 +10678,27 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if two cards in a non-battlefield zone share at least one creature type,
+     * reading each card's effective creature types in that zone, so creature types granted to
+     * cards outside the battlefield (such as Maskwood Nexus's) count.
+     */
+    public boolean shareCreatureType(GameData gameData, Card a, Card b) {
+        Set<CardSubtype> aTypes = getCardSubtypes(a, gameData, a.getOwnerId()).stream()
+                .filter(this::isCreatureSubtype)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<CardSubtype> bTypes = getCardSubtypes(b, gameData, b.getOwnerId()).stream()
+                .filter(this::isCreatureSubtype)
+                .collect(java.util.stream.Collectors.toSet());
+        if (a.hasKeyword(Keyword.CHANGELING)) {
+            return b.hasKeyword(Keyword.CHANGELING) || !bTypes.isEmpty();
+        }
+        if (b.hasKeyword(Keyword.CHANGELING)) {
+            return !aTypes.isEmpty();
+        }
+        return aTypes.stream().anyMatch(bTypes::contains);
+    }
+
+    /**
      * Returns {@code true} if two cards in non-battlefield zones share at least one creature type.
      * Only printed subtypes and keywords are relevant for cards in a graveyard.
      */
@@ -10622,6 +10741,13 @@ public class GameQueryService {
     public boolean sharesCardType(GameData gameData, Permanent a, Permanent b) {
         Set<CardType> aTypes = getEffectiveCardTypes(gameData, a);
         return getEffectiveCardTypes(gameData, b).stream().anyMatch(aTypes::contains);
+    }
+
+    /** Returns whether two permanents share at least one permanent type (kindred alone does not count). */
+    public boolean sharesPermanentType(GameData gameData, Permanent a, Permanent b) {
+        Set<CardType> aTypes = getEffectiveCardTypes(gameData, a);
+        return getEffectiveCardTypes(gameData, b).stream()
+                .anyMatch(type -> type.isPermanentType() && aTypes.contains(type));
     }
 
     /** Returns whether two permanents currently have equal effective toughness. */
@@ -11207,6 +11333,7 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (recipientControllerId.equals(controllerId)) return;
+            if (hasLostAllAbilities(gameData, permanent)) return;
             forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof OpponentDamageBonusEffect damageBonus) {
                     bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), damageBonus.amount()));

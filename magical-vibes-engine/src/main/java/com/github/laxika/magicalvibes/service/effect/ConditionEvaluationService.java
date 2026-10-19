@@ -185,6 +185,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerOrControllerHa
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeBelowStartingLife;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.ControllerRingLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerEndStep;
@@ -997,6 +998,10 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20)
                             >= c.threshold() + (c.relativeToStartingLifeTotal() ? gameData.format.startingLife() : 0);
+            case ControllerLifeBelowStartingLife c ->
+                    ctx.controllerId() != null
+                            && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), gameData.startingLife())
+                            < gameData.startingLife();
             case ControllerLifeAtMost c ->
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20)
@@ -3255,7 +3260,8 @@ public class ConditionEvaluationService {
         return gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(ctx.controllerId()))
                 .anyMatch(playerId -> gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                        .getOrDefault(playerId, Set.of()).size() >= 3);
+                        .getOrDefault(playerId, Set.of()).size()
+                        + gameData.cardsPutIntoGraveyardAgainThisTurn.getOrDefault(playerId, 0) >= 3);
     }
 
     private boolean opponentPermanentEnteredThisTurn(GameData gameData, ConditionContext ctx,
@@ -3892,8 +3898,7 @@ public class ConditionEvaluationService {
         if (battlefield == null) return false;
         return battlefield.stream()
                 .filter(Permanent::isAttacking)
-                .filter(p -> ctx.targetId() == null || !gameData.playerIds.contains(ctx.targetId())
-                        || ctx.targetId().equals(p.getAttackTarget()))
+                .filter(p -> attackTargetMatchesContext(gameData, battlefield, ctx, p))
                 .anyMatch(p -> matchesPermanent(gameData, p, predicate, ctx));
     }
 
@@ -3904,10 +3909,23 @@ public class ConditionEvaluationService {
         if (battlefield == null) return 0;
         return battlefield.stream()
                 .filter(Permanent::isAttacking)
-                .filter(p -> ctx.targetId() == null || !gameData.playerIds.contains(ctx.targetId())
-                        || ctx.targetId().equals(p.getAttackTarget()))
+                .filter(p -> attackTargetMatchesContext(gameData, battlefield, ctx, p))
                 .filter(p -> matchesPermanent(gameData, p, predicate, ctx))
                 .count();
+    }
+
+    /**
+     * Restricts attackers to those aimed at the context's target when it is a player or a permanent
+     * (a planeswalker) that one of the controller's creatures is attacking; any other target leaves
+     * the attacking group unrestricted.
+     */
+    private static boolean attackTargetMatchesContext(GameData gameData, List<Permanent> battlefield,
+                                                      ConditionContext ctx, Permanent attacker) {
+        UUID targetId = ctx.targetId();
+        if (targetId == null) return true;
+        boolean targetIsDefender = gameData.playerIds.contains(targetId)
+                || battlefield.stream().anyMatch(p -> p.isAttacking() && targetId.equals(p.getAttackTarget()));
+        return !targetIsDefender || targetId.equals(attacker.getAttackTarget());
     }
 
     private long countOpponentAttackingCreatures(GameData gameData, ConditionContext ctx) {

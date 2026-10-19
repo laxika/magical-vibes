@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -30,10 +31,13 @@ public class RavenousRotbelly extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), 3),
                         new ConditionalEffect(
                                 new EventValueAtLeast(1),
-                                new SacrificePermanentsEffect(
-                                        new EventValue(),
-                                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                                        SacrificeRecipient.EACH_OPPONENT))),
+                                new QueueReflexiveAbilityEffect(
+                                        new SacrificePermanentsEffect(
+                                                new EventValue(),
+                                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
+                                                SacrificeRecipient.EACH_OPPONENT),
+                                        false,
+                                        true))),
                 "Sacrifice up to three Zombies?"));
     }
 }

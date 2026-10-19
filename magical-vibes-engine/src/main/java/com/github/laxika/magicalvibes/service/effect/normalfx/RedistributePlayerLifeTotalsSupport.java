@@ -52,6 +52,7 @@ public class RedistributePlayerLifeTotalsSupport {
                 continue;
             }
             if (!gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    || (newLife < oldLife && !gameQueryService.canPlayerLoseLife(gameData, playerId))
                     || (newLife > oldLife && !gameQueryService.canPlayerGainLife(gameData, playerId))) {
                 throw new IllegalStateException("Life-total redistribution is no longer legal");
             }
@@ -130,6 +131,9 @@ public class RedistributePlayerLifeTotalsSupport {
                 continue;
             }
             if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                return false;
+            }
+            if (newLife < oldLife && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 return false;
             }
             if (newLife > oldLife && !gameQueryService.canPlayerGainLife(gameData, playerId)) {

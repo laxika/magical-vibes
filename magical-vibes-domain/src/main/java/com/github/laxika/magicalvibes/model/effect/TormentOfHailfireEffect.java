@@ -22,10 +22,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param discardCount     cards required for the discard alternative
  * @param dynamicIterations resolution-time pass count when no fixed count is supplied
  * @param targeted         whether to process the stack entry's target instead of each opponent
+ * @param deferChoices     whether every opponent makes all of their choices first, never picking the same
+ *                         permanent or card twice, and the sacrifices, discards and life loss then happen
+ *                         together (Rottenmouth Viper)
  */
 public record TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
                                       PermanentPredicate sacrificePredicate, int discardCount,
-                                      boolean targeted, DynamicAmount dynamicIterations) implements CardEffect {
+                                      boolean targeted, DynamicAmount dynamicIterations,
+                                      boolean deferChoices) implements CardEffect {
+
+    public TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
+                                   PermanentPredicate sacrificePredicate, int discardCount,
+                                   boolean targeted, DynamicAmount dynamicIterations) {
+        this(lifeLoss, fixedIterations, sacrificePredicate, discardCount, targeted, dynamicIterations, false);
+    }
 
     /** Uses the stack entry's {@code xValue} as the iteration count (Torment of Hailfire). */
     public TormentOfHailfireEffect(int lifeLoss) {
@@ -67,6 +77,12 @@ public record TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
     public static TormentOfHailfireEffect targeted(int lifeLoss, int iterations, int discardCount,
                                                    PermanentPredicate sacrificePredicate) {
         return new TormentOfHailfireEffect(lifeLoss, iterations, sacrificePredicate, discardCount, true, null);
+    }
+
+    /** The same process, with all choices made before any sacrifice, discard or life loss happens. */
+    public TormentOfHailfireEffect deferringChoices() {
+        return new TormentOfHailfireEffect(lifeLoss, fixedIterations, sacrificePredicate, discardCount,
+                targeted, dynamicIterations, true);
     }
 
     @Override

@@ -88,7 +88,7 @@ class RerouteSystemsTest extends BaseCardTest {
             harness.passBothPriorities();
             assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
-            harness.passUntil(player1, TurnStep.CLEANUP);
+            harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
             assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
             harness.assertOnBattlefield(player1, "Grizzly Bears");

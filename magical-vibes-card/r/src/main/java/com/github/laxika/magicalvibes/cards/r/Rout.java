@@ -16,7 +16,8 @@ import java.util.List;
 public class Rout extends Card {
 
     public Rout() {
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{W}{W}")), null, true));
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{W}{W}")), null, true)
+                .withFlashAdditionalGenericCost(2));
         addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true));
     }
 }

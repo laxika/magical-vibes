@@ -177,7 +177,8 @@ public class PermanentChoiceHandlerService {
         // only thing that would resume the entry parked in pendingEffectResolutionEntry, wedging
         // the game (and with it deferPlayerLossCheck) on nothing worse than a stale client answer.
         if (!validIds.contains(permanentId)) {
-            throw new IllegalStateException("Invalid permanent: " + permanentId);
+            throw new IllegalStateException(
+                    triggerHandler.rejectedChoiceMessage(gameData, permanentChoice.context(), permanentId));
         }
 
         gameData.interaction.clearAwaitingInput();

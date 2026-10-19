@@ -46,6 +46,7 @@ class RecantationTest extends BaseCardTest {
     @Test
     void canTargetItselfAndStillReturnOtherLegalTarget() {
         Permanent recantation = harness.addToBattlefieldAndReturn(player1, new Recantation());
+        harness.setHand(player1, List.of());
         recantation.setCounterCount(CounterType.VERSE, 2);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -66,6 +67,7 @@ class RecantationTest extends BaseCardTest {
     @Test
     void returnsStolenPermanentToOwnerRatherThanController() {
         Permanent recantation = harness.addToBattlefieldAndReturn(player1, new Recantation());
+        harness.setHand(player1, List.of());
         recantation.setCounterCount(CounterType.VERSE, 1);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
         gd.stolenCreatures.put(creature.getId(), player2.getId());

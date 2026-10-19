@@ -36,6 +36,8 @@ public class RuinousPath extends Card {
     }
 
     public RuinousPath() {
+        // Two separate "target" instances, neither using "another", so one object may be chosen for both.
+        setAllowSharedTargets(true);
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{B}{B}"))));
 
         target(new PermanentPredicateTargetFilter(

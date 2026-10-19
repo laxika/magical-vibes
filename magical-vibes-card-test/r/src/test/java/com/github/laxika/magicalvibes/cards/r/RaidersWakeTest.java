@@ -81,7 +81,7 @@ class RaidersWakeTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validPermanentIds())
+        assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validPlayerIds())
                 .containsExactly(player2.getId());
 
         // Select opponent as target

@@ -4778,14 +4778,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * the bottom. The deciding player is the target card's owner.
      */
     record TargetLibraryDestinationChoice(UUID playerId, UUID cardId, String cardName,
-                                          String firstOption)
+                                          String firstOption, java.util.List<UUID> otherCardIds)
             implements PendingInteraction {
 
         /** The exact option strings the handler's prompt offers and its answer parser matches. */
         public static final java.util.List<String> OPTIONS = java.util.List.of("Top", "Bottom");
 
         public TargetLibraryDestinationChoice(UUID playerId, UUID cardId, String cardName) {
-            this(playerId, cardId, cardName, OPTIONS.getFirst());
+            this(playerId, cardId, cardName, OPTIONS.getFirst(), java.util.List.of());
+        }
+
+        public TargetLibraryDestinationChoice(UUID playerId, UUID cardId, String cardName, String firstOption) {
+            this(playerId, cardId, cardName, firstOption, java.util.List.of());
         }
 
         public java.util.List<String> options() {

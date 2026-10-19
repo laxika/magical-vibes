@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,11 +69,15 @@ class RhoxMaulersTest extends BaseCardTest {
     @DisplayName("Trample damage to the defending player triggers renown")
     void trampleDamageTriggersRenown() {
         Permanent maulers = addCreatureReady(player1, new RhoxMaulers());
-        addCreatureReady(player2, new TimberpackWolf());
+        Permanent wolf = addCreatureReady(player2, new TimberpackWolf());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                wolf.getId(), 2,
+                player2.getId(), 2
+        ));
         resolveAllTriggers();
 
         harness.assertLife(player2, 18);

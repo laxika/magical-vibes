@@ -105,6 +105,9 @@ public class EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandl
 
         UUID controllerId = entry.getControllerId();
         for (Card duplicate : duplicates) {
+            // CR 108.3: a card brought into the game from outside it is owned by the player who brought
+            // it in, so the conjured duplicate belongs to the caster rather than the original's owner.
+            duplicate.setOwnerId(controllerId);
             graveyardService.addCardToGraveyard(gameData, controllerId, duplicate);
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(controllerId) + " conjures ", duplicate,

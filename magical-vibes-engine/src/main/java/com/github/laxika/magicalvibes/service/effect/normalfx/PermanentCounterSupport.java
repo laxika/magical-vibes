@@ -123,6 +123,10 @@ public class PermanentCounterSupport {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
+            if (source.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
+                continue;
+            }
             Card card = source.getCard();
             List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE);
             if (effects.isEmpty()) {
@@ -135,9 +139,10 @@ public class PermanentCounterSupport {
                     placingPlayerId,
                     card.getName() + "'s triggered ability",
                     new ArrayList<>(effects),
-                    creature.getId(),
+                    null,
                     source.getId()
             );
+            trigger.setNonTargeting(true);
             trigger.setEventValue(count);
             trigger.setTriggeringPermanentId(creature.getId());
             trigger.setTriggeringPermanentControllerId(creatureControllerId);

@@ -22,6 +22,12 @@ public class VeinRipper extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessSacrificesEffect(new PermanentIsCreaturePredicate(), "creature"));
 
+        // Whenever a creature dies (including this one), target opponent loses 2 life and you gain 2 life.
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(2)));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

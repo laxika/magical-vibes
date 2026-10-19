@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RoleReversal extends Card {
 
     public RoleReversal() {
-        setMultiTargetConstraint(MultiTargetConstraint.SHARE_CARD_TYPE);
+        setMultiTargetConstraint(MultiTargetConstraint.SHARE_PERMANENT_TYPE);
 
         target(TargetFilters.permanent());
         target(TargetFilters.permanent())

@@ -14,9 +14,9 @@ public class RenderSilent extends Card {
     public RenderSilent() {
         // Counter target spell. Its controller can't cast spells this turn.
         //
-        // The cast restriction is listed before the counter so the targeted spell is still on the
-        // stack when its controller is resolved.
-        addEffect(EffectSlot.SPELL, new TargetSpellControllerCantCastSpellsThisTurnEffect());
+        // The counter comes first: a replacement of it (Guile) lets its controller cast the spell
+        // before the restriction applies, which then uses the controller recorded by the counter.
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addEffect(EffectSlot.SPELL, new TargetSpellControllerCantCastSpellsThisTurnEffect());
     }
 }

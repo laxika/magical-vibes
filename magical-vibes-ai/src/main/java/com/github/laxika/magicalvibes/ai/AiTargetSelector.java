@@ -933,6 +933,7 @@ class AiTargetSelector {
                 case SHARE_ARTIFACT_OR_CREATURE_TYPE ->
                         gameQueryService.sharesArtifactOrCreatureType(gameData, other, candidate);
                 case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(gameData, other, candidate);
+                case SHARE_PERMANENT_TYPE -> gameQueryService.sharesPermanentType(gameData, other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
                 case CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT -> gameData

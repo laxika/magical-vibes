@@ -220,6 +220,8 @@ class RundveltHordemasterTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
         destroyWithShock(source);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player2, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);

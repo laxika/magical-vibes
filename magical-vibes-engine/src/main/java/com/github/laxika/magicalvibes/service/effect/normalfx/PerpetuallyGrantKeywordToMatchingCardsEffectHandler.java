@@ -118,11 +118,10 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
             if (existing != null) {
                 existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
             }
+            // Each grant is its own instance of the ability (CR 113.2c), so repeated grants stack.
             List<CardEffect> effects = updated.computeIfAbsent(effect.triggeredAbilitySlot(),
                     ignoredSlot -> new ArrayList<>());
-            if (!effects.contains(effect.triggeredAbility())) {
-                effects.add(effect.triggeredAbility());
-            }
+            effects.add(effect.triggeredAbility());
             updated.replaceAll((slot, slotEffects) -> List.copyOf(slotEffects));
             return Map.copyOf(updated);
         });
@@ -130,9 +129,7 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
 
     private void addPersistentTriggeredAbility(Permanent permanent,
                                                 PerpetuallyGrantKeywordToMatchingCardsEffect effect) {
-        if (effect.triggeredAbilitySlot() != null
-                && !permanent.getPersistentTriggeredEffects(effect.triggeredAbilitySlot())
-                        .contains(effect.triggeredAbility())) {
+        if (effect.triggeredAbilitySlot() != null) {
             permanent.addPersistentTriggeredEffect(effect.triggeredAbilitySlot(), effect.triggeredAbility());
         }
     }

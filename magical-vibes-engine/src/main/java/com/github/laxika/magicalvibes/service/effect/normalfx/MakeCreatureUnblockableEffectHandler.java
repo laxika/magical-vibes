@@ -7,7 +7,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -17,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -37,8 +42,12 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         var unblockable = (MakeCreatureUnblockableEffect) effect;
 
         if (unblockable.triggeringPermanent()) {
-            makeUnblockable(gameData,
-                    gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId()), entry, unblockable);
+            Permanent triggering = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+            if (unblockable.notBlockableByOpponentsOfController()) {
+                makeUnblockableByOpponentsOf(gameData, triggering, entry);
+            } else {
+                makeUnblockable(gameData, triggering, entry, unblockable);
+            }
             return;
         }
 
@@ -78,6 +87,32 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 effect.duration() == EffectDuration.UNTIL_END_OF_COMBAT
                         ? " can't be blocked this combat." : " can't be blocked."));
+    }
+
+    /**
+     * The target can't be blocked by creatures controlled by the opponents of the resolving ability's
+     * controller this turn. A creature that controller controls is blocked only by those opponents'
+     * creatures, so it simply can't be blocked.
+     */
+    private void makeUnblockableByOpponentsOf(GameData gameData, Permanent target, StackEntry entry) {
+        if (target == null) return;
+        UUID abilityControllerId = entry.getControllerId();
+        if (abilityControllerId.equals(gameQueryService.findPermanentController(gameData, target.getId()))) {
+            makeUnblockable(gameData, target);
+            return;
+        }
+        List<PermanentPredicate> opponentControlled = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(abilityControllerId))
+                .<PermanentPredicate>map(PermanentControlledByPlayerPredicate::new)
+                .toList();
+        if (opponentControlled.isEmpty()) return;
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), entry.getCard().getName(), null, abilityControllerId,
+                new GrantEffectEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
+                        new PermanentAnyOfPredicate(opponentControlled)), GrantScope.TARGET),
+                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                " can't be blocked by creatures its opponents control this turn."));
     }
 
     public void makeUnblockable(GameData gameData, Permanent target) {

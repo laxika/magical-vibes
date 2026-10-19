@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class RavenGuildInitiate extends Card {
 
     public RavenGuildInitiate() {
-        addMorph("{2}{U}", new ReturnPermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)));
+        addMorph("", new ReturnPermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)));
     }
 }

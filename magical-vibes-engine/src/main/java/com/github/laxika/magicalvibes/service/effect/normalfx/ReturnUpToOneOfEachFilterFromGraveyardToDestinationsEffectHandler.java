@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -24,6 +27,8 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentRemovalService permanentRemovalService;
+    private final AnimationSupport animationSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -101,8 +106,18 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
             for (Card card : battlefieldCards) {
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
             }
+            AnimatePermanentsEffect animation = returnEffect.entersAnimatedAs();
             graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
-                    gameData, Map.of(entry.getControllerId(), battlefieldCards), returnEffect.enterTapped(), null);
+                    gameData, Map.of(entry.getControllerId(), battlefieldCards), returnEffect.enterTapped(), null,
+                    animation == null ? null : permanent -> {
+                        AmountContext context = AmountContext.forStackEntry(entry, null);
+                        int power = animation.power() == null ? 0
+                                : amountEvaluationService.evaluate(gameData, animation.power(), context);
+                        int toughness = animation.toughness() == null ? 0
+                                : amountEvaluationService.evaluate(gameData, animation.toughness(), context);
+                        animationSupport.animatePermanently(gameData, permanent, animation, power, toughness,
+                                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+                    });
         }
         entry.setEventValue(returnedCount);
     }

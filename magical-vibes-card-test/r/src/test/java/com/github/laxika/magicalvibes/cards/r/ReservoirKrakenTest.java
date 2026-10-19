@@ -149,22 +149,20 @@ class ReservoirKrakenTest extends BaseCardTest {
 
     @Test
     @CardUsed({ReservoirKraken.class, BrokersVeteran.class, Murder.class})
-    void untappedKrakenDestroyedInResponseStillCreatesFish() {
+    void untappedKrakenDestroyedInResponseCreatesNoFish() {
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new ReservoirKraken());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BrokersVeteran());
         harness.setHand(player1, List.of(new Murder()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
 
         enterBeginningOfCombat(player1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player1, 0, kraken.getId());
         harness.assertInGraveyard(player1, "Reservoir Kraken");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, true);
-
-        assertThat(creature.isTapped()).isTrue();
-        assertThat(findPermanents(player1, "Fish")).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Fish")).isEmpty();
         assertThat(findPermanents(player2, "Fish")).isEmpty();
     }
 

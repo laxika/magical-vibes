@@ -211,6 +211,9 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted) {
             ManaCost cost = new ManaCost(manaCost);
+            if (effect.useXValue()) {
+                cost.asAnnouncedXCost();
+            }
             ManaPool pool = gameData.playerManaPools.get(player.getId());
             boolean canPayLife = lifeCost <= 0
                     || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
@@ -963,10 +966,8 @@ public class MayPenaltyChoiceHandlerService {
                 if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
                     gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                 } else {
-                    int lifeLoss = effect.lifeLoss()
-                            * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
-                    int currentLife = gameData.getLife(targetPlayerId);
-                    gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
+                    int lifeLoss = effect.lifeLoss();
+                    lifeSupport.applyLifeLoss(gameData, targetPlayerId, lifeLoss, ability.sourceCard().getName());
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " can't pay {" + effect.payAmount() + "}. " + player.getUsername()
                                     + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
@@ -978,10 +979,8 @@ public class MayPenaltyChoiceHandlerService {
             if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
             } else {
-                int lifeLoss = effect.lifeLoss()
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
-                int currentLife = gameData.getLife(targetPlayerId);
-                gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
+                int lifeLoss = effect.lifeLoss();
+                lifeSupport.applyLifeLoss(gameData, targetPlayerId, lifeLoss, ability.sourceCard().getName());
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());

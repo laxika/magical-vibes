@@ -138,6 +138,8 @@ class RocketLauncherTest extends BaseCardTest {
     @Test
     void becomesUsableWhenControllersNextTurnBegins() {
         harness.addToBattlefield(player1, new RocketLauncher());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

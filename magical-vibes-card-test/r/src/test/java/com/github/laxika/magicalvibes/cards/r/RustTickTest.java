@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -144,7 +147,7 @@ class RustTickTest extends BaseCardTest {
         Permanent rustTick = addReadyRustTick(player1);
         rustTick.tap();
 
-        harness.performUntapStep(player1);
+        advanceToUntapStepOf(player1);
 
         // Game should be awaiting may ability choice
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -286,8 +289,7 @@ class RustTickTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
-        harness.performUntapStep(player1);
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToNextTurnWithMayChoice(player2, true);
         rustTick.tap();
         harness.performUntapStep(player2);
 
@@ -320,7 +322,22 @@ class RustTickTest extends BaseCardTest {
      */
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.performUntapStep(newActivePlayer);
+        advanceToUntapStepOf(newActivePlayer);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
+    }
+
+    /**
+     * Runs the real turn flow up to the untap step of {@code newActivePlayer}, so the may-not-untap
+     * prompt for that player's tapped permanents is opened (the untap step's pending choices are only
+     * presented by the turn progression, not by {@code performUntapStep}).
+     */
+    private void advanceToUntapStepOf(Player newActivePlayer) {
+        Player currentActivePlayer = newActivePlayer == player1 ? player2 : player1;
+        harness.forceActivePlayer(currentActivePlayer);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 }

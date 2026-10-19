@@ -80,6 +80,8 @@ class ReluctantRoleModelTest extends BaseCardTest {
     @Test
     void survivalTriggersAgainOnLaterTurns() {
         Permanent roleModel = addRoleModel();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         roleModel.tap();
         advanceToPostcombatMain(player1);
         harness.passBothPriorities();

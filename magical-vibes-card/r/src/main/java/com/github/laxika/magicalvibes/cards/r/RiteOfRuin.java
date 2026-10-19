@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -20,8 +21,8 @@ import java.util.List;
  * their choice of the first type, sacrifices two of their choice of the second type, then
  * sacrifices three of their choice of the third type."
  *
- * <p>The order choice is modelled as a modal spell with one mode per permutation of the three
- * types; each mode splices three {@code EACH_PLAYER} forced sacrifices (1 / 2 / 3) into the
+ * <p>The order is chosen as the spell resolves (it is not a cast-time mode), so opponents can respond
+ * before it is picked. The choice has one option per permutation of the three types; each option splices three {@code EACH_PLAYER} forced sacrifices (1 / 2 / 3) into the
  * resolution in the chosen order. Each sacrifice step is its own APNAP choice round, so a player
  * who loses their artifacts to step one may not use them for a later step.
  */
@@ -36,13 +37,13 @@ public class RiteOfRuin extends Card {
     private static final PermanentPredicate LANDS = new PermanentIsLandPredicate();
 
     public RiteOfRuin() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.SPELL, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 order("Artifacts, then creatures, then lands", ARTIFACTS, CREATURES, LANDS),
                 order("Artifacts, then lands, then creatures", ARTIFACTS, LANDS, CREATURES),
                 order("Creatures, then artifacts, then lands", CREATURES, ARTIFACTS, LANDS),
                 order("Creatures, then lands, then artifacts", CREATURES, LANDS, ARTIFACTS),
                 order("Lands, then artifacts, then creatures", LANDS, ARTIFACTS, CREATURES),
-                order("Lands, then creatures, then artifacts", LANDS, CREATURES, ARTIFACTS))));
+                order("Lands, then creatures, then artifacts", LANDS, CREATURES, ARTIFACTS)))));
     }
 
     private static ChooseOneOption order(String label, PermanentPredicate first,

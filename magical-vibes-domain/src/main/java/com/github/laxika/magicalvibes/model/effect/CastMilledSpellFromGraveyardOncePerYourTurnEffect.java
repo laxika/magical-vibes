@@ -18,7 +18,7 @@ public record CastMilledSpellFromGraveyardOncePerYourTurnEffect(CardPredicate fi
     }
 
     @Override
-    public boolean onlyCardsPutIntoGraveyardFromLibraryThisTurn() {
+    public boolean onlyCardsMilledThisTurn() {
         return true;
     }
 }

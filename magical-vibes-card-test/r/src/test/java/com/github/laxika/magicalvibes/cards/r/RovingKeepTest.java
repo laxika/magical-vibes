@@ -42,7 +42,7 @@ class RovingKeepTest extends BaseCardTest {
         assertThat(keep.getGrantedKeywords()).contains(Keyword.TRAMPLE);
 
         beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareKeepAttack();
 
         assertThat(keep.isAttacking()).isTrue();
     }
@@ -98,7 +98,7 @@ class RovingKeepTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, keep, Keyword.DEFENDER)).isTrue();
 
         beginAttackers();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareKeepAttack();
         assertThat(keep.isAttacking()).isTrue();
     }
 
@@ -141,7 +141,7 @@ class RovingKeepTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareKeepAttack();
         assertThat(keep.isAttacking()).isTrue();
         assertThat(otherKeep.isAttacking()).isFalse();
     }
@@ -150,6 +150,11 @@ class RovingKeepTest extends BaseCardTest {
         Permanent keep = harness.addToBattlefieldAndReturn(player1, new RovingKeep());
         keep.setSummoningSick(false);
         return keep;
+    }
+
+    private void declareKeepAttack() {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0)));
     }
 
     private void beginAttackers() {

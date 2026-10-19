@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,7 +32,6 @@ public class ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final PermanentCounterSupport permanentCounterSupport;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -108,27 +108,18 @@ public class ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect
                 GameLog.textCardText(gameData.playerIdToName.get(entry.getControllerId()) + " exiles ",
                         card, " from their graveyard."));
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-        if (battlefield == null) {
-            return;
-        }
-
-        Permanent exiledCardAsPermanent = new Permanent(card);
-        List<Permanent> matchingCreatures = battlefield.stream()
-                .filter(permanent -> !isSource(entry, permanent))
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .filter(permanent -> gameQueryService.shareCreatureType(
-                        gameData, exiledCardAsPermanent, permanent))
-                .toList();
-
-        for (Permanent permanent : matchingCreatures) {
-            permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, entry, permanent, effect.counterType(), effect.counterCount());
-        }
-    }
-
-    private boolean isSource(StackEntry entry, Permanent permanent) {
-        return Objects.equals(entry.getSourcePermanentId(), permanent.getId())
-                || Objects.equals(entry.getCard().getId(), permanent.getCard().getId());
+        StackEntry reflexive = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                entry.getCard(),
+                entry.getControllerId(),
+                entry.getCard().getName() + "'s reflexive ability",
+                new ArrayList<>(List.of(new PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect(
+                        effect.counterType(), effect.counterCount()))),
+                null,
+                entry.getSourcePermanentId());
+        reflexive.setNonTargeting(true);
+        reflexive.setExiledCostCardSnapshot(card);
+        reflexive.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        gameData.stack.add(reflexive);
     }
 }

@@ -171,8 +171,10 @@ class RazorfinAbolisherTest extends BaseCardTest {
     @DisplayName("A controlled creature returns to its owner rather than its controller")
     void returnsCreatureToOwner() {
         addReadyAbolisher(player1);
-        Permanent target = addCreatureWithCounter(player1);
-        target.getCard().setOwnerId(player2.getId());
+        DuskdaleWurm stolen = new DuskdaleWurm();
+        stolen.setOwnerId(player2.getId());
+        Permanent target = addCreatureReady(player1, stolen);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.stolenCreatures.put(target.getId(), player2.getId());
         harness.addMana(player1, ManaColor.BLUE, 2);
 

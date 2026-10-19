@@ -42,6 +42,7 @@ class RankOfficerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
 
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         Permanent zombie = findPermanent(player1, "Zombie");
         assertThat(zombie.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);

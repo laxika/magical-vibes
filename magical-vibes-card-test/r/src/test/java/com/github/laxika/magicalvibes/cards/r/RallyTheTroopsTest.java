@@ -156,7 +156,6 @@ class RallyTheTroopsTest extends BaseCardTest {
             gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
             harness.castCreature(player1, 0, attacker.getId());
             harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, attacker.getId());
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, player2.getId());

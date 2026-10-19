@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
@@ -40,7 +42,9 @@ public class RoaringFurnaceSteamingSauna extends Card {
                                         new PermanentNotPredicate(
                                                 new PermanentControlledBySourceControllerPredicate()))))));
 
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DrawCardEffect(1));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceRoomDoorUnlocked(1),
+                new NoMaximumHandSizeEffect()));
+        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+                new SourceRoomDoorUnlocked(1), new DrawCardEffect(1)));
     }
 }

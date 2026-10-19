@@ -87,7 +87,6 @@ class RecklessSpiteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.passPriority(player1);
         harness.activateAbility(player2, 0, null, null);
-        harness.passPriority(player1);
         harness.activateAbility(player2, 1, null, null);
         harness.passBothPriorities();
         harness.handleListChoice(player2, "BLACK");

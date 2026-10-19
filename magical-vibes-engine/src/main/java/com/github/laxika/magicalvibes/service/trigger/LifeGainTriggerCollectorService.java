@@ -31,7 +31,7 @@ public class LifeGainTriggerCollectorService {
     private boolean handleLifeGainMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
         match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                null, match.permanent().getId());
+                null, match.permanent().getId(), null, new Permanent(match.permanent()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on life gain and queues a may ability",
                 match.gameData().id, sourceCard.getName());

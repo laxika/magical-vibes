@@ -154,15 +154,11 @@ class RatKingVerministerTest extends BaseCardTest {
 
     @Test
     void ratKingCanBeSacrificedAsOneOfTheThreeRats() {
-        Permanent ratKing = addReadyRatKing();
+        addReadyRatKing();
         addRatTokens(2);
         Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
         harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
-        harness.handlePermanentChosen(player1, ratKing.getId());
-        for (Permanent rat : findPermanents(player1, "Rat")) {
-            harness.handlePermanentChosen(player1, rat.getId());
-        }
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Rat King, Verminister");

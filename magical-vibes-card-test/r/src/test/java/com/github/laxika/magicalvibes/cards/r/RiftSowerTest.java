@@ -73,7 +73,7 @@ class RiftSowerTest extends BaseCardTest {
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
         harness.assertNotOnBattlefield(player1, "Rift Sower");
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -102,7 +102,7 @@ class RiftSowerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);

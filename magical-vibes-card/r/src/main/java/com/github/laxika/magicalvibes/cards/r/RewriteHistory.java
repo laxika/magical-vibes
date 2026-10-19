@@ -38,9 +38,10 @@ public class RewriteHistory extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        // "When the fourth plan counter is put" is an event trigger: removing counters in response does not stop it.
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(4, CounterType.PLAN),
-                new SacrificeSelfThenEffect(
+                SacrificeSelfThenEffect.reflexive(
                         ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(instantOrSorcery, 2))));
     }
 }

@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RampantFrogantua.class, Forest.class, GrizzlyBears.class})
 class RampantFrogantuaTest extends BaseCardTest {
@@ -164,12 +163,8 @@ class RampantFrogantuaTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
-            assertThatThrownBy(() -> harness.handleMayAbilityChosen(player1, true))
-                    .isInstanceOf(IllegalStateException.class);
-            harness.handleMayAbilityChosen(player1, false);
-        }
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(findPermanents(player1, "Forest")).isEmpty();

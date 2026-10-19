@@ -22,6 +22,7 @@ public class RhonassLastStand extends Card {
                 List.of(CardSubtype.SNAKE), Set.of(), Set.of()));
 
         // Lands you control don't untap during your next untap step.
-        addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
+        // The lands are matched at untap time, so lands entering later are also held (CR 611.2c).
+        addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
     }
 }

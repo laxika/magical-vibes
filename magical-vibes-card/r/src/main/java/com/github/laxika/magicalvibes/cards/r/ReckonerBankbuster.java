@@ -62,7 +62,7 @@ public class ReckonerBankbuster extends Card {
                 List.of(CardSubtype.PILOT),
                 Set.of(),
                 Set.of(),
-                Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2))
+                Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true))
         );
     }
 }

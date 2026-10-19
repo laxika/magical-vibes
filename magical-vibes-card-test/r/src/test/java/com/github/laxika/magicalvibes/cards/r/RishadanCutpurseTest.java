@@ -55,6 +55,8 @@ class RishadanCutpurseTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

@@ -17,6 +17,7 @@ class RampagingAetherhoodTest extends BaseCardTest {
         Permanent aetherhood = harness.addToBattlefieldAndReturn(player1, new RampagingAetherhood());
 
         advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
@@ -32,6 +33,7 @@ class RampagingAetherhoodTest extends BaseCardTest {
         Permanent aetherhood = harness.addToBattlefieldAndReturn(player1, new RampagingAetherhood());
 
         advanceToUpkeep(player1);
+        resolveAllTriggers();
         harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);

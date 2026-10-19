@@ -575,6 +575,7 @@ public class TurnCleanupService {
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.clear();
+        gameData.pendingNextSpellOrLoyaltyCopyLinkedThisTurn.clear();
         for (UUID permanentId : gameData.temporaryChosenSubtypePermanentIds) {
             gameData.forEachPermanent((ownerId, permanent) -> {
                 if (permanent.getId().equals(permanentId)) {
@@ -588,7 +589,7 @@ public class TurnCleanupService {
         gameData.pendingNextExhaustAbilityCopySourcesThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.untapAttackedCreaturesEachCombatThisTurnSources.clear();
-        gameData.conspiredSpellIds.clear();
+        gameData.conspiredSpellCopyCounts.clear();
         gameData.casualtySpellCopyCounts.clear();
 
         // Defensive reset of graveyard-leave batching state (always balanced via try/finally,
@@ -627,6 +628,7 @@ public class TurnCleanupService {
         gameData.exilePlayAnyManaType.removeIf(cardId ->
                 !gameData.exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId));
         gameData.exileCastPermissionsUntilEndOfTurn.clear();
+        gameData.exileCastWildcardPermissionsUntilEndOfTurn.clear();
         gameData.foretoldCardCastPermissionsThisTurn.clear();
         gameData.playersWhoForetoldThisTurn.clear();
         gameData.exileInsteadOfGraveyard.clear();
@@ -976,8 +978,10 @@ public class TurnCleanupService {
                 if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                     continue;
                 }
-                if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
+                List<CardEffect> staticEffects = gameQueryService == null
+                        ? perm.getCard().getEffects(EffectSlot.STATIC)
+                        : gameQueryService.getActiveStaticEffects(gameData, perm);
+                if (staticEffects.stream().anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     HandSizeStamp stamp = new HandSizeStamp(perm.getTimestamp(), handSizePosition(gameData, perm));
                     if (noMaximumStamp == null || stamp.isNewerThan(noMaximumStamp)) {
                         noMaximumStamp = stamp;

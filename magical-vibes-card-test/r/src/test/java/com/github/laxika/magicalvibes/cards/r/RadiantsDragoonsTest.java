@@ -103,10 +103,10 @@ class RadiantsDragoonsTest extends BaseCardTest {
     void counteringEchoDoesNotRepeatNextUpkeep() {
         castAndResolveDragoons();
         harness.setHand(player2, List.of(new Stifle()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
 
         advanceToUpkeep(player1);
         harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castInstant(player2, 0, gd.stack.getLast().getCard().getId());
         resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Radiant's Dragoons");

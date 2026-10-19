@@ -228,8 +228,8 @@ class LandTapTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Rainbow Vale's own tap queues its delayed control trigger")
-    void rainbowValeTapQueuesDelayedControlTrigger() {
+    @DisplayName("Rainbow Vale's own tap queues its delayed control action without using the stack")
+    void rainbowValeTapQueuesDelayedControlAction() {
         Permanent source = createLandPermanent("Rainbow Vale", ManaColor.BLUE);
         var effect = new RegisterDelayedChooseOpponentGainsControlOfSourceEffect();
 
@@ -238,10 +238,10 @@ class LandTapTriggerCollectorServiceTest {
                 new TriggerContext.LandTap(player1Id, source.getId()));
 
         assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
-        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(source.getId());
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.delayedActions).hasSize(1);
+        assertThat(gd.delayedActions.getFirst())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource.class);
     }
 
     @Test

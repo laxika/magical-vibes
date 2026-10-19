@@ -91,6 +91,8 @@ class RaiseTheDraugrTest extends BaseCardTest {
     void returnsDifferentPrintedTypesWithMaskwoodNexus() {
         Card giant = new BergStrider();
         Card rogue = new BrinebarrowIntruder();
+        giant.setOwnerId(player1.getId());
+        rogue.setOwnerId(player1.getId());
         harness.addToBattlefield(player1, new MaskwoodNexus());
         harness.setGraveyard(player1, List.of(giant, rogue));
         harness.setHand(player1, List.of(new RaiseTheDraugr()));

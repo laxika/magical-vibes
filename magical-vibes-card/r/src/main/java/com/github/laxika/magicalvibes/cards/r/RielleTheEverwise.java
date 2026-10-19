@@ -25,6 +25,6 @@ public class RielleTheEverwise extends Card {
                 new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new BoostSelfEffect(instantsAndSorceries, new Fixed(0)));
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,
-                new OncePerTurnTriggerEffect(new DrawCardEffect(new EventValue())));
+                OncePerTurnTriggerEffect.firstDiscardEvent(new DrawCardEffect(new EventValue())));
     }
 }

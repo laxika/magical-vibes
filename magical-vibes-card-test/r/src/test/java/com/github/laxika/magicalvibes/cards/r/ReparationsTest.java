@@ -33,7 +33,8 @@ class ReparationsTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, player1.getId());
 
-        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -56,7 +57,8 @@ class ReparationsTest extends BaseCardTest {
         UUID mantisId = harness.getPermanentId(player1, "Giant Mantis");
         harness.castInstant(player2, 0, mantisId);
 
-        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -77,7 +79,8 @@ class ReparationsTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, player1.getId());
 
-        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -158,10 +161,11 @@ class ReparationsTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, player1.getId());
 
-        assertThat(gd.pendingMayAbilities).hasSize(2);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
@@ -178,7 +182,8 @@ class ReparationsTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, player1.getId());
 
-        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

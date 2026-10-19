@@ -148,7 +148,7 @@ class RemoveSoulTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(
                 player2, 0, harness.getPermanentId(player1, "Durkwood Boars")))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("spell on the stack");
+                .hasMessageContaining("creature spell");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(removeSoul);
     }
@@ -168,7 +168,7 @@ class RemoveSoulTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, bees.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("spell on the stack");
+                .hasMessageContaining("creature spell");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(removeSoul);
     }

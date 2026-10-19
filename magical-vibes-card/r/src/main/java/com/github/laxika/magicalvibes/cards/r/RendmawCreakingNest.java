@@ -9,14 +9,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsForRestOfGameEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,9 @@ import java.util.Set;
 public class RendmawCreakingNest extends Card {
 
     public RendmawCreakingNest() {
-        EachPlayerCreatesTokenEffect birdTokens = new EachPlayerCreatesTokenEffect(birdToken());
+        SequenceEffect birdTokens = SequenceEffect.of(
+                new EachPlayerCreatesTokenEffect(birdToken()),
+                new GoadCreatedPermanentsForRestOfGameEffect());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, birdTokens);
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
@@ -45,8 +47,7 @@ public class RendmawCreakingNest extends Card {
                 List.of(CardSubtype.BIRD),
                 Set.of(Keyword.FLYING),
                 Set.of(),
-                Map.of(EffectSlot.STATIC,
-                        new GoadCreaturesUntilNextTurnEffect(new PermanentIsSourcePermanentPredicate())))
+                Map.of())
                 .withTapped(true);
     }
 

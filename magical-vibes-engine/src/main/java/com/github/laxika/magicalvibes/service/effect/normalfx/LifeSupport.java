@@ -111,17 +111,11 @@ public class LifeSupport {
             }
             return;
         }
-        // Rain of Gore turns the whole gain event into an equal life loss. Tainted Remedy and Plague Drone
-        // do the same as an ordered life-gain replacement below.
-        if (amount > 0 && gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
-                gameData, controllerId, sourceControllerId)) {
-            applyLifeLoss(gameData, controllerId, amount, source != null ? source : "replaced life gain");
-            return;
-        }
-        // Life-gain replacement effects (Heron of Hope, Boon Reflection) replace the amount before it is
-        // applied, in the order the gaining player chooses when that order matters (CR 616.1).
+        // Life-gain replacement effects (Heron of Hope, Boon Reflection, Rain of Gore, Tainted Remedy) replace
+        // the event before it is applied, in the order the gaining player chooses when that order matters (CR 616.1).
         ReplacementOrderService.Outcome<LifeGainEvent> outcome = replacementOrderService.run(gameData,
-                new LifeGainEvent(controllerId, amount, Set.of(), source, sourceCard, sourceEntryType, false, false));
+                new LifeGainEvent(controllerId, amount, Set.of(), source, sourceCard, sourceEntryType,
+                        sourceControllerId, false, false));
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<LifeGainEvent> completed) {
             completeGainLife(gameData, completed.event());
         }

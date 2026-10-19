@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -21,13 +24,14 @@ public class RoadkillRodney extends Card {
 
     public RoadkillRodney() {
         addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{3}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}")));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                new RepeatedAdditionalCostPaid("{3}"),
+                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}"))));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, mutagenToken());
     }
 
     private static CreateTokenEffect mutagenToken() {
-        return CreateTokenEffect.ofArtifactToken(1, "Mutagen", List.of(), List.of(
+        return CreateTokenEffect.ofArtifactToken(1, "Mutagen", List.of(CardSubtype.MUTAGEN), List.of(
                 new ActivatedAbility(
                         true,
                         "{1}",

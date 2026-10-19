@@ -28,7 +28,7 @@ public class RaggadraggaGoregutsBoss extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(
                 2,
                 2,
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasManaAbilityPredicate()))));

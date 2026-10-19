@@ -36,7 +36,7 @@ public class RumblingCrescendo extends Card {
                 null,
                 List.of(),
                 0,
-                100
+                Integer.MAX_VALUE
         ).withSourceCounterScaledTargets(CounterType.VERSE));
     }
 }

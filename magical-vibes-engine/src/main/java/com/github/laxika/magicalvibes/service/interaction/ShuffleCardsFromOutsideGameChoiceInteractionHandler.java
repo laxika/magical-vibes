@@ -79,8 +79,9 @@ public class ShuffleCardsFromOutsideGameChoiceInteractionHandler
             sideboard.removeIf(card -> selectedIds.contains(card.getId()));
             gameData.playerDecks.computeIfAbsent(interaction.playerId(), ignored -> new ArrayList<>())
                     .addAll(selected);
-            LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
         }
+        // Research's "shuffle" instruction shuffles the library even when no cards are chosen (CR 701.24a).
+        LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
 
         gameData.interaction.clearAwaitingInput();
         gameLogService.append(gameData, GameLog.text(

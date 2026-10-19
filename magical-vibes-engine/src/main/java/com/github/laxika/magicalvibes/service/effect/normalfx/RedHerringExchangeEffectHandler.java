@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedHerringExchangeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
+    private final TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -113,17 +115,21 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
 
         UUID oldTargetableId = spell.getTargetableId();
         Card exchangedCard = spell.getPhysicalCard();
-        addCardToOwnerHand(gameData, exchangedCard, spell.getOwnerId());
+        if (!spell.isCopy()) {
+            addCardToOwnerHand(gameData, exchangedCard, spell.getOwnerId());
+        }
         spell.exchangeWithCardAsCreatureSpell(handCard);
 
         List<StackEntry> entriesThatChangedTarget = new ArrayList<>();
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry != spell && stackEntry.replaceTargetReferences(oldTargetableId, handCard.getId())) {
+            if (stackEntry != spell && newSpellIsLegalTarget(gameData, stackEntry, spell)
+                    && stackEntry.replaceTargetReferences(oldTargetableId, handCard.getId())) {
                 entriesThatChangedTarget.add(stackEntry);
             }
         }
         if (gameData.pendingEffectResolutionEntry != null
                 && gameData.pendingEffectResolutionEntry != spell
+                && newSpellIsLegalTarget(gameData, gameData.pendingEffectResolutionEntry, spell)
                 && gameData.pendingEffectResolutionEntry.replaceTargetReferences(oldTargetableId, handCard.getId())) {
             entriesThatChangedTarget.add(gameData.pendingEffectResolutionEntry);
         }
@@ -141,6 +147,25 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
 
         gameLogService.append(gameData, GameLog.cardTextCard(
                 handCard, " exchanges with ", exchangedCard, "."));
+    }
+
+    /**
+     * Whether the exchanged spell, now a creature spell, still satisfies the targeting spell's target
+     * restriction (Negate's "noncreature spell" no longer admits it, so Negate keeps its old target).
+     */
+    private boolean newSpellIsLegalTarget(GameData gameData, StackEntry targetingEntry, StackEntry newSpell) {
+        if (targetingEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetingEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                || targetingEntry.getCard() == null
+                || targetingEntry.getCard().getSpellTargets().size() != 1) {
+            return true;
+        }
+        var filter = targetingEntry.getCard().getSpellTargets().getFirst().getFilter(false);
+        if (filter == null) {
+            return true;
+        }
+        return targetLegalityService.checkSpellTargetOnStack(gameData, newSpell.getTargetableId(), filter,
+                targetingEntry.getControllerId()).isEmpty();
     }
 
     private Card removeFromHand(GameData gameData, UUID controllerId, Card sourceCard) {
@@ -179,7 +204,6 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
     private boolean isControlledSpell(StackEntry entry, UUID controllerId) {
         return entry.getCard() != null
                 && controllerId.equals(entry.getControllerId())
-                && !entry.isCopy()
                 && switch (entry.getEntryType()) {
                     case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL,
                             BATTLE_SPELL, SORCERY_SPELL, INSTANT_SPELL -> true;

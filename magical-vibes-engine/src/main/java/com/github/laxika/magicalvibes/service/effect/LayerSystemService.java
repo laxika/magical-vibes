@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.ErrataCreatureTypeForMatchEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
@@ -693,6 +694,7 @@ public class LayerSystemService {
         h = mix(h, gameData.cardIntensities.size());
         h = mix(h, gameData.playersWhoLostGameThisMatch.hashCode());
         h = mix(h, gameData.playersWhoLostGameThisMatch.size());
+        h = mix(h, gameData.matchCreatureTypeErrata.hashCode());
         h = mix(h, gameData.currentStep == null ? -1 : gameData.currentStep.ordinal());
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> commanders = gameData.playerCommanders.get(playerId);
@@ -1443,12 +1445,22 @@ public class LayerSystemService {
      *     its condition fresh on every query.</li>
      * </ol>
      *
-     * <p>{@code EnchantedPermanentConditionalEffect} is never admitted — neither of its branches
-     * is type-changing on any current card, and its predicate is not a {@code Condition}.
+     * <p>{@code EnchantedPermanentConditionalEffect} is admitted only in layer 6, and only when one
+     * of its branches is a "loses all abilities" effect; no current branch is type-changing, and its
+     * predicate is not a {@code Condition}.
      *
      * <p>agent-docs/STATIC_EVALUATION_MIGRATION.md stage C0 records the tradeoff this resolves.
      */
     private static boolean admitsConditionalWrapper(CardEffect effect, Layer layer) {
+        if (effect instanceof EnchantedPermanentConditionalEffect enchantedConditional) {
+            // An Aura's "as long as enchanted creature is red, it loses all abilities" (Ray of
+            // Frost) must be ordered against the other layer 6 effects by timestamp (CR 613.7), or an
+            // ability granted before it would survive the removal. Its filter is evaluated when the
+            // instance is applied, against the board as of the layers applied so far.
+            return layer == Layer.L6_ABILITIES
+                    && (enchantedConditional.ifMatch() instanceof LosesAllAbilitiesEffect
+                    || enchantedConditional.ifNotMatch() instanceof LosesAllAbilitiesEffect);
+        }
         if (!(effect instanceof ConditionalEffect conditional)) {
             return false;
         }
@@ -1709,6 +1721,25 @@ public class LayerSystemService {
                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L4_TYPE),
                 slots, slotsById, board, this::applyL4Instance);
+        applyMatchCreatureTypeErrata(gameData, board);
+    }
+
+    /**
+     * Replaces creature types for the rest of the match once an errata source has been revealed,
+     * independent of whether that source is still on the battlefield (Ruff, Underdog Champ).
+     */
+    private void applyMatchCreatureTypeErrata(GameData gameData, LayeredBoardState board) {
+        if (gameData.matchCreatureTypeErrata.isEmpty()) {
+            return;
+        }
+        for (CharacteristicState state : board.states().values()) {
+            gameData.matchCreatureTypeErrata.forEach((from, to) -> {
+                if (state.hasSubtype(from)) {
+                    state.removeSubtypesIf(from::equals);
+                    state.addSubtype(to);
+                }
+            });
+        }
     }
 
     private void applyL4Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
@@ -1736,6 +1767,10 @@ public class LayerSystemService {
         Map<UUID, CharacteristicState> states = board.states();
         Map<UUID, List<CardSubtype>> landTypeOverrides = board.landTypeOverrides();
         switch (effect) {
+            case ErrataCreatureTypeForMatchEffect errata -> {
+                manage(board, instance);
+                gameData.matchCreatureTypeErrata.put(errata.from(), errata.to());
+            }
             case GrantSubtypeEffect grant -> {
                 manage(board, instance);
                 for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
@@ -1855,6 +1890,9 @@ public class LayerSystemService {
                     }
                     if (!state.hasCardType(CardType.PLANESWALKER)) {
                         state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
+                    }
+                    if (!state.hasCardType(CardType.LAND)) {
+                        state.removeSubtypesIf(LAND_SUBTYPES::contains);
                     }
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,

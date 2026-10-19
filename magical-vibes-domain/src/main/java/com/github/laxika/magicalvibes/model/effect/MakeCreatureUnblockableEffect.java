@@ -2,11 +2,23 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-/** Makes a creature unable to be blocked for the specified duration. */
+/**
+ * Makes a creature unable to be blocked for the specified duration. When
+ * {@code notBlockableByOpponentsOfController} is set, the creature instead can't be blocked by
+ * creatures the resolving ability's controller's opponents control ("can't be blocked by creatures
+ * your opponents control").
+ */
 public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
                                             EffectDuration duration, PermanentPredicate filter,
-                                            boolean triggeringPermanent, boolean targetAnyPermanent)
+                                            boolean triggeringPermanent, boolean targetAnyPermanent,
+                                            boolean notBlockableByOpponentsOfController)
         implements CardEffect {
+
+    public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
+                                         EffectDuration duration, PermanentPredicate filter,
+                                         boolean triggeringPermanent, boolean targetAnyPermanent) {
+        this(selfTargeting, attachedPermanent, duration, filter, triggeringPermanent, targetAnyPermanent, false);
+    }
 
     public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
                                          EffectDuration duration, PermanentPredicate filter,
@@ -49,6 +61,15 @@ public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attac
     /** Applies to the permanent whose action caused the trigger without choosing a target. */
     public static MakeCreatureUnblockableEffect forTriggeringPermanent() {
         return new MakeCreatureUnblockableEffect(false, false, EffectDuration.UNTIL_END_OF_TURN, null, true);
+    }
+
+    /**
+     * Applies to the permanent whose action caused the trigger without choosing a target; it can't be
+     * blocked by creatures the ability's controller's opponents control this turn.
+     */
+    public static MakeCreatureUnblockableEffect forTriggeringPermanentNotBlockableByOpponents() {
+        return new MakeCreatureUnblockableEffect(false, false, EffectDuration.UNTIL_END_OF_TURN, null,
+                true, false, true);
     }
 
     /** Allows subtype-based wording to target noncreature permanents as well. */

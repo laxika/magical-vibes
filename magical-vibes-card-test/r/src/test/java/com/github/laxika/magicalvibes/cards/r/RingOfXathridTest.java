@@ -128,9 +128,9 @@ class RingOfXathridTest extends BaseCardTest {
         ring.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setHand(player1, List.of(new Disarm()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 1, 0, null, null);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
         assertThat(ring.getAttachedTo()).isNull();

@@ -63,9 +63,9 @@ class RootSnareTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new GreenwoodSentinel());
         harness.setHand(player1, List.of(new RootSnare(), new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castAndResolveInstant(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, creature.getId());
 

@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
@@ -592,7 +593,8 @@ public class TargetLegalityService {
                     throw new IllegalStateException("Must target exactly "
                             + returnCardsEffect.maxTargets() + " cards");
                 }
-                if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+                if (returnCardsEffect.maxOnePerCardType().isEmpty()
+                        && new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
                     throw new IllegalStateException("Cannot target the same card twice");
                 }
                 for (UUID cardId : targetCardIds) {
@@ -607,15 +609,21 @@ public class TargetLegalityService {
                                 + CardPredicateUtils.describeFilter(returnCardsEffect.filter()));
                     }
                 }
-                for (CardType cardType : returnCardsEffect.maxOnePerCardType()) {
-                    long matchingTargets = targetCardIds.stream()
+                if (!returnCardsEffect.maxOnePerCardType().isEmpty()) {
+                    List<Card> targetedCards = targetCardIds.stream()
                             .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
                             .filter(java.util.Objects::nonNull)
-                            .filter(card -> card.hasType(cardType))
-                            .count();
-                    if (matchingTargets > 1) {
-                        throw new IllegalStateException("Cannot target more than one "
-                                + cardType.name().toLowerCase() + " card");
+                            .toList();
+                    List<CardType> typeSlots = List.copyOf(returnCardsEffect.maxOnePerCardType());
+                    if (!GraveyardChoiceHandlerService.canAssignDistinctCardTypes(
+                            targetedCards, typeSlots, new HashSet<>())) {
+                        CardType conflict = typeSlots.stream()
+                                .filter(cardType -> targetedCards.stream()
+                                        .filter(card -> card.hasType(cardType)).count() > 1)
+                                .findFirst().orElse(null);
+                        throw new IllegalStateException(conflict == null
+                                ? "Each targeted card must fill a different card type"
+                                : "Cannot target more than one " + conflict.name().toLowerCase() + " card");
                     }
                 }
                 for (UUID cardId : targetCardIds) {
@@ -2841,6 +2849,11 @@ public class TargetLegalityService {
                                     "Chosen permanents must share an artifact or creature type");
                         }
                     }
+                    case SHARE_PERMANENT_TYPE -> {
+                        if (!gameQueryService.sharesPermanentType(gameData, a, b)) {
+                            throw new IllegalStateException("Chosen permanents must share a card type that is a permanent type");
+                        }
+                    }
                     case SHARE_CARD_TYPE -> {
                         if (!gameQueryService.sharesCardType(gameData, a, b)) {
                             throw new IllegalStateException("Chosen permanents must share a card type");
@@ -3339,6 +3352,42 @@ public class TargetLegalityService {
     public boolean isTargetIllegalOnResolution(GameData gameData, StackEntry entry) {
         if (entry.isNonTargeting()) {
             return false;
+        }
+
+        // A multi-target restriction between chosen permanents must still hold when the spell resolves
+        // (CR 608.2b). Rivals' Duel: no shared creature type. Run Away Together: different controllers.
+        // Only targets still on the battlefield are compared here.
+        if (entry.getCard() != null) {
+            MultiTargetConstraint constraint = entry.getCard().getMultiTargetConstraint();
+            if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
+                // A target that already left the battlefield is compared by the controller it had as
+                // it left (last known information), so it can still make its partner illegal.
+                List<UUID> controllers = new java.util.ArrayList<>();
+                for (UUID id : entry.getDeclaredTargetIds()) {
+                    Permanent present = gameQueryService.findPermanentById(gameData, id);
+                    UUID controllerId = present != null
+                            ? gameQueryService.findPermanentController(gameData, id)
+                            : entry.getRemovedPermanentControllers().get(id);
+                    if (controllerId != null) {
+                        controllers.add(controllerId);
+                    }
+                }
+                if (controllers.size() != new java.util.HashSet<>(controllers).size()) {
+                    return true;
+                }
+            } else if (constraint == MultiTargetConstraint.SHARE_NO_CREATURE_TYPES) {
+                List<Permanent> present = entry.getDeclaredTargetIds().stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                for (int i = 0; i < present.size(); i++) {
+                    for (int j = i + 1; j < present.size(); j++) {
+                        if (gameQueryService.shareCreatureType(gameData, present.get(i), present.get(j))) {
+                            return true;
+                        }
+                    }
+                }
+            }
         }
 
         if (entry.getEffectsToResolve().stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
@@ -4604,6 +4653,12 @@ public class TargetLegalityService {
         return checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, null);
     }
 
+    /** Why a triggered ability can't target this player (shroud, hexproof, protection), or {@code null} if it can. */
+    public String playerUntargetableReason(GameData gameData, UUID targetPlayerId,
+                                           UUID sourcePlayerId, Card sourceCard) {
+        return checkPlayerUntargetableReason(gameData, targetPlayerId, sourcePlayerId, sourceCard);
+    }
+
     /** Whether a triggered ability should omit this player from its offered targets. */
     public boolean isPlayerUntargetable(GameData gameData, UUID targetPlayerId,
                                          UUID sourcePlayerId, Card sourceCard) {
@@ -4643,6 +4698,11 @@ public class TargetLegalityService {
                 && gameQueryService.playerHasProtectionFromChosenCardType(gameData, targetPlayerId, sourceCard)) {
             return gameData.playerIdToName.get(targetPlayerId)
                     + " has protection from the source's card type and can't be targeted";
+        }
+        if (sourceCard != null
+                && gameQueryService.playerHasProtectionFromChosenName(gameData, targetPlayerId, sourceCard.getName())) {
+            return gameData.playerIdToName.get(targetPlayerId)
+                    + " has protection from " + sourceCard.getName() + " and can't be targeted";
         }
         return null;
     }

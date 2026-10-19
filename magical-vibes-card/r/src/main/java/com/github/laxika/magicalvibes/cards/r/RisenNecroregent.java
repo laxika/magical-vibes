@@ -12,6 +12,6 @@ public class RisenNecroregent extends Card {
 
     public RisenNecroregent() {
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new ConditionalEffect(new MaxSpeed(), CreateTokenEffect.blackZombie(1)));
+                ConditionalEffect.atTriggerTime(new MaxSpeed(), CreateTokenEffect.blackZombie(1)));
     }
 }

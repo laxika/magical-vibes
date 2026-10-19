@@ -38,6 +38,11 @@ public class PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffectHandler 
         }
 
         source.setDamagedCreaturesCantRegenerateThisTurn(true);
+        if (entry.getTargetId() != null) {
+            // A targeted ability's effect (Runesword) belongs to the ability, not to the creature, so it keeps
+            // applying after that creature leaves; a self-granted ability (Bone Shaman) does not.
+            gameData.damagedCreaturesCantRegenerateSourceIdsThisTurn.add(source.getId());
+        }
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                 ": creatures it dealt damage to this turn can't be regenerated this turn."));

@@ -144,10 +144,9 @@ class RestrictedOfficeLectureHallTest extends BaseCardTest {
         harness.addMana(player1, doorIndex == 0 ? ManaColor.WHITE : ManaColor.BLUE,
                 doorIndex == 0 ? 4 : 7);
         harness.castModalSorcery(player1, 0, doorIndex, List.of());
+        harness.passBothPriorities();
         resolveAllTriggers();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof RestrictedOfficeLectureHall)
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Restricted Office // Lecture Hall");
     }
 
 }

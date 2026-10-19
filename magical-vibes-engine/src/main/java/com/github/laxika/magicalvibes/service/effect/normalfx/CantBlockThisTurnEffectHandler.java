@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
@@ -170,12 +172,37 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveAllCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect effect) {
-        var predicate = effect.filter() == null ? new PermanentTruePredicate() : effect.filter();
+        var predicate = effect.filter() == null
+                ? new PermanentTruePredicate()
+                : lockCounterThresholds(gameData, entry.getControllerId(), effect.filter());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
                 entry.getSourcePermanentId(), entry.getControllerId(),
                 new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
                         new PermanentTruePredicate(), "can't block this turn"),
                 null, null, predicate, EffectDuration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.text("Matching creatures can't block this turn."));
+    }
+
+    /**
+     * Fixes the number in a "power less than or equal to the number of {@code counters} on creatures you
+     * control" filter when the effect resolves (CR 608.2h). The restriction itself does not modify
+     * characteristics, so which creatures it hits is still checked continuously (CR 611.2c).
+     */
+    private PermanentPredicate lockCounterThresholds(GameData gameData, UUID controllerId, PermanentPredicate predicate) {
+        if (predicate instanceof PermanentPowerAtMostControlledCreatureCountersPredicate countersPredicate) {
+            int counterCount = 0;
+            for (Permanent controlled : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+                if (gameQueryService.isCreature(gameData, controlled)) {
+                    counterCount += controlled.getCounterCount(countersPredicate.counterType());
+                }
+            }
+            return new PermanentPowerAtMostPredicate(counterCount);
+        }
+        if (predicate instanceof PermanentAllOfPredicate allOf) {
+            return new PermanentAllOfPredicate(allOf.predicates().stream()
+                    .map(inner -> lockCounterThresholds(gameData, controllerId, inner))
+                    .toList());
+        }
+        return predicate;
     }
 }

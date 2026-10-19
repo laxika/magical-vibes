@@ -90,6 +90,7 @@ class RhinoBarrelingBruteTest extends BaseCardTest {
     void opponentSpellDoesNotQualify() {
         addCreatureReady(player1, new RhinoBarrelingBrute());
         harness.setLibrary(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Aetherize()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
@@ -122,6 +123,7 @@ class RhinoBarrelingBruteTest extends BaseCardTest {
     void noSpellDoesNotQualify() {
         addCreatureReady(player1, new RhinoBarrelingBrute());
         harness.setLibrary(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of());
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();

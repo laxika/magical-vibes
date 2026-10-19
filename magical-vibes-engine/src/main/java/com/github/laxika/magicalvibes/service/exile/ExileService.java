@@ -29,6 +29,11 @@ public class ExileService {
         gameData.addToExile(ownerId, card, sourcePermanentId);
     }
 
+    /** Exiles a card face up, tracked with a source permanent, while remembering which player exiled it. */
+    public void exileCard(GameData gameData, UUID ownerId, Card card, UUID sourcePermanentId, UUID exilerId) {
+        gameData.addToExile(ownerId, card, sourcePermanentId, false, exilerId);
+    }
+
     /**
      * Exiles a card face down (CR 406.3), optionally tracked with a source permanent.
      */

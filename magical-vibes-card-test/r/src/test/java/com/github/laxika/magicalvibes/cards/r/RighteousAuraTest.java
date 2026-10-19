@@ -211,8 +211,7 @@ class RighteousAuraTest extends BaseCardTest {
         harness.castInstant(player2, 0, target.getId());
 
         // Model the target dying while Fireblast remains on the stack.
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

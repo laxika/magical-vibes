@@ -70,9 +70,12 @@ class RadiantPerformerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        UUID abilityId = gd.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
+                .findFirst().orElseThrow().getTargetableId();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(sorcerer.getId());
-        harness.handlePermanentChosen(player1, sorcerer.getId());
+                .contains(abilityId);
+        harness.handlePermanentChosen(player1, abilityId);
         harness.passBothPriorities();
 
         List<StackEntry> copies = gd.stack.stream()

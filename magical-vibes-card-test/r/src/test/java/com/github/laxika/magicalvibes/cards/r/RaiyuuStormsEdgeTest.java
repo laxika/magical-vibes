@@ -110,6 +110,7 @@ class RaiyuuStormsEdgeTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(player1, List.of(1), 1));
         assertThat(earlierAttacker.isTapped()).isTrue();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(0), 2);

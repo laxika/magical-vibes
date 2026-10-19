@@ -19,6 +19,6 @@ public class RakshasasSecret extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
         addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.CONTROLLER));
     }
 }

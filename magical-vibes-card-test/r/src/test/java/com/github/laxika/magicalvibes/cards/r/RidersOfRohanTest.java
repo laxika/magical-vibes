@@ -78,7 +78,6 @@ class RidersOfRohanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.setHand(player2, List.of(new Stifle()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castWithAlternateCost(player1, 0, List.of());
         resolveAllTriggers();
@@ -88,6 +87,7 @@ class RidersOfRohanTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player2, 0, gd.stack.getLast().getCard().getId());
         resolveAllTriggers();
 

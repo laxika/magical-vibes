@@ -26,8 +26,9 @@ public class RocketeerBoostbuggy extends Card {
                 false,
                 "{3}",
                 List.of(
-                        new AnimatePermanentsEffect(3, 2, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT),
+                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT, null,
+                                Set.of(), false, false),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Exhaust — {3}: This Vehicle becomes an artifact creature. Put a +1/+1 counter on it."

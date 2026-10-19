@@ -26,7 +26,7 @@ class ReapersTalismanTest extends BaseCardTest {
         talisman.setAttachedTo(creature.getId());
 
         declareAttackers(player1, List.of(0));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -40,7 +40,7 @@ class ReapersTalismanTest extends BaseCardTest {
         talisman.setAttachedTo(creature.getId());
 
         declareAttackers(player1, List.of(0));
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -27,7 +28,7 @@ public class RavenousSailback extends Card {
                 "Target must be an artifact or enchantment"
         );
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "This creature gains haste until end of turn",
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)
@@ -37,6 +38,6 @@ public class RavenousSailback extends Card {
                         new DestroyTargetPermanentEffect(),
                         artifactOrEnchantment
                 )
-        )));
+        ))));
     }
 }

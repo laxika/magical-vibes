@@ -21,12 +21,11 @@ public class RaidersWake extends Card {
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
         // Raid — At the beginning of your end step, if you attacked this turn,
         // target opponent discards a card.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(new Raid(), 
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)
-        ));
-        setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
+        target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
+        )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(new Raid(),
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)
         ));
     }
 }

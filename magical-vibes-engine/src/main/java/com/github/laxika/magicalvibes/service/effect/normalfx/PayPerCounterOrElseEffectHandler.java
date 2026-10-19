@@ -38,7 +38,7 @@ public class PayPerCounterOrElseEffectHandler implements NormalEffectHandlerBean
         if (self == null) return;
 
         int counters = self.getCounterCount(e.counterType());
-        if (counters <= 0 && e.paidEffects().isEmpty()) {
+        if (counters <= 0 && e.paidEffects().isEmpty() && e.elseEffects().isEmpty()) {
             return;
         }
 

@@ -35,7 +35,8 @@ public class RedirectAllDamageFromTargetSorceryToControllerEffectHandler impleme
         }
 
         gameData.targetSorceryDamageRedirectShields.add(new TargetSorceryDamageRedirectShield(
-                targetSorcery.getCard().getId(), targetSorcery.getControllerId()));
+                targetSorcery.getCard().getId(), targetSorcery.getControllerId(),
+                gameData.graveyardEntryVersion(targetSorcery.getCard().getId())));
         gameLogService.append(gameData, GameLog.cardThen(targetSorcery.getCard(),
                 "'s damage is dealt to its controller instead this turn."));
     }

@@ -23,6 +23,7 @@ public class ExileRandomNonlandCardFromDamagedPlayerLibraryEffectHandler
         implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -60,6 +61,14 @@ public class ExileRandomNonlandCardFromDamagedPlayerLibraryEffectHandler
             exileService.exileCard(gameData, damagedPlayerId, chosen);
         } else {
             exileService.exileCard(gameData, damagedPlayerId, chosen, sourcePermanentId);
+        }
+
+        UUID controllerId = entry.getControllerId();
+        exileSupport.grantPlayWhileExiled(gameData, chosen.getId(), controllerId);
+        gameData.exilePlayAnyManaTypeWhileExiled.add(chosen.getId());
+        if (effect instanceof ExileRandomNonlandCardFromDamagedPlayerLibraryEffect exileEffect
+                && exileEffect.permissionCondition() != null) {
+            gameData.exilePlayPermissionConditions.put(chosen.getId(), exileEffect.permissionCondition());
         }
 
         gameLogService.append(gameData, GameLog.builder()

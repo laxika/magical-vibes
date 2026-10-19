@@ -24,10 +24,10 @@ class RocketeerBoostbuggyTest extends BaseCardTest {
     @DisplayName("Creates a Treasure when it attacks")
     void createsTreasureWhenItAttacks() {
         addCreatureReady(player1, new RocketeerBoostbuggy());
-        addCreatureReady(player1, new CanyonVaulter());
+        Permanent pilot = addCreatureReady(player1, new CanyonVaulter());
 
-        harness.activateAbility(player1, 0, 1, null, null);
-        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null); // the only legal crew creature is tapped automatically
+        resolveAllTriggers(); // the crew-payment trigger resolves above the crew ability itself
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -97,15 +97,15 @@ class RocketeerBoostbuggyTest extends BaseCardTest {
         Permanent buggy = addCreatureReady(player1, new RocketeerBoostbuggy());
         Permanent pilot = addCreatureReady(player1, new CanyonVaulter());
 
-        harness.activateAbility(player1, 0, 1, null, null);
-        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null); // the only legal crew creature is tapped automatically
+        resolveAllTriggers(); // the crew-payment trigger resolves above the crew ability itself
 
         assertThat(pilot.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, buggy)).isTrue();
         assertThat(buggy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(countPermanents(player1, "Treasure")).isZero();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, buggy)).isFalse();
         assertThat(gqs.isArtifact(buggy)).isTrue();
@@ -127,7 +127,7 @@ class RocketeerBoostbuggyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, buggy)).isTrue();
         assertThat(gqs.getEffectivePower(gd, buggy)).isEqualTo(4);

@@ -33,6 +33,10 @@ public class GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffectHandler imp
             return;
         }
 
+        if (!EnchantedEquipmentGrantSupport.equipmentKeepsGrantedAbility(aura, equipment)) {
+            return;
+        }
+
         accumulator.addKeywords(((GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect) effect).keywords());
     }
 

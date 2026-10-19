@@ -17,7 +17,7 @@ public class RigoStreetwiseMentor extends Card {
     public RigoStreetwiseMentor() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER,
                 new ConditionalEffect(
                         new HasAttacker(new PermanentPowerAtMostPredicate(1)),
                         new DrawCardEffect(1)));

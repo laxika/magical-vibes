@@ -97,6 +97,14 @@ public sealed interface ChoiceContext {
     record SpellReboundOrPlotChoice(UUID controllerId, UUID ownerId, Card card, Card physicalCard)
             implements ChoiceContext {}
 
+    /**
+     * Several permanents each replace a resolving spell going to the graveyard with exiling it (Rod of
+     * Absorption), so its controller picks which one applies (CR 616.1). The options are the
+     * permanents' ids; {@code physicalCard} is the card that actually leaves the stack.
+     */
+    record SpellExileSourceChoice(UUID controllerId, UUID ownerId, Card card, Card physicalCard)
+            implements ChoiceContext {}
+
     /** Divides one source's shared combat-damage prevention among its recipients. */
     record CombatSharedDamagePreventionChoice(UUID preventionSourceId, UUID damageSourceId,
                                              UUID controllerId, int remaining,
@@ -272,6 +280,13 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Chooses the mode of an exiled copy of a modal card as it is cast during resolution (Reenact the Crime). */
+    record ExileCopyCastModeChoice(PendingMayAbility ability, Map<String, Integer> modes) implements ChoiceContext {
+        public ExileCopyCastModeChoice {
+            modes = Map.copyOf(modes);
+        }
+    }
+
     /** Adds chosen fixed-color mana before resolving the remaining effects of a mana ability. */
     record FixedManaColorThenEffectsChoice(UUID recipientPlayerId, List<ManaColor> colors,
                                            int amount, StackEntry followUp) implements ChoiceContext {
@@ -362,14 +377,28 @@ public sealed interface ChoiceContext {
      * Division before a spell or triggered ability is stacked; a null counter type denotes damage.
      * A non-null {@code stackEntryId} names a triggered ability already on the stack whose division
      * is being announced before any player receives priority; the answer is recorded on that entry
-     * instead of pushing a new one.
+     * instead of pushing a new one. {@code entryTargetIds} and {@code entryTargetGroupSizes}, when
+     * set, are every target of an ETB ability whose counters are divided among only one of its target
+     * groups (Rhino, Terrible Trampler also destroys a target land), so the ability's stack entry
+     * keeps all of its targets while only {@code targetIds} receive counters.
      */
     record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, CounterType counterType,
                                           List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
                                           int nextTargetIndex, boolean allowsPartialDistribution,
                                           PermanentChoiceContext.HandCastSpellTarget spellCast,
-                                          UUID stackEntryId) implements ChoiceContext {
+                                          UUID stackEntryId, List<UUID> entryTargetIds,
+                                          List<Integer> entryTargetGroupSizes) implements ChoiceContext {
+
+        public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                              UUID sourcePermanentId, CounterType counterType,
+                                              List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                              int nextTargetIndex, boolean allowsPartialDistribution,
+                                              PermanentChoiceContext.HandCastSpellTarget spellCast,
+                                              UUID stackEntryId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, targetIds, assignments,
+                    total, nextTargetIndex, allowsPartialDistribution, spellCast, stackEntryId, null, null);
+        }
 
         public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                               UUID sourcePermanentId, CounterType counterType,
@@ -400,6 +429,18 @@ public sealed interface ChoiceContext {
             effects = List.copyOf(effects);
             targetIds = List.copyOf(targetIds);
             assignments = Map.copyOf(new java.util.LinkedHashMap<>(assignments));
+            entryTargetIds = entryTargetIds == null ? null : List.copyOf(entryTargetIds);
+            entryTargetGroupSizes = entryTargetGroupSizes == null ? null : List.copyOf(entryTargetGroupSizes);
+        }
+
+        /**
+         * The same prompt advanced to another target of the division, keeping the targets and target
+         * group sizes of the whole ability.
+         */
+        public CounterDistributionAssignment withProgress(Map<UUID, Integer> newAssignments, int newNextTargetIndex) {
+            return new CounterDistributionAssignment(sourceCard, controllerId, effects, sourcePermanentId,
+                    counterType, targetIds, newAssignments, total, newNextTargetIndex, allowsPartialDistribution,
+                    spellCast, stackEntryId, entryTargetIds, entryTargetGroupSizes);
         }
     }
 

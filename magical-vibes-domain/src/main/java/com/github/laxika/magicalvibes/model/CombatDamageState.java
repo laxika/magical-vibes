@@ -16,6 +16,8 @@ public class CombatDamageState {
     /** Redirect shields present at the start of this simultaneous damage event. */
     public List<SourcePermanentAndControllerNextDamageRedirectShield> sharedRedirectShields = List.of();
     public List<SourceNextDamageToAnyTargetShield> sourceDamageShields = List.of();
+    /** Sources chosen by Reflect Damage shields present at the start of this simultaneous damage event. */
+    public List<UUID> reflectDamageSourceIds = List.of();
 
     /** Pending replacement choices must finish before simultaneous damage is applied. */
     public int pendingOptionalDamageChoices;

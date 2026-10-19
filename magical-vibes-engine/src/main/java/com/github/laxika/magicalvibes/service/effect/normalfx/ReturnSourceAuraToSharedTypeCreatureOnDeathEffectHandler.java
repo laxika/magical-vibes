@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +26,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Reins of the Vinesteed's death trigger (already gated by a {@code MayEffect}): return the
- * aura from its owner's graveyard to the battlefield attached to a creature that shares a creature
+ * aura from its controller's graveyard to the battlefield attached to a creature that shares a creature
  * type with the creature that died. The dying creature's ID is baked into the effect; its creature
- * types are read from the graveyard as last-known information (Changeling-aware).
+ * types are read from the graveyard, or from exile if the creature was exiled again, as last-known
+ * information (Changeling-aware).
  */
 @Slf4j
 @Component
@@ -38,6 +41,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final AuraAttachmentService auraAttachmentService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,9 +71,24 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
                     gameData.id, entry.getCard().getName());
             return;
         }
+        // "return this card from your graveyard": only the controller's own graveyard qualifies.
+        if (!Objects.equals(auraOwnerId, gameQueryService.findGraveyardOwnerById(gameData, auraCardId))) {
+            gameLogService.append(gameData, GameLog.cardThen(auraCard, "'s ability fizzles (card not in your graveyard)."));
+            log.info("Game {} - {} is not in its controller's graveyard, death trigger fizzles",
+                    gameData.id, auraCard.getName());
+            return;
+        }
 
         // Read the dying creature's creature types from the graveyard (last-known information).
         Card dyingCreatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
+        if (dyingCreatureCard == null) {
+            // The dying creature may have been exiled again before this trigger resolves.
+            dyingCreatureCard = gameQueryService.findCardInExileById(gameData, dyingCreatureCardId);
+        }
+        if (dyingCreatureCard == null) {
+            // A token that died has ceased to exist; use what the trigger remembered of it.
+            dyingCreatureCard = entry.lastKnownPermanentCard(dyingCreatureCardId);
+        }
         List<CardSubtype> dyingTypes = new ArrayList<>();
         boolean dyingIsChangeling = false;
         if (dyingCreatureCard != null) {
@@ -101,7 +120,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
                         || (dyingChangeling && !pTypes.isEmpty())
                         || pTypes.stream().anyMatch(dyingTypes::contains);
 
-                if (sharesType) {
+                if (sharesType && auraAttachmentService.canEnchant(gameData, auraCard, auraOwnerId, p)) {
                     validTargetIds.add(p.getId());
                 }
             }

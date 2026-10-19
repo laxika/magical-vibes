@@ -48,6 +48,7 @@ class RenewedSolidarityTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(tokenPermanents(player1, "Older Goblin")).hasSize(1);
         assertThat(tokenPermanents(player1, "Goblin")).hasSize(2);

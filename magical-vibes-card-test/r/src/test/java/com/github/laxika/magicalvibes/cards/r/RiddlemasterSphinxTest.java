@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -84,8 +85,9 @@ class RiddlemasterSphinxTest extends BaseCardTest {
     @Test
     @DisplayName("A creature owned by the Sphinx controller returns to its owner, not its controller")
     void returnsCreatureToOwnerRatherThanController() {
-        UUID sentinelId = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel()).getId();
-        gd.stolenCreatures.put(sentinelId, player1.getId());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
+        setOwnerAndController(sentinel, player1, player2);
+        UUID sentinelId = sentinel.getId();
         castRiddlemasterSphinx();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, sentinelId);

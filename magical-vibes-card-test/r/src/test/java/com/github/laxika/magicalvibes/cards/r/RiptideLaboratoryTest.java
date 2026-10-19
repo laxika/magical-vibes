@@ -139,7 +139,6 @@ class RiptideLaboratoryTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(wizard);
         gd.playerBattlefields.get(player2.getId()).add(wizard);
-        gd.stolenCreatures.put(wizard.getId(), player1.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Riptide Biologist");

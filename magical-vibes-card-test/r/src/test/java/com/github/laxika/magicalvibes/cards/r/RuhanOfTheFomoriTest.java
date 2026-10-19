@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
 import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -67,8 +68,8 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(ruhan.isMustAttackThisCombat()).isTrue();
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0)));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(ruhan.isMustAttackThisCombat()).isFalse();
@@ -81,7 +82,8 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         harness.passBothPriorities();
         beginDeclareAttackers(player1);
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(ruhan.isAttacking()).isTrue();
         assertThat(ruhan.getAttackTarget()).isEqualTo(player2.getId());
@@ -145,11 +147,13 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         Permanent ruhan = addReadyRuhan(player1);
         harness.addToBattlefield(player2, new GhostlyPrison());
         Permanent teferi = harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler());
+        teferi.setCounterCount(CounterType.LOYALTY, 4);
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
         beginDeclareAttackers(player1);
 
-        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, teferi.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, teferi.getId())));
 
         assertThat(ruhan.isAttacking()).isTrue();
         assertThat(ruhan.getAttackTarget()).isEqualTo(teferi.getId());

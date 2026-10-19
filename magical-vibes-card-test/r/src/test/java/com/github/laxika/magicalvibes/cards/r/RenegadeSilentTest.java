@@ -28,8 +28,8 @@ class RenegadeSilentTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds())
-                .containsExactlyInAnyOrder(opposingCreature.getId(), player1.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(opposingCreature.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player1.getId());
         harness.handlePermanentChosen(player1, opposingCreature.getId());
         harness.passBothPriorities();
 

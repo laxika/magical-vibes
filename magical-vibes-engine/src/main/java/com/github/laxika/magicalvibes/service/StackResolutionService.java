@@ -754,6 +754,11 @@ public class StackResolutionService {
         }
 
         Permanent perm = createEnteringPermanent(entry, card, characteristics);
+        // CR 609.7a: a shield chosen for this permanent spell now tracks the permanent it became, so a later
+        // bounce and recast of the same card (a new object) is not shielded.
+        UUID spellCardId = entry.getCard().getId();
+        gameData.playerSourceNextDamageShields.replaceAll(shield -> spellCardId.equals(shield.sourceId())
+                ? shield.withSourceId(perm.getId()) : shield);
         perm.setChosenSubtype(entry.getBeholdChosenSubtype());
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
         // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.
@@ -1708,6 +1713,12 @@ public class StackResolutionService {
             // Spell disposition deferred — will be resolved after the async discard
             // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
             // otherwise to graveyard).
+        } else if (exileSpellEffect != null && competingExileSources(gameData, entry).size() > 1) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            playerInputService.beginSpellExileSourceChoice(gameData,
+                    new ChoiceContext.SpellExileSourceChoice(
+                            entry.getControllerId(), ownerId, entry.getCard(), physicalCard),
+                    competingExileSources(gameData, entry));
         } else if (exileSpellEffect != null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             UUID exileSourceId = entry.getExileWithSourcePermanentId() != null
@@ -1802,6 +1813,28 @@ public class StackResolutionService {
         gameData.exilePlayWithoutPayingManaCost.add(physicalCard.getId());
         triggerCollectionService.checkPlotTriggers(gameData, ownerId, physicalCard);
         gameLogService.append(gameData, GameLog.cardThen(physicalCard, " becomes plotted."));
+    }
+
+    /** The distinct permanents still on the battlefield whose exile replacement applies to the spell. */
+    private List<UUID> competingExileSources(GameData gameData, StackEntry entry) {
+        List<UUID> sources = new ArrayList<>();
+        if (entry.getExileWithSourcePermanentId() != null) {
+            sources.add(entry.getExileWithSourcePermanentId());
+        }
+        for (UUID sourceId : entry.getCompetingExileSourcePermanentIds()) {
+            if (!sources.contains(sourceId)) {
+                sources.add(sourceId);
+            }
+        }
+        sources.removeIf(sourceId -> gameQueryService.findPermanentById(gameData, sourceId) == null);
+        return sources;
+    }
+
+    /** Exiles the spell with the permanent its controller picked from competing exile replacements (CR 616.1). */
+    public void resolveSpellExileSourceChoice(GameData gameData, ChoiceContext.SpellExileSourceChoice choice,
+                                              UUID sourcePermanentId) {
+        gameData.addToExile(choice.ownerId(), choice.physicalCard(), sourcePermanentId);
+        gameLogService.append(gameData, GameLog.isExiled(choice.card()));
     }
 
     /** Applies the exile replacement the spell's controller picked: rebound or plot (CR 616.1). */

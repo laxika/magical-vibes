@@ -105,7 +105,10 @@ class RotisserieElementalTest extends BaseCardTest {
         Permanent elemental = addReadyElemental();
         elemental.setAttacking(true);
 
-        resolveCombat();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).isNotEmpty();
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, elemental));

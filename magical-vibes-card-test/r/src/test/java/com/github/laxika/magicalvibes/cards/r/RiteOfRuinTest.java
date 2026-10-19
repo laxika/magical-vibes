@@ -36,7 +36,9 @@ class RiteOfRuinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfRuin()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Artifacts, then creatures, then lands");
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).isEmpty();
     }
@@ -53,7 +55,9 @@ class RiteOfRuinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfRuin()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castAndResolveSorcery(player1, 0, 5);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Lands, then creatures, then artifacts");
         harness.handleMultiplePermanentsChosen(player1, List.of(chosenForest.getId()));
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
@@ -70,7 +74,9 @@ class RiteOfRuinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfRuin()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Creatures, then artifacts, then lands");
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -113,7 +119,16 @@ class RiteOfRuinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfRuin()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castAndResolveSorcery(player1, 0, order);
+        String[] labels = {
+                "Artifacts, then creatures, then lands",
+                "Artifacts, then lands, then creatures",
+                "Creatures, then artifacts, then lands",
+                "Creatures, then lands, then artifacts",
+                "Lands, then artifacts, then creatures",
+                "Lands, then creatures, then artifacts"};
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, labels[order]);
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
@@ -129,7 +144,9 @@ class RiteOfRuinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfRuin()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Artifacts, then creatures, then lands");
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).hasSize(4);
@@ -147,7 +164,9 @@ class RiteOfRuinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfRuin()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Artifacts, then creatures, then lands");
         harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).hasSize(3);
@@ -168,7 +187,9 @@ class RiteOfRuinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfRuin()));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Artifacts, then creatures, then lands");
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).hasSize(3);

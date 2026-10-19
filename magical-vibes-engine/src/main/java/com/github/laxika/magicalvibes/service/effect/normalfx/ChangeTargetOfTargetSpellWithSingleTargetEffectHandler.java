@@ -69,6 +69,13 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
             return;
         }
 
+        if (redirectEffect.requiresTargetIsController()
+                && !(occurrences.size() == 1 && occurrences.getFirst().equals(controllerId))) {
+            gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(),
+                    " doesn't target its controller)."));
+            return;
+        }
+
         boolean creatureTargetsOnly = redirectEffect.creatureTargetsOnly();
         if (creatureTargetsOnly && (occurrences.isEmpty() || !isCreatureId(gameData, occurrences.getFirst()))) {
             gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " doesn't target a creature)."));

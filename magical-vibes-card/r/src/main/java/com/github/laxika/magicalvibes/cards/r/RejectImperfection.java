@@ -13,9 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 public class RejectImperfection extends Card {
 
     public RejectImperfection() {
+        // "Counter target spell. If that spell's mana value was 3 or less, proliferate." The counter
+        // resolves first; the mana value is then judged from the spell's last known information.
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new TargetSpellMatches(new StackEntryMaxManaValuePredicate(3)),
                 new ProliferateEffect()));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

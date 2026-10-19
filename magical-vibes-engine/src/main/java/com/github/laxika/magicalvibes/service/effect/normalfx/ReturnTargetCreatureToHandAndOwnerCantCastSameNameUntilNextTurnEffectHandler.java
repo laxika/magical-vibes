@@ -41,7 +41,8 @@ public class ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffe
             return;
         }
 
-        String creatureName = target.getCard().getName();
+        // A face-down creature has no name, so returning it prohibits no printed name.
+        String creatureName = target.isFaceDown() ? null : target.getCard().getName();
         UUID ownerId = gameData.stolenCreatures.get(target.getId());
         if (ownerId == null) {
             ownerId = target.getOriginalCard().getOwnerId();

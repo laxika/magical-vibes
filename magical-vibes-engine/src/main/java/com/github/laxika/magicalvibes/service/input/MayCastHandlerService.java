@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetNoncreatureCardFrom
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -201,6 +202,16 @@ public class MayCastHandlerService {
         return card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT)
                 || card.hasType(CardType.ENCHANTMENT) || card.hasType(CardType.PLANESWALKER)
                 || card.hasType(CardType.BATTLE);
+    }
+
+    /**
+     * Whether the spell's graveyard return is "up to" (minimum zero targets), so it can be cast with
+     * zero targets even when no card in a graveyard can be chosen.
+     */
+    private static boolean choosesUpToZeroGraveyardTargets(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(effect -> effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
+                        && returnEffect.minTargets() == 0 && !returnEffect.xScaled());
     }
 
     private void makeWordOfCommandPlayerActive(GameData gameData, UUID playerId) {
@@ -2545,7 +2556,8 @@ public class MayCastHandlerService {
         }
 
         boolean splitCard = SplitCardCastSupport.isSplitCard(cardToCast);
-        if (!splitCard && (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
+        if (!splitCard && !choosesUpToZeroGraveyardTargets(cardToCast)
+                && (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
                 && buildValidSpellTargets(gameData, cardToCast, cardToCast.getEffects(EffectSlot.SPELL),
                 player.getId(), 0, false).isEmpty()) {
             queueDeclineEffect(gameData, ability);
@@ -2830,7 +2842,7 @@ public class MayCastHandlerService {
             return;
         }
         boolean zeroOptionalTargets = xScaledGraveyardReturn != null
-                || hasOnlyOptionalDeclaredTargets(card, xValue)
+                || (hasOnlyOptionalDeclaredTargets(card, xValue) || choosesUpToZeroGraveyardTargets(card))
                 && buildValidSpellTargets(gameData, card, spellEffects, playerId, xValue,
                 "madness".equals(costLabel)).isEmpty();
         boolean zeroDividedDamage = "madness".equals(costLabel)

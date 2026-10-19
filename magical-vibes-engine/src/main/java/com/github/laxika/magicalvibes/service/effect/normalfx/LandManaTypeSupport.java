@@ -25,10 +25,14 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
@@ -49,6 +53,9 @@ public class LandManaTypeSupport {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final LandManaReplacementService landManaReplacementService;
+    @Autowired
+    @Lazy
+    private AmountEvaluationService amountEvaluationService;
 
     public Set<ManaColor> manaTypesCouldProduce(GameData gameData, Permanent land) {
         return manaTypesCouldProduce(gameData, land, new HashSet<>());
@@ -132,7 +139,9 @@ public class LandManaTypeSupport {
                                          Permanent source, Set<ManaColor> types, Set<UUID> visited) {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect mana) {
-                addIfNonNull(types, mana.color());
+                if (producesAnyMana(gameData, source, mana)) {
+                    addIfNonNull(types, mana.color());
+                }
             } else if (effect instanceof AwardManaOfTypeLandsCouldProduceEffect mana) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
                 for (UUID playerId : gameData.orderedPlayerIds) {
@@ -207,6 +216,19 @@ public class LandManaTypeSupport {
                 addIfNonNull(types, mana.estimatedManaColor());
             }
         }
+    }
+
+    /**
+     * Whether one resolution of {@code mana} would add any mana right now. A dynamic amount that
+     * evaluates to zero (Gaea's Cradle with no creatures) contributes no type (CR 106.7).
+     */
+    private boolean producesAnyMana(GameData gameData, Permanent source, AwardManaEffect mana) {
+        if (mana.amount() instanceof Fixed) {
+            return true;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        AmountContext context = new AmountContext(controllerId, source, null, 0, 0);
+        return amountEvaluationService.evaluate(gameData, mana.amount(), context) > 0;
     }
 
     private static void addIfNonNull(Set<ManaColor> types, ManaColor color) {

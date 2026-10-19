@@ -14,6 +14,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * (Ooze Flux).
  *
  * @param counterType type of counter to remove
+ * @param allowsZero whether the chosen X may be zero (e.g. "Remove X counters", Retribution of the
+ *                   Ancients); the "one or more" wording of Ooze Flux requires at least one
  */
-public record RemoveOneOrMoreCountersFromControlledCreaturesCost(CounterType counterType) implements CostEffect {
+public record RemoveOneOrMoreCountersFromControlledCreaturesCost(CounterType counterType, boolean allowsZero)
+        implements CostEffect {
+
+    public RemoveOneOrMoreCountersFromControlledCreaturesCost(CounterType counterType) {
+        this(counterType, false);
+    }
 }

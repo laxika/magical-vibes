@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 
 import java.util.List;
 
@@ -17,8 +16,7 @@ public class Ribskiff extends Card {
 
     public Ribskiff() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

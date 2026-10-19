@@ -123,10 +123,12 @@ class RainOfBladesTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
         attacker.tap();
 
-        castRainOfBlades(player2);
+        castRainOfBladesWithoutResolving(player2);
+        castRainOfBladesWithoutResolving(player2);
+        harness.passBothPriorities();
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
 
-        castRainOfBlades(player2);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");

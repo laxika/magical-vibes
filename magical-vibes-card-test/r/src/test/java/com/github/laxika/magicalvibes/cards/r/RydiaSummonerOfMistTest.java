@@ -164,7 +164,7 @@ class RydiaSummonerOfMistTest extends BaseCardTest {
         Permanent returnedSaga = findPermanent(player1, "Summon: Choco/Mog");
         assertThat(gqs.hasKeyword(gd, returnedSaga, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, returnedSaga, Keyword.HASTE)).isFalse();
         assertThat(returnedSaga.getCounterCount(CounterType.FINALITY)).isEqualTo(1);

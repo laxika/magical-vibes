@@ -39,7 +39,7 @@ public class RatKingPalePiper extends Card {
                 false,
                 "{2}",
                 List.of(
-                        new SacrificePermanentCost(new PermanentIsTokenPredicate(), "Sacrifice a token"),
+                        new SacrificePermanentCost(new PermanentIsTokenPredicate(), "Sacrifice a token", false),
                         new DrawCardEffect()),
                 "{2}, Sacrifice a token: Draw a card."));
     }

@@ -113,7 +113,7 @@ class RollRollRollRollTest extends BaseCardTest {
     @DisplayName("A creature owned by the opponent returns under its owner's control")
     void stolenCreatureReturnsToOwner() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
         castSaga();
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
@@ -135,9 +135,7 @@ class RollRollRollRollTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castSaga();
         harness.handlePermanentChosen(player1, creature.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        setOwnerAndController(creature, player1, player2);
 
         harness.passBothPriorities();
 

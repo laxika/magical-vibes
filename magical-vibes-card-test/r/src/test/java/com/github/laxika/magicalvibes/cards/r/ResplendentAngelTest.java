@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ResplendentAngel.class})
@@ -161,15 +163,17 @@ class ResplendentAngelTest extends BaseCardTest {
     @DisplayName("Life gain is cumulative and later life loss does not prevent the token")
     void cumulativeLifeGainCountsDespiteLifeLoss() {
         harness.addToBattlefield(player1, new ResplendentAngel());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 6, "test life loss");
+        harness.setHand(player2, List.of());
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
+            harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 6, "test life loss");
+        });
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Angel")).isEqualTo(1);
-        harness.passUntil(player2, TurnStep.UPKEEP);
         advanceToEndStep(player2);
         assertThat(gd.stack).isEmpty();
         assertThat(countPermanents(player1, "Angel")).isEqualTo(1);

@@ -10,12 +10,10 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
 public class ParadigmCastSupport {
 
     private final GameLogService gameLogService;
-    private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
@@ -45,14 +42,12 @@ public class ParadigmCastSupport {
     // @Lazy breaks cycle: ParadigmCastSupport → InputCompletionService → TurnProgressionService →
     // StepTriggerService → ParadigmService → ParadigmCastSupport.
     public ParadigmCastSupport(GameLogService gameLogService,
-                               GraveyardService graveyardService,
                                PlayerInputService playerInputService,
                                @Lazy TriggerCollectionService triggerCollectionService,
                                @Lazy InputCompletionService inputCompletionService,
                                ExileCastTargetSupport exileCastTargetSupport,
                                @Lazy CastingPermissionService castingPermissionService) {
         this.gameLogService = gameLogService;
-        this.graveyardService = graveyardService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.inputCompletionService = inputCompletionService;
@@ -96,12 +91,8 @@ public class ParadigmCastSupport {
                     : !firstCandidates.isEmpty();
 
             if (!hasLegalTargets) {
-                // Single-target keeps the historical behavior of putting the copy into the graveyard.
-                // A multi-target copy that can't be legally cast ceases to exist instead (CR 707.10a).
-                if (!multiTarget) {
-                    graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.EXILE);
-                }
-                
+                // The copy never was a card in a graveyard, so without a legal target it simply
+                // ceases to exist (CR 707.10a) rather than being put into a graveyard.
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
                 log.info("Game {} - {} paradigm copy has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

@@ -38,9 +38,10 @@ class RedSunsTwilightTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(2).allSatisfy(token -> {
             assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
-            assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
             assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                    .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                    .anyMatch(action -> action.permanentId().equals(token.getId())
+                            && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
         });
     }
 

@@ -165,7 +165,6 @@ class RhysTheExiledTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, rhys.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Rhys the Exiled");

@@ -50,7 +50,7 @@ class RekindlingPhoenixTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Elemental");
         Permanent phoenix = findPermanents(player1, "Rekindling Phoenix").getFirst();
-        assertThat(phoenix.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, phoenix, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Rekindling Phoenix");
     }
 
@@ -87,22 +87,24 @@ class RekindlingPhoenixTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Rekindling Phoenix");
         harness.assertNotInGraveyard(player1, "Rekindling Phoenix");
-        assertThat(findPermanents(player1, "Rekindling Phoenix").getFirst().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanents(player1, "Rekindling Phoenix").getFirst(), Keyword.HASTE)).isTrue();
     }
 
     @Test
     @DisplayName("The returned Phoenix loses its granted haste after the turn ends")
     void returnedPhoenixHasteExpires() {
         killPhoenix();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         beginTokenUpkeep();
         choosePhoenix();
         harness.passBothPriorities();
-        assertThat(findPermanents(player1, "Rekindling Phoenix").getFirst().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanents(player1, "Rekindling Phoenix").getFirst(), Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Rekindling Phoenix");
-        assertThat(findPermanents(player1, "Rekindling Phoenix").getFirst().hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanents(player1, "Rekindling Phoenix").getFirst(), Keyword.HASTE)).isFalse();
     }
 
     @Test

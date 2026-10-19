@@ -17,7 +17,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * owner's hand", Smuggler's Buggy).</p>
  */
 public record MayPlayExiledCardWithoutPayingManaCostEffect(boolean exclusive, boolean grantHaste,
-                                                           boolean returnSourceToHand) implements CardEffect {
+                                                           boolean returnSourceToHand,
+                                                           Integer maxManaValue) implements CardEffect {
+
+    public MayPlayExiledCardWithoutPayingManaCostEffect(boolean exclusive, boolean grantHaste,
+                                                        boolean returnSourceToHand) {
+        this(exclusive, grantHaste, returnSourceToHand, null);
+    }
 
     public MayPlayExiledCardWithoutPayingManaCostEffect(boolean exclusive, boolean grantHaste) {
         this(exclusive, grantHaste, false);

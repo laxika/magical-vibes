@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleUpToNCardsFromOutsideGameIntoLibraryEffect;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,12 @@ public class ShuffleUpToNCardsFromOutsideGameIntoLibraryEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ShuffleUpToNCardsFromOutsideGameIntoLibraryEffect) effect;
         List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, entry.getControllerId());
-        if (e.maxCount() <= 0 || sideboard.isEmpty()) {
+        if (e.maxCount() <= 0) {
+            return;
+        }
+        if (sideboard.isEmpty()) {
+            // With nothing outside the game to choose, the library is still shuffled (CR 701.24a).
+            LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
             return;
         }
 

@@ -59,6 +59,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** "Whenever one or more tokens you control enter the battlefield." */
     ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
+    /** "Whenever a nontoken artifact you control enters" (no "another"): also triggers when the source is a
+     *  nontoken artifact as it enters (CR 603.6a). Scanned in
+     *  {@code TriggerCollectionService.checkAllyNontokenArtifactEntersTriggers} without the self-exclusion. */
+    ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
     ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
     /** "Whenever a creature enters" (any controller, including the source itself, e.g. as a creature
      *  through Opalescence). Use {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} for "another creature". */
@@ -295,6 +299,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
     /** "Whenever you tap a nonland permanent for mana"; checked on the tapping player's battlefield. */
     ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
+    /** "Whenever you tap an artifact token for mana"; checked on the tapping player's battlefield. */
+    ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
     /** Triggers whenever an opponent gains control of a permanent from this permanent's controller. */
@@ -782,6 +788,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controls. Attacking a planeswalker does not count. Checked in
      *  {@code CombatAttackService.declareAttackers}. */
     ON_ALLY_CREATURES_ATTACK_PLAYER,
+    /** Triggers once for each player or planeswalker directly attacked by one or more creatures the
+     *  controller controls ("whenever you attack a player or planeswalker with ..."). Attacking a
+     *  battle does not count. Checked in {@code CombatAttackService.declareAttackers}. */
+    ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
     STATE_TRIGGERED,

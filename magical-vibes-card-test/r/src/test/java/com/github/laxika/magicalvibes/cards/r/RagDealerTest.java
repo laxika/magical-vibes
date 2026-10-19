@@ -165,7 +165,7 @@ class RagDealerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
                 List.of(card.getId(), card.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("same card twice");
+                .hasMessageContaining("same graveyard card twice");
     }
 
     @Test

@@ -24,7 +24,8 @@ import java.util.UUID;
  * when the order in which they apply changes the amount gained (CR 616.1). Nefarious Lich's
  * {@code draw that many cards instead} is also an option; once chosen no life is gained, so no
  * other life-gain replacement applies to the event. Plague Drone's and Tainted Remedy's {@code lose that
- * much life instead} is likewise an option that ends the gain.
+ * much life instead} is likewise an option that ends the gain, and so is Rain of Gore's, which applies to
+ * a gain caused by a spell or ability its gaining player controls.
  */
 @Component
 public class LifeGainReplacements implements ReplacementCandidateSource<LifeGainEvent> {
@@ -32,6 +33,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
     private static final String KEY = "LifeGain:";
     private static final String LICH_KEY = "LifeGainDraw:";
     private static final String LOSS_KEY = "LifeGainLoss:";
+    private static final String RAIN_KEY = "LifeGainRain";
 
     private final GameQueryService gameQueryService;
 
@@ -80,6 +82,11 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
                 }
             }
         }
+        if (gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
+                gameData, event.playerId(), event.sourceControllerId())) {
+            options.add(new ReplacementOption(RAIN_KEY, "Rain of Gore: lose that much life instead",
+                    ReplacementOption.Kind.REPLACEMENT, true));
+        }
         for (SourcedEffect sourced : activeEffects(gameData, event)) {
             String text = sourced.effect().additionalLifeGain() != 0
                     ? "gain " + sourced.effect().additionalLifeGain() + " additional life"
@@ -97,7 +104,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
         if (option.key().startsWith(LICH_KEY)) {
             return event.withDrawInstead();
         }
-        if (option.key().startsWith(LOSS_KEY)) {
+        if (option.key().startsWith(LOSS_KEY) || option.key().equals(RAIN_KEY)) {
             return event.withLoseInstead();
         }
         SourcedEffect sourced = activeEffects(gameData, event).stream()

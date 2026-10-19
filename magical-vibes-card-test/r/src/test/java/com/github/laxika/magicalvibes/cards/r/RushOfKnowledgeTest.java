@@ -20,6 +20,7 @@ class RushOfKnowledgeTest extends BaseCardTest {
     @Test
     @DisplayName("Includes noncreature permanents when finding the greatest mana value")
     void includesNoncreaturePermanents() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new DecreeOfSilence());
         harness.addToBattlefield(player1, new MischievousQuanar());
         harness.setLibrary(player1, List.of(

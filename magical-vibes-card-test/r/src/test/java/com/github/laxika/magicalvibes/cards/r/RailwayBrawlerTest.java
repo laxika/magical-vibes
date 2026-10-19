@@ -95,6 +95,7 @@ class RailwayBrawlerTest extends BaseCardTest {
         harness.setHand(player1, List.of(brawler));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of());
 
         harness.castWithAlternateCost(player1, 0, List.of());
 

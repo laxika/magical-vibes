@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ class ReservoirWalkerTest extends BaseCardTest {
         gd.playerEnergyCounters.put(player2.getId(), 4);
         int controllerLifeBefore = gd.getLife(player2.getId());
         int opponentLifeBefore = gd.getLife(player1.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castFromHand(player2, new ReservoirWalker(), "{5}");
         resolveAllTriggers();

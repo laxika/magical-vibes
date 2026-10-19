@@ -35,7 +35,9 @@ public class RuthlessTechnomancer extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                         )),
                         CreateTokenEffect.ofTreasureToken(new SacrificedPermanentPower()),
-                        "another creature"),
+                        "another creature",
+                        false,
+                        false),
                 "Sacrifice another creature?"));
 
         addActivatedAbility(new ActivatedAbility(

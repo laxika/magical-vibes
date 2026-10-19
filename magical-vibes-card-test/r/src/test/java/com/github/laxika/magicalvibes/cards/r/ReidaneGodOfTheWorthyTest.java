@@ -126,9 +126,11 @@ class ReidaneGodOfTheWorthyTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         prepareOpponentMainPhase();
 
+        // X=3 makes the spell's mana value 4 on the stack (CR 202.3e); Reidane's +2 makes the cost
+        // 6, more than the 4 mana available.
         assertThatThrownBy(() -> harness.castSorcery(player2, 0, 3, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("Not enough mana");
     }
 
     @Test

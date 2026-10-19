@@ -19,8 +19,7 @@ public class RoadOfReturn extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target permanent card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardIsPermanentPredicate(), 1)),
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(new CardIsPermanentPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put your commander into your hand from the command zone",
                         new PutCommanderFromCommandZoneIntoHandEffect())

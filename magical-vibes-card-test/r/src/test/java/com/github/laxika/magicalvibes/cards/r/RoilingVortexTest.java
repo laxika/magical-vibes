@@ -42,7 +42,7 @@ class RoilingVortexTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);

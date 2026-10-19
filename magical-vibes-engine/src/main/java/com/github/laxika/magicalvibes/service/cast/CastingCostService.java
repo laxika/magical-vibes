@@ -1159,7 +1159,8 @@ public class CastingCostService {
      * Extra generic mana required to activate an activated ability of {@code sourcePermanent},
      * summed over every {@link ActivatedAbilityCostIncreasingEffect} on any battlefield whose
      * predicate matches the source (e.g. Gloom taxes white enchantments' abilities {3} more).
-     * Symmetric — applies regardless of who controls the source or the taxing permanent.
+     * Symmetric — applies regardless of who controls the source or the taxing permanent. Suspend is a
+     * special action (CR 116.2f), not an activated ability, so suspending a card is never taxed.
      */
     public int getActivatedAbilityActivationTax(GameData gameData, Permanent sourcePermanent) {
         return getActivatedAbilityActivationTax(gameData, null, sourcePermanent, null, false);
@@ -1184,6 +1185,7 @@ public class CastingCostService {
                         taxEffect = wrappedTax;
                     }
                     if (taxEffect != null
+                            && !(ability != null && ability.isSuspendsSourceFromHand())
                             && taxEffect.appliesTo(ability, manaAbility, activatingPlayerId, pid)
                             && predicateEvaluationService.matchesPermanentPredicate(
                                     sourcePermanent, taxEffect.affectedPermanents(),
@@ -1218,6 +1220,7 @@ public class CastingCostService {
                         taxEffect = wrappedTax;
                     }
                     if (taxEffect != null
+                            && !(ability != null && ability.isSuspendsSourceFromHand())
                             && taxEffect.appliesTo(ability, manaAbility, activatingPlayerId, pid)
                             && predicateEvaluationService.matchesPermanentPredicate(
                             sourcePermanent, taxEffect.affectedPermanents(),

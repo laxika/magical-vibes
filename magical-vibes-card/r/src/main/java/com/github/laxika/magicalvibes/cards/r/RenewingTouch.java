@@ -14,6 +14,7 @@ public class RenewingTouch extends Card {
     public RenewingTouch() {
         // Shuffle any number of target creature cards from your graveyard into your library.
         addEffect(EffectSlot.SPELL, new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
-                new CardTypePredicate(CardType.CREATURE)));
+                new CardTypePredicate(CardType.CREATURE),
+                ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.ANY_NUMBER, false, true));
     }
 }

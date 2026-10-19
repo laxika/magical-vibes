@@ -647,6 +647,9 @@ public class AbilityActivationService {
         if (choice.context() instanceof ChoiceContext.CommanderCounterManaColorChoice) {
             return true;
         }
+        if (choice.context() instanceof ChoiceContext.TreasureManaColorChoice) {
+            return true;
+        }
         if (choice.context() instanceof ChoiceContext.RestrictedManaColorChoice) {
             return true;
         }
@@ -2573,9 +2576,11 @@ public class AbilityActivationService {
                 Map.of(),
                 targetZone,
                 List.of(),
-                targetIds != null ? targetIds : List.of()
+                targetIds != null && !ability.isCyclingTriggerTargets() ? targetIds : List.of()
         );
-        configureHandAbilityTargets(stackEntry, ability, targetIds);
+        if (!ability.isCyclingTriggerTargets()) {
+            configureHandAbilityTargets(stackEntry, ability, targetIds);
+        }
         stackEntry.setCyclingAbility(ability.isCyclingAbility());
         flushActivatedAbilityCostTriggers(gameData);
         recordHandAbilityActivationUse(gameData, card, abilityIndex);
@@ -2594,7 +2599,8 @@ public class AbilityActivationService {
         if (discarded) {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
-                triggerCollectionService.checkCycleTriggers(gameData, playerId, card, xValue);
+                triggerCollectionService.checkCycleTriggers(gameData, playerId, card, xValue,
+                        ability.isCyclingTriggerTargets() ? ability : null, targetIds);
                 triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
                 if (!gameData.interaction.isAwaitingInput()) {
                     triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
@@ -4212,7 +4218,7 @@ public class AbilityActivationService {
                 .orElse(null);
         RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler timeCounterCostHandler =
                 timeCounterCost == null ? null : new RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler(
-                        gameLogService, removeTimeCounterFromExiledCardEffectHandler);
+                        gameLogService, removeTimeCounterFromExiledCardEffectHandler, permanentCounterSupport);
 
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
             handler.validateCanPay(gameData, playerId);
@@ -4303,7 +4309,10 @@ public class AbilityActivationService {
         boolean usesTargetCardGroups = activationEffects.stream()
                 .anyMatch(effect -> effect instanceof TargetCardGroupEffect groupedEffect
                         && !groupedEffect.targetGroups().isEmpty());
-        if (targetsGraveyard && !usesTargetCardGroups && targetIds != null
+        boolean separateTypeSlots = activationEffects.stream()
+                .anyMatch(effect -> effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
+                        && !returnEffect.maxOnePerCardType().isEmpty());
+        if (targetsGraveyard && !usesTargetCardGroups && !separateTypeSlots && targetIds != null
                 && new java.util.HashSet<>(targetIds).size() != targetIds.size()) {
             throw new IllegalStateException("Cannot target the same graveyard card twice");
         }
@@ -5905,7 +5914,7 @@ public class AbilityActivationService {
         }
         RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler handler =
                 new RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler(
-                        gameLogService, removeTimeCounterFromExiledCardEffectHandler);
+                        gameLogService, removeTimeCounterFromExiledCardEffectHandler, permanentCounterSupport);
         if (!handler.validCardIds(gameData, player.getId()).contains(chosenCardId)) {
             throw new IllegalStateException("Chosen permanent or suspended card is no longer valid");
         }
@@ -9508,10 +9517,11 @@ public class AbilityActivationService {
         if (graveyard == null) {
             return candidates;
         }
+        UUID sourceCardId = sourceCard == null ? null : sourceCard.getId();
         for (Card card : graveyard) {
             if ((cost.requiredType() == null || card.hasType(cost.requiredType()))
                     && (cost.predicate() == null
-                    || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null))) {
+                    || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), sourceCardId))) {
                 candidates.add(card);
             }
         }
@@ -10369,7 +10379,7 @@ public class AbilityActivationService {
         List<? extends CardEffect> effects = abilityEffects.stream()
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
-        return !effects.isEmpty() && effects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
+        return !effects.isEmpty() && effects.stream().anyMatch(ManaProducingEffect::addsManaWhenResolved);
     }
 
     private static boolean movesCardToOrFromLibrary(CardEffect effect) {

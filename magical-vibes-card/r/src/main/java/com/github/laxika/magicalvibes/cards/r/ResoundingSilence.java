@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileUpToNAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,10 +19,19 @@ public class ResoundingSilence extends Card {
                 .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
 
         // Cycling {5}{G}{W}{U} ({5}{G}{W}{U}, Discard this card: Draw a card.) — discard cost is intrinsic.
-        // "When you cycle this card, exile up to two target attacking creatures." The reflexive trigger
-        // rides on the cycling ability: the exile choice resolves first, then the cycling draw.
+        // "When you cycle this card, exile up to two target attacking creatures." The targets are
+        // announced with the cycling ability and ride on the self-cycle trigger, which resolves
+        // before the cycling draw.
         addHandActivatedAbility(new ActivatedAbility(false, "{5}{G}{W}{U}",
-                List.of(new ExileUpToNAttackingCreaturesEffect(2), new DrawCardEffect(1)),
-                "Cycling {5}{G}{W}{U} ({5}{G}{W}{U}, Discard this card: Draw a card.)"));
+                List.of(new DrawCardEffect(1)),
+                "Cycling {5}{G}{W}{U} ({5}{G}{W}{U}, Discard this card: Draw a card.)",
+                TargetFilters.attackingCreature(),
+                null,
+                null,
+                null,
+                List.of(),
+                0,
+                2).withCyclingTriggerTargets());
+        addEffect(EffectSlot.ON_SELF_CYCLED, new ExileTargetPermanentEffect());
     }
 }

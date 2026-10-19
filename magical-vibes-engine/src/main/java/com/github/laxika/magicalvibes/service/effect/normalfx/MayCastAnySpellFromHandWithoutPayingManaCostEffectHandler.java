@@ -87,6 +87,16 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                     } else if (qualifies.test(c)) {
                         eligible.put(c, null);
                     }
+                    // A modal double-faced card may be cast as either face, and the face being cast is
+                    // the one judged against the limit.
+                    Card backFace = c.getBackFaceCard();
+                    if (c.isModalDoubleFaced() && backFace != null && !backFace.hasType(CardType.LAND)
+                            && qualifies.test(backFace)) {
+                        Card backFaceCopy = c.createRuntimeCopyWithFace(backFace);
+                        if (castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, backFaceCopy)) {
+                            eligible.put(backFaceCopy, null);
+                        }
+                    }
                     // CR 715.3a: an adventurer card cast as an Adventure is judged by its Adventure's
                     // characteristics alone.
                     if (c.getCastingOption(AdventureCast.class).isPresent() && c.getBackFaceCard() != null

@@ -926,8 +926,8 @@ public class BattlefieldPlacementService {
         UUID controllerId = request.controllerId();
         List<Permanent> simultaneouslyEntered = request.simultaneouslyEntered();
         boolean grantedRiot = gameData.spellsGrantedRiotOnEntry.remove(permanent.getCard().getId());
-        boolean creature = permanent.getCard().hasType(CardType.CREATURE) && !permanent.isFaceDown();
-        int ownRiot = creature
+        boolean creature = permanent.getCard().hasType(CardType.CREATURE);
+        int ownRiot = creature && !permanent.isFaceDown()
                 && !gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)
                 ? (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(RiotEffect.class::isInstance).count() : 0;

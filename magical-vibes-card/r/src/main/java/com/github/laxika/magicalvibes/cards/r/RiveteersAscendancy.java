@@ -23,7 +23,7 @@ public class RiveteersAscendancy extends Card {
                 .enterTapped(true)
                 .build();
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
-                new OncePerTurnTriggerEffect(new TriggeringPermanentConditionalEffect(
+                OncePerTurnTriggerEffect.markOnAcceptance(new TriggeringPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new MayEffect(returnCreature,
                                 "Return target creature card with lesser mana value from your graveyard "

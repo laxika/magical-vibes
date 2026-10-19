@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesOfSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
@@ -10,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "138")
 @CardRegistration(set = "ELD", collectorNumber = "365")
@@ -22,6 +25,7 @@ public class RobberOfTheRich extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new AttackedWithCreaturesOfSubtypeThisTurn(1, CardSubtype.ROGUE),
                 new AllowCastFromCardsExiledWithSourceEffect(
-                        true, null, false, false, 0, null, false, true, false)));
+                        true, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), false, false, 0, null,
+                        false, false, false, true)));
     }
 }

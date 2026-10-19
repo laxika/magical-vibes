@@ -28,10 +28,10 @@ class ReconstructedThopterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent thopter = findPermanent(player1, "Reconstructed Thopter");
-        assertThat(thopter.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Reconstructed Thopter");
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Reconstructed Thopter");

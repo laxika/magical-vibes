@@ -51,6 +51,11 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         this.combatDamageService = combatDamageService;
     }
 
+    private int opponentSourceReduction(PermanentDamageContext ctx) {
+        return prevention.applyOpponentSourceDamageReductionToPermanent(
+                ctx.gameData(), ctx.targetControllerId(), ctx.sourceControllerId(), ctx.amount(), ctx.combat());
+    }
+
     @Override
     protected List<Rule<PermanentDamageContext>> rules() {
         List<Rule<PermanentDamageContext>> built = rules;
@@ -86,8 +91,8 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                     return prevented(ctx);
                 }));
         all.add(spellPrevention("SpellToControllerAndPermanents", "Prevent the spell's damage to your permanents",
-                ctx -> gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(
-                        ctx.gameData(), ctx.entry(), ctx.targetControllerId())));
+                ctx -> gameQueryService.isSpellDamageToPermanentPrevented(
+                        ctx.gameData(), ctx.entry(), ctx.target())));
         all.add(pure("InstantOrSorceryPrevented", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
                         && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(ctx.gameData(), ctx.entry()),
@@ -126,6 +131,16 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         + " of the spell's damage",
                 ctx -> ctx.event().withAmount(
                         ctx.amount() - gameQueryService.getSpellDamagePrevention(ctx.gameData(), ctx.entry())),
+                (ctx, result) -> {
+                    gameLogService.append(ctx.gameData(), GameLog.textCardText((ctx.amount() - result.amount()) + " of ",
+                            ctx.target().getCard(), "'s damage is prevented."));
+                    return null;
+                }));
+        all.add(pure("OpponentSourceReduction", PREVENTION,
+                ctx -> !ctx.targetProtectedFromPrevention() && opponentSourceReduction(ctx) < ctx.amount(),
+                ctx -> "Prevent " + (ctx.amount() - opponentSourceReduction(ctx))
+                        + " damage from an opponent's source",
+                ctx -> ctx.event().withAmount(opponentSourceReduction(ctx)),
                 (ctx, result) -> {
                     gameLogService.append(ctx.gameData(), GameLog.textCardText((ctx.amount() - result.amount()) + " of ",
                             ctx.target().getCard(), "'s damage is prevented."));

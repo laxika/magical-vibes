@@ -16,7 +16,6 @@ public class RuthlessDisposal extends Card {
         addEffect(EffectSlot.SPELL, new DiscardCardTypeCost(null, null));
         addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
 
-        setAllowSharedTargets(true);
         target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
                 new BoostTargetCreatureEffect(-13, -13));
         target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,

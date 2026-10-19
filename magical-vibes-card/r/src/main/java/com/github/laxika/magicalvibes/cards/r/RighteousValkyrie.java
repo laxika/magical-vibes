@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -30,7 +29,7 @@ public class RighteousValkyrie extends Card {
                         new GainLifeEqualToToughnessEffect()));
         addEffect(EffectSlot.STATIC,
                 new ConditionalEffect(
-                        new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL + 7),
+                        new ControllerLifeAtLeast(7, true),
                         new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));
     }
 }

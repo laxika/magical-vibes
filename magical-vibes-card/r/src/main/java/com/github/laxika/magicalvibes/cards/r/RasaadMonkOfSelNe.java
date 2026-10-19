@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
@@ -31,7 +33,7 @@ public class RasaadMonkOfSelNe extends Card {
 
     public RasaadMonkOfSelNe() {
         target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileTargetPermanentAndTrackWithSourceEffect());
+                new ConditionalEffect(new SourceIsOnBattlefield(), new ExileTargetPermanentAndTrackWithSourceEffect()));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new ReturnAllCardsExiledWithSourceEffect());
 

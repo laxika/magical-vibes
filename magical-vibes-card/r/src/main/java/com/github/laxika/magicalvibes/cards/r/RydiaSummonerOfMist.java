@@ -7,9 +7,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -22,7 +26,7 @@ public class RydiaSummonerOfMist extends Card {
 
     public RydiaSummonerOfMist() {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(null, new DrawCardEffect(1), "a card"),
+                DiscardCardThenEffect.continuing(null, new DrawCardEffect(1), "a card"),
                 "Discard a card to draw a card?"));
 
         addActivatedAbility(new ActivatedAbility(
@@ -35,7 +39,8 @@ public class RydiaSummonerOfMist extends Card {
                         .requiresManaValueEqualsX(true)
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
-                        .grantHaste(true)
+                        .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
+                        .battlefieldEffectGrantDuration(EffectDuration.UNTIL_END_OF_TURN)
                         .build()),
                 "{X}, {T}: Return target Saga card with mana value X from your graveyard to the battlefield "
                         + "with a finality counter on it. It gains haste until end of turn. Activate only as "

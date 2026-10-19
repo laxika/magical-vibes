@@ -107,6 +107,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ResourcefulCollector());
         harness.setGraveyard(player1, List.of(new Forest()));
         advanceToEndStep();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.playLandFromGraveyard(player1, 0);
@@ -115,7 +116,6 @@ class ResourcefulCollectorTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, forest)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOOD)).isTrue();
         assertThat(gd.graveyardPlayPermissions).isEmpty();
-        forest.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest),
                 0, null, null);
@@ -147,6 +147,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ResourcefulCollector());
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         advanceToEndStep();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -181,6 +182,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         advanceToEndStep();
         Card converted = gd.playerGraveyards.get(player1.getId()).getFirst();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Recover()));
         harness.setLibrary(player1, List.of(new Shock()));
@@ -212,6 +214,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Shock(), new Shock()));
         harness.setLibrary(player2, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of());
         advanceToEndStep();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

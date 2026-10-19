@@ -25,7 +25,7 @@ public class RestInPeace extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));
         // "If a card or token would be put into a graveyard from anywhere, exile it instead" —
         // the controller-side and opponent-side halves of the replacement together cover every player.
-        addEffect(EffectSlot.STATIC, new ExileOwnCardsInsteadOfGraveyardEffect());
+        addEffect(EffectSlot.STATIC, new ExileOwnCardsInsteadOfGraveyardEffect(true));
         addEffect(EffectSlot.STATIC, new ExileOpponentCardsInsteadOfGraveyardEffect());
     }
 }

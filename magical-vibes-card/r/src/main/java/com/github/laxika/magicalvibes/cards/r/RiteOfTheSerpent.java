@@ -25,7 +25,7 @@ public class RiteOfTheSerpent extends Card {
         target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
                 EventStat.NONE,
                 new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN, List.of(CardSubtype.SNAKE), Set.of(), Set.of()),
-                ThenEffectRecipient.TARGET_CONTROLLER,
+                ThenEffectRecipient.CONTROLLER,
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

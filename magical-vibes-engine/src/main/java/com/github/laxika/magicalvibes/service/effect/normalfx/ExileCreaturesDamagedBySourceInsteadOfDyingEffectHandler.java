@@ -33,5 +33,8 @@ public class ExileCreaturesDamagedBySourceInsteadOfDyingEffectHandler implements
         }
 
         source.setExileDamagedCreaturesInsteadOfDyingThisTurn(true);
+        if (entry.getTargetId() != null) {
+            gameData.exileDamagedCreaturesSourceIdsThisTurn.add(source.getId());
+        }
     }
 }

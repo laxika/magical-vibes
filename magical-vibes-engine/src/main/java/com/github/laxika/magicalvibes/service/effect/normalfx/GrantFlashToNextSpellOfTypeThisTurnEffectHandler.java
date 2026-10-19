@@ -28,13 +28,14 @@ public class GrantFlashToNextSpellOfTypeThisTurnEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantFlashToNextSpellOfTypeThisTurnEffect grant = (GrantFlashToNextSpellOfTypeThisTurnEffect) effect;
         gameData.addNextSpellFlashGrant(entry.getControllerId(), grant.cardType());
-        String typeName = grant.cardType().name().toLowerCase(Locale.ROOT);
+        String typeName = grant.cardType() == null
+                ? "spell" : grant.cardType().name().toLowerCase(Locale.ROOT) + " spell";
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" lets its controller cast their next " + typeName
-                        + " spell this turn as though it had flash.")
+                        + " this turn as though it had flash.")
                 .build());
-        log.info("Game {} - {} grants flash to the next {} spell for player {} this turn",
+        log.info("Game {} - {} grants flash to the next {} for player {} this turn",
                 gameData.id, entry.getCard().getName(), typeName, entry.getControllerId());
     }
 }

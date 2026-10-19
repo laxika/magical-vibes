@@ -142,7 +142,7 @@ class RoseRoomTreasurerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new SakuraTribeElder());
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.enterBattlefieldAndReturn(player1, new SakuraTribeElder());
         harness.passBothPriorities();
         harness.enterBattlefieldAndReturn(player1, new SakuraTribeElder());

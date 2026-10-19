@@ -18,7 +18,7 @@ import java.util.Set;
 public class ReleaseTheGremlins extends Card {
 
     public ReleaseTheGremlins() {
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
         ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());

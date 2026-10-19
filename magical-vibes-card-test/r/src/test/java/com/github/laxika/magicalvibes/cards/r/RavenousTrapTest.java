@@ -183,7 +183,7 @@ class RavenousTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.castInstant(player1, 0, player2.getId());
 
-        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterLandBattlefieldAndReturn(player1, new Forest());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

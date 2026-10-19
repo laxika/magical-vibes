@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
@@ -27,14 +27,14 @@ public class Reveillark extends Card {
         // Flying is auto-loaded from Scryfall keywords.
 
         // "When this creature leaves the battlefield, return up to two target creature cards with
-        // power 2 or less from your graveyard to the battlefield." Cards are chosen when the
-        // trigger resolves.
+        // power 2 or less from your graveyard to the battlefield." The targets are chosen when the
+        // trigger is put on the stack.
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
+                new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardPowerAtMostPredicate(2))),
-                        2));
+                        2, false, false));
 
         // Evoke {5}{W}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{W}"))));

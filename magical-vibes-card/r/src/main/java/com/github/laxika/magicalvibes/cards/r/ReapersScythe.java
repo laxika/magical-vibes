@@ -9,15 +9,23 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+
+import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "FIC", collectorNumber = "48")
 @CardRegistration(set = "FIC", collectorNumber = "117")
 public class ReapersScythe extends Card {
 
     public ReapersScythe() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
+                        List.of(CardSubtype.HERO), Set.of(), Set.of())));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new PutCountersOnSelfEffect(CounterType.SOUL, new PlayersWhoLostLifeThisTurn()));
         addEffect(EffectSlot.STATIC, new AttachedBoostEffect(

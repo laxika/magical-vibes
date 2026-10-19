@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "105")
 @CardRegistration(set = "AKR", collectorNumber = "121")
@@ -18,7 +19,8 @@ public class RuthlessSniper extends Card {
         // chosen there too (the resolution-time targeting path, as in Furnace Celebration).
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
                 new MayPayManaEffect("{1}",
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1),
+                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                CounterType.MINUS_ONE_MINUS_ONE, 1, new PermanentIsCreaturePredicate()),
                         "Pay {1} to put a -1/-1 counter on target creature?"));
     }
 }

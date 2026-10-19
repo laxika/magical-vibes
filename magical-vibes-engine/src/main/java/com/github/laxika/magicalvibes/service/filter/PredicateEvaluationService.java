@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -496,6 +498,29 @@ public class PredicateEvaluationService {
     private static final PermanentIsCreaturePredicate STATIC_CREATURE_LEAF = new PermanentIsCreaturePredicate();
 
     /** Changeling leaf, built here for the same reason as {@link #STATIC_CREATURE_LEAF}. */
+    /**
+     * Whether an Aura or Equipment still attached to a permanent that already left the battlefield
+     * grants it {@code keyword} through a plain static grant; orphaned Auras only fall off in a later
+     * state-based-action pass, so the attachment is the last-known source of the keyword.
+     */
+    private static boolean keywordGrantedByAttachment(GameData gameData, Permanent permanent, Keyword keyword) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent source : battlefield) {
+                if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())) continue;
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GrantKeywordEffect grant
+                            && grant.keywords().contains(keyword)
+                            && (grant.scope() == GrantScope.ENCHANTED_CREATURE
+                            || grant.scope() == GrantScope.ENCHANTED_PERMANENT
+                            || grant.scope() == GrantScope.EQUIPPED_CREATURE)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private static final PermanentHasKeywordPredicate CHANGELING_PREDICATE =
             new PermanentHasKeywordPredicate(Keyword.CHANGELING);
 
@@ -1161,7 +1186,7 @@ public class PredicateEvaluationService {
             case CardSharesNameWithAPermanentPredicate ignored ->
                     gameData != null && gameData.playerBattlefields.values().stream()
                             .flatMap(java.util.List::stream)
-                            .anyMatch(perm -> perm.getCard().getName().equals(card.getName()));
+                            .anyMatch(perm -> !perm.isFaceDown() && perm.getCard().getName().equals(card.getName()));
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {
@@ -1278,9 +1303,12 @@ public class PredicateEvaluationService {
                 }
                 // Last-known information of a permanent that already left the battlefield: the layered
                 // board no longer knows its keyword counters, so read them off the snapshot itself.
-                yield gameQueryService.findPermanentById(gameData, permanent.getId()) == null
-                        && permanent.hasKeyword(checkedKeyword)
-                        && !gameQueryService.computeStaticBonus(gameData, permanent).removedKeywords().contains(checkedKeyword);
+                if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
+                    yield false;
+                }
+                yield (permanent.hasKeyword(checkedKeyword)
+                        && !gameQueryService.computeStaticBonus(gameData, permanent).removedKeywords().contains(checkedKeyword))
+                        || keywordGrantedByAttachment(gameData, permanent, checkedKeyword);
             }
             case PermanentHasProtectionFromColorPredicate hasProtectionPredicate -> {
                 if (gameData == null) {
@@ -4381,7 +4409,8 @@ public class PredicateEvaluationService {
 
     private boolean hasManaAbility(GameData gameData, Permanent permanent) {
         return ((gameData == null || !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                && PotentialManaService.hasOnTapManaEffects(permanent.getCard()))
+                && (PotentialManaService.hasOnTapManaEffects(permanent.getCard())
+                || hasTriggeredManaAbility(permanent.getCard())))
                 || effectiveActivatedAbilities(gameData, permanent).stream()
                 .anyMatch(AbilityActivationService::isManaAbility);
     }
@@ -4635,6 +4664,7 @@ public class PredicateEvaluationService {
 
     private static boolean hasPrintedManaAbility(Card card) {
         return PotentialManaService.hasOnTapManaEffects(card)
+                || hasTriggeredManaAbility(card)
                 || card.getActivatedAbilities().stream()
                 .anyMatch(AbilityActivationService::isManaAbility);
     }

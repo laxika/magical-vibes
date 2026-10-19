@@ -18,6 +18,6 @@ public class GoblinTraprunner extends Card {
         CreateTokenEffect goblinToken = new CreateTokenEffect(
                 1, "Goblin", 1, 1, CardColor.RED, List.of(CardSubtype.GOBLIN), true);
         addEffect(EffectSlot.ON_ATTACK,
-                new FlipCoinsPerHeadsEffect(3, new CreateTokensAttackingEffect(1, goblinToken)));
+                new FlipCoinsPerHeadsEffect(3, new CreateTokensAttackingEffect(1, goblinToken), true));
     }
 }

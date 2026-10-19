@@ -454,6 +454,20 @@ public class PlayerInputService {
         }
     }
 
+    /** Asks the spell's controller which of several exile replacements applies to the resolving spell (CR 616.1). */
+    public void beginSpellExileSourceChoice(GameData gameData, ChoiceContext.SpellExileSourceChoice context,
+                                            List<UUID> sourcePermanentIds) {
+        var choice = new PendingInteraction.ColorChoice(
+                context.controllerId(), null, null, context,
+                sourcePermanentIds.stream().map(UUID::toString).toList(),
+                "Choose which permanent exiles " + context.card().getName() + " instead of putting it into a graveyard.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.pendingInteractions.addLast(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
+    }
+
     public void beginSagaChapterCounterAssignmentChoice(
             GameData gameData, UUID playerId, ChoiceContext.SagaChapterCounterAssignment context) {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();

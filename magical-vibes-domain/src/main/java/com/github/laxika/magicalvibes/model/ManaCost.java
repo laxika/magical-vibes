@@ -45,6 +45,11 @@ public class ManaCost {
     private final int xSymbolCount;
     /** When true, canPay/pay may spend cumulative-upkeep-only mana buckets. */
     private final boolean cumulativeUpkeepPayment;
+    /**
+     * Set on a freshly parsed cost that is the value of an {X} ("unless its controller pays {X}"), so
+     * mana that can be spent only on costs containing {X} may pay it. Not carried to derived costs.
+     */
+    private boolean paysAnnouncedX;
 
     public ManaCost(String manaCostString) {
         this(manaCostString, false);
@@ -406,7 +411,16 @@ public class ManaCost {
      * when the cost contains an {X} symbol, and only for generic portions (it is colorless).
      */
     private int xCostOnlyAvailable(ManaPool pool) {
-        return hasX() ? pool.getXCostOnlyColorless() : 0;
+        return hasX() || paysAnnouncedX ? pool.getXCostOnlyColorless() : 0;
+    }
+
+    /**
+     * Marks this freshly parsed cost as the resolved value of an {X} in an effect's cost, so mana
+     * that can be spent only on costs containing {X} (Rosheen Meanderer) can pay it. Returns this cost.
+     */
+    public ManaCost asAnnouncedXCost() {
+        this.paysAnnouncedX = true;
+        return this;
     }
 
     /**
@@ -414,7 +428,7 @@ public class ManaCost {
      * {X}), returning the generic still owed afterwards.
      */
     private int spendXCostOnlyForGeneric(ManaPool pool, int remainingGeneric) {
-        if (hasX() && remainingGeneric > 0) {
+        if ((hasX() || paysAnnouncedX) && remainingGeneric > 0) {
             int fromRestricted = Math.min(remainingGeneric, pool.getXCostOnlyColorless());
             pool.removeXCostOnlyColorless(fromRestricted);
             remainingGeneric -= fromRestricted;

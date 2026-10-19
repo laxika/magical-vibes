@@ -23,7 +23,9 @@ public class RecurringNightmare extends Card {
                 false,
                 null,
                 List.of(
-                        new SacrificeCreatureCost(),
+                        // The source must still be on the battlefield for the return-to-hand cost, which is
+                        // paid after the sacrifice, so it can never be the creature sacrificed here.
+                        new SacrificeCreatureCost(false, false, false, true),
                         new ReturnSelfToHandCost(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

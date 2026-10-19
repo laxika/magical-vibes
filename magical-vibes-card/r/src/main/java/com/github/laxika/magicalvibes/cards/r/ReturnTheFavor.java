@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWith
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -30,8 +29,7 @@ public class ReturnTheFavor extends Card {
                 StackEntryType.SORCERY_SPELL,
                 StackEntryType.ACTIVATED_ABILITY,
                 StackEntryType.TRIGGERED_ABILITY));
-        StackEntryPredicate singleTarget = new StackEntryAllOfPredicate(List.of(
-                new StackEntryIsSingleTargetPredicate(), copyTypes));
+        StackEntryPredicate singleTarget = new StackEntryIsSingleTargetPredicate();
 
         addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(

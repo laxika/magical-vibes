@@ -12,11 +12,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param filter       which permanents to exile
  * @param returnTapped whether the returned permanents enter tapped
+ * @param returnsOnSourceLeavesTrigger whether the return is a separate leaves-the-battlefield triggered
+ *                     ability (Realm Razer, Worldgorger Dragon style) that triggers even when the
+ *                     enters ability never exiled anything, rather than a "until" duration
  */
 public record ExileAllPermanentsUntilSourceLeavesEffect(PermanentPredicate filter, boolean returnTapped,
-                                                       boolean requiresSourcePresent)
+                                                       boolean requiresSourcePresent,
+                                                       boolean returnsOnSourceLeavesTrigger)
         implements CardEffect {
+    public ExileAllPermanentsUntilSourceLeavesEffect(PermanentPredicate filter, boolean returnTapped,
+                                                     boolean requiresSourcePresent) {
+        this(filter, returnTapped, requiresSourcePresent, false);
+    }
+
     public ExileAllPermanentsUntilSourceLeavesEffect(PermanentPredicate filter, boolean returnTapped) {
-        this(filter, returnTapped, false);
+        this(filter, returnTapped, false, false);
     }
 }

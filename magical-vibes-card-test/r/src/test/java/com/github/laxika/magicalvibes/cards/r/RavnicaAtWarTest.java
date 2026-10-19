@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.q.QasaliAmbusher;
 import com.github.laxika.magicalvibes.cards.t.TenthDistrictLegionnaire;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +25,8 @@ class RavnicaAtWarTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles hybrid multicolored planeswalkers and creatures without targeting")
     void exilesHybridPlaneswalkerAndMulticoloredCreature() {
-        harness.addToBattlefield(player1, new DovinHandOfControl());
+        Permanent dovin = harness.addToBattlefieldAndReturn(player1, new DovinHandOfControl());
+        dovin.setCounterCount(CounterType.LOYALTY, 5);
         harness.addToBattlefield(player2, new TenthDistrictLegionnaire());
         harness.setHand(player1, List.of(new RavnicaAtWar()));
         harness.addMana(player1, ManaColor.WHITE, 4);

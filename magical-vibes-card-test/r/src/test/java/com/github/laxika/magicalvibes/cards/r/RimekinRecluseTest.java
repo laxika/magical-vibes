@@ -61,6 +61,7 @@ class RimekinRecluseTest extends BaseCardTest {
     @DisplayName("ETB may leave another available creature on the battlefield")
     void etbMayChooseNoTargetWithCreatureAvailable() {
         harness.addToBattlefield(player2, new RimekinRecluse());
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new RimekinRecluse(), "{2}{U}");
 
         harness.passBothPriorities();

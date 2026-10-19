@@ -181,7 +181,8 @@ class RenegadeBullTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
 
-        harness.assertLife(player2, 18);
+        // Shock deals 2, then the unblocked Bull (0 power + 1 from the cast trigger) deals 1 in combat.
+        harness.assertLife(player2, 17);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shock);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }

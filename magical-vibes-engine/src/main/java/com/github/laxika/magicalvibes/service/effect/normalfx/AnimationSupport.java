@@ -437,7 +437,26 @@ public class AnimationSupport {
 
         String durationText = untilNextTurn ? "until your next turn" : "until end of turn";
         gameLogService.append(gameData, GameLog.text("All lands you control become " + power + "/" + toughness
-                        + " Elemental creatures with reach, indestructible, and haste " + durationText + ". They're still lands."));
+                        + " " + describeAnimatedGrants(effect) + " " + durationText + ". They're still lands."));
+    }
+
+    /** Names only the subtypes and keywords the animation actually grants, e.g. "Elemental creatures with reach". */
+    private static String describeAnimatedGrants(AnimatePermanentsEffect effect) {
+        String subtypes = effect.grantedSubtypes().stream()
+                .map(subtype -> subtype.name().charAt(0) + subtype.name().substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
+        String creatureNoun = subtypes.isEmpty() ? "creatures" : subtypes + " creatures";
+        List<String> keywords = effect.grantedKeywords().stream()
+                .map(keyword -> keyword.name().toLowerCase().replace('_', ' '))
+                .toList();
+        if (keywords.isEmpty()) {
+            return creatureNoun;
+        }
+        String keywordList = keywords.size() == 1 ? keywords.get(0)
+                : keywords.size() == 2 ? keywords.get(0) + " and " + keywords.get(1)
+                : String.join(", ", keywords.subList(0, keywords.size() - 1)) + ", and "
+                        + keywords.get(keywords.size() - 1);
+        return creatureNoun + " with " + keywordList;
     }
 
     /** TARGET_PLAYERS_LANDS scope — all lands the targeted player controls, until end of turn. */
@@ -633,6 +652,43 @@ public class AnimationSupport {
 
             animatePermanently(gameData, target, effect, power, toughness,
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+        }
+    }
+
+    /**
+     * OWN_PERMANENTS scope, PERMANENT duration ("each noncreature artifact you control becomes a 0/0
+     * artifact creature", Rise and Shine's overload). The affected set is fixed as the effect resolves,
+     * so the filter is not re-read once the permanents are creatures, and every animated permanent is
+     * remembered on the entry for a following "each ... that became a creature this way" instruction.
+     */
+    public void animateControlledPermanentsPermanently(GameData gameData, StackEntry entry,
+                                                       AnimatePermanentsEffect effect) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
+        if (battlefield == null) {
+            return;
+        }
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(source);
+        AmountContext ctx = AmountContext.forStackEntry(entry, source);
+        entry.clearReturnedPermanentIds();
+        List<Permanent> matching = battlefield.stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, effect.filter(), filterContext))
+                .toList();
+        for (Permanent permanent : matching) {
+            int power = effect.power() == null ? printedPower(permanent)
+                    : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+            int toughness = effect.toughness() == null ? printedToughness(permanent)
+                    : amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+            animatePermanently(gameData, permanent, effect, power, toughness,
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+            entry.rememberReturnedPermanent(permanent.getId());
         }
     }
 

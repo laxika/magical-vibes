@@ -3,16 +3,19 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "DRK", collectorNumber = "106")
 public class ReflectingMirror extends Card {
@@ -23,15 +26,16 @@ public class ReflectingMirror extends Card {
                 "{0}",
                 List.of(
                         new IncreaseActivationCostEffect(new Scaled(new TargetSpellManaValue(), 2)),
-                        ChangeTargetOfTargetSpellWithSingleTargetEffect.playersOnly()
+                        ChangeTargetOfTargetSpellWithSingleTargetEffect.playersOnlyIfTargetIsController()
                 ),
                 "{X}, {T}: Change the target of target spell with a single target if that target is you. The new target must be a player. X is twice the mana value of that spell.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryIsSingleTargetPredicate(),
-                                new StackEntryTargetsYouPredicate()
+                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
+                                        StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))),
+                                new StackEntryIsSingleTargetPredicate()
                         )),
-                        "Target must be a single-target spell that targets you."
+                        "Target must be a single-target spell."
                 )
         ));
     }

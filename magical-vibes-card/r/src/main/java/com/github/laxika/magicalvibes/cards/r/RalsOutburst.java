@@ -11,6 +11,6 @@ public class RalsOutburst extends Card {
 
     public RalsOutburst() {
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
     }
 }

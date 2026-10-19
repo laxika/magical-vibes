@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,11 +109,13 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                     new ExiledCardsControlLossWatch(currentControllerId, sourceCard));
         }
 
+        List<UUID> exiledCardIds = new ArrayList<>();
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
             exileTopCards(gameData, e, playerId, sourceCard, sourcePermanentId,
                     effectiveCount(gameData, entry, sourcePermanent, e), persistentPermissions,
-                    controllerId);
+                    controllerId, exiledCardIds);
         }
+        entry.setResolutionExiledCardIds(exiledCardIds);
     }
 
     private int effectiveCount(GameData gameData, StackEntry entry, Permanent sourcePermanent,
@@ -189,7 +192,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
     private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,
                                Card sourceCard, UUID sourcePermanentId, int count,
                                List<PersistentPermission> persistentPermissions,
-                               UUID sourceControllerId) {
+                               UUID sourceControllerId, List<UUID> exiledCardIds) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null) {
             return;
@@ -198,10 +201,13 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         int toExile = Math.min(count, deck.size());
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
+            exiledCardIds.add(card.getId());
             if (e.faceDown()) {
                 exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId, sourceControllerId);
-            } else {
+            } else if (persistentPermissions.isEmpty()) {
                 exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+            } else {
+                exileService.exileCard(gameData, playerId, card, sourcePermanentId, sourceControllerId);
             }
             if (e.faceDown() && (e.exilerMayLookWhileExiled()
                     || e.mayLookAtFaceDownCards() && sourcePermanentId == null)) {

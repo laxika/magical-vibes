@@ -31,6 +31,13 @@ class RysorianBadgerTest extends BaseCardTest {
         return cards;
     }
 
+    private void resolveTriggerAcceptingMay() {
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+    }
+
     private void attackUnblocked() {
         declareAttackers(List.of(0));
     }
@@ -70,7 +77,7 @@ class RysorianBadgerTest extends BaseCardTest {
         attackUnblocked();
 
         harness.handleMultipleCardsChosen(player1, validChoiceIds());
-        harness.passBothPriorities(); // resolve the trigger
+        resolveTriggerAcceptingMay();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(defenderCards.get(2));
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
@@ -90,7 +97,7 @@ class RysorianBadgerTest extends BaseCardTest {
         attackUnblocked();
 
         harness.handleMultipleCardsChosen(player1, List.of(validChoiceIds().getFirst()));
-        harness.passBothPriorities();
+        resolveTriggerAcceptingMay();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .containsExactlyInAnyOrder(defenderCards.get(1), defenderCards.get(2));
@@ -108,7 +115,7 @@ class RysorianBadgerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(defenderCards.getFirst().getId()));
         harness.setGraveyard(player2, defenderCards.subList(1, defenderCards.size()));
         harness.setGraveyard(player1, List.of(defenderCards.getFirst()));
-        harness.passBothPriorities();
+        resolveTriggerAcceptingMay();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .containsExactly(defenderCards.get(1), defenderCards.get(2));

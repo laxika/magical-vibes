@@ -170,6 +170,7 @@ class RecoupTest extends BaseCardTest {
         addRecoupMana();
         harness.castAndResolveSorcery(player1, 0, concentrate.getId());
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 2);

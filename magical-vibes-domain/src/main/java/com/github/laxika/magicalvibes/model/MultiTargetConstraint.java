@@ -28,6 +28,12 @@ public enum MultiTargetConstraint {
     /** The chosen permanents must share at least one card type (e.g. Daring Thief). */
     SHARE_CARD_TYPE,
     /**
+     * The chosen permanents must share at least one permanent type (artifact, battle, creature,
+     * enchantment, land or planeswalker); a shared nonpermanent type such as kindred does not
+     * satisfy it (e.g. Role Reversal).
+     */
+    SHARE_PERMANENT_TYPE,
+    /**
      * Every permanent chosen after the first target must be controlled by the first target — the
      * first target itself when it is a player, otherwise the controller of the first target
      * permanent (e.g. Chandra, Pyromaster's "up to one target creature that player or that

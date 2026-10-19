@@ -29,6 +29,6 @@ public class RohgahhOfKherKeep extends Card {
                 null,
                 "Pay {R}{R}{R} to keep control of Rohgahh of Kher Keep?",
                 new TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect(kobolds)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES, kobolds));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES, kobolds));
     }
 }

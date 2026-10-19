@@ -19,7 +19,7 @@ public class RingingStrikeMastery extends Card {
 
     public RingingStrikeMastery() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
                 .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                         new ActivatedAbility(

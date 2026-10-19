@@ -20,7 +20,7 @@ import java.util.List;
 public class RingOfGix extends Card {
 
     public RingOfGix() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{3}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{3}"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -159,6 +159,16 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimePutOnBottomThenExileTopCardsResume;
     public boolean resolutionTimePutOnBottomThenExileTopCardsChoiceMade;
     public UUID resolutionTimePutOnBottomThenExileTopCardsChosenCardId;
+    /** Whether a per-filter "return up to one card of each" choice is awaiting its answer. */
+    public boolean resolutionTimeOneCardPerFilterResume;
+    /** Whether the pending per-filter choice has been answered. */
+    public boolean resolutionTimeOneCardPerFilterChoiceMade;
+    /** The card picked for the answered per-filter choice, or {@code null} for a decline. */
+    public UUID resolutionTimeOneCardPerFilterChosenCardId;
+    /** Index of the filter whose choice is pending. */
+    public int resolutionTimeOneCardPerFilterIndex;
+    /** Cards picked so far across the per-filter choices of the resolving effect. */
+    public List<UUID> resolutionTimeOneCardPerFilterChosenIds = new java.util.ArrayList<>();
     /** Whether an optional graveyard exile with a follow-up is awaiting its answer. */
     public boolean resolutionTimeExileThenEffectResume;
     /** Whether the optional graveyard exile with a follow-up has been answered. */

@@ -195,8 +195,8 @@ class RadiateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Still copies the targeted spell after its original creature target leaves")
-    void copiesAfterOriginalTargetLeavesBattlefield() {
+    @DisplayName("Fizzles when the targeted spell's only target has left the battlefield")
+    void fizzlesAfterOriginalTargetLeavesBattlefield() {
         FieryTemper originalSpell = new FieryTemper();
         Permanent original = harness.addToBattlefieldAndReturn(player1, new NantukoShade());
         harness.addToBattlefield(player2, new NantukoShade());
@@ -208,9 +208,10 @@ class RadiateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, original.getId());
         resolveAllTriggers();
 
-        harness.assertLife(player1, 17);
-        harness.assertLife(player2, 17);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy).toList()).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
         harness.assertNotOnBattlefield(player1, "Nantuko Shade");
-        harness.assertNotOnBattlefield(player2, "Nantuko Shade");
+        harness.assertOnBattlefield(player2, "Nantuko Shade");
     }
 }

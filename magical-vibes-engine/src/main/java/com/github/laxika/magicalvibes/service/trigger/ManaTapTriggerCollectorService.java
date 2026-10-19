@@ -84,6 +84,14 @@ public class ManaTapTriggerCollectorService {
     }
 
     @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA)
+    private boolean handleAddManaOfTypeProducedByArtifactToken(TriggerMatchContext match,
+                                                               AddManaOfTypeProducedByTappedPermanentEffect trigger,
+                                                               TriggerContext ctx) {
+        return handleAddManaOfTypeProducedByNonlandPermanent(match, trigger, ctx);
+    }
+
+    @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
             slot = EffectSlot.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA)
     private boolean handleAddManaOfTypeProducedByNonlandPermanent(TriggerMatchContext match,
                                                                   AddManaOfTypeProducedByTappedPermanentEffect trigger,

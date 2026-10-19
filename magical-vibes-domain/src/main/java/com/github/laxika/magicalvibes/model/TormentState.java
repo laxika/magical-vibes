@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.model;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -22,8 +26,23 @@ public class TormentState {
     public UUID currentOpponentId;
     /** The penalty option the current opponent picked, consumed on the next re-entry. */
     public String chosenMode;
+    /** Whether choices are collected first and carried out together at the end. */
+    public boolean deferred;
+    /** Passes each opponent still has to make in deferred mode, counting the one in progress. */
+    public int opponentPassesLeft;
+    /** Passes each opponent makes in deferred mode. */
+    public int totalPasses;
+    /** Permanents chosen to be sacrificed in deferred mode. */
+    public final List<UUID> chosenSacrifices = new ArrayList<>();
+    /** Times each player loses life in deferred mode. */
+    public final Map<UUID, Integer> lifeLossCounts = new HashMap<>();
 
     public void reset() {
+        deferred = false;
+        opponentPassesLeft = 0;
+        totalPasses = 0;
+        chosenSacrifices.clear();
+        lifeLossCounts.clear();
         active = false;
         remainingIterations = 0;
         remaining.clear();

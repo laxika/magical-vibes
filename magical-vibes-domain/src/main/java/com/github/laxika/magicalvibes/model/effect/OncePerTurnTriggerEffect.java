@@ -62,6 +62,17 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
     /** Placeholder key that {@code GrantTriggeredAbilityEffect} replaces with one key per granting permanent. */
     public static final String PER_GRANT_KEY = "per-grant";
 
+    /** Key marking an ability that triggers only for its controller's first discard event each turn. */
+    public static final String FIRST_DISCARD_EVENT_KEY = "first-discard-event";
+
+    /**
+     * Triggers only for the controller's first discard event each turn, counting discards made before
+     * the source entered (Rielle, the Everwise).
+     */
+    public static OncePerTurnTriggerEffect firstDiscardEvent(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, FIRST_DISCARD_EVENT_KEY);
+    }
+
     /**
      * For a granted ability: each granting permanent gives its own copy of the ability, so each has
      * its own once-per-turn limit on the receiving permanent. Only valid on slots whose collector

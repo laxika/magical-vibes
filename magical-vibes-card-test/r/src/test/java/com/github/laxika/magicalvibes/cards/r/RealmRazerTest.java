@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -32,6 +33,13 @@ class RealmRazerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell -> enters, ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB -> exile all lands
+    }
+
+    /** Keeps both players stopping at precombat main so the leave trigger stays on the stack for inspection. */
+    private void stopAtPrecombatMain() {
+        for (Player player : List.of(player1, player2)) {
+            gd.playerAutoStopSteps.put(player.getId(), new java.util.HashSet<>(List.of(TurnStep.PRECOMBAT_MAIN)));
+        }
     }
 
     @Test
@@ -69,6 +77,7 @@ class RealmRazerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        stopAtPrecombatMain();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         UUID razerId = harness.getPermanentId(player1, "Realm Razer");
@@ -124,6 +133,7 @@ class RealmRazerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        stopAtPrecombatMain();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Realm Razer"));

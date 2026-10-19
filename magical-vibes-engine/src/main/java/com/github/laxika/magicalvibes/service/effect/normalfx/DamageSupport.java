@@ -103,6 +103,17 @@ public class DamageSupport {
     private final ObjectProvider<com.github.laxika.magicalvibes.service.combat.CombatDamageService> combatDamageService;
     private final ObjectProvider<com.github.laxika.magicalvibes.service.input.PlayerInputService> playerInputService;
 
+    /**
+     * Whether a creature source's damage is dealt by another object, such as the Equipment whose granted
+     * ability is resolving (Razor Boomerang). The creature's own damage triggers (an Aura's "enchanted
+     * creature deals damage") don't apply to that damage.
+     */
+    private static boolean damageComesFromOtherObject(StackEntry entry, Permanent sourcePermanent) {
+        return sourcePermanent != null && sourcePermanent.getCard().hasType(CardType.CREATURE)
+                && entry.getDamageSourceCard() != null
+                && entry.getDamageSourceCard() != sourcePermanent.getCard();
+    }
+
     /** Colours of a non-permanent damage source (spell/ability card), for colour-based prevention. */
     private static Set<CardColor> sourceCardColors(Card card) {
         if (card == null) return Set.of();
@@ -1343,6 +1354,9 @@ public class DamageSupport {
             Permanent sourceCreature = entry.getSourcePermanentId() == null
                     ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (damageComesFromOtherObject(entry, sourceCreature)) {
+                sourceCreature = null;
+            }
             triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(
                     gameData, sourceCreature, effectiveDamage);
             int artifactDamage = gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent)
@@ -1411,7 +1425,7 @@ public class DamageSupport {
             // Source's own ON_DAMAGE_TO_PLAYER (e.g. Niv-Mizzet, Dracogenius ping → may draw).
             if (entry.getSourcePermanentId() != null) {
                 Permanent triggerSourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                if (triggerSourcePermanent != null) {
+                if (triggerSourcePermanent != null && !damageComesFromOtherObject(entry, triggerSourcePermanent)) {
                     // "you may draw" belongs to the source's controller at damage time, which can differ
                     // from the ability's controller if the source changed control while the ping was pending.
                     UUID sourceControllerAtDamage = gameQueryService.findPermanentController(
@@ -1470,7 +1484,7 @@ public class DamageSupport {
                     reflection.eyeCard(),
                     reflection.eyeControllerId(),
                     reflection.eyeCard().getName() + "'s reflection",
-                    List.of());
+                    List.of(), (UUID) null, reflection.sourcePermanentId());
             dealDamageToPlayer(gameData, tempEntry, reflection.targetPlayerId(), reflection.amount());
         }
     }

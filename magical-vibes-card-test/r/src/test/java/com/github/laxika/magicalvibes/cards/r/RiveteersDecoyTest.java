@@ -53,7 +53,7 @@ class RiveteersDecoyTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, decoy, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Riveteers Decoy");

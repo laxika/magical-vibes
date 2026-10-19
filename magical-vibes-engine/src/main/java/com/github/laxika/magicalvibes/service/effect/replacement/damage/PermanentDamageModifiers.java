@@ -42,8 +42,8 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                 spellDamageReductionRule(),
                 bonusRule("NoncreatureSourceBonus", ctx -> ctx.combat() || isCreatureExplicitSource(ctx) ? List.of()
                         : gameQueryService.getNoncreatureSourceDamageBonuses(ctx.gameData(), ctx.entry(), null, ctx.target())),
-                bonusRule("PlayersAndBattlesBonus", ctx -> ctx.combat() ? List.of()
-                        : gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), false, ctx.target())),
+                bonusRule("PlayersAndBattlesBonus", ctx ->
+                        gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), false, ctx.target())),
                 bonusRule("ToOpponentsBonus", ctx -> gameQueryService.getAdditionalDamageToOpponentsBonuses(
                         ctx.gameData(), ctx.sourceControllerId(), ctx.sourceCard(), ctx.damageSource(),
                         ctx.targetControllerId())),

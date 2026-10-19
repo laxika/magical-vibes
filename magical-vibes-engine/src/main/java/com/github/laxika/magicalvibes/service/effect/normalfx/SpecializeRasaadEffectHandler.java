@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeRasaadEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
         Card specialized = source.getCard().createRuntimeCopy();
         specialized.clearRulesTextAndAbilities();
         setBaseFaceCharacteristics(specialized);
+        specialized.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ReturnAllCardsExiledWithSourceEffect());
 
         CardEffect specializedTrigger = RasaadMonkOfSelNe.specializedTrigger(specialize.color());
         switch (specialize.color()) {

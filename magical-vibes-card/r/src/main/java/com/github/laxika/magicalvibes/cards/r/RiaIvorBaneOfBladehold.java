@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextCombatDamageByTargetCreatureAndCreateTokensEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -40,9 +40,7 @@ public class RiaIvorBaneOfBladehold extends Card {
                 false,
                 false,
                 Map.of(
-                        EffectSlot.STATIC, new CantBlockEffect(),
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)),
+                        EffectSlot.STATIC, SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1))),
                 List.of(),
                 false,
                 false,

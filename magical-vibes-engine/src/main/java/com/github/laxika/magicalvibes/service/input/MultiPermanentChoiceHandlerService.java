@@ -346,6 +346,10 @@ public class MultiPermanentChoiceHandlerService {
         if (permanentIds.size() > maxCount) {
             throw new IllegalStateException("Too many permanents selected: " + permanentIds.size() + " > " + maxCount);
         }
+        if (permanentIds.isEmpty()
+                && multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.UntapChosenPermanent) {
+            throw new IllegalStateException("Must choose a permanent to untap");
+        }
         if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Exactly " + maxCount + " permanents must be selected");

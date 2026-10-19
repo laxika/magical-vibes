@@ -116,6 +116,8 @@ class RoseCutthroatRaiderTest extends BaseCardTest {
     @DisplayName("Junk play permission expires at the end of the turn")
     void junkPlayPermissionExpires() {
         createJunk();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Mountain top = new Mountain();
         harness.setLibrary(player1, List.of(top, new Mountain(), new Mountain()));
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain()));

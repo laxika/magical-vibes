@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -240,7 +241,13 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                     referencedCard = gameData.findExiledCard(referencedId).card();
                 }
                 if (referencedCard == null) {
+                    referencedCard = stackEntry.lastKnownPermanentCard(referencedId);
+                }
+                if (referencedCard == null) {
                     referencedCard = findDepartedAbilitySourceCard(gameData, resolvingEntry, referencedId);
+                }
+                if (referencedCard == null) {
+                    referencedCard = findDepartedPermanentCard(gameData, referencedId);
                 }
                 if (referencedCard != null && !validIds.contains(referencedId)
                         && (sourceFilter == null || predicateEvaluationService.matchesPermanentPredicate(
@@ -263,6 +270,17 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
                 if (!validIds.contains(sourceId)) validIds.add(sourceId);
             }
         }
+        // CR 609.7a: a source referred to by a prevention effect that is still waiting to apply stays a
+        // legal choice after it has left the battlefield (its card is kept with the shield).
+        for (PlayerSourceNextDamageShield shield : gameData.playerSourceNextDamageShields) {
+            UUID referencedId = shield.sourceId();
+            Card referencedCard = gameData.waitingRedirectDamageSourceCards.get(referencedId);
+            if (referencedCard != null && !validIds.contains(referencedId)
+                    && (sourceFilter == null || predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, new Permanent(referencedCard), sourceFilter))) {
+                validIds.add(referencedId);
+            }
+        }
         return validIds;
     }
 
@@ -281,6 +299,14 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
      * Last-known card of a permanent that left the battlefield while it was the source of an ability
      * (on the stack or the resolving entry), matched by the permanent's id as a stack reference holds it.
      */
+    private static Card findDepartedPermanentCard(GameData gameData, UUID permanentId) {
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> snapshot.getId().equals(permanentId))
+                .map(Permanent::getCard)
+                .findFirst()
+                .orElse(null);
+    }
+
     private Card findDepartedAbilitySourceCard(GameData gameData, StackEntry resolvingEntry, UUID permanentId) {
         if (matchesAbilitySourceSnapshot(resolvingEntry, permanentId)) {
             return resolvingEntry.getSourcePermanentSnapshot().getCard();

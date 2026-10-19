@@ -12,7 +12,7 @@ public class RakingCanopy extends Card {
 
     public RakingCanopy() {
         // Whenever a creature with flying attacks you, this enchantment deals 4 damage to it.
-        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU,
+        addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
                 new DealDamageToTriggeringAttackerEffect(4, new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

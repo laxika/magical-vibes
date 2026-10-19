@@ -37,7 +37,7 @@ public class ResponseResurgence extends Card {
         CardEffect response = new DealDamageToTargetCreatureEffect(5);
         CardEffect firstStrikeAndVigilance = new GrantKeywordEffect(
                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.OWN_CREATURES);
-        CardEffect additionalCombatAndMainPhase = new AdditionalCombatMainPhaseEffect(1);
+        CardEffect additionalCombatAndMainPhase = new AdditionalCombatMainPhaseEffect(1, null, true);
 
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

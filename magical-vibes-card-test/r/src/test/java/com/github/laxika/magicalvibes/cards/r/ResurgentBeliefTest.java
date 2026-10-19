@@ -41,6 +41,7 @@ class ResurgentBeliefTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities(); // the last-counter trigger offers the free cast (CR 702.62a)
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -64,6 +65,7 @@ class ResurgentBeliefTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities(); // the last-counter trigger offers the free cast (CR 702.62a)
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -75,7 +77,7 @@ class ResurgentBeliefTest extends BaseCardTest {
 
     @Test
     void returnsAllEnchantmentsOnlyFromControllersGraveyard() {
-        suspendCard();
+        ResurgentBelief card = suspendCard();
         Card first = new Sanctimony();
         Card second = new Sanctimony();
         Card opponentsEnchantment = new Sanctimony();
@@ -87,7 +89,7 @@ class ResurgentBeliefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Sanctimony")).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsEnchantment);
         harness.assertNotOnBattlefield(player2, "Sanctimony");
     }
@@ -159,6 +161,7 @@ class ResurgentBeliefTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities(); // the last-counter trigger offers the free cast (CR 702.62a)
     }
     private ResurgentBelief suspendCard() {
         ResurgentBelief card = new ResurgentBelief();

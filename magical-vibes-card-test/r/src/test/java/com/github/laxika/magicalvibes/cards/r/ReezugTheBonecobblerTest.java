@@ -86,6 +86,8 @@ class ReezugTheBonecobblerTest extends BaseCardTest {
         Card bears = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(bears));
         activate(reezug, bears);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

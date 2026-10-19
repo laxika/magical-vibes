@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -20,6 +21,7 @@ public class ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffectHandle
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentControlSupport permanentControlSupport;
@@ -42,8 +44,10 @@ public class ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffectHandle
             return;
         }
 
-        int power = targetCard.getPower() == null ? 0 : Math.max(0, targetCard.getPower());
-        int toughness = targetCard.getToughness() == null ? 0 : Math.max(0, targetCard.getToughness());
+        int power = amountEvaluationService.rawCharacteristicPowerForController(
+                gameData, targetCard, entry.getControllerId());
+        int toughness = amountEvaluationService.rawCharacteristicToughnessForController(
+                gameData, targetCard, entry.getControllerId());
 
         graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard);
 

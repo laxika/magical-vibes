@@ -163,6 +163,8 @@ class RiveteersCharmTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(card));
         cast(1, null);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

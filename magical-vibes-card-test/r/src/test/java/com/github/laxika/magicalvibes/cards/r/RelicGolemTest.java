@@ -175,7 +175,8 @@ class RelicGolemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         beginAttackerDeclaration(player1);
-        gs.declareAttackers(gd, player1, List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(1)));
 
         assertThat(attacker.isAttacking()).isTrue();
     }

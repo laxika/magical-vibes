@@ -26,6 +26,7 @@ public class RestorationSeminar extends Card {
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))
                 )))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

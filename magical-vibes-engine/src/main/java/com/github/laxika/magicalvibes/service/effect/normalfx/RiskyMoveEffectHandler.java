@@ -49,7 +49,11 @@ public class RiskyMoveEffectHandler implements NormalEffectHandlerBean {
 
         List<UUID> creatureIds = controlledCreatureIds(gameData, controllerId);
         List<UUID> opponentIds = opponentIds(gameData, controllerId);
-        if (creatureIds.isEmpty() || opponentIds.isEmpty()) {
+        if (opponentIds.isEmpty()) {
+            return;
+        }
+        if (creatureIds.isEmpty()) {
+            flipAndApply(gameData, entry.getCard().getName(), controllerId, null, null);
             return;
         }
 
@@ -129,7 +133,7 @@ public class RiskyMoveEffectHandler implements NormalEffectHandlerBean {
         if (result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
-        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+        Permanent creature = creatureId == null ? null : gameQueryService.findPermanentById(gameData, creatureId);
         if (creature != null) {
             creatureControlService.applyControlEffect(gameData, opponentId, creature,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),

@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithou
 public class Reinterpret extends Card {
 
     public Reinterpret() {
+        // The counter remembers the countered spell's mana value for the hand-spell cap that follows.
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL,
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new TargetSpellManaValue()));
-        // Counter last so the hand-spell cap can still read the target's mana value.
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

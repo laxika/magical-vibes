@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
@@ -29,7 +30,14 @@ public class AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffectHandler
         if (sourcePermanentId == null) return;
 
         var permission = (AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect) effect;
-        List<Card> matchingCards = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
+        List<Card> exiledCandidates = permission.exiledThisResolutionOnly()
+                ? entry.getResolutionExiledCardIds().stream()
+                .map(gameData::findExiledCard)
+                .filter(java.util.Objects::nonNull)
+                .map(ExiledCardEntry::card)
+                .toList()
+                : gameData.getCardsExiledByPermanent(sourcePermanentId);
+        List<Card> matchingCards = exiledCandidates.stream()
                 .filter(card -> permission.filter() == null
                         || predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))
                 .toList();

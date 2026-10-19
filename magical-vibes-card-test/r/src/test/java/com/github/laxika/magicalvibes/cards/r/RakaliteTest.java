@@ -55,6 +55,7 @@ class RakaliteTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rakalite);
@@ -111,7 +112,9 @@ class RakaliteTest extends BaseCardTest {
 
     @Test
     void delayedReturnRemainsControlledByAbilityControllerAfterControlChanges() {
-        Permanent rakalite = addReadyRakalite(player1);
+        Rakalite rakaliteCard = new Rakalite();
+        rakaliteCard.setOwnerId(player1.getId());
+        Permanent rakalite = harness.addToBattlefieldAndReturn(player1, rakaliteCard);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

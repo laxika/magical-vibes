@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
@@ -977,6 +978,7 @@ public class DamageTriggerCollectorService {
                 List.of()
         );
         entry.setNonTargeting(true);
+        entry.setTriggeringPermanentId(dc.damagedCreature().getId());
         gameData.stack.add(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
@@ -2444,6 +2446,21 @@ public class DamageTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger fires ({} damage)",
                 match.gameData().id, sourceCard.getName(), sd.totalDamage());
+        return true;
+    }
+
+    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            slot = EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE)
+    private boolean handleSelfDealsCombatDamageModalAtTriggerTime(TriggerMatchContext match,
+            ChooseOneAtTriggerTimeEffect effect, TriggerContext ctx) {
+        TriggerContext.SourceDealsCombatDamage sd = (TriggerContext.SourceDealsCombatDamage) ctx;
+        if (sd.totalDamage() <= 0) return false;
+
+        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                sd.sourceCard(), sd.sourceControllerId(), effect.choice(), sd.sourcePermanentId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sd.sourceCard()));
+        log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger chooses modes as it is put on the stack",
+                match.gameData().id, sd.sourceCard().getName());
         return true;
     }
 

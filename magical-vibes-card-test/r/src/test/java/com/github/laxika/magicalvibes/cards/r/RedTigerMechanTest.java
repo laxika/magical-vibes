@@ -40,6 +40,7 @@ class RedTigerMechanTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
+        declareAttackers(List.of());
 
         harness.passUntil(TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Red Tiger Mechan");
@@ -77,10 +78,12 @@ class RedTigerMechanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(mechan.getId())).isNotNull();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -88,6 +91,7 @@ class RedTigerMechanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Red Tiger Mechan");
         assertThat(gd.findExiledCard(mechan.getId())).isNull();
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Red Tiger Mechan");

@@ -32,7 +32,7 @@ public class GrantTriggeredAbilityToCastSpellEffectHandler implements NormalEffe
 
         for (StackEntry spellEntry : gameData.stack) {
             if (spellEntry.getCard() != null && spellCardId.equals(spellEntry.getCard().getId())) {
-                spellEntry.addGrantedTriggeredEffectOnEntry(grant.slot(), grant.grantedEffect());
+                spellEntry.addPersistentTriggeredEffectOnEntry(grant.slot(), grant.grantedEffect());
                 gameLogService.append(gameData, GameLog.cardThen(spellEntry.getCard(),
                         " gains a triggered ability as it enters the battlefield."));
                 return;

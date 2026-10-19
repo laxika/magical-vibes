@@ -199,24 +199,24 @@ class RelicRunnerTest extends BaseCardTest {
     @DisplayName("An opponent's historic spell does not make Relic Runner unblockable")
     void opponentHistoricSpellDoesNotPreventBlocking() {
         Permanent runner = harness.addToBattlefieldAndReturn(player1, new RelicRunner());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         gd.recordSpellCast(player2.getId(), new Ornithopter());
 
         prepareBlockers(runner);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        assertThat(runner.isBlockedThisCombat()).isTrue();
+        assertThat(bears.getBlockingTargetIds()).containsExactly(runner.getId());
     }
 
     @Test
     @DisplayName("Putting an artifact onto the battlefield does not count as casting")
     void artifactEnteringWithoutCastingDoesNotPreventBlocking() {
         Permanent runner = harness.addToBattlefieldAndReturn(player1, new RelicRunner());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new Ornithopter());
 
         prepareBlockers(runner);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        assertThat(runner.isBlockedThisCombat()).isTrue();
+        assertThat(bears.getBlockingTargetIds()).containsExactly(runner.getId());
     }
 
     @Test
@@ -235,16 +235,16 @@ class RelicRunnerTest extends BaseCardTest {
     void losingAbilitiesRestoresBlockerDeclaration() {
         Permanent runner = harness.addToBattlefieldAndReturn(player1, new RelicRunner());
         runner.setSummoningSick(false);
-        runner.setAttacking(true);
         harness.addToBattlefield(player2, new GrizzlyBears());
         gd.recordSpellCast(player1.getId(), new Ornithopter());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.setHand(player2, List.of(new MerfolkTrickster()));
         harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(0)));
         harness.castCreature(player2, 0, 0, runner.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(runner.isAttacking()).isTrue();
         assertThat(runner.isLosesAllAbilitiesUntilEndOfTurn()).isTrue();

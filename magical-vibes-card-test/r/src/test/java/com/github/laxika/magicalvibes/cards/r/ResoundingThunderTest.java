@@ -53,7 +53,8 @@ class ResoundingThunderTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         addCyclingMana(player1);
 
-        harness.activateHandAbility(player1, 0, player2.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -72,7 +73,8 @@ class ResoundingThunderTest extends BaseCardTest {
         addCyclingMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Serra Angel");
-        harness.activateHandAbility(player1, 0, targetId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -88,7 +90,8 @@ class ResoundingThunderTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         addCyclingMana(player1);
 
-        harness.activateHandAbility(player1, 0, player2.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.assertInGraveyard(player1, "Resounding Thunder");
         harness.assertNotInHand(player1, "Grizzly Bears");
         harness.passBothPriorities();
@@ -113,7 +116,8 @@ class ResoundingThunderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.activateHandAbility(player1, 0, targetId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, targetId);
         harness.castAndResolveInstant(player2, 0, targetId);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.passBothPriorities();

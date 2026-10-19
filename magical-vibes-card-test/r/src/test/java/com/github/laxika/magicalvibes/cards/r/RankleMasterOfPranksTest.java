@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +60,7 @@ class RankleMasterOfPranksTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, ALL_MODES);
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -95,13 +95,11 @@ class RankleMasterOfPranksTest extends BaseCardTest {
     void announcesModesWhenTriggerGoesOnStack() {
         Permanent rankle = addReadyRankle();
         rankle.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-
-        harness.resolveCombatDamage();
+        resolveCombat();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player1, NO_MODES);
+        resolveAllTriggers();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -136,6 +134,7 @@ class RankleMasterOfPranksTest extends BaseCardTest {
         String choice = String.join("; ", modes);
         choice = Character.toUpperCase(choice.charAt(0)) + choice.substring(1);
         harness.handleListChoice(player1, choice);
+        resolveAllTriggers();
         if (discard) {
             harness.handleCardChosen(player1, 0);
             harness.handleCardChosen(player2, 0);
@@ -166,6 +165,7 @@ class RankleMasterOfPranksTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Each player discards a card");
+        resolveAllTriggers();
 
         harness.handleCardChosen(player1, 0);
 
@@ -191,6 +191,7 @@ class RankleMasterOfPranksTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, ALL_MODES);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

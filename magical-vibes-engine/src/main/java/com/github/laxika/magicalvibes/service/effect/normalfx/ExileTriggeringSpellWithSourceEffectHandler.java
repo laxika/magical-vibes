@@ -35,7 +35,20 @@ public class ExileTriggeringSpellWithSourceEffectHandler implements NormalEffect
                         || candidate.getCard().hasType(CardType.SORCERY))
                 .findFirst()
                 .orElse(null);
-        if (spell == null || spell.getEffectsToResolve().stream().anyMatch(candidateEffect ->
+        if (spell == null) {
+            return;
+        }
+        if (spell.getExileWithSourcePermanentId() != null
+                && !sourcePermanentId.equals(spell.getExileWithSourcePermanentId())
+                && spell.getEffectsToResolve().stream().anyMatch(ExileSpellEffect.class::isInstance)) {
+            // Another source already marked the spell: both replacement effects apply, and the spell's
+            // controller picks which one is used as the spell resolves (CR 616.1).
+            if (!spell.getCompetingExileSourcePermanentIds().contains(sourcePermanentId)) {
+                spell.getCompetingExileSourcePermanentIds().add(sourcePermanentId);
+            }
+            return;
+        }
+        if (spell.getEffectsToResolve().stream().anyMatch(candidateEffect ->
                 candidateEffect instanceof ExileSpellEffect
                         || candidateEffect instanceof ShuffleIntoLibraryEffect
                         || candidateEffect instanceof PutSelfOnBottomOfOwnersLibraryEffect)) {

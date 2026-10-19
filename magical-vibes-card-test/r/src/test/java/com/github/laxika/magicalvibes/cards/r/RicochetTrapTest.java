@@ -155,6 +155,7 @@ class RicochetTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.BLUE, 3);
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.passPriority(player1);
 
         harness.castInstant(player2, 0, bears.getId());

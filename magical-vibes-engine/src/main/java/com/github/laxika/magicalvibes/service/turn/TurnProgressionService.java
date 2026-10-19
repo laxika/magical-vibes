@@ -496,6 +496,7 @@ public class TurnProgressionService {
                 .map(gameData.playerBattlefields::get)
                 .filter(java.util.Objects::nonNull)
                 .flatMap(List::stream)
+                .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(RunedTerrorEffect.class::isInstance);
     }
@@ -1129,6 +1130,7 @@ public class TurnProgressionService {
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.cardsPutIntoGraveyardAgainThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromLibraryThisTurn.clear();
+        gameData.cardsMilledThisTurn.clear();
         gameData.cardsSurveilledThisTurn.clear();
         gameData.cardsPutIntoHandThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromHandThisTurn.clear();
@@ -1183,6 +1185,7 @@ public class TurnProgressionService {
         gameData.sorcerySpellDamageDealtThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
+        gameData.declaredAttackerSnapshotsThisTurn.clear();
         gameData.playersAfraidOfControllerAfterAttackThisTurn.clear();
         gameData.playersAttackedThisCombat.clear();
         gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn.clear();
@@ -1238,6 +1241,7 @@ public class TurnProgressionService {
         gameData.combatBlockOpponentControllerIdsThisTurn.clear();
         gameData.combatOpponentIdsBlockedByThisTurn.clear();
         gameData.creaturesBlockedThisTurn.clear();
+        gameData.creaturesEnteredBlockingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();
         gameData.artifactDamageDealtToPlayersThisTurn.clear();
@@ -1282,6 +1286,8 @@ public class TurnProgressionService {
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
+        gameData.damagedCreaturesCantRegenerateSourceIdsThisTurn.clear();
+        gameData.exileDamagedCreaturesSourceIdsThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySource.clear();
         gameData.creatureCardsDamagedThisTurnByController.clear();
         gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();

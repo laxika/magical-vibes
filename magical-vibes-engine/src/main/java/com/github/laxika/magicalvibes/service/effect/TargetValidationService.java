@@ -414,6 +414,13 @@ public class TargetValidationService {
     public void checkProtection(TargetValidationContext ctx, Permanent target) {
         Permanent sourcePermanent = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(ctx.gameData(), ctx.sourcePermanentId());
+        if (sourcePermanent != null && ctx.sourceCard() != null
+                && sourcePermanent.getId().equals(ctx.triggeringPermanentId())
+                && !sourcePermanent.getCard().getId().equals(ctx.sourceCard().getId())) {
+            // The permanent recorded as the damage source (e.g. the attacker for Rage Forger's ping)
+            // is not the ability's source; targeting protection looks at the ability's own source.
+            sourcePermanent = null;
+        }
         Set<CardColor> sourceColors = sourcePermanent == null
                 ? gameQueryService.getEffectiveCardColors(ctx.gameData(), ctx.sourceCard())
                 : gameQueryService.getEffectiveColors(ctx.gameData(), sourcePermanent);

@@ -167,7 +167,8 @@ class ReincarnationTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AzureDrake());
         harness.setGraveyard(player2, List.of(new KoboldsOfKherKeep()));
         harness.setHand(player1, List.of(new Reincarnation(), new ActiveVolcano()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Azure Drake");
@@ -188,7 +189,8 @@ class ReincarnationTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AzureDrake());
         harness.setGraveyard(player2, List.of(new KoboldsOfKherKeep()));
         harness.setHand(player1, List.of(new Reincarnation(), new Reincarnation(), new ActiveVolcano()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Azure Drake");

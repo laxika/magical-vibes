@@ -12,6 +12,6 @@ public class RealmRazer extends Card {
     public RealmRazer() {
         // Exile all lands on enter; when Realm Razer leaves, return them tapped under their owners' control.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileAllPermanentsUntilSourceLeavesEffect(new PermanentIsLandPredicate(), true));
+                new ExileAllPermanentsUntilSourceLeavesEffect(new PermanentIsLandPredicate(), true, false, true));
     }
 }

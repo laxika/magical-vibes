@@ -18,7 +18,6 @@ public class RobeOfTheArchmagi extends Card {
             new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SHAMAN, CardSubtype.WARLOCK, CardSubtype.WIZARD));
 
     public RobeOfTheArchmagi() {
-        setAttachRestriction(ARCHMAGE_CREATURE);
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(new EventValue()));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
         addActivatedAbility(new EquipActivatedAbility(

@@ -19,9 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,9 +36,7 @@ public class PayXManaReturnTargetCreatureWithManaValueXEffectHandler implements 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final ReturnCardFromGraveyardEffectHandler returnCardFromGraveyardEffectHandler;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,16 +47,8 @@ public class PayXManaReturnTargetCreatureWithManaValueXEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PayXManaReturnTargetCreatureWithManaValueXEffect) effect;
         UUID controllerId = entry.getControllerId();
-        Card sourceCard = entry.getCard();
-        String cardName = sourceCard.getName();
+        String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
-
-        if (entry.getTargetId() != null && gameData.chosenXValue != null) {
-            int chosenX = gameData.chosenXValue;
-            gameData.chosenXValue = null;
-            returnTarget(gameData, entry, e.filter(), chosenX);
-            return;
-        }
 
         if (gameData.chosenXValue == null) {
             if (maxPotentialX(gameData, controllerId) <= 0) {
@@ -71,8 +59,8 @@ public class PayXManaReturnTargetCreatureWithManaValueXEffectHandler implements 
         }
 
         int chosenX = gameData.chosenXValue;
+        gameData.chosenXValue = null;
         if (chosenX == 0) {
-            gameData.chosenXValue = null;
             gameLogService.append(gameData, GameLog.text(playerName + " chooses X=0 for " + cardName + "'s ability."));
             return;
         }
@@ -85,39 +73,7 @@ public class PayXManaReturnTargetCreatureWithManaValueXEffectHandler implements 
 
         new ManaCost("{X}").pay(pool, chosenX);
         gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenX + "} for " + cardName + "."));
-
-        CardPredicate filter = manaValueCreatureFilter(e.filter(), chosenX);
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        List<Integer> matchingIndices = new ArrayList<>();
-        if (graveyard != null) {
-            for (int i = 0; i < graveyard.size(); i++) {
-                if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), filter, sourceCard.getId())) {
-                    matchingIndices.add(i);
-                }
-            }
-        }
-
-        if (matchingIndices.isEmpty()) {
-            gameData.chosenXValue = null;
-            gameLogService.append(gameData, GameLog.text(cardName + " has no legal graveyard target for X=" + chosenX + "."));
-            return;
-        }
-
-        if (matchingIndices.size() == 1) {
-            Card target = graveyard.get(matchingIndices.getFirst());
-            gameData.chosenXValue = null;
-            entry.setTargetId(target.getId());
-            triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
-            returnTarget(gameData, entry, e.filter(), chosenX);
-            return;
-        }
-
-        gameData.resolvedMayTargetingEntry = entry;
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(controllerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                        "Choose a matching creature card with mana value " + chosenX
-                                + " to return to the battlefield.")
-                .build());
+        returnTarget(gameData, entry, e.filter(), chosenX);
     }
 
     private void returnTarget(GameData gameData, StackEntry entry, CardPredicate filter, int chosenX) {

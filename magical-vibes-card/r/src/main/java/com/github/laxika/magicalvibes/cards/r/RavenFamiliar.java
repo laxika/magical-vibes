@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 public class RavenFamiliar extends Card {
 
     public RavenFamiliar() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{2}{U}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
     }

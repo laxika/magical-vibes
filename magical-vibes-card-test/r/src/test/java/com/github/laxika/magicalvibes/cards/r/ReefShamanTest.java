@@ -3,16 +3,20 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -79,7 +83,9 @@ class ReefShamanTest extends BaseCardTest {
 
         activateAndChooseIsland(land);
 
-        assertThat(gs.getEffectiveActivatedAbilities(gd, land)).isEmpty();
+        List<ActivatedAbility> abilities = gs.getEffectiveActivatedAbilities(gd, land);
+        assertThat(abilities).hasSize(1);
+        assertThat(abilities.getFirst().getEffects()).containsExactly(new AwardManaEffect(ManaColor.BLUE));
     }
 
     @Test

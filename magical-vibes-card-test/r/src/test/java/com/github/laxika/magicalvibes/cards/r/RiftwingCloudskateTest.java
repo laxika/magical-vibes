@@ -70,6 +70,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
         }
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -94,6 +95,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -113,6 +115,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getCard()).isSameAs(card));
@@ -187,6 +190,7 @@ class RiftwingCloudskateTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         advanceToUpkeep(player1);

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class RuinousMinotaur extends Card {
 
     public RuinousMinotaur() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));
     }
 }

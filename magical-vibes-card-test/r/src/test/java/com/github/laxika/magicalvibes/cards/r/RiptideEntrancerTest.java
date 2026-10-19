@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -144,9 +145,9 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         Permanent target = addCreatureReady(player2, new MistformWall());
-        harness.addMana(player1, ManaColor.BLUE, 2);
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
         harness.passBothPriorities();
 
@@ -165,9 +166,10 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent target = addCreatureReady(player2, new MistformWall());
         harness.setHand(player2, List.of(new Smother()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
 
         harness.castAndResolveInstant(player2, 0, attacker.getId());
         harness.passBothPriorities();
@@ -187,9 +189,10 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent target = addCreatureReady(player2, new MistformWall());
         harness.setHand(player2, List.of(new Smother()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
 
         harness.castAndResolveInstant(player2, 0, target.getId());
         harness.passBothPriorities();

@@ -149,6 +149,11 @@ public class ActivatedAbility {
     private boolean xScaledTargets;
     /** Whether both target bounds equal the announced X, independently of fixed target limits. */
     private boolean exactXTargets;
+    /**
+     * Whether the targets announced with this cycling ability belong to the card's own "when you
+     * cycle this card" trigger rather than to the cycling ability itself.
+     */
+    private boolean cyclingTriggerTargets;
     /** Counter type that supplies the target limit instead of a paid X value. */
     private CounterType sourceCounterScaledTargetsType;
     /** Dynamic amount that supplies the maximum number of targets at activation time. */
@@ -372,6 +377,7 @@ public class ActivatedAbility {
         copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
         copy.xScaledTargets = this.xScaledTargets;
         copy.exactXTargets = this.exactXTargets;
+        copy.cyclingTriggerTargets = this.cyclingTriggerTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.dynamicMaxTargets = this.dynamicMaxTargets;
         copy.requiresXValue = this.requiresXValue;
@@ -768,6 +774,20 @@ public class ActivatedAbility {
         return this;
     }
 
+    /**
+     * Routes the targets announced with this cycling ability to the card's {@code ON_SELF_CYCLED}
+     * trigger ("When you cycle this card, destroy up to X target artifacts"), so the cycling
+     * ability's draw is a separate stack object that doesn't depend on those targets.
+     */
+    public ActivatedAbility withCyclingTriggerTargets() {
+        this.cyclingTriggerTargets = true;
+        return this;
+    }
+
+    public boolean isCyclingTriggerTargets() {
+        return cyclingTriggerTargets;
+    }
+
     public boolean isXScaledTargets() {
         return exactXTargets || xScaledTargets || sourceCounterScaledTargetsType != null;
     }
@@ -864,7 +884,7 @@ public class ActivatedAbility {
         }
         return effects.stream()
                 .filter(effect -> !(effect instanceof CostEffect))
-                .anyMatch(ManaProducingEffect.class::isInstance);
+                .anyMatch(ManaProducingEffect::addsManaWhenResolved);
     }
 
     /** Whether this activated ability is an equip ability. */

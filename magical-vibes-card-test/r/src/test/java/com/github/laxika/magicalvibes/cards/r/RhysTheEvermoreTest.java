@@ -76,6 +76,8 @@ class RhysTheEvermoreTest extends BaseCardTest {
         assertThat(choice.maxValue()).isEqualTo(3);
 
         harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "+1/+1 counters");
+        harness.handleListChoice(player1, "charge counters");
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
                 + bears.getCounterCount(CounterType.CHARGE)).isEqualTo(1);

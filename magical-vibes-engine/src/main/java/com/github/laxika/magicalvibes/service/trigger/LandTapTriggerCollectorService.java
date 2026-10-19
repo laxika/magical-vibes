@@ -29,12 +29,14 @@ import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubt
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ProducedManaColorAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
+import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
@@ -97,6 +99,15 @@ public class LandTapTriggerCollectorService {
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleManaAbilitySequence(TriggerMatchContext match,
             SequenceEffect sequence, TriggerContext ctx) {
+        if (sequence.steps().size() == 2
+                && sequence.steps().get(0) instanceof AddManaOnEnchantedLandTapEffect mana
+                && sequence.steps().get(1) instanceof IntensifySourceCardEffect intensify) {
+            if (!handleAddManaOnEnchantedLandTap(match, mana, ctx)) {
+                return false;
+            }
+            match.gameData().intensifyCard(match.permanent().getCard(), intensify.amount());
+            return true;
+        }
         if (sequence.steps().size() == 2
                 && sequence.steps().get(0) instanceof AddManaOnEnchantedLandTapEffect mana
                 && sequence.steps().get(1) instanceof PutCountersOnSelfEffect intensify) {
@@ -516,6 +527,10 @@ public class LandTapTriggerCollectorService {
         }
 
         Set<ManaColor> producedColors = new java.util.LinkedHashSet<>(lt.producedColors());
+        if (trigger.anyColor()) {
+            producedColors.addAll(java.util.EnumSet.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                    ManaColor.RED, ManaColor.GREEN));
+        }
         if (producedColors.isEmpty() && tappedLand != null) {
             tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
                     .filter(AwardManaEffect.class::isInstance)
@@ -531,21 +546,23 @@ public class LandTapTriggerCollectorService {
                     .fixedColorCombination(lt.tappingPlayerId(), false, 1, choices);
             AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, match.gameData(),
                     new PendingInteraction.ColorChoice(lt.tappingPlayerId(), null, null, choiceContext,
-                            choices.stream().map(Enum::name).toList(), "Choose a type of mana the land produced."));
+                            choices.stream().map(Enum::name).toList(), trigger.anyColor()
+                                    ? "Choose a color of mana to add." : "Choose a type of mana the land produced."));
         } else {
             match.gameData().playerManaPools.get(lt.tappingPlayerId()).add(producedColors.iterator().next());
         }
 
+        String extraManaSource = trigger.anyColor() ? "of any color" : "of a type produced by the land";
         if (sourceCard == null) {
             gameLogService.append(match.gameData(), GameLog.text(
                     match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                            + " adds 1 additional mana of a type produced by the land."));
+                            + " adds 1 additional mana " + extraManaSource + "."));
             return true;
         }
 
         gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
                 " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                        + " adds 1 additional mana of a type produced by the land."));
+                        + " adds 1 additional mana " + extraManaSource + "."));
         return true;
     }
 
@@ -941,17 +958,9 @@ public class LandTapTriggerCollectorService {
         if (!match.permanent().getId().equals(lt.tappedLandId())) return false;
         if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        // The delayed trigger is created by the mana ability itself, which does not use the stack.
+        match.gameData().queueDelayedAction(new DelayedChooseOpponentGainsControlOfSource(
+                match.controllerId(), match.permanent().getId(), match.permanent().getCard()));
         return true;
     }
 

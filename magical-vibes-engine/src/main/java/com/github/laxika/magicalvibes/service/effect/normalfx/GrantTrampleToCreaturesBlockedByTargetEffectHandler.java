@@ -39,7 +39,13 @@ public class GrantTrampleToCreaturesBlockedByTargetEffectHandler implements Norm
             return;
         }
 
-        List<UUID> blockedCreatureIds = List.copyOf(blocker.getBlockingTargetIds());
+        // Creatures this blocker was declared to block this turn, including ones it was later reassigned
+        // away from. A creature that entered the battlefield blocking was never declared as a blocker,
+        // so the attackers it blocks do not gain trample (Ride Down ruling).
+        List<UUID> blockedCreatureIds = !gameData.creaturesEnteredBlockingThisTurn.contains(blocker.getId())
+                ? List.copyOf(gameData.combatOpponentIdsBlockedByThisTurn
+                        .getOrDefault(blocker.getId(), java.util.Set.of()))
+                : List.of();
         GrantKeywordEffect grant = new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET);
         for (UUID blockedCreatureId : blockedCreatureIds) {
             Permanent blockedCreature = gameQueryService.findPermanentById(gameData, blockedCreatureId);

@@ -86,7 +86,8 @@ public class MillControllerAndTemporarilyReanimateMilledCreaturesEffectHandler
                     gameData, controllerId, permanent, permanent.getCard());
             if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
-                        permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+                        permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
+                        false, null, null, null, false, entry.getCard()));
             }
         }
     }

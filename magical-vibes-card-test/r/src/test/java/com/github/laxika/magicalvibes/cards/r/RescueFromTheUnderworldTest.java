@@ -131,8 +131,11 @@ class RescueFromTheUnderworldTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrificed.getId());
         harness.passBothPriorities();
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .addCardToHandFromGraveyard(gd, player1.getId(), player1.getId(), target));
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, target.getId());
+            harness.getPermanentRemovalService()
+                    .addCardToHandFromGraveyard(gd, player1.getId(), player1.getId(), target);
+        });
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -193,8 +196,11 @@ class RescueFromTheUnderworldTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrificed.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .addCardToHandFromGraveyard(gd, player1.getId(), player1.getId(), target));
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, target.getId());
+            harness.getPermanentRemovalService()
+                    .addCardToHandFromGraveyard(gd, player1.getId(), player1.getId(), target);
+        });
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(rescue.getId())).isNull();

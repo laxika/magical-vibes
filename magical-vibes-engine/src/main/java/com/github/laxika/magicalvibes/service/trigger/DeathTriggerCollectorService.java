@@ -147,6 +147,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
@@ -160,6 +161,7 @@ import com.github.laxika.magicalvibes.model.effect.PutLesserManaValueCreatureFro
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
@@ -202,12 +204,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -234,6 +239,7 @@ public class DeathTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+    @Autowired @Lazy private GraveyardTargetingService graveyardTargetingService;
 
     // ── ON_DEATH (dying card's own death triggers) ─────────────────────
 
@@ -839,6 +845,11 @@ public class DeathTriggerCollectorService {
                     match.permanent().getId()
             );
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            // CR 400.7: the trigger refers to this stay in the graveyard; if the card leaves and dies
+            // again before it resolves, a return of the card itself no longer finds that object.
+            entry.setTriggeringCardId(sd.dyingCard().getId());
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
             match.gameData().stack.add(entry);
         }
         return true;
@@ -1428,6 +1439,8 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId()
         );
         entry.setTriggeringCardId(death.dyingCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(death.dyingCard().getId()));
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (equipped creature died)."));
@@ -1492,7 +1505,7 @@ public class DeathTriggerCollectorService {
                     null, new Permanent(match.permanent()), match.permanent().getCard().getTargetFilter()
             ));
         } else {
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     match.controllerId(),
@@ -1500,7 +1513,14 @@ public class DeathTriggerCollectorService {
                     new ArrayList<>(List.of(resolvedEffect)),
                     null,
                     match.permanent().getId()
-            ));
+            );
+            // The dying card's graveyard object is fixed at the death (CR 400.7): a later re-entry
+            // before this trigger resolves must not satisfy a delayed return meant for the old object.
+            if (death.dyingCard() != null) {
+                entry.setTriggeringCardGraveyardEntryVersion(
+                        gameData.graveyardEntryVersion(death.dyingCard().getId()));
+            }
+            gameData.stack.add(entry);
         }
         gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (equipped creature died)."));
@@ -1518,6 +1538,14 @@ public class DeathTriggerCollectorService {
                 ? new ReturnSourceAuraToOpponentCreatureOnDeathEffect(epd.dyingPermanentControllerId())
                 : effect;
         addEnchantedPermanentDeathEntry(match, effectForStack);
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleReturnSourceTransformedAttachedToTargetPlayer(TriggerMatchContext match,
+            ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect effect, TriggerContext ctx) {
+        addEnchantedPermanentDeathEntry(match, effect);
         return true;
     }
 
@@ -1543,7 +1571,11 @@ public class DeathTriggerCollectorService {
         // "you may return this card ..." — gate the return behind a MayEffect for the aura's controller.
         MayEffect may = new MayEffect(baked,
                 "return it to the battlefield attached to a creature that shares a creature type with the creature that died?");
-        addEnchantedPermanentDeathEntry(match, may);
+        StackEntry entry = addEnchantedPermanentDeathEntryReturning(match, may, null, null, null);
+        // A token that died has ceased to exist, so its creature types survive only as last-known information.
+        if (entry != null && epd.dyingCard() != null && epd.dyingCreatureCardId() != null) {
+            entry.rememberLastKnownPermanentCard(epd.dyingCreatureCardId(), epd.dyingCard());
+        }
         return true;
     }
 
@@ -1826,12 +1858,18 @@ public class DeathTriggerCollectorService {
      */
     private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect,
             Integer eventValue, UUID enchantedControllerId, UUID dyingCardId) {
+        addEnchantedPermanentDeathEntryReturning(match, effect, eventValue, enchantedControllerId, dyingCardId);
+    }
+
+    /** As above; returns the stack entry, or {@code null} if the trigger was queued for a target choice. */
+    private StackEntry addEnchantedPermanentDeathEntryReturning(TriggerMatchContext match, CardEffect effect,
+            Integer eventValue, UUID enchantedControllerId, UUID dyingCardId) {
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)), eventValue,
                     new Permanent(match.permanent()), false));
-            return;
+            return null;
         }
 
         StackEntry entry = new StackEntry(
@@ -1880,6 +1918,7 @@ public class DeathTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));
         log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", match.gameData().id, match.permanent().getCard().getName());
+        return entry;
     }
 
     private static boolean returnsSourceCardFromGraveyard(CardEffect effect) {
@@ -4336,6 +4375,17 @@ public class DeathTriggerCollectorService {
                 null,
                 match.permanent().getId());
         match.gameData().stack.add(entry);
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnTargetCardsFromGraveyardToBattlefieldEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleReturnTargetCardsFromGraveyardSelfLeaves(TriggerMatchContext match,
+            ReturnTargetCardsFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        graveyardTargetingService.handleReturnToBattlefieldETBTargeting(match.gameData(), sl.controllerId(),
+                match.permanent().getCard(), List.of(effect), effect, effect.maxTargets());
         logSelfLeaves(match);
         return true;
     }

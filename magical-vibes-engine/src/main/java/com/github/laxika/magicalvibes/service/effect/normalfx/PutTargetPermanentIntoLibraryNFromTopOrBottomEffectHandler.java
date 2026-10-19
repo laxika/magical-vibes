@@ -59,7 +59,11 @@ public class PutTargetPermanentIntoLibraryNFromTopOrBottomEffectHandler
                         ownerId,
                         target.getCard().getId(),
                         target.getCard().getName(),
-                        positionLabel(e.position())));
+                        positionLabel(e.position()),
+                        target.cardsLeavingBattlefield().stream()
+                                .map(com.github.laxika.magicalvibes.model.Card::getId)
+                                .filter(id -> !id.equals(target.getCard().getId()))
+                                .toList()));
         log.info("Game {} - awaiting {} to choose the library destination for {}",
                 gameData.id, gameData.playerIdToName.get(ownerId), target.getCard().getName());
     }

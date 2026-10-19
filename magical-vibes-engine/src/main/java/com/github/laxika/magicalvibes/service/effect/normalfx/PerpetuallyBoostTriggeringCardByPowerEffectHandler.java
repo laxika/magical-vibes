@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -29,13 +28,10 @@ public class PerpetuallyBoostTriggeringCardByPowerEffectHandler implements Norma
             return;
         }
 
-        int power = triggeringCard.getPower() == null ? 0 : triggeringCard.getPower();
-        CardPowerToughnessModifier existingModifier =
-                gameData.perpetualCardPowerToughnessModifiers.get(triggeringCard.getId());
-        if (existingModifier != null) {
-            power += existingModifier.power();
-        }
-        power = Math.max(0, power);
+        // The card's current power, including characteristic-defining power while it is still a spell
+        // (Maro) and any perpetual modifiers it already carries.
+        Integer currentPower = gameQueryService.getEffectiveCardPower(gameData, triggeringCard);
+        int power = Math.max(0, currentPower == null ? 0 : currentPower);
         PerpetualCardPowerToughnessSupport.remember(gameData, triggeringCard, power, power);
     }
 }

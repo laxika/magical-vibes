@@ -127,9 +127,15 @@ public class ExileFreeCastSupport {
 
     /** Offers every castable Adventure face that satisfies the effect's mana-value restriction. */
     public void castWithManaValueLimit(GameData gameData, Player player, UUID exileCardId, Integer maxManaValue) {
+        castWithManaValueLimit(gameData, player, exileCardId, maxManaValue, true);
+    }
+
+    /** As above; {@code returnToHandIfUnable} false leaves a card that can't be cast in exile. */
+    public void castWithManaValueLimit(GameData gameData, Player player, UUID exileCardId, Integer maxManaValue,
+                                       boolean returnToHandIfUnable) {
         ExiledCardEntry exiled = gameData.findExiledCard(exileCardId);
         if (exiled == null || maxManaValue == null) {
-            castFromExileWithoutPaying(gameData, player, exileCardId, false, true);
+            castFromExileWithoutPaying(gameData, player, exileCardId, false, returnToHandIfUnable);
             return;
         }
         Card card = exiled.card();
@@ -146,15 +152,16 @@ public class ExileFreeCastSupport {
             faces.put("Cast " + card.getBackFaceCard().getName(), 1);
         }
         if (faces.isEmpty()) {
-            returnExiledCardToHand(gameData, exileCardId);
+            if (returnToHandIfUnable) returnExiledCardToHand(gameData, exileCardId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         } else if (faces.size() == 1) {
-            castSelectedFace(gameData, player, exileCardId, false, true, false, true,
+            castSelectedFace(gameData, player, exileCardId, false, returnToHandIfUnable, false, true,
                     faces.values().iterator().next());
         } else {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     player.getId(), null, null,
-                    new ChoiceContext.ExileFreeCastFaceChoice(exileCardId, faces, false, true, false, true),
+                    new ChoiceContext.ExileFreeCastFaceChoice(exileCardId, faces, false, returnToHandIfUnable,
+                            false, true),
                     new ArrayList<>(faces.keySet()), "Choose which spell to cast."));
         }
     }
@@ -248,7 +255,8 @@ public class ExileFreeCastSupport {
         boolean needsTarget = chosenEffects != null
                 ? EffectResolution.needsTarget(spellEffects, List.of(), card.isAuraThatRequiresAttachment(),
                 card.isEnchantPlayer())
-                : EffectResolution.needsTarget(card);
+                : EffectResolution.needsTarget(card) || (!card.getSpellTargets().isEmpty()
+                && !EffectResolution.targetsOnlyWithEtbAbilities(card));
         List<UUID> firstCandidates = !needsTarget ? List.of()
                 : chosenEffects != null
                 ? exileCastTargetSupport.firstSlotCandidates(gameData, card, spellEffects, playerId)

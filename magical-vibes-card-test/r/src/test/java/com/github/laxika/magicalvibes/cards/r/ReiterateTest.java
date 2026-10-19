@@ -105,6 +105,7 @@ class ReiterateTest extends BaseCardTest {
         harness.setHand(player1, List.of(riftBolt, new Reiterate(), new Cancel()));
         addReiterateMana(true);
         harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.castInstantWithBuyback(player1, 0, riftBolt.getId());

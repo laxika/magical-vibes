@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -40,6 +41,18 @@ public class RemoveAnyNumberOfCountersFromTargetPermanentEffectHandler implement
         if (gameData.chosenXValue != null) {
             int chosen = gameData.chosenXValue;
             gameData.chosenXValue = null;
+            List<CounterType> counterTypes = RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(target);
+            int available = counterTypes.stream().mapToInt(target::getCounterCount).sum();
+            if (counterTypes.size() > 1 && chosen > 0 && chosen < available) {
+                // The controller chooses which kinds of counters make up the chosen total.
+                ChoiceContext.RemoveChosenCountersChoice context = new ChoiceContext.RemoveChosenCountersChoice(
+                        target.getId(), entry.getControllerId(), entry.getCard().getName(), chosen,
+                        counterTypes, true);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        entry.getControllerId(), null, null, context, context.options(),
+                        entry.getCard().getName() + " — Choose " + chosen + " counters to remove."));
+                return;
+            }
             removeCounters(gameData, target, chosen);
             return;
         }

@@ -10,6 +10,11 @@ import java.util.List;
 /**
  * Returns up to one target card matching each filter from the controller's graveyard, with one
  * destination per target group.
+ *
+ * <p>{@code entersAnimatedAs}, when non-null, makes every card returned to the battlefield enter as
+ * that animation ("They are 5/5 Elemental creatures in addition to their other types", Relive the
+ * Past), so enter triggers already see creatures. It is only applied when every destination is the
+ * battlefield or {@code enterTapped} is set, i.e. when the cards enter simultaneously.</p>
  */
 public record ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
         List<CardPredicate> targetFilters,
@@ -17,8 +22,31 @@ public record ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
         List<String> targetDescriptions,
         List<Integer> minimumTargetCounts,
         boolean requiresDistinctTargets,
-        boolean enterTapped
+        boolean enterTapped,
+        AnimatePermanentsEffect entersAnimatedAs
 ) implements IndependentlyTargetedGraveyardCardsEffect {
+
+    public ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
+            List<CardPredicate> targetFilters,
+            List<GraveyardChoiceDestination> destinations,
+            List<String> targetDescriptions,
+            List<Integer> minimumTargetCounts,
+            boolean requiresDistinctTargets,
+            boolean enterTapped) {
+        this(targetFilters, destinations, targetDescriptions, minimumTargetCounts, requiresDistinctTargets,
+                enterTapped, null);
+    }
+
+    /** Every returned card enters as the given animation. */
+    public ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
+            List<CardPredicate> targetFilters,
+            List<GraveyardChoiceDestination> destinations,
+            List<String> targetDescriptions,
+            AnimatePermanentsEffect entersAnimatedAs) {
+        this(targetFilters, destinations, targetDescriptions,
+                targetFilters == null ? List.of() : Collections.nCopies(targetFilters.size(), 0), false, false,
+                entersAnimatedAs);
+    }
 
     public ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
             List<CardPredicate> targetFilters,

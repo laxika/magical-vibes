@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
@@ -32,27 +31,12 @@ public class WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffectHandler
                 (WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect) effect;
         UUID losingPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
-        if (losingPlayerId == null || controllerId == null || !wasAttackedByControlledSubtype(
-                gameData, losingPlayerId, controllerId, conditional.subtype())) {
+        if (losingPlayerId == null || controllerId == null || !gameQueryService
+                .wasPlayerAttackedByControlledSubtypeThisTurn(gameData, losingPlayerId, controllerId,
+                        conditional.subtype())) {
             return;
         }
 
         winGameEffectHandler.resolve(gameData, entry, new WinGameEffect());
-    }
-
-    private boolean wasAttackedByControlledSubtype(GameData gameData, UUID losingPlayerId,
-                                                   UUID controllerId, CardSubtype subtype) {
-        for (var attack : gameData.playersAttackedThisTurn.entrySet()) {
-            if (!attack.getValue().contains(losingPlayerId)) {
-                continue;
-            }
-            Permanent attacker = gameQueryService.findPermanentById(gameData, attack.getKey());
-            if (attacker != null
-                    && controllerId.equals(gameQueryService.findPermanentController(gameData, attacker.getId()))
-                    && gameQueryService.hasEffectiveSubtype(gameData, attacker, subtype)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

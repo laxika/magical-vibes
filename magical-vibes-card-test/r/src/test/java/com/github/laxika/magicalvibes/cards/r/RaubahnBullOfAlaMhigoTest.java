@@ -197,7 +197,7 @@ class RaubahnBullOfAlaMhigoTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, raubahn.getId());
         harness.passBothPriorities();
 
-        assertThat(raubahn.isAttacking()).isTrue();
+        assertThat(gd.playersAttackedThisTurn.get(raubahn.getId())).contains(player2.getId());
         assertThat(gd.stack).isEmpty();
     }
 

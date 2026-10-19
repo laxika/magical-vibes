@@ -90,6 +90,7 @@ class RobotDominationTest extends BaseCardTest {
     void simultaneousCreatureDeathsTriggerOnce() {
         Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
         Card drawn = new AerialDoombot();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn, new AerialDoombot(), new AerialDoombot()));
         Permanent first = addCreatureReady(player1, new AerialDoombot());
         Permanent second = addCreatureReady(player1, new AerialDoombot());

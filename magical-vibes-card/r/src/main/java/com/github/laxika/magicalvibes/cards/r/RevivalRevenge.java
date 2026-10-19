@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -46,7 +50,12 @@ public class RevivalRevenge extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Revenge — Double your life total. Target opponent loses half their life, rounded up",
                         List.of(
-                                new GainLifeEffect(new ControllerLifeTotal()),
+                                // CR 701.10d: doubling a negative life total means losing life (gaining a negative amount does nothing).
+                                new ConditionalEffect(new ControllerLifeAtLeast(0),
+                                        new GainLifeEffect(new ControllerLifeTotal())),
+                                new ConditionalEffect(new ControllerLifeAtMost(-1),
+                                        new LoseLifeEffect(new Scaled(new ControllerLifeTotal(), -1),
+                                                LoseLifeRecipient.CONTROLLER)),
                                 new LoseLifeEffect(
                                         new HalvedRoundedUp(new TargetPlayerLifeTotal()),
                                         LoseLifeRecipient.TARGET_PLAYER)

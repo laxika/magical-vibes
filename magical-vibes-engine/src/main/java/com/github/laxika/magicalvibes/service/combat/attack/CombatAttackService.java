@@ -113,6 +113,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
@@ -790,9 +791,15 @@ public class CombatAttackService {
             }
             // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
             Permanent attacker = battlefield.get(idx);
+            // CR 508.1d: a must-attack requirement is only "able" to be obeyed without paying an attack
+            // tax, since the controller is not required to pay that cost.
             if (attacker.getMustAttackTargetId() != null
                     && validTargetIds.contains(attacker.getMustAttackTargetId())
                     && attackLegalityService.canAttackDefender(gameData, attacker, attacker.getMustAttackTargetId())
+                    && castingCostService.getAttackPaymentPerCreature(gameData, playerId,
+                    attacker.getMustAttackTargetId(), attacker) == 0
+                    && castingCostService.getAttackLifePaymentPerCreature(gameData, playerId,
+                    attacker.getMustAttackTargetId(), attacker) == 0
                     && !attacker.getMustAttackTargetId().equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
             }
@@ -970,6 +977,7 @@ public class CombatAttackService {
                 gameData.recordAttackAgainstPlayer(attacker.getId(), attackTarget);
                 gameData.recordPlayerAttackAgainstPlayer(playerId, attackTarget);
                 var attackSubtypes = gameQueryService.effectiveCreatureSubtypes(gameData, attacker);
+                gameData.recordDeclaredAttackerSnapshot(attacker.getId(), playerId, attackSubtypes);
                 if (attacker.isFaceDown() || gameQueryService.isEnchantment(gameData, attacker)
                         || attackSubtypes.contains(CardSubtype.HORROR)
                         || attackSubtypes.contains(CardSubtype.NIGHTMARE)) {
@@ -1047,8 +1055,11 @@ public class CombatAttackService {
                     || equipmentAttackTrigger
                     ? List.of() : attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
             // A granted triggered ability is an ability of the creature, so losing all abilities removes it.
-            List<CardEffect> temporaryAttackEffects = gameQueryService.hasLostAllAbilities(gameData, attacker)
-                    ? List.of() : attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK);
+            List<CardEffect> temporaryAttackEffects = new ArrayList<>();
+            if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
+                temporaryAttackEffects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK));
+                temporaryAttackEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_ATTACK));
+            }
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
             // "Whenever this creature attacks, it deals 1 damage to any target").
             List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
@@ -1279,7 +1290,7 @@ public class CombatAttackService {
                                     attacker.getId(), playerId, new Permanent(attacker));
                         } else {
                             gameData.queueMayAbility(attacker.getCard(), playerId, may, otherAttackerId, attacker.getId(),
-                                    attacker.getAttackTarget());
+                                    attackedTargetForPendingMay(gameData, attacker, may));
                         }
                     }
 
@@ -2123,12 +2134,35 @@ public class CombatAttackService {
                 directlyAttackedPlayers.add(attackedTargetId);
             }
         }
+        // "Whenever you attack a player or planeswalker" also fires once for each attacked planeswalker.
+        // Attacked battles don't count (CR 508.1b: only players, planeswalkers and battles can be attacked,
+        // and the ability names players and planeswalkers).
+        Set<UUID> directlyAttackedPlaneswalkers = new LinkedHashSet<>();
+        for (int idx : attackerIndices) {
+            UUID attackedTargetId = resolvedTargets.get(idx);
+            Permanent attackedPermanent = gameData.playerIds.contains(attackedTargetId)
+                    ? null : gameQueryService.findPermanentById(gameData, attackedTargetId);
+            if (attackedPermanent != null && gameQueryService.isPlaneswalker(gameData, attackedPermanent)) {
+                directlyAttackedPlaneswalkers.add(attackedTargetId);
+            }
+        }
+        List<Map.Entry<EffectSlot, UUID>> attackedDefenderSlots = new ArrayList<>();
         for (UUID attackedPlayerId : directlyAttackedPlayers) {
+            attackedDefenderSlots.add(Map.entry(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER, attackedPlayerId));
+            attackedDefenderSlots.add(Map.entry(
+                    EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER, attackedPlayerId));
+        }
+        for (UUID attackedPlaneswalkerId : directlyAttackedPlaneswalkers) {
+            attackedDefenderSlots.add(Map.entry(
+                    EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER, attackedPlaneswalkerId));
+        }
+        for (Map.Entry<EffectSlot, UUID> attackedDefenderSlot : attackedDefenderSlots) {
+            EffectSlot attackPlayerSlot = attackedDefenderSlot.getKey();
+            UUID attackedPlayerId = attackedDefenderSlot.getValue();
             for (Permanent perm : new ArrayList<>(battlefield)) {
-                List<CardEffect> effects = new ArrayList<>(
-                        perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER));
+                List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(attackPlayerSlot));
                 effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER));
+                        gameData, perm, attackPlayerSlot));
                 if (effects.isEmpty()) continue;
 
                 ConditionContext targetContext = ConditionContext.forPermanent(perm, playerId)
@@ -2594,18 +2628,16 @@ public class CombatAttackService {
         // Check for "whenever a creature attacks you or a planeswalker you control" triggers
         // (ON_CREATURE_ATTACKS_YOU). These fire once per attacking creature, on the permanents of
         // the player being attacked (directly or via one of their planeswalkers). The attacking
-        // creature is stored as a non-targeting targetId so the effect can act on it.
+        // creature is stored as a non-targeting targetId so the effect can act on it. A battle is
+        // attacked rather than its protector (CR 506.2, CR 508.1b), so attacks on battles don't fire these.
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             UUID attackedTargetId = resolvedTargets.get(idx);
             Permanent attackedBattle = gameData.playerIds.contains(attackedTargetId)
                     ? null : gameQueryService.findPermanentById(gameData, attackedTargetId);
-            // The defending player of an attacked battle is its protector (CR 506.2).
+            if (attackedBattle != null && gameQueryService.isBattle(gameData, attackedBattle)) continue;
             UUID attackedPlayerId = gameData.playerIds.contains(attackedTargetId)
                     ? attackedTargetId
-                    : attackedBattle != null && gameQueryService.isBattle(gameData, attackedBattle)
-                    && attackedBattle.getProtectorPlayerId() != null
-                    ? attackedBattle.getProtectorPlayerId()
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
             if (attackedPlayerId == null) continue;
             triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
@@ -4405,5 +4437,24 @@ public class CombatAttackService {
             }
         }
         return fallbackControllerId;
+    }
+
+    /**
+     * CR 508.5: "the defending player" stays the player the creature attacked even if an attacked
+     * planeswalker or battle leaves before the pending "you may" is answered, so a may-ability that only
+     * needs the defending player is queued with that player rather than with the attacked permanent.
+     */
+    private UUID attackedTargetForPendingMay(GameData gameData, Permanent attacker,
+                                             com.github.laxika.magicalvibes.model.effect.MayEffect may) {
+        UUID attackedTargetId = attacker.getAttackTarget();
+        if (attackedTargetId == null || gameData.playerIds.contains(attackedTargetId)
+                || !(may.wrapped() instanceof DealDamageToDefendingPlayerCreaturesEffect)) {
+            return attackedTargetId;
+        }
+        Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackedTargetId);
+        UUID defendingPlayerId = attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
+                ? attackedPermanent.getProtectorPlayerId()
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        return defendingPlayerId != null ? defendingPlayerId : attackedTargetId;
     }
 }

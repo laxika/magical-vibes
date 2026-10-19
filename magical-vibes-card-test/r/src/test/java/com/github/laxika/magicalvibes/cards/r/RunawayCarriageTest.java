@@ -20,7 +20,7 @@ class RunawayCarriageTest extends BaseCardTest {
         addCreatureReady(player1, new RunawayCarriage());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Runaway Carriage");
         harness.assertInGraveyard(player1, "Runaway Carriage");

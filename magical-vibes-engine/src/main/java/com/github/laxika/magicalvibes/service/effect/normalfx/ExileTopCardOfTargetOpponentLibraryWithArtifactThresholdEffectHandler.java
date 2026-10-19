@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -60,11 +61,18 @@ public class ExileTopCardOfTargetOpponentLibraryWithArtifactThresholdEffectHandl
         gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
 
         int artifactCount = countArtifacts(gameData, controllerId);
-        if (topCard.getManaValue() < artifactCount) {
+        // An Adventurer qualifies through either face it could be cast as (CR 715.4 / cascade's
+        // "resulting spell's mana value" wording), so the offer is limited to faces under the threshold.
+        boolean adventurer = topCard.getBackFaceCard() != null
+                && topCard.getCastingOption(AdventureCast.class).isPresent();
+        boolean qualifies = topCard.getManaValue() < artifactCount
+                || adventurer && topCard.getBackFaceCard().getManaValue() < artifactCount;
+        if (qualifies) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(),
                     controllerId,
-                    List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
+                    List.of(new MayPlayExiledCardWithoutPayingManaCostEffect(false, false, false,
+                            artifactCount - 1)),
                     "Cast " + topCard.getName() + " without paying its mana cost?",
                     topCard.getId()));
         }

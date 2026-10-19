@@ -65,7 +65,7 @@ class RubbleRouserTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB: accepting with an empty hand does not draw")
+    @DisplayName("ETB: with an empty hand there is nothing to discard, so no prompt and no draw")
     void etbWithoutDiscardDoesNotDraw() {
         Forest libraryCard = new Forest();
         harness.setLibrary(player1, List.of(libraryCard));
@@ -78,8 +78,8 @@ class RubbleRouserTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

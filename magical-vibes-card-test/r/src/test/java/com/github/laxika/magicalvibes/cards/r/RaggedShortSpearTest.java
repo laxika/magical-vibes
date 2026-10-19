@@ -80,7 +80,7 @@ class RaggedShortSpearTest extends BaseCardTest {
     }
 
     @Test
-    void acceptingWithEmptyHandDoesNotDraw() {
+    void enteringWithEmptyHandOffersNoChoiceAndDoesNotDraw() {
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, new Mountain()));
         harness.forceActivePlayer(player1);
@@ -89,8 +89,8 @@ class RaggedShortSpearTest extends BaseCardTest {
         harness.castFromHand(player1, new RaggedShortSpear(), "{1}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2).first().isSameAs(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

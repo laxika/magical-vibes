@@ -5,14 +5,21 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnTargetAndSacrificedCardsEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class RegisterDelayedReturnTargetAndSacrificedCardsEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,9 +35,19 @@ public class RegisterDelayedReturnTargetAndSacrificedCardsEffectHandler implemen
         if (entry.getSacrificedCardId() != null && !cardIds.contains(entry.getSacrificedCardId())) {
             cardIds.add(entry.getSacrificedCardId());
         }
-        if (!cardIds.isEmpty()) {
+        Map<UUID, Long> versions = new HashMap<>();
+        List<UUID> remembered = new ArrayList<>(2);
+        for (UUID cardId : cardIds) {
+            if (gameQueryService.findCardInGraveyardById(gameData, cardId) != null) {
+                versions.put(cardId, gameData.graveyardEntryVersion(cardId));
+                remembered.add(cardId);
+            } else if (gameData.findExiledCard(cardId) != null) {
+                remembered.add(cardId);
+            }
+        }
+        if (!remembered.isEmpty()) {
             gameData.queueDelayedAction(new DelayedGraveyardCardsToBattlefieldUnderControl(
-                    cardIds, entry.getControllerId()));
+                    remembered, entry.getControllerId(), entry.getCard(), versions));
         }
     }
 }

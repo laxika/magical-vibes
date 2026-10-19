@@ -112,13 +112,25 @@ public class CombatTriggerService {
                 boolean includeOncePerBlockRegistration = !hasOncePerBlockRegistration
                         || oncePerBlockTriggeredPermanents == null
                         || oncePerBlockTriggeredPermanents.add(perm.getId());
-                List<CardEffect> nonPerBlockerEffects = auraRegs.stream()
+                List<EffectRegistration> queuedRegistrations = auraRegs.stream()
                         .filter(r -> r.triggerMode() != TriggerMode.PER_BLOCKER)
                         .filter(r -> r.triggerMode() != TriggerMode.ONCE_PER_BLOCK
                                 || includeOncePerBlockRegistration)
+                        .toList();
+                List<List<CardEffect>> effectGroups = new ArrayList<>();
+                List<CardEffect> sharedEffects = queuedRegistrations.stream()
+                        .filter(r -> r.triggerMode() != TriggerMode.INDEPENDENT)
                         .map(EffectRegistration::effect)
                         .toList();
-                if (!nonPerBlockerEffects.isEmpty()) {
+                if (!sharedEffects.isEmpty()) {
+                    effectGroups.add(sharedEffects);
+                }
+                queuedRegistrations.stream()
+                        .filter(r -> r.triggerMode() == TriggerMode.INDEPENDENT)
+                        .forEach(r -> effectGroups.add(List.of(r.effect())));
+                for (List<CardEffect> nonPerBlockerEffects : effectGroups) {
+                    // Each INDEPENDENT registration is its own triggered ability (Reaper's Talisman).
+                    if (nonPerBlockerEffects.isEmpty()) continue;
                     // Bake the creature's controller into effects that need it,
                     // and transform subtype-filtered combat effects
                     List<CardEffect> effectsForStack = new ArrayList<>();
@@ -206,7 +218,7 @@ public class CombatTriggerService {
                                 && !conditionEvaluationService.isMet(gameData, ce.condition(), attackTargetContext));
                     }
 
-                    if (effectsForStack.isEmpty()) return;
+                    if (effectsForStack.isEmpty()) continue;
 
                     int previousCopies = slot == EffectSlot.ON_ATTACK
                             ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
@@ -244,7 +256,7 @@ public class CombatTriggerService {
                             graveyardTargetingService.handleAttackGraveyardTargeting(
                                     gameData, auraOwnerId, perm.getCard(), effectsForStack, perm.getId(),
                                     defendingPlayerId);
-                            return;
+                            continue;
                         } else {
                             // Check if any effect needs a permanent target — queue for target selection
                             boolean needsTarget = effectsForStack.stream()

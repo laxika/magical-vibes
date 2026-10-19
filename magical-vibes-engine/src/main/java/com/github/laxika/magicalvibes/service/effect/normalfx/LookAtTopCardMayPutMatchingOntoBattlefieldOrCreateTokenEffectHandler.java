@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -25,6 +27,7 @@ public class LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenEffectHandle
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final CreateTokenEffectHandler createTokenEffectHandler;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,6 +51,8 @@ public class LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenEffectHandle
                 GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
 
         Card topCard = deck.getFirst();
+        cardRevealService.revealToPlayer(gameData, controllerId, GameEventFact.RevealZone.LIBRARY,
+                List.of(topCard), controllerId);
         if (!predicateEvaluationService.matchesCardPredicate(topCard, typed.predicate(), entry.getCard().getId())) {
             gameLogService.append(gameData,
                     GameLog.text(playerName + " leaves the top card on their library (" + sourceName + ")."));

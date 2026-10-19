@@ -105,10 +105,11 @@ class RagostDeftGastronautTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 21);
 
+        assertThat(fountain.isTapped()).isTrue();
+
         advanceToEndStep(player2);
 
-        assertThat(ragost.isTapped()).isFalse();
-        assertThat(fountain.isTapped()).isTrue();
+        assertThat(gameLogContains("Ragost, Deft Gastronaut untaps.")).isTrue();
     }
 
     @Test

@@ -26,10 +26,12 @@ public class RampartArchitect extends Card {
                 "Wall", 1, 3, CardColor.WHITE, List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, wallToken);
         addEffect(EffectSlot.ON_ATTACK, wallToken);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        var defenderDeathSearch = new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.DEFENDER),
                 new MayEffect(new SearchLibraryEffect(
                         CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        "Search your library for a basic land card?")));
+                        "Search your library for a basic land card?"));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, defenderDeathSearch);
+        addEffect(EffectSlot.ON_DEATH, defenderDeathSearch);
     }
 }

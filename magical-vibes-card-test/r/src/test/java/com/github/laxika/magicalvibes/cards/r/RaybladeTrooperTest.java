@@ -182,6 +182,7 @@ class RaybladeTrooperTest extends BaseCardTest {
     void warpedTrooperCanBeCastNormallyOnLaterTurnAndStaysInPlay() {
         harness.setLibrary(player1, List.of(new RaybladeTrooper(), new RaybladeTrooper()));
         harness.setLibrary(player2, List.of(new RaybladeTrooper(), new RaybladeTrooper()));
+        harness.setHand(player2, List.of());
         RaybladeTrooper card = new RaybladeTrooper();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.WHITE, 1);

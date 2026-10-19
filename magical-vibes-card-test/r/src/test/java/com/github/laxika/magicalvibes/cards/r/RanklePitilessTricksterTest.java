@@ -63,7 +63,7 @@ class RanklePitilessTricksterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(player1Creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(player2Creature);
         Permanent rankle = findPermanent(player1, "Rankle, Pitiless Trickster");
-        assertThat(rankle.getCard().getPower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rankle)).isEqualTo(3);
     }
 
     private Permanent addReadyRankle() {

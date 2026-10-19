@@ -220,7 +220,9 @@ public class DestructionSupport {
                 if (gameQueryService.isLand(gameData, perm)) {
                     continue;
                 }
-                if (perm.getCard().getManaValue() == targetManaValue) {
+                // A face-down permanent has no mana cost, so its mana value is 0 whatever it was face up.
+                int manaValue = perm.isFaceDown() ? 0 : perm.getCard().getManaValue();
+                if (manaValue == targetManaValue) {
                     toDestroy.add(perm);
                 }
             }

@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
 
@@ -35,7 +37,9 @@ public class RestlessBloodseeker extends Card {
                 false,
                 null,
                 List.of(
-                        new SacrificeMultiplePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.BLOOD)),
+                        new SacrificeMultiplePermanentsCost(2, new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                                new PermanentIsTokenPredicate()))),
                         new TransformSelfEffect()),
                 "Sacrifice two Blood tokens: Transform this creature. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED

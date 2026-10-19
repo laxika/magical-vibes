@@ -64,14 +64,14 @@ class ReinforcedRoninTest extends BaseCardTest {
     @Test
     void returnsStolenRoninToOwnerAtControllersEndStep() {
         Permanent ronin = harness.addToBattlefieldAndReturn(player2, new ReinforcedRonin());
-        gd.stolenCreatures.put(ronin.getId(), player1.getId());
+        setOwnerAndController(ronin, player2, player1);
 
-        advanceToEndStep(player2);
+        advanceToEndStep(player1);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Reinforced Ronin");
-        harness.assertInHand(player1, "Reinforced Ronin");
-        harness.assertNotInHand(player2, "Reinforced Ronin");
+        harness.assertNotOnBattlefield(player1, "Reinforced Ronin");
+        harness.assertInHand(player2, "Reinforced Ronin");
+        harness.assertNotInHand(player1, "Reinforced Ronin");
     }
 
     @Test

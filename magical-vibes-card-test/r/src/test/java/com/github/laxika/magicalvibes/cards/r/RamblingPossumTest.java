@@ -24,6 +24,7 @@ class RamblingPossumTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, saddler.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         assertThat(possum.isSaddled()).isTrue();
         assertThat(saddler.isTapped()).isTrue();
@@ -110,6 +111,7 @@ class RamblingPossumTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, firstSaddler.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         saddle(possum);
 
@@ -137,8 +139,9 @@ class RamblingPossumTest extends BaseCardTest {
     @DisplayName("A creature that saddled the Possum remains eligible after an opponent gains control of it")
     void mayReturnSaddlerNowControlledByOpponent() {
         Permanent possum = addCreatureReady(player1, new RamblingPossum());
-        Permanent saddler = addCreatureReady(player1, new RamblingPossum());
-        saddler.getCard().setOwnerId(player1.getId());
+        RamblingPossum saddlerCard = new RamblingPossum();
+        saddlerCard.setOwnerId(player1.getId());
+        Permanent saddler = addCreatureReady(player1, saddlerCard);
 
         saddle(possum);
         gd.playerBattlefields.get(player1.getId()).remove(saddler);

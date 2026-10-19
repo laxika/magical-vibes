@@ -78,13 +78,7 @@ class RoilingHorrorTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
-        resolveAllTriggers();
+        answerLastCounterTriggers(true);
 
         Permanent horror = findPermanent(player1, "Roiling Horror");
         assertThat(gqs.hasKeyword(gd, horror, Keyword.HASTE)).isTrue();
@@ -100,14 +94,7 @@ class RoilingHorrorTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        answerLastCounterTriggers(false);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(targetLife - 1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLife + 1);
@@ -177,6 +164,25 @@ class RoilingHorrorTest extends BaseCardTest {
         harness.assertLife(player1, 1);
         harness.assertLife(player2, 20);
         assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    /**
+     * Answers the simultaneous last-counter triggers in whichever order the engine offers them. Both the
+     * drain targeting choice and the suspend cast choice belong to the controller, who orders them
+     * (CR 603.3b), so the test does not depend on one fixed order.
+     */
+    private void answerLastCounterTriggers(boolean mayCast) {
+        for (int step = 0; step < 10; step++) {
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+                harness.handlePermanentChosen(player1, player2.getId());
+            } else if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                harness.handleMayAbilityChosen(player1, mayCast);
+            } else if (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            } else {
+                break;
+            }
+        }
     }
 
     private RoilingHorror suspendCard(int xValue) {

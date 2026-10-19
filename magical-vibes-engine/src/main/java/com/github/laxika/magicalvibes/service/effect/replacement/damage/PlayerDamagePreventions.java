@@ -124,9 +124,9 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 preventAll("ProtectionFromName", "Protection from the chosen name",
                         ctx -> preventable(ctx)
                                 && (gameQueryService.playerHasProtectionFromChosenName(
-                                ctx.gameData(), ctx.playerId(), ctx.source().getName())
+                                ctx.gameData(), ctx.playerId(), nameForChosenNameCheck(ctx))
                                 || gameQueryService.isDamageFromChosenNamePreventedForController(
-                                ctx.gameData(), ctx.playerId(), ctx.source().getName()))),
+                                ctx.gameData(), ctx.playerId(), nameForChosenNameCheck(ctx)))),
                 preventAll("ProtectionFromCardType", "Protection from the chosen card type",
                         ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromChosenCardType(
                                 ctx.gameData(), ctx.playerId(), ctx.source(), ctx.sourcePermanent())),
@@ -262,6 +262,14 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
     @Override
     protected List<Rule<PlayerDamageContext>> rules() {
         return rules;
+    }
+
+    /** A face-down source has no name (CR 708.2), so it matches no chosen name. */
+    private static String nameForChosenNameCheck(PlayerDamageContext ctx) {
+        if (ctx.sourcePermanent() != null && ctx.sourcePermanent().isFaceDown()) {
+            return null;
+        }
+        return ctx.source().getName();
     }
 
     private boolean preventable(PlayerDamageContext ctx) {

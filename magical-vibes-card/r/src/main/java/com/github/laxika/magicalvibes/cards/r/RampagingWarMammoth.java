@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -19,7 +20,7 @@ public class RampagingWarMammoth extends Card {
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}{2}{R}",
-                List.of(new DestroyEachTargetPermanentEffect(), new DrawCardEffect(1)),
+                List.of(new DrawCardEffect(1)),
                 "Cycling {X}{2}{R} ({X}{2}{R}, Discard this card: Draw a card.)",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsArtifactPredicate(),
@@ -31,6 +32,7 @@ public class RampagingWarMammoth extends Card {
                 List.of(),
                 0,
                 100
-        ).withXScaledTargets());
+        ).withXScaledTargets().withCyclingTriggerTargets());
+        addEffect(EffectSlot.ON_SELF_CYCLED, new DestroyEachTargetPermanentEffect());
     }
 }

@@ -51,6 +51,7 @@ class RoadsideAssistanceTest extends BaseCardTest {
         pilot.setSummoningSick(false);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
         harness.handlePermanentChosen(player1, pilot.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();

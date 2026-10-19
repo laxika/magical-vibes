@@ -150,7 +150,7 @@ class ResurrectedCultistTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
 
         gd.playerGraveyards.get(player1.getId()).remove(cultist);
-        gd.getPlayerExiledCards(player1.getId()).add(cultist);
+        gd.addToExile(player1.getId(), cultist);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Resurrected Cultist");

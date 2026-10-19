@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.t.TheBlackstaffOfWaterdeep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -157,6 +159,8 @@ class RuneOfMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         staff.untap();
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(CreatureControlService.class).onSourceUntapped(gd, staff));
         harness.runStateBasedActions();
         assertThat(gqs.isCreature(gd, equipment)).isFalse();
         harness.activateAbilityWithMultiTargets(player1, 2, 0,

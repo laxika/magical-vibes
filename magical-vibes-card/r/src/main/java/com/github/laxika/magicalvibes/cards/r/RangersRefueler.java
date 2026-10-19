@@ -26,8 +26,8 @@ public class RangersRefueler extends Card {
                 false,
                 "{4}",
                 List.of(
-                        new AnimatePermanentsEffect(3, 3, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT),
+                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT, null),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "Exhaust — {4}: This Vehicle becomes an artifact creature. Put a +1/+1 counter on it."

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DeferredSpellCopy;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -311,6 +312,11 @@ public class CopySupport {
         }
 
         copy.copyTargetingFrom(original);
+        // "Cast only from your graveyard" is part of the copiable ability that stops the copy
+        // from being cast from any other zone (Haakon, Stromgald Scourge).
+        if (original.isCastOnlyFromGraveyard()) {
+            original.getCastingOption(GraveyardCast.class).ifPresent(copy::addCastingOption);
+        }
         for (var ability : original.getActivatedAbilities()) {
             copy.addActivatedAbility(ability);
         }

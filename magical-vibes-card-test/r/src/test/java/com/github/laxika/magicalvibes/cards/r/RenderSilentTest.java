@@ -133,10 +133,10 @@ class RenderSilentTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears, new RenderSilent()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.handleMayAbilityChosen(player1, true);
 

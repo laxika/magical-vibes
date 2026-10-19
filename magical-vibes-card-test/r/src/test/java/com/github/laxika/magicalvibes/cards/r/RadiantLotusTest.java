@@ -27,6 +27,7 @@ class RadiantLotusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RadiantLotus());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.END_STEP));
 
         harness.activateAbility(player1, 0, 0, 1, player2.getId());
         harness.handlePermanentChosen(player1, source.getId());

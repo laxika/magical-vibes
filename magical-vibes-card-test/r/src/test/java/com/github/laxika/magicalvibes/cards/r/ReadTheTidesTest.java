@@ -102,6 +102,7 @@ class ReadTheTidesTest extends BaseCardTest {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new AlpineWatchdog());
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
         harness.setHand(player1, List.of(new ReadTheTides()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castModalSorcery(player1, 0, 1, List.of(own.getId(), opposing.getId()));
@@ -119,6 +120,7 @@ class ReadTheTidesTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
         harness.setHand(player1, List.of(new ReadTheTides()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castModalSorcery(player1, 0, 1, List.of(first.getId(), second.getId()));
@@ -164,6 +166,7 @@ class ReadTheTidesTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
         gd.stolenCreatures.put(creature.getId(), player1.getId());
         harness.setHand(player1, List.of(new ReadTheTides()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castModalSorcery(player1, 0, 1, List.of(creature.getId()));
@@ -179,6 +182,7 @@ class ReadTheTidesTest extends BaseCardTest {
     void doesNotDrawWhenAllTargetsBecomeIllegal() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
         harness.setHand(player1, List.of(new ReadTheTides()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 

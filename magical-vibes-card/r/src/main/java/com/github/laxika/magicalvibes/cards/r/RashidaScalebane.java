@@ -20,9 +20,10 @@ import java.util.List;
 public class RashidaScalebane extends Card {
 
     public RashidaScalebane() {
-        // Gain life first so the Dragon's power is read before it is destroyed.
+        // Destroy first, then gain life equal to the destroyed Dragon's last-known power, so that a
+        // life-total restriction on the Dragon (Platinum Emperion) has already ended when life is gained.
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new GainLifeEffect(new TargetPower()), new DestroyTargetPermanentEffect(true)),
+                List.of(new DestroyTargetPermanentEffect(true), new GainLifeEffect(new TargetPower())),
                 "{T}: Destroy target attacking or blocking Dragon. It can't be regenerated. You gain life equal to its power.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

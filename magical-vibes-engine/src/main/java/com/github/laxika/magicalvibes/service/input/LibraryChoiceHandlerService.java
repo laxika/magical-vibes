@@ -165,6 +165,8 @@ public class LibraryChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport exileFreeCastSupport;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -1741,6 +1743,9 @@ public class LibraryChoiceHandlerService {
             if (putChosenCardOnBattlefield) {
                 placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), handOwnerId,
                         toBattlefieldTapped, false, false, false, null, battlefieldCounter, enterWithCounters);
+            } else if (isHeldOutForBattlefieldDecision(gameData, followUp, chosenCard, playerId)) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " holds ", chosenCard, " for the battlefield decision."));
             } else {
                 addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
             }
@@ -2255,6 +2260,42 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
+    /**
+     * Whether the found card is offered for the battlefield "instead" of going to hand, so it must not
+     * enter the hand first. The follow-up carries the card and puts it into hand if the offer is declined.
+     */
+    private boolean isHeldOutForBattlefieldDecision(GameData gameData, LibrarySearchFollowUp followUp,
+            Card chosenCard, UUID playerId) {
+        LibrarySearchFollowUp.SelectedCardFollowUp selected = followUp.selectedCardFollowUp();
+        if (selected == null || selected.predicate() == null || gameData.pendingEffectResolutionEntry == null
+                || !predicateEvaluationService.matchesCardPredicate(chosenCard, selected.predicate(), null,
+                gameData, playerId, null, null, gameData.pendingEffectResolutionEntry.getXValue())) {
+            return false;
+        }
+        CardEffect effect = selected.effect();
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    com.github.laxika.magicalvibes.service.effect.ConditionContext.forStackEntry(
+                            gameData.pendingEffectResolutionEntry))) {
+                return false;
+            }
+            effect = conditional.wrapped();
+        }
+        return effect instanceof com.github.laxika.magicalvibes.model.effect.MayPutSelectedCardOntoBattlefieldEffect;
+    }
+
+    private static CardEffect withChosenCard(CardEffect effect, Card chosenCard) {
+        if (effect instanceof ChosenCardAwareEffect aware) {
+            return aware.withChosenCard(chosenCard);
+        }
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect conditional
+                && conditional.wrapped() instanceof ChosenCardAwareEffect aware) {
+            return new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(conditional.condition(),
+                    aware.withChosenCard(chosenCard), conditional.interveningIf(), conditional.triggerTimeOnly());
+        }
+        return effect;
+    }
+
     private void insertSelectedCardFollowUp(GameData gameData, LibrarySearchFollowUp followUp,
             Card chosenCard, UUID playerId) {
         LibrarySearchFollowUp.SelectedCardFollowUp selectedCardFollowUp = followUp.selectedCardFollowUp();
@@ -2269,9 +2310,7 @@ public class LibraryChoiceHandlerService {
             }
             gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCard);
             CardEffect followUpEffect = selectedCardFollowUp.effect();
-            if (followUpEffect instanceof ChosenCardAwareEffect chosenCardAwareEffect) {
-                followUpEffect = chosenCardAwareEffect.withChosenCard(chosenCard);
-            }
+            followUpEffect = withChosenCard(followUpEffect, chosenCard);
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
                     List.of(followUpEffect));
@@ -3272,7 +3311,8 @@ public class LibraryChoiceHandlerService {
             Set<Integer> selectedPowers = new HashSet<>();
             for (Card card : allRevealedCards) {
                 if (cardIds.contains(card.getId())) {
-                    int power = card.getPower() == null ? 0 : card.getPower();
+                    Integer currentPower = gameQueryService.getEffectiveCardPower(gameData, card);
+                    int power = currentPower == null ? 0 : currentPower;
                     if (!selectedPowers.add(power)) {
                         throw new IllegalStateException("Selected cards must have different powers");
                     }

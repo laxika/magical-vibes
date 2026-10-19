@@ -49,10 +49,11 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
 
     public void completeTapChoice(GameData gameData, List<UUID> chosenIds,
                                   MultiPermanentChoiceContext.RaidingPartyTapChoice context) {
+        UUID tappingPlayerId = context.playerIds().get(context.playerIndex());
         int tappedCount = 0;
         for (UUID permanentId : chosenIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent)) {
+            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent, tappingPlayerId)) {
                 tappedCount++;
             }
         }
@@ -163,8 +164,7 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
 
     private boolean isPlains(GameData gameData, Permanent permanent) {
         return gameQueryService.isLand(gameData, permanent)
-                && gameQueryService.cardHasSubtype(permanent.getCard(), CardSubtype.PLAINS,
-                gameData, permanent.getCard().getOwnerId());
+                && gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.PLAINS);
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

@@ -18,7 +18,7 @@ public class RisonaAsariCommander extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.INDESTRUCTIBLE)),
                 new PutCountersOnSelfEffect(CounterType.INDESTRUCTIBLE)));
 
-        addEffect(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
+        addEffect(EffectSlot.ON_CONTROLLER_DEALT_COMBAT_DAMAGE,
                 new RemoveCounterFromSourceEffect(CounterType.INDESTRUCTIBLE, 1));
     }
 }

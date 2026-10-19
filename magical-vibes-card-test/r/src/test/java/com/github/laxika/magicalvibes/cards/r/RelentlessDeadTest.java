@@ -69,14 +69,8 @@ class RelentlessDeadTest extends BaseCardTest {
         Card zombie = new DiregrafColossus();
         prepareDeath(List.of(zombie));
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        if (choice != null) {
-            harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
-        }
-
         assertThat(gd.stack).anySatisfy(entry ->
-                assertThat(entry.getTargetId()).isEqualTo(zombie.getId()));
+                assertThat(entry.getTargetCardIds()).containsExactly(zombie.getId()));
         harness.assertInGraveyard(player1, "Diregraf Colossus");
     }
 
@@ -113,10 +107,10 @@ class RelentlessDeadTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Relentless Dead");
 
         harness.addMana(player1, ManaColor.BLACK, 1);
-        resolveUntilHandTrigger();
-        harness.handleMayAbilityChosen(player1, true);
-        resolveRemainingTriggerByDecliningX();
+        harness.passBothPriorities();
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Relentless Dead");
         harness.assertNotInHand(player1, "Relentless Dead");
     }
@@ -128,6 +122,11 @@ class RelentlessDeadTest extends BaseCardTest {
         harness.setHand(player2, List.of(new FieryTemper()));
         harness.addMana(player2, ManaColor.RED, 3);
         harness.castAndResolveInstant(player2, 0, dead.getId());
+        PendingInteraction.MultiGraveyardChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        if (targetChoice != null) {
+            harness.handleMultipleCardsChosen(player1, List.of(targetChoice.cards().getFirst().getId()));
+        }
     }
 
     private void resolveUntilHandTrigger() {
@@ -150,11 +149,6 @@ class RelentlessDeadTest extends BaseCardTest {
             PendingInteraction interaction = gd.interaction.activeInteraction();
             if (interaction instanceof PendingInteraction.XValueChoice) {
                 harness.handleXValueChosen(player1, x);
-                PendingInteraction.GraveyardChoice choice =
-                        gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-                if (choice != null) {
-                    harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
-                }
                 return;
             }
             if (interaction instanceof PendingInteraction.MayAbilityChoice) {

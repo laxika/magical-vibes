@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -98,7 +99,7 @@ class RiptidePilfererTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         resolveCombat();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -113,7 +114,7 @@ class RiptidePilfererTest extends BaseCardTest {
         harness.setHand(player2, List.of(handCard));
 
         resolveCombat();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         harness.assertLife(player2, 18);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
@@ -145,7 +146,7 @@ class RiptidePilfererTest extends BaseCardTest {
         HedgeTroll handCard = new HedgeTroll();
         harness.setHand(player2, List.of(handCard));
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(pilferer);
         gd.playerGraveyards.get(player1.getId()).add(pilferer.getCard());

@@ -151,6 +151,7 @@ class RhythmicWaterVortexTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         MuYanling muYanling = new MuYanling();
         harness.setLibrary(player1, List.of(muYanling));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new RhythmicWaterVortex()));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));

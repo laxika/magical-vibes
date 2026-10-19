@@ -38,6 +38,6 @@ public class RimehornAurochs extends Card {
                 List.of(TargetFilters.creature(), TargetFilters.creature()),
                 2,
                 2
-        ));
+        ).withAllowSharedTargets());
     }
 }

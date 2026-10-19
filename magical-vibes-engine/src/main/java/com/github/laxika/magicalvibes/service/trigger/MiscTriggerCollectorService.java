@@ -681,6 +681,19 @@ public class MiscTriggerCollectorService {
             wrapped = manaValueAware.boundToSacrificedPermanentManaValue(
                     as.sacrificedCard().getManaValue());
         }
+        CardEffect graveyardTargeting = wrapped instanceof MayEffect may ? may.wrapped() : wrapped;
+        if (graveyardTargeting instanceof ReturnCardFromGraveyardEffect returnEffect
+                && returnEffect.targetGraveyard()) {
+            // The card is targeted as the trigger is put on the stack (CR 603.3d), so the may choice
+            // comes at resolution. "Do this only once each turn" is used up only by an accepted return.
+            boolean markOnAcceptance = match.rawEffect() instanceof OncePerTurnTriggerEffect once
+                    && once.markOnAcceptance();
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(wrapped)),
+                    null, 0, 0, 0, null, false, null, match.permanent().getId(), markOnAcceptance));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            return true;
+        }
         if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
@@ -866,16 +879,20 @@ public class MiscTriggerCollectorService {
             GivePoisonCountersEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
         GivePoisonCountersEffect resolved = new GivePoisonCountersEffect(
-                e.amount(), PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER, null, ept.tappedPermanentControllerId());
-        match.gameData().enqueueTrigger(new StackEntry(
+                e.amount(), PoisonRecipient.TARGET_PERMANENT_CONTROLLER);
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s triggered ability",
                 new ArrayList<>(List.of(resolved)),
-                null,
+                ept.tappedPermanent().getId(),
                 match.permanent().getId()
-        ));
+        );
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentId(ept.tappedPermanent().getId());
+        entry.setTriggeringPermanentControllerId(ept.tappedPermanentControllerId());
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on enchanted permanent tap ({})",
                 match.gameData().id, match.permanent().getCard().getName(),

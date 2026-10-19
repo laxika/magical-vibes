@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -31,11 +32,14 @@ public class RakdosRiteknife extends Card {
                 new Fixed(0),
                 GrantScope.EQUIPPED_CREATURE));
 
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new SacrificeCreatureCost(), new PutCountersOnSelfEffect(CounterType.BLOOD)),
-                "{T}, Sacrifice a creature: Put a blood counter on Rakdos Riteknife."
+        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                new ActivatedAbility(
+                        true,
+                        null,
+                        List.of(new SacrificeCreatureCost(), new PutCountersOnGrantingEquipmentEffect(CounterType.BLOOD)),
+                        "{T}, Sacrifice a creature: Put a blood counter on Rakdos Riteknife."
+                ),
+                GrantScope.EQUIPPED_CREATURE
         ));
 
         addActivatedAbility(new ActivatedAbility(

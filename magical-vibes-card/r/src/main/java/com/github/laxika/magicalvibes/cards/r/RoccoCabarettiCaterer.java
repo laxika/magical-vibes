@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class RoccoCabarettiCaterer extends Card {
 
     public RoccoCabarettiCaterer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 new MayEffect(
                         new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
                                 LibrarySearchDestination.BATTLEFIELD, new ManaValueBound(false, 0)),

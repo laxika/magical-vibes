@@ -36,11 +36,21 @@ public class ExileTopCardsRepeatIfLastNonlandCreateTokensEffectHandler implement
         int nonlandCards = 0;
         boolean repeat = true;
 
+        boolean bottomInsteadOfExile = gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
+                .contains(entry.getControllerId());
+
         while (repeat && !library.isEmpty()) {
             int cardsToExile = Math.min(e.cardsPerIteration(), library.size());
             Card lastCard = null;
             for (int i = 0; i < cardsToExile; i++) {
                 Card card = library.removeFirst();
+                if (bottomInsteadOfExile) {
+                    library.addLast(card);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            playerName + " puts ", card, " on the bottom of their library instead of exiling it ("
+                                    + sourceName + ")."));
+                    continue;
+                }
                 exileService.exileCard(gameData, entry.getControllerId(), card);
                 gameLogService.append(gameData, GameLog.textCardText(
                         playerName + " exiles ", card, " from the top of their library (" + sourceName + ")."));
@@ -50,7 +60,8 @@ public class ExileTopCardsRepeatIfLastNonlandCreateTokensEffectHandler implement
                 }
             }
 
-            repeat = cardsToExile == e.cardsPerIteration() && !lastCard.hasType(CardType.LAND);
+            repeat = !bottomInsteadOfExile && cardsToExile == e.cardsPerIteration()
+                    && !lastCard.hasType(CardType.LAND);
         }
 
         if (nonlandCards > 0) {

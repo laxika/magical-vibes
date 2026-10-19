@@ -13,11 +13,9 @@ public class RedeemTheLost extends Card {
 
     public RedeemTheLost() {
         // Target creature you control gains protection from the color of your choice until end of turn.
-        // The clash resolves first so its won-clash return-to-hand flag is set before the protection
-        // color choice interrupts resolution (spell disposition runs once resolution first breaks).
+        // Clash with an opponent. If you win, return Redeem the Lost to its owner's hand.
         target(TargetFilters.creatureYouControl())
-                // Clash with an opponent. If you win, return Redeem the Lost to its owner's hand.
-                .addEffect(EffectSlot.SPELL, new ClashEffect(ReturnToHandEffect.selfSpell()))
-                .addEffect(EffectSlot.SPELL, new GrantProtectionChoiceUntilEndOfTurnEffect());
+                .addEffect(EffectSlot.SPELL, new GrantProtectionChoiceUntilEndOfTurnEffect())
+                .addEffect(EffectSlot.SPELL, new ClashEffect(ReturnToHandEffect.selfSpell()));
     }
 }

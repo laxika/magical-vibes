@@ -136,6 +136,7 @@ class RibtrussRoasterTest extends BaseCardTest {
         resolveControllerEndStep();
         List<Permanent> pests = findPermanents(player1, "Pest");
         harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 

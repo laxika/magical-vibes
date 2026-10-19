@@ -27,7 +27,7 @@ public class RaiyuuStormsEdge extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringCardConditionalEffect(samuraiOrWarrior,
                         new ConditionalEffect(new AttacksAlone(),
-                                new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES))));
+                                new UntapPermanentsEffect(TapUntapScope.TRIGGERING))));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringCardConditionalEffect(samuraiOrWarrior,
                         new ConditionalEffect(new AttacksAlone(),

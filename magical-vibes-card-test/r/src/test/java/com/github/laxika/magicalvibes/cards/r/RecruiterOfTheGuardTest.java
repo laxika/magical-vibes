@@ -158,6 +158,7 @@ class RecruiterOfTheGuardTest extends BaseCardTest {
         List<Card> opposingLibrary = List.of(new GrizzlyBears(), new GiantSpider());
         harness.setLibrary(player1, List.of(chosen, remaining));
         harness.setLibrary(player2, opposingLibrary);
+        harness.setHand(player2, List.of());
 
         resolveEtb();
         harness.handleMayAbilityChosen(player1, true);

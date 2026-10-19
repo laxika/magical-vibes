@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SauroformHybrid;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -58,8 +59,7 @@ class RavagerWurmTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent field = harness.addToBattlefieldAndReturn(player2, new FieldOfRuin());
 
-        castWithoutEntryChoicesAndChooseCounter();
-        harness.handleListChoice(player1, "Destroy target land with an activated ability that isn't a mana ability");
+        castWithMode(1);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -74,8 +74,7 @@ class RavagerWurmTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
 
-        castWithoutEntryChoicesAndChooseCounter();
-        harness.handleListChoice(player1, "This creature fights target creature you don't control");
+        castWithMode(0);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -119,7 +118,6 @@ class RavagerWurmTest extends BaseCardTest {
         harness.castFromHand(player1, new RavagerWurm(), "{3}{R}{G}{G}");
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
         resolveCreatureAndChooseRiotCounter();
-        harness.handleListChoice(player1, "This creature fights target creature you don't control");
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
@@ -127,19 +125,17 @@ class RavagerWurmTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Ravager Wurm").getMarkedDamage()).isEqualTo(2);
     }
 
-    private void castWithoutEntryChoicesAndChooseCounter() {
-        harness.castFromHand(player1, new RavagerWurm(), "{3}{R}{G}{G}");
+    private void castWithMode(int mode) {
+        harness.setHand(player1, java.util.List.of(new RavagerWurm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0, mode);
         resolveCreatureAndChooseRiotCounter();
     }
 
     private void castRavager(int mode, UUID targetId) {
-        castWithoutEntryChoicesAndChooseCounter();
-        harness.handleListChoice(player1, switch (mode) {
-            case -1 -> "Choose no modes";
-            case 0 -> "This creature fights target creature you don't control";
-            case 1 -> "Destroy target land with an activated ability that isn't a mana ability";
-            default -> throw new IllegalArgumentException("Unknown mode");
-        });
+        castWithMode(mode);
         if (targetId != null) {
             harness.handlePermanentChosen(player1, targetId);
         }

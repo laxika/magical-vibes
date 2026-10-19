@@ -203,6 +203,11 @@ public class GraveyardService {
                     true, null, null, null, false, false, false, null, true);
             if (entered) {
                 cardsEnteredGraveyard.add(card);
+                if (!isToken(gameData, card)) {
+                    gameData.cardsMilledThisTurn
+                            .computeIfAbsent(targetPlayerId, ignored -> ConcurrentHashMap.newKeySet())
+                            .add(card.getId());
+                }
             }
         }
         cardsEnteredGraveyard.stream().filter(card -> card.hasType(CardType.LAND)).findFirst()
@@ -706,6 +711,10 @@ public class GraveyardService {
 
         OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
                 gameData, ownerId);
+        if (opponentExileReplacement == null) {
+            opponentExileReplacement = leavingSourceOpponentExileReplacement(
+                    ownerId, card, battlefieldControllerId, battlefieldSnapshot);
+        }
         if (opponentExileReplacement != null && !isToken(gameData, card)) {
             if (opponentExileReplacement.effect().addVoidCounter()) {
                 gameData.addToExileWithVoidCounter(ownerId, card,
@@ -1023,8 +1032,11 @@ public class GraveyardService {
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                // The departed permanent stays the damage source (lifelink, deathtouch) by its last known information.
                 gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        card, ownerId, new ArrayList<>(List.of(effect))));
+                        card, ownerId, new ArrayList<>(List.of(effect)), "leaves-the-battlefield",
+                        battlefieldPermanentId,
+                        battlefieldSnapshot == null ? null : new Permanent(battlefieldSnapshot), null));
                 continue;
             }
             StackEntry entry = new StackEntry(
@@ -1390,7 +1402,9 @@ public class GraveyardService {
                 }
             }
         }
-        return false;
+        return gameData.damagedCreaturesCantRegenerateSourceIdsThisTurn.stream()
+                .anyMatch(sourceId -> gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                        .getOrDefault(sourceId, Set.of()).contains(cardId));
     }
 
     /**
@@ -1796,6 +1810,29 @@ public class GraveyardService {
             }
         }
         return false;
+    }
+
+    /**
+     * An opponent-controlled permanent with {@code ExileOpponentCardsInsteadOfGraveyardEffect} that is
+     * itself leaving the battlefield still applies to its own card (its owner is the opponent), since it
+     * is no longer found on any battlefield when the card reaches the graveyard.
+     */
+    private OpponentExileReplacement leavingSourceOpponentExileReplacement(UUID ownerId, Card card,
+                                                                           UUID battlefieldControllerId,
+                                                                           Permanent battlefieldSnapshot) {
+        if (battlefieldSnapshot == null || battlefieldControllerId == null
+                || battlefieldControllerId.equals(ownerId) || battlefieldSnapshot.isFaceDown()
+                || battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn()
+                || battlefieldSnapshot.getCard() == null
+                || !battlefieldSnapshot.getCard().getId().equals(card.getId())) {
+            return null;
+        }
+        for (CardEffect effect : battlefieldSnapshot.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
+                return new OpponentExileReplacement(replacement, battlefieldSnapshot.getId());
+            }
+        }
+        return null;
     }
 
     private OpponentExileReplacement opponentHasExileReplacementEffect(
@@ -2398,6 +2435,10 @@ public class GraveyardService {
             if (libraryTracked != null) {
                 libraryTracked.remove(leavingCard.getId());
             }
+            Set<UUID> milled = gameData.cardsMilledThisTurn.get(ownerId);
+            if (milled != null) {
+                milled.remove(leavingCard.getId());
+            }
             Set<UUID> surveilled = gameData.cardsSurveilledThisTurn.get(ownerId);
             if (surveilled != null) {
                 surveilled.remove(leavingCard.getId());
@@ -2428,6 +2469,10 @@ public class GraveyardService {
         Set<UUID> libraryTracked = gameData.cardsPutIntoGraveyardFromLibraryThisTurn.get(ownerId);
         if (libraryTracked != null) {
             leavingCards.forEach(card -> libraryTracked.remove(card.getId()));
+        }
+        Set<UUID> milled = gameData.cardsMilledThisTurn.get(ownerId);
+        if (milled != null) {
+            leavingCards.forEach(card -> milled.remove(card.getId()));
         }
         Set<UUID> surveilled = gameData.cardsSurveilledThisTurn.get(ownerId);
         if (surveilled != null) {

@@ -173,6 +173,6 @@ class RealityRippleTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
     }
 }

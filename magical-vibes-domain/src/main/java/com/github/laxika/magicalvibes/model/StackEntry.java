@@ -91,11 +91,6 @@ public class StackEntry {
     @Setter private int tokenCopyXValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
-    /**
-     * Total mana cost of the single mode the spell was cast with, when that mode carries its own cost
-     * (a split card's chosen half). The spell's mana value on the stack is that of the chosen half.
-     */
-    @Setter private String castModeManaCost;
     @Setter private int phyrexianManaPaidWithLife;
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
@@ -210,6 +205,11 @@ public class StackEntry {
     @Setter private boolean exilePermanentIfLeavesBattlefield;
     /** Source permanent to record when an ExileSpellEffect tracks the spell in exile. */
     @Setter private UUID exileWithSourcePermanentId;
+    /**
+     * Further source permanents whose replacement effect would also exile this spell (a second Rod of
+     * Absorption); the spell's controller picks which one applies as it resolves (CR 616.1).
+     */
+    private final List<UUID> competingExileSourcePermanentIds = new ArrayList<>();
     /** Whether this spell goes to the bottom of its owner's library instead of a graveyard. */
     @Setter private boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard;
     /** Whether this spell was cast via Disturb (CR 702.146) — enters transformed; exile on leave-to-GY. */
@@ -903,7 +903,6 @@ public class StackEntry {
         this.xValue = source.xValue;
         this.xValueSetByCastTrigger = source.xValueSetByCastTrigger;
         this.modalModeCount = source.modalModeCount;
-        this.castModeManaCost = source.castModeManaCost;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
         this.etbMode = source.etbMode;
         this.targetId = source.targetId;
@@ -953,6 +952,7 @@ public class StackEntry {
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.exilePermanentIfLeavesBattlefield = source.exilePermanentIfLeavesBattlefield;
         this.exileWithSourcePermanentId = source.exileWithSourcePermanentId;
+        this.competingExileSourcePermanentIds.addAll(source.competingExileSourcePermanentIds);
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
                 source.putOnBottomOfOwnersLibraryInsteadOfGraveyard;
         this.castWithDisturb = source.castWithDisturb;
@@ -1949,8 +1949,20 @@ public class StackEntry {
                 : List.copyOf(assignments.keySet());
     }
 
+    /**
+     * True when this entry targets exactly one distinct object or player. A spell whose several target
+     * slots all name the same permanent (Seeds of Strength) still targets only that one object.
+     */
     public boolean isSingleTarget() {
-        return !nonTargeting && (targetId != null ? 1 : 0) + targetIds.size() + targetCardIds.size() == 1;
+        if (nonTargeting) {
+            return false;
+        }
+        Set<UUID> distinctTargets = new HashSet<>(targetIds);
+        distinctTargets.addAll(targetCardIds);
+        if (targetId != null) {
+            distinctTargets.add(targetId);
+        }
+        return distinctTargets.size() == 1;
     }
 
     public boolean hasAnyTarget() {
@@ -1962,11 +1974,7 @@ public class StackEntry {
      * not at all when the cost has no {X}, e.g. an X chosen by another effect (CR 202.3e).
      */
     public int getSpellManaValue() {
-        if (castModeManaCost != null) {
-            ManaCost modeCost = new ManaCost(castModeManaCost);
-            return modeCost.getManaValue() + xValue * modeCost.getXSymbolCount();
-        }
-        if (castWithAdventure && card != null && card.getBackFaceCard() != null) {
+        if ((castWithAdventure || castWithOmen) && card != null && card.getBackFaceCard() != null) {
             return spellManaValue(card.getBackFaceCard(), xValue);
         }
         return spellManaValue(card, xValue);

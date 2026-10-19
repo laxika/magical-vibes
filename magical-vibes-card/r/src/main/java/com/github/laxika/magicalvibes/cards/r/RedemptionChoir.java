@@ -25,6 +25,7 @@ public class RedemptionChoir extends Card {
                         new CardMaxManaValuePredicate(3)
                 )))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build();
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Coven(), returnPermanent));

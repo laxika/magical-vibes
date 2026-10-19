@@ -160,9 +160,9 @@ class RestlessVentsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(undrawn));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

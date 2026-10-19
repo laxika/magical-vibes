@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -42,6 +43,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<PendingInteraction.SearchLibraryAndOrGraveyardChoice> handledType() {
@@ -114,6 +116,14 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
     private boolean completeSingleSelection(GameData gameData, UUID playerId, Card chosen,
                                          PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
                                          boolean toBattlefield) {
+        if (toBattlefield && interaction.attachToPermanentId() != null
+                && gameQueryService.findPermanentById(gameData, interaction.attachToPermanentId()) == null) {
+            // An Aura that can't enter attached to the permanent it was meant for stays where it is.
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(playerId) + " finds ", chosen,
+                    ", but it can't enter attached to a permanent that is no longer on the battlefield."));
+            return false;
+        }
         boolean fromLibrary = interaction.libraryCardIds().contains(chosen.getId());
         boolean fromHand = interaction.handCardIds().contains(chosen.getId());
         boolean fromOutsideGame = interaction.outsideGameCardIds().contains(chosen.getId());
@@ -162,13 +172,10 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             return true;
         }
         if (toBattlefield) {
-            Permanent entered = graveyardReturnSupport.putCardOntoBattlefield(
-                    gameData, playerId, chosen, null, null, false, false,
-                    interaction.enterWithCounterType(), interaction.enterWithCounterCount(), false);
-            if (entered != null && fromLibrary) {
-                entered.setEnteredFromZone(Zone.LIBRARY);
-                entered.setEnteredFromGraveyardOwnerId(null);
-            }
+            Permanent entered = graveyardReturnSupport.putSearchedCardOntoBattlefield(
+                    gameData, playerId, chosen,
+                    fromLibrary ? Zone.LIBRARY : fromHand ? Zone.HAND : Zone.GRAVEYARD,
+                    interaction.enterWithCounterType(), interaction.enterWithCounterCount());
             if (entered != null && gameData.pendingEffectResolutionEntry != null) {
                 gameData.pendingEffectResolutionEntry.setChosenPermanentId(entered.getId());
             }

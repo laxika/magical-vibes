@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +16,7 @@ import java.util.List;
 public class RideTheAvalanche extends Card {
 
     public RideTheAvalanche() {
-        addEffect(EffectSlot.SPELL, new GrantFlashToSpellsThisTurnEffect());
+        addEffect(EffectSlot.SPELL, GrantFlashToNextSpellOfTypeThisTurnEffect.nextSpell());
         addEffect(EffectSlot.SPELL, new RegisterDelayedControllerSpellCastTriggerEffect(
                 null,
                 null,

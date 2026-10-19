@@ -134,6 +134,7 @@ class RuthlessLawbringerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard(), artifact.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);

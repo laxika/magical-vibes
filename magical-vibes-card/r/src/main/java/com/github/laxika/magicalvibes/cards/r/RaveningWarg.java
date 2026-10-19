@@ -6,14 +6,19 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "HOB", collectorNumber = "80")
 public class RaveningWarg extends Card {
 
     public RaveningWarg() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
+                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(4)))),
                 new GainLifeEffect(2)));
     }
 }

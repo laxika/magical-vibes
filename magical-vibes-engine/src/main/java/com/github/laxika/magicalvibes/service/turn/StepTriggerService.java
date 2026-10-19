@@ -235,6 +235,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ReturnDelayedCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnGraveyardCardsToBattlefieldUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -588,21 +589,30 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(ExilePermanentAtNextUpkeep.class)) {
             List<ExilePermanentAtNextUpkeep> pendingExiles = gameData.drainDelayedActions(
                     ExilePermanentAtNextUpkeep.class, a -> a.controllerId().equals(gameData.activePlayerId));
+            // Creatures scheduled by one resolution share a single delayed trigger that exiles them all
+            // ("exile those creatures at the beginning of the next upkeep").
+            Map<List<Object>, List<ExilePermanentAtNextUpkeep>> batches = new LinkedHashMap<>();
             for (ExilePermanentAtNextUpkeep action : pendingExiles) {
                 if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
                     continue;
                 }
+                batches.computeIfAbsent(List.of(action.sourceCard().getId(), action.controllerId()),
+                        ignored -> new ArrayList<>()).add(action);
+            }
+            for (List<ExilePermanentAtNextUpkeep> batch : batches.values()) {
+                ExilePermanentAtNextUpkeep first = batch.getFirst();
+                List<UUID> permanentIds = batch.stream().map(ExilePermanentAtNextUpkeep::permanentId).toList();
                 StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
-                        action.sourceCard().getName() + "'s delayed ability",
+                        StackEntryType.TRIGGERED_ABILITY, first.sourceCard(), first.controllerId(),
+                        first.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
-                        action.permanentId(), (UUID) null);
+                        (UUID) null, permanentIds);
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
-                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                gameLogService.append(gameData, GameLog.cardThen(first.sourceCard(),
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed upkeep exile trigger pushed onto stack",
-                        gameData.id, action.sourceCard().getName());
+                        gameData.id, first.sourceCard().getName());
             }
         }
 
@@ -3199,7 +3209,12 @@ public class StepTriggerService {
                                     ConditionContext.forPermanent(perm, activePlayerId))) {
                         continue;
                     }
-                    if (effect instanceof MayEffect may) {
+                    if (effect instanceof MayEffect may && may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                        // A targeted "you may" draw-step trigger chooses its target as it goes on the
+                        // stack (CR 603.3d); only the may decision waits for resolution.
+                        gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
+                                perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                    } else if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                     } else {
                         StackEntry triggerEntry = new StackEntry(
@@ -3219,6 +3234,9 @@ public class StepTriggerService {
                     }
                 }
             }
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+            processNextUpkeepPermanentTarget(gameData);
         }
 
         // Giant Oyster: "at the beginning of each of your draw steps, put a -1/-1 counter on that
@@ -4511,7 +4529,7 @@ public class StepTriggerService {
         }
     }
 
-    /** Resolves delayed simultaneous graveyard returns scheduled for a player's next upkeep. */
+    /** Puts the delayed simultaneous graveyard returns scheduled for a player's next upkeep on the stack. */
     private void resolveDelayedGraveyardCardsUnderControlAtUpkeep(GameData gameData) {
         if (!gameData.hasDelayedAction(DelayedGraveyardCardsToBattlefieldUnderControl.class,
                 action -> action.controllerId().equals(gameData.activePlayerId))) {
@@ -4522,62 +4540,16 @@ public class StepTriggerService {
                 gameData.drainDelayedActions(DelayedGraveyardCardsToBattlefieldUnderControl.class,
                         action -> action.controllerId().equals(gameData.activePlayerId));
         for (DelayedGraveyardCardsToBattlefieldUnderControl pending : pendingReturns) {
-            List<DelayedReturningGraveyardCard> returningCards = new ArrayList<>();
-            for (UUID cardId : pending.cardIds()) {
-                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                if (card == null || ownerId == null) {
-                    log.info("Game {} - Delayed simultaneous return for card {} skipped (no longer in a graveyard)",
-                            gameData.id, cardId);
-                    continue;
-                }
-                if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(card, " can't return from the graveyard; it stays in the graveyard."));
-                    continue;
-                }
-                returningCards.add(new DelayedReturningGraveyardCard(card, ownerId));
-            }
-            if (returningCards.isEmpty()) {
-                continue;
-            }
-
-            for (DelayedReturningGraveyardCard returningCard : returningCards) {
-                permanentRemovalService.removeCardFromGraveyardById(gameData, returningCard.card().getId());
-            }
-
-            Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-            List<Permanent> simultaneouslyEntered = new ArrayList<>();
-            for (DelayedReturningGraveyardCard returningCard : returningCards) {
-                Card card = returningCard.card();
-                Permanent permanent = new Permanent(card);
-                permanent.setEnteredFromGraveyardOwnerId(returningCard.ownerId());
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, pending.controllerId(), permanent, enterTappedTypes, simultaneouslyEntered);
-                simultaneouslyEntered.add(permanent);
-
-                if (!pending.controllerId().equals(returningCard.ownerId())) {
-                    gameData.stolenCreatures.put(permanent.getId(), returningCard.ownerId());
-                    creatureControlService.applyControlEffect(gameData, pending.controllerId(), permanent,
-                            new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                            ControlDuration.PERMANENT.toEffectDuration(), null,
-                            "Rescue from the Underworld");
-                }
-
-                String playerName = gameData.playerIdToName.get(pending.controllerId());
-                gameLogService.append(gameData, GameLog.cardThen(card,
-                        " returns to the battlefield under " + playerName + "'s control (Rescue from the Underworld)."));
-                log.info("Game {} - {} returns under {}'s control (Rescue from the Underworld)",
-                        gameData.id, card.getName(), playerName);
-            }
-            for (DelayedReturningGraveyardCard returningCard : returningCards) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(
-                        gameData, pending.controllerId(), returningCard.card(), null, false);
-            }
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(),
+                    pending.controllerId(), pending.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(new ReturnGraveyardCardsToBattlefieldUnderControlEffect(
+                            pending.cardIds(), pending.graveyardEntryVersions()))));
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(pending.sourceCard(), "'s delayed return ability triggers."));
         }
     }
-
-    private record DelayedReturningGraveyardCard(Card card, UUID ownerId) {}
 
     public void handleEndStepTriggers(GameData gameData) {
         for (UUID cardId : Set.copyOf(gameData.exilePlayPermissionsExpireAtEndStep)) {

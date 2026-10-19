@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -49,6 +50,9 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
             default -> controllerId;
         };
         UUID scryingPlayerId = e.owner() == LibraryOwner.TARGET_PLAYER
+                && e.decisionMaker() == LibraryDecisionMaker.CONTROLLER
+                ? controllerId
+                : e.owner() == LibraryOwner.TARGET_PLAYER
                 || e.owner() == LibraryOwner.OPPONENT
                 || e.owner() == LibraryOwner.DYING_CREATURE_CONTROLLER
                 ? libraryOwnerId : controllerId;

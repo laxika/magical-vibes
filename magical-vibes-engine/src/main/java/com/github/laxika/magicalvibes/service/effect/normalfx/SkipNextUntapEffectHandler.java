@@ -121,12 +121,11 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveControlled(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
+        UUID controllerId = entry.getControllerId();
         if (e.matchAtUntap()) {
             gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
-                    entry.getControllerId(), id -> new ArrayList<>()).add(e);
-            return;
+                    controllerId, id -> new ArrayList<>()).add(e);
         }
-        UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
 

@@ -122,6 +122,8 @@ class RootingMolochTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new DrannithHealer(), new DrannithHealer()));
         castWithGraveyardTarget(cyclingCard);
         harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(cyclingCard.getId(), player1.getId());

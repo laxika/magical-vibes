@@ -124,6 +124,7 @@ class RedressFateTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(new Pacifism()));
 
         castRedressFate();

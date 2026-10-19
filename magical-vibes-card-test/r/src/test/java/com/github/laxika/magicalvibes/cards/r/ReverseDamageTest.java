@@ -118,12 +118,13 @@ class ReverseDamageTest extends BaseCardTest {
         harness.setHand(player2, List.of(shock));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, player1.getId());
-        castReverseDamage(player1);
+        ReverseDamage reverseDamage = new ReverseDamage();
+        harness.castFromHand(player1, reverseDamage, "{1}{W}{W}");
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(shock.getId());
+                .containsExactlyInAnyOrder(shock.getId(), reverseDamage.getId());
         harness.handlePermanentChosen(player1, shock.getId());
         harness.passBothPriorities();
 
@@ -142,12 +143,13 @@ class ReverseDamageTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castSorcery(player2, 0, 3, player1.getId());
-        castReverseDamage(player1);
+        ReverseDamage reverseDamage = new ReverseDamage();
+        harness.castFromHand(player1, reverseDamage, "{1}{W}{W}");
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(blaze.getId());
+                .containsExactlyInAnyOrder(blaze.getId(), reverseDamage.getId());
         harness.handlePermanentChosen(player1, blaze.getId());
         harness.passBothPriorities();
 

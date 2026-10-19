@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RootwiseSurvivor.class, Forest.class})
@@ -99,6 +101,7 @@ class RootwiseSurvivorTest extends BaseCardTest {
     @Test
     void landLosesGrantedHasteAtControllersNextTurnButRemainsAnimated() {
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new RootwiseSurvivor());
+        harness.setHand(player2, List.of());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         survivor.tap();
 
@@ -185,6 +188,7 @@ class RootwiseSurvivorTest extends BaseCardTest {
     @Test
     void animatingSameLandAgainAddsCountersWithoutResettingThem() {
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new RootwiseSurvivor());
+        harness.setHand(player2, List.of());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         survivor.tap();
 

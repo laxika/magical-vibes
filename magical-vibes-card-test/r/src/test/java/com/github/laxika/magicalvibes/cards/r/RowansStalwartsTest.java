@@ -22,6 +22,7 @@ class RowansStalwartsTest extends BaseCardTest {
 
         castStalwarts();
         resolveMay(true);
+        harness.handleMultipleCardsChosen(player1, List.of(rowan.getId()));
 
         harness.assertInHand(player1, "Rowan, Fearless Sparkmage");
         harness.assertNotInGraveyard(player1, "Rowan, Fearless Sparkmage");
@@ -36,7 +37,7 @@ class RowansStalwartsTest extends BaseCardTest {
         castStalwarts();
         resolveMay(true);
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(rowan.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(rowan);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

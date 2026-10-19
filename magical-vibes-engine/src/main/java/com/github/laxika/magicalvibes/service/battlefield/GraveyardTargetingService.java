@@ -591,7 +591,8 @@ public class GraveyardTargetingService {
                     card,
                     controllerId,
                     card.getName() + "'s " + triggerLabel + " trigger",
-                    new ArrayList<>(effects),
+                    new ArrayList<>(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport
+                            .withoutOptionalWrapperWhenNoCards(effects)),
                     defendingPlayerId,
                     sourcePermanentId);
             trigger.setNonTargeting(true);
@@ -1324,7 +1325,7 @@ public class GraveyardTargetingService {
         if (requireSharedCreatureType) {
             matchingCards.removeIf(candidate -> matchingCards.stream()
                     .noneMatch(other -> !other.getId().equals(candidate.getId())
-                            && gameQueryService.shareCreatureType(candidate, other)));
+                            && gameQueryService.shareCreatureType(gameData, candidate, other)));
         }
 
         if (matchingCards.size() < minTargets) {
@@ -1461,7 +1462,7 @@ public class GraveyardTargetingService {
                 if (returnEffect.requireSharedCreatureType()) {
                     matchingCards.removeIf(candidate -> matchingCards.stream()
                             .noneMatch(other -> !other.getId().equals(candidate.getId())
-                                    && gameQueryService.shareCreatureType(candidate, other)));
+                                    && gameQueryService.shareCreatureType(gameData, candidate, other)));
                 }
                 if (!matchingCards.isEmpty()) {
                     handleUpToNGraveyardSpellTargeting(gameData, operation.controllerId, operation.card,

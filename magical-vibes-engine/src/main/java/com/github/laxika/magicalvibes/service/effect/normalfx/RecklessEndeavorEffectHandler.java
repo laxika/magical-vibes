@@ -35,8 +35,9 @@ public class RecklessEndeavorEffectHandler implements NormalEffectHandlerBean {
         int firstRoll = entry.getXValue();
         int secondRoll = entry.getEventValue();
         if (firstRoll == 0 || secondRoll == 0) {
-            firstRoll = d12RollService.roll(gameData, entry.getControllerId());
-            secondRoll = d12RollService.roll(gameData, entry.getControllerId());
+            List<Integer> rolls = d12RollService.rollDice(gameData, entry.getControllerId(), 2);
+            firstRoll = rolls.get(0);
+            secondRoll = rolls.get(1);
             entry.setXValue(firstRoll);
             entry.setEventValue(secondRoll);
 

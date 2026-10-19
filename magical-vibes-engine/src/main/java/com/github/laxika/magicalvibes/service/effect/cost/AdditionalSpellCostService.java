@@ -2088,6 +2088,10 @@ public class AdditionalSpellCostService {
                         pool, 0, count, 0, "");
                 if (payment != null) return payment;
             }
+            if (gameData.getLife(playerId) < cost.lifeAmount()) {
+                throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
+                        + " life for " + card.getName());
+            }
         }
         throw new IllegalStateException("Cannot pay the selected life or mana costs for " + card.getName());
     }

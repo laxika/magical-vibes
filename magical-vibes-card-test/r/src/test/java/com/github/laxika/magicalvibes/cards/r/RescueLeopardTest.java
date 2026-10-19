@@ -64,7 +64,7 @@ class RescueLeopardTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with an empty hand does not draw")
+    @DisplayName("With an empty hand there is no discard to choose, so nothing is offered and nothing is drawn")
     void emptyHandDoesNotDraw() {
         Permanent leopard = harness.addToBattlefieldAndReturn(player1, new RescueLeopard());
         harness.setHand(player1, List.of());
@@ -72,7 +72,6 @@ class RescueLeopardTest extends BaseCardTest {
 
         tap(leopard);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

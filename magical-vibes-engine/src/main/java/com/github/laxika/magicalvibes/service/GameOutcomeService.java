@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -198,7 +199,13 @@ public class GameOutcomeService {
         }
 
         gameData.forEachPermanent((controllerId, perm) -> {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_PLAYER_LOSES_GAME);
+            // "Whenever a player loses the game, if ..." intervening-if (CR 603.4): the trigger does not
+            // go on the stack unless its condition holds when the player loses.
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_PLAYER_LOSES_GAME).stream()
+                    .filter(effect -> !(effect instanceof WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect win)
+                            || gameQueryService.wasPlayerAttackedByControlledSubtypeThisTurn(
+                                    gameData, losingPlayerId, controllerId, win.subtype()))
+                    .toList();
             if (effects.isEmpty()) {
                 return;
             }

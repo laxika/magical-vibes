@@ -96,6 +96,25 @@ public class PermanentChoiceTriggerHandlerService {
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
     private final MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler blackGateHandler;
     private final TheMasterGallifreysEndEffectHandler theMasterHandler;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+
+    /**
+     * The message for a target answer that wasn't among the offered choices: when the answer is a player
+     * the trigger's source can't target, the reason (protection, hexproof, ...) is reported.
+     */
+    public String rejectedChoiceMessage(GameData gameData, PermanentChoiceContext context, UUID chosenId) {
+        if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt
+                && !stt.nonTargeting() && gameData.playerIds.contains(chosenId)) {
+            String reason = targetLegalityService.playerUntargetableReason(
+                    gameData, chosenId, stt.controllerId(), stt.sourceCard());
+            if (reason != null) {
+                return reason;
+            }
+        }
+        return "Invalid permanent: " + chosenId;
+    }
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
@@ -299,6 +318,13 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleDeathTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.DeathTriggerTarget dtt) {
+        if (!gameData.playerIdToName.containsKey(permanentId)
+                && dtt.effects().stream().anyMatch(effect -> effect.targetSpec()
+                .admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))
+                && triggerCollectionService.beginDeathGraveyardTargetAfterPermanent(gameData, dtt, permanentId)) {
+            // The graveyard card is chosen next; the ability goes on the stack once it is.
+            return;
+        }
         boolean declined = hasOptionalSingleTarget(dtt.dyingCard(), dtt.effects())
                 && gameData.playerIdToName.containsKey(permanentId)
                 && permanentId.equals(dtt.controllerId());
@@ -1461,6 +1487,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (attacker != null && attacker.isAttacking()
                 && gameQueryService.isCreature(gameData, attacker) && validTarget) {
             attacker.setAttackTarget(attackTargetId);
+            attacker.setAttackTargetReselected(true);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -1470,6 +1497,7 @@ public class PermanentChoiceTriggerHandlerService {
         Permanent permanent = gameQueryService.findPermanentById(gameData, context.permanentId());
         if (permanent != null && permanent.isAttacking() && gameQueryService.isCreature(gameData, permanent)) {
             permanent.setAttackTarget(attackTargetId);
+            permanent.setAttackTargetReselected(true);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

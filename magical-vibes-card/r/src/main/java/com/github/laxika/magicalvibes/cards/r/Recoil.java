@@ -19,7 +19,7 @@ public class Recoil extends Card {
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Target must be a permanent"))
                 .addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandThenEffect(
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
-                        ThenEffectRecipient.TARGET_OWNER));
+                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        ThenEffectRecipient.TARGET_OWNER_AS_TARGET));
     }
 }

@@ -16,6 +16,7 @@ class RangerSquadronTest extends BaseCardTest {
 
     @Test
     void laterAttacksByTheOriginalAndConjuredSquadronDoNotConjureAgain() {
+        harness.setHand(player1, List.of());
         Permanent original = addCreatureReady(player1, new RangerSquadron());
 
         declareAttackers(List.of(0));
@@ -38,6 +39,8 @@ class RangerSquadronTest extends BaseCardTest {
 
     @Test
     void eachAttackingSquadronConjuresItsOwnDuplicate() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent first = addCreatureReady(player1, new RangerSquadron());
         Permanent second = addCreatureReady(player1, new RangerSquadron());
 

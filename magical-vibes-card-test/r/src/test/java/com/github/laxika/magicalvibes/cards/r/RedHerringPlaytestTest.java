@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -160,6 +161,9 @@ class RedHerringPlaytestTest extends BaseCardTest {
     @Test
     void doesNotChangeNegatesTargetToAnIllegalCreatureSpell() {
         GrizzlyBears bears = new GrizzlyBears();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castFromHand(player2, bears, "{1}{G}");
         Counterspell counterspell = new Counterspell();
         harness.setHand(player1, List.of(counterspell));
@@ -208,6 +212,7 @@ class RedHerringPlaytestTest extends BaseCardTest {
         UUID copyId = gd.stack.getLast().getTargetableId();
 
         RedHerringPlaytest redHerring = new RedHerringPlaytest();
+        addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(redHerring));
         addExchangeMana();
         harness.ensurePriority(player1);

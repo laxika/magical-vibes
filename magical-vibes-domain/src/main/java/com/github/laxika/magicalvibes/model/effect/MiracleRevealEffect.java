@@ -14,4 +14,9 @@ public record MiracleRevealEffect(String miracleCost, int xReduction) implements
     public MiracleRevealEffect() {
         this(null, 0);
     }
+
+    @Override
+    public boolean pausesDrawInstruction() {
+        return true;
+    }
 }

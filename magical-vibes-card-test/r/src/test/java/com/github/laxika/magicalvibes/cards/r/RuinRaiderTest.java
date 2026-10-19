@@ -133,7 +133,7 @@ class RuinRaiderTest extends BaseCardTest {
     @DisplayName("Raid counts an earlier attack by another creature before Ruin Raider entered")
     void triggersAfterAnotherCreatureAttackedBeforeEntering() {
         addCreatureReady(player1, new RaptorHatchling());
-        declareAttackersAndPrepareBlockers(List.of(0));
+        declareAttackers(List.of(0));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.addToBattlefield(player1, new RuinRaider());
         harness.setHand(player1, List.of());

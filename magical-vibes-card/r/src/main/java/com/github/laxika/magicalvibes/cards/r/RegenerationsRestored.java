@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
@@ -27,10 +28,15 @@ public class RegenerationsRestored extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(12)));
 
-        // At the beginning of your upkeep, remove a time counter from this enchantment. When the
-        // last is removed, sacrifice it.
+        // Vanishing: the upkeep removal and the last-counter sacrifice are separate triggers. The
+        // sacrifice is added first so the card's own exile trigger sits above it on the stack and
+        // can exile the enchantment (and earn the extra turn) before it is sacrificed.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
+                new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
+                        new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
+        addEffect(EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED,
+                new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
+                        new SacrificeSelfEffect()));
 
         // Whenever one or more time counters are removed from this enchantment, scry 1 and gain 1
         // life. Then, if it has no time counters, exile it and take an extra turn.

@@ -10,8 +10,13 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateMayCastWithoutPayingManaEffect;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -33,6 +38,7 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,6 +55,11 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
         if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
+            return;
+        }
+
+        if (typedEffect.exileRevealedCards()) {
+            resolveExilingUntil(gameData, entry, typedEffect, controllerId, deck, playerName);
             return;
         }
 
@@ -123,5 +134,92 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
                         .build(),
                 prompt,
                 true));
+    }
+
+    /**
+     * Exiles cards from the top of the library until a card matching the predicate is exiled, then
+     * offers that card for a free cast from exile when it is a spell the cast predicate allows. The
+     * exiled cards not cast go to the bottom of the library in a random order.
+     */
+    private void resolveExilingUntil(GameData gameData, StackEntry entry,
+                                     RevealUntilCardPredicateMayCastWithoutPayingManaEffect effect,
+                                     UUID controllerId, List<Card> deck, String playerName) {
+        List<Card> exiledCards = new ArrayList<>();
+        Card foundCard = null;
+        while (!deck.isEmpty()) {
+            Card card = deck.removeFirst();
+            exileService.exileCard(gameData, controllerId, card);
+            exiledCards.add(card);
+            if (predicateEvaluationService.matchesCardPredicate(
+                    card, effect.predicate(), entry.getCard().getId(), gameData, controllerId,
+                    entry.getSourcePermanentId(), null)) {
+                foundCard = card;
+                break;
+            }
+        }
+        gameLogService.append(gameData, GameLog.text(playerName + " exiles "
+                + exiledCards.stream().map(Card::getName).collect(Collectors.joining(", "))
+                + " from the top of their library."));
+
+        Integer powerLimit = effect.castPredicate() instanceof CardManaValueAtMostSourcePowerPredicate
+                ? sourcePower(gameData, entry) : null;
+        if (foundCard == null || !canBeOffered(gameData, entry, effect, controllerId, foundCard, powerLimit)) {
+            returnExiledCardsToBottom(gameData, deck, exiledCards);
+            gameLogService.append(gameData, GameLog.text(playerName
+                    + " can't cast an exiled card; the exiled cards go to the bottom of their library"
+                    + " in a random order."));
+            return;
+        }
+
+        String prompt = "You may cast " + foundCard.getName() + " without paying its mana cost.";
+        var params = LibrarySearchParams.builder(controllerId, List.of(foundCard))
+                .reveals(true)
+                .canFailToFind(true)
+                .sourceCards(new ArrayList<>(exiledCards))
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .prompt(prompt)
+                .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING);
+        if (powerLimit != null) {
+            params.mayCastManaValueAtMost(powerLimit);
+        }
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.LibrarySearch(params.build(), prompt, true));
+    }
+
+    private void returnExiledCardsToBottom(GameData gameData, List<Card> deck, List<Card> exiledCards) {
+        List<Card> bottom = new ArrayList<>(exiledCards);
+        Collections.shuffle(bottom);
+        bottom.forEach(card -> gameData.removeFromExile(card.getId()));
+        deck.addAll(bottom);
+    }
+
+    /** Whether the found card is a spell the cast predicate allows, counting an Adventure half on its own. */
+    private boolean canBeOffered(GameData gameData, StackEntry entry,
+                                 RevealUntilCardPredicateMayCastWithoutPayingManaEffect effect,
+                                 UUID controllerId, Card foundCard, Integer powerLimit) {
+        if (effect.castPredicate() == null) {
+            return true;
+        }
+        if (powerLimit != null) {
+            return !foundCard.hasType(CardType.LAND) && foundCard.getManaValue() <= powerLimit
+                    || foundCard.getBackFaceCard() != null
+                    && foundCard.getCastingOption(AdventureCast.class).isPresent()
+                    && foundCard.getBackFaceCard().getManaValue() <= powerLimit;
+        }
+        return predicateEvaluationService.matchesCardPredicate(
+                foundCard, effect.castPredicate(), entry.getCard().getId(), gameData,
+                controllerId, entry.getSourcePermanentId(), null);
+    }
+
+    /** The source creature's power as the ability resolves, falling back to its last known power. */
+    private Integer sourcePower(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source != null) {
+            return gameQueryService.getEffectivePower(gameData, source);
+        }
+        return entry.getSourcePermanentSnapshot() == null
+                ? null : entry.getSourcePermanentSnapshot().getEffectivePower();
     }
 }

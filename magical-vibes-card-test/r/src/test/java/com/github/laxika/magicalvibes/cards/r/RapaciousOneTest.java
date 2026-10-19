@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RapaciousOne.class, UlamogsCrusher.class, ReinforcedBulwark.class})
@@ -86,9 +88,9 @@ class RapaciousOneTest extends BaseCardTest {
     void triggerResolvesAfterSourceLeavesBattlefield() {
         Permanent rapaciousOne = addCreatureReady(player1, new RapaciousOne());
         rapaciousOne.setAttacking(true);
+        harness.resolveCombatDamage();
 
-        resolveCombat();
-        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(rapaciousOne);
         resolveAllTriggers();
 
@@ -105,6 +107,10 @@ class RapaciousOneTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 4,
+                player2.getId(), 1
+        ));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);

@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffectH
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final LifeSupport lifeSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +51,16 @@ public class ExileTargetCreatureCardFromGraveyardGainLifeEqualToToughnessEffectH
             return;
         }
 
-        int toughness = targetCard.getToughness() == null ? 0 : Math.max(0, targetCard.getToughness());
+        // The card's characteristic-defining toughness is evaluated for its owner, since "you" on a card
+        // outside the battlefield refers to its owner (CR 109.5, CR 604.3).
+        UUID cardOwnerId = gameData.playerGraveyards.entrySet().stream()
+                .filter(graveyard -> graveyard.getValue().stream()
+                        .anyMatch(card -> card.getId().equals(targetCardId)))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(entry.getControllerId());
+        int toughness = Math.max(0, amountEvaluationService.rawCharacteristicToughnessForController(
+                gameData, targetCard, cardOwnerId));
 
         graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard);
 

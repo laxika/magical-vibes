@@ -43,22 +43,43 @@ public class RebirthAnteHandler implements MayEffectHandlerBean {
         List<Card> library = gameData.playerDecks.get(playerId);
 
         if (accepted && library != null && !library.isEmpty()) {
-            Card anted = library.removeFirst();
-            gameData.addToAnte(playerId, anted);
-            gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
-            log.info("Game {} - {} antes {} to {}", gameData.id, player.getUsername(), anted.getName(),
-                    ability.sourceCard().getName());
-
-            if (lifeSupport.applySetLifeTotal(gameData, playerId, 20)) {
-                gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + "'s life total becomes 20."));
-            }
+            gameData.rebirthAnteAcceptedPlayerIds.add(playerId);
         } else {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to ante. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} declines the {} ante", gameData.id, player.getUsername(),
                     ability.sourceCard().getName());
         }
 
+        boolean decisionsPending = gameData.pendingMayAbilities.stream()
+                .anyMatch(pending -> pending.effects().stream().anyMatch(RebirthAnteEffect.class::isInstance));
+        if (!decisionsPending) {
+            applyAcceptedAntes(gameData, ability);
+        }
+
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * CR 608.2e: every player's choice is made before the ante and life change happen, so the
+     * accepted antes are performed together once the last player has decided.
+     */
+    private void applyAcceptedAntes(GameData gameData, PendingMayAbility ability) {
+        for (UUID playerId : List.copyOf(gameData.rebirthAnteAcceptedPlayerIds)) {
+            gameData.rebirthAnteAcceptedPlayerIds.remove(playerId);
+            List<Card> library = gameData.playerDecks.get(playerId);
+            if (library == null || library.isEmpty()) {
+                continue;
+            }
+            String name = gameData.playerIdToName.get(playerId);
+            Card anted = library.removeFirst();
+            gameData.addToAnte(playerId, anted);
+            gameLogService.append(gameData, GameLog.builder().text(name + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
+            log.info("Game {} - {} antes {} to {}", gameData.id, name, anted.getName(),
+                    ability.sourceCard().getName());
+
+            if (lifeSupport.applySetLifeTotal(gameData, playerId, 20)) {
+                gameLogService.append(gameData, GameLog.text(name + "'s life total becomes 20."));
+            }
+        }
     }
 }

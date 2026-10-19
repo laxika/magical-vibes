@@ -40,7 +40,7 @@ public class RagostDeftGastronaut extends Card {
                         new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT)),
                 "{1}, {T}, Sacrifice a Food: Ragost deals 3 damage to each opponent."));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new GainedLifeThisTurn(), new UntapPermanentsEffect(TapUntapScope.SELF)));
     }
 

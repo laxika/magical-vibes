@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Food;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RapaciousGuest.class, Food.class, GrizzlyBears.class, Murder.class})
+@CardUsed({RapaciousGuest.class, Food.class, GrizzlyBears.class, Murder.class, Unsummon.class})
 class RapaciousGuestTest extends BaseCardTest {
 
     @Test
@@ -136,8 +137,14 @@ class RapaciousGuestTest extends BaseCardTest {
         guest.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setLife(player2, 20);
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, guest));
-        resolveAllTriggers();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player2, 0, guest.getId());
+
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();

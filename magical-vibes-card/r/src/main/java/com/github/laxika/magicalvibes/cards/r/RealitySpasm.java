@@ -19,11 +19,11 @@ public class RealitySpasm extends Card {
                 ChooseOneEffect.ChooseOneOption.exactlyXTargets(
                         "Tap X target permanents",
                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                        TargetFilters.permanent(), 100),
+                        TargetFilters.permanent(), Integer.MAX_VALUE),
                 ChooseOneEffect.ChooseOneOption.exactlyXTargets(
                         "Untap X target permanents",
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        TargetFilters.permanent(), 100)
+                        TargetFilters.permanent(), Integer.MAX_VALUE)
         )));
     }
 }

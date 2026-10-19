@@ -51,6 +51,7 @@ class RealmwrightTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
 
         gs.tapPermanent(gd, player1, 2);
+        harness.handleListChoice(player1, "GREEN");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
         assertThat(secondForest.isTapped()).isTrue();
@@ -137,7 +138,10 @@ class RealmwrightTest extends BaseCardTest {
     @DisplayName("Realmwright also requires a choice when entering without being cast")
     void enteringWithoutCastingRequiresChoice() {
         Permanent gate = harness.addToBattlefieldAndReturn(player1, new SimicGuildgate());
-        harness.enterBattlefieldAndReturn(player1, new Realmwright());
+        Realmwright realmwright = new Realmwright();
+        harness.addToBattlefield(player1, realmwright);
+        harness.inMutationScope(() -> harness.getBattlefieldEntryService()
+                .handleCreatureEnteredBattlefield(gd, player1.getId(), realmwright, null, false));
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "SWAMP");
 

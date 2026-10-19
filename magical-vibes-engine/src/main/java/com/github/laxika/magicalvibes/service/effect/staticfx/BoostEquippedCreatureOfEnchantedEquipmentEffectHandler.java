@@ -33,6 +33,10 @@ public class BoostEquippedCreatureOfEnchantedEquipmentEffectHandler implements S
             return;
         }
 
+        if (!EnchantedEquipmentGrantSupport.equipmentKeepsGrantedAbility(aura, equipment)) {
+            return;
+        }
+
         var boost = (BoostEquippedCreatureOfEnchantedEquipmentEffect) effect;
         accumulator.addPower(boost.powerBoost());
         accumulator.addToughness(boost.toughnessBoost());

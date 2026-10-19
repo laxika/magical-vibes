@@ -17,7 +17,12 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class RisenReef extends Card {
 
     public RisenReef() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        // Whenever this creature or another Elemental you control enters. The self entry is unconditional so a
+        // type-changing effect on Risen Reef itself (Conspiracy) does not stop its own trigger.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
+                        new CardTypePredicate(CardType.LAND), true));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ELEMENTAL),
                         new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(

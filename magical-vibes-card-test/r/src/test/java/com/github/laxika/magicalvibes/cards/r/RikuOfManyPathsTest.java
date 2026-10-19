@@ -79,7 +79,7 @@ class RikuOfManyPathsTest extends BaseCardTest {
         Permanent riku = addRiku();
         harness.setHand(player1, List.of(new TrashTheTown()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castModalInstant(player1, 0, 2, List.of(riku.getId()));
+        harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{2}, List.of(riku.getId()));
 
         assertThatCode(() -> harness.handleListChoice(player1, "Choose no modes"))
                 .doesNotThrowAnyException();
@@ -225,6 +225,7 @@ class RikuOfManyPathsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drake, new TrashTheTown(), new TrashTheTown()));
         harness.setHand(player1, List.of(new TrashTheTown()));
         castModal(EXILE_MODE);
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -242,6 +243,7 @@ class RikuOfManyPathsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drake, new TrashTheTown(), new TrashTheTown()));
         harness.setHand(player1, List.of(new TrashTheTown()));
         castModal(EXILE_MODE);
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
@@ -255,7 +257,7 @@ class RikuOfManyPathsTest extends BaseCardTest {
 
     private void castModal(String rikuMode) {
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castModalInstant(player1, 0, 2,
+        harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{2},
                 List.of(findPermanent(player1, "Riku of Many Paths").getId()));
         harness.handleListChoice(player1, rikuMode);
         resolveAllTriggers();

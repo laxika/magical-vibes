@@ -32,6 +32,9 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
         UUID playerId = e.affectedPlayerId();
         if (entry.isNonTargeting() && entry.getTargetId() != null) {
             UUID currentController = gameQueryService.findPermanentController(gameData, entry.getTargetId());
+            if (currentController == null) {
+                currentController = entry.getRemovedPermanentControllers().get(entry.getTargetId());
+            }
             if (currentController != null) {
                 playerId = currentController;
             }

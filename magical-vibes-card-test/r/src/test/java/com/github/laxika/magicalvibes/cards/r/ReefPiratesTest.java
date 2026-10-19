@@ -136,9 +136,10 @@ class ReefPiratesTest extends BaseCardTest {
         Card topCard = new ReefPirates();
         harness.setLibrary(player2, List.of(topCard));
         Permanent pirates = addCreatureReady(player1, new ReefPirates());
-        declareAttackers(List.of(0));
-        resolveCombat();
+        pirates.setAttacking(true);
+        harness.resolveCombatDamage();
 
+        assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);

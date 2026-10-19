@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -50,6 +51,9 @@ public class RatadrabikOfUrborg extends Card {
                     List.of(CardColor.BLACK));
 
     public RatadrabikOfUrborg() {
+        // Ward {2}.
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.VIGILANCE,
                 GrantScope.OWN_CREATURES,

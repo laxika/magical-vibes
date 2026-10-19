@@ -26,15 +26,11 @@ class RiveteersAscendancyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(lowerManaValueCreature, equalManaValueCreature));
 
         harness.activateAbility(player1, 1, 1, null, null);
-        harness.passBothPriorities();
+        chooseGraveyardTarget(lowerManaValueCreature);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.GraveyardChoice) {
-            harness.handleGraveyardCardChosen(player1, 0);
-        }
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
@@ -54,17 +50,13 @@ class RiveteersAscendancyTest extends BaseCardTest {
         Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Card returnedCreature = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setGraveyard(player1, List.of(returnedCreature, new GrizzlyBears()));
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.handlePermanentChosen(player1, firstSacrifice.getId());
-        harness.passBothPriorities();
+        chooseGraveyardTarget(returnedCreature);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.GraveyardChoice) {
-            harness.handleGraveyardCardChosen(player1, 0);
-        }
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.activateAbility(player1, 2, 1, null, null);
@@ -88,15 +80,16 @@ class RiveteersAscendancyTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.handlePermanentChosen(player1, firstSacrifice.getId());
-        harness.passBothPriorities();
+        chooseGraveyardTarget(null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         harness.activateAbility(player1, 2, 1, null, null);
-        harness.handlePermanentChosen(player1, secondSacrifice.getId());
-        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player1, secondSacrifice.getId());
+        }
+        chooseGraveyardTarget(null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -143,6 +136,15 @@ class RiveteersAscendancyTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    private void chooseGraveyardTarget(Card expected) {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        Card chosen = expected == null ? choice.cards().getFirst() : expected;
+        assertThat(choice.cards()).contains(chosen);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
     }
 
     private void addAscendancyAndMarket() {

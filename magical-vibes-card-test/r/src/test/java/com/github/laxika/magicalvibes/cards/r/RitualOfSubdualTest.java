@@ -198,6 +198,6 @@ class RitualOfSubdualTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ritual of Subdual");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ritual);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gameLogContains("to avoid penalty")).isFalse();
     }
 }

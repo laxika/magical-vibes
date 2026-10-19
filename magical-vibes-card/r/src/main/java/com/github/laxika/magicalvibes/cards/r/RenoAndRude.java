@@ -36,8 +36,10 @@ public class RenoAndRude extends Card {
                 new MayEffect(
                         new SacrificePermanentThenEffect(
                                 anotherCreatureOrArtifact,
-                                new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null),
-                                "another creature or artifact"),
+                                new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null, false, true),
+                                "another creature or artifact",
+                                false,
+                                false),
                         "Sacrifice another creature or artifact?")));
     }
 }

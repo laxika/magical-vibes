@@ -52,7 +52,6 @@ class RenoAndRudeTest extends BaseCardTest {
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
@@ -82,7 +81,6 @@ class RenoAndRudeTest extends BaseCardTest {
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

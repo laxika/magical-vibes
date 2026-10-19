@@ -1882,9 +1882,12 @@ public class CastingPermissionService {
                 && !isTreatedAsInPlayersGraveyardThisTurn(gameData, playerId, card, graveyardOwnerId)) {
             return false;
         }
-        return !permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
+        return (!permission.onlyCardsPutIntoGraveyardFromLibraryThisTurn()
                 || gameData.cardsPutIntoGraveyardFromLibraryThisTurn
-                .getOrDefault(graveyardOwnerId, Set.of()).contains(card.getId());
+                .getOrDefault(graveyardOwnerId, Set.of()).contains(card.getId()))
+                && (!permission.onlyCardsMilledThisTurn()
+                || gameData.cardsMilledThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of()).contains(card.getId()));
     }
 
     /**
@@ -2074,6 +2077,9 @@ public class CastingPermissionService {
                 && !cardWasPutIntoGraveyardFromLibraryThisTurn(gameData, card)) {
             return false;
         }
+        if (permission.onlyCardsMilledThisTurn() && !cardWasMilledThisTurn(gameData, card)) {
+            return false;
+        }
         if (permission instanceof CastSpellsFromGraveyardPermission castPermission) {
             return predicateEvaluationService.matchesCardPredicate(card, castPermission.filter(), null);
         }
@@ -2087,6 +2093,14 @@ public class CastingPermissionService {
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         return graveyardOwnerId != null
                 && gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of())
+                .contains(card.getId());
+    }
+
+    private boolean cardWasMilledThisTurn(GameData gameData, Card card) {
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        return graveyardOwnerId != null
+                && gameData.cardsMilledThisTurn
                 .getOrDefault(graveyardOwnerId, Set.of())
                 .contains(card.getId());
     }
@@ -2780,6 +2794,7 @@ public class CastingPermissionService {
      * on their permanents.
      */
     public Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
+        materializeWildcardExileCastPermissions(gameData);
         Set<UUID> castableIds = new HashSet<>();
         for (GameData.ExileCastPermission permission : gameData.exileCastPermissionsUntilEndOfTurn) {
             if (playerId.equals(permission.castingPlayerId())
@@ -3046,6 +3061,7 @@ public class CastingPermissionService {
 
     /** Consumes a temporary normal-cost source-linked exile-cast grant, if present. */
     public boolean consumeTemporaryCastFromExiledWithSource(GameData gameData, UUID playerId, UUID cardId) {
+        materializeWildcardExileCastPermissions(gameData);
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return false;
         GameData.ExileCastPermission permission = gameData.exileCastPermissionsUntilEndOfTurn.stream()
@@ -3058,7 +3074,33 @@ public class CastingPermissionService {
         if (permission == null) return false;
         gameData.exileCastPermissionsUntilEndOfTurn.removeIf(candidate ->
                 candidate.grantId().equals(permission.grantId()));
+        gameData.exileCastWildcardPermissionsUntilEndOfTurn.removeIf(candidate ->
+                candidate.grantId().equals(permission.grantId()));
         return true;
+    }
+
+    /**
+     * Gives every card exiled with a wildcard grant's source its own one-card permission, so a card
+     * exiled after the grant was created is covered too (CR 611.2c).
+     */
+    private void materializeWildcardExileCastPermissions(GameData gameData) {
+        for (GameData.ExileCastWildcardPermission wildcard : gameData.exileCastWildcardPermissionsUntilEndOfTurn) {
+            for (ExiledCardEntry exiled : gameData.getExiledWithPermanentEntries(
+                    wildcard.sourcePermanentId(), wildcard.sourceCardId())) {
+                UUID cardId = exiled.card().getId();
+                boolean covered = gameData.exileCastPermissionsUntilEndOfTurn.stream().anyMatch(permission ->
+                        permission.grantId().equals(wildcard.grantId()) && permission.cardId().equals(cardId));
+                if (covered
+                        || wildcard.ownOnly() && !wildcard.castingPlayerId().equals(exiled.ownerId())
+                        || wildcard.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                                exiled.card(), wildcard.filter(), null)) {
+                    continue;
+                }
+                gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+                        wildcard.grantId(), wildcard.sourcePermanentId(), wildcard.castingPlayerId(), cardId,
+                        wildcard.withoutPayingManaCost(), wildcard.putOnBottomOfOwnersLibrary()));
+            }
+        }
     }
 
     /** Marks a once-per-turn or one-shot normal-cost exile-cast permission after a successful spell cast. */
@@ -3163,6 +3205,8 @@ public class CastingPermissionService {
         if (temporaryPermission != null) {
             if (consume) {
                 gameData.exileCastPermissionsUntilEndOfTurn.removeIf(permission ->
+                        permission.grantId().equals(temporaryPermission.grantId()));
+                gameData.exileCastWildcardPermissionsUntilEndOfTurn.removeIf(permission ->
                         permission.grantId().equals(temporaryPermission.grantId()));
             }
             return true;
@@ -3313,6 +3357,7 @@ public class CastingPermissionService {
 
     private GameData.ExileCastPermission findTemporaryExileCastPermission(
             GameData gameData, UUID playerId, ExiledCardEntry entry, boolean freeOnly) {
+        materializeWildcardExileCastPermissions(gameData);
         return gameData.exileCastPermissionsUntilEndOfTurn.stream()
                 .filter(permission -> permission.cardId().equals(entry.card().getId()))
                 .filter(permission -> permission.sourcePermanentId().equals(entry.sourcePermanentId()))

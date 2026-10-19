@@ -16,9 +16,8 @@ public class RegalBehemoth extends Card {
         // Trample is auto-loaded from Scryfall.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
 
-        // While its controller is the monarch, tapping a land adds one additional mana of a type
-        // that land produced.
+        // Whenever you tap a land for mana while you're the monarch, add an additional one mana of any color.
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
-                new AddOneOfEachManaTypeProducedByLandEffect(true, null, true));
+                AddOneOfEachManaTypeProducedByLandEffect.anyColor(true, null, true));
     }
 }

@@ -93,9 +93,7 @@ class RiteOfUndoingTest extends BaseCardTest {
         UUID opposingId = harness.getPermanentId(player2, "Llanowar Elves");
         harness.castInstant(player1, 0, List.of(ownId, opposingId));
 
-        var moved = gd.playerBattlefields.get(player1.getId()).removeFirst();
-        gd.playerBattlefields.get(player2.getId()).add(moved);
-        gd.stolenCreatures.put(ownId, player1.getId());
+        setOwnerAndController(findPermanent(player1, "Grizzly Bears"), player1, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -115,9 +113,7 @@ class RiteOfUndoingTest extends BaseCardTest {
         UUID opposingId = harness.getPermanentId(player2, "Llanowar Elves");
         harness.castInstant(player1, 0, List.of(ownId, opposingId));
 
-        var moved = gd.playerBattlefields.get(player2.getId()).removeFirst();
-        gd.playerBattlefields.get(player1.getId()).add(moved);
-        gd.stolenCreatures.put(opposingId, player2.getId());
+        setOwnerAndController(findPermanent(player2, "Llanowar Elves"), player2, player1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
@@ -133,7 +129,7 @@ class RiteOfUndoingTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LlanowarElves());
         UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID opposingId = harness.getPermanentId(player2, "Llanowar Elves");
-        gd.stolenCreatures.put(ownId, player2.getId());
+        setOwnerAndController(findPermanent(player1, "Grizzly Bears"), player2, player1);
         harness.setHand(player1, List.of(new RiteOfUndoing()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 

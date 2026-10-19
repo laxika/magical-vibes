@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.BoostByAttackCountEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,11 @@ public class BoostByAttackCountEffectHandler implements StaticEffectHandlerBean 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostByAttackCountEffect) effect;
-        if (!support.matchesCreatureScope(context, boost.scope(), boost.filter())) {
+        boolean inScope = boost.scope() == GrantScope.SELF
+                ? context.target().getId().equals(context.sourceId())
+                        && support.matchesStaticFilter(context, context.target(), boost.filter())
+                : support.matchesCreatureScope(context, boost.scope(), boost.filter());
+        if (!inScope) {
             return;
         }
         int attacks = boost.countThisGame()

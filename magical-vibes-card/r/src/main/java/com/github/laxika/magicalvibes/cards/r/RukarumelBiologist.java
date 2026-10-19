@@ -31,6 +31,10 @@ public class RukarumelBiologist extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentHasSubtypePredicate(CardSubtype.SLIVER)
                 ))));
+        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnCreaturesEffect(
+                false,
+                GrantScope.OWN_PERMANENTS,
+                new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

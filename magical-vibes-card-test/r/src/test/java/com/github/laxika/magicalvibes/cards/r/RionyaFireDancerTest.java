@@ -34,7 +34,7 @@ class RionyaFireDancerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(tokens.getFirst().hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(rionya).isIn(gd.playerBattlefields.get(player1.getId()));
     }
 
@@ -164,7 +164,7 @@ class RionyaFireDancerTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(rionya.getId());
         harness.passBothPriorities();

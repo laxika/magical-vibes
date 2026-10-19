@@ -48,10 +48,10 @@ class RestoreBalanceTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         for (int i = 0; i < 5; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -89,10 +89,10 @@ class RestoreBalanceTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         for (int i = 0; i < 5; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -163,7 +163,7 @@ class RestoreBalanceTest extends BaseCardTest {
             resolveAllTriggers();
         }
         harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
+        harness.passBothPriorities();
 
         assertThat(landCount(player2)).isZero();
         assertThat(countCreatures(player2)).isZero();

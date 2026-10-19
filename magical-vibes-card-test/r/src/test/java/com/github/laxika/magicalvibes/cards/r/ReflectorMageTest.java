@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BlindingDrone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -121,7 +123,7 @@ class ReflectorMageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player2, 0);
+        harness.castCreature(player2, handIndexOf(player2, target.getOriginalCard()));
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -138,7 +140,8 @@ class ReflectorMageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+        int droneIndex = handIndexOf(player2, target.getOriginalCard());
+        assertThatThrownBy(() -> harness.castCreature(player2, droneIndex))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -161,8 +164,14 @@ class ReflectorMageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player2, 0);
+        harness.castCreature(player2, handIndexOf(player2, target.getOriginalCard()));
         assertThat(gd.stack).hasSize(1);
+    }
+
+    private int handIndexOf(Player player, Card card) {
+        int index = gd.playerHands.get(player.getId()).indexOf(card);
+        assertThat(index).isNotNegative();
+        return index;
     }
 
     private void castAndResolveReflectorMage(Permanent target) {

@@ -10,6 +10,6 @@ public class RansackTheLab extends Card {
 
     public RansackTheLab() {
         // Look at the top three cards of your library. Put one into your hand and the rest into your graveyard.
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
     }
 }

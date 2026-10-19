@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,9 +31,8 @@ class RankleAndTorbranTest extends BaseCardTest {
     @DisplayName("Combat damage trigger can make each player create a Treasure")
     void createsTreasureForEachPlayer() {
         addAttackingRankle();
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, true);
         chooseMode(TREASURE);
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
@@ -45,9 +45,8 @@ class RankleAndTorbranTest extends BaseCardTest {
         addAttackingRankle();
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, true);
         chooseMode(SACRIFICE);
         harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
@@ -68,9 +67,8 @@ class RankleAndTorbranTest extends BaseCardTest {
     @DisplayName("Damage mode adds two to player and battle damage but not creature damage")
     void addsDamageOnlyToPlayersAndBattles() {
         addAttackingRankle();
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, true);
         chooseMode(DAMAGE);
 
         Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfInnistrad());
@@ -107,9 +105,9 @@ class RankleAndTorbranTest extends BaseCardTest {
     @DisplayName("Choosing no modes produces no Treasure or sacrifice")
     void canChooseNoModes() {
         addAttackingRankle();
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleListChoice(player1, ChooseOneEffect.NO_MODE_LABEL);
 
         assertThat(countPermanents(player1, "Treasure")).isZero();
         assertThat(countPermanents(player2, "Treasure")).isZero();
@@ -123,9 +121,8 @@ class RankleAndTorbranTest extends BaseCardTest {
         addAttackingRankle();
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         bear.setAttacking(true);
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, true);
         chooseMode(DAMAGE);
         harness.passBothPriorities();
 
@@ -141,9 +138,8 @@ class RankleAndTorbranTest extends BaseCardTest {
         Permanent rankle = addCreatureReady(player1, new RankleAndTorbran());
         rankle.setAttacking(true);
         rankle.setAttackTarget(battle.getId());
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, true);
         chooseMode(TREASURE);
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
@@ -156,12 +152,12 @@ class RankleAndTorbranTest extends BaseCardTest {
     @DisplayName("All modes resolve in printed order even when Rankle and Torbran is sacrificed")
     void allModesContinueAfterSourceIsSacrificed() {
         addAttackingRankle();
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, DAMAGE);
         harness.handleListChoice(player1, SACRIFICE);
         harness.handleListChoice(player1, TREASURE);
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
         assertThat(countPermanents(player2, "Treasure")).isEqualTo(1);
@@ -187,9 +183,8 @@ class RankleAndTorbranTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         bear.setAttacking(true);
         bear.setAttackTarget(battle.getId());
-        resolveCombatAndTrigger();
+        resolveCombat();
 
-        harness.handleMayAbilityChosen(player1, true);
         chooseMode(DAMAGE);
         harness.passBothPriorities();
 
@@ -201,8 +196,7 @@ class RankleAndTorbranTest extends BaseCardTest {
     @DisplayName("The damage bonus expires before the next turn")
     void damageBonusExpiresAtEndOfTurn() {
         addAttackingRankle();
-        resolveCombatAndTrigger();
-        harness.handleMayAbilityChosen(player1, true);
+        resolveCombat();
         chooseMode(DAMAGE);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
@@ -219,13 +213,9 @@ class RankleAndTorbranTest extends BaseCardTest {
         rankle.setAttacking(true);
     }
 
-    private void resolveCombatAndTrigger() {
-        resolveCombat();
-        harness.passBothPriorities();
-    }
-
     private void chooseMode(String mode) {
         harness.handleListChoice(player1, mode);
-        harness.handleListChoice(player1, "Done");
+        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
+        harness.passBothPriorities();
     }
 }

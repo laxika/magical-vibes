@@ -102,9 +102,7 @@ class ReduceToMemoryTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new EagerFirstYear());
         castReduceToMemory(target.getId());
 
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))

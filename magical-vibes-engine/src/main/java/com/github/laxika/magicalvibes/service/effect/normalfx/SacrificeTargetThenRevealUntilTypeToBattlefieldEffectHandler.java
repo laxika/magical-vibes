@@ -65,6 +65,12 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
                 : e.cardTypes();
         boolean permanentCardsOnly = e.cardTypes().isEmpty();
 
+        // "Its controller sacrifices it": a permanent that can't be sacrificed (Hithlain Rope) stops the
+        // effect, so nothing is revealed or put onto the battlefield.
+        if (gameQueryService.cantBeSacrificed(gameData, target)) {
+            return;
+        }
+
         // Sacrifice the targeted permanent
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
         String sacrificeLog = targetControllerName + " sacrifices " + targetName + ".";
@@ -151,14 +157,25 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
             types.add(card.getType());
         }
         types.addAll(card.getAdditionalTypes());
-        types.removeIf(type -> !type.isPermanentType() || type == CardType.KINDRED);
-        return types;
+        return withoutNonPermanentTypes(types);
     }
 
     private Set<CardType> effectivePermanentTypesOf(GameData gameData, Permanent permanent) {
         Set<CardType> types = EnumSet.noneOf(CardType.class);
         types.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
-        types.removeIf(type -> !type.isPermanentType() || type == CardType.KINDRED);
+        return withoutNonPermanentTypes(types);
+    }
+
+    /**
+     * Keeps the permanent types and kindred (CR 205.2a: kindred is a card type, so a kindred permanent
+     * shares it with other kindred permanents). A card with no permanent type of its own is not a
+     * permanent card, so its kindred alone does not make it one.
+     */
+    private static Set<CardType> withoutNonPermanentTypes(Set<CardType> types) {
+        types.removeIf(type -> !type.isPermanentType() && type != CardType.KINDRED);
+        if (types.stream().noneMatch(CardType::isPermanentType)) {
+            types.clear();
+        }
         return types;
     }
 }

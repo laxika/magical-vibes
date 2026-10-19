@@ -142,6 +142,7 @@ class RockJockeyTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Mountain()));
+        harness.setHand(player2, List.of());
         harness.playLand(player1, 0);
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

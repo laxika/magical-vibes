@@ -89,7 +89,7 @@ class RuinationGuideTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(topCard, nextCard));
         harness.setLibrary(player1, List.of(ownTopCard));
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
@@ -120,7 +120,7 @@ class RuinationGuideTest extends BaseCardTest {
         OranRiefInvoker topCard = new OranRiefInvoker();
         harness.setLibrary(player2, List.of(topCard));
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
         gd.playerBattlefields.get(player1.getId()).remove(guide);

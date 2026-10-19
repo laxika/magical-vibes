@@ -27,7 +27,8 @@ public class RogueClass extends Card {
     public RogueClass() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null,
-                        new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.TARGET_OPPONENT)));
+                        new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.TARGET_OPPONENT,
+                                false, null, false, true, true)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

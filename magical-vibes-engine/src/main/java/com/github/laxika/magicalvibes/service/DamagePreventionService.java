@@ -1983,16 +1983,42 @@ public class DamagePreventionService {
                 || gameData.reflectDamageToSourceControllerShields.isEmpty()) {
             return damage;
         }
+        UUID sourceControllerId = reflectSourceControllerId(gameData, sourcePermanentId);
+        Card sourceCard = reflectSourceCard(gameData, sourcePermanentId);
+        if (sourceControllerId == null || sourceCard == null) return damage;
         // List.remove(Object) removes the first matching entry — a single shield is consumed per event.
         if (!gameData.reflectDamageToSourceControllerShields.remove(sourcePermanentId)) return damage;
 
-        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
-        if (source == null || sourceControllerId == null) return damage;
-
         gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
-                sourceControllerId, damage, source.getCard(), sourceControllerId));
+                sourceControllerId, damage, sourceCard, sourceControllerId,
+                gameQueryService.findPermanentById(gameData, sourcePermanentId) != null ? sourcePermanentId : null));
         return 0;
+    }
+
+    /** Controller of a Reflect Damage source: its permanent's controller, or the controller of a spell on the stack. */
+    private UUID reflectSourceControllerId(GameData gameData, UUID sourceId) {
+        if (gameQueryService.findPermanentById(gameData, sourceId) != null) {
+            return gameQueryService.findPermanentController(gameData, sourceId);
+        }
+        StackEntry spell = reflectSourceSpell(gameData, sourceId);
+        return spell == null ? null : spell.getControllerId();
+    }
+
+    private Card reflectSourceCard(GameData gameData, UUID sourceId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, sourceId);
+        if (permanent != null) {
+            return permanent.getCard();
+        }
+        StackEntry spell = reflectSourceSpell(gameData, sourceId);
+        return spell == null ? null : spell.getCard();
+    }
+
+    private StackEntry reflectSourceSpell(GameData gameData, UUID sourceId) {
+        return gameData.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                        || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
+                .filter(entry -> entry.getCard() != null && sourceId.equals(entry.getCard().getId()))
+                .findFirst().orElse(null);
     }
 
     /** Redirects a source's next combat damage to the stored controller of the effect that created the shield. */
@@ -2054,7 +2080,8 @@ public class DamagePreventionService {
         UUID sorceryCardId = entry.getCard().getId();
         synchronized (gameData.targetSorceryDamageRedirectShields) {
             return gameData.targetSorceryDamageRedirectShields.stream()
-                    .filter(shield -> sorceryCardId.equals(shield.sorceryCardId()))
+                    .filter(shield -> sorceryCardId.equals(shield.sorceryCardId())
+                            && shield.graveyardEntryVersion() == gameData.graveyardEntryVersion(sorceryCardId))
                     .map(TargetSorceryDamageRedirectShield::controllerId)
                     .findFirst()
                     .orElse(null);
@@ -2744,6 +2771,21 @@ public class DamagePreventionService {
 
     public int applyOpponentSourceDamageReduction(GameData gameData, UUID playerId, UUID sourceControllerId,
                                                    int damage, boolean combatDamage) {
+        return applyOpponentSourceDamageReduction(gameData, playerId, sourceControllerId, damage, combatDamage, false);
+    }
+
+    /**
+     * As above for damage to a permanent {@code controllerId} controls: only effects that also cover
+     * permanents apply (Valkmira, Protector's Shield).
+     */
+    public int applyOpponentSourceDamageReductionToPermanent(GameData gameData, UUID controllerId,
+                                                              UUID sourceControllerId, int damage,
+                                                              boolean combatDamage) {
+        return applyOpponentSourceDamageReduction(gameData, controllerId, sourceControllerId, damage, combatDamage, true);
+    }
+
+    private int applyOpponentSourceDamageReduction(GameData gameData, UUID playerId, UUID sourceControllerId,
+                                                    int damage, boolean combatDamage, boolean toPermanent) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
         if (damage <= 0) return damage;
         if (sourceControllerId == null || sourceControllerId.equals(playerId)) return damage;
@@ -2755,7 +2797,8 @@ public class DamagePreventionService {
         for (Permanent permanent : battlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PreventDamageFromOpponentSourcesEffect e) {
+                if (effect instanceof PreventDamageFromOpponentSourcesEffect e
+                        && (!toPermanent || e.includesPermanents())) {
                     totalReduction += e.amount();
                     if (totalReduction >= damage) return 0;
                 }
@@ -3415,8 +3458,7 @@ public class DamagePreventionService {
     public boolean hasReflectDamageToSourceControllerShield(GameData gameData, UUID sourcePermanentId) {
         return sourcePermanentId != null
                 && gameData.reflectDamageToSourceControllerShields.contains(sourcePermanentId)
-                && gameQueryService.findPermanentById(gameData, sourcePermanentId) != null
-                && gameQueryService.findPermanentController(gameData, sourcePermanentId) != null;
+                && reflectSourceControllerId(gameData, sourcePermanentId) != null;
     }
 
     /** Whether Opal-Eye-style shields redirect the next damage from {@code sourcePermanentId}. */

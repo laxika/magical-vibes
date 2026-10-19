@@ -64,13 +64,14 @@ class RakdosRiteknifeTest extends BaseCardTest {
     }
 
     @Test
-    void unequippedEquipmentCannotTapToAddBloodCounter() {
+    void unattachedEquipmentGrantsNoTapAbilityToCreature() {
         Permanent riteknife = harness.addToBattlefieldAndReturn(player1, new RakdosRiteknife());
         Permanent creature = addCreatureReady(player1, new MistralCharger());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
+        assertThat(creature.isTapped()).isFalse();
         assertThat(riteknife.isTapped()).isFalse();
         assertThat(riteknife.getCounterCount(CounterType.BLOOD)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(riteknife, creature);
@@ -131,7 +132,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(riteknife);
@@ -147,7 +148,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -164,7 +165,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Rakdos Riteknife");
@@ -185,7 +186,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -210,7 +211,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         harness.handleMultiplePermanentsChosen(player2, List.of(equipment.getId()));
@@ -225,7 +226,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(riteknife);
@@ -239,7 +240,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new MistralCharger());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, 2, null, creature.getId());
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(riteknife.getAttachedTo()).isEqualTo(creature.getId());

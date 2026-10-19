@@ -21,7 +21,7 @@ public class RottenmouthViper extends Card {
 
         SequenceEffect blightTrigger = SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.BLIGHT),
-                new TormentOfHailfireEffect(4, null, new CountersOnSource(CounterType.BLIGHT)));
+                new TormentOfHailfireEffect(4, null, new CountersOnSource(CounterType.BLIGHT)).deferringChoices());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, blightTrigger);
         addEffect(EffectSlot.ON_ATTACK, blightTrigger);
     }

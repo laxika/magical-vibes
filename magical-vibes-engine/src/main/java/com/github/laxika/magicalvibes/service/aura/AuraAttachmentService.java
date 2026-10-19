@@ -132,8 +132,14 @@ public class AuraAttachmentService {
                         snapshotDepartingSource(gameData, p);
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
+                        // An Aura controlled by someone else goes to its owner's graveyard (CR 400.3).
+                        UUID auraOwnerId = gameData.stolenCreatures.get(p.getId());
+                        if (auraOwnerId == null) {
+                            auraOwnerId = p.getOriginalCard().getOwnerId() != null
+                                    ? p.getOriginalCard().getOwnerId() : playerId;
+                        }
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(
-                                gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
+                                gameData, auraOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
                         if (wentToGraveyard && hadOilCounter) {
                             gameData.recordPermanentWithOilCounterPutIntoGraveyard();
                         }
@@ -372,6 +378,10 @@ public class AuraAttachmentService {
                 if (gameQueryService.playerHasProtectionFromChosenCardType(
                         gameData, attachedTo, attachment.getCard(), attachment)) {
                     return "enchanted player has protection from the Aura's card type";
+                }
+                if (gameQueryService.playerHasProtectionFromChosenName(
+                        gameData, attachedTo, attachment.getCard().getName())) {
+                    return "enchanted player has protection from the Aura's name";
                 }
             }
             if (isFortification) {

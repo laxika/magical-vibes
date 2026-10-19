@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinForEachMatchingPermanentDestroyOnLossEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService.CoinFlipResult;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -17,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves independent coin flips for matching permanents and destroys the permanents that lose.
+ * Resolves independent coin flips for matching permanents and destroys the permanents whose flip comes
+ * up tails. These flips only care about heads or tails, so no player wins or loses them and they never
+ * trigger "win a coin flip" abilities (CR 705.2).
  */
 @Component
 @RequiredArgsConstructor
@@ -27,7 +28,6 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,11 +63,7 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
                     + " the coin flip for " + sourceName + " for " + permanent.getCard().getName()
                     + coinFlipService.replacementDetails(result) + "."));
 
-            if (result.heads()) {
-                if (result.isActualCoinFlip()) {
-                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
-                }
-            } else {
+            if (!result.heads()) {
                 lostPermanents.add(permanent);
             }
         }

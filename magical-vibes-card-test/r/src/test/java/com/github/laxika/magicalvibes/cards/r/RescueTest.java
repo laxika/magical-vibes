@@ -154,9 +154,7 @@ class RescueTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
 
         // Simulate a control change while Rescue is on the stack, preserving ownership.
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
 
         harness.passBothPriorities();
 

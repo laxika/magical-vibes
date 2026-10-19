@@ -151,6 +151,7 @@ public class DrawService {
     private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
             "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
     private static final CreateTokenEffect HULLBREACHER_TREASURE = CreateTokenEffect.ofTreasureToken(1);
+    private static final String RING_OF_MARF_CHOICE_NAME = "Ring of Ma'r\u00fbf";
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
     private final ExileBottomRandomSupport exileBottomRandomSupport;
@@ -432,8 +433,10 @@ public class DrawService {
         Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
         Permanent ubaMaskSource = findUbaMaskSource(gameData);
         boolean sagesAndUbaMaskCompete = revealCreaturesSource != null && ubaMaskSource != null;
+        boolean ringPending = gameData.pendingNextDrawFromOutsideGame.containsKey(playerId);
         if (exileReplacementSources.size() > 1
                 || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)
+                || (!exileReplacementSources.isEmpty() && ringPending)
                 || sagesAndUbaMaskCompete) {
             Map<String, UUID> sourceIds = new LinkedHashMap<>();
             exileReplacementSources.forEach((name, source) -> sourceIds.put(name, source.getId()));
@@ -443,6 +446,10 @@ public class DrawService {
             if (sagesAndUbaMaskCompete) {
                 sourceIds.putIfAbsent(revealCreaturesSource.getCard().getName(), revealCreaturesSource.getId());
                 sourceIds.putIfAbsent(ubaMaskSource.getCard().getName(), ubaMaskSource.getId());
+            }
+            if (ringPending) {
+                // The Ring's exiled source is gone, so its replacement is keyed by the drawing player's id.
+                sourceIds.putIfAbsent(RING_OF_MARF_CHOICE_NAME, playerId);
             }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null,
@@ -746,13 +753,18 @@ public class DrawService {
                     findFirstNonDrawStepDrawReplacement(gameData, playerId);
             if (replacement != null
                     && gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.add(replacement.source().getId())) {
-                int drawCount = replacement.effect().replacementDrawCount();
+                int replacementCount = replacement.effect().replacementDrawCount();
+                int perDoubler = 2 * MaroGoneNutsSupport.doublingFactor(gameData);
+                int doublerMultiplier = repeatedProduct(perDoubler, countDrawDoublers(gameData, playerId, false))
+                        * repeatedProduct(perDoubler, countDrawDoublers(gameData, playerId, true));
+                int drawCount = replacementCount * doublerMultiplier;
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " draws " + drawCount
                         + " cards instead with " + replacement.source().getCard().getName() + "."));
                 for (int i = 0; i < drawCount; i++) {
-                    performDrawCard(gameData, playerId);
+                    gameData.pendingReplacementCardDraws.addLast(playerId);
                 }
+                performPendingReplacementDraws(gameData);
                 return;
             }
         }
@@ -1639,6 +1651,9 @@ public class DrawService {
             if (gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.contains(permanent.getId())) {
                 continue;
             }
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof FirstNonDrawStepDrawReplacementEffect replacement) {
                     return new FirstNonDrawStepDrawReplacement(permanent, replacement);
@@ -2056,6 +2071,14 @@ public class DrawService {
 
     /** Applies the competing draw replacement selected by the player who would draw (CR 616.1). */
     public void resolveChosenDrawReplacementSource(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        if (sourcePermanentId.equals(playerId) && gameData.pendingNextDrawFromOutsideGame.containsKey(playerId)) {
+            Integer pendingOutsideGame = gameData.pendingNextDrawFromOutsideGame.remove(playerId);
+            if (pendingOutsideGame > 1) {
+                gameData.pendingNextDrawFromOutsideGame.put(playerId, pendingOutsideGame - 1);
+            }
+            resolveNextDrawFromOutsideGame(gameData, playerId);
+            return;
+        }
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
             throw new IllegalStateException("That draw replacement is no longer available");

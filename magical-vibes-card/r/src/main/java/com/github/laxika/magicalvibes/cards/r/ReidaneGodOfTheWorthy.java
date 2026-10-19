@@ -35,7 +35,7 @@ public class ReidaneGodOfTheWorthy extends Card {
         addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
                 new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        new CardMinManaValuePredicate(4))),
+                        new CardMinManaValuePredicate(4, true))),
                 2,
                 CostModificationScope.OPPONENT));
     }

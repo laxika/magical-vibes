@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RoaringPrimadox.class, PrimalHuntbeast.class, Forest.class})
@@ -98,6 +100,7 @@ class RoaringPrimadoxTest extends BaseCardTest {
     @DisplayName("Triggered ability does nothing when no creatures remain")
     void resolvesWithNoCreaturesRemaining() {
         Permanent primadox = addCreatureReady(player1, new RoaringPrimadox());
+        harness.setHand(player1, List.of());
 
         advanceToUpkeep(player1);
         gd.playerBattlefields.get(player1.getId()).remove(primadox);
@@ -114,7 +117,8 @@ class RoaringPrimadoxTest extends BaseCardTest {
     void returnsBorrowedCreatureToOwner() {
         addCreatureReady(player1, new RoaringPrimadox());
         Permanent borrowed = addCreatureReady(player1, new PrimalHuntbeast());
-        gd.stolenCreatures.put(borrowed.getId(), player2.getId());
+        setOwnerAndController(borrowed, player2, player1);
+        harness.setHand(player1, List.of());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

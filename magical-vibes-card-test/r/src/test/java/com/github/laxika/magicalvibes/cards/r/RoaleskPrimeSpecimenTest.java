@@ -18,8 +18,10 @@ class RoaleskPrimeSpecimenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RoaleskPrimeSpecimen());
         Permanent dogWalker = castFaceDownDogWalker();
 
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dogWalker));
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
 
@@ -37,8 +39,10 @@ class RoaleskPrimeSpecimenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RoaleskPrimeSpecimen());
         Permanent dogWalker = castFaceDownDogWalker();
 
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dogWalker));
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 1);
 
@@ -73,8 +77,10 @@ class RoaleskPrimeSpecimenTest extends BaseCardTest {
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
         Permanent dogWalker = castFaceDownDogWalker();
 
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dogWalker));
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
         resolveAllTriggers();

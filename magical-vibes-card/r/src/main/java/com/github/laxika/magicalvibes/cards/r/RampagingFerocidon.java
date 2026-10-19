@@ -17,6 +17,7 @@ public class RampagingFerocidon extends Card {
         // Players can't gain life.
         addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
         // Whenever another creature enters, Rampaging Ferocidon deals 1 damage to that creature's controller.
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

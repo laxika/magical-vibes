@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +29,13 @@ public class AnimatePermanentsEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (AnimatePermanentsEffect) effect;
         switch (e.duration()) {
-            case PERMANENT -> animationSupport.animatePermanentTarget(gameData, entry, e);
+            case PERMANENT -> {
+                if (e.scope() == GrantScope.OWN_PERMANENTS && e.filter() != null) {
+                    animationSupport.animateControlledPermanentsPermanently(gameData, entry, e);
+                } else {
+                    animationSupport.animatePermanentTarget(gameData, entry, e);
+                }
+            }
             case WHILE_SOURCE_ON_BATTLEFIELD -> animationSupport.animateWhileSource(gameData, entry, e);
             case WHILE_SOURCE_REMAINS_TAPPED ->
                     animationSupport.animateWhileSourceRemainsTapped(gameData, entry, e);

@@ -25,7 +25,7 @@ public class ResplendentMentor extends Card {
                         List.of(new GainLifeEffect(1)),
                         "{T}: You gain 1 life."
                 ),
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))
         ));
     }

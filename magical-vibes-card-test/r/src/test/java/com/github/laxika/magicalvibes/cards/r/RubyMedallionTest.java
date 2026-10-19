@@ -52,7 +52,7 @@ class RubyMedallionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana");
+                .hasMessageContaining("Card is not playable");
     }
 
     @Test
@@ -91,7 +91,7 @@ class RubyMedallionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana");
+                .hasMessageContaining("Card is not playable");
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());

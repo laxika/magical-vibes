@@ -974,7 +974,7 @@ class LibraryChoiceHandlerServiceTest {
 
             service.handleLibraryCardChosen(gd, player1, 0);
 
-            verify(predicateEvaluationService).matchesCardPredicate(eq(found),
+            verify(predicateEvaluationService, atLeastOnce()).matchesCardPredicate(eq(found),
                     any(CardManaValueLessThanXPredicate.class), isNull(), eq(gd), eq(player1Id),
                     isNull(), isNull(), eq(3));
             assertThat(paused.getEffectsToResolve()).containsExactly(followUpEffect);

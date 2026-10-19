@@ -30,8 +30,7 @@ public class RoxanneStarfallSavant extends Card {
             false,
             true,
             Map.of(
-                    EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(2),
-                    EffectSlot.ON_SELF_TAPPED_FOR_MANA, new AddManaOfTypeProducedByTappedPermanentEffect()
+                    EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(2)
             ),
             List.of(ManaAbilities.tapForAnyColor()),
             false,
@@ -44,5 +43,7 @@ public class RoxanneStarfallSavant extends Card {
     public RoxanneStarfallSavant() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, METEORITE);
         addEffect(EffectSlot.ON_ATTACK, METEORITE);
+        addEffect(EffectSlot.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA,
+                new AddManaOfTypeProducedByTappedPermanentEffect());
     }
 }

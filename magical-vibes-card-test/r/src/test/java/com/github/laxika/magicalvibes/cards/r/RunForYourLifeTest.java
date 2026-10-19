@@ -183,6 +183,7 @@ class RunForYourLifeTest extends BaseCardTest {
     void bothEffectsExpireAtEndOfTurn() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         castOn(attacker);
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

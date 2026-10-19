@@ -49,6 +49,7 @@ class RagingRedcapTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new Gingerbrute());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(attacker.getId());
 
         resolveCombat();
 

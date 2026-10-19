@@ -135,7 +135,7 @@ class RangerEnVecTest extends BaseCardTest {
 
         assertThat(ranger.getRegenerationShield()).isEqualTo(1);
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(ranger.getRegenerationShield()).isZero();
         harness.assertOnBattlefield(player1, "Ranger en-Vec");

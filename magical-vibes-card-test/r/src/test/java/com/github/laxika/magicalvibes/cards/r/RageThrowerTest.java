@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
@@ -129,7 +130,8 @@ class RageThrowerTest extends BaseCardTest {
     void deathTriggerCanTargetPlaneswalker() {
         harness.addToBattlefield(player1, new RageThrower());
         harness.addToBattlefield(player2, new DarkthicketWolf());
-        harness.addToBattlefield(player2, new GarrukRelentless());
+        Permanent garruk = harness.addToBattlefieldAndReturn(player2, new GarrukRelentless());
+        garruk.setCounterCount(CounterType.LOYALTY, 3);
         harness.setHand(player1, List.of(new BrimstoneVolley()));
         harness.addMana(player1, ManaColor.RED, 3);
 

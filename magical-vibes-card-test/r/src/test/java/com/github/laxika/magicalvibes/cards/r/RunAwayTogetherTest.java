@@ -5,6 +5,11 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -132,10 +137,11 @@ class RunAwayTogetherTest extends BaseCardTest {
     @Test
     @DisplayName("Returns creatures to their owners even when both cards have the same owner")
     void returnsStolenCreatureToOwner() {
-        GrizzlyBears bear = new GrizzlyBears();
-        bear.setOwnerId(player2.getId());
-        Permanent stolenBear = harness.addToBattlefieldAndReturn(player1, bear);
-        gd.stolenCreatures.put(stolenBear.getId(), player2.getId());
+        Permanent stolenBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), stolenBear,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Control effect"));
         UUID elvesId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
         harness.setHand(player1, List.of(new RunAwayTogether()));
         harness.setHand(player2, List.of());

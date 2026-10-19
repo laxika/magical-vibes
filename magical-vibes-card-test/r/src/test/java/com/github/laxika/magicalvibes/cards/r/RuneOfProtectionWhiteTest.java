@@ -202,8 +202,7 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castModalInstant(player2, 0, 1, List.of(whiteSource.getId()));
 
-        gd.playerBattlefields.get(player2.getId()).remove(whiteSource);
-        gd.playerGraveyards.get(player2.getId()).add(whiteSource.getCard());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, whiteSource));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -866,6 +866,27 @@ public class ETBTokenTargetService {
         return Math.max(staticMin, Math.max(0, dynamicMin));
     }
 
+    /**
+     * The targets a counter distribution divides its counters among: only those chosen for the target
+     * group the effect is bound to, so another group's target (Rhino, Terrible Trampler's destroyed
+     * land) is never offered counters. An effect not bound to a group divides among every target.
+     */
+    private List<UUID> distributionTargetIds(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                             DistributeCountersAmongTargetsEffect distribution) {
+        List<UUID> chosen = pending.chosenTargetsSoFar();
+        int group = pending.sourceCard().getEffectTargetIndex(distribution);
+        List<Integer> sizes = pending.groupSizes();
+        if (group < 0 || group >= sizes.size() || sizes.size() != pending.sourceCard().getSpellTargets().size()) {
+            return chosen;
+        }
+        int start = 0;
+        for (int i = 0; i < group; i++) {
+            start += sizes.get(i);
+        }
+        int end = Math.min(chosen.size(), start + sizes.get(group));
+        return start > end ? List.of() : List.copyOf(chosen.subList(start, end));
+    }
+
     private void pushMultiTargetETBStackEntry(GameData gameData,
                                                PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
         if (pending.resumePendingMayResolution()) {
@@ -880,7 +901,9 @@ public class ETBTokenTargetService {
         DistributeCountersAmongTargetsEffect counterDistribution =
                 findChosenCounterDistribution(pending.effects());
         Map<UUID, Integer> counterAssignments = Map.of();
-        if (counterDistribution != null && !pending.chosenTargetsSoFar().isEmpty()) {
+        List<UUID> distributionTargets = counterDistribution == null
+                ? List.of() : distributionTargetIds(pending, counterDistribution);
+        if (counterDistribution != null && !distributionTargets.isEmpty()) {
             Permanent source = pending.sourcePermanentId() == null
                     ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
             int total = amountEvaluationService.evaluate(gameData, counterDistribution.total(),
@@ -889,7 +912,7 @@ public class ETBTokenTargetService {
             Map<UUID, Integer> presetAssignments = gameData.pendingETBDamageAssignments;
             boolean validPreset = presetAssignments != null
                     && !presetAssignments.isEmpty()
-                    && pending.chosenTargetsSoFar().containsAll(presetAssignments.keySet())
+                    && distributionTargets.containsAll(presetAssignments.keySet())
                     && presetAssignments.values().stream().allMatch(amount -> amount != null && amount > 0)
                     && (counterDistribution.allowsPartialDistribution()
                     ? presetAssignments.values().stream().mapToInt(Integer::intValue).sum() <= total
@@ -905,8 +928,9 @@ public class ETBTokenTargetService {
                         pending.controllerId(),
                         new ChoiceContext.CounterDistributionAssignment(
                                 card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                                counterDistribution.counterType(), pending.chosenTargetsSoFar(), Map.of(),
-                                total, 0, counterDistribution.allowsPartialDistribution()));
+                                counterDistribution.counterType(), distributionTargets, Map.of(),
+                                total, 0, counterDistribution.allowsPartialDistribution(), null, null,
+                                pending.chosenTargetsSoFar(), pending.groupSizes()));
                 return;
             }
         }

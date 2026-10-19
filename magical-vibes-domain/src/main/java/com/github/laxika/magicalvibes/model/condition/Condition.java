@@ -166,6 +166,7 @@ public sealed interface Condition permits
         ControllerMaximumHandSizeOtherThanSeven,
         ControllerLifeAtLeast,
         ControllerLifeAtMost,
+        ControllerLifeBelowStartingLife,
         ControllerMainPhase,
         ControllerRingLevelAtLeast,
         ControllerControlsPrimeNumberOfLands,

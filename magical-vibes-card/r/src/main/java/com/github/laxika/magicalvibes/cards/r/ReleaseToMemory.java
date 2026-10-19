@@ -27,8 +27,10 @@ public class ReleaseToMemory extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
+        // Exile target opponent's graveyard; the creature cards among them are counted for the Spirits.
         addEffect(EffectSlot.SPELL, new ExileGraveyardCardsEffect(
-                0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, new CardTypePredicate(CardType.CREATURE)));
+                0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, null, null, false, false, false,
+                new CardTypePredicate(CardType.CREATURE)));
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(new EventValue(), "Spirit", 1, 1,
                 null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
     }

@@ -122,8 +122,8 @@ class RabidAttackTest extends BaseCardTest {
         Permanent bearB = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new RabidAttack(), new Shock(), new Shock()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, List.of(bearA.getId(), bearB.getId()));
         harness.castAndResolveInstant(player1, 0, bearA.getId());

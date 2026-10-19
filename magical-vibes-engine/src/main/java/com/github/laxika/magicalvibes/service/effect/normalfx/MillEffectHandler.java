@@ -86,8 +86,14 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PERMANENT_CONTROLLER -> {
                 int count = evaluateCount(gameData, entry, mill, source, null);
                 Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                if (target != null) {
-                    graveyardService.resolveMillPlayer(gameData, gameQueryService.findPermanentController(gameData, target.getId()), count);
+                UUID targetControllerId = target != null
+                        ? gameQueryService.findPermanentController(gameData, target.getId())
+                        : entry.getTriggeringPermanentId() != null
+                        && entry.getTriggeringPermanentId().equals(entry.getTargetId())
+                        ? entry.getTriggeringPermanentControllerId()
+                        : null;
+                if (targetControllerId != null) {
+                    graveyardService.resolveMillPlayer(gameData, targetControllerId, count);
                 }
             }
             case UNTAPPED_PERMANENT_CONTROLLER -> {

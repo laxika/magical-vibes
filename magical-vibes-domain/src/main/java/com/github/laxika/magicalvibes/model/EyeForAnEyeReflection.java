@@ -11,6 +11,13 @@ import java.util.UUID;
  * @param amount          the reflected damage amount
  * @param eyeCard         the Eye for an Eye card dealing the reflected damage
  * @param eyeControllerId the controller of the reflected damage
+ * @param sourcePermanentId the permanent that deals the reflected damage when it is the original damage
+ *                        source itself (Reflect Damage), or {@code null} when {@code eyeCard} deals it
  */
-public record EyeForAnEyeReflection(UUID targetPlayerId, int amount, Card eyeCard, UUID eyeControllerId) {
+public record EyeForAnEyeReflection(UUID targetPlayerId, int amount, Card eyeCard, UUID eyeControllerId,
+                                    UUID sourcePermanentId) {
+
+    public EyeForAnEyeReflection(UUID targetPlayerId, int amount, Card eyeCard, UUID eyeControllerId) {
+        this(targetPlayerId, amount, eyeCard, eyeControllerId, null);
+    }
 }

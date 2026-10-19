@@ -9,10 +9,19 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param allowsRepeatedSourceTarget when {@code requiresSourceTarget} is set, whether the spell may have
  *                                   several targets as long as every one of them is the source permanent;
  *                                   when false the spell must have exactly one target
+ * @param requiresTargetIsController whether the spell's single target must be the effect's controller
+ *                                   ("if that target is you"), checked on resolution
  */
 public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind,
                                                                boolean requiresSourceTarget,
-                                                               boolean allowsRepeatedSourceTarget) implements CardEffect {
+                                                               boolean allowsRepeatedSourceTarget,
+                                                               boolean requiresTargetIsController) implements CardEffect {
+
+    public ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind,
+                                                           boolean requiresSourceTarget,
+                                                           boolean allowsRepeatedSourceTarget) {
+        this(newTargetKind, requiresSourceTarget, allowsRepeatedSourceTarget, false);
+    }
 
     public enum NewTargetKind {
         ANY,
@@ -34,6 +43,10 @@ public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newT
 
     public static ChangeTargetOfTargetSpellWithSingleTargetEffect playersOnly() {
         return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.PLAYER, false, false);
+    }
+
+    public static ChangeTargetOfTargetSpellWithSingleTargetEffect playersOnlyIfTargetIsController() {
+        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.PLAYER, false, false, true);
     }
 
     public static ChangeTargetOfTargetSpellWithSingleTargetEffect sourceCreatureTargetsOnly() {

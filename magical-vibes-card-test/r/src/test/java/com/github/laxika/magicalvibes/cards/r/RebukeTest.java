@@ -52,8 +52,8 @@ class RebukeTest extends BaseCardTest {
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
-        harness.addToBattlefield(player1, new DarkthicketWolf());
-        UUID targetId = harness.getPermanentId(player1, "Darkthicket Wolf");
+        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player1, new DarkthicketWolf());
+        UUID targetId = nonAttacker.getId();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

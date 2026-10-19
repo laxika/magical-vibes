@@ -114,7 +114,6 @@ class RampagingYaoGuaiTest extends BaseCardTest {
         prepareCast(2);
         harness.castCreatureForX(player1, 0, 2, List.of());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Rampaging Yao Guai")

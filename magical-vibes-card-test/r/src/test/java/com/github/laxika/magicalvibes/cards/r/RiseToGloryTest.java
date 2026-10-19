@@ -147,4 +147,20 @@ class RiseToGloryTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
+
+    @Test
+    void returnedGraveyardAuraReanimatesTheCreatureCardItEnchants() {
+        Card creature = new GrizzlyBears();
+        Card aura = new AnimateDead();
+        harness.setGraveyard(player1, List.of(creature, aura));
+
+        cast(new int[]{1}, List.of(aura.getId()));
+        harness.handleGraveyardCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        Permanent returnedCreature = findPermanent(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Animate Dead").getAttachedTo()).isEqualTo(returnedCreature.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(creature.getId()) || card.getId().equals(aura.getId()));
+    }
 }

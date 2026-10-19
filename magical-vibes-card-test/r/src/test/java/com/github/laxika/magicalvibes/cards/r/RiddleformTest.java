@@ -42,6 +42,7 @@ class RiddleformTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -63,6 +64,7 @@ class RiddleformTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -89,6 +91,7 @@ class RiddleformTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, riddleform)).isTrue();
@@ -154,10 +157,11 @@ class RiddleformTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 10);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

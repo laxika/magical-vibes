@@ -90,9 +90,11 @@ class RoccoStreetChefTest extends BaseCardTest {
 
         assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
         gd.turnNumber += 2;
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
@@ -189,13 +191,14 @@ class RoccoStreetChefTest extends BaseCardTest {
         Permanent rocco = addCreatureReady(player1, new RoccoStreetChef());
         Forest land = new Forest();
         harness.setLibrary(player1, List.of(land));
-        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
         gd.playerBattlefields.get(player1.getId()).remove(rocco);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
@@ -204,6 +207,6 @@ class RoccoStreetChefTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(land);
         assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         assertThat(countPermanents(player1, "Food")).isZero();
-        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
     }
 }

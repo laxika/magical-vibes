@@ -44,7 +44,7 @@ class ReapIntellectTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A chosen card is exiled along with every copy in hand, graveyard, and library")
+    @DisplayName("A chosen card is exiled, and any number of its copies in hand, graveyard, and library are exiled")
     void exilesChosenCardAndAllCopies() {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears(), new LightningBolt())));
         harness.setGraveyard(player2, new ArrayList<>(List.of(new GrizzlyBears(), new SerraAngel())));
@@ -52,6 +52,11 @@ class ReapIntellectTest extends BaseCardTest {
 
         castReapIntellect(1);
         harness.handleCardChosen(player1, 0);
+        PendingInteraction.MultiZoneExileChoice copies =
+                gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
+        assertThat(copies).isNotNull();
+        assertThat(copies.validCardIds()).hasSize(3);
+        harness.handleMultipleCardsChosen(player1, copies.validCardIds());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId()))
@@ -82,6 +87,10 @@ class ReapIntellectTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
         assertThat(second.validIndices()).containsExactly(0);
         harness.handleCardChosen(player1, 0);
+        PendingInteraction.MultiZoneExileChoice copies =
+                gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
+        assertThat(copies).isNotNull();
+        harness.handleMultipleCardsChosen(player1, copies.validCardIds());
 
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(Card::getName)

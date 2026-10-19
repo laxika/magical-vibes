@@ -30,7 +30,7 @@ public class RavenousRobots extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
+                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsTokenPredicate())),
                 "{R}, {T}: Creature tokens you control gain haste until end of turn."
         ));

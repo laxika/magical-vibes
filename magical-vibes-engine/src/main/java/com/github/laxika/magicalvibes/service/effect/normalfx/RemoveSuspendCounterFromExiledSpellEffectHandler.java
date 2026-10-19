@@ -7,16 +7,25 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
+    private final TriggerCollectionService triggerCollectionService;
+
+    public RemoveSuspendCounterFromExiledSpellEffectHandler(GameLogService gameLogService,
+            RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler,
+            @Lazy TriggerCollectionService triggerCollectionService) {
+        this.gameLogService = gameLogService;
+        this.removeTimeCounterHandler = removeTimeCounterHandler;
+        this.triggerCollectionService = triggerCollectionService;
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +59,10 @@ public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalE
         }
 
         gameData.suspendedSpellExiles.remove(index);
+        // "When the last time counter is removed from this card while it's exiled" fires whether or not
+        // the owner goes on to cast the card.
+        triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
+                gameData, exiled.card(), exiled.ownerId(), 0);
         removeTimeCounterHandler.queueCastTrigger(gameData, exiled, true);
         gameLogService.append(gameData, GameLog.cardThen(exiled.card(),
                 " loses its last time counter. Its owner may cast it without paying its mana cost."));

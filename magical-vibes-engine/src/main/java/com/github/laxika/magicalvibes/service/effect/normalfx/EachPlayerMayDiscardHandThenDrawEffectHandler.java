@@ -68,9 +68,11 @@ public class EachPlayerMayDiscardHandThenDrawEffectHandler implements NormalEffe
         Permanent source = sourcePermanent(gameData, entry);
 
         for (UUID playerId : acceptedPlayerIds) {
-            int drawAmount = evaluateDrawAmount(gameData, entry, source, playerId, cardsToDraw);
             discardHandEffectHandler.discardHand(gameData, playerId, sourceControllerId,
                     sourceCard.getName());
+        }
+        for (UUID playerId : acceptedPlayerIds) {
+            int drawAmount = evaluateDrawAmount(gameData, entry, source, playerId, cardsToDraw);
             playerInteractionSupport.applyDrawCards(gameData, playerId, drawAmount);
         }
 

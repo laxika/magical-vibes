@@ -45,7 +45,12 @@ public class ExileTriggeringSpellWithSuspendCountersEffectHandler implements Nor
                 .filter(candidate -> !candidate.isCopy())
                 .findFirst()
                 .orElse(null);
-        if (spell == null) return;
+        if (spell == null) {
+            // The spell already left the stack (e.g. countered): there is nothing to exile, but a
+            // follow-up such as Rory Williams' "Then investigate" still resolves.
+            insertFollowUp(entry, effect, suspendEffect);
+            return;
+        }
         if (suspendEffect.skipIfCastFromExile() && spell.getSourceZone() == Zone.EXILE) return;
 
         Card card = spell.getCard();
@@ -61,6 +66,11 @@ public class ExileTriggeringSpellWithSuspendCountersEffectHandler implements Nor
         log.info("Game {} - {} exiled with {} suspend counters", gameData.id,
                 card.getName(), suspendEffect.counters());
 
+        insertFollowUp(entry, effect, suspendEffect);
+    }
+
+    private void insertFollowUp(StackEntry entry, CardEffect effect,
+                                ExileTriggeringSpellWithSuspendCountersEffect suspendEffect) {
         if (suspendEffect.followUp() != null) {
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
             if (effectIndex >= 0) {

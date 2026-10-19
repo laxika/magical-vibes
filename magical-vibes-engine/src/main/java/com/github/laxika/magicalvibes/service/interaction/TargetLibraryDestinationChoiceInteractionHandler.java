@@ -47,9 +47,12 @@ public class TargetLibraryDestinationChoiceInteractionHandler
 
         if (!onFirstChoice) {
             List<Card> deck = gameData.playerDecks.get(interaction.playerId());
-            Card card = deck == null ? null
-                    : deck.stream().filter(c -> c.getId().equals(interaction.cardId())).findFirst().orElse(null);
-            if (card != null) {
+            List<Card> moved = new java.util.ArrayList<>();
+            if (deck != null) {
+                deck.stream().filter(c -> c.getId().equals(interaction.cardId())).findFirst().ifPresent(moved::add);
+                deck.stream().filter(c -> interaction.otherCardIds().contains(c.getId())).forEach(moved::add);
+            }
+            for (Card card : moved) {
                 deck.remove(card);
                 deck.add(card);
             }

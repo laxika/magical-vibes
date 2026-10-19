@@ -7,8 +7,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code GraveyardService.tryRegenerate} then refuses to regenerate any creature recorded
  * in {@code GameData.creatureCardsDamagedThisTurnBySourcePermanent} for a flagged source. Because the
  * damage record covers the whole turn, creatures damaged before the ability was activated are also
- * covered. The flag is cleared during turn cleanup and stops applying if the source leaves the
- * battlefield. Bone Shaman and Runesword.
+ * covered. The flag and the source id recorded in
+ * {@code GameData.damagedCreaturesCantRegenerateSourceIdsThisTurn} are cleared during turn cleanup;
+ * for a targeted ability (Runesword) the recorded id keeps the effect going if the targeted source leaves the battlefield,
+ * while a self-granted ability (Bone Shaman) stops applying with it.
  */
 public record PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect() implements CardEffect {
 }

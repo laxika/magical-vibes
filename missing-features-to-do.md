@@ -325,6 +325,74 @@ ask me. Don't commit until I say so.
 
 ---
 
+## 38. "Until end of turn" effects under Runed Terror's phase-by-phase turn structure
+
+**Status:** open · **Found:** 2026-10-19, while fixing R-card test failures
+
+**Failing tests:**
+- `RunedTerrorTest.temporaryBoostSurvivesOtherPlayersCleanup()`
+
+**What the rules require.** Runed Terror makes players take each phase in sequence instead of whole
+turns, so every player gets a cleanup step during one turn cycle. Its ruling (2024-11-08, found by web
+search; re-check before implementing)
+says an "until end of turn" effect ends at the cleanup step of the player who was active when the
+effect began. CR 514.2 ends "until end of turn" and "this turn" effects at cleanup. The engine's
+`TurnCleanupService.applyCleanupResets` / `resetEndOfTurnModifiers` clears every temporary modifier at
+whichever cleanup comes first, so Titanic Growth cast during player 2's phases ends at player 1's
+cleanup.
+
+**Why it's large.** Every until-end-of-turn store (power/toughness modifiers, granted keywords,
+floating layer effects, "this turn" flags and sets) would need to record the active player at creation
+and be cleared only at that player's cleanup while Runed Terror's structure is in effect. That touches
+most of `TurnCleanupService` and every place that creates such effects.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 38: while RunedTerrorEffect is active, "until end of turn"
+effects must end at the cleanup step of the player who was active when the effect was created
+(Runed Terror ruling; CR 514.2). Record the creating active player on temporary modifiers / floating
+effects and make TurnCleanupService.applyCleanupResets clear only those belonging to the player whose
+cleanup it is. Make RunedTerrorTest.temporaryBoostSurvivesOtherPlayersCleanup pass without changing
+normal-game behaviour. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 39. Non-mana triggers from mana abilities are held during the mana-undo window
+
+**Status:** open · **Found:** 2026-10-19, while fixing R-card test failures
+
+**Failing tests:**
+- `RelicPutrescenceTest.manaAbilityResolvesBeforePoisonTrigger()` ("Tapping for mana adds mana
+  immediately and puts poison on the stack")
+
+**What the rules require.** CR 605.3b: an activated mana ability resolves immediately. Relic
+Putrescence's "Whenever enchanted artifact becomes tapped, its controller gets a poison counter" is
+not a mana ability, so per CR 603.3 it goes on the stack the next time a player would receive
+priority. The engine's `GameService.flushManaAbilityTriggersAfterActivation` deliberately keeps such
+triggers in `pendingManaAbilityTriggers` while `revertableManaActivations` is non-empty, so the
+player can still undo the mana tap. The trigger therefore is not on the stack after the tap.
+
+**Why it's large.** It is a conflict between rules timing and the client's "undo mana tap" UX.
+Fixing it means deciding that a mana activation whose trigger leaves the mana-ability world can't
+be reverted (or ending the revert window at that point), then changing the revert bookkeeping, the
+flush logic, and the frontend's undo affordance.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 39: when an activated mana ability causes a non-mana
+triggered ability (e.g. Relic Putrescence), put that trigger on the stack at the next priority
+(CR 603.3) instead of holding it in pendingManaAbilityTriggers during the revertable-mana window.
+Decide how this interacts with revertableManaActivations (likely: that activation becomes
+non-revertable) and update GameService.flushManaAbilityTriggersAfterActivation and the client undo
+UI. Make RelicPutrescenceTest.manaAbilityResolvesBeforePoisonTrigger pass. Don't run the full test
+suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

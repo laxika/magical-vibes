@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -22,6 +23,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +39,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final DrawService drawService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -54,6 +58,14 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && e.elseEffect() == null
                 && gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).isEmpty()) {
             // Nothing can be discarded, so there is no choice to offer and "if you do" can't happen.
+            return;
+        }
+        if (e.wrapped() instanceof MillControllerAndMayPutMilledLandsOntoBattlefieldEffect mill
+                && e.elseEffect() == null
+                && amountEvaluationService.evaluate(gameData, mill.count(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()))
+                > gameData.playerDecks.getOrDefault(entry.getControllerId(), List.of()).size()) {
+            // CR 701.17b — a player can't choose to mill more cards than their library holds, so no choice is offered.
             return;
         }
         if (e.wrapped() instanceof ReturnCardFromGraveyardEffect battlefieldReturn

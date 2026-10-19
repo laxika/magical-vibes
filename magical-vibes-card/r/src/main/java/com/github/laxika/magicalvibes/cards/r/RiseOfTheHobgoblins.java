@@ -29,7 +29,7 @@ public class RiseOfTheHobgoblins extends Card {
 
         // {R/W}: Red creatures and white creatures you control gain first strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R/W}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES,
                         new PermanentColorInPredicate(Set.of(CardColor.RED, CardColor.WHITE)))),
                 "{R/W}: Red creatures and white creatures you control gain first strike until end of turn."));
     }

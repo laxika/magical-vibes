@@ -46,6 +46,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -1031,7 +1032,10 @@ class TurnCleanupServiceTest {
         void returnsTrueWithNoMaxHandSizeEffect() {
             Card card = createCardWithName("Spellbook");
             card.addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
-            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            lenient().when(gameQueryService.getActiveStaticEffects(gd, permanent))
+                    .thenReturn(card.getEffects(EffectSlot.STATIC));
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();
         }

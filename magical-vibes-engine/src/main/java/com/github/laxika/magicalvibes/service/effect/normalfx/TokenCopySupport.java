@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -171,6 +172,9 @@ public class TokenCopySupport {
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
                 Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
+                if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
+                    preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
+                }
                 if (auraHost != null && tokenCard.isAura() && !tokenCard.isEnchantZone()) {
                     if (!auraAttachmentService.canEnchant(gameData, tokenCard, tokenControllerId, auraHost)) {
                         continue;
@@ -518,7 +522,8 @@ public class TokenCopySupport {
                 // token changes control before the end step.
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
-                        false, null, null, entry.getControllerId(), false, entry.getCard()));
+                        false, null, null, entry.getControllerId(), false, entry.getCard(),
+                        entry.getControllerId(), entry.getSourcePermanentId()));
             }
             if (effect.exileAtEndOfCombat()) {
                 // One resolution's tokens share a single "exile them at end of combat" delayed trigger;
@@ -531,9 +536,15 @@ public class TokenCopySupport {
             }
             if (effect.sacrificeAtEndStep()) {
                 // Only the player who created the token sacrifices it, and only while they control it
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, tokenControllerId));
+                // The source card keys the batch: several tokens from one resolution share a single
+                // "sacrifice those tokens at the beginning of the next end step" delayed trigger.
+                gameData.queueDelayedAction(tokens.size() > 1
+                        ? new DelayedPermanentAction(
+                                tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                                false, null, null, tokenControllerId, false, entry.getCard())
+                        : new DelayedPermanentAction(
+                                tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                                false, null, null, tokenControllerId));
             }
             if (effect.sacrificeAtNextUpkeep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
@@ -647,6 +658,7 @@ public class TokenCopySupport {
         tokenCard.setSupertypes(supertypes);
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
         tokenCard.setToughness(effect.toughnessOverride() != null ? effect.toughnessOverride() : sourceCard.getToughness());
+        tokenCard.setLoyalty(sourceCard.getLoyalty());
         tokenCard.setAttachRestriction(sourceCard.getAttachRestriction());
         tokenCard.setCardText(sourceCard.getCardText());
         tokenCard.setSetCode(sourceCard.getSetCode());

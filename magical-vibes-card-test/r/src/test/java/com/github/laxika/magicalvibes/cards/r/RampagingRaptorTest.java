@@ -92,10 +92,10 @@ class RampagingRaptorTest extends BaseCardTest {
         Permanent raptor = addCreatureReady(player1, new RampagingRaptor());
         raptor.setAttacking(true);
         raptor.setAttackTarget(player2.getId());
-        harness.addMana(player1, ManaColor.RED, 3);
 
         resolveCombat();
         harness.handlePermanentChosen(player1, battle.getId());
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
 

@@ -49,6 +49,7 @@ class RassilonTheWarPresidentTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, topCard.getId());

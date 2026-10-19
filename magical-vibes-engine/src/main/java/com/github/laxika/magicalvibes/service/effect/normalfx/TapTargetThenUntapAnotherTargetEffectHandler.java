@@ -30,16 +30,19 @@ public class TapTargetThenUntapAnotherTargetEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targetIds = entry.getTargetIds();
+        // Positions are read from the declared list so an illegal first target does not shift the second one.
+        List<UUID> targetIds = entry.getDeclaredTargetIds();
 
-        Permanent toTap = targetIds.isEmpty() ? null : gameQueryService.findPermanentById(gameData, targetIds.get(0));
+        Permanent toTap = targetIds.isEmpty() || !entry.isTargetLegal(0)
+                ? null : gameQueryService.findPermanentById(gameData, targetIds.get(0));
         if (toTap != null) {
             tapUntapSupport.tapPermanent(gameData, toTap);
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", toTap.getCard(), "."));
             log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), toTap.getCard().getName());
         }
 
-        Permanent toUntap = targetIds.size() < 2 ? null : gameQueryService.findPermanentById(gameData, targetIds.get(1));
+        Permanent toUntap = targetIds.size() < 2 || !entry.isTargetLegal(1)
+                ? null : gameQueryService.findPermanentById(gameData, targetIds.get(1));
         if (toUntap != null) {
             tapUntapSupport.untapPermanent(gameData, toUntap);
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", toUntap.getCard(), "."));

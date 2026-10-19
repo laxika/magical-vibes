@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 
@@ -29,8 +29,8 @@ import java.util.Set;
 public class RasputinTheOneiromancer extends Card {
 
     public RasputinTheOneiromancer() {
-        // Rasputin enters with one dream counter for each opponent, and each opponent creates a Goblin.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        // When Rasputin enters, put a dream counter on it for each opponent, and each opponent creates a Goblin.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCountersOnSelfEffect(
                 CounterType.DREAM, new Sum(new PlayersInGame(), new Fixed(-1))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EachOpponentCreatesTokenEffect(goblinToken()));

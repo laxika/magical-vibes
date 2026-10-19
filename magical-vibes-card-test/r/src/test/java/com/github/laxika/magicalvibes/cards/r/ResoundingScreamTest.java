@@ -50,7 +50,8 @@ class ResoundingScreamTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ResoundingRoar()));
         addCyclingMana(player1);
 
-        harness.activateHandAbility(player1, 0, player2.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -70,7 +71,8 @@ class ResoundingScreamTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ResoundingSilence()));
         addCyclingMana(player1);
 
-        harness.activateHandAbility(player1, 0, player2.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -88,7 +90,8 @@ class ResoundingScreamTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ResoundingScream()));
         addCyclingMana(player1);
 
-        harness.activateHandAbility(player1, 0, player2.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.assertInGraveyard(player1, "Resounding Scream");
         assertThat(gd.stack).hasSize(2);
 

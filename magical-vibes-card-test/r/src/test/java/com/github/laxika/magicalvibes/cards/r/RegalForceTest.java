@@ -96,6 +96,7 @@ class RegalForceTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Regal Force"));
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -118,6 +119,7 @@ class RegalForceTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Regal Force"));
         harness.passBothPriorities();
 

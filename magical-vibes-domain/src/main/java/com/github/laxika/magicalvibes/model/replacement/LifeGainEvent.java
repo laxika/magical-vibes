@@ -16,13 +16,14 @@ import java.util.UUID;
  * @param source          the source description carried to the log, or {@code null}
  * @param sourceCard      the card that caused the gain, carried to the life-gain triggers, or {@code null}
  * @param sourceEntryType the kind of stack entry that caused the gain, or {@code null}
+ * @param sourceControllerId the controller of the spell or ability that caused the gain, or {@code null}
  * @param loseInstead     {@code true} once a replacement (Plague Drone, Tainted Remedy) has turned the gain into
  *                        losing {@code amount} life, so no life is gained and no other life-gain replacement applies
  * @param drawInstead     {@code true} once a replacement (Nefarious Lich) has turned the gain into drawing
  *                        {@code amount} cards, so no life is gained and no other life-gain replacement applies
  */
 public record LifeGainEvent(UUID playerId, int amount, Set<String> appliedKeys, String source,
-                            Card sourceCard, StackEntryType sourceEntryType,
+                            Card sourceCard, StackEntryType sourceEntryType, UUID sourceControllerId,
                             boolean drawInstead, boolean loseInstead) implements ReplacementEvent {
 
     public LifeGainEvent {
@@ -35,26 +36,26 @@ public record LifeGainEvent(UUID playerId, int amount, Set<String> appliedKeys, 
     }
 
     public LifeGainEvent withAmount(int newAmount) {
-        return new LifeGainEvent(playerId, newAmount, appliedKeys, source, sourceCard, sourceEntryType, drawInstead, loseInstead);
+        return new LifeGainEvent(playerId, newAmount, appliedKeys, source, sourceCard, sourceEntryType, sourceControllerId, drawInstead, loseInstead);
     }
 
     public LifeGainEvent withDrawInstead() {
-        return new LifeGainEvent(playerId, amount, appliedKeys, source, sourceCard, sourceEntryType, true, loseInstead);
+        return new LifeGainEvent(playerId, amount, appliedKeys, source, sourceCard, sourceEntryType, sourceControllerId, true, loseInstead);
     }
 
     public LifeGainEvent withLoseInstead() {
-        return new LifeGainEvent(playerId, amount, appliedKeys, source, sourceCard, sourceEntryType, drawInstead, true);
+        return new LifeGainEvent(playerId, amount, appliedKeys, source, sourceCard, sourceEntryType, sourceControllerId, drawInstead, true);
     }
 
     @Override
     public LifeGainEvent withApplied(String key) {
         Set<String> keys = new HashSet<>(appliedKeys);
         keys.add(key);
-        return new LifeGainEvent(playerId, amount, keys, source, sourceCard, sourceEntryType, drawInstead, loseInstead);
+        return new LifeGainEvent(playerId, amount, keys, source, sourceCard, sourceEntryType, sourceControllerId, drawInstead, loseInstead);
     }
 
     @Override
     public LifeGainEvent withoutAppliedKeys() {
-        return new LifeGainEvent(playerId, amount, Set.of(), source, sourceCard, sourceEntryType, drawInstead, loseInstead);
+        return new LifeGainEvent(playerId, amount, Set.of(), source, sourceCard, sourceEntryType, sourceControllerId, drawInstead, loseInstead);
     }
 }

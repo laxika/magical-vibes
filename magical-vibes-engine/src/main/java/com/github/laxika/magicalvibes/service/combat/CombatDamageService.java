@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.service.effect.replacement.damage.Redirect
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -1358,6 +1359,7 @@ public class CombatDamageService {
                                      DamagePhase phase) {
         state.sharedRedirectShields = List.copyOf(gameData.sourcePermanentAndControllerNextDamageRedirectShields);
         state.sourceDamageShields = List.copyOf(gameData.sourceNextDamageToAnyTargetShields);
+        state.reflectDamageSourceIds = List.copyOf(gameData.reflectDamageToSourceControllerShields);
         captureCombatDamageBaselines(gameData, state, atkBf, defBf);
         // CR 510.4: all combat damage in this step is dealt simultaneously, so every value used
         // to assign and deal it (P/T, combat keywords, protection, prevention) comes from one
@@ -2706,6 +2708,21 @@ public class CombatDamageService {
      * another player controls the commander. The dealer predicate decides whether the dealer
      * qualifies for that player.
      */
+    /**
+     * "Whenever this creature deals combat damage to a player for the first time each turn" counts the
+     * damage event itself, so damage dealt while the creature has lost its abilities still uses up the
+     * first time even though no trigger fires (Raphael, Tag Team Tough).
+     */
+    private void markFirstTimeEachTurnSelfCombatDamageSpent(GameData gameData, Permanent perm) {
+        for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)) {
+            if (effect instanceof OncePerTurnTriggerEffect once && once.key() == null && !once.markOnAcceptance()
+                    && once.wrapped() instanceof AllyCombatDamageTriggerEffect trigger
+                    && trigger.dealerPredicate() instanceof PermanentIsSourceCardPredicate) {
+                gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+            }
+        }
+    }
+
     private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,
                                                                UUID defenderId, int damageDealt,
                                                                Map<Permanent, Integer> combatDamageDealtToPlayer,
@@ -2741,7 +2758,12 @@ public class CombatDamageService {
         watchers.addAll(departedWatchers);
         for (Permanent perm : watchers) {
             if (perm.isFaceDown() || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()
-                    || perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                    || perm.isLosesAllAbilitiesUntilEndOfTurn()) {
+                if (!perm.isFaceDown() && !battleDamage && !ownerRelativePass && perm.getId().equals(creature.getId())) {
+                    markFirstTimeEachTurnSelfCombatDamageSpent(gameData, perm);
+                }
+                continue;
+            }
             List<CardEffect> effects = new ArrayList<>();
             if (!battleDamage) {
                 effects.addAll(perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
@@ -4925,6 +4947,10 @@ public class CombatDamageService {
         restoreSharedRedirectForCombatChunk(gameData, state, recipientId, playerRecipient);
         for (DamagePortion portion : event.portions()) {
             restoreSourceShieldForCombatChunk(gameData, state, portion.sourceId(), recipientId, playerRecipient);
+            if (state.reflectDamageSourceIds.contains(portion.sourceId())
+                    && !gameData.reflectDamageToSourceControllerShields.contains(portion.sourceId())) {
+                gameData.reflectDamageToSourceControllerShields.add(portion.sourceId());
+            }
         }
     }
 

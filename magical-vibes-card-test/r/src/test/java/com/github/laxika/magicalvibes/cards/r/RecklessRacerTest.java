@@ -69,7 +69,7 @@ class RecklessRacerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with an empty hand does not draw a card")
+    @DisplayName("With an empty hand there is nothing to discard, so no choice is offered and no card is drawn")
     void emptyHandDoesNotDraw() {
         Permanent racer = harness.addToBattlefieldAndReturn(player1, new RecklessRacer());
         Card topCard = new RecklessRacer();
@@ -77,7 +77,6 @@ class RecklessRacerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         tapAndResolve(racer);
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);

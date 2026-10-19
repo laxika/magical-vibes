@@ -182,10 +182,22 @@ public class TriggeredAbilityQueueService {
             // to exile, at the time the trigger is put on the stack.
             GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(pending.effects());
             if (graveyardTarget != null) {
-                if (beginDeathGraveyardTarget(gameData, pending, graveyardTarget)) {
-                    return;
+                if (!hasBattlefieldTargetBesidesGraveyard(pending.effects())) {
+                    if (beginDeathGraveyardTarget(gameData, pending, graveyardTarget)) {
+                        return;
+                    }
+                    continue;
                 }
-                continue;
+                // One ability targeting both a permanent and a graveyard card (Ragnarok, Divine
+                // Deliverance): it needs both, so it is skipped when no graveyard card is legal
+                // (CR 603.3c). The permanent is chosen first; the card choice follows it.
+                if (graveyardTarget.minTargets() > 0
+                        && matchingDeathGraveyardCards(gameData, pending, graveyardTarget).isEmpty()) {
+                    gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+                    gameLogService.append(gameData, GameLog.cardThen(pending.dyingCard(),
+                            "'s death trigger has no valid graveyard targets."));
+                    continue;
+                }
             }
 
             var dyingCard = pending.dyingCard();
@@ -409,6 +421,34 @@ public class TriggeredAbilityQueueService {
      */
     private boolean beginDeathGraveyardTarget(GameData gameData,
             PermanentChoiceContext.DeathTriggerTarget pending, GraveyardTargetingSupport.Target target) {
+        return beginDeathGraveyardTarget(gameData, pending, target, null, true);
+    }
+
+    /**
+     * Whether the ability also targets something on the battlefield or a player besides its graveyard
+     * card, found through the effects' own target specs (a sequence reports its first declared target).
+     */
+    private boolean hasBattlefieldTargetBesidesGraveyard(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+    }
+
+    /**
+     * Continues a death trigger that targets a permanent and a graveyard card once the permanent has
+     * been chosen: the card choice follows, and the permanent rides along as the entry's primary target.
+     * Returns {@code true} if the card choice was begun.
+     */
+    public boolean beginDeathGraveyardTargetAfterPermanent(GameData gameData,
+            PermanentChoiceContext.DeathTriggerTarget pending, UUID permanentTargetId) {
+        GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(pending.effects());
+        if (target == null) {
+            return false;
+        }
+        return beginDeathGraveyardTarget(gameData, pending, target, permanentTargetId, false);
+    }
+
+    private List<Card> matchingDeathGraveyardCards(GameData gameData,
+            PermanentChoiceContext.DeathTriggerTarget pending, GraveyardTargetingSupport.Target target) {
         CardPredicate filter = target.filter();
         UUID predicateSourceCardId = pending.excludedGraveyardCardId() == null
                 ? pending.dyingCard().getId() : pending.excludedGraveyardCardId();
@@ -431,11 +471,21 @@ public class TriggeredAbilityQueueService {
                 }
             }
         }
+        return matchingCards;
+    }
 
-        gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+    private boolean beginDeathGraveyardTarget(GameData gameData,
+            PermanentChoiceContext.DeathTriggerTarget pending, GraveyardTargetingSupport.Target target,
+            UUID primaryTargetId, boolean pollPending) {
+        CardPredicate filter = target.filter();
+        List<Card> matchingCards = matchingDeathGraveyardCards(gameData, pending, target);
+
+        if (pollPending) {
+            gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+        }
 
         if (matchingCards.isEmpty()) {
-            if (target.minTargets() == 0) {
+            if (target.minTargets() == 0 && primaryTargetId == null) {
                 // A trigger consisting only of an optional graveyard return has nothing to do
                 // when no card can be returned. Avoid leaving an empty Soulshift trigger above
                 // another ability on the stack.
@@ -473,6 +523,7 @@ public class TriggeredAbilityQueueService {
                 ? pending.eventValue()
                 : pending.sourcePermanentSnapshot() == null
                 ? null : pending.sourcePermanentSnapshot().getEffectivePower();
+        gameData.graveyardTargetOperation.targetPlayerId = primaryTargetId;
 
         String zoneLabel = switch (target.scope()) {
             case ALL_GRAVEYARDS -> "a graveyard";
@@ -951,6 +1002,18 @@ public class TriggeredAbilityQueueService {
                 return;
             }
 
+            // The damage source of an optional attack trigger can be a different creature than the
+            // ability's source (Rage Forger's "that creature deals 1 damage"). Target legality is judged
+            // from the ability's source (CR 702.16b), so protection from the attacker's color must not
+            // hide a planeswalker here; the damage itself is prevented later (CR 702.16e).
+            Permanent targetingSource = sourcePermanent;
+            if (sourcePermanent != null
+                    && !sourcePermanent.getCard().getId().equals(pending.sourceCard().getId())) {
+                Permanent abilityPermanent = gameQueryService.findPermanentByCardId(gameData, pending.sourceCard().getId());
+                if (abilityPermanent != null) {
+                    targetingSource = abilityPermanent;
+                }
+            }
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
@@ -958,7 +1021,7 @@ public class TriggeredAbilityQueueService {
                     pending.controllerId(),
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.ATTACK,
-                    sourcePermanent,
+                    targetingSource,
                     defendingPlayerId(gameData, pending.attackedTargetId()));
             boolean optionalTarget = hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
             List<UUID> candidateTargets = new ArrayList<>(result.validTargets());
@@ -1453,6 +1516,28 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
+            int exactTargets = pending.sourcePermanentId() == null
+                    ? pending.sourceCard().getSelfCycledTriggerPermanentTargets() : 0;
+            if (exactTargets > 0 && pending.effects().equals(
+                    pending.sourceCard().getEffects(EffectSlot.ON_SELF_CYCLED))) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+                if (result.validTargets().size() < exactTargets) {
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s cycling trigger has too few valid targets."));
+                    log.info("Game {} - {} cycling trigger removed (fewer than {} valid targets)",
+                            gameData.id, pending.sourceCard().getName(), exactTargets);
+                    continue;
+                }
+                playerInputService.beginMultiPermanentChoice(gameData, pending.controllerId(),
+                        result.validTargets(), exactTargets,
+                        new MultiPermanentChoiceContext.SelfTriggeredAbilityTargets(
+                                pending.sourceCard(), pending.controllerId(), pending.effects(), "cycling",
+                                null, null, exactTargets),
+                        pending.sourceCard().getName() + "'s ability - Choose " + exactTargets
+                                + " target permanents.");
+                return;
+            }
+
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
@@ -1719,6 +1804,21 @@ public class TriggeredAbilityQueueService {
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s triggered ability triggers without a target."));
                 continue;
+            }
+
+            if (!pending.nonTargeting()) {
+                // A player that can't be targeted by this source (hexproof, protection from its name) is not offered.
+                validPlayerTargets = validPlayerTargets.stream()
+                        .filter(id -> (pending.optionalTarget() && id.equals(pending.controllerId()))
+                                || !targetLegalityService.isPlayerUntargetable(
+                                        gameData, id, pending.controllerId(), pending.sourceCard()))
+                        .toList();
+                if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                    gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+                    log.info("Game {} - {} spell-target trigger skipped (no targetable players)",
+                            gameData.id, pending.sourceCard().getName());
+                    continue;
+                }
             }
 
             String prompt = pending.playerTargetOnly()

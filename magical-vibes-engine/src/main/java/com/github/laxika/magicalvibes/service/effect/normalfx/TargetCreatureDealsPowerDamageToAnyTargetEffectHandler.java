@@ -91,7 +91,8 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
                     : damageSupport.computeExcessDamageToCreature(
                             gameData, victim, rawDamage, victim.getMarkedDamage(),
                             gameQueryService.sourceHasKeyword(gameData, damageEntry, biter, Keyword.DEATHTOUCH));
-            damageSupport.resolveAnyTargetDamage(gameData, damageEntry, victimId, rawDamage, false);
+            int damageToVictim = Math.max(0, rawDamage - excessDamage);
+            damageSupport.resolveAnyTargetDamage(gameData, damageEntry, victimId, damageToVictim, false);
             if (excessDamage > 0) {
                 damageSupport.dealDamageToPlayer(gameData, damageEntry, victimControllerId, excessDamage);
             }

@@ -116,6 +116,7 @@ class ReverberatingSummonsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         advanceToCombat();
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThat(gd.stack).isEmpty();
         harness.castAndResolveInstant(player1, 0, player2.getId());

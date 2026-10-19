@@ -115,6 +115,7 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         sacrifice(creature);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
@@ -168,6 +169,7 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         sacrifice(creature);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.castFromExile(player1, first.getId());

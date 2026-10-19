@@ -1498,6 +1498,7 @@ public class CombatBlockService {
                             may.prompt(), may.elseEffect(), may.choicePlayer());
                 }).filter(java.util.Objects::nonNull).toList();
                 GraveyardCardChoosingEffect graveyardChoice = effects.stream()
+                        .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                         .filter(GraveyardCardChoosingEffect.class::isInstance)
                         .map(GraveyardCardChoosingEffect.class::cast)
                         .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
@@ -1953,6 +1954,7 @@ public class CombatBlockService {
             }
         }
         recordCombatBlockOpponentSubtypes(gameData, token, attacker);
+        gameData.creaturesEnteredBlockingThisTurn.add(token.getId());
         fireCreatureBecomesBlockedTriggers(gameData, attacker, attackerControllerId, List.of(token), newlyBlocked);
         if (newlyBlocked) {
             combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
@@ -2070,7 +2072,8 @@ public class CombatBlockService {
                         || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         if (targetsChosenTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    attacker.getCard(), controllerId, new ArrayList<>(otherEffects), attacker.getId()));
+                    attacker.getCard(), controllerId, new ArrayList<>(otherEffects), attacker.getId(),
+                    controllerId, attacker.getAttackTarget()));
             gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                     "'s becomes-blocked ability triggers."));
             log.info("Game {} - {} becomes-blocked trigger queued for target selection",
@@ -2091,8 +2094,13 @@ public class CombatBlockService {
         trigger.setAttackedTargetId(attacker.getAttackTarget());
         UUID attackedTarget = attacker.getAttackTarget();
         if (attackedTarget != null) {
+            // CR 310.9d: "defending player" for an attacked battle is its protector.
+            Permanent attackedPermanent = gameData.playerIds.contains(attackedTarget)
+                    ? null : gameQueryService.findPermanentById(gameData, attackedTarget);
             trigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTarget)
                     ? attackedTarget
+                    : attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
+                    ? attackedPermanent.getProtectorPlayerId()
                     : gameQueryService.findPermanentController(gameData, attackedTarget));
         }
         gameData.stack.add(trigger);
@@ -2257,6 +2265,11 @@ public class CombatBlockService {
     private void checkAllyBecomesBlockedTriggers(GameData gameData, UUID activeId, Permanent blockedAttacker, TriggerMode mode) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activeId);
         if (battlefield == null) {
+            return;
+        }
+        // Per-blocker ally triggers are abilities granted to the blocked creature (Retaliation), so
+        // a creature that lost its abilities no longer has them.
+        if (mode == TriggerMode.PER_BLOCKER && gameQueryService.hasLostPrintedAbilities(gameData, blockedAttacker)) {
             return;
         }
         for (Permanent perm : battlefield) {
@@ -3182,18 +3195,37 @@ public class CombatBlockService {
             assignedBlockerIndices.add(assignment.blockerIndex());
         }
 
+        List<Integer> satisfiableRequirementBlockers = new ArrayList<>();
+        Permanent firstUnobeyedBlocker = null;
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (assignedBlockerIndices.contains(blockerIdx) || !mustBlockIfAble(gameData, blocker)) {
+            if (!mustBlockIfAble(gameData, blocker)) {
                 continue;
             }
             for (int attackerIdx = 0; attackerIdx < attackerBattlefield.size(); attackerIdx++) {
                 Permanent attacker = attackerBattlefield.get(attackerIdx);
                 if (attacker.isAttacking() && canBlockAsPartOfLegalDeclaration(gameData, blockContext,
                         attackerBattlefield, defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
-                    throw new IllegalStateException(blocker.getCard().getName() + " must block this turn if able");
+                    satisfiableRequirementBlockers.add(blockerIdx);
+                    if (!assignedBlockerIndices.contains(blockerIdx) && firstUnobeyedBlocker == null) {
+                        firstUnobeyedBlocker = blocker;
+                    }
+                    break;
                 }
             }
+        }
+        if (firstUnobeyedBlocker == null) {
+            return;
+        }
+
+        int obeyedRequirements = (int) satisfiableRequirementBlockers.stream()
+                .filter(assignedBlockerIndices::contains)
+                .count();
+        int maximumObeyableRequirements = Math.min(satisfiableRequirementBlockers.size(),
+                CombatHelper.getMaximumBlockers(gameData,
+                        controllerIdOf(gameData, defenderBattlefield), staticEffectConditionResolver));
+        if (obeyedRequirements < maximumObeyableRequirements) {
+            throw new IllegalStateException(firstUnobeyedBlocker.getCard().getName() + " must block this turn if able");
         }
     }
 

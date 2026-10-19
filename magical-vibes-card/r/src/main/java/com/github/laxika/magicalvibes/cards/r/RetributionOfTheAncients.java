@@ -20,7 +20,7 @@ public class RetributionOfTheAncients extends Card {
                 false,
                 "{B}",
                 List.of(
-                        new RemoveOneOrMoreCountersFromControlledCreaturesCost(CounterType.PLUS_ONE_PLUS_ONE),
+                        new RemoveOneOrMoreCountersFromControlledCreaturesCost(CounterType.PLUS_ONE_PLUS_ONE, true),
                         new BoostTargetCreatureEffect(
                                 new Scaled(new XValue(), -1),
                                 new Scaled(new XValue(), -1))

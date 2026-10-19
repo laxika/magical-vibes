@@ -1354,15 +1354,37 @@ public class AmountEvaluationService {
 
     /** A card's power with its characteristic-defining P/T evaluated for the given controller, in any zone (CR 604.3). */
     public int characteristicPowerForController(GameData gameData, Card card, UUID controllerId) {
+        return Math.max(0, rawCharacteristicPowerForController(gameData, card, controllerId));
+    }
+
+    /**
+     * A card's unclamped power with its characteristic-defining P/T evaluated for the given controller,
+     * in any zone (CR 604.3). Negative values are kept for callers that copy the number as a characteristic.
+     */
+    public int rawCharacteristicPowerForController(GameData gameData, Card card, UUID controllerId) {
         for (var effect : card.getEffects(EffectSlot.STATIC)) {
             if (effect instanceof SetPowerToughnessToAmountEffect cda) {
-                int power = evaluate(gameData, cda.power(),
+                return evaluate(gameData, cda.power(),
                         AmountContext.forStaticEffect(new Permanent(card), controllerId));
-                return Math.max(0, power);
             }
         }
         Integer power = card.getPower();
-        return power == null ? 0 : Math.max(0, power);
+        return power == null ? 0 : power;
+    }
+
+    /**
+     * A card's unclamped toughness with its characteristic-defining P/T evaluated for the given controller,
+     * in any zone (CR 604.3).
+     */
+    public int rawCharacteristicToughnessForController(GameData gameData, Card card, UUID controllerId) {
+        for (var effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof SetPowerToughnessToAmountEffect cda) {
+                return evaluate(gameData, cda.toughness(),
+                        AmountContext.forStaticEffect(new Permanent(card), controllerId));
+            }
+        }
+        Integer toughness = card.getToughness();
+        return toughness == null ? 0 : toughness;
     }
 
     /**
@@ -2779,7 +2801,11 @@ public class AmountEvaluationService {
             if (!matches) {
                 continue;
             }
-            greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
+            // CR 712.8e: a transformed nonmodal DFC's mana value is calculated from its front face's mana cost.
+            Card manaValueSource = permanent.isTransformed() && permanent.getOriginalCard() != null
+                    ? permanent.getOriginalCard()
+                    : permanent.getCard();
+            greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : manaValueSource.getManaValue());
         }
         return greatest;
     }
@@ -3218,7 +3244,7 @@ public class AmountEvaluationService {
             for (Card spell : gameData.getSpellsCastThisTurn(playerId)) {
                 if (predicateEvaluationService.matchesCardPredicate(
                         spell, amount.filter(), spell.getId(), gameData, playerId)) {
-                    greatestManaValue = Math.max(greatestManaValue, spell.getManaValue());
+                    greatestManaValue = Math.max(greatestManaValue, gameData.getSpellManaValueWhenCast(spell));
                 }
             }
         }

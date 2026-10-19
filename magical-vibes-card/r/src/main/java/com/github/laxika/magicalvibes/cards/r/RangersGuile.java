@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "201")
 @CardRegistration(set = "M14", collectorNumber = "191")
@@ -15,7 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class RangersGuile extends Card {
 
     public RangersGuile() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET));
+        // Target creature you control gets +1/+1 and gains hexproof until end of turn.
+        target(TargetFilters.creatureYouControl())
+                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1))
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET));
     }
 }

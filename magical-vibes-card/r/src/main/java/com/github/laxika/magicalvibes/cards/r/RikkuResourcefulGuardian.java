@@ -17,7 +17,7 @@ import java.util.List;
 public class RikkuResourcefulGuardian extends Card {
 
     public RikkuResourcefulGuardian() {
-        addEffect(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE, new MakeCreatureUnblockableEffect());
+        addEffect(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE, MakeCreatureUnblockableEffect.forTriggeringPermanentNotBlockableByOpponents());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

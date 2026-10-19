@@ -149,10 +149,11 @@ class ReinsOfTheVinesteedTest extends BaseCardTest {
     void cannotReturnAuraFromAnotherPlayersGraveyard() {
         Permanent dyingElf = addCreatureReady(player1, new LlanowarElves());
         addCreatureReady(player1, new ElvishWarrior());
-        Permanent aura = attachReinsTo(player1, dyingElf);
-        gd.playerBattlefields.get(player1.getId()).remove(aura);
-        gd.playerBattlefields.get(player2.getId()).add(aura);
-        gd.stolenCreatures.put(aura.getId(), player1.getId());
+        Card ownedAura = new ReinsOfTheVinesteed().createRuntimeCopy();
+        ownedAura.setOwnerId(player1.getId());
+        Permanent aura = new Permanent(ownedAura);
+        aura.setAttachedTo(dyingElf.getId());
+        setOwnerAndController(aura, player1, player2);
 
         destroyEnchantedCreature(dyingElf);
         harness.handleMayAbilityChosen(player2, true);

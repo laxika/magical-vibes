@@ -35,6 +35,6 @@ public class RabidBite extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        ), 0, 1).addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
+        )).addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
     }
 }

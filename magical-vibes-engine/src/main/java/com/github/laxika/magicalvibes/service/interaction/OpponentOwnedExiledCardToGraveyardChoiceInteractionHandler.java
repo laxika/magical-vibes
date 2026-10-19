@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffectHandler;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,6 +61,10 @@ public class OpponentOwnedExiledCardToGraveyardChoiceInteractionHandler
             throw new IllegalStateException("Chosen card is no longer available");
         }
 
+        if (chosen != null && chosen.faceDown()) {
+            chosen = randomCardOfFaceDownPile(gameData, chosen);
+        }
+
         gameData.interaction.clearAwaitingInput();
         if (chosen == null) {
             if (gameData.pendingEffectResolutionEntry != null) {
@@ -87,6 +92,18 @@ public class OpponentOwnedExiledCardToGraveyardChoiceInteractionHandler
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private ExiledCardEntry randomCardOfFaceDownPile(GameData gameData, ExiledCardEntry representative) {
+        List<ExiledCardEntry> pile;
+        synchronized (gameData.exiledCards) {
+            pile = gameData.exiledCards.stream()
+                    .filter(exiled -> PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffectHandler
+                            .sameFaceDownPile(representative, exiled))
+                    .toList();
+        }
+        return pile.isEmpty() ? representative
+                : pile.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pile.size()));
     }
 
     private ExiledCardEntry findEligibleCard(GameData gameData, UUID controllerId, UUID cardId) {

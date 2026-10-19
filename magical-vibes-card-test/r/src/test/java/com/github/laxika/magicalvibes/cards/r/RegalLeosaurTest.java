@@ -53,6 +53,8 @@ class RegalLeosaurTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, host.getId());
         resolveAllTriggers();
+        harness.handleListChoice(player1, "TOP");
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);

@@ -242,6 +242,7 @@ class RowanScholarOfSparksTest extends BaseCardTest {
     @Test
     void willSetsBaseStatsWithoutRemovingCountersAndExpiresOnNextTurn() {
         addReadyWill(5);
+        harness.setHand(player2, List.of());
         Permanent target = addCreatureReady(player2, new CampusGuide());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
@@ -252,7 +253,7 @@ class RowanScholarOfSparksTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }

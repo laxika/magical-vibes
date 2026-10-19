@@ -35,7 +35,9 @@ class RighteousBlowTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new RighteousBlow()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
+        if (attacking) {
+            harness.passPriority(player1);
+        }
         return combatant;
     }
 

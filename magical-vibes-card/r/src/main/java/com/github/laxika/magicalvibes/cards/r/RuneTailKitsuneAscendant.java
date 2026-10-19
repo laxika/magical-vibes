@@ -16,7 +16,7 @@ public class RuneTailKitsuneAscendant extends Card {
 
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 (gameData, sourcePermanent, controllerId) -> gameData.getLife(controllerId) >= 30,
-                List.of(new TransformToBackFaceEffect()),
+                List.of(new TransformToBackFaceEffect(true)),
                 "Rune-Tail, Kitsune Ascendant's state-triggered ability"
         ));
     }

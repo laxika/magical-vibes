@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 public class ReplicationSpecialist extends Card {
 
     public ReplicationSpecialist() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD, new MayPayManaEffect(
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD, new MayPayManaEffect(
                 "{1}{U}",
                 new CreateTokenCopyOfTargetPermanentEffect(),
                 "Pay {1}{U} to create a token that's a copy of that artifact?"

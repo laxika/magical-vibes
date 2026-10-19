@@ -142,6 +142,9 @@ class RaphaelsTechniqueTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(attacker.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        // The returned Zoo Escapees' leave-the-battlefield trigger goes on the stack above the spell
+        // (CR 603.3), so it resolves first and the spell follows.
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);

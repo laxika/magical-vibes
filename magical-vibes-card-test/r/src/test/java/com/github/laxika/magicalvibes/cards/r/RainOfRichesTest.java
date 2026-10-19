@@ -194,6 +194,7 @@ class RainOfRichesTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         LlanowarElves hit = new LlanowarElves();

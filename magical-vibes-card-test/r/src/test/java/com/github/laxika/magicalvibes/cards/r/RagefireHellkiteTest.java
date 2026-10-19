@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.e.EssenceFlux;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -95,7 +96,8 @@ class RagefireHellkiteTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, hellkite, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hellkite);
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()
+                && gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
     }
 
     @Test

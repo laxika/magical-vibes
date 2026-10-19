@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "HML", collectorNumber = "96")
@@ -15,10 +16,11 @@ public class RysorianBadger extends Card {
         // cards from defending player's graveyard. If you do, you gain 1 life for each card exiled
         // this way and this creature assigns no combat damage this turn."
         // The cards are chosen from the defending player's graveyard as the trigger goes on the
-        // stack; choosing none covers the "you may", and both riders only apply when at least one
+        // stack; the "you may" is decided on resolution, and both riders only apply when at least one
         // card was exiled.
         addEffect(EffectSlot.ON_ATTACKS_UNBLOCKED,
-                new ExileCardsFromGraveyardEffect(2, 1, true,
-                        new CardTypePredicate(CardType.CREATURE), true));
+                new MayEffect(new ExileCardsFromGraveyardEffect(2, 1, true,
+                        new CardTypePredicate(CardType.CREATURE), true),
+                        "Exile the chosen cards from the defending player's graveyard?"));
     }
 }

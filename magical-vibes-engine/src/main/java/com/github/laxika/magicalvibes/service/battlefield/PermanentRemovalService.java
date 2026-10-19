@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
@@ -1800,11 +1801,12 @@ public class PermanentRemovalService {
             List<Object> batchKey = (kind == DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP
                     || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
                     || kind == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP
-                    || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
+                    || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
+                    || kind == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
                     && action.sourceCard() != null
                     ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), "")
                             , Objects.requireNonNullElse(action.sacrificingPlayerId(), ""))
-                    : List.of(action);
+                    : List.of(action, batches.size());
             batches.computeIfAbsent(batchKey, ignored -> new ArrayList<>()).add(action);
         }
         for (List<DelayedPermanentAction> batch : batches.values()) {
@@ -2208,6 +2210,11 @@ public class PermanentRemovalService {
                 rememberCombatEquipmentAttachments(gameData, target);
                 target.setLastKnownAuraCount(attachmentCounts[0]);
                 target.setLastKnownEquipmentCount(attachmentCounts[1]);
+                if (gameQueryService.hasKeyword(gameData, target, Keyword.LIFELINK)) {
+                    // Lifelink granted by an attachment falls off with it, so the permanent's last known
+                    // information keeps it for damage its leave-the-battlefield ability deals.
+                    target.getGrantedKeywords().add(Keyword.LIFELINK);
+                }
                 Card lastKnownCard = removalSnapshot != null ? removalSnapshot.getCard()
                         : snapshotEffectivePermanentCard(gameData, target);
                 for (StackEntry entry : gameData.stack) {
@@ -2383,6 +2390,15 @@ public class PermanentRemovalService {
         departureSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilities);
         gameData.departedPermanentSnapshots.put(target.getCard().getId(), departureSnapshot);
         gameData.departedPermanentSnapshots.put(target.getOriginalCard().getId(), departureSnapshot);
+        for (StackEntry entry : gameData.stack) {
+            if (target.getId().equals(entry.getTriggeringPermanentId())
+                    && entry.getEffectsToResolve().stream().anyMatch(
+                    com.github.laxika.magicalvibes.model.effect
+                            .EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class::isInstance)) {
+                // "That creature's controller" uses the creature's last known controller (CR 608.2h).
+                entry.setTargetId(controllerId);
+            }
+        }
         notifyPermanentLeftBattlefield(gameData, target, controllerId);
         gameData.playersWhosePermanentsLeftBattlefieldThisTurn.add(controllerId);
         if (!wasLand) {
@@ -2646,6 +2662,11 @@ public class PermanentRemovalService {
             }
         }
         if (controlledSourceExilesDyingCreature(gameData, cardId)) {
+            return true;
+        }
+        if (gameData.exileDamagedCreaturesSourceIdsThisTurn.stream()
+                .anyMatch(sourceId -> gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                        .getOrDefault(sourceId, Set.of()).contains(cardId))) {
             return true;
         }
         for (Permanent source : gameData.simultaneousDyingCreatures.values()) {
@@ -3048,7 +3069,8 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId,
                     target.getCard().getId(), dyingPowerAtDeath, dyingToughnessAtDeath,
                     target.getCard().getManaValue(), wasCreature,
-                    target.cardsLeavingBattlefield().stream().map(Card::getId).toList(), ownerId);
+                    target.cardsLeavingBattlefield().stream().map(Card::getId).toList(), ownerId,
+                    target.getCard());
             }
             // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)
             if ((target.getCard().isAura() || target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
@@ -3360,8 +3382,12 @@ public class PermanentRemovalService {
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect hand
                         && hand.returnOnSourceLeave()
                         && hand.destination() == com.github.laxika.magicalvibes.model.effect.HandChoiceDestination.EXILE);
+        boolean hasLeavesTriggerExileAll = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream()
+                .anyMatch(effect -> effect instanceof ExileAllPermanentsUntilSourceLeavesEffect exileAll
+                        && exileAll.returnsOnSourceLeavesTrigger());
         if (pendingReturns == null && !returnsOnSourceLeavesTrigger && !hasLeavesTriggerExile
-                && !hasLeavesTriggerHandExile) {
+                && !hasLeavesTriggerHandExile && !hasLeavesTriggerExileAll) {
             triggerCollectionService.processDelayedExileReturnCounterTriggers(
                     gameData, removedPermanent.getId(), List.of(), List.of());
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
@@ -3380,6 +3406,7 @@ public class PermanentRemovalService {
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect);
         returnsThroughLeavesTrigger |= returnsOnSourceLeavesTrigger;
         returnsThroughLeavesTrigger |= hasLeavesTriggerHandExile;
+        returnsThroughLeavesTrigger |= hasLeavesTriggerExileAll;
         returnsThroughLeavesTrigger |= removedPermanent.getCard().getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost.class::isInstance);
         if (returnsThroughLeavesTrigger) {
@@ -3387,7 +3414,7 @@ public class PermanentRemovalService {
                 phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
                 return;
             }
-            List<PendingExileReturn> returnBatches = returnsOnSourceLeavesTrigger
+            List<PendingExileReturn> returnBatches = returnsOnSourceLeavesTrigger || hasLeavesTriggerExileAll
                     ? mergeSameControllerReturns(pendingReturns)
                     : pendingReturns;
             List<CardEffect> effects = returnBatches.stream()

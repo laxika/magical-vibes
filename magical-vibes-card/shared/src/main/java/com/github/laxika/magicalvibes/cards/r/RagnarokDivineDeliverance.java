@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -20,13 +21,14 @@ public class RagnarokDivineDeliverance extends Card {
 
     public RagnarokDivineDeliverance() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.ON_DEATH, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardAllOfPredicate(List.of(
-                        new CardIsPermanentPredicate(),
-                        new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY)))))
-                .targetGraveyard(true)
-                .build());
+                .addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+                        new DestroyTargetPermanentEffect(),
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardAllOfPredicate(List.of(
+                                        new CardIsPermanentPredicate(),
+                                        new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY)))))
+                                .targetGraveyard(true)
+                                .build()));
     }
 }

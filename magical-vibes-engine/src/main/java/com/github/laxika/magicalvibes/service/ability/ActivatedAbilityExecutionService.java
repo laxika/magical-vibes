@@ -159,6 +159,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ActivatedAbilityExecutionService {
     private final com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry effectHandlerRegistry;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.EffectResolutionService> effectResolutionServiceProvider;
 
     /** Performs a paid special action immediately, without activation triggers or a stack entry. */
     public void performSpecialAction(GameData gameData, Player player, Permanent source, ActivatedAbility action) {
@@ -907,10 +908,15 @@ public class ActivatedAbilityExecutionService {
                     gameData.pendingManaAbilityTriggers.addAll(deferredSelfTapTriggers);
                 }
             }
+            // The land-tap watchers of a mana ability that adds its mana only after resolution-time
+            // choices (Rhystic Cave) run when that mana is actually added, not when it is activated.
             // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
             // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
             // watchers must see it exactly as they see a printed ON_TAP land.
-            if (!manaTypeChoicePending && ability.isRequiresTap() && (gameQueryService.isLand(gameData, permanent)
+            boolean manaAddedAtResolution = snapshotEffects.stream().anyMatch(
+                    com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect.class::isInstance);
+            if (!manaTypeChoicePending && !manaAddedAtResolution && ability.isRequiresTap()
+                    && (gameQueryService.isLand(gameData, permanent)
                     || permanent.getCard().hasType(CardType.LAND))) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
                 Set<ManaColor> producedColors = newlyProducedManaTypes(
@@ -1016,6 +1022,11 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        }
+        // Likewise a trigger that targets a graveyard card (Riveteers Ascendancy's sacrifice trigger).
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
@@ -1283,6 +1294,20 @@ public class ActivatedAbilityExecutionService {
             CardEffect effect = effectsToResolve.get(effectIndex);
             if (landManaReplaced && effect instanceof ManaProducingEffect) {
                 continue;
+            }
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect) {
+                // Rhystic Cave: "Choose a color. Add one mana of that color unless any player pays {1}."
+                // The choice and the payment decisions are resolution-time interactions, so the rest of
+                // the ability runs through the ordinary effect loop, which parks and resumes around them
+                // while the ability itself still never uses the stack (CR 605.3b).
+                StackEntry resolving = new StackEntry(StackEntryType.ACTIVATED_ABILITY, permanent.getCard(),
+                        playerId, permanent.getCard().getName() + "'s ability",
+                        new ArrayList<>(effectsToResolve.subList(effectIndex, effectsToResolve.size())),
+                        xValue, permanent.getId());
+                resolving.setActivePlayerId(gameData.activePlayerId);
+                resolving.setSourcePermanentSnapshot(new Permanent(permanent));
+                effectResolutionServiceProvider.getObject().resolveEffects(gameData, resolving);
+                break;
             }
             ManaAbilityEffectHandler manaAbilityEffectHandler = manaAbilityEffectHandlerRegistry.getHandler(effect);
             if (manaAbilityEffectHandler != null) {
@@ -1783,6 +1808,7 @@ public class ActivatedAbilityExecutionService {
                         permanent.getId(), playerId, permanent.getCard(),
                         sacrifice.currentControllerSacrifices()));
             } else if (effect instanceof SacrificeSelfEffect
+                    && !gameQueryService.cantBeSacrificed(gameData, permanent)
                     && permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));

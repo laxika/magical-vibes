@@ -24,7 +24,8 @@ public class RuthlessKnave extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentIsCreaturePredicate(),
-                                "Sacrifice a creature"
+                                "Sacrifice a creature",
+                                false
                         ),
                         CreateTokenEffect.ofTreasureToken(2)
                 ),

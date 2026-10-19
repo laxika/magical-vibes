@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 import java.util.List;
@@ -38,15 +40,18 @@ public class RestlessSpire extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}{R}",
-                List.of(AnimatePermanentsEffect.withAnimatedColors(
-                        2, 1, List.of(CardSubtype.ELEMENTAL), Set.of(),
-                        Set.of(CardColor.BLUE, CardColor.RED))),
+                List.of(
+                        AnimatePermanentsEffect.withAnimatedColors(
+                                2, 1, List.of(CardSubtype.ELEMENTAL), Set.of(),
+                                Set.of(CardColor.BLUE, CardColor.RED)),
+                        new GrantStaticEffectToSourceEffect(
+                                new ConditionalEffect(new ControllerTurn(),
+                                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                                EffectDuration.UNTIL_END_OF_TURN)),
                 "{U}{R}: This land becomes a 2/1 blue and red Elemental creature with "
                         + "\"During your turn, this creature has first strike.\" It's still a land."
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ATTACK, new ScryEffect(1));
     }
 }

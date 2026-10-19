@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -216,25 +217,31 @@ public class CardChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        Card card = hand.remove(cardIndex);
+        Card card = hand.get(cardIndex);
         gameLogService.append(gameData,
                 GameLog.textCardText(player.getUsername() + " reveals ", card, " from their hand."));
 
         boolean sharesNameWithPermanent = predicateEvaluationService.matchesCardPredicate(
                 card, new CardSharesNameWithAPermanentPredicate(), card.getId(), gameData, player.getId());
-        if (sharesNameWithPermanent) {
+        if (sharesNameWithPermanent && card.isAura() && !card.isEnchantZone()) {
+            // The Aura stays in hand until the batch places it, so it remains there if no host is legal.
+            battlefieldEntryBatchSupport.begin(gameData, List.of(
+                    new BattlefieldEntryCard(player.getId(), player.getId(), card, Zone.HAND, null)));
+        } else if (sharesNameWithPermanent) {
+            hand.remove(cardIndex);
             Permanent permanent = new Permanent(card);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " puts ", card, " onto the battlefield."));
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
         } else {
-            hand.add(cardIndex, card);
             gameLogService.append(gameData,
                     GameLog.cardThen(card, " does not share a name with a permanent and remains in their hand."));
         }
 
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
     }
 
     /** Applies a perpetual power/keyword modification to a chosen creature card in hand. */
@@ -2469,7 +2476,7 @@ public class CardChoiceHandlerService {
             }
 
             if (revealedHandChoice.exileAllCopiesOfChosenNames()) {
-                exileSameNamedCopies(gameData, player, targetPlayerId, chosenCards);
+                offerSameNamedCopiesExile(gameData, player, targetPlayerId, chosenCards);
             }
         } else if (shuffleIntoLibraryMode) {
             List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -2543,6 +2550,11 @@ public class CardChoiceHandlerService {
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
+        }
+
+        // A follow-up choice (Reap Intellect's same-name search) resumes the remaining effects once answered.
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
         }
 
         // Resume resolving remaining effects on the same spell/ability
@@ -2626,48 +2638,25 @@ public class CardChoiceHandlerService {
     }
 
     /**
-     * Exiles every card sharing a name with one of {@code chosenCards} from the target's hand,
-     * graveyard, and library, then shuffles that library (Reap Intellect's follow-up search).
+     * Each chosen card's name opens an optional search of the target's hand, graveyard, and library: the
+     * caster exiles any number of cards with that name (CR 701.23a search, "for any number of cards").
+     * Offered as one multi-zone choice covering every chosen name.
      */
-    private void exileSameNamedCopies(GameData gameData, Player player, UUID targetPlayerId, List<Card> chosenCards) {
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
+    private void offerSameNamedCopiesExile(GameData gameData, Player player, UUID targetPlayerId,
+                                           List<Card> chosenCards) {
         List<String> names = chosenCards.stream().map(Card::getName).distinct().toList();
-
-        int exiledCount = exileNamedCardsFromZone(gameData, targetPlayerId, gameData.playerHands.get(targetPlayerId), names);
-
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        List<Card> exiledFromGraveyard = exileNamedCardsFromZoneCards(gameData, targetPlayerId, graveyard, names);
-        if (!exiledFromGraveyard.isEmpty()) {
-            graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, exiledFromGraveyard);
+        List<Card> matchingCards = new ArrayList<>();
+        for (List<Card> zone : List.of(gameData.playerHands.get(targetPlayerId),
+                gameData.playerGraveyards.get(targetPlayerId), gameData.playerDecks.get(targetPlayerId))) {
+            if (zone != null) {
+                zone.stream().filter(card -> names.contains(card.getName())).forEach(matchingCards::add);
+            }
         }
-        exiledCount += exiledFromGraveyard.size();
-
-        List<Card> library = gameData.playerDecks.get(targetPlayerId);
-        exiledCount += exileNamedCardsFromZone(gameData, targetPlayerId, library, names);
-        if (library != null) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+        if (matchingCards.isEmpty()) {
+            return;
         }
-
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles " + exiledCount
-                + " card" + (exiledCount != 1 ? "s" : "") + " with the same name from " + targetName
-                + "'s hand, graveyard, and library. " + targetName + " shuffles their library."));
-        log.info("Game {} - {} exiled {} same-named card(s) from {}'s zones", gameData.id,
-                player.getUsername(), exiledCount, targetName);
-    }
-
-    private int exileNamedCardsFromZone(GameData gameData, UUID ownerId, List<Card> zone, List<String> names) {
-        return exileNamedCardsFromZoneCards(gameData, ownerId, zone, names).size();
-    }
-
-    private List<Card> exileNamedCardsFromZoneCards(GameData gameData, UUID ownerId, List<Card> zone,
-                                                     List<String> names) {
-        if (zone == null) {
-            return List.of();
-        }
-        List<Card> toExile = zone.stream().filter(c -> names.contains(c.getName())).toList();
-        zone.removeAll(toExile);
-        toExile.forEach(card -> exileService.exileCard(gameData, ownerId, card));
-        return toExile;
+        playerInputService.beginMultiZoneExileChoice(gameData, player.getId(), matchingCards,
+                matchingCards.size(), targetPlayerId, String.join(", ", names), false);
     }
 
     /** The caster declines an optional revealed-hand choice (e.g. Vendilion Clique's "may"). */

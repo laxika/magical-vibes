@@ -128,6 +128,10 @@ public class ExampleCard extends Card {
   - `addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, effect, TriggerMode.ONCE_PER_BATCH)`
   - The tap-payment path brackets multi-permanent tap events so the registration fires once
 
+- "Whenever one or more creature cards are put into your graveyard from anywhere":
+  - `addEffect(EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, TriggerMode.ONCE_PER_BATCH)` — creature cards that die in one simultaneous batch share one trigger
+  - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RobotDomination.java`
+
 - "Whenever one or more lands enter under your control":
   - `addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, effect, TriggerMode.ONCE_PER_BATCH)` — lands entering in one simultaneous event share one trigger, listed in `StackEntry.triggeringPermanentIds`
   - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MythweaverPoq.java`

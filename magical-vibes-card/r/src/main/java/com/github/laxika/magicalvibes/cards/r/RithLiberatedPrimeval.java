@@ -23,6 +23,10 @@ public class RithLiberatedPrimeval extends Card {
     public RithLiberatedPrimeval() {
         PermanentHasSubtypePredicate dragon = new PermanentHasSubtypePredicate(CardSubtype.DRAGON);
 
+        // Ward {2}.
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+
+        // Other Dragons you control have ward {2}.
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.OWN_CREATURES, dragon));

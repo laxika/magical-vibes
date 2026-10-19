@@ -92,6 +92,9 @@ class RealityScrambleTest extends BaseCardTest {
                 .containsExactly("Hill Giant");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .contains("Reality Scramble", "Mountain", "Grizzly Bears");
+                .containsExactlyInAnyOrder("Reality Scramble", "Mountain");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Forest", "Grizzly Bears");
     }
 }

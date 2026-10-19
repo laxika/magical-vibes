@@ -35,6 +35,11 @@ public interface GraveyardPlayPermission extends CardEffect {
         return false;
     }
 
+    /** True if only cards milled into the controller's graveyard this turn qualify (CR 701.17a). */
+    default boolean onlyCardsMilledThisTurn() {
+        return false;
+    }
+
     /** True if the permission can be used only during its controller's turn. */
     default boolean onlyDuringControllerTurn() {
         return false;

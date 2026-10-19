@@ -59,7 +59,7 @@ class RoyalWardenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent warden = findPermanent(player1, "Royal Warden");
-        assertThat(warden.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, warden, Keyword.HASTE)).isTrue();
         assertThat(warden.isTapped()).isFalse();
         harness.assertNotInGraveyard(player1, "Royal Warden");
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()

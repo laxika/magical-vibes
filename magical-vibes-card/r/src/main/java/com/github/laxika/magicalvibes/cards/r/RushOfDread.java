@@ -29,6 +29,9 @@ public class RushOfDread extends Card {
 
     public RushOfDread() {
         addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{1}", "{2}", "{2}")));
+        // Each mode says "target opponent", a separate instance of the word "target" (CR 115.3), so
+        // one opponent may be chosen for several modes.
+        setAllowSharedTargets(true);
 
         var opponentFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

@@ -172,6 +172,8 @@ class RatchetFieldMedicTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MishrasBauble());
         harness.activateAbility(player1, 1, 0, player2.getId());
         resolveAllTriggers();
+        harness.handleCardChosen(player1, -1);
+        resolveAllTriggers();
         assertThat(ratchet.isTransformed()).isFalse();
 
         harness.addToBattlefield(player1, new SoulWarden());
@@ -185,6 +187,8 @@ class RatchetFieldMedicTest extends BaseCardTest {
 
         harness.addToBattlefield(player1, new MishrasBauble());
         harness.activateAbility(player1, 4, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, -1);
         resolveAllTriggers();
 
         assertThat(ratchet.isTransformed()).isTrue();

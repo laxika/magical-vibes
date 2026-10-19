@@ -137,7 +137,6 @@ class RunedHaloTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castCreature(player2, 0);
-        harness.handleMayAbilityChosen(player2, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player2, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)

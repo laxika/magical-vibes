@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "21")
 @CardRegistration(set = "2XM", collectorNumber = "27")
@@ -19,18 +20,19 @@ public class RememberTheFallen extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardTypePredicate(CardType.CREATURE), 1)),
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactly(new CardTypePredicate(CardType.CREATURE), 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target artifact card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardTypePredicate(CardType.ARTIFACT), 1)),
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactly(new CardTypePredicate(CardType.ARTIFACT), 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card and target artifact card from your graveyard to your hand",
                         new ReturnTargetCardsFromGraveyardToHandEffect(
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
-                                        new CardTypePredicate(CardType.ARTIFACT))), 2))
+                                        new CardTypePredicate(CardType.ARTIFACT))),
+                                2, null, false, false, 1, false, Set.of(), false, false,
+                                List.of(), false, false, null, false, false,
+                                Set.of(CardType.CREATURE, CardType.ARTIFACT)))
         )));
     }
 }

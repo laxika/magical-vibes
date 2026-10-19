@@ -595,14 +595,14 @@ public class AsEntersInteractionService {
                         .map(MayReturnPermanentToHandAndEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
         if (returnChoice != null) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = battlefield.getLast();
+            Permanent justEntered = enteringPermanent;
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(card.getId())
                     .withSourceControllerId(controllerId)
                     .withSourcePermanentId(justEntered.getId());
             boolean hasValidChoice = gameData.playerBattlefields.values().stream()
                     .flatMap(List::stream)
+                    .filter(permanent -> !gameData.permanentsEnteringSimultaneously.contains(permanent.getId()))
                     .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                             permanent, returnChoice.filter(), filterContext));
             if (hasValidChoice) {

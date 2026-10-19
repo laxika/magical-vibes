@@ -52,8 +52,8 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
                         ctx.gameData(), ctx.playerId(), ctx.sourceControllerId())));
         all.add(bonusRule("NoncreatureSourceBonus", ctx -> gameQueryService.getNoncreatureSourceDamageBonuses(
                 ctx.gameData(), ctx.entry(), ctx.playerId(), null)));
-        all.add(bonusRule("PlayersAndBattlesBonus", ctx -> ctx.combat() ? List.of()
-                : gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), true, null)));
+        all.add(bonusRule("PlayersAndBattlesBonus", ctx ->
+                gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), true, null)));
         all.add(bonusRule("ControllerToOpponentBonus", ctx -> gameQueryService.getControllerDamageToOpponentBonuses(
                 ctx.gameData(), ctx.sourceControllerId(), ctx.playerId(), ctx.combat(), false,
                 ctx.sourcePermanent() == null ? ctx.entry().getSourcePermanentId() : ctx.sourcePermanent().getId())));

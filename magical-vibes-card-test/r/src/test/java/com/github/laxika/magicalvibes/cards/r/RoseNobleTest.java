@@ -102,6 +102,7 @@ class RoseNobleTest extends BaseCardTest {
     @DisplayName("An opponent casting a companion does not draw for Rose's controller")
     void opponentCompanionDoesNotDrawCard() {
         addRose();
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

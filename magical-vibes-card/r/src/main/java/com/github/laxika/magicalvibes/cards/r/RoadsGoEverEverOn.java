@@ -39,8 +39,8 @@ public class RoadsGoEverEverOn extends Card {
                         new SearchLibraryForCardsToExileWithSourceEffect(basicPlains, 2),
                         new GainLifeEffect(2))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new PutCardExiledWithSourceIntoHandEffect());
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new PutCardExiledWithSourceIntoHandEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_II, PutCardExiledWithSourceIntoHandEffect.returningToOwner());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, PutCardExiledWithSourceIntoHandEffect.returningToOwner());
 
         PermanentCount plainsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.PLAINS), CountScope.CONTROLLER);

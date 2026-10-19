@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastE
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledEffect;
+import com.github.laxika.magicalvibes.model.effect.PayXManaReturnTargetCreatureWithManaValueXEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardByExperienceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
@@ -53,6 +54,18 @@ import java.util.List;
 
 @Component
 public class GraveyardTargetingSupport {
+
+    /**
+     * Drops the "you may" wrapper around a graveyard-card-choosing effect once no card was chosen, so
+     * the trigger does not ask for a decision that cannot change anything.
+     */
+    public static List<CardEffect> withoutOptionalWrapperWhenNoCards(List<CardEffect> effects) {
+        return effects.stream()
+                .map(effect -> effect instanceof MayEffect may
+                        && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect
+                        ? may.wrapped() : effect)
+                .toList();
+    }
 
     public Target findTarget(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
@@ -254,6 +267,15 @@ public class GraveyardTargetingSupport {
             return new Target(returnByExperience.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                     "to the battlefield or your hand", 1, 1);
         }
+        if (effect instanceof PayXManaReturnTargetCreatureWithManaValueXEffect payX) {
+            CardPredicate creatureCard = payX.filter() == null
+                    ? new CardTypePredicate(com.github.laxika.magicalvibes.model.CardType.CREATURE)
+                    : new com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate(List.of(
+                            new CardTypePredicate(com.github.laxika.magicalvibes.model.CardType.CREATURE),
+                            payX.filter()));
+            return new Target(creatureCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                    "to the battlefield", 1, 1);
+        }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             String destination = switch (returnEffect.destination()) {
                 case HAND -> "to your hand";
@@ -265,7 +287,7 @@ public class GraveyardTargetingSupport {
                 case EXILE -> "to exile";
                 case DREDGE -> "with dredge";
                 case MAY_ABILITY_TARGET, RANDOM_PLAYER_GRAVEYARD_COPY, CONJURE_DUPLICATE_INTO_HAND,
-                        COPY_FROM_LEAVING_GRAVEYARD -> "as chosen";
+                        COPY_FROM_LEAVING_GRAVEYARD, ENCHANT_GRAVEYARD_CARD -> "as chosen";
             };
             return new Target(returnEffect.filter(), returnEffect.source(), destination, 1,
                     returnEffect.upTo() ? 0 : 1, returnEffect.dynamicMaxManaValue());

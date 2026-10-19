@@ -42,7 +42,9 @@ public class DefendingPlayerDiscardsHandThenDrawsThatManyEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID attackedTargetId = entry.getAttackedTargetId();
-        UUID playerId = defendingPlayerId(gameData, attackedTargetId);
+        UUID playerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : defendingPlayerId(gameData, attackedTargetId);
         if (playerId == null) {
             return;
         }
@@ -87,7 +89,13 @@ public class DefendingPlayerDiscardsHandThenDrawsThatManyEffectHandler implement
             return attackedTargetId;
         }
         Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackedTargetId);
-        return attackedPermanent == null ? null
-                : gameQueryService.findPermanentController(gameData, attackedPermanent.getId());
+        if (attackedPermanent == null) {
+            return null;
+        }
+        // CR 310.9d: "defending player" for an attacked battle is its protector.
+        if (gameQueryService.isBattle(gameData, attackedPermanent)) {
+            return attackedPermanent.getProtectorPlayerId();
+        }
+        return gameQueryService.findPermanentController(gameData, attackedPermanent.getId());
     }
 }

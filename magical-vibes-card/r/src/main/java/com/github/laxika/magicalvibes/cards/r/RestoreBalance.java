@@ -25,7 +25,7 @@ public class RestoreBalance extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(6));
         addEffect(EffectSlot.SPELL, new EachPlayerSacrificesDownToFewestEffect(new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.SPELL, new EachPlayerDiscardsDownToFewestEffect());
         addEffect(EffectSlot.SPELL, new EachPlayerSacrificesDownToFewestEffect(new PermanentIsCreaturePredicate()));
+        addEffect(EffectSlot.SPELL, new EachPlayerDiscardsDownToFewestEffect());
     }
 }

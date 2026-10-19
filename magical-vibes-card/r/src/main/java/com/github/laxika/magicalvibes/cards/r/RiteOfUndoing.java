@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RiteOfUndoing extends Card {
 
     public RiteOfUndoing() {
+        addEffect(EffectSlot.SPELL, new DelveCost());
+
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "First target must be a nonland permanent you control"))

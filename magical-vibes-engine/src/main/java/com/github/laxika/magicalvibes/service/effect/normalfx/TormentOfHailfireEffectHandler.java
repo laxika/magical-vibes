@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TormentState;
@@ -19,13 +20,18 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -59,6 +65,10 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
 
+    @Autowired
+    @Lazy
+    private CardChoiceHandlerService cardChoiceHandlerService;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return TormentOfHailfireEffect.class;
@@ -87,6 +97,15 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
                 iterations = entry.getXValue();
             }
             state.remainingIterations = Math.max(0, iterations);
+            if (torment.deferChoices()) {
+                // Each opponent makes all of their choices in turn order, then everything happens together.
+                state.deferred = true;
+                state.totalPasses = state.remainingIterations;
+                state.remainingIterations = 0;
+                state.remaining.addAll(torment.targeted()
+                        ? targetedPlayer(gameData, entry.getTargetId())
+                        : apnapOpponents(gameData, entry.getControllerId()));
+            }
             advance(gameData, entry, sourceName, lifeLoss, discardCount,
                     torment.sacrificePredicate(), torment.targeted());
             return;
@@ -96,12 +115,18 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             // The current opponent just picked a penalty option — apply it.
             String mode = state.chosenMode;
             state.chosenMode = null;
+            if (state.deferred) {
+                applyDeferredMode(gameData, entry, sourceName, lifeLoss, discardCount,
+                        state.currentOpponentId, mode, torment.sacrificePredicate());
+                return;
+            }
             applyMode(gameData, entry, sourceName, lifeLoss, discardCount,
                     state.currentOpponentId, mode, torment.sacrificePredicate(), torment.targeted());
             return;
         }
 
         // Re-entry after a discard / sacrifice sub-choice completed — advance to the next opponent.
+        gameData.deferredDiscardChooserId = null;
         advance(gameData, entry, sourceName, lifeLoss, discardCount,
                 torment.sacrificePredicate(), torment.targeted());
     }
@@ -115,6 +140,10 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             int discardCount, PermanentPredicate sacrificePredicate, boolean targeted) {
         TormentState state = gameData.torment;
         UUID controllerId = entry.getControllerId();
+        if (state.deferred) {
+            advanceDeferred(gameData, entry, sourceName, lifeLoss, discardCount, sacrificePredicate);
+            return;
+        }
         while (true) {
             if (state.remaining.isEmpty()) {
                 if (state.remainingIterations <= 0) {
@@ -138,8 +167,8 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             }
             state.currentOpponentId = opponentId;
 
-            List<String> options = availableOptions(gameData, opponentId, lifeLoss, discardCount,
-                    sacrificePredicate);
+            List<String> options = availableOptions(gameData, opponentId, controllerId, lifeLoss,
+                    discardCount, sacrificePredicate);
             if (options.size() == 1) {
                 // Only "lose life" is possible — no choice to make.
                 lifeSupport.applyLifeLoss(gameData, opponentId, lifeLoss, sourceName);
@@ -159,6 +188,115 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
+     * Deferred form: opponents in turn order each make all of their choices (never choosing the same
+     * permanent or card twice), then the sacrifices, discards and life loss all happen together.
+     */
+    private void advanceDeferred(GameData gameData, StackEntry entry, String sourceName, int lifeLoss,
+            int discardCount, PermanentPredicate sacrificePredicate) {
+        TormentState state = gameData.torment;
+        UUID controllerId = entry.getControllerId();
+        while (true) {
+            if (state.opponentPassesLeft <= 0) {
+                UUID next = state.remaining.pollFirst();
+                if (next == null) {
+                    finishDeferred(gameData, entry, sourceName, lifeLoss);
+                    return;
+                }
+                if (gameData.playerIds.contains(next)) {
+                    state.currentOpponentId = next;
+                    state.opponentPassesLeft = state.totalPasses;
+                }
+                continue;
+            }
+            state.opponentPassesLeft--;
+            UUID opponentId = state.currentOpponentId;
+            List<String> options = availableOptions(gameData, opponentId, controllerId, lifeLoss,
+                    discardCount, sacrificePredicate);
+            if (options.size() == 1) {
+                state.lifeLossCounts.merge(opponentId, 1, Integer::sum);
+                continue;
+            }
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            String prompt = sourceName + " — lose " + lifeLoss
+                    + " life unless you sacrifice " + sacrificeDescription(sacrificePredicate)
+                    + " or discard " + discardDescription(discardCount) + ".";
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    opponentId, null, null,
+                    new ChoiceContext.TormentPenaltyChoice(opponentId, sourceName),
+                    options, prompt));
+            return;
+        }
+    }
+
+    private void applyDeferredMode(GameData gameData, StackEntry entry, String sourceName, int lifeLoss,
+            int discardCount, UUID opponentId, String mode, PermanentPredicate sacrificePredicate) {
+        TormentState state = gameData.torment;
+        if (sacrificeOption(sacrificePredicate).equals(mode)) {
+            List<UUID> sacrificeableIds = sacrificeablePermanentIds(gameData, opponentId,
+                    entry.getControllerId(), sacrificePredicate);
+            if (!sacrificeableIds.isEmpty()) {
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.TormentSacrifice(opponentId));
+                playerInputService.beginPermanentChoice(gameData, opponentId, sacrificeableIds,
+                        sourceName + " — choose " + sacrificeDescription(sacrificePredicate) + " to sacrifice.");
+                return;
+            }
+        } else if (discardOption(discardCount).equals(mode)) {
+            List<Integer> validIndices = unchosenHandIndices(gameData, opponentId);
+            if (validIndices.size() >= discardCount) {
+                gameData.discardCausedByOpponent = !opponentId.equals(entry.getControllerId());
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                gameData.deferredDiscardChooserId = opponentId;
+                playerInteractionSupport.resolveDiscardCards(gameData, opponentId, discardCount, validIndices);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                gameData.deferredDiscardChooserId = null;
+            }
+        } else {
+            state.lifeLossCounts.merge(opponentId, 1, Integer::sum);
+        }
+        advanceDeferred(gameData, entry, sourceName, lifeLoss, discardCount, sacrificePredicate);
+    }
+
+    /** Positions in the player's hand of the cards they haven't already chosen to discard. */
+    private List<Integer> unchosenHandIndices(GameData gameData, UUID playerId) {
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            UUID cardId = hand.get(i).getId();
+            boolean chosen = gameData.deferredDiscardSelections.stream()
+                    .anyMatch(selection -> selection.cardId().equals(cardId));
+            if (!chosen) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    private void finishDeferred(GameData gameData, StackEntry entry, String sourceName, int lifeLoss) {
+        TormentState state = gameData.torment;
+        List<UUID> sacrifices = List.copyOf(state.chosenSacrifices);
+        Map<UUID, Integer> lifeLosses = new LinkedHashMap<>(state.lifeLossCounts);
+        gameData.deferredDiscardChooserId = null;
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        state.reset();
+        for (UUID permanentId : sacrifices) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null) {
+                destructionSupport.sacrificeAndLog(gameData, permanent,
+                        gameQueryService.findPermanentController(gameData, permanentId));
+            }
+        }
+        cardChoiceHandlerService.discardDeferredSelections(gameData, entry.getControllerId());
+        lifeLosses.forEach((playerId, times) -> {
+            for (int i = 0; i < times; i++) {
+                lifeSupport.applyLifeLoss(gameData, playerId, lifeLoss, sourceName);
+            }
+        });
+    }
+
+    /**
      * Applies the current opponent's chosen penalty. Sacrifice/discard begin a sub-choice and pause
      * (advancing on completion via the re-run); losing life applies immediately and continues.
      */
@@ -166,7 +304,8 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             int discardCount, UUID opponentId, String mode, PermanentPredicate sacrificePredicate,
             boolean targeted) {
         if (sacrificeOption(sacrificePredicate).equals(mode)) {
-            List<UUID> sacrificeableIds = sacrificeablePermanentIds(gameData, opponentId, sacrificePredicate);
+            List<UUID> sacrificeableIds = sacrificeablePermanentIds(gameData, opponentId,
+                    entry.getControllerId(), sacrificePredicate);
             if (sacrificeableIds.isEmpty()) {
                 advance(gameData, entry, sourceName, lifeLoss, discardCount,
                         sacrificePredicate, targeted);
@@ -206,27 +345,34 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
                 sacrificePredicate, targeted);
     }
 
-    private List<String> availableOptions(GameData gameData, UUID opponentId, int lifeLoss,
-            int discardCount, PermanentPredicate sacrificePredicate) {
+    private List<String> availableOptions(GameData gameData, UUID opponentId, UUID sourceControllerId,
+            int lifeLoss, int discardCount, PermanentPredicate sacrificePredicate) {
         List<String> options = new ArrayList<>();
-        if (!sacrificeablePermanentIds(gameData, opponentId, sacrificePredicate).isEmpty()) {
+        if (!sacrificeablePermanentIds(gameData, opponentId, sourceControllerId, sacrificePredicate).isEmpty()) {
             options.add(sacrificeOption(sacrificePredicate));
         }
         List<Card> hand = gameData.playerHands.get(opponentId);
-        if (hand != null && hand.size() >= discardCount) {
+        int availableCards = gameData.torment.deferred
+                ? unchosenHandIndices(gameData, opponentId).size()
+                : hand == null ? 0 : hand.size();
+        if (availableCards >= discardCount) {
             options.add(discardOption(discardCount));
         }
         options.add("Lose " + lifeLoss + " life");
         return options;
     }
 
-    private List<UUID> sacrificeablePermanentIds(GameData gameData, UUID opponentId,
+    /** Permanents the opponent may sacrifice to this penalty; none if an opponent's effect can't force a sacrifice. */
+    private List<UUID> sacrificeablePermanentIds(GameData gameData, UUID opponentId, UUID sourceControllerId,
             PermanentPredicate sacrificePredicate) {
+        if (!gameQueryService.canEffectCauseSacrifice(gameData, opponentId, sourceControllerId)) {
+            return List.of();
+        }
         return destructionSupport.collectPermanentIds(gameData, opponentId,
-                p -> sacrificePredicate == null
+                p -> !gameData.torment.chosenSacrifices.contains(p.getId()) && (sacrificePredicate == null
                         ? !p.getCard().hasType(CardType.LAND)
                         : predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, p, sacrificePredicate));
+                                gameData, p, sacrificePredicate)));
     }
 
     private String sacrificeDescription(PermanentPredicate sacrificePredicate) {

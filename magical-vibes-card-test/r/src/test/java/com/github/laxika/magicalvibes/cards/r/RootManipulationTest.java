@@ -101,6 +101,7 @@ class RootManipulationTest extends BaseCardTest {
     @DisplayName("Boost, menace, and the granted attack ability expire at cleanup")
     void bonusesExpireAtCleanup() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         castRootManipulation();
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

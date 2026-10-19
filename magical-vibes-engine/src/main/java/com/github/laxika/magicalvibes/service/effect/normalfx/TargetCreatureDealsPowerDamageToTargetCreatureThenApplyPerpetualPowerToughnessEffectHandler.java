@@ -53,10 +53,10 @@ public class TargetCreatureDealsPowerDamageToTargetCreatureThenApplyPerpetualPow
                 boolean deathtouch = gameQueryService.sourceHasKeyword(
                         gameData, entry, source, Keyword.DEATHTOUCH);
 
-                if (!(gameQueryService.isDamagePreventable(gameData)
-                        && gameQueryService.isPreventedFromDealingDamage(gameData, source))
-                        && !(gameQueryService.isDamagePreventable(gameData)
-                        && gameQueryService.hasProtectionFromSource(gameData, victim, source))) {
+                boolean preventable = gameQueryService.isDamagePreventable(gameData)
+                        && !gameQueryService.damageCantBePreventedFromSource(gameData, source);
+                if (!(preventable && gameQueryService.isPreventedFromDealingDamage(gameData, source))
+                        && !(preventable && gameQueryService.hasProtectionFromSource(gameData, victim, source))) {
                     int power = gameQueryService.getPowerBasedDamage(gameData, source);
                     int rawDamage = power;
                     int damageDealt = damageSupport.dealCreatureDamage(

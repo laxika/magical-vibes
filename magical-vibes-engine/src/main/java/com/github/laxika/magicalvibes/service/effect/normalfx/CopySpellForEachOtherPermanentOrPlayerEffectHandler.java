@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,7 +53,11 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
 
         UUID originalTargetId = copyEffect.originalTargetId() != null
                 ? copyEffect.originalTargetId()
-                : targetEntry.getTargetId();
+                : targetEntry.getTargetId() != null
+                ? targetEntry.getTargetId()
+                : !targetEntry.getTargetIds().isEmpty()
+                ? targetEntry.getTargetIds().get(0)
+                : targetEntry.getDamageAssignments().keySet().stream().findFirst().orElse(null);
         if (originalTargetId == null || !isSingleTarget(targetEntry)) return;
 
         Card spellCard = targetEntry.getCard();
@@ -69,11 +74,17 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
 
         for (TargetCopy target : targets) {
             Card copyCard = spellCard == null ? null : copySupport.createCopyCard(spellCard);
-            StackEntry copyEntry = targetEntry.getDamageAssignments().isEmpty()
-                    ? copySupport.createCopyStackEntry(
-                            targetEntry, copyCard, copyControllerId, target.id(), target.zone())
-                    : copySupport.createCopyStackEntry(targetEntry, copyCard, copyControllerId, target.id(),
-                            Map.of(target.id(), totalDamage(targetEntry)), List.of(target.id()));
+            StackEntry copyEntry;
+            if (!targetEntry.getDamageAssignments().isEmpty()) {
+                copyEntry = copySupport.createCopyStackEntry(targetEntry, copyCard, copyControllerId, target.id(),
+                        Map.of(target.id(), totalDamage(targetEntry)), List.of(target.id()));
+            } else if (targetEntry.getTargetIds().size() > 1) {
+                copyEntry = copySupport.createCopyStackEntry(targetEntry, copyCard, copyControllerId, target.id(),
+                        Map.of(), new ArrayList<>(Collections.nCopies(targetEntry.getTargetIds().size(), target.id())));
+            } else {
+                copyEntry = copySupport.createCopyStackEntry(
+                        targetEntry, copyCard, copyControllerId, target.id(), target.zone());
+            }
             if (isAbility(targetEntry)) {
                 copyEntry.setTargetFilter(targetEntry.getTargetFilter());
                 copyEntry.setTargetFilters(targetEntry.getTargetFilters());
@@ -126,6 +137,9 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
     }
 
     private boolean isSingleTarget(StackEntry stackEntry) {
+        if (stackEntry.getDamageAssignments().isEmpty() && stackEntry.getTargetIds().size() > 1) {
+            return stackEntry.isSingleTarget();
+        }
         if (!stackEntry.getDamageAssignments().isEmpty()) {
             return stackEntry.getTargetId() == null && stackEntry.getDamageAssignments().size() == 1;
         }

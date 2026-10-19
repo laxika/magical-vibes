@@ -95,6 +95,7 @@ class RenegadeMapTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RenegadeMap());
         Plains plains = new Plains();
         harness.setLibrary(player1, List.of(plains));
+        harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -29,7 +29,11 @@ public class RoughshodDuo extends Card {
                 false,
                 null,
                 0,
-                4
+                0,
+                false,
+                false,
+                4,
+                false
         ));
     }
 }

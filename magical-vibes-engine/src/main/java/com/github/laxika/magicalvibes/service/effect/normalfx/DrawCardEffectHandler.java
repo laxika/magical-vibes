@@ -61,6 +61,9 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
         List<Card> hand = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of());
         Set<UUID> cardsInHandBeforeDraw = new HashSet<>();
         hand.forEach(card -> cardsInHandBeforeDraw.add(card.getId()));
+        Set<UUID> cardsInLibraryBeforeDraw = new HashSet<>();
+        gameData.playerDecks.getOrDefault(entry.getControllerId(), List.of())
+                .forEach(card -> cardsInLibraryBeforeDraw.add(card.getId()));
 
         if (entry.isCyclingAbility()) {
             for (int i = 0; i < amount; i++) {
@@ -73,8 +76,11 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
             playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
         }
 
+        // Only cards that came out of the library are drawn; a permanent returned to hand by a replacement
+        // (Words of Wind) is a new hand card but was not drawn.
         List<Card> newlyDrawn = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .filter(card -> !cardsInHandBeforeDraw.contains(card.getId()))
+                .filter(card -> cardsInLibraryBeforeDraw.contains(card.getId()))
                 .toList();
         // More cards than instructed means a draw was replaced by drawing extra cards (e.g. Alhammarret's
         // Archive); those cards were not drawn by this effect's instruction, so "that card" does not exist.

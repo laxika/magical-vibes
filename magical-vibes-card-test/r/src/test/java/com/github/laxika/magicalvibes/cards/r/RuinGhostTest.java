@@ -3,6 +3,11 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -82,6 +87,7 @@ class RuinGhostTest extends BaseCardTest {
         harness.addToBattlefield(player1, forest);
         UUID oldId = harness.getPermanentId(player1, "Forest");
         gd.stolenCreatures.put(oldId, player2.getId());
+        giveControl(player1, oldId);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, oldId);
@@ -105,6 +111,7 @@ class RuinGhostTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(forest);
         gd.playerBattlefields.get(player2.getId()).add(forest);
         gd.stolenCreatures.put(forest.getId(), player1.getId());
+        giveControl(player2, forest.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Forest");
@@ -133,5 +140,12 @@ class RuinGhostTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forestId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void giveControl(Player controller, UUID permanentId) {
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), "Test control", null, controller.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanentId, null, null,
+                EffectDuration.PERMANENT, 0));
     }
 }

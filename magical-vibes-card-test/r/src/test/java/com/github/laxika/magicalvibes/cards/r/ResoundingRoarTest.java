@@ -64,7 +64,9 @@ class ResoundingRoarTest extends BaseCardTest {
         addCyclingMana(player1);
 
         UUID targetId = harness.getPermanentId(player1, "Cylian Elf");
-        harness.activateHandAbility(player1, 0, targetId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
         Permanent elf = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -99,7 +101,9 @@ class ResoundingRoarTest extends BaseCardTest {
         addCyclingMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Cylian Elf");
-        harness.activateHandAbility(player1, 0, targetId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.withAutoStop(gd.currentStep, () -> harness.passBothPriorities());
 
         Permanent elf = gd.playerBattlefields.get(player2.getId()).getFirst();
@@ -127,7 +131,9 @@ class ResoundingRoarTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Cylian Elf");
-        harness.activateHandAbility(player1, 0, targetId);
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.castAndResolveInstant(player2, 0, targetId);
         harness.assertNotOnBattlefield(player1, "Cylian Elf");
 

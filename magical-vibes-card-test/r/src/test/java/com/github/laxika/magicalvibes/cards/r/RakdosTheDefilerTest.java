@@ -53,6 +53,7 @@ class RakdosTheDefilerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(rakdos)));
         harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.passBothPriorities();
 
@@ -83,6 +84,7 @@ class RakdosTheDefilerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(rakdos)));
         harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.passBothPriorities();
 
@@ -162,6 +164,7 @@ class RakdosTheDefilerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.passBothPriorities();
 

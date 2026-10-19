@@ -47,7 +47,10 @@ public class DestroySelfAtEndStepEffectHandler implements NormalEffectHandlerBea
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.DESTROY_AT_END_STEP));
+        // CR 603.7e: the delayed destruction is controlled by the controller of the ability that created it,
+        // even if the artifact has changed control since.
+        gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.DESTROY_AT_END_STEP,
+                false, null, null, null, false, null, entry.getControllerId(), null));
 
         String logEntry = source.getCard().getName() + " will be destroyed at the beginning of the next end step.";
         gameLogService.append(gameData, GameLog.text(logEntry));

@@ -270,6 +270,18 @@ public class ExileCastTargetSupport {
             }
         }
 
+        if (!allowedTargets.contains(TargetType.PLAYER)
+                && card.getTargetFilter() instanceof com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter) {
+            // A declared "target opponent / target player" group whose effects don't name a player target
+            // themselves (Rousing Refrain's amount reads the targeted player's hand).
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (targetLegalityService.checkSpellTargeting(
+                        gameData, card, playerId, null, controllerId).isEmpty()) {
+                    validTargets.add(playerId);
+                }
+            }
+        }
+
         if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
             for (var stackEntry : gameData.stack) {
                 UUID targetId = stackEntry.getTargetableId();

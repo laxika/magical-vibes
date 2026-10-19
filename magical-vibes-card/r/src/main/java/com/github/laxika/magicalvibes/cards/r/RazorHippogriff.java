@@ -16,6 +16,7 @@ public class RazorHippogriff extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.ARTIFACT))
+                .targetGraveyard(true)
                 .gainLifeEqualToManaValue(true)
                 .build());
     }

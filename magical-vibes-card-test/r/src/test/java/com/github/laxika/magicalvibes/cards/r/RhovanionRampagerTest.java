@@ -86,7 +86,9 @@ class RhovanionRampagerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        // The opposing Rampager can block, so the defender is asked to declare blockers; the attack
+        // trigger itself offers no sacrifice.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(rampager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(rampager);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);

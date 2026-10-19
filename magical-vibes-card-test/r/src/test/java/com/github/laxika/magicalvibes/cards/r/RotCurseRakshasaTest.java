@@ -45,12 +45,16 @@ class RotCurseRakshasaTest extends BaseCardTest {
     @DisplayName("A decayed Rot-Curse Rakshasa cannot block and is sacrificed after attacking")
     void decayedCreatureCannotBlockAndIsSacrificedAfterAttacking() {
         Permanent rakshasa = addCreatureReady(player1, new RotCurseRakshasa());
+        rakshasa.setCounterCount(CounterType.DECAYED, 1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         assertThat(bls.canBlock(gd, rakshasa)).isFalse();
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        resolveCombat();
+        resolveAllTriggers();
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(rakshasa.getId()));
@@ -133,6 +137,8 @@ class RotCurseRakshasaTest extends BaseCardTest {
     @Test
     void renewedCreatureWithNativeAttackTriggerIsStillSacrificed() {
         harness.setGraveyard(player1, List.of(new RotCurseRakshasa()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent target = addCreatureReady(player1, new DeltaBloodflies());
         harness.addMana(player1, ManaColor.BLACK, 3);
         gs.activateGraveyardAbility(gd, player1, 0, 0, 1, null, List.of(target.getId()));
@@ -141,8 +147,9 @@ class RotCurseRakshasaTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.DECAYED)).isEqualTo(1);
         assertThat(bls.canBlock(gd, target)).isFalse();
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        resolveCombat();
+        resolveAllTriggers();
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(target.getId()));

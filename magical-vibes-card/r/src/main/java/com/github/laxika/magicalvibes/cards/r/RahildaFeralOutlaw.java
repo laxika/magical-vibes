@@ -8,7 +8,7 @@ public class RahildaFeralOutlaw extends Card {
 
     public RahildaFeralOutlaw() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new ExileRandomNonlandCardFromDamagedPlayerLibraryEffect());
-        addEffect(EffectSlot.STATIC, RahildaWantedCutthroat.castExiledNonlandCards());
+                new ExileRandomNonlandCardFromDamagedPlayerLibraryEffect(
+                        RahildaWantedCutthroat.duringTurnAttackedWithWolfOrWerewolf()));
     }
 }

@@ -13,7 +13,7 @@ public class RetrieverPhoenix extends Card {
 
     public RetrieverPhoenix() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new WasCast(), new LearnEffect()));
+                new ConditionalEffect(new WasCast(true), new LearnEffect()));
         addEffect(EffectSlot.STATIC, new ReturnFromGraveyardInsteadOfLearnEffect());
     }
 }

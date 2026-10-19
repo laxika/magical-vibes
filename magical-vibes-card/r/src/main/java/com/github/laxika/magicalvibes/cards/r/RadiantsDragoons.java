@@ -11,6 +11,6 @@ public class RadiantsDragoons extends Card {
 
     public RadiantsDragoons() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(5));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{3}{W}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{3}{W}"));
     }
 }

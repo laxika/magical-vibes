@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
 
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,7 +67,13 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
 
         if (e.targetGraveyard()) {
             List<UUID> boundTargets = entry.targetsForBoundEffectGroup(effect);
-            if (boundTargets != null && !boundTargets.isEmpty()) {
+            // A sequence bound to a permanent's target group (Ragnarok: destroy target permanent and
+            // return target card) has its card chosen separately as targetCardIds.
+            boolean boundToOtherTarget = boundTargets != null && !boundTargets.isEmpty()
+                    && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()
+                    && !entry.getTargetCardIds().contains(boundTargets.getFirst())
+                    && gameQueryService.findCardInGraveyardById(gameData, boundTargets.getFirst()) == null;
+            if (boundTargets != null && !boundTargets.isEmpty() && !boundToOtherTarget) {
                 graveyardReturnSupport.resolvePreTargetedById(
                         gameData, entry, e, controllerId, sourceCardId, boundTargets.getFirst());
                 return;

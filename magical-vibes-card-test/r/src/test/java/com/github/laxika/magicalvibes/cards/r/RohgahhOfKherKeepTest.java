@@ -168,6 +168,7 @@ class RohgahhOfKherKeepTest extends BaseCardTest {
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(paper), null, rohgahh.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "Kobolds of Kher Keep");
         harness.handleListChoice(player1, "KOBOLD");
 

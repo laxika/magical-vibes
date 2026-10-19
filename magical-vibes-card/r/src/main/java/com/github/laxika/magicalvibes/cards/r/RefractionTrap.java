@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.effect.PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -30,6 +29,6 @@ public class RefractionTrap extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}")),
                 new OpponentCastSpellThisTurn(redInstantOrSorcery), false));
         addEffect(EffectSlot.SPELL,
-                new PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect(new Fixed(3)));
+                new PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect(3));
     }
 }

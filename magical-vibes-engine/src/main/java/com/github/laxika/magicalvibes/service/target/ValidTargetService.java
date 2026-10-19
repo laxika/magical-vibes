@@ -301,6 +301,17 @@ public class ValidTargetService {
                             .anyMatch(sel -> !gameQueryService.haveEqualToughness(gameData, sel, candidate));
                 });
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_PERMANENT_TYPE && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate != null && selected.stream()
+                            .noneMatch(sel -> gameQueryService.sharesPermanentType(gameData, sel, candidate));
+                });
+            }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE && !excludeIds.isEmpty()) {
                 List<Permanent> selected = excludeIds.stream()
                         .map(id -> gameQueryService.findPermanentById(gameData, id))

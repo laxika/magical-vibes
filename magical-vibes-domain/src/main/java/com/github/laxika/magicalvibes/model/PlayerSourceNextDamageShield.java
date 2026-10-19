@@ -47,6 +47,14 @@ public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean
                                            boolean preventAllButOne,
                                            com.github.laxika.magicalvibes.model.filter.PermanentPredicate requiredSourceFilter) {
 
+    /** The same shield keyed to another source object (a permanent spell's card becoming its permanent). */
+    public PlayerSourceNextDamageShield withSourceId(UUID newSourceId) {
+        return new PlayerSourceNextDamageShield(playerId, newSourceId, gainLife, coversControlledCreatures,
+                gainLifeOnlyFromBlackSource, exileFromLibrary, damageSourceControllerCard, preventHalfDamage,
+                drawCards, sourceControllerId, requiredDamageColors, combatOnly, unblockedOnly,
+                preventAllButOne, requiredSourceFilter);
+    }
+
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                         boolean coversControlledCreatures, boolean gainLifeOnlyFromBlackSource,
                                         boolean exileFromLibrary, Card damageSourceControllerCard,

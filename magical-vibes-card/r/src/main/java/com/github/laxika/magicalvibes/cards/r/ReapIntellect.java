@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,11 +20,14 @@ import java.util.List;
 public class ReapIntellect extends Card {
 
     public ReapIntellect() {
-        // Target opponent reveals their hand; choose up to X nonland cards, exile them, then exile
-        // every card with a chosen name from that player's graveyard, hand, and library and shuffle.
+        // Target opponent reveals their hand; choose up to X nonland cards and exile them. For each
+        // exiled card, the caster searches that player's graveyard, hand, and library for any number of
+        // cards with the same name and exiles them. The shuffle is its own final step: it happens even
+        // when no card is chosen.
         addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
                 new XValue(), List.of(), List.of(), HandChoiceDestination.EXILE, false,
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true, true));
+        addEffect(EffectSlot.SPELL, new ShuffleLibraryEffect(true));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"));
     }

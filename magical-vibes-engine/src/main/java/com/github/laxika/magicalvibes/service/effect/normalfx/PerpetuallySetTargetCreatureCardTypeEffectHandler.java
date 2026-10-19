@@ -63,6 +63,10 @@ public class PerpetuallySetTargetCreatureCardTypeEffectHandler implements Normal
             modifiedCard.setAdditionalTypes(Set.of());
             modifiedCard.freeze();
             graveyard.set(i, modifiedCard);
+            if (e.cardType() != CardType.CREATURE) {
+                // CR 205.3d: creature subtypes no longer correspond to a type the card has.
+                gameData.perpetualCreatureTypeReplacedCardIds.add(targetCardId);
+            }
             gameLogService.append(gameData, GameLog.cardTextCard(
                     entry.getCard(), " perpetually changes ", targetCard,
                     " to only the " + e.cardType().getDisplayName() + " card type."));

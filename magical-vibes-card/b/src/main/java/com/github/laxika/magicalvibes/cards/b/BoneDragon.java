@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class BoneDragon extends Card {
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B}{B}",
-                List.of(new ExileNCardsFromGraveyardCost(7, null),
+                List.of(new ExileNCardsFromGraveyardCost(7, null, new CardNotPredicate(new CardIsSelfPredicate())),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardIsSelfPredicate())

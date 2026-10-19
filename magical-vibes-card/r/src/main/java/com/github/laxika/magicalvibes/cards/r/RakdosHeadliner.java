@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 public class RakdosHeadliner extends Card {
 
     public RakdosHeadliner() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addEffect(EffectSlot.STATIC,
                 new RegisterEchoAtNextUpkeepEffect(new DiscardCardTypeCost(null, null)));
     }
 }

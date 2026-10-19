@@ -80,6 +80,7 @@ class RosemaneCentaurTest extends BaseCardTest {
 
         assertThat(centaur.isAttacking()).isTrue();
         assertThat(centaur.isTapped()).isFalse();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.assertLife(player2, 16);
     }

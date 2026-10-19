@@ -181,7 +181,7 @@ class ReassemblingSkeletonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(findPermanent(player1, "Reassembling Skeleton").isTapped()).isTrue();
         harness.assertNotInGraveyard(player1, "Reassembling Skeleton");

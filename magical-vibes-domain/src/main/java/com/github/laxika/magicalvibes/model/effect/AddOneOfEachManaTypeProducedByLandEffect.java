@@ -20,16 +20,30 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                imprinted on the source trigger
  * @param monarchOnly when {@code true}, the source controller must be the monarch when the land
  *                    is tapped
+ * @param anyColor when {@code true}, the extra mana is of any color instead of a type the land produced
+ *                 (Regal Behemoth), so the chooser picks from all five colors
  */
 public record AddOneOfEachManaTypeProducedByLandEffect(
         boolean controllerOnly,
         boolean matchesImprintedCardName,
         PermanentPredicate landFilter,
-        boolean monarchOnly
+        boolean monarchOnly,
+        boolean anyColor
 ) implements CardEffect {
 
+    public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly, boolean matchesImprintedCardName,
+                                                     PermanentPredicate landFilter, boolean monarchOnly) {
+        this(controllerOnly, matchesImprintedCardName, landFilter, monarchOnly, false);
+    }
+
+    public static AddOneOfEachManaTypeProducedByLandEffect anyColor(boolean controllerOnly,
+                                                                     PermanentPredicate landFilter,
+                                                                     boolean monarchOnly) {
+        return new AddOneOfEachManaTypeProducedByLandEffect(controllerOnly, false, landFilter, monarchOnly, true);
+    }
+
     public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly) {
-        this(controllerOnly, false, null, false);
+        this(controllerOnly, false, null, false, false);
     }
 
     public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly,

@@ -71,7 +71,7 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
         return predicateEvaluationService.matchesCardPredicate(
                 context.spell(), increase.predicate(),
                 source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
-                context.gameData(), context.castingPlayerId());
+                context.gameData(), context.castingPlayerId(), null, null, context.xValue());
     }
 
     private boolean spellWasCastFromZone(CostModificationContext context, Zone zone) {

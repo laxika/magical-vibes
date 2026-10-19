@@ -120,10 +120,10 @@ class RitesOfFlourishingTest extends BaseCardTest {
     void pendingDrawSurvivesSourceRemoval() {
         var rites = harness.addToBattlefieldAndReturn(player1, new RitesOfFlourishing());
         harness.setHand(player2, List.of(new Naturalize()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToDraw(player1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         harness.castAndResolveInstant(player2, 0, rites.getId());

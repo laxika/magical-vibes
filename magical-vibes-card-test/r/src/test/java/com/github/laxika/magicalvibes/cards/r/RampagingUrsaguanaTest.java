@@ -47,7 +47,7 @@ class RampagingUrsaguanaTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 3);
         harness.castInstant(player2, 0, ursaguana.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -76,7 +76,7 @@ class RampagingUrsaguanaTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 3);
         harness.castInstant(player2, 0, ursaguana.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);

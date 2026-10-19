@@ -87,7 +87,7 @@ class RumbleweedTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
@@ -104,7 +104,7 @@ class RumbleweedTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);

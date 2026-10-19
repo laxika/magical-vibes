@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -37,11 +36,9 @@ public class RoseRoomTreasurer extends Card {
                                         new NthAbilityResolutionThisTurn(2)))),
                                 SequenceEffect.of(
                                         new PayXManaEffect(),
-                                        ConditionalEffect.unless(
-                                                new EventValueAtLeast(1),
-                                                new QueueReflexiveAbilityEffect(
-                                                        new DealDamageToAnyTargetEffect(new EventValue()),
-                                                        false,
-                                                        true))))));
+                                        new QueueReflexiveAbilityEffect(
+                                                new DealDamageToAnyTargetEffect(new EventValue()),
+                                                false,
+                                                true)))));
     }
 }

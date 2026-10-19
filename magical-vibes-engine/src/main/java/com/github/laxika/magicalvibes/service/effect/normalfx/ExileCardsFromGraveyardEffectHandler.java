@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -48,6 +49,13 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
             List<String> exiledNames = new ArrayList<>();
             for (UUID cardId : targetCardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                // "Cards from the defending player's graveyard": a card that moved to another graveyard
+                // since the trigger chose it is a new object (CR 400.7) and is no longer the target.
+                if (card != null && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                        && !entry.getTargetId().equals(gameQueryService.findGraveyardOwnerById(gameData, cardId))) {
+                    card = null;
+                }
                 if (card != null) {
                     exiledNames.add(card.getName());
                     exiledCards.add(card);
@@ -98,6 +106,7 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
         // actually exiled, and only for the ability's source permanent (the unblocked attacker).
         if (e.assignNoCombatDamage() && exiledCount > 0 && entry.getSourcePermanentId() != null) {
             gameData.creaturesPreventedFromDealingCombatDamage.add(entry.getSourcePermanentId());
+            gameData.creaturesAssigningNoCombatDamageThisTurn.add(entry.getSourcePermanentId());
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     " assigns no combat damage this turn."));
             log.info("Game {} - {} assigns no combat damage this turn", gameData.id, entry.getCard().getName());

@@ -74,6 +74,17 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         return -amountEvaluationService.evaluate(context.gameData(), reduce.amount(), amountContext);
     }
 
+    /**
+     * Cost reductions apply to the alternative cost as well (CR 601.2f: the total cost is the
+     * alternative cost plus increases and minus all reductions), so an evoke or dash cost is
+     * reduced by the same matching-spell amount as the mana cost.
+     */
+    @Override
+    public int modifyAlternateCost(CostModificationContext context, CardEffect effect,
+                                   CostModificationSource source) {
+        return modifyCost(context, effect, source);
+    }
+
     private boolean spellWasCastFromZone(GameData gameData, Card spell, Zone zone) {
         return switch (zone) {
             case EXILE -> gameData.findExiledCard(spell.getId()) != null;

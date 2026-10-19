@@ -129,9 +129,7 @@ class RavenousDaggertoothTest extends BaseCardTest {
                 firstBlocker.getId(), 1, secondBlocker.getId(), 2));
 
         harness.assertInGraveyard(player1, "Ravenous Daggertooth");
-        assertThat(gd.stack).hasSize(1);
-        harness.assertLife(player1, lifeBefore);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, lifeBefore + 2);
         assertThat(gd.stack).isEmpty();

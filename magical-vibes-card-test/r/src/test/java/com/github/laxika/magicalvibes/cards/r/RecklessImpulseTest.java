@@ -71,6 +71,7 @@ class RecklessImpulseTest extends BaseCardTest {
         Card top = new BelligerentGuest();
         harness.setLibrary(player1, List.of(top, new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new RecklessImpulse()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -141,6 +142,7 @@ class RecklessImpulseTest extends BaseCardTest {
         Card creature = new BelligerentGuest();
         harness.setLibrary(player1, List.of(creature, new Forest(), new Forest()));
         harness.setHand(player1, List.of(new RecklessImpulse()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castSorcery(player1, 0, 0);
@@ -185,6 +187,7 @@ class RecklessImpulseTest extends BaseCardTest {
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land, new Forest(), new Forest()));
         harness.setHand(player1, List.of(new RecklessImpulse()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castSorcery(player1, 0, 0);

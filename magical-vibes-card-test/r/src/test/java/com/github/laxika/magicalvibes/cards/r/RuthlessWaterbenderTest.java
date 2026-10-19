@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,6 +21,7 @@ class RuthlessWaterbenderTest extends BaseCardTest {
     void waterbendBoostsThisCreatureUntilEndOfTurn() {
         Permanent waterbender = harness.addToBattlefieldAndReturn(player1, new RuthlessWaterbender());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new RuthlessWaterbender());
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -30,7 +33,7 @@ class RuthlessWaterbenderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, waterbender)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, waterbender)).isEqualTo(4);
 
-        harness.passUntilWithNoAttackers(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, waterbender)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, waterbender)).isEqualTo(3);
@@ -101,15 +104,17 @@ class RuthlessWaterbenderTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.getEffectivePower(gd, waterbender)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, waterbender)).isEqualTo(5);
 
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, waterbender)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, waterbender)).isEqualTo(3);

@@ -67,6 +67,9 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
         String manaCost = e.manaCost() != null ? e.manaCost() : "{" + payAmount + "}";
         ManaCost cost = new ManaCost(manaCost);
+        if (e.useXValue()) {
+            cost.asAnnouncedXCost();
+        }
         int lifeCost = e.lifeCost();
         boolean canPayLife = lifeCost <= 0
                 || (gameQueryService.canPlayerLoseLife(gameData, targetControllerId)
@@ -95,7 +98,7 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                     + targetEntry.getCard().getName() + " from being countered?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), targetControllerId,
-                    List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(),
+                    List.of(new CounterUnlessPaysEffect(payAmount, e.useXValue(), e.exileIfCountered(),
                             null, e.onNotPaidEffects(), lifeCost, e.manaCost(), e.onPaidEffects())),
                     prompt, targetCardId, manaCost, entry.getSourcePermanentId(), null, 0, 0,
                     null, null, null, entry.getSourcePermanentSnapshot(), entry.getControllerId()

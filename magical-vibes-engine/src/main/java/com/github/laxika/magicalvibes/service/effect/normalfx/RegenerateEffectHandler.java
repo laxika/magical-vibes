@@ -48,6 +48,13 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                     Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                     if (source != null && source.getAttachedTo() != null) {
                         regenerationTargetId = source.getAttachedTo();
+                    } else if (source != null
+                            && source.getCard().getSubtypes().contains(
+                            com.github.laxika.magicalvibes.model.CardSubtype.EQUIPMENT)
+                            && !source.getId().equals(regenerationTargetId)) {
+                        // "Regenerate equipped creature" while the Equipment is no longer attached: there is
+                        // no equipped creature to regenerate.
+                        return;
                     } else if (source == null && entry.getSourcePermanentSnapshot() != null
                             && entry.getSourcePermanentSnapshot().getAttachedTo() != null) {
                         // The enchanted creature is the source's last known information once the Aura has

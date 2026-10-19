@@ -16,9 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class RyanSinclair extends Card {
 
     public RyanSinclair() {
-        addEffect(EffectSlot.ON_ATTACK, new RevealUntilCardPredicateMayCastWithoutPayingManaEffect(
+        addEffect(EffectSlot.ON_ATTACK, RevealUntilCardPredicateMayCastWithoutPayingManaEffect.exilingUntil(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                false,
                 new CardManaValueAtMostSourcePowerPredicate()));
     }
 }

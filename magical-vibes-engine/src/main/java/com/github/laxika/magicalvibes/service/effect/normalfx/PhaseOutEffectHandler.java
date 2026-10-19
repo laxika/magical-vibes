@@ -72,13 +72,20 @@ public class PhaseOutEffectHandler implements NormalEffectHandlerBean {
 
     private Permanent findAttached(GameData gameData, StackEntry entry) {
         Permanent aura = findPermanent(gameData, entry.getSourcePermanentId());
+        UUID attachedToId;
         if (aura == null) {
-            log.info("Game {} - Aura {} no longer on battlefield, skipping phase out",
-                    gameData.id, entry.getCard().getName());
-            return null;
+            // The ability exists independently of its source (CR 113.7a), so when the source has left the
+            // battlefield the equipped/enchanted creature is taken from the source's last known information.
+            Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+            if (sourceSnapshot == null || sourceSnapshot.getAttachedTo() == null) {
+                log.info("Game {} - Aura {} no longer on battlefield, skipping phase out",
+                        gameData.id, entry.getCard().getName());
+                return null;
+            }
+            attachedToId = sourceSnapshot.getAttachedTo();
+        } else {
+            attachedToId = aura.getAttachedTo();
         }
-
-        UUID attachedToId = aura.getAttachedTo();
         if (attachedToId == null) {
             log.info("Game {} - {} is not attached to anything, skipping phase out",
                     gameData.id, entry.getCard().getName());

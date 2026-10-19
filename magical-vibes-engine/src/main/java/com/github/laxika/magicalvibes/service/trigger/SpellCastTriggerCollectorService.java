@@ -3467,10 +3467,10 @@ public class SpellCastTriggerCollectorService {
         }
 
         int choices = Math.min(triggeringSpell.getModalModeCount(), trigger.options().size());
-        ChooseOneEffect modalChoice = new ChooseOneEffect(trigger.options(), choices);
+        ChooseOneEffect modalChoice = new ChooseOneEffect(trigger.options(), true, 0, choices);
         match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                 match.permanent().getCard(), match.controllerId(), modalChoice,
-                match.permanent().getId(), true));
+                match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }

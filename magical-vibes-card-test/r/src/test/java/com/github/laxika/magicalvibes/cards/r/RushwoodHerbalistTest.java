@@ -133,7 +133,7 @@ class RushwoodHerbalistTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         target.setMarkedDamage(1);
         target.setAttacking(true);
-        harness.getPermanentRemovalService().tryDestroyPermanent(gd, target, false);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, target, false));
 
         harness.assertOnBattlefield(player2, "Rushwood Dryad");
         harness.assertNotInGraveyard(player2, "Rushwood Dryad");
@@ -142,7 +142,7 @@ class RushwoodHerbalistTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(target.getRegenerationShield()).isZero();
 
-        harness.getPermanentRemovalService().tryDestroyPermanent(gd, target, false);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, target, false));
 
         harness.assertNotOnBattlefield(player2, "Rushwood Dryad");
         harness.assertInGraveyard(player2, "Rushwood Dryad");

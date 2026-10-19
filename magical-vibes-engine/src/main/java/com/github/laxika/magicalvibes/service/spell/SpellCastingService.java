@@ -1090,6 +1090,7 @@ public class SpellCastingService {
                     card.setName(splitCharacteristics.getName());
                 }
                 validateModeCastZone(gameData, controllerId, card, chosenModeIndices, chosenModes, castFromOwnHand);
+                validateChosenModesHaveLegalGraveyardTargets(gameData, controllerId, chosenModes);
                 List<List<CardEffect>> chosenModeEffects = chosenModes.stream()
                         .map(ChooseOneEffect.ChooseOneOption::effectsForSelection)
                         .toList();
@@ -1234,6 +1235,33 @@ public class SpellCastingService {
         }
     }
 
+    /**
+     * CR 601.2c: a mode can only be chosen when every target it requires can be announced, so a mode
+     * that must return a card from its controller's graveyard is refused when that graveyard holds no
+     * matching card.
+     */
+    private void validateChosenModesHaveLegalGraveyardTargets(GameData gameData, UUID controllerId,
+                                                              List<ChooseOneEffect.ChooseOneOption> chosenModes) {
+        if (gameData == null) {
+            return;
+        }
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
+        for (ChooseOneEffect.ChooseOneOption mode : chosenModes) {
+            for (CardEffect effect : mode.effectsForSelection()) {
+                if (!(effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect)
+                        || returnEffect.minTargets() < 1 || returnEffect.dynamicMaxTargets() != null
+                        || returnEffect.xScaled() || !returnEffect.targetGroups().isEmpty()) {
+                    continue;
+                }
+                boolean legalTargetExists = graveyard.stream().anyMatch(card -> returnEffect.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(card, returnEffect.filter(), null));
+                if (!legalTargetExists) {
+                    throw new IllegalStateException("No legal target for the chosen mode");
+                }
+            }
+        }
+    }
+
     private static void validateOptionalCostModalSelection(
             ChooseOneEffect modal,
             AdditionalSpellCostService.ExtractedCosts additionalCosts,
@@ -1331,7 +1359,7 @@ public class SpellCastingService {
         }
         boolean hasSharedPair = matchingCards.stream().anyMatch(first -> matchingCards.stream()
                 .anyMatch(second -> !first.getId().equals(second.getId())
-                        && gameQueryService.shareCreatureType(first, second)));
+                        && gameQueryService.shareCreatureType(gameData, first, second)));
         if (!hasSharedPair) {
             throw new IllegalStateException("The chosen mode requires two creature cards that share a creature type");
         }
@@ -4811,7 +4839,8 @@ public class SpellCastingService {
             } else if (multipleSpellTargets) {
                 targetLegalityService.validateMultiSpellTargetsOnStack(
                         gameData, card, targetIds, playerId, kicked, giftPromised);
-            } else {
+            } else if (targetId != null || hasRequiredSpellOnStackTargetGroup(card, targetingSpellEffects)) {
+                // An optional spell target ("up to one target creature spell") may be declined.
                 TargetFilter stackTargetFilter = card.getTargetFilter() instanceof StackEntryPredicateTargetFilter
                         ? card.getTargetFilter()
                         : card.getSpellTargets().stream().map(SpellTarget::getFilter)
@@ -5220,20 +5249,26 @@ public class SpellCastingService {
             convokeContributions = contributions;
         }
 
-        // Validate and apply conspire (CR 702.78): tap two untapped creatures you control that each
-        // share a color with this spell. Conspire is an additional cost, so the normal mana cost is
-        // still paid below. Paying it flags the spell (gameData.conspiredSpellIds) so that a single
-        // "copy it, you may choose a new target for the copy" trigger is queued above the spell when
-        // spell-cast triggers are collected in finishSpellCast().
+        // Validate and apply conspire (CR 702.78): each instance of conspire is paid separately by
+        // tapping two untapped creatures you control that each share a color with this spell. Conspire
+        // is an additional cost, so the normal mana cost is still paid below. Paying it records one
+        // pending copy per instance (gameData.conspiredSpellCopyCounts), queuing a "copy it, you may
+        // choose a new target for the copy" trigger per instance above the spell when spell-cast
+        // triggers are collected in finishSpellCast().
         if (!conspireCreatureIds.isEmpty()) {
-            if (!card.getKeywords().contains(Keyword.CONSPIRE)
-                    && !hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.CONSPIRE)) {
+            int conspireInstances = (card.getKeywords().contains(Keyword.CONSPIRE) ? 1 : 0)
+                    + spellCastingAbilityGrantValuesForCard(gameData, playerId, card, Keyword.CONSPIRE, Zone.HAND).size();
+            if (conspireInstances == 0) {
                 throw new IllegalStateException(card.getName() + " doesn't have conspire");
             }
-            if (conspireCreatureIds.size() != 2 || conspireCreatureIds.get(0).equals(conspireCreatureIds.get(1))) {
+            if (conspireCreatureIds.size() != 2 * conspireInstances
+                    || conspireCreatureIds.stream().distinct().count() != conspireCreatureIds.size()) {
                 throw new IllegalStateException("Conspire requires two different untapped creatures you control");
             }
             List<CardColor> spellColors = card.getColors();
+            if (spellColors == null || spellColors.isEmpty()) {
+                throw new IllegalStateException(card.getName() + " is colorless and can't be cast with conspire");
+            }
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             List<Permanent> conspireCreatures = new ArrayList<>();
             for (UUID creatureId : conspireCreatureIds) {
@@ -5280,7 +5315,7 @@ public class SpellCastingService {
                 gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
                 gameData.pendingManaAbilityTriggers.addAll(deferred);
             }
-            gameData.conspiredSpellIds.add(card.getId());
+            gameData.conspiredSpellCopyCounts.merge(card.getId(), conspireInstances, Integer::sum);
         }
 
         // Validate graveyard targets for spells that target creature cards in graveyard
@@ -5823,9 +5858,6 @@ public class SpellCastingService {
             }
             if (wasModal) {
                 entry.setModalModeCount(modalModeCount);
-            }
-            if (preservePrintedModeManaCost) {
-                entry.setCastModeManaCost(selectedModeManaCost);
             }
             entry.setSourceZone(castSourceZone);
             if (castSourceZone == Zone.HAND && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))) {
@@ -6512,6 +6544,11 @@ public class SpellCastingService {
                 if (matchingCount > 0 && graveyardMaxTargets > 0) {
                     gameData.graveyardTargetOperation.spellCounterTargetId = spellCounterTargetId;
                     gameData.graveyardTargetOperation.permanentTargetIds = new ArrayList<>(targetIds);
+                    if (graveyardToHandEffect.dynamicMaxTargets() != null && targetId != null
+                            && gameData.playerIds.contains(targetId)) {
+                        // The player whose permanents set X (Reap) stays a target of the spell.
+                        gameData.graveyardTargetOperation.targetPlayerId = targetId;
+                    }
                     gameData.graveyardTargetOperation.physicalCard = physicalSourceCard;
                     gameData.graveyardTargetOperation.castWithAdventure = adventure;
                     gameData.graveyardTargetOperation.giftPromised = giftPromised;
@@ -7247,9 +7284,6 @@ public class SpellCastingService {
                 }
                 if (wasModal) {
                     gameData.stack.getLast().setModalModeCount(modalModeCount);
-                }
-                if (preservePrintedModeManaCost) {
-                    gameData.stack.getLast().setCastModeManaCost(selectedModeManaCost);
                 }
             }
             gameData.stack.stream()
@@ -9865,6 +9899,8 @@ public class SpellCastingService {
                 && !isHarmonize
                 && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast
                 && !isGrantedGraveyardPlay
+                && !(chosenGraveyardType != null && castingPermissionService
+                        .findGraveyardCastSourcePermanentId(gameData, playerId, card).isPresent())
                 && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, graveyardCastOpt.get())
                 && !castsWithoutChoosingGraveyardExileCost(gameData, playerId, card, graveyardCastOpt.get(),
                 exileGraveyardCardIndices);
@@ -10148,8 +10184,11 @@ public class SpellCastingService {
         // Validate and pay flashback / disturb / graveyard cast cost
         boolean paysFlashbackCost = flashbackOpt.isPresent() || grantedFlashback
                 || emblemFlashback && !emblemOnlyFlashback;
+        // A surcharge that belongs to the card's own graveyard permission (Risen Executioner) does not
+        // apply when another source's permission lets the card be cast from the graveyard.
+        Zone costSourceZone = graveyardCastOpt.isPresent() && !isGraveyardCast ? null : Zone.GRAVEYARD;
         int additionalCost = castingCostService.getCastCostModifier(
-                gameData, playerId, card, paysFlashbackCost, effectiveXValue, Zone.GRAVEYARD);
+                gameData, playerId, card, paysFlashbackCost, effectiveXValue, costSourceZone);
         if (castingPermissionService.flashTimingRequiresAlternateCast(gameData, playerId, card)) {
             AlternateHandCast flashOption = card.getCastingOption(AlternateHandCast.class).orElse(null);
             if (flashOption == null || flashOption.flashAdditionalGenericCost() == null) {
@@ -10214,6 +10253,14 @@ public class SpellCastingService {
                 && gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId())
                 .withoutPayingManaCost();
         if (usingSharedColorDiscardAlternativeCost) {
+            withoutPayingManaCost = true;
+        }
+        // A battlefield permission to cast the spell for {0} (Rooftop Storm) is the alternative cost of a
+        // cast from the graveyard that uses the card's own mana cost. Additional costs are still paid.
+        if (!withoutPayingManaCost && isGraveyardCast && effectiveXValue == 0
+                && flashbackOpt.isEmpty() && !isRetrace && !isJumpStart
+                && graveyardCastOpt.map(GraveyardCast::alternateManaCost).isEmpty()
+                && castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card, Zone.GRAVEYARD)) {
             withoutPayingManaCost = true;
         }
         if (card.isRequiresNoMana() && !withoutPayingManaCost) {
@@ -10891,7 +10938,9 @@ public class SpellCastingService {
                         targetId != null ? List.of(targetId) : List.of(), List.of()
                 );
             } else if (targetId != null && EffectResolution.needsTarget(castHalf)) {
-                targetLegalityService.validateSpellTargeting(gameData, castHalf, targetId, null, playerId, true);
+                if (!primaryTargetValidatedBeforeCosts) {
+                    targetLegalityService.validateSpellTargeting(gameData, castHalf, targetId, null, playerId, true);
+                }
                 stackEntry = new StackEntry(
                         entryType, card, playerId, spellName,
                         spellEffects, effectiveXValue, targetId, null
@@ -11439,7 +11488,12 @@ public class SpellCastingService {
         boolean delveWithoutExilingCards = additionalCosts.delveCost() != null && !playWithoutPaying
                 && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
                 .allMatch(cost -> cost instanceof DelveCost || cost instanceof ChooseXValueCost);
+        List<CardEffect> effectsWithoutCasualty = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        effectsWithoutCasualty.removeIf(effect -> effect instanceof CasualtyCost);
+        boolean onlyOptionalCasualtyCost = additionalCosts.casualtyCost() != null
+                && !additionalSpellCostService.extractAndRemove(gameData, playerId, card, effectsWithoutCasualty).any();
         if ((additionalCosts.any() && !freeCastSkipsDelve && !delveWithoutExilingCards
+                && !onlyOptionalCasualtyCost
                 && additionalCosts.chooseXValueCost() == null
                 && !supportedAdditionalManaCost && !supportedAdditionalDiscardCost
                 && !supportedSacrificeOrPayManaCost
@@ -14705,6 +14759,13 @@ public class SpellCastingService {
                     requiredPermanentIds += tapCost.count();
                 } else if (cost instanceof ReturnPermanentsCost returnCost) {
                     requiredPermanentIds += returnCost.count();
+                } else if (cost instanceof EachOpponentGainsLifeCastingCost) {
+                    if (gameData.orderedPlayerIds.stream().anyMatch(opponentId ->
+                            !opponentId.equals(player.getId())
+                                    && !gameQueryService.canPlayerGainLife(gameData, opponentId))) {
+                        throw new IllegalStateException(
+                                "Each opponent must be able to gain life to pay the splice cost");
+                    }
                 } else if (!(cost instanceof ManaCastingCost)
                         && !(cost instanceof ExileTopCardsFromGraveyardCastingCost)) {
                     throw new IllegalStateException("Unsupported splice cost component: "
@@ -14834,6 +14895,18 @@ public class SpellCastingService {
                 }
             }
             paySpliceGraveyardExileCost(gameData, player, hostSpell, graveyardExileTotal);
+            for (SpliceEffect splice : spliceCosts) {
+                for (CastingCost cost : splice.costs()) {
+                    if (cost instanceof EachOpponentGainsLifeCastingCost lifeCost) {
+                        for (UUID otherPlayerId : gameData.orderedPlayerIds) {
+                            if (!otherPlayerId.equals(playerId)) {
+                                lifeSupport.applyGainLife(gameData, otherPlayerId, lifeCost.amount(),
+                                        hostSpell.getName());
+                            }
+                        }
+                    }
+                }
+            }
         } catch (IllegalStateException e) {
             if (preManaPaymentPool != null) {
                 gameData.playerManaPools.put(playerId, preManaPaymentPool);
@@ -17073,6 +17146,9 @@ public class SpellCastingService {
             gameData.commanderTaxByCardId.merge(commanderId, 2, Integer::sum);
         }
         stampLatestCastDuringMainPhase(gameData, playerId, card);
+        if (castEntry != null) {
+            gameData.recordSpellManaValueWhenCast(castCharacteristics.getId(), castEntry.getSpellManaValue());
+        }
         recordSpellCastPreservingEntryCounters(gameData, playerId, castCharacteristics,
                 castEntry != null && castEntry.isCastWithWarp());
         gameData.priorityPassedBy.clear();

@@ -9,8 +9,18 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * dynamic ("scry X, where X is the number of Zombies you control"). The optional library owner
  * can also be the resolving controller's opponent; that opponent makes the scry choices and is
  * not a target.
+ *
+ * <p>{@code decisionMaker} only matters for {@link LibraryOwner#TARGET_PLAYER}: the target makes
+ * the choices by default ("target player scries", Bumi, King of Three Trials), while
+ * {@link LibraryDecisionMaker#CONTROLLER} leaves the arrangement to the controller of the spell
+ * or ability (Ransack looks at a target player's library but the caster arranges it).
  */
-public record ScryEffect(DynamicAmount count, LibraryOwner owner, boolean causesScryTriggers) implements CardEffect {
+public record ScryEffect(DynamicAmount count, LibraryOwner owner, boolean causesScryTriggers,
+                         LibraryDecisionMaker decisionMaker) implements CardEffect {
+
+    public ScryEffect(DynamicAmount count, LibraryOwner owner, boolean causesScryTriggers) {
+        this(count, owner, causesScryTriggers, defaultDecisionMaker(owner));
+    }
 
     public ScryEffect(DynamicAmount count, LibraryOwner owner) {
         this(count, owner, true);
@@ -31,6 +41,12 @@ public record ScryEffect(DynamicAmount count, LibraryOwner owner, boolean causes
 
     public ScryEffect(int count, LibraryOwner owner) {
         this(new Fixed(count), owner);
+    }
+
+    private static LibraryDecisionMaker defaultDecisionMaker(LibraryOwner owner) {
+        return owner == LibraryOwner.TARGET_PLAYER
+                ? LibraryDecisionMaker.TARGET_PLAYER
+                : LibraryDecisionMaker.CONTROLLER;
     }
 
     @Override

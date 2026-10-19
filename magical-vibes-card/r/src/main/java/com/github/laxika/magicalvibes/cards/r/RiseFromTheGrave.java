@@ -34,6 +34,7 @@ public class RiseFromTheGrave extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .targetGraveyard(true)
                 .grantColor(CardColor.BLACK)
                 .grantSubtype(CardSubtype.ZOMBIE)
                 .build());

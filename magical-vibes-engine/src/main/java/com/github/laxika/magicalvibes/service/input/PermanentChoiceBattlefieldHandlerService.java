@@ -2270,6 +2270,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                                                         PermanentChoiceContext.PreventNextDamageFromSourceChoice ctx) {
         Card chosenSource = findDamageSourceCard(gameData, permanentId);
         if (chosenSource == null) {
+            chosenSource = gameData.waitingRedirectDamageSourceCards.get(permanentId);
+        }
+        if (chosenSource == null) {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
@@ -2280,6 +2283,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 ctx.damageSourceControllerCard(), ctx.preventHalfDamage(), ctx.drawCards(),
                 findDamageSourceController(gameData, permanentId), ctx.requiredDamageColors(),
                 false, false, false, ctx.requiredSourceFilter()));
+        gameData.waitingRedirectDamageSourceCards.put(permanentId, chosenSource);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenSource.getName();
@@ -2567,7 +2571,20 @@ public class PermanentChoiceBattlefieldHandlerService {
             return graveyardCard;
         }
         var exiled = gameData.findExiledCard(sourceId);
-        return exiled == null ? null : exiled.card();
+        if (exiled != null) {
+            return exiled.card();
+        }
+        for (StackEntry stackEntry : gameData.stack) {
+            Card lastKnown = stackEntry.lastKnownPermanentCard(sourceId);
+            if (lastKnown != null) {
+                return lastKnown;
+            }
+        }
+        // A permanent the ability targets that has since left the battlefield: look back to how it last existed.
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> snapshot.getId().equals(sourceId))
+                .map(Permanent::getCard)
+                .findFirst().orElse(null);
     }
 
     /**
@@ -3149,7 +3166,10 @@ public class PermanentChoiceBattlefieldHandlerService {
                                        PermanentChoiceContext.TormentSacrifice ctx) {
         Permanent toSacrifice = gameQueryService.findPermanentById(gameData, permanentId);
         var eachPlayerState = gameData.eachPlayerSacrificeOrDiscard;
-        if (toSacrifice != null && eachPlayerState.active && eachPlayerState.deferSacrifices
+        if (toSacrifice != null && gameData.torment.active && gameData.torment.deferred
+                && ctx.playerId().equals(gameData.torment.currentOpponentId)) {
+            gameData.torment.chosenSacrifices.add(permanentId);
+        } else if (toSacrifice != null && eachPlayerState.active && eachPlayerState.deferSacrifices
                 && ctx.playerId().equals(eachPlayerState.currentPlayerId)) {
             eachPlayerState.chosenSacrifices.add(permanentId);
         } else if (toSacrifice != null) {

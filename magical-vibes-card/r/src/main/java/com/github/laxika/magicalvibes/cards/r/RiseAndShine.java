@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReturnedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -41,17 +41,16 @@ public class RiseAndShine extends Card {
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new Overloaded(),
                 SequenceEffect.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                                GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN)),
+                                GrantScope.TARGET, EffectDuration.PERMANENT),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)),
                 SequenceEffect.of(
-                        new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 4, noncreatureArtifact),
                         new AnimatePermanentsEffect(
                                 new Fixed(0), new Fixed(0), List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                                GrantScope.OWN_PERMANENTS, EffectDuration.UNTIL_END_OF_TURN,
-                                noncreatureArtifact))));
+                                GrantScope.OWN_PERMANENTS, EffectDuration.PERMANENT,
+                                noncreatureArtifact),
+                        new PutCounterOnReturnedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE, 4))));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 noncreatureArtifact,

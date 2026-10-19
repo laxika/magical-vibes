@@ -243,7 +243,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             deck.addAll(remainingRevealedCards);
         }
 
-        Permanent permanent = new Permanent(context.foundCard());
+        Permanent permanent = new Permanent(context.foundCard(), Zone.LIBRARY);
         permanent.tap();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, context.controllerId(), permanent);
         if (context.foundCard().hasType(CardType.CREATURE)) {

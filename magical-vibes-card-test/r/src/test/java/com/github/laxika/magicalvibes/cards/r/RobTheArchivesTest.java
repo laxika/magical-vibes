@@ -136,6 +136,7 @@ class RobTheArchivesTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsKey(land.getId());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

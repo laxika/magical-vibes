@@ -52,9 +52,14 @@ public class AllowCastCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
                             || predicateEvaluationService.matchesCardPredicate(exiledEntry.card(), e.filter(), null))
                     .toList();
         }
-        if (matchingEntries.isEmpty()) return;
-
         UUID grantId = UUID.randomUUID();
+        if (!e.targetSpecificCard()) {
+            gameData.exileCastWildcardPermissionsUntilEndOfTurn.add(new GameData.ExileCastWildcardPermission(
+                    grantId, sourcePermanentId, entry.getCard().getId(), entry.getControllerId(), e.ownOnly(),
+                    e.filter(), e.withoutPayingManaCost(), e.putOnBottomOfOwnersLibrary()));
+        } else if (matchingEntries.isEmpty()) {
+            return;
+        }
         for (ExiledCardEntry matchingEntry : matchingEntries) {
             gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
                     grantId, sourcePermanentId, entry.getControllerId(), matchingEntry.card().getId(),

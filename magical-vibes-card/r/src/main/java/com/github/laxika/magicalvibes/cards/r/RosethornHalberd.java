@@ -34,7 +34,7 @@ public class RosethornHalberd extends Card {
         target(targetFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new AttachSourceEquipmentToTargetCreatureEffect());
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
-        addActivatedAbility(new EquipActivatedAbility("{5}", nonHuman,
-                "Target must be a non-Human creature you control"));
+        addActivatedAbility(new EquipActivatedAbility("{5}", new PermanentIsCreaturePredicate(),
+                "Target must be a creature you control"));
     }
 }

@@ -11,6 +11,12 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record TapTargetThenUntapAnotherTargetEffect() implements CardEffect {
 
+    /** Each half resolves on its own, so the untap still happens when the first target has left. */
+    @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return true;
+    }
+
     @Override
     public TargetSpec targetSpec() {
         // The targets ride entry.getTargetIds() and are validated on the multi-target path, so the

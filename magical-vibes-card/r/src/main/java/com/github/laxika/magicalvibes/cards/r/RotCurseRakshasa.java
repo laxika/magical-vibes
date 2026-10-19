@@ -31,6 +31,6 @@ public class RotCurseRakshasa extends Card {
                 List.of(),
                 0,
                 100
-        ).withXScaledTargets());
+        ).withExactXTargets());
     }
 }

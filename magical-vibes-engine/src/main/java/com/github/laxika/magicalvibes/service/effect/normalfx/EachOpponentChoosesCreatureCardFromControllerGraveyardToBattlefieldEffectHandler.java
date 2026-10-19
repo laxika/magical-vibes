@@ -31,8 +31,7 @@ public class EachOpponentChoosesCreatureCardFromControllerGraveyardToBattlefield
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
-                controllerId, List.of(), java.util.Map.of());
+        gameData.pendingGraveyardReturnBatch = PendingGraveyardReturnBatch.heldInGraveyard(controllerId);
 
         List<UUID> opponents = opponentsStartingAfterController(gameData, controllerId);
         CardTypePredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);

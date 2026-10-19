@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class RakshasasBargain extends Card {
 
     public RakshasasBargain() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 2));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 2));
     }
 }

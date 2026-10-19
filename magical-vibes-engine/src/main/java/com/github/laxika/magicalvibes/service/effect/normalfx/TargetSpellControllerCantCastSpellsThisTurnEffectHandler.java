@@ -28,14 +28,18 @@ public class TargetSpellControllerCantCastSpellsThisTurnEffectHandler implements
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
+        UUID restrictedId = entry.getCounteredSpellControllerId();
         for (StackEntry se : gameData.stack) {
             if (se.getTargetableId().equals(targetCardId)) {
-                UUID restrictedId = se.getControllerId();
-                gameData.playersSilencedThisTurn.add(restrictedId);
-                gameLogService.append(gameData, GameLog.text(
-                        gameData.playerIdToName.get(restrictedId) + " can't cast spells this turn."));
-                return;
+                restrictedId = se.getControllerId();
+                break;
             }
+        }
+        if (restrictedId != null) {
+            gameData.playersSilencedThisTurn.add(restrictedId);
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(restrictedId) + " can't cast spells this turn."));
+            return;
         }
         log.info("Game {} - Target spell no longer on stack for cast restriction", gameData.id);
     }

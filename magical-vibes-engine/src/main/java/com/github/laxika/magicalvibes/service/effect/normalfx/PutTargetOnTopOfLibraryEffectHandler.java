@@ -108,7 +108,11 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
     private void tuckTogether(GameData gameData, StackEntry entry, List<PutTargetOnTopOfLibraryEffect> siblings) {
         List<UUID> targetIds = new ArrayList<>();
         for (PutTargetOnTopOfLibraryEffect sibling : siblings) {
-            List<UUID> bound = entry.targetsForBoundEffectGroup(sibling);
+            // Each sibling owns its own target group; the group being resolved right now must not
+            // stand in for the others, or the first effect only ever finds its own target.
+            int group = entry.getTargetingCard() == null ? -1
+                    : entry.getTargetingCard().getEffectTargetIndex(sibling);
+            List<UUID> bound = group >= 0 ? entry.targetsForGroup(group) : null;
             List<UUID> siblingTargets = bound != null ? bound : entry.targetsForEffect(sibling);
             for (UUID targetId : siblingTargets) {
                 if (!targetIds.contains(targetId)) {

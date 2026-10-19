@@ -121,6 +121,7 @@ class RancorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.runStateBasedActions();
         resolveAllTriggers();
 
         harness.assertInHand(player1, "Rancor");

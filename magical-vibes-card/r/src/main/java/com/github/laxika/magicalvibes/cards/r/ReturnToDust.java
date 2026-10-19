@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
+import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -48,6 +48,6 @@ public class ReturnToDust extends Card {
                 .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
         target(artifactOrEnchantment, 0, 1)
                 .addEffect(EffectSlot.SPELL,
-                        new ConditionalEffect(new ControllerMainPhase(), new ExileTargetPermanentEffect()));
+                        new ConditionalEffect(new CastDuringMainPhase(), new ExileTargetPermanentEffect()));
     }
 }

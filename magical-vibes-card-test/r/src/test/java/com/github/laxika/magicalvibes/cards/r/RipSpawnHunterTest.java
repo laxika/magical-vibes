@@ -161,6 +161,8 @@ class RipSpawnHunterTest extends BaseCardTest {
         Permanent rip = harness.addToBattlefieldAndReturn(player1, new RipSpawnHunter());
         Card goyf = new Tarmogoyf();
         Card goat = new PossessedGoat();
+        goyf.setOwnerId(player1.getId());
+        goat.setOwnerId(player1.getId());
         rip.tap();
         harness.setGraveyard(player2, List.of(new Forest()));
         harness.setLibrary(player1, List.of(goyf, goat));

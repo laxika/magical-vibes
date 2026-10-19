@@ -124,6 +124,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DragonsFire()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castAndResolveInstant(player2, 0, rasaad.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
         harness.assertOnBattlefield(player2, "Steadfast Paladin");
@@ -220,6 +221,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrimBounty()));
         harness.addMana(player2, ManaColor.BLACK, 4);
         harness.castAndResolveSorcery(player2, 0, specialized.getId());
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
         harness.assertOnBattlefield(player2, "Steadfast Paladin");

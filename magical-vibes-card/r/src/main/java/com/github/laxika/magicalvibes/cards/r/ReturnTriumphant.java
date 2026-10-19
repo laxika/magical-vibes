@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,12 +17,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 
 import java.util.List;
 import java.util.Map;
@@ -59,8 +60,8 @@ public class ReturnTriumphant extends Card {
                 false,
                 Map.of(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentToughnessAtMostPredicate(3),
+                        new ConditionalEffect(
+                                new NotCondition(new SourceToughnessAtLeast(4)),
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         GrantScope.ENCHANTED_CREATURE)),
                 List.of(),

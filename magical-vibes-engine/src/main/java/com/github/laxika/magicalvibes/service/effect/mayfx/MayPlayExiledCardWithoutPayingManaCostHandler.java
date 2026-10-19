@@ -54,8 +54,19 @@ public class MayPlayExiledCardWithoutPayingManaCostHandler implements MayEffectH
                     .filter(MayPlayExiledCardWithoutPayingManaCostEffect.class::isInstance)
                     .map(MayPlayExiledCardWithoutPayingManaCostEffect.class::cast)
                     .anyMatch(MayPlayExiledCardWithoutPayingManaCostEffect::grantHaste);
-            exileFreeCastSupport.castFromExileWithoutPaying(
-                    gameData, player, ability.targetCardId(), grantHaste);
+            Integer maxManaValue = ability.effects().stream()
+                    .filter(MayPlayExiledCardWithoutPayingManaCostEffect.class::isInstance)
+                    .map(MayPlayExiledCardWithoutPayingManaCostEffect.class::cast)
+                    .map(MayPlayExiledCardWithoutPayingManaCostEffect::maxManaValue)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst().orElse(null);
+            if (maxManaValue != null) {
+                exileFreeCastSupport.castWithManaValueLimit(
+                        gameData, player, ability.targetCardId(), maxManaValue, false);
+            } else {
+                exileFreeCastSupport.castFromExileWithoutPaying(
+                        gameData, player, ability.targetCardId(), grantHaste);
+            }
             if (returnsSourceToHand(ability) && gameData.findExiledCard(ability.targetCardId()) == null) {
                 returnSourceToHand(gameData, ability);
             }

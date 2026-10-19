@@ -38,6 +38,7 @@ public class RescueSkiff extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardTypePredicate(CardType.ENCHANTMENT))))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
 
         addActivatedAbility(new ActivatedAbility(

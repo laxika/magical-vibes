@@ -212,7 +212,7 @@ public final class CombatHelper {
 
     public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,
                                                      GameData gameData, Permanent attacker) {
-        boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasEffect = gameQueryService.getActiveStaticEffects(gameData, attacker).stream()
                 .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance);
         if (!hasEffect) return false;
         UUID controllerId = gameData.findControllerOf(attacker);

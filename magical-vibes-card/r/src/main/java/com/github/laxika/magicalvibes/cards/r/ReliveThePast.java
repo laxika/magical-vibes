@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect;
@@ -38,8 +37,7 @@ public class ReliveThePast extends Card {
                         GraveyardChoiceDestination.BATTLEFIELD,
                         GraveyardChoiceDestination.BATTLEFIELD,
                         GraveyardChoiceDestination.BATTLEFIELD),
-                List.of("artifact card", "land card", "non-Aura enchantment card")));
-        addEffect(EffectSlot.SPELL, new AnimateReturnedPermanentsEffect(
+                List.of("artifact card", "land card", "non-Aura enchantment card"),
                 new AnimatePermanentsEffect(5, 5, List.of(CardSubtype.ELEMENTAL), Set.of(), null,
                         Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT)));
     }

@@ -14,7 +14,7 @@ public class RhinoBarrelingBrute extends Card {
 
     public RhinoBarrelingBrute() {
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
-                new ControllerCastSpellThisTurn(new CardMinManaValuePredicate(4)),
+                new ControllerCastSpellThisTurn(new CardMinManaValuePredicate(4, true)),
                 new DrawCardEffect()));
     }
 }

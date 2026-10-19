@@ -109,7 +109,9 @@ class RecurringInsightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        // Declining at upkeep leaves the card exiled; the turn then reaches the draw step, where the
+        // active player draws (CR 504.1), so the hand holds the first draw plus that draw.
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
         harness.assertNotInGraveyard(player1, "Recurring Insight");
 

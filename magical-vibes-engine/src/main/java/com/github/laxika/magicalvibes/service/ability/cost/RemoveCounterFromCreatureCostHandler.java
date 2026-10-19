@@ -27,6 +27,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
     private final CardEffect cost;
     private final CounterType counterType;
     private final int requiredCount;
+    private final boolean allowsZero;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private int pendingBulkRemoval;
@@ -35,7 +36,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
     public RemoveCounterFromCreatureCostHandler(RemoveCounterFromControlledCreatureCost cost,
                                                  GameQueryService gameQueryService,
                                                  GameLogService gameLogService) {
-        this(cost, cost.counterType(), cost.count(), gameQueryService, gameLogService);
+        this(cost, cost.counterType(), cost.count(), false, gameQueryService, gameLogService);
     }
 
     /** "Remove one or more counters from among creatures you control" — the count is the chosen X. */
@@ -43,15 +44,17 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
                                                  int xValue,
                                                  GameQueryService gameQueryService,
                                                  GameLogService gameLogService) {
-        this(cost, cost.counterType(), xValue, gameQueryService, gameLogService);
+        this(cost, cost.counterType(), xValue, cost.allowsZero(), gameQueryService, gameLogService);
     }
 
     private RemoveCounterFromCreatureCostHandler(CardEffect cost, CounterType counterType, int requiredCount,
+                                                 boolean allowsZero,
                                                  GameQueryService gameQueryService,
                                                  GameLogService gameLogService) {
         this.cost = cost;
         this.counterType = counterType;
         this.requiredCount = requiredCount;
+        this.allowsZero = allowsZero;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
     }
@@ -64,7 +67,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
 
     @Override
     public void validateCanPay(GameData gameData, UUID playerId) {
-        if (requiredCount < 1) {
+        if (requiredCount < 1 && !allowsZero) {
             throw new IllegalStateException("Must remove at least one " + counterLabel() + " counter");
         }
         if (totalCounters(gameData, playerId) < requiredCount) {

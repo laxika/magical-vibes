@@ -25,13 +25,20 @@ import java.util.List;
  * @param onWin              the effect to execute when the controller wins the clash (may be
  *                           {@code null} for a clash with no win reward)
  * @param repeatWhileWinning whether the whole sequence repeats while the controller keeps winning
+ * @param beforeClashResolved true once the {@code beforeClash} effects have been queued ahead of this
+ *                           record, so that only the clash itself remains to be performed
  */
-public record ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolean repeatWhileWinning)
+public record ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolean repeatWhileWinning,
+                          boolean beforeClashResolved)
         implements CardEffect {
 
     /** "Clash with an opponent. If you win, [onWin]." — the plain clash-then-reward template. */
     public ClashEffect(CardEffect onWin) {
-        this(List.of(), onWin, false);
+        this(List.of(), onWin, false, false);
+    }
+
+    public ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolean repeatWhileWinning) {
+        this(beforeClash, onWin, repeatWhileWinning, false);
     }
 
     @Override

@@ -92,7 +92,7 @@ class RoguesGlovesTest extends BaseCardTest {
         equipAttackingBears(player1);
         prepareLibraryAndHand();
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof RoguesGloves);
         harness.passBothPriorities();

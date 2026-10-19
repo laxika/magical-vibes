@@ -23,8 +23,8 @@ class RealityIsMineToControlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, scheme.getId());
         harness.passBothPriorities();
 
@@ -41,6 +41,7 @@ class RealityIsMineToControlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
@@ -55,8 +56,8 @@ class RealityIsMineToControlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, scheme.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -76,6 +77,7 @@ class RealityIsMineToControlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         resolveAllTriggers();

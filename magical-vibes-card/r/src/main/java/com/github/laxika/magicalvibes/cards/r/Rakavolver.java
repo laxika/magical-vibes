@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -25,13 +25,13 @@ public class Rakavolver extends Card {
 
     public Rakavolver() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{U}")));
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{U}"), true, 1));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
-                new GrantEffectToSourceEffect(EffectSlot.ON_SELF_DEALS_DAMAGE,
-                        new GainLifeEffect(new EventValue()))));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+                new GrantTriggeredAbilityEffect(EffectSlot.ON_SELF_DEALS_DAMAGE,
+                        new GainLifeEffect(new EventValue()), GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{U}"),

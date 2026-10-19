@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -842,7 +843,7 @@ class MiscTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("resolved effect bakes in the tapped permanent controller's ID")
+        @DisplayName("resolved effect targets the tapped permanent's controller at resolution")
         void resolvedEffectContainsControllerId() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
@@ -853,8 +854,11 @@ class MiscTriggerCollectorServiceTest {
                     match(aura, player1Id, effect),
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
-            var resolved = (GivePoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
-            assertThat(resolved.affectedPlayerId()).isEqualTo(player2Id);
+            StackEntry entry = gd.stack.getLast();
+            var resolved = (GivePoisonCountersEffect) entry.getEffectsToResolve().getFirst();
+            assertThat(resolved.recipient()).isEqualTo(PoisonRecipient.TARGET_PERMANENT_CONTROLLER);
+            assertThat(entry.getTargetId()).isEqualTo(tappedPerm.getId());
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
             assertThat(resolved.amount()).isEqualTo(new Fixed(1));
         }
 
