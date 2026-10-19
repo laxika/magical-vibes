@@ -368,7 +368,9 @@ public class AttackLegalityService {
                         effect = conditional.wrapped();
                     }
                     if (effect instanceof EnchantedCreatureAttackRestrictionEffect
-                            && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect))
+                            && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect)
+                            && targetPermanent != null
+                            && gameQueryService.isPlaneswalker(gameData, targetPermanent))
                             && !source.isAuraEffectsIgnoredFor(
                                     gameQueryService.findPermanentController(gameData, attacker.getId()))
                             && source.isAttached()

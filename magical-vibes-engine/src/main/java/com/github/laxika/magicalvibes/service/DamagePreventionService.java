@@ -576,18 +576,6 @@ public class DamagePreventionService {
                 },
                 this::removePlusOneCountersForDamage,
                 (gd, c, damage) -> !gameQueryService.isDamagePreventable(gd, c.combatDamage())));
-        steps.add(new CreatureDamageStep("SelfDamageToPlusOneCounters", "Put +1/+1 counters on it instead",
-                replacement, false,
-                (gd, c, damage) -> damage > 0 && gameQueryService.getActiveStaticEffects(gd, c.permanent()).stream()
-                        .filter(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::isInstance)
-                        .map(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::cast)
-                        .anyMatch(effect -> effect.sourceOnly() && (!c.combatDamage() || !effect.noncombatOnly())),
-                (gd, c, damage) -> {
-                    putPlusOneCountersFor(gd, c.permanent(), damage);
-                    return isDamageUnpreventable(gd, c) || !gameQueryService.isDamagePreventable(gd, c.combatDamage())
-                            ? damage : 0;
-                },
-                ALWAYS));
         steps.add(step("SelfDamageControlChangeUnpreventable",
                 "Have an opponent gain control of it (the damage can't be prevented)", prevention, false,
                 (gd, c, damage) -> damage > 0 && !preventable(gd, c) && c.applySelfDamagePrevention()
@@ -1734,7 +1722,8 @@ public class DamagePreventionService {
                                                               boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
         if (damage <= 0 || creatureControllerId == null || sourcePermanentId == null
-                || gameData.playerSourceNextDamageShields.isEmpty()) {
+                || gameData.playerSourceNextDamageShields.isEmpty()
+                && gameData.playerSourceShieldsUsedInOpenEvent.isEmpty()) {
             return damage;
         }
         for (var shield : List.copyOf(gameData.playerSourceShieldsUsedInOpenEvent)) {
@@ -1753,7 +1742,8 @@ public class DamagePreventionService {
                     && shieldMatchesSource(gameData, shield, sourcePermanentId, null)) {
                 it.remove();
                 // One damage event can hit several creatures at once; the shield covers all of them.
-                if (!gameData.pendingSimultaneousDamage.isEmpty() || gameData.openDamageEvent != null) {
+                if (!gameData.pendingSimultaneousDamage.isEmpty() || gameData.openDamageEvent != null
+                        || gameData.effectResolutionDepth > 0) {
                     gameData.playerSourceShieldsUsedInOpenEvent.add(shield);
                 }
                 applyNextSourceShieldRiders(gameData, shield, damage, null);
@@ -2460,6 +2450,47 @@ public class DamagePreventionService {
     }
 
     /**
+     * The distinct destinations of Soltari Guerrillas shields that currently apply to combat damage
+     * from {@code sourcePermanentId}, as UUID strings. When more than one applies, the damaged player
+     * chooses which replacement effect applies (CR 616.1).
+     */
+    public List<String> applicableSourceNextCombatDamageToOpponentRedirects(GameData gameData,
+                                                                             UUID sourcePermanentId) {
+        if (sourcePermanentId == null) return List.of();
+        return gameData.sourceNextCombatDamageToOpponentRedirectShields.stream()
+                .filter(shield -> shield.sourcePermanentId().equals(sourcePermanentId)
+                        && isCreatureOnBattlefield(gameData, shield.destinationPermanentId()))
+                .map(shield -> shield.destinationPermanentId().toString())
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * Applies one Soltari Guerrillas shield, chosen by destination: consumes it and queues the
+     * redirected damage. Any other shield from the same source stays, since that damage is no longer
+     * dealt to an opponent.
+     *
+     * @return the remaining damage after redirection (0 if redirected)
+     */
+    public int applySourceNextCombatDamageToOpponentRedirectTo(GameData gameData, UUID damagedPlayerId,
+                                                               UUID sourcePermanentId, UUID destinationId,
+                                                               int damage) {
+        if (damage <= 0) return damage;
+        Iterator<SourceNextCombatDamageToOpponentRedirectShield> it =
+                gameData.sourceNextCombatDamageToOpponentRedirectShields.iterator();
+        while (it.hasNext()) {
+            SourceNextCombatDamageToOpponentRedirectShield shield = it.next();
+            if (!shield.sourcePermanentId().equals(sourcePermanentId)
+                    || !shield.destinationPermanentId().equals(destinationId)) continue;
+            it.remove();
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    damagedPlayerId, sourcePermanentId, damage, destinationId));
+            return 0;
+        }
+        return damage;
+    }
+
+    /**
      * Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed
      * permanent. Any source, amount-limited, consumed as it absorbs damage. This is a redirection
      * (replacement) effect, so it applies even when damage can't be prevented. The redirect only
@@ -2754,9 +2785,23 @@ public class DamagePreventionService {
             return gameData.colorlessDamagePreventionUntilEndOfTurn.contains(targetId);
         }
         Set<CardColor> preventedColors = gameData.colorDamagePreventionUntilEndOfTurn.get(targetId);
-        if (preventedColors == null || preventedColors.isEmpty()) return false;
-        return damageSourceColors.stream()
-                .anyMatch(preventedColors::contains);
+        if (preventedColors != null && !preventedColors.isEmpty()
+                && damageSourceColors.stream().anyMatch(preventedColors::contains)) {
+            return true;
+        }
+        return isControlledCreatureColorDamagePrevented(gameData, targetId, damageSourceColors);
+    }
+
+    private boolean isControlledCreatureColorDamagePrevented(GameData gameData, UUID targetId,
+                                                             Set<CardColor> damageSourceColors) {
+        if (gameData.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.isEmpty()) return false;
+        Permanent creature = gameQueryService.findPermanentById(gameData, targetId);
+        if (creature == null || !gameQueryService.isCreature(gameData, creature)) return false;
+        UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null) return false;
+        Set<CardColor> preventedColors =
+                gameData.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.get(controllerId);
+        return preventedColors != null && damageSourceColors.stream().anyMatch(preventedColors::contains);
     }
 
     /**

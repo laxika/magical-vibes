@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SylvanParadise extends Card {
 
     public SylvanParadise() {
-        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
+        target(TargetFilters.creature(), 1, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL,
                         new GrantColorUntilEndOfTurnEffect(CardColor.GREEN, GrantScope.TARGETS));
     }

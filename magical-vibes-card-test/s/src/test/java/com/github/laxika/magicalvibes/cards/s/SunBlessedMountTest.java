@@ -37,6 +37,9 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB may on stack
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(huatli.getId()));
 
         harness.assertInHand(player1, "Huatli, Dinosaur Knight");
         harness.assertNotInGraveyard(player1, "Huatli, Dinosaur Knight");
@@ -54,10 +57,12 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Library search prompt should appear
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Huatli, Dinosaur Knight");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.pool()).hasSize(1);
+        assertThat(choice.pool().getFirst().getName()).isEqualTo("Huatli, Dinosaur Knight");
     }
 
     @Test
@@ -109,7 +114,7 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(huatli.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(huatli);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -126,7 +131,7 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(huatli);

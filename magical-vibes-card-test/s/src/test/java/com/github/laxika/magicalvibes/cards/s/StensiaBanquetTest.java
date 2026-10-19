@@ -73,7 +73,7 @@ class StensiaBanquetTest extends BaseCardTest {
 
     @Test
     void canDamageOwnPlaneswalker() {
-        harness.addToBattlefield(player1, new LilianaTheLastHope());
+        harness.enterBattlefieldAndReturn(player1, new LilianaTheLastHope());
         for (int i = 0; i < 3; i++) {
             harness.addToBattlefield(player1, new CaptivatingVampire());
         }

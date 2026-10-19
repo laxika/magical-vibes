@@ -98,8 +98,12 @@ class SedraxisSpecterTest extends BaseCardTest {
         specter.setAttacking(true);
         harness.setHand(player2, List.of());
 
-        resolveCombat();
-        harness.withAutoStop(TurnStep.END_OF_COMBAT, harness::passBothPriorities);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            resolveCombat();
+            if (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            }
+        });
 
         harness.assertLife(player2, 17);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

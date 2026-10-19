@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,7 +27,7 @@ public class StormscapeBattlemage extends Card {
 
     public StormscapeBattlemage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{W}")));
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{W}"), true, 1));
 
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -38,6 +39,6 @@ public class StormscapeBattlemage extends Card {
                 new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect(true)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new RepeatedAdditionalCostPaid("{W}"), new GainLifeEffect(3)));
+                new RepeatedAdditionalCostPaid("{W}"), new GainLifeEffect(3)), TriggerMode.INDEPENDENT);
     }
 }

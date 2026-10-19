@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.Cursecatcher;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MistmeadowSkulk;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpellSyphon.class, Cursecatcher.class, MistmeadowSkulk.class, SteelOfTheGodhead.class})
+@CardUsed({SpellSyphon.class, Cursecatcher.class, MistmeadowSkulk.class, SteelOfTheGodhead.class,
+        GrizzlyBears.class})
 class SpellSyphonTest extends BaseCardTest {
 
     /** Player2 casts Spell Syphon on player1's Mistmeadow Skulk. */
@@ -191,7 +193,8 @@ class SpellSyphonTest extends BaseCardTest {
     @Test
     @DisplayName("A multicolored blue noncreature permanent contributes exactly one to the cost")
     void countsMulticoloredBlueEnchantmentOnce() {
-        var creature = harness.addToBattlefieldAndReturn(player2, new MistmeadowSkulk());
+        // Not Mistmeadow Skulk: its protection from mana value 3 or greater would make the MV 3 Aura fall off.
+        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         var aura = harness.addToBattlefieldAndReturn(player2, new SteelOfTheGodhead());
         aura.setAttachedTo(creature.getId());
 

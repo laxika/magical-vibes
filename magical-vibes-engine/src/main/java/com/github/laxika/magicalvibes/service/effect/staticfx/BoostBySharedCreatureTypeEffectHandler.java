@@ -35,7 +35,7 @@ public class BoostBySharedCreatureTypeEffectHandler implements StaticEffectHandl
 
         gameData.forEachPermanent((playerId, other) -> {
             if (other.getId().equals(target.getId())) return;
-            if (!support.isEffectivelyCreature(gameData, other, hasAnimateArtifacts)) return;
+            if (boost.filter() == null && !support.isEffectivelyCreature(gameData, other, hasAnimateArtifacts)) return;
             if (!support.matchesStaticFilter(context, other, boost.filter())) return;
 
             if (support.sharesCreatureType(target, other)) count[0]++;

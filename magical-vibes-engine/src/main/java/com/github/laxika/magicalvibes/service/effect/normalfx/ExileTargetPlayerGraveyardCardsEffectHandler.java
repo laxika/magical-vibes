@@ -44,7 +44,10 @@ public class ExileTargetPlayerGraveyardCardsEffectHandler implements NormalEffec
                 : gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of());
 
         List<String> exiledNames = new ArrayList<>();
-        for (UUID cardId : entry.getTargetCardIds()) {
+        // A card that became an illegal target (Ground Seal) is unaffected on resolution (CR 608.2b).
+        List<UUID> legalTargetCardIds = gameQueryService.canGraveyardCardsBeTargeted(gameData)
+                ? entry.getTargetCardIds() : List.of();
+        for (UUID cardId : legalTargetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             boolean isStillInTargetGraveyard = targetGraveyard.stream()
                     .anyMatch(graveyardCard -> graveyardCard.getId().equals(cardId));

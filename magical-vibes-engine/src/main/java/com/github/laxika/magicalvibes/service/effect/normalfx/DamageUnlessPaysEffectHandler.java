@@ -62,7 +62,8 @@ public class DamageUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         String prompt = "Pay {" + e.payAmount() + "}? If you don't, " + entry.getCard().getName()
                 + " deals " + e.damage() + " damage to you.";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(), targetPlayerId, List.of(e), prompt, null, null, entry.getSourcePermanentId()
+                entry.getCard(), targetPlayerId, List.of(e), prompt, null, "{" + e.payAmount() + "}",
+                entry.getSourcePermanentId()
         ));
     }
 }

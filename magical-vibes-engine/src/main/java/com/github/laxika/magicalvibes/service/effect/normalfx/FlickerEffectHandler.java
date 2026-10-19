@@ -269,13 +269,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
                 .toList();
 
-        for (Permanent permanent : toExile) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-            UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), controllerId);
-            exileSupport.exileAndScheduleReturn(
-                    gameData, entry, permanent, ownerId, e.returnTapped(), e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn());
-        }
+        exileAllPlayersPermanentsAtStep(gameData, entry, e, toExile);
     }
 
     /**
@@ -626,7 +620,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         afterEntry.forEach(Runnable::run);
         exiled.stream()
-                .filter(flickered -> !returning.contains(flickered) && flickered.hadBonusSubtype())
+                .filter(flickered -> !returning.contains(flickered) && flickered.hadBonusSubtype()
+                        && effect.bonusSubtypes().isEmpty())
                 .forEach(flickered -> applyImmediateBonus(gameData, entry, effect, flickered.card(), true));
     }
 
@@ -740,13 +735,20 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 grantKeywordEffectHandler.grantToPermanent(gameData, entry, returned, e.grantedKeywordsOnReturn());
             }
 
-            applyImmediateBonus(gameData, entry, e, card, hadBonusSubtype);
+            // A bonus keyed to a set of subtypes ("if that creature is a Bird, Frog, Otter, or Rat")
+            // looks at the permanent as it exists after returning, not as it was when exiled.
+            boolean bonusApplies = e.bonusSubtypes().isEmpty()
+                    ? hadBonusSubtype
+                    : gameQueryService.effectiveCreatureSubtypes(gameData, returned).stream()
+                            .anyMatch(e.bonusSubtypes()::contains);
+            applyImmediateBonus(gameData, entry, e, card, bonusApplies);
         };
     }
 
     /**
-     * Applies the flicker's bonus to a permanent that was exiled with the required subtype, whether or
-     * not it returns: a token is exiled and then ceases to exist, but still counts as exiled this way.
+     * Applies the flicker's bonus once the required subtype has been established. A single-subtype
+     * bonus ("if a Pirate was exiled this way") still counts a token that ceased to exist; a
+     * subtype-set bonus is only applied for a permanent that returned.
      */
     private void applyImmediateBonus(GameData gameData, StackEntry entry, FlickerEffect e, Card card,
                                      boolean hadBonusSubtype) {

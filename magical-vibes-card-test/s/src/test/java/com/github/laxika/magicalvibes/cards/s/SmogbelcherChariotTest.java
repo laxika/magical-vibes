@@ -95,6 +95,9 @@ class SmogbelcherChariotTest extends BaseCardTest {
         if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
             harness.handlePermanentChosen(player1, crewer.getId());
         }
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
         harness.passBothPriorities();
     }
 }

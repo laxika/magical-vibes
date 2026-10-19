@@ -54,6 +54,7 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
             if (grantableKeywords.isEmpty() || permanent.getOriginalCard() == null) {
                 continue;
             }
+            restoreOrStackPerpetualKeywords(gameData, permanent, grantableKeywords);
             permanent.getPersistentGrantedKeywords().addAll(grantableKeywords);
             addPerpetualKeywords(gameData, permanent.getOriginalCard().getId(), grantableKeywords);
             addPerpetualTriggeredAbility(gameData, permanent.getOriginalCard().getId(), perpetual);
@@ -86,6 +87,24 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
                     card, filter, null, gameData, entry.getControllerId())) {
                 addPerpetualKeywords(gameData, card.getId(), effect.keywords());
                 addPerpetualTriggeredAbility(gameData, card.getId(), effect);
+            }
+        }
+    }
+
+    /**
+     * A grant newer than an earlier perpetual loss of the keyword restores it (the loss no longer applies);
+     * a keyword the permanent still has gains another instance, which matters for keywords that trigger
+     * separately.
+     */
+    private void restoreOrStackPerpetualKeywords(GameData gameData, Permanent permanent, Set<Keyword> keywords) {
+        UUID cardId = permanent.getCard().getId();
+        Set<Keyword> removed = gameData.perpetualCardRemovedKeywords.get(cardId);
+        for (Keyword keyword : keywords) {
+            boolean lost = removed != null && removed.remove(keyword);
+            if (!lost && permanent.getPersistentGrantedKeywords().contains(keyword)) {
+                gameData.perpetualCardExtraKeywordInstances
+                        .computeIfAbsent(cardId, ignored -> new java.util.concurrent.ConcurrentHashMap<>())
+                        .merge(keyword, 1, Integer::sum);
             }
         }
     }

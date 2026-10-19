@@ -66,21 +66,32 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SearchLibraryEffect) effect, LibrarySearchFollowUp.NONE, null);
+        doResolve(gameData, entry, (SearchLibraryEffect) effect, LibrarySearchFollowUp.NONE, null, List.of());
+    }
+
+    /**
+     * Searches and puts the found card onto the battlefield together with {@code enteringWithFound}
+     * (cards already in exile that enter at the same time, e.g. Sword of Hearth and Home). They are
+     * carried by the library search and enter when it completes, whether or not a card is found.
+     */
+    void resolveWithCardsEnteringTogether(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
+                                          List<Card> enteringWithFound) {
+        doResolve(gameData, entry, effect, LibrarySearchFollowUp.NONE, null, enteringWithFound);
     }
 
     void resolveWithFollowUp(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
                              LibrarySearchFollowUp followUp) {
-        doResolve(gameData, entry, effect, followUp, null);
+        doResolve(gameData, entry, effect, followUp, null, List.of());
     }
 
     void resolveWithTotalManaValueCap(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
                                       int maxTotalManaValue) {
-        doResolve(gameData, entry, effect, LibrarySearchFollowUp.NONE, maxTotalManaValue);
+        doResolve(gameData, entry, effect, LibrarySearchFollowUp.NONE, maxTotalManaValue, List.of());
     }
 
     private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
-                           LibrarySearchFollowUp followUp, Integer totalManaValueBound) {
+                           LibrarySearchFollowUp followUp, Integer totalManaValueBound,
+                           List<Card> enteringWithFound) {
         UUID controllerId = switch (effect.searchPlayer()) {
             case ACTIVE_PLAYER -> entry.getActivePlayerId();
             case TRIGGERING_PERMANENT_CONTROLLER -> entry.getTriggeringPermanentControllerId();
@@ -178,7 +189,9 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                                 .exileAtEndStep(effect.exileAtEndStep())
                                 .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                                 .animateFound(effect.animateFound())
-                                .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
+                                .accumulatedCards(new ArrayList<>(enteringWithFound))
+                                .placeBattlefieldCardsSimultaneously(
+                                        effect.animateFound() != null || !enteringWithFound.isEmpty())
                                 .battlefieldCounter(effect.battlefieldCounter())
                                 .followUp(followUp)
                                 .shuffleAfterSelection(effect.shuffleAfterSelection())
@@ -223,7 +236,9 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .exileAtEndStep(effect.exileAtEndStep())
                         .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                         .animateFound(effect.animateFound())
-                        .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
+                        .accumulatedCards(new ArrayList<>(enteringWithFound))
+                                .placeBattlefieldCardsSimultaneously(
+                                        effect.animateFound() != null || !enteringWithFound.isEmpty())
                         .battlefieldCounter(effect.battlefieldCounter())
                         .followUp(followUp)
                         .enterWithCounters(effect.enterWithCounters())

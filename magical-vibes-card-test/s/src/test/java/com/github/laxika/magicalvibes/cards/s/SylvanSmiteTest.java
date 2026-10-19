@@ -57,6 +57,7 @@ class SylvanSmiteTest extends BaseCardTest {
     private void cast(com.github.laxika.magicalvibes.model.Player caster,
                       Permanent source, Permanent target) {
         harness.forceActivePlayer(caster);
+        gd.startingPlayerId = player1.getId();
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new SylvanSmite()));

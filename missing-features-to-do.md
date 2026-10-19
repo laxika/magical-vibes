@@ -393,6 +393,44 @@ suite; ask me. Don't commit until I say so.
 
 ---
 
+## 40. Mana riders and spending restrictions tied to specific units of mana
+
+**Status:** open · **Found:** 2026-10-19, while fixing S-card test failures
+
+**Failing tests:**
+- `SunkenPalaceTest.activatingAnotherManaAbilityDoesNotConsumeTheCopyRider()`
+- `SunkenPalaceTest.freeSpellDoesNotConsumeTheCopyRider()`
+- `SunkenPalaceTest.spellPaidWithOtherManaDoesNotTriggerACopy()`
+- `SunkenCitadelTest` "Damping Sphere changes mana type and amount but preserves the spending restriction"
+
+**What the rules require.** CR 106.6: a mana ability can restrict how its mana is spent, add an
+effect to the spell or ability that mana is spent on, or create a delayed trigger that fires when
+that mana is spent. Sunken Palace's {U} copies the spell or ability *that mana* is spent on, so the
+copy must fire only when that exact unit pays for something. Sunken Citadel's two mana "spend this
+mana only to activate abilities of land sources" keeps its restriction even when Damping Sphere
+replaces it with different mana. The engine instead arms the Palace rider per player:
+`ActivatedAbilityExecutionService` calls `TriggerCollectionService.consumeManaLinkedCopyOnManaAbility`
+on any later mana ability, and the next spell is copied whichever mana paid for it. Citadel's
+restriction is lost when a replacement changes the mana.
+
+**Why it's large.** `ManaPool` tracks counts per color plus a few special pools. Riders and
+restrictions have to stay attached to individual units through every payment path, cost
+reduction, free cast, mana-doubling and mana-replacement effect, and spell copy. That touches the
+pool, all of `ManaCost`'s payment helpers, and every caller that spends mana.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 40: tag mana units in ManaPool with their rider/spend
+restriction (CR 106.6) so Sunken Palace's "when you spend this mana ... copy that spell or ability"
+fires only for the spell or ability that the tagged {U} actually paid for, and Sunken Citadel's
+land-ability-only restriction survives Damping Sphere-style mana replacement. Replace the per-player
+consumeManaLinkedCopyOnManaAbility arming. Make the failing SunkenPalaceTest and SunkenCitadelTest
+cases pass. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

@@ -18,7 +18,7 @@ public class SteelyResolve extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.SHROUD,
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSourceChosenSubtypePredicate()));
     }
 }

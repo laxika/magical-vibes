@@ -142,7 +142,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertLife(player1, 21);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 16);
         assertThat(sephiroth.isTransformed()).isFalse();
     }
 
@@ -192,7 +192,7 @@ class SephirothFabledSoldierTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 22);
-        harness.assertLife(player2, 18);
+        harness.assertLife(player2, 13);
         harness.assertInGraveyard(player1, "Al Bhed Salvagers");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);

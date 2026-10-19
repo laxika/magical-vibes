@@ -75,7 +75,7 @@ class SphinxOfForesightTest extends BaseCardTest {
                 .isNotNull();
         h.handleMayAbilityChosen(h.getPlayer2(), true);
         assertThat(h.getGameData().interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
-        h.passUntil(h.getPlayer1(), TurnStep.UPKEEP);
+        h.passUntil(h.getPlayer1(), TurnStep.PRECOMBAT_MAIN);
         assertThat(h.getGameData().stack).isEmpty();
         assertThat(h.getGameData().interaction.isAwaitingInput()).isFalse();
 

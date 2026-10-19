@@ -8,13 +8,22 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScytheSpecterEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Resolves Scythe Specter's APNAP discard and greatest-mana-value comparison. */
+/**
+ * Resolves Scythe Specter: each opponent chooses a card in APNAP order, the chosen cards are
+ * discarded together once everyone has chosen, then the opponents who discarded a card with the
+ * greatest mana value lose that much life.
+ */
 @Component
 @RequiredArgsConstructor
 public class ScytheSpecterEffectHandler implements NormalEffectHandlerBean {
@@ -22,6 +31,10 @@ public class ScytheSpecterEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
+
+    @Autowired
+    @Lazy
+    private CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,9 +49,8 @@ public class ScytheSpecterEffectHandler implements NormalEffectHandlerBean {
             state.controllerId = entry.getControllerId();
             addOpponentsInApnapOrder(gameData, state);
         } else if (state.currentPlayerId != null) {
-            state.discardedManaValues.put(state.currentPlayerId,
-                    gameData.lastDiscardedCardManaValue);
             state.currentPlayerId = null;
+            gameData.deferredDiscardChooserId = null;
         }
 
         processNextOpponent(gameData, entry, state);
@@ -56,30 +68,44 @@ public class ScytheSpecterEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
 
-            gameData.lastDiscardedCardManaValue = 0;
             gameData.discardCausedByOpponent = true;
             gameData.rerunCurrentEffectAfterInteraction = true;
+            gameData.deferredDiscardChooserId = playerId;
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, DiscardFollowUp.NONE);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
 
-            state.discardedManaValues.put(playerId, gameData.lastDiscardedCardManaValue);
             state.currentPlayerId = null;
+            gameData.deferredDiscardChooserId = null;
         }
 
         finish(gameData, entry, state);
     }
 
     private void finish(GameData gameData, StackEntry entry, ScytheSpecterState state) {
-        int greatestManaValue = state.discardedManaValues.values().stream()
+        gameData.discardCausedByOpponent = true;
+        Map<UUID, List<Card>> discarded =
+                cardChoiceHandlerService.discardDeferredSelections(gameData, entry.getControllerId());
+        Map<UUID, Integer> manaValues = new HashMap<>();
+        discarded.forEach((playerId, cards) -> {
+            List<Card> library = gameData.playerDecks.get(playerId);
+            for (Card card : cards) {
+                boolean putIntoHiddenLibrary = library != null && !library.isEmpty()
+                        && library.getFirst() == card;
+                if (!putIntoHiddenLibrary) {
+                    manaValues.merge(playerId, card.getManaValue(), Math::max);
+                }
+            }
+        });
+        int greatestManaValue = manaValues.values().stream()
                 .mapToInt(Integer::intValue)
                 .max()
                 .orElse(0);
         List<UUID> lifeLossPlayers = new ArrayList<>();
         if (greatestManaValue > 0) {
             for (UUID playerId : gameData.orderedPlayerIds) {
-                Integer manaValue = state.discardedManaValues.get(playerId);
+                Integer manaValue = manaValues.get(playerId);
                 if (manaValue != null && manaValue == greatestManaValue) {
                     lifeLossPlayers.add(playerId);
                 }

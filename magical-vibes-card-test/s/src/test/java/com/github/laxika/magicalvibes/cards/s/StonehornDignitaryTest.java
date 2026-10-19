@@ -46,7 +46,7 @@ class StonehornDignitaryTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid permanent");
+                .hasMessageContaining("Target must be an opponent");
 
         assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
 
@@ -133,7 +133,8 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.enterBattlefieldAndReturn(player1, new StonehornDignitary());
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        // Resolve the trigger without auto-passing on through the rest of the turn.
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);

@@ -120,7 +120,7 @@ class ScrollOfTheMastersTest extends BaseCardTest {
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
 
-        harness.passUntilWithNoAttackers(null, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();

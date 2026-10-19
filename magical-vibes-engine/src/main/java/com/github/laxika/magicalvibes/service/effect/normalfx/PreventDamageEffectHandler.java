@@ -323,17 +323,9 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                if (!gameQueryService.isCreature(gameData, permanent)) {
-                    continue;
-                }
-                gameData.colorDamagePreventionUntilEndOfTurn
-                        .computeIfAbsent(permanent.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                        .addAll(effect.sourceColors());
-            }
-        }
+        gameData.colorDamagePreventionForControlledCreaturesUntilEndOfTurn
+                .computeIfAbsent(controllerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                .addAll(effect.sourceColors());
 
         String colorNames = effect.sourceColors().stream()
                 .map(color -> color.name().toLowerCase())

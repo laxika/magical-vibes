@@ -66,6 +66,7 @@ class SunfireBalmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(creature.getDamagePreventionShield()).isZero();
@@ -105,6 +106,7 @@ class SunfireBalmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
         harness.assertInGraveyard(player1, "Sunfire Balm");
@@ -126,6 +128,7 @@ class SunfireBalmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
         harness.assertInGraveyard(player1, "Sunfire Balm");

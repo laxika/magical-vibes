@@ -1194,12 +1194,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Eye of the Storm: choose any number of generated copies and their casting order. */
-    record EyeOfTheStormCastChoice(UUID playerId, java.util.List<UUID> validCopyIds)
+    /**
+     * Eye of the Storm: choose any number of generated copies and their casting order. When
+     * {@code mustCastAll} is set (Spelltwine's "cast the copies if able") every copy must be chosen
+     * and only the casting order is decided.
+     */
+    record EyeOfTheStormCastChoice(UUID playerId, java.util.List<UUID> validCopyIds, boolean mustCastAll)
             implements PendingInteraction {
 
         public EyeOfTheStormCastChoice {
             validCopyIds = java.util.List.copyOf(validCopyIds);
+        }
+
+        public EyeOfTheStormCastChoice(UUID playerId, java.util.List<UUID> validCopyIds) {
+            this(playerId, validCopyIds, false);
         }
 
         @Override
@@ -1209,7 +1217,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCopyIds, 0, validCopyIds.size());
+            return new InteractionOptions.MultiCardPick(
+                    validCopyIds, mustCastAll ? validCopyIds.size() : 0, validCopyIds.size());
         }
     }
     /**

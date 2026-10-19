@@ -44,6 +44,7 @@ class SurgingAetherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -74,6 +75,7 @@ class SurgingAetherTest extends BaseCardTest {
                 .as("a revealed Surging Aether should accept any permanent target")
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.passBothPriorities();

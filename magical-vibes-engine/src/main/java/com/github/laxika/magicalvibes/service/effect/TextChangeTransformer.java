@@ -162,7 +162,7 @@ public final class TextChangeTransformer {
             String chosenWord = source.getChosenColor().name().toLowerCase(Locale.ROOT);
             for (String word : COLOR_WORDS.keySet()) {
                 if (!word.equals(chosenWord)) {
-                    replacements.add(new TextReplacement(word, chosenWord));
+                    replacements.add(new TextReplacement(word, chosenWord, false, source.getTimestamp()));
                 }
             }
         }
@@ -172,11 +172,21 @@ public final class TextChangeTransformer {
     /**
      * Applies an object's own text replacements and then any global color-word change, which
      * — rewriting every color word to one word — subsumes whatever the object's own replacements
-     * did to color words regardless of their relative timestamps.
+     * did to color words. An own replacement made after the global change (it carries a later
+     * timestamp) is applied after it instead, so it can rewrite the word the global change supplied.
      */
     public static CardEffect transform(CardEffect effect, List<TextReplacement> own,
                                        List<TextReplacement> global) {
-        return transform(transform(effect, own), global);
+        if (own.stream().noneMatch(replacement -> replacement.timestamp() > 0) || global.isEmpty()) {
+            return transform(transform(effect, own), global);
+        }
+        // A timestamped change is newer than the global rewrite only if it was made later, so the two
+        // lists are applied together in timestamp order (CR 613.7); the sort is stable, so untimed
+        // own replacements stay ahead of the global ones.
+        List<TextReplacement> inOrder = new ArrayList<>(own);
+        inOrder.addAll(global);
+        inOrder.sort(Comparator.comparingLong(TextReplacement::timestamp));
+        return transform(effect, inOrder);
     }
 
     /**

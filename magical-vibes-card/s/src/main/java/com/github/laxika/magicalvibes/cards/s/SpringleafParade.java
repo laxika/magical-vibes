@@ -25,7 +25,7 @@ public class SpringleafParade extends Card {
                 List.of(CardSubtype.SHAPESHIFTER), Set.of(Keyword.CHANGELING), Set.of()));
 
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                ManaAbilities.tapForAnyColor(), GrantScope.OWN_CREATURES,
+                ManaAbilities.tapForAnyColor(), GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsTokenPredicate()));
     }
 }

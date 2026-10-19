@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -42,6 +43,10 @@ public class SoulEchoDamageRedirectionHandler implements MayEffectHandlerBean {
 
         if (accepted && source != null) {
             source.setEchoDamageRedirectionActive(true);
+            UUID echoControllerId = gameQueryService.findPermanentController(gameData, source.getId());
+            if (echoControllerId != null) {
+                gameData.soulEchoReplacementPlayers.add(echoControllerId);
+            }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " chooses the echo-counter replacement for ", ability.sourceCard(), "."));
             log.info("Game {} - {} armed the echo-counter damage replacement on {}", gameData.id,

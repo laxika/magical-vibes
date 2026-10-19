@@ -81,10 +81,8 @@ class SprintingWarbruteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        declareAttackers(player1, List.of(0));
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Sprinting Warbrute");
@@ -125,13 +123,12 @@ class SprintingWarbruteTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent warbrute = findPermanent(player1, "Sprinting Warbrute");
         assertThat(warbrute.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        declareAttackers(player1, List.of(0));
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Sprinting Warbrute");

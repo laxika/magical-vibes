@@ -2375,6 +2375,7 @@ public class GraveyardService {
                 triggerCollectionService.checkControllerArtifactCardsLeaveGraveyardTriggers(gameData, ownerId);
             }
             gameData.graveyardLeaveNotificationPendingOwners.clear();
+            gameData.graveyardLeaveNotificationPendingCards.clear();
             gameData.graveyardLeaveNotificationPendingInstantOrSorceryCards.clear();
             gameData.graveyardExileNotificationPendingCounts.clear();
             gameData.kayaExileNotificationPendingCreatureCards.clear();

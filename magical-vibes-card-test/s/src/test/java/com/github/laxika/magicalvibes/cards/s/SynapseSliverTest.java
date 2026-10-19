@@ -118,6 +118,7 @@ class SynapseSliverTest extends BaseCardTest {
         Permanent synapse = addCreatureReady(player1, new SynapseSliver());
         addAttackingCreature(player2, new CryptSliver());
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new EnormousBaloth()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);

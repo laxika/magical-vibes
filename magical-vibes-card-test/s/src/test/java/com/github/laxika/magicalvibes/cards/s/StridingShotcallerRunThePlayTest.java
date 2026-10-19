@@ -155,9 +155,11 @@ class StridingShotcallerRunThePlayTest extends BaseCardTest {
         assertThat(shotcaller.hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(shotcaller.isPrepared()).isFalse();
 
-        advanceToUpkeep(player1);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(shotcaller.hasKeyword(Keyword.FLYING)).isFalse();
         assertThat(shotcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         declareAttackers(List.of(0));
         resolveAllTriggers();
         assertThat(shotcaller.isPrepared()).isTrue();

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -58,16 +59,19 @@ class SplinterTest extends BaseCardTest {
     @DisplayName("Exiles the target artifact and every same-name copy from graveyard, hand, and library")
     void exilesTargetAndAllCopies() {
         harness.addToBattlefield(player2, new Shuko());
-        harness.setHand(player2, List.of(new Shuko(), new TendoIceBridge()));
+        Card handCopy = new Shuko();
+        Card libraryCopy = new Shuko();
+        harness.setHand(player2, List.of(handCopy, new TendoIceBridge()));
         harness.setGraveyard(player2, List.of(new Shuko(), new TendoIceBridge()));
 
-        harness.setLibrary(player2, List.of(new Shuko(), new TendoIceBridge()));
+        harness.setLibrary(player2, List.of(libraryCopy, new TendoIceBridge()));
 
         harness.setHand(player1, List.of(new Splinter()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Shuko");
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId(), libraryCopy.getId()));
 
         harness.assertNotOnBattlefield(player2, "Shuko");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

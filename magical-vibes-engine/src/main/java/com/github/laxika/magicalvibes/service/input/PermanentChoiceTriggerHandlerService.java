@@ -113,6 +113,16 @@ public class PermanentChoiceTriggerHandlerService {
                 return reason;
             }
         }
+        com.github.laxika.magicalvibes.model.filter.TargetFilter declaredFilter = switch (context) {
+            case PermanentChoiceContext.SpellTargetTriggerAnyTarget stt -> stt.targetFilter();
+            case PermanentChoiceContext.ETBTokenTargetTrigger etb -> etb.targetFilter();
+            default -> null;
+        };
+        if (declaredFilter instanceof com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter playerFilter
+                && gameData.playerIds.contains(chosenId)) {
+            // A player the trigger's own target restriction excludes (e.g. "target opponent").
+            return playerFilter.errorMessage();
+        }
         return "Invalid permanent: " + chosenId;
     }
 
@@ -348,6 +358,17 @@ public class PermanentChoiceTriggerHandlerService {
         }
         if (dtt.sourcePermanentSnapshot() != null) {
             entry.setSourcePermanentSnapshot(dtt.sourcePermanentSnapshot());
+        }
+        if (dtt.excludedGraveyardCardId() != null && dtt.effects().stream().anyMatch(effect ->
+                effect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect damage
+                        && damage.triggeringCreatureDealsDamage())) {
+            // The dying creature deals the damage (last-known information): its lifelink and its
+            // controller apply to that damage rather than the watching permanent's.
+            Card dyingCreatureCard = gameQueryService.findCardInGraveyardById(gameData, dtt.excludedGraveyardCardId());
+            if (dyingCreatureCard != null) {
+                entry.setDamageSourceCard(dyingCreatureCard);
+                entry.setDamageSourceControllerId(dtt.controllerId());
+            }
         }
         pushTriggeredEntry(gameData, entry);
 
@@ -1316,6 +1337,29 @@ public class PermanentChoiceTriggerHandlerService {
     public void handlePreparedOpponentTokenCopiesAttacking(GameData gameData, UUID attackTargetId,
             PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking context) {
         tokenCopySupport.completeOpponentAttackTargetChoice(gameData, attackTargetId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTokenAttackTargetChoice(GameData gameData, UUID attackTargetId,
+            PermanentChoiceContext.TokenAttackTargetChoice context) {
+        Permanent token = gameQueryService.findPermanentById(gameData, context.tokenIds().getFirst());
+        if (token != null) {
+            token.setAttackTarget(attackTargetId);
+        }
+        List<UUID> remaining = context.tokenIds().subList(1, context.tokenIds().size());
+        if (!remaining.isEmpty()) {
+            List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(context.controllerId())).toList();
+            List<UUID> planeswalkerIds = opponentIds.stream()
+                    .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
+                    .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                    .map(Permanent::getId).toList();
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.TokenAttackTargetChoice(context.controllerId(), remaining));
+            playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), planeswalkerIds,
+                    opponentIds, "Choose the player or planeswalker for the token to attack.");
+            return;
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

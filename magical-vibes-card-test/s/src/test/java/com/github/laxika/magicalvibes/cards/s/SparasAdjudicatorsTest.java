@@ -179,8 +179,11 @@ class SparasAdjudicatorsTest extends BaseCardTest {
 
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, "GREEN");
+        // Without a stop here the auto-pass that follows the color choice leaves the upkeep and empties the pool.
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, "GREEN");
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }

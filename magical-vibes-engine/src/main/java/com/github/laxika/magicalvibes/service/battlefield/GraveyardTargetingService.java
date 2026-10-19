@@ -474,7 +474,8 @@ public class GraveyardTargetingService {
         if (graveyard != null) {
             for (Card graveyardCard : graveyard) {
                 if (filter == null
-                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId(),
+                        gameData, controllerId)) {
                     if (maxTotalManaValue != null && graveyardCard.getManaValue() > maxTotalManaValue) {
                         continue;
                     }
@@ -1077,6 +1078,14 @@ public class GraveyardTargetingService {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
                 spellEffects, 0, false, false, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                 false, null, null);
+    }
+
+    public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                    StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
+                                                    List<CardEffect> spellEffects, GraveyardSearchScope source,
+                                                    boolean singleGraveyard) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter, maxTargetsCap,
+                spellEffects, 0, false, false, source, singleGraveyard, null, null);
     }
 
     public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,

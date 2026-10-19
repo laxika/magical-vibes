@@ -28,6 +28,7 @@ class SpinerockTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -60,6 +61,7 @@ class SpinerockTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -79,6 +81,7 @@ class SpinerockTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -113,6 +116,7 @@ class SpinerockTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, firstTarget.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -137,6 +141,7 @@ class SpinerockTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

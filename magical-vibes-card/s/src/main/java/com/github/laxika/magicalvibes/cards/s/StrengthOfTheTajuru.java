@@ -16,8 +16,9 @@ import java.util.List;
 public class StrengthOfTheTajuru extends Card {
 
     public StrengthOfTheTajuru() {
+        setAdditionalCostPerExtraTarget(1);
         addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{1}")));
-        targetX(TargetFilters.creature(), 100)
+        target(TargetFilters.creature(), 1, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }

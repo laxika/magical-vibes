@@ -28,8 +28,8 @@ import java.util.Set;
 public class SoulReap extends Card {
 
     public SoulReap() {
-        // The life loss reads the target's controller, so it runs while the creature is still on the
-        // battlefield — listed before the destroy (Gloomlance pattern).
+        // The destroy comes first, as worded: the creature is already gone when its controller loses life
+        // (last-known controller), so abilities of that creature can't see the life loss.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -37,9 +37,9 @@ public class SoulReap extends Card {
                 )),
                 "Target must be a nongreen creature."
         ))
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new ControllerCastAnotherSpellThisTurn(new CardColorPredicate(CardColor.BLACK)),
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)));
     }
 }

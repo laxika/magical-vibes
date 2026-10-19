@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForControllerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -39,6 +41,9 @@ public class CopyThisSpellForControllerEffectHandler implements NormalEffectHand
         Card copyCard = copySupport.createCopyCard(spellCard);
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 entry, copyCard, entry.getControllerId(), entry.getTargetId());
+        // A copy of a spell isn't cast (CR 707.10), and the choice to copy is made on resolution, so
+        // the copy carries no copy step of its own.
+        copyEntry.getEffectsToResolve().removeIf(CopyThisSpellForControllerEffectHandler::isCopyStep);
         copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
@@ -52,6 +57,19 @@ public class CopyThisSpellForControllerEffectHandler implements NormalEffectHand
                     "Choose new targets for the copy of " + spellCard.getName() + "?",
                     copyCard.getId()
             ));
+        }
+    }
+
+    private static boolean isCopyStep(CardEffect effect) {
+        CardEffect unwrapped = effect;
+        while (true) {
+            if (unwrapped instanceof MayEffect may) {
+                unwrapped = may.wrapped();
+            } else if (unwrapped instanceof ConditionalEffect conditional) {
+                unwrapped = conditional.wrapped();
+            } else {
+                return unwrapped instanceof CopyThisSpellForControllerEffect;
+            }
         }
     }
 }

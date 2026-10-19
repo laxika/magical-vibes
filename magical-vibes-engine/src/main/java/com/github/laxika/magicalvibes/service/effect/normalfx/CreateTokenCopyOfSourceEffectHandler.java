@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -43,6 +46,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
     private final CloneService cloneService;
     private final AmountEvaluationService amountEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -88,6 +92,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                 Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
                 List<Permanent> simultaneouslyEntered = new ArrayList<>();
                 List<Card> enteredTokenCards = new ArrayList<>();
+                List<UUID> attackingTokenIds = new ArrayList<>();
                 for (int copy = 0; copy < totalAmount; copy++) {
                     // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
                     Card tokenCard = new Card();
@@ -228,6 +233,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     if (e.tappedAndAttacking()) {
                         // CR 508.4: it is attacking but was never declared as an attacker.
                         tokenPermanent.enterAttacking(true);
+                        attackingTokenIds.add(tokenPermanent.getId());
                         if (sourceForRelativeValues != null) {
                             tokenPermanent.setAttackTarget(sourceForRelativeValues.getAttackTarget());
                         }
@@ -275,5 +281,34 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     battlefieldEntryService.handleCreatureEnteredBattlefield(
                             gameData, entry.getControllerId(), enteredTokenCard, null, false);
                 }
+
+                if (!attackingTokenIds.isEmpty()) {
+                    chooseAttackTargets(gameData, entry.getControllerId(), attackingTokenIds);
+                }
+    }
+
+    /**
+     * CR 508.4: the controller of a creature put onto the battlefield attacking chooses which player or
+     * planeswalker it is attacking. With a single opposing player and no planeswalkers there is no choice.
+     */
+    private void chooseAttackTargets(GameData gameData, UUID controllerId, List<UUID> tokenIds) {
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId)).toList();
+        List<UUID> planeswalkerIds = opponentIds.stream()
+                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId).toList();
+        if (opponentIds.isEmpty()) return;
+        if (opponentIds.size() == 1 && planeswalkerIds.isEmpty()) {
+            for (UUID tokenId : tokenIds) {
+                Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
+                if (token != null) token.setAttackTarget(opponentIds.getFirst());
+            }
+            return;
+        }
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.TokenAttackTargetChoice(controllerId, tokenIds));
+        playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkerIds, opponentIds,
+                "Choose the player or planeswalker for the token to attack.");
     }
 }

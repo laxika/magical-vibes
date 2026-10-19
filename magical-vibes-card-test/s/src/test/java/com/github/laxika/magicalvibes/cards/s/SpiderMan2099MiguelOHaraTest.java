@@ -49,12 +49,12 @@ class SpiderMan2099MiguelOHaraTest extends BaseCardTest {
     @DisplayName("ETB can choose no targets even when a creature is available")
     void entersWithoutReturningCreature() {
         addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new SpiderMan2099MiguelOHara()));
         addManaForSpiderMan();
 
         harness.castCreature(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Spider-Man 2099, Miguel O'Hara");

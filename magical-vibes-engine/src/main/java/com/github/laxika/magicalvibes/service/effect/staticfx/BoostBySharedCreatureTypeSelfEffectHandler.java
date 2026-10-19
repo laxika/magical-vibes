@@ -39,7 +39,7 @@ public class BoostBySharedCreatureTypeSelfEffectHandler implements StaticEffectH
         final int[] count = {0};
         gameData.forEachPermanent((playerId, other) -> {
             if (other.getId().equals(source.getId())) return;
-            if (!support.isEffectivelyCreature(gameData, other, hasAnimateArtifacts)) return;
+            if (boost.filter() == null && !support.isEffectivelyCreature(gameData, other, hasAnimateArtifacts)) return;
             if (!support.matchesStaticFilter(context, other, boost.filter())) return;
             if (support.sharesCreatureType(source, other)) count[0]++;
         });

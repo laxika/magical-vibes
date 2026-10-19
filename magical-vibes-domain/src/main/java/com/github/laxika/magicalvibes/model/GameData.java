@@ -118,6 +118,11 @@ public class GameData {
     public int untapStepUntappedPermanentCount;
     /** Player whose untap step owns {@link #untapStepUntappedPermanentCount}. */
     public UUID untapStepPlayerId;
+    /**
+     * The player whose untap-step phasing has already been applied ahead of a Storage Matrix choice,
+     * so {@code UntapStepService.untapPermanents} does not apply it a second time.
+     */
+    public UUID untapPhasingAppliedPlayerId;
     public int turnNumber;
 
     /** Counts main phases that have begun during the current turn. */
@@ -981,6 +986,12 @@ public class GameData {
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
     /** Target IDs to colors whose damage is prevented to that target until end of turn. */
     public final Map<UUID, Set<CardColor>> colorDamagePreventionUntilEndOfTurn = new ConcurrentHashMap<>();
+    /**
+     * Controller IDs to colors whose damage is prevented to every creature that controller controls,
+     * including creatures that enter later this turn (one-shot prevention is not a continuous effect).
+     */
+    public final Map<UUID, Set<CardColor>> colorDamagePreventionForControlledCreaturesUntilEndOfTurn =
+            new ConcurrentHashMap<>();
     /** Target IDs to which damage from colorless sources is prevented until end of turn. */
     public final Set<UUID> colorlessDamagePreventionUntilEndOfTurn = ConcurrentHashMap.newKeySet();
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
@@ -1005,6 +1016,11 @@ public class GameData {
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
      */
     public final List<UUID> eachPlayerDamageUnlessPaysRemaining = new ArrayList<>();
+    /**
+     * Players (one entry per declined prompt) who declined to pay in the current pay-or-take-damage
+     * queue; their damage is dealt together once every prompt has been answered.
+     */
+    public final List<UUID> eachPlayerDamageUnlessPaysDeclined = new ArrayList<>();
     /** Progress state for Whirlwind Denial's opponent-by-opponent pay-or-counter sequence. */
     public final WhirlwindDenialState whirlwindDenial = new WhirlwindDenialState();
     /**
@@ -1082,6 +1098,11 @@ public class GameData {
     /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
+    /**
+     * The player whose library shuffles once the free cast that is currently being set up has put its
+     * spell on the stack ("may cast that card without paying its mana cost. Then the player shuffles").
+     */
+    public UUID libraryToShuffleAfterFreeCast;
     /** Target awaiting a resolution-time damage-allocation answer for a divided damage effect. */
     public UUID pendingDividedDamageTargetId;
     public PendingAbilityCounterCostActivation pendingAbilityCounterCostActivation;
@@ -1406,6 +1427,9 @@ public class GameData {
     public TurnStep additionalCombatMainPhasePairsReturnStep;
     /** Additional beginning phases queued after the current postcombat main phase. */
     public int additionalBeginningPhasesAfterPostcombatMain;
+    /** How many of the queued postcombat-main beginning phases were created after the queued
+     *  combat/main pairs and therefore happen before them. */
+    public int additionalBeginningPhasesBeforeQueuedCombat;
     /** The ordinary phase to resume after inserted beginning phases. */
     public TurnStep additionalBeginningPhaseReturnStep;
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
@@ -2338,6 +2362,9 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+    /** The source card of the delayed trigger counted in {@link #pendingNextInstantSorceryCopyThisTurnCount},
+     *  so the copy trigger's source is the object that created it (CR 603.7e), not the spell it copies. */
+    public final Map<UUID, Card> pendingNextInstantSorceryCopyThisTurnCountSource = new ConcurrentHashMap<>();
     /** Pending one-shot grants that give the next instant or sorcery spell Storm this turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryStormThisTurnCount = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> pendingNextInstantSorceryCastFromHandToHandThisTurnCount =
@@ -2348,6 +2375,9 @@ public class GameData {
             new ConcurrentHashMap<>();
     /** Pending one-shot spell-copy counts evaluated when the next instant or sorcery is cast. */
     public final Map<UUID, List<DynamicAmount>> pendingNextInstantSorceryCopyThisTurnDynamicCounts =
+            new ConcurrentHashMap<>();
+    /** Source cards of {@link #pendingNextInstantSorceryCopyThisTurnDynamicCounts}, in the same order. */
+    public final Map<UUID, List<Card>> pendingNextInstantSorceryCopyThisTurnDynamicSources =
             new ConcurrentHashMap<>();
     /** Pending one-shot "when you next cast a spell this turn, copy that spell" delayed triggers. */
     public final Map<UUID, Integer> pendingNextSpellCopyThisTurnCount = new ConcurrentHashMap<>();
@@ -2565,6 +2595,9 @@ public class GameData {
     public final Map<UUID, UUID> exilePlayPermissionSourceCards = new ConcurrentHashMap<>();
     /** Maps a card with a source-controlled exile-play permission to its source permanent. */
     public final Map<UUID, UUID> exilePlayPermissionSourcePermanents = new ConcurrentHashMap<>();
+    /** Maps a card exiled by a Saga's chapter to that Saga: the exiling player may play it during any turn
+     *  they put a lore counter on the Saga (Summon: Brynhildr). The permission is renewed each such turn. */
+    public final Map<UUID, UUID> exilePlayPermissionLoreCounterSagas = new ConcurrentHashMap<>();
     /** Cost modifiers attached to cards that may be played from exile. */
     public final Map<UUID, ExilePlayCostModifier> exilePlayCostModifiers = new ConcurrentHashMap<>();
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
@@ -3330,6 +3363,13 @@ public class GameData {
 
     /** Permanent IDs that have replaced a token creation event this turn. */
     public final Set<UUID> tokenCreationReplacementUsedThisTurn = ConcurrentHashMap.newKeySet();
+    /**
+     * Players whose Soul Echo replacement ("for each 1 damage that would be dealt to you until your next
+     * upkeep, you remove an echo counter instead") was chosen. The effect is independent of its source, so it
+     * keeps replacing damage with nothing after Soul Echo has left the battlefield; it ends at that player's
+     * next upkeep.
+     */
+    public final Set<UUID> soulEchoReplacementPlayers = ConcurrentHashMap.newKeySet();
     /** Token creation event paused for a once-per-turn replacement choice. */
     public PendingTokenCreationReplacement pendingTokenCreationReplacement;
 
@@ -4445,6 +4485,15 @@ public class GameData {
         activeTriggeredAbilityCopies = previous;
     }
 
+    private void recordGraveyardTargetVersions(StackEntry entry) {
+        if (entry.getTargetCardIds() == null) {
+            return;
+        }
+        for (UUID cardId : entry.getTargetCardIds()) {
+            entry.recordTargetCardGraveyardVersion(cardId, graveyardEntryVersion(cardId));
+        }
+    }
+
     private int activeTriggeredAbilityCopies() {
         return activeTriggeredAbilityCopies;
     }
@@ -4462,6 +4511,7 @@ public class GameData {
             boolean added = super.add(entry);
             if (added) {
                 gameData.recordStackEntryForCrime(entry);
+                gameData.recordGraveyardTargetVersions(entry);
             }
             if (added && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
                 for (int i = 1; i < gameData.activeTriggeredAbilityCopies(); i++) {
@@ -4480,6 +4530,7 @@ public class GameData {
         public void add(int index, StackEntry entry) {
             super.add(index, entry);
             gameData.recordStackEntryForCrime(entry);
+            gameData.recordGraveyardTargetVersions(entry);
             gameData.recordCurrentStackSourceCount();
         }
 
@@ -4488,6 +4539,7 @@ public class GameData {
             boolean added = super.addAll(entries);
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);
+                entries.forEach(gameData::recordGraveyardTargetVersions);
                 gameData.recordCurrentStackSourceCount();
             }
             return added;
@@ -4498,6 +4550,7 @@ public class GameData {
             boolean added = super.addAll(index, entries);
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);
+                entries.forEach(gameData::recordGraveyardTargetVersions);
                 gameData.recordCurrentStackSourceCount();
             }
             return added;
@@ -6908,6 +6961,7 @@ public class GameData {
             additionalExileLookPermissions.remove(cardId);
             clearExilePlayPermissionGroup(cardId);
             exilePlayPermissionConditions.remove(cardId);
+            exilePlayPermissionLoreCounterSagas.remove(cardId);
             exilePlayPermissionSpellFilters.remove(cardId);
             exilePlayForLifeEqualToManaValue.remove(cardId);
             exilePlayCostModifiers.remove(cardId);
@@ -7509,6 +7563,7 @@ public class GameData {
         copy.initiativePlayerId = this.initiativePlayerId;
         copy.untapStepUntappedPermanentCount = this.untapStepUntappedPermanentCount;
         copy.untapStepPlayerId = this.untapStepPlayerId;
+        copy.untapPhasingAppliedPlayerId = this.untapPhasingAppliedPlayerId;
         copy.turnNumber = this.turnNumber;
         copy.mainPhasesBegunThisTurn = this.mainPhasesBegunThisTurn;
         copy.postcombatMainPhasesBegunThisTurn = this.postcombatMainPhasesBegunThisTurn;
@@ -7593,6 +7648,7 @@ public class GameData {
                 ? copy.pendingEffectResolutionEntry
                 : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);
         copy.chosenXValue = this.chosenXValue;
+        copy.libraryToShuffleAfterFreeCast = this.libraryToShuffleAfterFreeCast;
         copy.pendingDividedDamageTargetId = this.pendingDividedDamageTargetId;
         copy.pendingAbilityCounterCostActivation = this.pendingAbilityCounterCostActivation;
         copy.chosenCostCounterType = this.chosenCostCounterType;
@@ -7824,6 +7880,7 @@ public class GameData {
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatMainPhasePairsReturnStep = this.additionalCombatMainPhasePairsReturnStep;
         copy.additionalBeginningPhasesAfterPostcombatMain = this.additionalBeginningPhasesAfterPostcombatMain;
+        copy.additionalBeginningPhasesBeforeQueuedCombat = this.additionalBeginningPhasesBeforeQueuedCombat;
         copy.additionalBeginningPhaseReturnStep = this.additionalBeginningPhaseReturnStep;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.aggressiveCombatPhasesOnly = this.aggressiveCombatPhasesOnly;
@@ -7977,6 +8034,11 @@ public class GameData {
             copied.addAll(colors);
             copy.colorDamagePreventionUntilEndOfTurn.put(targetId, copied);
         });
+        this.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.forEach((controllerId, colors) -> {
+            Set<CardColor> copied = ConcurrentHashMap.newKeySet();
+            copied.addAll(colors);
+            copy.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.put(controllerId, copied);
+        });
         copy.colorlessDamagePreventionUntilEndOfTurn.addAll(this.colorlessDamagePreventionUntilEndOfTurn);
         this.handsRevealedWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
             Set<UUID> copied = ConcurrentHashMap.newKeySet();
@@ -8125,6 +8187,8 @@ public class GameData {
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
         copy.foretoldCardCosts.putAll(this.foretoldCardCosts);
         copy.foretoldCardTurnsTaken.putAll(this.foretoldCardTurnsTaken);
+        this.pendingNextInstantSorceryCopyThisTurnDynamicSources.forEach((playerId, sources) ->
+                copy.pendingNextInstantSorceryCopyThisTurnDynamicSources.put(playerId, new ArrayList<>(sources)));
         this.pendingNextInstantSorceryCopyThisTurnMaxManaValues.forEach((playerId, maxManaValues) ->
                 copy.pendingNextInstantSorceryCopyThisTurnMaxManaValues.put(
                         playerId, new ArrayList<>(maxManaValues)));
@@ -8438,6 +8502,7 @@ public class GameData {
         this.bendingTypesCompletedThisTurn.forEach((k, v) ->
                 copy.bendingTypesCompletedThisTurn.put(k, new java.util.HashSet<>(v)));
         copy.tokenCreationReplacementUsedThisTurn.addAll(this.tokenCreationReplacementUsedThisTurn);
+        copy.soulEchoReplacementPlayers.addAll(this.soulEchoReplacementPlayers);
         copy.pendingTokenCreationReplacement = this.pendingTokenCreationReplacement;
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
         copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
@@ -8682,6 +8747,7 @@ public class GameData {
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
+        copy.eachPlayerDamageUnlessPaysDeclined.addAll(this.eachPlayerDamageUnlessPaysDeclined);
         copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.pendingCardDraws.addAll(this.pendingCardDraws);
@@ -9119,6 +9185,7 @@ public class GameData {
         copy.pendingPathOfAncestryManaChoices.putAll(this.pendingPathOfAncestryManaChoices);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.pendingNextInstantSorceryCopyThisTurnCountSource.putAll(this.pendingNextInstantSorceryCopyThisTurnCountSource);
         copy.pendingNextInstantSorceryStormThisTurnCount.putAll(this.pendingNextInstantSorceryStormThisTurnCount);
         copy.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
                 .putAll(this.pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
@@ -9166,6 +9233,7 @@ public class GameData {
         copy.exilePlayForLifeEqualToManaValue.addAll(this.exilePlayForLifeEqualToManaValue);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
         copy.exilePlayPermissionSourcePermanents.putAll(this.exilePlayPermissionSourcePermanents);
+        copy.exilePlayPermissionLoreCounterSagas.putAll(this.exilePlayPermissionLoreCounterSagas);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);

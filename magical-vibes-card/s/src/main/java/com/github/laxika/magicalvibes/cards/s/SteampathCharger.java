@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class SteampathCharger extends Card {
 
     public SteampathCharger() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addEffect(EffectSlot.STATIC, new KickerEffect("{2}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_DEATH, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));

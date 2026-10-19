@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /** Shared-deck Planechase actions. Callers own the game mutation and priority boundaries. */
 @Service
@@ -250,8 +249,8 @@ public class PlanechaseService {
         }
 
         List<Card> revealed = List.of(state.deck.removeFirst(), state.deck.removeFirst());
-        logs.append(game, GameLog.text("The top two cards of the planar deck are revealed: "
-                + revealed.stream().map(Card::getName).collect(Collectors.joining(", ")) + "."));
+        logs.append(game, GameLog.text(game.playerIdToName.get(state.controllerId)
+                + " looks at the top two cards of the planar deck."));
         interactions.begin(game, new PendingInteraction.PlanarCardChoice(
                 state.controllerId, revealed, revealed.stream().map(Card::getId).toList(),
                 "Choose one card to put on the bottom of the planar deck, then planeswalk.", true));

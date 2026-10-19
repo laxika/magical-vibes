@@ -17,6 +17,6 @@ public class SowerOfTemptation extends Card {
         // as this creature remains on the battlefield. (Flying is auto-loaded.)
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS));
     }
 }

@@ -206,7 +206,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
     @DisplayName("An opponent-owned permanent returns to its owner after its controller exiles it")
     void returnsUnderOwnersControl() {
         Permanent stolen = harness.addToBattlefieldAndReturn(player1, new JoustingLance());
-        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        setOwnerAndController(stolen, player2, player1);
         castAndExile(stolen.getId());
 
         advanceToEndStep();

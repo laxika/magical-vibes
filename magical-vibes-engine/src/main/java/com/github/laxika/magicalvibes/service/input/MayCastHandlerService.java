@@ -562,6 +562,28 @@ public class MayCastHandlerService {
         castRevealedCardWithoutPaying(gameData, player, card, ownerId, null, false);
     }
 
+    /**
+     * Whether {@code card} can legally be cast without paying its mana cost right now: a targeted
+     * non-split spell needs at least one legal target (CR 601.2c). Split cards are left to their own
+     * half-selection flow and are reported as castable.
+     */
+    public boolean hasLegalFreeCastTarget(GameData gameData, Player player, Card card) {
+        if (SplitCardCastSupport.isSplitCard(card)) {
+            return true;
+        }
+        if (!EffectResolution.needsTarget(card) && !EffectResolution.needsSpellTarget(card)) {
+            return true;
+        }
+        boolean permanentSpell = card.hasType(CardType.CREATURE)
+                || card.hasType(CardType.ARTIFACT)
+                || card.hasType(CardType.ENCHANTMENT)
+                || card.hasType(CardType.PLANESWALKER);
+        List<CardEffect> spellEffects = permanentSpell
+                ? List.of()
+                : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        return !buildValidSpellTargets(gameData, card, spellEffects, player.getId()).isEmpty();
+    }
+
     public void castRevealedCardWithoutPaying(GameData gameData, Player player, Card card, UUID ownerId,
                                               List<Card> cardsToBottom, boolean deferCompletion) {
         String playerName = player.getUsername();
@@ -674,6 +696,8 @@ public class MayCastHandlerService {
         boolean canTargetPermanent = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 || card.getTargetFilter() instanceof PermanentPredicateTargetFilter;
         if (canTargetPermanent) {
+            // An effect-declared restriction ("any target", ...) is already applied to legalPermanentTargets.
+            var declaredPermanentRestriction = EffectResolution.declaredPermanentRestriction(spellEffects);
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
@@ -689,6 +713,7 @@ public class MayCastHandlerService {
                             validTargets.add(p.getId());
                         }
                     } else if (gameQueryService.isCreature(gameData, p)
+                            || declaredPermanentRestriction.isPresent()
                             || gameQueryService.isPlaneswalker(gameData, p)
                             && spellEffects.stream().anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
                             && (divided.canTargetPlayers() || divided.canTargetPlaneswalkers()))) {

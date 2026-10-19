@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,10 @@ public class Stangg extends Card {
                 0,
                 Set.of());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenAndLinkToSourceEffect(twin));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ExileTokensCreatedWithSourceEffect());
+        // "Exile that token when Stangg leaves the battlefield. Sacrifice Stangg when that token leaves the
+        // battlefield." Both are delayed triggered abilities created by the enters trigger, so they stay under
+        // the enters trigger's controller even if Stangg changes controllers.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenAndLinkToSourceEffect(
+                twin, false, new SacrificeSelfEffect(), new ExileTokensCreatedWithSourceEffect()));
     }
 }

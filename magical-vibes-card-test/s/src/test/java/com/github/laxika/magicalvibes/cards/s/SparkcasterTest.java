@@ -129,6 +129,7 @@ class SparkcasterTest extends BaseCardTest {
     @DisplayName("An illegal damage target does not stop the mandatory creature return")
     void illegalDamageTargetDoesNotStopReturn() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         castSparkcaster(planeswalker.getId());
         harness.passBothPriorities();
         chooseDamageFirstIfOrderingRequested();

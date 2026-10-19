@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,8 @@ public class PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEff
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
             if (permanent.getId().equals(sourcePermanentId)
                     || !gameQueryService.isCreature(gameData, permanent)
-                    || !matches(gameData, entry, boost, permanent.getCard(), controllerId)) {
+                    || !(matches(gameData, entry, boost, permanent.getCard(), controllerId)
+                    || hasEffectiveSubtypeOnBattlefield(gameData, boost, permanent))) {
                 continue;
             }
             PerpetualCardPowerToughnessSupport.remember(
@@ -46,6 +48,14 @@ public class PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEff
 
         applyToCards(gameData, entry, boost, gameData.playerHands.getOrDefault(controllerId, List.of()), controllerId);
         applyToCards(gameData, entry, boost, gameData.playerDecks.getOrDefault(controllerId, List.of()), controllerId);
+    }
+
+    /** A battlefield creature counts as the filtered subtype when layers give it that type (Xenograft). */
+    private boolean hasEffectiveSubtypeOnBattlefield(
+            GameData gameData, PerpetuallyBoostOtherControlledCreaturesAndCardsInHandAndLibraryEffect effect,
+            Permanent permanent) {
+        return effect.filter() instanceof CardSubtypePredicate subtype
+                && gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype.subtype());
     }
 
     private void applyToCards(GameData gameData, StackEntry entry,

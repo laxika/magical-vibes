@@ -12,9 +12,8 @@ public class StompAndHowl extends Card {
     public StompAndHowl() {
         setAllowSharedTargets(true);
 
-        target(TargetFilters.artifact())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        target(TargetFilters.enchantment())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        DestroyTargetPermanentEffect destroy = new DestroyTargetPermanentEffect();
+        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, destroy);
+        target(TargetFilters.enchantment()).bindEffect(destroy);
     }
 }

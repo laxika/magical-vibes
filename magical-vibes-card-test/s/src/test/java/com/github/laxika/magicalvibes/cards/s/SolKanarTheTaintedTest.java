@@ -116,7 +116,7 @@ class SolKanarTheTaintedTest extends BaseCardTest {
         beginEndStep();
         harness.handleListChoice(player1, DAMAGE);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         assertThat(gqs.findPermanentById(gd, target.getId())).isNotNull();
         assertThat(target.getMarkedDamage()).isEqualTo(3);

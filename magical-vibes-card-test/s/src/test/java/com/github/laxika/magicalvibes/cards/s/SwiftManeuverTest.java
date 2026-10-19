@@ -117,7 +117,7 @@ class SwiftManeuverTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passBothPriorities());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }

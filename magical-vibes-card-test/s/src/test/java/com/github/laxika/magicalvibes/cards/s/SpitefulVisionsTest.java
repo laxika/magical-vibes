@@ -122,7 +122,7 @@ class SpitefulVisionsTest extends BaseCardTest {
     void damageTriggersSurviveSourceRemoval() {
         harness.addToBattlefield(player1, new SpitefulVisions());
         harness.setLife(player2, 20);
-        harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         gd.playerBattlefields.get(player1.getId()).clear();

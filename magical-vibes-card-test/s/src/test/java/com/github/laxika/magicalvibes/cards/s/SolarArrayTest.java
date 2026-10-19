@@ -44,7 +44,6 @@ class SolarArrayTest extends BaseCardTest {
         MyrRetriever second = new MyrRetriever();
         harness.setHand(player1, List.of(first, second));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 

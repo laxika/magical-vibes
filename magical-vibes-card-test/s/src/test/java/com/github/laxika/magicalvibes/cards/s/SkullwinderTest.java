@@ -24,7 +24,7 @@ class SkullwinderTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCard, otherOpponentCard));
         castAndResolveEtb();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(ownCard);
         harness.passBothPriorities();
 
@@ -50,9 +50,10 @@ class SkullwinderTest extends BaseCardTest {
         Card ownCard = new Forest();
         harness.setGraveyard(player1, List.of(ownCard));
         harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of());
         castAndResolveEtb();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(ownCard);
@@ -72,7 +73,7 @@ class SkullwinderTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCard));
         castAndResolveEtb();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(ownCard);
@@ -104,7 +105,7 @@ class SkullwinderTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCard));
         castAndResolveEtb();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
         chooseOpponentIfPrompted();
         harness.setGraveyard(player1, List.of());
         harness.setExile(player1, List.of(ownCard));

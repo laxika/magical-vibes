@@ -143,6 +143,7 @@ class StarfieldVocalistTest extends BaseCardTest {
         StarfieldVocalist vocalist = new StarfieldVocalist();
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(vocalist));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

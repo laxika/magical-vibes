@@ -56,9 +56,9 @@ public class DestroyTargetPermanentsThenEffectHandler implements NormalEffectHan
         List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
                 gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
 
-        // "For each permanent destroyed this way": nothing destroyed means the rider never happens,
-        // so a zero-count search does not shuffle the library.
-        if (e.thenEffect() == null || destroyed.isEmpty()) {
+        // The rider always runs, even when nothing was destroyed: its count is the number destroyed
+        // (zero for none), and the "then shuffle" half of the instruction is not conditional on it.
+        if (e.thenEffect() == null) {
             return;
         }
 

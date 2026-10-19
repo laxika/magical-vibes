@@ -33,7 +33,7 @@ public class SpectralAdversary extends Card {
                                 new PermanentIsEnchantmentPredicate()
                         )),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                )), "Target must be another artifact, creature, or enchantment"), 100);
+                )), "Target must be another artifact, creature, or enchantment"), 1000);
         registerEffectTargetIndex(phaseOut, 0);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PayManaAnyNumberOfTimesPutCountersOnSelfEffect(

@@ -153,7 +153,8 @@ class SoulSeizerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
 
-        harness.getPermanentRemovalService().removePermanentToHand(gd, soulSeizer);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, soulSeizer));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

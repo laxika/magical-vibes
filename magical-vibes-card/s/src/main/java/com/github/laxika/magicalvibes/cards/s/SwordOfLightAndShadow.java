@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -30,15 +31,17 @@ public class SwordOfLightAndShadow extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
                 Set.of(CardColor.WHITE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
+        // One ability: if the chosen graveyard target is illegal on resolution it does nothing at all,
+        // including the life gain (CR 608.2b).
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
-                new GainLifeEffect(3));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
-                new MayEffect(ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.HAND)
-                        .filter(new CardTypePredicate(CardType.CREATURE))
-                        .targetGraveyard(true)
-                        .upTo(true)
-                        .build(), "Return the targeted creature card to your hand?"));
+                SequenceEffect.of(
+                        new GainLifeEffect(3),
+                        new MayEffect(ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .targetGraveyard(true)
+                                .upTo(true)
+                                .build(), "Return the targeted creature card to your hand?")));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

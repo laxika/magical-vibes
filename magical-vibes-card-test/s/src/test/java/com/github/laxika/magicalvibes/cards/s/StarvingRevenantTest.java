@@ -146,6 +146,7 @@ class StarvingRevenantTest extends BaseCardTest {
         harness.addToBattlefield(player1, new StarvingRevenant());
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -215,6 +216,7 @@ class StarvingRevenantTest extends BaseCardTest {
 
     private void drawAndResolveTrigger() {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.passBothPriorities();
         chooseOpponentIfPrompted();
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }

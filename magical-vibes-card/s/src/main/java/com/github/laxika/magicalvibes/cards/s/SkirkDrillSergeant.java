@@ -7,9 +7,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
@@ -33,6 +38,15 @@ public class SkirkDrillSergeant extends Card {
         // Otherwise, put it into your graveyard.
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), DRILL_SERGEANT_ABILITY));
+        // A noncreature Goblin permanent that dies is not a creature, so it reaches this card through the
+        // ally and opponent permanent slots instead (CR 700.4: "dies" means put into a graveyard from the battlefield).
+        TriggeringPermanentConditionalEffect noncreatureGoblinDies = new TriggeringPermanentConditionalEffect(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
+                        new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
+                DRILL_SERGEANT_ABILITY);
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, noncreatureGoblinDies);
+        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, noncreatureGoblinDies);
         addEffect(EffectSlot.ON_DEATH, DRILL_SERGEANT_ABILITY);
     }
 }

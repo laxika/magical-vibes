@@ -47,7 +47,9 @@ public class AetherworksMarvelEffectHandler implements NormalEffectHandlerBean {
         if (count == 0) {
             return;
         }
-        List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, count);
+        // The looked-at cards stay in the library until the player chooses (looking at cards moves
+        // nothing); the cast-without-paying choice removes them and bottoms the rest.
+        List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " looks at the top " + count + " cards of their library ("
                 + entry.getCard().getName() + ")."));
@@ -56,6 +58,7 @@ public class AetherworksMarvelEffectHandler implements NormalEffectHandlerBean {
                 .filter(card -> !card.hasType(CardType.LAND))
                 .toList();
         if (castable.isEmpty()) {
+            deck.subList(0, count).clear();
             Collections.shuffle(topCards);
             deck.addAll(topCards);
             return;

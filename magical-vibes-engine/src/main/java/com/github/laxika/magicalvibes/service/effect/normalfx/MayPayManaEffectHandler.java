@@ -139,6 +139,11 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             return null;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+        if (controllerId == null) {
+            // An earlier step of this spell moved the target away (String of Disappearances): its
+            // controller is the one it had as it left the battlefield (CR 608.2h).
+            controllerId = entry.getRemovedPermanentControllers().get(targetId);
+        }
         if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
             controllerId = entry.getTriggeringPermanentControllerId();
         }

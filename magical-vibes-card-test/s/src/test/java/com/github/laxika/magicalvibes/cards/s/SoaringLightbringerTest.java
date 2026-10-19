@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NyxbornBehemoth;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -30,8 +31,10 @@ class SoaringLightbringerTest extends BaseCardTest {
         addCreatureReady(player1, new SoaringLightbringer());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(1));
+            resolveAllTriggers();
+        });
 
         Permanent glimmer = findPermanent(player1, "Glimmer");
         assertThat(glimmer.isTapped()).isTrue();
@@ -47,8 +50,10 @@ class SoaringLightbringerTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0, 1, 2));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1, 2));
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanents(player1, "Glimmer")).hasSize(1);
         Permanent glimmer = findPermanent(player1, "Glimmer");

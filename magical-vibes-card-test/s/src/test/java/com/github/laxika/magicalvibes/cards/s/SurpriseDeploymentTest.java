@@ -155,9 +155,7 @@ class SurpriseDeploymentTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         Permanent entered = findPermanent(player1, "Alpha Kavu");
         harness.inMutationScope(() -> {
-            gd.playerBattlefields.get(player1.getId()).remove(entered);
-            gd.playerBattlefields.get(player2.getId()).add(entered);
-            gd.stolenCreatures.put(entered.getId(), player1.getId());
+            setOwnerAndController(entered, player1, player2);
         });
 
         harness.passUntil(TurnStep.END_STEP);

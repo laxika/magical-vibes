@@ -31,6 +31,19 @@ public final class LibraryShuffleHelper {
         checkShuffleTriggers(gameData, playerId);
     }
 
+    /**
+     * Shuffles the library recorded in {@code libraryToShuffleAfterFreeCast}, if any. Called once the
+     * free-cast spell has been put on the stack, so shuffle triggers go on the stack above it.
+     */
+    public static void shuffleLibraryPendingAfterFreeCast(GameData gameData) {
+        UUID playerId = gameData.libraryToShuffleAfterFreeCast;
+        if (playerId == null) {
+            return;
+        }
+        gameData.libraryToShuffleAfterFreeCast = null;
+        shuffleLibrary(gameData, playerId);
+    }
+
     private static void checkShuffleTriggers(GameData gameData, UUID shufflingPlayerId) {
         gameData.forEachPermanent((controllerId, perm) -> {
             List<CardEffect> effects = new ArrayList<>(

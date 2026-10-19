@@ -91,6 +91,7 @@ class SurgeOfBrillianceTest extends BaseCardTest {
         Card firstDraw = new SurgeOfBrilliance();
         Card secondDraw = new SurgeOfBrilliance();
         Card remainingCard = new SurgeOfBrilliance();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(firstDraw, secondDraw, remainingCard));
         for (int i = 0; i < 2; i++) {
             SurgeOfBrilliance spell = new SurgeOfBrilliance();

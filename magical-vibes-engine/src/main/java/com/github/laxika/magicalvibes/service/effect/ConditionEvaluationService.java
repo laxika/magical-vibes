@@ -1627,6 +1627,12 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && !ctx.controllerId().equals(gameData.activePlayerId);
             case TargetPermanentMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+                if (target == null && ctx.targetId() != null) {
+                    // Last known information: "if it was a token" after the target already left (CR 608.2h).
+                    target = gameData.departedPermanentSnapshots.values().stream()
+                            .filter(departed -> ctx.targetId().equals(departed.getId()))
+                            .findFirst().orElse(null);
+                }
                 yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
             }
             case TargetPermanentManaValueEqualsControllerUnspentMana ignored -> {
@@ -4669,8 +4675,11 @@ public class ConditionEvaluationService {
         Card imprintedCard = ctx.triggeringCard() != null
                 ? ctx.triggeringCard() : gameData.getImprintedCard(sourceCard);
         boolean discardedCard = "discarded card".equals(condition.subject());
+        // An ability that resolves with a snapshot of the card its cost exiled uses that card's last
+        // known information if it has since left exile (CR 608.2h); a static check needs it still exiled.
+        boolean lastKnownCostCard = !ctx.staticEvaluation() && ctx.triggeringCard() != null;
         return imprintedCard != null
-                && (discardedCard || gameData.findExiledCard(imprintedCard.getId()) != null)
+                && (discardedCard || lastKnownCostCard || gameData.findExiledCard(imprintedCard.getId()) != null)
                 && predicateEvaluationService.matchesCardPredicate(
                 imprintedCard, condition.filter(), sourceCard.getId(), gameData, ctx.controllerId());
     }

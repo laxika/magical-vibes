@@ -684,6 +684,10 @@ public class Permanent {
     private final Set<UUID> losesAllAbilitiesUntilNextTurnControllers = new HashSet<>();
     /** Concrete printed static effect types suppressed on this permanent until end of turn. */
     private final Set<Class<? extends CardEffect>> suppressedStaticEffectsUntilEndOfTurn = new HashSet<>();
+    /** Static effect objects removed from this permanent until end of turn; an effect it gains later is a
+     *  different object and is not affected (CR 611.2c). Compared by identity. */
+    private final Set<CardEffect> suppressedStaticEffectInstancesUntilEndOfTurn =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
     @Setter private boolean losesAllAbilitiesPermanently;
     /** When true, this permanent has lost all creature types until end of turn (e.g. Amoeboid Changeling).
@@ -1185,6 +1189,7 @@ public class Permanent {
         this.losesAllAbilitiesUntilNextTurnControllers.addAll(
                 source.losesAllAbilitiesUntilNextTurnControllers);
         this.suppressedStaticEffectsUntilEndOfTurn.addAll(source.suppressedStaticEffectsUntilEndOfTurn);
+        this.suppressedStaticEffectInstancesUntilEndOfTurn.addAll(source.suppressedStaticEffectInstancesUntilEndOfTurn);
         this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
         this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
@@ -2069,6 +2074,17 @@ public class Permanent {
         return suppressedStaticEffectsUntilEndOfTurn.contains(effectType);
     }
 
+    /** Removes exactly this static effect object from the permanent until end of turn. */
+    public void suppressStaticEffectInstanceUntilEndOfTurn(CardEffect effect) {
+        suppressedStaticEffectInstancesUntilEndOfTurn.add(effect);
+    }
+
+    /** Whether this static effect is suppressed, either as its whole type or as this exact object. */
+    public boolean isStaticEffectSuppressed(CardEffect effect) {
+        return suppressedStaticEffectsUntilEndOfTurn.contains(effect.getClass())
+                || suppressedStaticEffectInstancesUntilEndOfTurn.contains(effect);
+    }
+
     public void addAdaptOverrideUntilEndOfTurn() {
         adaptOverridesUntilEndOfTurn++;
     }
@@ -2143,6 +2159,7 @@ public class Permanent {
         this.mustBlockIdsUntilEndOfCombat.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.suppressedStaticEffectsUntilEndOfTurn.clear();
+        this.suppressedStaticEffectInstancesUntilEndOfTurn.clear();
         this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.transientRemovedSubtypes.clear();
         this.temporaryActivatedAbilities.clear();

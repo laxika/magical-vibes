@@ -104,8 +104,9 @@ class SvellaIceShaperTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        // CR 601.2a: the spell moves to the stack when its casting is proposed, so it has left the library.
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactlyElementsOf(library);
+                .containsExactlyInAnyOrderElementsOf(library.subList(1, library.size()));
         harness.handlePermanentChosen(player1, svella.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(svella);
         harness.passBothPriorities();

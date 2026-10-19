@@ -567,6 +567,7 @@ public class DestructionSupport {
 
     public void performSimultaneousSacrifice(GameData gameData, List<UUID> ids) {
         List<Permanent> permanents = ids.stream()
+                .distinct()
                 .map(permId -> gameQueryService.findPermanentById(gameData, permId))
                 .filter(java.util.Objects::nonNull)
                 .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
@@ -623,6 +624,12 @@ public class DestructionSupport {
 
         PendingForcedSacrifice next = choosers.getFirst();
         List<PendingForcedSacrifice> remainingChoosers = List.copyOf(choosers.subList(1, choosers.size()));
+        // A permanent already chosen for an earlier prompt of the same sacrifice cannot be chosen again.
+        List<UUID> stillValid = next.validPermanentIds().stream()
+                .filter(id -> !accumulatedSacrificeIds.contains(id)).toList();
+        if (!stillValid.isEmpty() && stillValid.size() != next.validPermanentIds().size()) {
+            next = new PendingForcedSacrifice(next.playerId(), Math.min(next.count(), stillValid.size()), stillValid);
+        }
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,

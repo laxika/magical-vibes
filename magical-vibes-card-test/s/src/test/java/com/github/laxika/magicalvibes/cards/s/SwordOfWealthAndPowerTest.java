@@ -133,7 +133,8 @@ class SwordOfWealthAndPowerTest extends BaseCardTest {
         Permanent first = addCreatureReady(player2, new RuneclawBear());
         Permanent second = addCreatureReady(player2, new RuneclawBear());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
         gd.playerBattlefields.get(player1.getId()).remove(sword);

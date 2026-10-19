@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -173,7 +174,7 @@ class SoulTitheTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Soul Tithe");
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player2, true));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
         harness.assertInGraveyard(player2, "Grizzly Bears");

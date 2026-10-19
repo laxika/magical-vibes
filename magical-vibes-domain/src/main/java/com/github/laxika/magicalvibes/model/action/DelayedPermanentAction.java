@@ -18,13 +18,31 @@ import java.util.UUID;
  * A non-null {@code triggerControllerId} is the controller of the delayed trigger itself (the
  * controller of the ability that created it), and a non-null {@code triggerSourcePermanentId} is the
  * permanent that ability came from; both default to the scheduled permanent's own data when null.
+ * A {@code recurring} action models a granted "at the beginning of the end step" ability that stays
+ * on the permanent: it is scheduled again each time it is drained while the permanent is still on
+ * the battlefield, so a countered trigger fires again at the next end step.
  */
 public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                      boolean cannotBeRegenerated, UUID returnExiledCardId,
                                      UUID controllerId, UUID sacrificingPlayerId,
                                      boolean followsPermanentController, Card sourceCard,
-                                     UUID triggerControllerId, UUID triggerSourcePermanentId)
+                                     UUID triggerControllerId, UUID triggerSourcePermanentId,
+                                     boolean recurring)
         implements DelayedAction {
+
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
+                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
+                                  UUID controllerId, UUID sacrificingPlayerId,
+                                  boolean followsPermanentController, Card sourceCard,
+                                  UUID triggerControllerId, UUID triggerSourcePermanentId) {
+        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId, sacrificingPlayerId,
+                followsPermanentController, sourceCard, triggerControllerId, triggerSourcePermanentId, false);
+    }
+
+    /** Creates a recurring action; see the class description. */
+    public static DelayedPermanentAction recurring(UUID permanentId, DelayedPermanentActionKind kind) {
+        return new DelayedPermanentAction(permanentId, kind, false, null, null, null, false, null, null, null, true);
+    }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                   boolean cannotBeRegenerated, UUID returnExiledCardId,

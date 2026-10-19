@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -55,7 +56,9 @@ class StealerOfSecretsTest extends BaseCardTest {
         int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
         int defenderHandBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(controllerHandBefore);
@@ -73,7 +76,9 @@ class StealerOfSecretsTest extends BaseCardTest {
         stealer.setAttackTarget(player2.getId());
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);

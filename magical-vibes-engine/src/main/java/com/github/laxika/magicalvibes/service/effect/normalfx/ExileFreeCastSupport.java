@@ -186,6 +186,17 @@ public class ExileFreeCastSupport {
         }
 
         Card physicalCard = exiledEntry.card();
+        if (suspendHaste && face == 0 && physicalCard.hasType(CardType.LAND)) {
+            // CR 702.62a: when the last time counter is removed the controller may *play* the card, so a
+            // suspended land (e.g. an animated manland given suspend) is played as a land if able;
+            // otherwise it remains exiled.
+            if (!spellCastingService.playLandFromExileDuringResolution(gameData, player, exileCardId)) {
+                gameLogService.append(gameData, GameLog.cardThen(physicalCard,
+                        " cannot be played and stays exiled."));
+            }
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (face == 0 && SplitCardCastSupport.isSplitCard(physicalCard)) {
             castSplitCard(gameData, player, physicalCard, returnToHandIfUnable, completeInput, Integer.MAX_VALUE);
             return;
@@ -218,6 +229,15 @@ public class ExileFreeCastSupport {
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
         if (!castingPermissionService.canCastDuringResolution(gameData, playerId)) {
             if (returnToHandIfUnable) returnExiledCardToHand(gameData, exileCardId);
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card)
+                || !castingPermissionService.canCastWithCastCondition(gameData, playerId, card)) {
+            // "Cast this spell only ..." is a "can't" restriction that still applies to a free cast (CR 601.3,
+            // CR 101.2), so a spell that can't legally be cast right now stays where it was.
+            if (returnToHandIfUnable) returnExiledCardToHand(gameData, exileCardId);
+            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast right now."));
             if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

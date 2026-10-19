@@ -57,7 +57,10 @@ public class PsychicBattleSupport {
         if (!entry.getTargetIds().isEmpty()) {
             ids.addAll(entry.getDeclaredTargetIds());
         } else if (!entry.getTargetCardIds().isEmpty()) {
-            ids.addAll(entry.getTargetCardIds());
+            List<UUID> cardIds = entry.getTargetCardIds();
+            // A graveyard-targeting spell mirrors its first target in both targetId and targetCardIds.
+            boolean mirrorsTargetId = entry.getTargetId() != null && entry.getTargetId().equals(cardIds.getFirst());
+            ids.addAll(mirrorsTargetId ? cardIds.subList(1, cardIds.size()) : cardIds);
         }
         return ids;
     }
@@ -111,6 +114,10 @@ public class PsychicBattleSupport {
         }
         if (entry.getTargetId() != null) {
             if (targetIndex == 0) {
+                if (entry.getTargetIds().isEmpty() && !entry.getTargetCardIds().isEmpty()
+                        && entry.getTargetId().equals(entry.getTargetCardIds().getFirst())) {
+                    entry.replaceTargetCardIdAt(0, targetId);
+                }
                 entry.setTargetId(targetId);
                 return;
             }

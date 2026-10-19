@@ -53,6 +53,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_COMBAT_AFTER_BLOCKERS_DECLARED` | Activate during declare blockers, combat damage, or end of combat. Trap Runner |
 | `ONLY_DURING_DECLARE_BLOCKERS_IF_BLOCKED` | Activate only during the declare blockers step and only if at least one creature is blocking this creature (`gameQueryService.isBlockedByAnyCreature`). Grizzled Wolverine |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
+| `ONLY_WHILE_ANIMATED_BY_ITS_OWN_ABILITY` | An ability granted by the permanent's own animation ("becomes a creature with '{B}: Regenerate this creature'"); another effect animating it does not grant it |
 | `CAST_NONCREATURE_SPELL_THIS_TURN` | Activate only if you've cast a noncreature spell this turn (checks `gameQueryService.playerCastNoncreatureSpellThisTurn()`). Seeker of Insight |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
 | `COVEN` | Activate only if you control three or more creatures with different powers (checks distinct effective powers via `gameQueryService.isCovenMet()`). Ambitious Farmhand |
@@ -226,10 +227,10 @@ new ActivatedAbility(requiresTap, manaCost, effects, description, timingRestrict
 **Use when:** The ability can only be activated at specific times.
 
 ```java
-// Regenerate, only while this land is animated as a creature
+// Regenerate, only while this land is animated by its own ability (it grants the regeneration)
 new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
     "{B}: Regenerate this creature.",
-    ActivationTimingRestriction.ONLY_WHILE_CREATURE)
+    ActivationTimingRestriction.ONLY_WHILE_ANIMATED_BY_ITS_OWN_ABILITY)
 
 // Sorcery-speed sacrifice ability
 new ActivatedAbility(false, null,
@@ -238,7 +239,7 @@ new ActivatedAbility(false, null,
     ActivationTimingRestriction.SORCERY_SPEED)
 ```
 
-Cards: `SpawningPool` (ONLY_WHILE_CREATURE), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED), `VonaButcherOfMagan` (ONLY_DURING_YOUR_TURN)
+Cards: `SpawningPool` (ONLY_WHILE_ANIMATED_BY_ITS_OWN_ABILITY), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED), `VonaButcherOfMagan` (ONLY_DURING_YOUR_TURN)
 
 **Note:** For abilities that target spells on the stack (e.g. activated counter ability), spell targeting is auto-derived from effects (e.g. `CounterUnlessPaysEffect.targetSpec()` returns `benign(SPELL_ON_STACK)`). Use a `StackEntryPredicateTargetFilter` if target legality is restricted.
 

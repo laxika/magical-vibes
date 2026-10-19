@@ -36,7 +36,7 @@ public class SpawningPool extends Card {
                 "{B}",
                 List.of(new RegenerateEffect()),
                 "{B}: Regenerate this creature.",
-                ActivationTimingRestriction.ONLY_WHILE_CREATURE
+                ActivationTimingRestriction.ONLY_WHILE_ANIMATED_BY_ITS_OWN_ABILITY
         ));
     }
 }

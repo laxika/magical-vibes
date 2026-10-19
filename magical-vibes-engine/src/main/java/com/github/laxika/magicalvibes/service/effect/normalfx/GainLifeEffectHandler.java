@@ -59,7 +59,13 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
             // "target opponent gains N life": derived opponent (two-player engine), so the entry's
             // target slot stays free for a sibling effect on the same ability.
             UUID opponentId = gameQueryService.getOpponentId(gameData, entry.getControllerId());
-            if (opponentId != null) {
+            // The derived opponent stands in for a "target opponent", so shroud and hexproof make the
+            // instruction do nothing (CR 702.11c).
+            boolean untargetable = opponentId != null
+                    && (gameQueryService.playerHasShroud(gameData, opponentId)
+                    || gameQueryService.playerHasHexproof(gameData, opponentId)
+                    && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, entry.getControllerId()));
+            if (opponentId != null && !untargetable) {
                 lifeSupport.applyGainLife(gameData, opponentId, amount);
             }
             return;

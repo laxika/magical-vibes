@@ -201,8 +201,10 @@ class SandSquidTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.setHand(player2, List.of(new RealityRipple()));
         harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.castInstant(player2, 0, source.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castInstant(player2, 0, source.getId());
+            harness.passBothPriorities();
+        });
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
 
         advanceToNextTurnWithMayChoice(player2, false);

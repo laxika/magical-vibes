@@ -6,13 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 
 import java.util.List;
 
@@ -32,10 +31,10 @@ public class StudyHall extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         null,
-                        List.of(new ScryEffect(new CommanderCastsFromCommandZoneThisGame())),
+                        List.of(new ScryEffect(CommanderCastsFromCommandZoneThisGame.ofTriggeringCommander())),
                         null,
                         null,
-                        new StackEntryCastFromZonePredicate(Zone.COMMAND),
+                        new StackEntrySourceIsCommanderPredicate(),
                         false,
                         false,
                         null,

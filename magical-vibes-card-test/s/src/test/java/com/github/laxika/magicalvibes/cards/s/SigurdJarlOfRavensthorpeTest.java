@@ -157,7 +157,7 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
+        harness.handleListChoice(player1, "2");
         Permanent saga = findPermanent(player1, "The Weatherseed Treaty");
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         harness.handlePermanentChosen(player1, otherCreature.getId());

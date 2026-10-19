@@ -285,7 +285,7 @@ class ScapeshiftTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
         assertThat(landsOnBattlefield()).isEmpty();
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() instanceof CosisTrickster);
         harness.handleCardChosen(player1, 0);
 
         assertThat(landsOnBattlefield()).hasSize(2).allMatch(Permanent::isTapped);

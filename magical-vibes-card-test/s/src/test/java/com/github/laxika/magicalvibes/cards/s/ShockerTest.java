@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -102,10 +103,10 @@ class ShockerTest extends BaseCardTest {
         Mountain drawnCard = new Mountain();
         harness.setHand(player2, List.of(new LightningBlast(), discardedCard));
         harness.setLibrary(player2, List.of(drawnCard, new Mountain()));
-        harness.addMana(player2, ManaColor.RED, 4);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.RED, 4);
         harness.castInstant(player2, 0, shocker.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Shocker");

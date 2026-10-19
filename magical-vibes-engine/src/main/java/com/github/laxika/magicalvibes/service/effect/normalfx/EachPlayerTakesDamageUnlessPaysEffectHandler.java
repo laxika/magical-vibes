@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerTakesDamageUnlessPaysEffect;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,7 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
     public void offerToPlayers(GameData gameData, StackEntry entry,
             EachPlayerTakesDamageUnlessPaysEffect effect, List<UUID> payers) {
         gameData.eachPlayerDamageUnlessPaysRemaining.clear();
+        gameData.eachPlayerDamageUnlessPaysDeclined.clear();
         if (payers.isEmpty()) {
             return;
         }
@@ -59,15 +62,28 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
     }
 
     /**
-     * After a player's may-pay decision: deal damage if they declined/couldn't pay, then offer the
-     * next remaining player (or finish). Called from {@code MayPenaltyChoiceHandlerService}.
+     * After a player's may-pay decision: remember that they declined/couldn't pay, then offer the
+     * next remaining player. Once every prompt is answered the declined damage is dealt at the same
+     * time, one combined amount per player, so a single prevention shield covers all of it.
+     * Called from {@code MayPenaltyChoiceHandlerService}.
      */
     public void afterPlayerDecision(GameData gameData, PendingMayAbility ability,
             EachPlayerTakesDamageUnlessPaysEffect effect, UUID playerId, boolean paid) {
         if (!paid) {
-            dealDamageToPlayer(gameData, ability, effect, playerId);
+            gameData.eachPlayerDamageUnlessPaysDeclined.add(playerId);
         }
-        offerNext(gameData, ability, effect);
+        if (!gameData.eachPlayerDamageUnlessPaysRemaining.isEmpty()) {
+            offerNext(gameData, ability, effect);
+            return;
+        }
+        List<UUID> declined = new ArrayList<>(gameData.eachPlayerDamageUnlessPaysDeclined);
+        gameData.eachPlayerDamageUnlessPaysDeclined.clear();
+        Map<UUID, Integer> promptsDeclined = new LinkedHashMap<>();
+        for (UUID declinedPlayerId : declined) {
+            promptsDeclined.merge(declinedPlayerId, 1, Integer::sum);
+        }
+        promptsDeclined.forEach((declinedPlayerId, count) ->
+                dealDamageToPlayer(gameData, ability, declinedPlayerId, effect.damage() * count));
     }
 
     private void offerNext(GameData gameData, PendingMayAbility ability,
@@ -97,11 +113,10 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
                 sourceControllerId, effect.manaCost(), entry.getSourcePermanentId()));
     }
 
-    private void dealDamageToPlayer(GameData gameData, PendingMayAbility ability,
-            EachPlayerTakesDamageUnlessPaysEffect effect, UUID playerId) {
+    private void dealDamageToPlayer(GameData gameData, PendingMayAbility ability, UUID playerId, int amount) {
         UUID sourceControllerId = sourceControllerId(gameData, ability);
         DealDamageToPlayersEffect damage =
-                new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
+                new DealDamageToPlayersEffect(amount, DamageRecipient.TARGET_PLAYER);
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),

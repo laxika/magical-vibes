@@ -118,7 +118,7 @@ class SublimeArchangelTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new WalkingCorpse());
 
         declareAttackers(player1, List.of(1)); // Walking Corpse attacks alone
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -132,7 +132,7 @@ class SublimeArchangelTest extends BaseCardTest {
         addCreatureReady(player1, new WalkingCorpse());
 
         declareAttackers(player1, List.of(1));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
@@ -145,7 +145,7 @@ class SublimeArchangelTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new WalkingCorpse());
 
         declareAttackers(player1, List.of(1));
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -175,7 +175,7 @@ class SublimeArchangelTest extends BaseCardTest {
         addCreatureReady(player1, new WalkingCorpse());
 
         declareAttackers(player1, List.of(0));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(5);

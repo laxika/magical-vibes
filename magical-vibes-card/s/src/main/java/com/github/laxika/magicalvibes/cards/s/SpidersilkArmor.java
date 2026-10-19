@@ -14,6 +14,6 @@ import java.util.Set;
 public class SpidersilkArmor extends Card {
 
     public SpidersilkArmor() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, Set.of(Keyword.REACH), GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, Set.of(Keyword.REACH), GrantScope.ALL_OWN_CREATURES));
     }
 }

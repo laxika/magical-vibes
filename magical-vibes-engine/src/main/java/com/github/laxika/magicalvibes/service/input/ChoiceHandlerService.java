@@ -2540,7 +2540,7 @@ public class ChoiceHandlerService {
 
         if (ctx.sourcePermanentId() != null && chosenColor != ManaColor.COLORLESS) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-            if (source != null) {
+            if (source != null && sourceBecomesProducedColor(source)) {
                 CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
                 source.getTransientColors().clear();
                 source.getTransientColors().add(sourceChosenColor);
@@ -2743,7 +2743,7 @@ public class ChoiceHandlerService {
 
         if (ctx.sourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-            if (source != null) {
+            if (source != null && sourceBecomesProducedColor(source)) {
                 CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
                 source.getTransientColors().clear();
                 source.getTransientColors().add(sourceChosenColor);
@@ -3018,6 +3018,18 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Whether the source's mana ability says the source becomes the color of the mana it produced
+     * (Foraging Wickermaw). The mana choice context carries the source permanent id for unrelated
+     * tagging as well, so the id alone must not recolor the source.
+     */
+    private static boolean sourceBecomesProducedColor(Permanent source) {
+        return source.getCard().getActivatedAbilities().stream()
+                .flatMap(ability -> ability.getEffects().stream())
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect anyColor
+                        && anyColor.sourceBecomesProducedColorUntilEndOfTurn());
+    }
+
     private void handleCreatureAbilityManaColorChosen(GameData gameData, Player player, String colorName,
                                                       ChoiceContext.CreatureAbilityManaColorChoice ctx,
                                                       List<String> options) {
@@ -3143,7 +3155,7 @@ public class ChoiceHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            target.getTextReplacements().add(new TextReplacement(fromText, toText, ctx.untilEndOfTurn()));
+            target.getTextReplacements().add(new TextReplacement(fromText, toText, ctx.untilEndOfTurn(), gameData.nextTimestamp()));
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , target.getCard(), "."));
             log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
@@ -3152,7 +3164,7 @@ public class ChoiceHandlerService {
             // that spell becomes.
             StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, ctx.targetId());
             if (targetSpell != null) {
-                TextReplacement replacement = new TextReplacement(fromText, toText, ctx.untilEndOfTurn());
+                TextReplacement replacement = new TextReplacement(fromText, toText, ctx.untilEndOfTurn(), gameData.nextTimestamp());
                 gameData.spellTextReplacements
                         .computeIfAbsent(ctx.targetId(), k -> new ArrayList<>())
                         .add(replacement);

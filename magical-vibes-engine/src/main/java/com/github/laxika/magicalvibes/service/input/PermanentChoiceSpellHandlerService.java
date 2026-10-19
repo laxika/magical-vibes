@@ -169,9 +169,13 @@ public class PermanentChoiceSpellHandlerService {
             } else if (retarget.targetIndex() != null) {
                 psychicBattleSupport.replaceTarget(targetSpell, retarget.targetIndex(), permanentId);
             } else {
+                UUID previousTargetId = targetSpell.getTargetId();
                 targetSpell.setTargetId(permanentId);
-                if (targetSpell.getTargetZone() == Zone.GRAVEYARD && targetSpell.getTargetCardIds() != null
-                        && !targetSpell.getTargetCardIds().isEmpty()) {
+                // A spell with declared target groups also keeps the target in its flat target list.
+                targetSpell.replaceTargetReferences(previousTargetId, permanentId);
+                if (targetSpell.getTargetCardIds() != null && !targetSpell.getTargetCardIds().isEmpty()
+                        && (targetSpell.getTargetZone() == Zone.GRAVEYARD
+                        || targetSpell.getTargetCardIds().contains(previousTargetId))) {
                     targetSpell.setTargetCardIds(List.of(permanentId));
                 }
             }
@@ -262,6 +266,9 @@ public class PermanentChoiceSpellHandlerService {
                 entry.setOwnerIdOverride(lct.ownerIdOverride());
                 entry.setSourceZone(Zone.OUTSIDE_GAME);
             }
+            if (lct.cardsToBottom() == null && exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) {
+                return;
+            }
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(lct.controllerId(), lct.cardToCast());
@@ -304,6 +311,8 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         checkDiscoverTriggers(gameData, lct);
+        com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper
+                .shuffleLibraryPendingAfterFreeCast(gameData);
 
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

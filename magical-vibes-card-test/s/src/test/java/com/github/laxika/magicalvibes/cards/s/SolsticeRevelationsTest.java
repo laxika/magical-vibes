@@ -86,6 +86,7 @@ class SolsticeRevelationsTest extends BaseCardTest {
         SolsticeRevelations spell = new SolsticeRevelations();
         SolsticeRevelations hit = new SolsticeRevelations();
         Mountain land = new Mountain();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(spell));
         harness.setLibrary(player1, List.of(land, hit));
         harness.addMana(player1, ManaColor.RED, 1);

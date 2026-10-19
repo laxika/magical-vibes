@@ -436,7 +436,8 @@ public class LibraryChoiceHandlerService {
                 handleCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
                         searchCards, sourceCards, deck, grantHaste, sacrificeAtEndStep,
                         librarySearch.mayCastManaValueAtMost() == null
-                                ? Integer.MAX_VALUE : librarySearch.mayCastManaValueAtMost());
+                                ? Integer.MAX_VALUE : librarySearch.mayCastManaValueAtMost(),
+                        restToExile);
                 return;
             }
 
@@ -735,8 +736,23 @@ public class LibraryChoiceHandlerService {
             // If ETB or legend rule caused awaiting input, defer remaining card reorder
             if (gameData.interaction.isAwaitingInput()) {
                 if (!sourceCards.isEmpty()) {
-                    gameData.pendingLibraryBottomReorders.addLast(
-                            new LibraryBottomReorderRequest(deckOwnerId, new ArrayList<>(sourceCards)));
+                    if (toBattlefield && reorderRemainingToBottom && sourceCards.size() > 1
+                            && gameData.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+                        // The rest go to the bottom while the spell resolves, before the entering
+                        // permanent's triggered ability chooses its targets: order them first and
+                        // return to the target prompt afterwards.
+                        gameData.interaction.openNestedPromptWindow();
+                        try {
+                            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                                    playerId, new ArrayList<>(sourceCards), true, deckOwnerId,
+                                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
+                        } finally {
+                            gameData.interaction.closeNestedPromptWindow();
+                        }
+                    } else {
+                        gameData.pendingLibraryBottomReorders.addLast(
+                                new LibraryBottomReorderRequest(deckOwnerId, new ArrayList<>(sourceCards)));
+                    }
                 }
                 return;
             }
@@ -1675,7 +1691,10 @@ public class LibraryChoiceHandlerService {
 
             List<UUID> creatureIds = new ArrayList<>();
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (gameQueryService.isCreature(gameData, p)) {
+                // A creature the Equipment can't be attached to (protection from artifacts) isn't offered.
+                if (gameQueryService.isCreature(gameData, p)
+                        && !gameQueryService.cantBeEquipped(gameData, p)
+                        && !gameQueryService.hasProtectionFromSource(gameData, p, equipment)) {
                     creatureIds.add(p.getId());
                 }
             }
@@ -2831,14 +2850,23 @@ public class LibraryChoiceHandlerService {
         // same way the enter-tapped snapshot above is frozen before any of them enters.
         List<Permanent> batch = new ArrayList<>();
         for (Card card : cards) {
-            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
+            // A card already in exile (Sword of Hearth and Home's exiled creature) enters together with
+            // the cards found in the library.
+            boolean fromExile = gameData.findExiledCard(card.getId()) != null;
+            if (!fromExile && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
                 gameData.playerDecks.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(card);
                 anyBlocked = true;
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " can't enter the battlefield from a library; it stays in the library."));
                 continue;
             }
-            Permanent perm = new Permanent(card, Zone.LIBRARY);
+            if (fromExile) {
+                gameData.removeFromExile(card.getId());
+            }
+            Permanent perm = new Permanent(card, fromExile ? Zone.EXILE : Zone.LIBRARY);
+            if (fromExile) {
+                perm.setEnteredFromExile(true);
+            }
             var landEquilibriumPlan = puttingPlayerId.equals(ownerId) ? null
                     : landEquilibriumSupport.findPlan(gameData, puttingPlayerId, perm);
             if (cloaked) {
@@ -4552,14 +4580,13 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        // Opponent pays life for each denied card
-        if (!toExile.isEmpty()) {
-            int lifeLoss = totalLifeCost
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, opponentId);
-            gameData.playerLifeTotals.merge(opponentId, -lifeLoss, Integer::sum);
-            gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(opponentName + " pays " + lifeLoss + " life to deny "), toExile)
-                            .text(".").build());
+        // Opponent pays life for each denied card; each card is its own payment, so life-payment
+        // triggers and replacements apply per card.
+        StackEntry punisherSource = gameData.pendingEffectResolutionEntry;
+        String punisherSourceName = punisherSource != null && punisherSource.getCard() != null
+                ? punisherSource.getCard().getName() : "a denied card";
+        for (int i = 0; i < toExile.size(); i++) {
+            lifeSupport.applyLifePayment(gameData, opponentId, lifeCost, punisherSourceName);
         }
 
         // Cards not denied go to controller's hand
@@ -4606,16 +4633,20 @@ public class LibraryChoiceHandlerService {
                                                 boolean canFailToFind, List<Card> searchCards,
                                                 List<Card> sourceCards, List<Card> deck,
                                                 boolean grantHaste, boolean sacrificeAtEndStep,
-                                                int spellManaValueLimit) {
+                                                int spellManaValueLimit, boolean restToExile) {
         String playerName = player.getUsername();
         Set<UUID> exiledSourceIds = sourceCards.stream()
                 .filter(card -> gameData.findExiledCard(card.getId()) != null)
                 .map(Card::getId).collect(java.util.stream.Collectors.toSet());
+        // Cards that were only looked at (Svella, Ice Shaper) are still in the library; they leave it
+        // now that the player has chosen, and the uncast ones are put back on the bottom below.
+        Set<UUID> sourceCardIds = sourceCards.stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
+        deck.removeIf(card -> sourceCardIds.contains(card.getId()));
 
         boolean chosenCardCastable = cardIndex == -1 || cardIndex < -1 || cardIndex >= searchCards.size()
                 || canCastWithoutPaying(gameData, player.getId(), searchCards.get(cardIndex), spellManaValueLimit);
         if (!sourceCards.isEmpty() && exiledSourceIds.size() == sourceCards.size()
-                && !grantHaste && !sacrificeAtEndStep && chosenCardCastable) {
+                && !grantHaste && !sacrificeAtEndStep && !restToExile && chosenCardCastable) {
             if (cardIndex == -1 && !canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
             }
@@ -4672,8 +4703,8 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        // Put remaining cards on the bottom of the library in a random order
-        if (!sourceCards.isEmpty()) {
+        // Put remaining cards on the bottom of the library in a random order, unless they stay exiled
+        if (!restToExile && !sourceCards.isEmpty()) {
             Collections.shuffle(sourceCards);
             sourceCards.forEach(card -> gameData.removeFromExile(card.getId()));
             deck.addAll(sourceCards);
@@ -4727,12 +4758,15 @@ public class LibraryChoiceHandlerService {
         if (!sourceCards.isEmpty()) {
             deck.addAll(sourceCards);
         }
-        LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
 
         if (chosenCard == null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             finishSearchAndResume(gameData);
             return;
         }
+        // The shuffle follows the cast: the spell and its targets are chosen first and the shuffle
+        // triggers then go on the stack above the spell.
+        gameData.libraryToShuffleAfterFreeCast = deckOwnerId;
         castCardWithoutPaying(gameData, player, chosenCard);
     }
 
@@ -5255,6 +5289,7 @@ public class LibraryChoiceHandlerService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, ctx.controllerId(), ctx.sourceZone());
         checkDiscoverTriggers(gameData, ctx.controllerId(), ctx.discoverValue());
+        LibraryShuffleHelper.shuffleLibraryPendingAfterFreeCast(gameData);
         finishSearchAndResume(gameData);
     }
 
@@ -5456,6 +5491,7 @@ public class LibraryChoiceHandlerService {
         );
         freeSpell.setSourceZone(sourceZone);
         freeSpell.setOwnerIdOverride(searchedCardOwnerOverride(gameData, castCard, playerId));
+        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, freeSpell)) return;
         gameData.stack.add(freeSpell);
 
         gameData.recordSpellCast(playerId, castCard);
@@ -5468,6 +5504,7 @@ public class LibraryChoiceHandlerService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, castCard, playerId, sourceZone);
         checkDiscoverTriggers(gameData, playerId, discoverValue);
+        LibraryShuffleHelper.shuffleLibraryPendingAfterFreeCast(gameData);
         // The free spell now sits on the stack, but the ability that cast it is still parked
         // mid-resolution. Only the shared tail drains that park; a bare view invalidation leaves it
         // dangling, which strands any later effect on the same ability and wedges

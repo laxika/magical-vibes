@@ -45,7 +45,9 @@ class StringOfDisappearancesTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.stack).hasSize(1);
+        // The original stays on the stack until the final part of its resolution (CR 608.2n), beneath the copy.
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
     }
 
@@ -218,7 +220,7 @@ class StringOfDisappearancesTest extends BaseCardTest {
     @DisplayName("A stolen creature returns to its owner while its controller gets the payment choice")
     void stolenCreatureOwnerAndControllerAreDistinct() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         castAt(target.getId());
 
         harness.assertInHand(player1, "Grizzly Bears");

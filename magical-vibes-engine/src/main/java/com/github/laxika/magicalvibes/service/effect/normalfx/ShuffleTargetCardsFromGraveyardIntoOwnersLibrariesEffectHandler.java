@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -61,8 +62,14 @@ public class ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffectHandler
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
+        boolean spellShufflesItselfIn = entry.getEffectsToResolve().stream()
+                .anyMatch(ShuffleIntoLibraryEffect.class::isInstance);
         for (Map.Entry<UUID, List<Card>> movedEntry : movedCardsByOwner.entrySet()) {
             UUID ownerId = movedEntry.getKey();
+            if (spellShufflesItselfIn && ownerId.equals(entry.getOwnerId())) {
+                // The spell's own shuffle (a later effect) shuffles this library once for both.
+                continue;
+            }
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(ownerId) + " shuffles cards into their library (",

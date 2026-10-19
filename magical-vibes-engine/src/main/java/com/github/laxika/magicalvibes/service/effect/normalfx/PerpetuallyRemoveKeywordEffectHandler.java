@@ -39,6 +39,11 @@ public class PerpetuallyRemoveKeywordEffectHandler implements NormalEffectHandle
         gameData.perpetualCardRemovedKeywords
                 .computeIfAbsent(entry.getCard().getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                 .add(removal.keyword());
+        java.util.Map<Keyword, Integer> extraInstances =
+                gameData.perpetualCardExtraKeywordInstances.get(entry.getCard().getId());
+        if (extraInstances != null) {
+            extraInstances.remove(removal.keyword());
+        }
 
         Permanent permanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

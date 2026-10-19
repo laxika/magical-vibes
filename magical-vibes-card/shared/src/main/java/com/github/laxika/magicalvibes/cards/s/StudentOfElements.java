@@ -21,7 +21,7 @@ public class StudentOfElements extends Card {
         // the source predicate is layer-aware so granted flying (auras, pumps) counts.
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
-                List.of(new TransformToBackFaceEffect()),
+                List.of(new TransformToBackFaceEffect(true)),
                 "Student of Elements's state-triggered ability"
         ));
     }

@@ -113,7 +113,7 @@ class SlaveOfBolasTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
@@ -127,7 +127,7 @@ class SlaveOfBolasTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
 
         takeCreatureBackWithRayOfCommand(target);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");

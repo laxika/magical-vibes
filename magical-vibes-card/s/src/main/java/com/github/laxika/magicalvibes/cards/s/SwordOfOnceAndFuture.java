@@ -7,15 +7,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromGraveyardAndGrantCastPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -35,12 +35,13 @@ public class SwordOfOnceAndFuture extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
                 Set.of(CardColor.BLUE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new SurveilEffect(2));
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
-            new ChooseCardFromGraveyardAndGrantCastPermissionEffect(
-                    INSTANT_OR_SORCERY_WITH_MAX_MANA_VALUE_TWO,
-                    GraveyardSearchScope.CONTROLLERS_GRAVEYARD, true, true),
-                "Cast an instant or sorcery spell with mana value 2 or less from your graveyard without paying its mana cost?"));
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
+                SurveilThenEffect.direct(2, new CastCardFromGraveyardEffect(
+                        INSTANT_OR_SORCERY_WITH_MAX_MANA_VALUE_TWO,
+                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                        new CardTruePredicate(),
+                        true,
+                        true)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

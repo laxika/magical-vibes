@@ -24,7 +24,7 @@ public class StrongholdArena extends Card {
         // "Kicker {G} and/or {W}" — the two optional payments are independent and each may be
         // paid at most once.
         addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{W}")));
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{W}"), true, 1));
 
         // Each paid kicker gains 3 life when Stronghold Arena enters, as one life gain event.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(new Sum(List.of(

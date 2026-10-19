@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.PayRansomEffect;
 import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
@@ -1984,7 +1985,10 @@ public class LayerSystemService {
             case BecomeEnchantmentUntilCreatureSpellCastEffect ignored -> {
                 if (instance.floating() == null) return;
                 for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).overrideCardTypes(Set.of(CardType.ENCHANTMENT));
+                    // "Becomes an enchantment" without "in addition": prior creature subtypes are not retained (CR 205.1b).
+                    CharacteristicState becomesEnchantment = states.get(target.permanent().getId());
+                    becomesEnchantment.overrideCardTypes(Set.of(CardType.ENCHANTMENT));
+                    becomesEnchantment.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.of(CardType.ENCHANTMENT)));
@@ -2216,7 +2220,9 @@ public class LayerSystemService {
             case AnimateControlledEnchantmentsEffect animateEnchantments -> {
                 // Starfield of Nyx. NOT managed, for the same reason as March above. Unlike March
                 // it does not skip permanents that are already creatures: "is a creature in
-                // addition to its other types" still sets an enchantment creature's base P/T.
+                // addition to its other types" still sets an enchantment creature's base P/T. A
+                // one-shot animation's base P/T is a timestamped floating effect, so Starfield
+                // competes with it by timestamp (CR 613.7) instead of skipping it.
                 PermanentSlot animateSource = instance.source();
                 if (animateSource == null) return;
                 UUID controllerId = animateSource.controllerId();
@@ -2228,8 +2234,7 @@ public class LayerSystemService {
                     if (!target.controllerId().equals(controllerId)) continue;
                     Permanent permanent = target.permanent();
                     CharacteristicState state = states.get(permanent.getId());
-                    if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)
-                            && !isOneShotAnimated(permanent)) {
+                    if (state.hasCardType(CardType.ENCHANTMENT) && !state.hasSubtype(CardSubtype.AURA)) {
                         state.addCardType(CardType.CREATURE);
                         board.starfieldAnimatedIds().add(permanent.getId());
                     }
@@ -2935,24 +2940,39 @@ public class LayerSystemService {
      * A source that gained "creatures you control have [ability]" (a Saga's chapter) only carries that
      * ability while it still has it: if a later-timestamp effect made the source lose all abilities
      * (CR 613.7, 613.1f), the creatures it was granting lose the ability too.
+     *
+     * <p>A ransom ability (Squidnapper) is granted to one specific creature but belongs to the source:
+     * it is lost when the source later loses its abilities, and it is kept when the creature it was
+     * granted to later loses its own.</p>
      */
     private void removeAbilitiesGrantedByLaterAbilityLoss(GameData gameData, LayeredBoardState board) {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (!(floating.effect() instanceof GrantActivatedAbilityEffect grant)
-                        || floating.affectedPermanentId() != null
                         || floating.sourcePermanentId() == null
                         || grant.duration() != EffectDuration.WHILE_SOURCE_REMAINS) {
                     continue;
                 }
-                CharacteristicState sourceState = board.states().get(floating.sourcePermanentId());
-                if (sourceState == null || !sourceState.isLosesAllAbilities()
-                        || sourceState.getLosesAllAbilitiesTimestamp() <= floating.timestamp()) {
+                boolean ransom = grant.ability().getEffects().stream().anyMatch(PayRansomEffect.class::isInstance);
+                if (floating.affectedPermanentId() != null && !ransom) {
                     continue;
                 }
-                for (CharacteristicState state : board.states().values()) {
-                    state.removeActivatedAbilitiesGrantedBy(floating.sourcePermanentId(),
-                            grant.ability().getDescription());
+                CharacteristicState sourceState = board.states().get(floating.sourcePermanentId());
+                boolean sourceLostAbilities = sourceState != null && sourceState.isLosesAllAbilities()
+                        && sourceState.getLosesAllAbilitiesTimestamp() > floating.timestamp();
+                if (sourceLostAbilities) {
+                    for (CharacteristicState state : board.states().values()) {
+                        state.removeActivatedAbilitiesGrantedBy(floating.sourcePermanentId(),
+                                grant.ability().getDescription());
+                    }
+                } else if (ransom && sourceState != null) {
+                    CharacteristicState affectedState = board.states().get(floating.affectedPermanentId());
+                    if (affectedState != null && affectedState.getGrantedActivatedAbilities().stream().noneMatch(
+                            existing -> floating.sourcePermanentId().equals(existing.getGrantSourcePermanentId())
+                                    && grant.ability().getDescription().equals(existing.getDescription()))) {
+                        affectedState.addActivatedAbility(
+                                grant.ability().withGrantSource(floating.sourcePermanentId()));
+                    }
                 }
             }
         }
@@ -3090,6 +3110,13 @@ public class LayerSystemService {
             return;
         }
         applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
+            if (instance.effect() instanceof PlaneswalkersWithLoyaltyBecomeCreaturesEffect
+                    && !board.l4Contributions().getOrDefault(instance.original(), Map.of())
+                    .containsKey(target.permanent().getId())) {
+                // Only planeswalkers this effect turned into creatures in layer 4 lose their abilities;
+                // one an earlier effect already made a non-planeswalker is unaffected.
+                return;
+            }
             CharacteristicState state = states.get(target.permanent().getId());
             boolean touched = false;
             // Removal before grants within one harvested instance: "loses all other

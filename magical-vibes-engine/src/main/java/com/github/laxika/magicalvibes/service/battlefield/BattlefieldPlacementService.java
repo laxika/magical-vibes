@@ -598,7 +598,11 @@ public class BattlefieldPlacementService {
         }
         // Delayed "sacrifice this token at the beginning of the next end step" (Choreographed Sparks).
         if (permanent.getCard().isSacrificeAtEndStep()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            // A non-token card cast this way (Strago and Relm) gains "At the beginning of the end step,
+            // sacrifice this creature", which keeps triggering at each end step until it is sacrificed.
+            gameData.queueDelayedAction(permanent.getCard().isToken()
+                    ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP)
+                    : DelayedPermanentAction.recurring(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
         }
         // CR 702.152a — a spell cast for its printed blitz cost creates the delayed "sacrifice at the
         // beginning of the next end step" trigger as it resolves, independent of any ETB trigger.

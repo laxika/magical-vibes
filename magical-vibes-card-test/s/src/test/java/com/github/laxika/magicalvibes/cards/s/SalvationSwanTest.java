@@ -134,7 +134,7 @@ class SalvationSwanTest extends BaseCardTest {
     @Test
     void stolenCreatureReturnsToItsOwner() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
 
         castSwan();
         resolveTrigger(target);

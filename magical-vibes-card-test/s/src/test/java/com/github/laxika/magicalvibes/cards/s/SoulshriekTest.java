@@ -129,7 +129,8 @@ class SoulshriekTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Bay Falcon");
 
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        // Stay in the end step: the stolen creature returns at cleanup, which would hide the check.
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertOnBattlefield(player2, "Bay Falcon");
         harness.assertNotInGraveyard(player1, "Bay Falcon");

@@ -93,16 +93,17 @@ class StellaLeeWildCardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top, new Mountain(), new Mountain(), new Mountain()));
         addCreatureReady(player1, new StellaLeeWildCard());
         harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0);
         harness.castAndResolveInstant(player1, 0);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -137,7 +138,7 @@ class StellaLeeWildCardTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0);
@@ -146,9 +147,9 @@ class StellaLeeWildCardTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(top);
         harness.passBothPriorities();
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
     }
 

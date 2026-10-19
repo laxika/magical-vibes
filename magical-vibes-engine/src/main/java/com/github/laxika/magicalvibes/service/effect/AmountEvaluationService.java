@@ -1064,9 +1064,14 @@ public class AmountEvaluationService {
                 ? null : gameQueryService.findCardById(gameData, ctx.stackEntry().getTriggeringCardId());
         return new ConditionContext(ctx.controllerId(),
                 ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
-                ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, ctx.madness(), false,
+                ctx.sourcePermanent(), ctx.sourceCard(), kickedInContext(ctx), false, false, ctx.madness(), false,
                 ctx.stackEntry() == null ? null : ctx.stackEntry().getSourceZone(), ctx.xValue(), ctx.targetPermanentId(), triggeringCard, ctx.staticEvaluation(), false,
                 triggeringPermanentId, null, null).withEventValue(ctx.eventValue());
+    }
+
+    private static boolean kickedInContext(AmountContext ctx) {
+        return (ctx.stackEntry() != null && ctx.stackEntry().isKicked())
+                || (ctx.sourcePermanent() != null && ctx.sourcePermanent().isKicked());
     }
 
     private int chosenPermanentEffectivePower(GameData gameData, AmountContext ctx) {
@@ -3100,15 +3105,34 @@ public class AmountEvaluationService {
                 ? ctx.stackEntry().getCard().getId() : null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
-            total += (int) gameData.getSpellsCastThisTurn(playerId).stream()
-                    .filter(spell -> !count.excludeResolvingSpell() || resolvingCardId == null
-                            || !resolvingCardId.equals(spell.getId()))
-                    .filter(spell -> count.filter() == null
-                            || predicateEvaluationService.matchesCardPredicate(
-                            spell, count.filter(), sourceCardId, gameData, playerId))
-                    .count();
+            List<Card> spells = new ArrayList<>(gameData.getSpellsCastThisTurn(playerId));
+            // A card cast, returned to hand and cast again is a different spell each time, so only the
+            // latest casting is the spell the source came from ("another spell" still counts the earlier one).
+            int sourceSpellIndex = sourceCardId == null ? -1
+                    : lastIndexOfCard(spells, sourceCardId);
+            for (int i = 0; i < spells.size(); i++) {
+                Card spell = spells.get(i);
+                if (count.excludeResolvingSpell() && resolvingCardId != null
+                        && resolvingCardId.equals(spell.getId())) {
+                    continue;
+                }
+                if (count.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        spell, count.filter(), i == sourceSpellIndex ? sourceCardId : null, gameData, playerId)) {
+                    total++;
+                }
+            }
         }
         return total;
+    }
+
+    private static int lastIndexOfCard(List<Card> spells, UUID cardId) {
+        for (int i = spells.size() - 1; i >= 0; i--) {
+            if (cardId.equals(spells.get(i).getId())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private int countSpellsCastSinceBeginningOfLastTurn(
@@ -3254,6 +3278,10 @@ public class AmountEvaluationService {
     private int countCommanderCastsFromCommandZoneThisGame(GameData gameData,
                                                             CommanderCastsFromCommandZoneThisGame count,
                                                             AmountContext ctx) {
+        if (count.triggeringCommanderOnly()) {
+            UUID commanderId = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringCardId();
+            return commanderId == null ? 0 : gameData.commanderTaxByCardId.getOrDefault(commanderId, 0) / 2;
+        }
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;

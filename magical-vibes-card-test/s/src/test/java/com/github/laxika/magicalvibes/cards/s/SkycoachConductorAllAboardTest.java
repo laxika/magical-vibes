@@ -96,7 +96,7 @@ class SkycoachConductorAllAboardTest extends BaseCardTest {
     void returnsCreatureToItsOwner() {
         Permanent conductor = castSkycoachConductor();
         Permanent borrowed = addCreatureReady(player1, new SlumberingTrudge());
-        gd.stolenCreatures.put(borrowed.getId(), player2.getId());
+        setOwnerAndController(borrowed, player2, player1);
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, conductor.getPreparedSpellCardId(), borrowed.getId());

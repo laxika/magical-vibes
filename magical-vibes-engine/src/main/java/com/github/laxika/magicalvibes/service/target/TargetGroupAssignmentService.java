@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -104,6 +106,12 @@ public class TargetGroupAssignmentService {
         return false;
     }
 
+    /** Whether a target group's filter selects battlefield permanents (including "you control" wording). */
+    public static boolean isPermanentGroupFilter(TargetFilter filter) {
+        return filter instanceof PermanentPredicateTargetFilter
+                || filter instanceof ControlledPermanentPredicateTargetFilter;
+    }
+
     private boolean assignPermanentTarget(GameData gameData, List<UUID> targets, List<SpellTarget> groups,
             List<Integer> groupOrder, FilterContext context, List<List<Integer>> groupToTargets,
             int targetIndex) {
@@ -113,8 +121,9 @@ public class TargetGroupAssignmentService {
         for (int groupIndex : groupOrder) {
             List<Integer> assigned = groupToTargets.get(groupIndex);
             if (assigned.size() >= groups.get(groupIndex).getMaxTargets()) continue;
-            if (!(groups.get(groupIndex).getFilter() instanceof PermanentPredicateTargetFilter filter)
-                    || !predicateEvaluationService.matchesPermanentPredicate(permanent, filter.predicate(), context)) continue;
+            if (!isPermanentGroupFilter(groups.get(groupIndex).getFilter())
+                    || predicateEvaluationService.checkTargetFilter(
+                            groups.get(groupIndex).getFilter(), permanent, context).isPresent()) continue;
             assigned.add(targetIndex);
             if (assignPermanentTarget(gameData, targets, groups, groupOrder, context, groupToTargets,
                     targetIndex + 1)) return true;

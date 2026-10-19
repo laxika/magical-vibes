@@ -47,7 +47,7 @@ class SmokyLoungeMistySalonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof CharredFoyerWarpedSpace);
+                .anyMatch(permanent -> permanent.getCard().getName().startsWith("Charred Foyer"));
     }
 
     @Test

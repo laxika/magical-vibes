@@ -32,6 +32,9 @@ public class EyeOfTheStormCastChoiceInteractionHandler
                              PendingInteraction.EyeOfTheStormCastChoice interaction,
                              InteractionAnswer answer) {
         List<UUID> chosenCopyIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
+        if (interaction.mustCastAll() && chosenCopyIds.size() != interaction.validCopyIds().size()) {
+            throw new IllegalStateException("Every copy must be cast; choose their casting order");
+        }
         if (chosenCopyIds.size() > interaction.validCopyIds().size()
                 || new HashSet<>(chosenCopyIds).size() != chosenCopyIds.size()
                 || !interaction.validCopyIds().containsAll(chosenCopyIds)

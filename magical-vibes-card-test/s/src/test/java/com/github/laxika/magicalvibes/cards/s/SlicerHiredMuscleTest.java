@@ -63,8 +63,7 @@ class SlicerHiredMuscleTest extends BaseCardTest {
     void combatDamageWithConvertedSlicerConvertsItBack() {
         Permanent slicer = castConvertedSlicer();
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
-        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> gs.declareBlockers(gd, player2, List.of()));
         harness.assertLife(player2, 17);
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveAllTriggers);
 
@@ -93,7 +92,7 @@ class SlicerHiredMuscleTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gqs.isGoaded(gd, slicer)).isTrue();
 
-        advanceToUpkeep(player1);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.isGoaded(gd, slicer)).isFalse();
     }
 

@@ -82,7 +82,9 @@ class SteadfastUnicornTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        resolveAllTriggers();
+        // Stop in the end step once both resolve instead of auto-passing into cleanup, which would end
+        // the "until end of turn" effects before they can be observed.
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gqs.getEffectivePower(gd, unicorn)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, unicorn)).isEqualTo(4);

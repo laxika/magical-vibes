@@ -5,12 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetThenSearchLibraryPutBothOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,11 +27,9 @@ public class SwordOfHearthAndHome extends Card {
 
         target(new OwnedPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature you own"), 0, 1)
-                .addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
-                        SequenceEffect.of(
-                                FlickerEffect.flickerTargetUnderYourControl(),
-                                new SearchLibraryEffect(
-                                        CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD)));
+                .addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
+                        new ExileTargetThenSearchLibraryPutBothOntoBattlefieldEffect(
+                                CardPredicateUtils.basicLand()));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

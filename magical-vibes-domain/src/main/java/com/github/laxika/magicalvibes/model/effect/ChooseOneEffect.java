@@ -21,15 +21,25 @@ import java.util.function.Supplier;
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                               boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
                               Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
-                              boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet)
+                              boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet,
+                              boolean allModesWhenConditionMet)
         implements CombatDamageTriggerContextEffect {
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                           boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
+                           Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
+                           boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, modesMayRepeat,
+                choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue, anyNumberWhenConditionMet,
+                false);
+    }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                            boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
                            Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
                            boolean choicesEqualModalXValue) {
         this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, modesMayRepeat,
-                choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue, false);
+                choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue, false, false);
     }
 
     public static final String NO_MODE_LABEL = "Choose no modes";
@@ -125,6 +135,12 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     /** Modal with one required mode and additional modes available when the condition is met. */
     public static ChooseOneEffect oneOrMoreWhen(List<ChooseOneOption> options, Condition choicesMaxCondition) {
         return new ChooseOneEffect(options, false, 1, options.size(), false, false, choicesMaxCondition);
+    }
+
+    /** "Choose one. If [condition], choose all of them instead." */
+    public static ChooseOneEffect allWhen(List<ChooseOneOption> options, Condition choicesMaxCondition) {
+        return new ChooseOneEffect(options, false, 1, options.size(), false, false, choicesMaxCondition,
+                List.of(), 0, false, false, true);
     }
 
     /**

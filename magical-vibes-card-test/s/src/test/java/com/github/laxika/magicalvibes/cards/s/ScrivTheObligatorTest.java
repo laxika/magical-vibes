@@ -120,8 +120,7 @@ class ScrivTheObligatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
         int attackerIndex = gd.playerBattlefields.get(attackerController.getId()).indexOf(attacker);
-        harness.inMutationScope(() -> harness.getCombatAttackService().declareAttackers(
-                gd, attackerController, List.of(attackerIndex), Map.of(attackerIndex, attackTarget)));
+        gs.declareAttackers(gd, attackerController, List.of(attackerIndex), Map.of(attackerIndex, attackTarget));
     }
 
 }

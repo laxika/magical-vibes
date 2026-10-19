@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -25,8 +26,8 @@ public class SoulcatchersAerie extends Card {
         // the permanent's controller, counts. A token is owned by its creator, so tokens use the
         // controller-based slot.
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.BIRD),
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.BIRD)),
                         new PutCountersOnSelfEffect(CounterType.FEATHER)));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

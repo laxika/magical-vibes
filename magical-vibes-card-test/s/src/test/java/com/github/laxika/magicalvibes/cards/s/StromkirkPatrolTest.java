@@ -110,6 +110,8 @@ class StromkirkPatrolTest extends BaseCardTest {
     @Test
     @DisplayName("Each Patrol gets its own counter only when its trigger resolves")
     void eachPatrolGetsItsOwnCounter() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent first = addReadyPatrol();
         Permanent second = addReadyPatrol();
         first.setAttacking(true);

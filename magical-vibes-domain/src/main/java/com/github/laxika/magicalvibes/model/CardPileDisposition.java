@@ -11,6 +11,11 @@ public enum CardPileDisposition {
     PLAY_FROM_EXILE,
     /** Fact-or-Fiction style (Unesh, Criosphinx Sovereign): chosen pile → controller's hand; other pile → controller's graveyard. */
     HAND,
+    /**
+     * Split the Spoils: the cards were exiled from the controller's graveyard; the chosen pile goes
+     * to their hand and the other pile goes from exile to their graveyard (not from their library).
+     */
+    HAND_FROM_EXILE,
     /** Intrude on the Mind: chosen pile → controller's hand; other pile → graveyard, then create a Thopter with counters. */
     HAND_AND_THOPTER,
     /** Curator of Destinies and Fortune's Favor: one pile is face down; the chosen pile goes to hand and the other to the graveyard. */

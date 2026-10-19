@@ -115,7 +115,6 @@ class SwampbendersTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
 
         harness.tapPermanent(player1, 0);
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();

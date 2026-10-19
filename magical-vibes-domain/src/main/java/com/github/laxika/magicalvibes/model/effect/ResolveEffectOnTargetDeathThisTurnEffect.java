@@ -12,6 +12,20 @@ package com.github.laxika.magicalvibes.model.effect;
  * (e.g. {@link TransformToBackFaceEffect}) still find it. Used by Skeletonize and Initiate of Blood.
  *
  * @param effect the effect to resolve when the targeted permanent dies this turn
+ * @param onlyIfDealtDamageBySource when true the delayed trigger is only registered if the source of this
+ *                                  spell or ability actually dealt damage to the target ("a creature dealt
+ *                                  damage this way dies this turn", Skeletonize), so prevented damage
+ *                                  registers nothing
  */
-public record ResolveEffectOnTargetDeathThisTurnEffect(CardEffect effect) implements CardEffect {
+public record ResolveEffectOnTargetDeathThisTurnEffect(CardEffect effect, boolean onlyIfDealtDamageBySource)
+        implements CardEffect {
+
+    public ResolveEffectOnTargetDeathThisTurnEffect(CardEffect effect) {
+        this(effect, false);
+    }
+
+    /** "When a creature dealt damage this way dies this turn, ..." */
+    public static ResolveEffectOnTargetDeathThisTurnEffect ifDealtDamageThisWay(CardEffect effect) {
+        return new ResolveEffectOnTargetDeathThisTurnEffect(effect, true);
+    }
 }

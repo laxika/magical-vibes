@@ -8,11 +8,14 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "56")
@@ -25,7 +28,9 @@ public class StubbornDenial extends Card {
                 ),
                 "Target must be a noncreature spell."
         )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
-                new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
+                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentPowerAtLeastPredicate(4)))),
                 new CounterUnlessPaysEffect(1),
                 new CounterSpellEffect()
         ));

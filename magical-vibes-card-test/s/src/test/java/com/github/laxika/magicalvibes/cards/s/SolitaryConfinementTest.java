@@ -206,9 +206,9 @@ class SolitaryConfinementTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SolitaryConfinement());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SuntailHawk()));
-        gd.startingPlayerId = player2.getId();
 
         advanceToUpkeep(player1);
+        gd.startingPlayerId = player2.getId();
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Solitary Confinement");
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

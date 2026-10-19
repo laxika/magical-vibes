@@ -2550,7 +2550,7 @@ public class PredicateEvaluationService {
                         ? defendingPlayerId.equals(controllerId)
                         : gameData.currentStep == TurnStep.BEGINNING_OF_COMBAT
                         ? !controllerId.equals(gameData.activePlayerId)
-                        : gameQueryService.isPlayerBeingAttacked(gameData, controllerId));
+                        : gameQueryService.isDefendingPlayer(gameData, controllerId));
             }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
                     !permanent.isSummoningSick();

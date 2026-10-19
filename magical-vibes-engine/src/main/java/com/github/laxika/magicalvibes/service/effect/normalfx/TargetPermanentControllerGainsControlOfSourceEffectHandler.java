@@ -15,8 +15,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link TargetPermanentControllerGainsControlOfSourceEffect}: the controller of the
- * ability's targeted permanent gains control of the source permanent. Nothing happens if either the
- * source or the target has left the battlefield.
+ * ability's targeted permanent gains control of the source permanent. Nothing happens if the source
+ * has left the battlefield. If the target has left the battlefield, its controller is read from last
+ * known information remembered earlier in the same resolution (CR 608.2h), and nothing happens when
+ * none was remembered.
  */
 @Component
 @RequiredArgsConstructor
@@ -40,6 +42,9 @@ public class TargetPermanentControllerGainsControlOfSourceEffectHandler implemen
         }
 
         UUID newControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
+        if (newControllerId == null) {
+            newControllerId = entry.getRemovedPermanentControllers().get(entry.getTargetId());
+        }
         if (newControllerId == null) {
             return;
         }

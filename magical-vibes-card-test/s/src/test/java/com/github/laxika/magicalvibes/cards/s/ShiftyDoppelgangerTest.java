@@ -135,10 +135,12 @@ class ShiftyDoppelgangerTest extends BaseCardTest {
     void hasteExpiresBeforeNextEndStep() {
         harness.addToBattlefield(player1, new ShiftyDoppelganger());
         harness.setHand(player1, List.of(new DuskImp()));
-        advanceToEndStep();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of());
         addActivationMana();
-        activateAndChooseCreature();
+        harness.withAutoStop(TurnStep.END_STEP, this::activateAndChooseCreature);
         assertThat(findPermanent(player1, "Dusk Imp").hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
@@ -204,6 +206,6 @@ class ShiftyDoppelgangerTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 }

@@ -72,11 +72,8 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        if (exiledCount == 0) {
-            return;
-        }
-
-        // Target player may search their library for up to that many basic land cards
+        // Target player may search their library for that many basic land cards, even when that many is
+        // zero (they may still search, find nothing, and shuffle).
         if (librarySearchSupport.isSearchPrevented(gameData, targetPlayerId)) return;
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -95,7 +92,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
                         card, CardSupertype.BASIC, gameData, targetPlayerId))
                 .toList();
 
-        if (basicLands.isEmpty()) {
+        if (basicLands.isEmpty() && exiledCount > 0) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, targetPlayerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
@@ -103,15 +100,17 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
             return;
         }
 
+        List<Card> candidates = exiledCount == 0 ? List.of() : new ArrayList<>(basicLands);
         String prompt = "You may search your library for up to " + exiledCount
                 + " basic land card" + (exiledCount != 1 ? "s" : "")
                 + " and put them onto the battlefield tapped (" + exiledCount + " remaining).";
 
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, targetPlayerId, LibrarySearchParams.builder(targetPlayerId, new ArrayList<>(basicLands))
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, targetPlayerId, LibrarySearchParams.builder(targetPlayerId, candidates)
                 .remainingCount(exiledCount)
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
-                .build(), prompt, true);
+                .declineSkipsShuffle(exiledCount > 0)
+                .build(), prompt, true, playerName + " may search their library.");
 
         log.info("Game {} - {} may search library for up to {} basic lands", gameData.id, playerName, exiledCount);
     }

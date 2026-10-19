@@ -186,18 +186,21 @@ class StragoAndRelmTest extends BaseCardTest {
 
     @Test
     void sacrificeAbilityTriggersAgainAfterItsFirstTriggerIsCountered() {
-        activateWithLibrary(List.of(new IncubationDruid()));
+        IncubationDruid druid = new IncubationDruid();
+        druid.setOwnerId(player2.getId());
+        activateWithLibrary(List.of(druid));
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         Permanent creature = findPermanent(player1, "Incubation Druid");
         harness.setHand(player1, List.of(new Disallow()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castAndResolveInstant(player1, 0, creature.getCard().getId());
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> harness.castAndResolveInstant(player1, 0, creature.getCard().getId()));
         harness.assertOnBattlefield(player1, "Incubation Druid");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.forceActivePlayer(player2);

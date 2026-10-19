@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GildedLotus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.m.MoxPearl;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SmeltingVat.class, WornPowerstone.class, Ornithopter.class, MindStone.class,
+@CardUsed({SmeltingVat.class, WornPowerstone.class, MoxPearl.class, Ornithopter.class, MindStone.class,
         GildedLotus.class, GrizzlyBears.class, Shock.class, Forest.class})
 class SmeltingVatTest extends BaseCardTest {
 
@@ -32,16 +33,16 @@ class SmeltingVatTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SmeltingVat());
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
 
-        Card ornithopter = new Ornithopter();
+        Card moxPearl = new MoxPearl();
         Card firstMindStone = new MindStone();
         Card secondMindStone = new MindStone();
         Card gildedLotus = new GildedLotus();
         Card creature = new GrizzlyBears();
         Card shock = new Shock();
         Card forest = new Forest();
-        Card secondCreature = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(ornithopter, firstMindStone, secondMindStone,
-                gildedLotus, creature, shock, forest, secondCreature));
+        Card artifactCreature = new Ornithopter();
+        harness.setLibrary(player1, List.of(moxPearl, firstMindStone, secondMindStone,
+                gildedLotus, creature, shock, forest, artifactCreature));
 
         activateWithSacrifice(sacrificed);
 
@@ -49,7 +50,7 @@ class SmeltingVatTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
-                ornithopter.getId(), firstMindStone.getId(), secondMindStone.getId());
+                moxPearl.getId(), firstMindStone.getId(), secondMindStone.getId());
         assertThat(choice.maxCount()).isEqualTo(2);
         assertThat(choice.totalManaValueBound()).isEqualTo(3);
 
@@ -58,17 +59,17 @@ class SmeltingVatTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("total mana value");
 
-        harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId(), firstMindStone.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(moxPearl.getId(), firstMindStone.getId()));
 
         harness.assertInGraveyard(player1, "Worn Powerstone");
-        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertOnBattlefield(player1, "Mox Pearl");
         harness.assertOnBattlefield(player1, "Mind Stone");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() == gildedLotus
                         || permanent.getCard() == creature
-                        || permanent.getCard() == secondCreature);
+                        || permanent.getCard() == artifactCreature);
         assertThat(gd.playerDecks.get(player1.getId()))
-                .containsExactlyInAnyOrder(secondMindStone, gildedLotus, creature, shock, forest, secondCreature);
+                .containsExactlyInAnyOrder(secondMindStone, gildedLotus, creature, shock, forest, artifactCreature);
     }
 
     @Test

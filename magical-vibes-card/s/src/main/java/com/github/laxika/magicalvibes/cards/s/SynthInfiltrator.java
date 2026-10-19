@@ -19,7 +19,7 @@ public class SynthInfiltrator extends Card {
     public SynthInfiltrator() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature",
-                Set.of(CardType.ARTIFACT), Set.of(CardSubtype.SYNTH)
+                Set.of(CardType.ARTIFACT, CardType.CREATURE), Set.of(CardSubtype.SYNTH)
         ));
     }
 }

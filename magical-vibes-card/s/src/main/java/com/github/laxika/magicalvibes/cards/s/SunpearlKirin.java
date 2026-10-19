@@ -29,9 +29,9 @@ public class SunpearlKirin extends Card {
                 )),
                 "Target must be another nonland permanent you control"
         ), 0, 1)
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
                         new TargetPermanentMatches(new PermanentIsTokenPredicate()),
-                        new TargetPermanentControllerDrawsCardEffect()))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target());
+                        new TargetPermanentControllerDrawsCardEffect()));
     }
 }

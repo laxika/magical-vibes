@@ -80,7 +80,7 @@ public class MayCastCardExiledWithSourceEffectHandler implements NormalEffectHan
             Card card = offeredCards.get(i);
             CardEffect offer = castEffect.withoutPayingManaCost()
                     ? new MayPlayExiledCardWithoutPayingManaCostEffect(
-                            true, false, castEffect.returnSourceToHandIfCast())
+                            !castEffect.offerEveryCard(), false, castEffect.returnSourceToHandIfCast())
                     : new MayCastExiledCardWithNormalCostEffect(
                             offerGroupId, false, false, castEffect.genericCostReduction());
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

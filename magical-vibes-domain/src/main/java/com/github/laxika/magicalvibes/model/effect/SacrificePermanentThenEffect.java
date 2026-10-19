@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param excludeGrantingPermanent whether the permanent granting this ability cannot be sacrificed
  * @param thenWithoutSacrifice whether a non-reflexive {@code thenEffect} still resolves when there is
  *                  nothing to sacrifice ("Sacrifice a permanent, then draw two cards")
+ * @param onlyGrantingPermanent whether only the permanent that granted this ability may be sacrificed
+ *                  ("you may sacrifice this Equipment" in an ability the Equipment grants)
  */
 public record SacrificePermanentThenEffect(
         PermanentPredicate filter,
@@ -34,8 +36,17 @@ public record SacrificePermanentThenEffect(
         boolean targetBeforeSacrifice,
         boolean reflexive,
         boolean excludeGrantingPermanent,
-        boolean thenWithoutSacrifice
+        boolean thenWithoutSacrifice,
+        boolean onlyGrantingPermanent
 ) implements GrantingPermanentAwareEffect {
+
+    public SacrificePermanentThenEffect(PermanentPredicate filter, CardEffect thenEffect,
+                                        String permanentDescription, boolean targetBeforeSacrifice,
+                                        boolean reflexive, boolean excludeGrantingPermanent,
+                                        boolean thenWithoutSacrifice) {
+        this(filter, thenEffect, permanentDescription, targetBeforeSacrifice, reflexive,
+                excludeGrantingPermanent, thenWithoutSacrifice, false);
+    }
 
     public SacrificePermanentThenEffect(PermanentPredicate filter, CardEffect thenEffect,
                                         String permanentDescription, boolean targetBeforeSacrifice,
@@ -63,8 +74,21 @@ public record SacrificePermanentThenEffect(
                 targetBeforeSacrifice, reflexive, true);
     }
 
+    /** Restricts the sacrifice to the permanent granting this ability, even when another copy has the same name. */
+    public SacrificePermanentThenEffect sacrificingGrantingPermanent() {
+        return new SacrificePermanentThenEffect(filter, thenEffect, permanentDescription,
+                targetBeforeSacrifice, reflexive, excludeGrantingPermanent, thenWithoutSacrifice, true);
+    }
+
     @Override
     public CardEffect withGrantingPermanentId(java.util.UUID permanentId) {
+        if (onlyGrantingPermanent) {
+            PermanentPredicate onlyGranting = new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(
+                    java.util.List.of(filter,
+                            new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(permanentId)));
+            return new SacrificePermanentThenEffect(onlyGranting, thenEffect, permanentDescription,
+                    targetBeforeSacrifice, reflexive, excludeGrantingPermanent, thenWithoutSacrifice, false);
+        }
         if (!excludeGrantingPermanent) return this;
         PermanentPredicate boundFilter = new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(
                 java.util.List.of(filter, new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(

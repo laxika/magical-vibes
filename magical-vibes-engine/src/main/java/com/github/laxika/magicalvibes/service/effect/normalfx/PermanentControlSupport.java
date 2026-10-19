@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -46,7 +45,6 @@ public class PermanentControlSupport {
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -329,9 +327,6 @@ public class PermanentControlSupport {
             if (!hasNativeDevour) gameLogService.append(gameData, GameLog.text(logEntry));
 
                 if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenPermanent.getCard(), null, false);
-                if (!hasNativeDevour && !gameData.interaction.isAwaitingInput()) {
-                    legendRuleService.checkLegendRule(gameData, controllerId);
-                }
             } else {
                 String tokenTypeDesc = tokenBlueprint.primaryType().name().charAt(0) + tokenBlueprint.primaryType().name().substring(1).toLowerCase();
                 String logEntry = "A " + colorDesc + tokenBlueprint.tokenName() + " " + tokenTypeDesc.toLowerCase() + " token enters the battlefield.";
@@ -341,9 +336,6 @@ public class PermanentControlSupport {
                 // watching Blood tokens). Same entry pipeline as creature tokens — type checks
                 // inside BattlefieldEntryService gate creature-only slots.
                 if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenPermanent.getCard(), null, false);
-                if (!hasNativeDevour && !gameData.interaction.isAwaitingInput()) {
-                    legendRuleService.checkLegendRule(gameData, controllerId);
-                }
             }
             if (hasNativeDevour) {
                 nativeEntries.add(new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(

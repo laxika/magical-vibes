@@ -86,6 +86,7 @@ class SolitaryStudyEndlessCorridorTest extends BaseCardTest {
     @Test
     void roomEnteringWithoutBeingCastHasNoActiveBoostOrUnlockTrigger() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         harness.enterBattlefieldAndReturn(player1, new SolitaryStudyEndlessCorridor());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);

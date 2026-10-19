@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesTwoDistinctPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -39,6 +40,11 @@ public class DestructionTargetValidators {
                 || effect.recipient() == SacrificeRecipient.CONTROLLER_AND_TARGET_PLAYER) {
             tvs.requireTargetPlayer(ctx);
         }
+    }
+
+    @ValidatesTarget(TargetPlayerSacrificesTwoDistinctPermanentsEffect.class)
+    public void validateTargetPlayerSacrificesTwoDistinctPermanents(TargetValidationContext ctx) {
+        tvs.requireTargetPlayer(ctx);
     }
 
     @ValidatesTarget(DestroyCreatureBlockingThisEffect.class)

@@ -1731,36 +1731,41 @@ public class CombatAttackService {
         }
 
         // Engine-level double team triggers: a nontoken attacker conjures a copy into its
-        // controller's hand, then both cards lose double team permanently.
+        // controller's hand, then both cards lose double team permanently. Each instance of the
+        // keyword triggers separately.
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.DOUBLE_TEAM)
                     || attacker.getCard().isToken()) {
                 continue;
             }
+            int doubleTeamInstances = gameQueryService.triggerKeywordInstances(
+                    gameData, attacker, Keyword.DOUBLE_TEAM);
             int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
             try {
-                List<CardEffect> doubleTeamEffects = List.of(
-                        new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM),
-                        ConjureCardToHandEffect.withoutKeyword(
-                                attacker.getCard().getName(), Keyword.DOUBLE_TEAM));
-                StackEntry doubleTeamTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        playerId,
-                        attacker.getCard().getName() + "'s double team",
-                        doubleTeamEffects,
-                        attacker.getId(),
-                        attacker.getId()
-                );
-                doubleTeamTrigger.setNonTargeting(true);
-                gameData.stack.add(doubleTeamTrigger);
-                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                        gameData, attacker, doubleTeamTrigger);
-                gameLogService.append(gameData,
-                        GameLog.builder().card(attacker.getCard()).text("'s double team triggers.").build());
-                log.info("Game {} - {} double team trigger pushed onto stack", gameData.id,
-                        attacker.getCard().getName());
+                for (int instance = 0; instance < doubleTeamInstances; instance++) {
+                    List<CardEffect> doubleTeamEffects = List.of(
+                            new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM),
+                            ConjureCardToHandEffect.withoutKeyword(
+                                    attacker.getCard().getName(), Keyword.DOUBLE_TEAM));
+                    StackEntry doubleTeamTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            playerId,
+                            attacker.getCard().getName() + "'s double team",
+                            doubleTeamEffects,
+                            attacker.getId(),
+                            attacker.getId()
+                    );
+                    doubleTeamTrigger.setNonTargeting(true);
+                    gameData.stack.add(doubleTeamTrigger);
+                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                            gameData, attacker, doubleTeamTrigger);
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(attacker.getCard()).text("'s double team triggers.").build());
+                    log.info("Game {} - {} double team trigger pushed onto stack", gameData.id,
+                            attacker.getCard().getName());
+                }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }

@@ -745,6 +745,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever any creature deals combat damage to one of this permanent's controller's opponents. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT,
+    /** Triggers whenever any creature deals combat damage to any player, including this permanent's controller. */
+    ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
     /** Triggers whenever a creature deals combat damage to its owner. */
     ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER,
     /** Triggers once when one or more goaded creatures deal combat damage to one of this permanent's controller's opponents. */
@@ -1604,6 +1606,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
 
     /** A controlled source deals damage to any player, including its controller. */
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER,
+    /**
+     * A source deals damage to its own controller, who is not the controller of the watching plane
+     * ("whenever a creature deals damage to one or more players" on Stensia, for a player other than
+     * the planar controller damaging themselves). Fired from the same choke points as
+     * {@link #ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT} and only for planar objects: the other damage
+     * slots already cover the planar controller as the damaged player or as the source's controller.
+     */
+    ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR,
     /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
     ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
     /**

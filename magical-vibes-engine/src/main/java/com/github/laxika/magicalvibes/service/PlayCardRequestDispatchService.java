@@ -110,6 +110,11 @@ public class PlayCardRequestDispatchService {
                         request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
                         listOrEmpty(request.convokeCreatureIds()),
                         listOrEmpty(request.additionalCostSacrificePermanentIds()), waterbendPaid(request));
+            } else if (!listOrEmpty(request.targetIds()).isEmpty()) {
+                gameService.playCardFromExileWithTargets(gameData, player, request.fromExileCardId(),
+                        request.xValue(), request.targetId(), listOrEmpty(request.targetIds()),
+                        listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()));
             } else {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
                         request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),

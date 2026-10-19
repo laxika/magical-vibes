@@ -19,7 +19,7 @@ import java.util.List;
 public class SurgeOfAcclaim extends Card {
 
     public SurgeOfAcclaim() {
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
+        addEffect(EffectSlot.SPELL, ChooseOneEffect.allWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Seek a card with start your engines!",
                         new SeekLibraryToHandEffect(new CardKeywordPredicate(Keyword.START_YOUR_ENGINES))),

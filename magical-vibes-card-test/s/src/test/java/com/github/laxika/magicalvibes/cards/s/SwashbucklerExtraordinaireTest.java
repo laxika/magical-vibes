@@ -139,6 +139,7 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
     @Test
     void canChooseFewerTargetsThanTreasuresSacrificedAndGrantExpiresAtEndOfTurn() {
         Permanent swashbuckler = addReadySwashbuckler();
+        Permanent bystander = addCreatureReady(player1, new GrizzlyBears());
         Permanent firstTreasure = harness.addToBattlefieldAndReturn(player1, new Treasure());
         Permanent secondTreasure = harness.addToBattlefieldAndReturn(player1, new Treasure());
 
@@ -151,6 +152,7 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(swashbuckler.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(bystander.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
 
         harness.forceStep(TurnStep.END_STEP);

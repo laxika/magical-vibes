@@ -31,6 +31,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SilverclawGriffin()));
 
         advanceToUpkeep(player1);
+        chooseSeanceTarget();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -43,6 +44,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SilverclawGriffin()));
 
         advanceToUpkeep(player2);
+        chooseSeanceTarget();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -55,6 +57,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SilverclawGriffin()));
 
         advanceToUpkeep(player1);
+        chooseSeanceTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -79,6 +82,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SilverclawGriffin()));
 
         advanceToUpkeep(player1);
+        chooseSeanceTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -94,6 +98,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SilverclawGriffin()));
 
         advanceToUpkeep(player1);
+        chooseSeanceTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -142,6 +147,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DrogskolCaptain()));
 
         advanceToUpkeep(player1);
+        chooseSeanceTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -162,6 +168,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DrogskolCaptain()));
 
         advanceToUpkeep(player1);
+        chooseSeanceTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -180,6 +187,7 @@ class SeanceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SilverclawGriffin()));
 
         advanceToUpkeep(player2);
+        chooseSeanceTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -204,6 +212,7 @@ class SeanceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SilverclawGriffin());
 
         advanceToUpkeep(player1);
+        chooseSeanceTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -221,6 +230,11 @@ class SeanceTest extends BaseCardTest {
         });
         resolveAllTriggers();
         harness.assertNotOnBattlefield(player2, "Drogskol Captain");
+    }
+
+    private void chooseSeanceTarget() {
+        harness.handleMultipleCardsChosen(player1,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
     }
 
     private void advanceToEndStep() {

@@ -81,7 +81,10 @@ public class MillEachPlayerAndExileUpToTwoCreaturesCreateTokenWithTotalPowerEffe
                 continue;
             }
             if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card)) {
-                totalPower += card.getPower() == null ? 0 : card.getPower();
+                // Read the power once the card is in exile, so a characteristic-defined power (Mortivore)
+                // counts the graveyards as they are after the exile.
+                Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
+                totalPower += power == null ? 0 : power;
             }
         }
         return totalPower;

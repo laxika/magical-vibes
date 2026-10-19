@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -27,8 +28,8 @@ public class SwordOfTruthAndJustice extends Card {
                 new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 SequenceEffect.of(
-                        new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                new PermanentIsCreaturePredicate()),
+                        new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1),
+                                new PermanentIsCreaturePredicate(), false, true),
                         new ProliferateEffect()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

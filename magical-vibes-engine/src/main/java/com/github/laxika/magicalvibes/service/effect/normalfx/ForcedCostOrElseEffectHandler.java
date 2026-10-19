@@ -176,9 +176,12 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 .toList();
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
+        boolean echoPayment = forcedCost instanceof PayEchoCost
+                || pendingEntry != null && pendingEntry.getEffectsToResolve().stream().anyMatch(effect ->
+                effect instanceof ForcedCostOrElseEffect pending && pending.forcedCost() instanceof PayEchoCost);
         if (pendingEntry != null
                 && !cumulativeUpkeep
-                && !(forcedCost instanceof PayEchoCost)
+                && !echoPayment
                 && pendingEntry.getControllerId().equals(controllerId)
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0
@@ -462,6 +465,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             }
             if (payCost.genericReduction() != null || payCost.genericIncrease() != null) {
                 Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                if (source == null) {
+                    // The source left the battlefield while the trigger was on the stack: use its last-known
+                    // information (an Aura's enchanted permanent, for instance).
+                    source = entry.getSourcePermanentSnapshot();
+                }
                 var context = com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source);
                 int delta = payCost.genericReduction() == null ? 0
                         : amountEvaluationService.evaluate(gameData, payCost.genericReduction(), context);

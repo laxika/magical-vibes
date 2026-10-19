@@ -18,7 +18,7 @@ import java.util.Set;
 public class SummonBrynhildr extends Card {
 
     public SummonBrynhildr() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new ExileTopCardMayPlayThisTurnEffect(false));
+        addEffect(EffectSlot.SAGA_CHAPTER_I, ExileTopCardMayPlayThisTurnEffect.renewedOnLoreCounterTurns());
 
         var nextCreatureGainsHaste = new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardTypePredicate(CardType.CREATURE),

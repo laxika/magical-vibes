@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,14 +37,14 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
     @DisplayName("Creatures target player controls gain all creature types")
     void grantsAllCreatureTypes() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GoldmeadowStalwart());
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.KITHKIN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.SOLDIER)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.KITHKIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.SOLDIER)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.GOBLIN)).isFalse();
 
         castShields(player2.getId());
 
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.GOBLIN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.ELF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.ELF)).isTrue();
     }
 
     @Test
@@ -59,9 +58,9 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
 
         assertThat(firstCreature.getEffectiveToughness()).isEqualTo(3);
         assertThat(secondCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(GameQueryService.permanentHasSubtype(firstCreature, CardSubtype.GOBLIN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(secondCreature, CardSubtype.GOBLIN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(artifact, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, firstCreature, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, secondCreature, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, artifact, CardSubtype.GOBLIN)).isFalse();
     }
 
     @Test
@@ -72,7 +71,7 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
         castShields(player2.getId());
 
         assertThat(ownBears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(ownBears, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownBears, CardSubtype.GOBLIN)).isFalse();
     }
 
     @Test
@@ -83,7 +82,7 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
         castShields(player1.getId());
 
         assertThat(ownBears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(GameQueryService.permanentHasSubtype(ownBears, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownBears, CardSubtype.GOBLIN)).isTrue();
     }
 
     @Test
@@ -93,12 +92,12 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
 
         castShields(player2.getId());
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.GOBLIN)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(bears, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.GOBLIN)).isFalse();
     }
 
     @Test

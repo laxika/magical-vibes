@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsBottomThenDamageIfCopyRevealedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,8 +19,6 @@ public class RevealTopCardsBottomThenDamageIfCopyRevealedEffectHandler implement
 
     private final GameLogService gameLogService;
     private final LibraryRevealSupport libraryRevealSupport;
-    private final DamageSupport damageSupport;
-    private final GameOutcomeService gameOutcomeService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,11 +42,12 @@ public class RevealTopCardsBottomThenDamageIfCopyRevealedEffectHandler implement
 
         boolean copyRevealed = result.topCards().stream().anyMatch(c -> c.getName().equals(cardName));
 
-        // If a copy was revealed, the source deals its damage to the chosen any-target.
+        // If a copy was revealed, the source deals its damage once the revealed cards are on the bottom
+        // (the reorder may pause for input), so the damage is queued right after this effect.
         UUID targetId = entry.getTargetId();
         if (copyRevealed && targetId != null) {
-            damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, e.damage(), false);
-            gameOutcomeService.checkWinCondition(gameData);
+            entry.insertEffectsToResolve(entry.getEffectsToResolve().indexOf(effect) + 1,
+                    List.of(new DealDamageToAnyTargetEffect(e.damage())));
         }
 
         // Put the revealed cards on the bottom of the library in any order.

@@ -23,7 +23,7 @@ public class SpikedRipsaw extends Card {
                 new SacrificePermanentThenEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                         new BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(0, 0, Keyword.TRAMPLE),
-                        "a Forest"),
+                        "a Forest", false, false),
                 "Sacrifice a Forest?"));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

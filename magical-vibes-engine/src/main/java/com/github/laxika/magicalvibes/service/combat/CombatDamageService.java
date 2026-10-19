@@ -475,6 +475,18 @@ public class CombatDamageService {
 
     /** Resolves the pending combat-damage stack object after both players pass priority. */
     public void resolvePendingCombatDamage(GameData gameData) {
+        CombatDamageState state = gameData.pendingCombatDamageState;
+        if (state != null && !state.collectedPortions.isEmpty()) {
+            DamagePhase phase = gameData.pendingCombatDamageFirstestStrikePhase
+                    ? DamagePhase.FIRSTEST_STRIKE
+                    : gameData.pendingCombatDamageFirstStrikePhase
+                    ? DamagePhase.FIRST_STRIKE
+                    : DamagePhase.REGULAR;
+            processCollectedCombatDamage(gameData, state);
+            if (parkOptionalDamageChoices(gameData, state, phase)) {
+                return;
+            }
+        }
         completePendingCombatDamage(gameData);
     }
 
@@ -1508,7 +1520,11 @@ public class CombatDamageService {
                 }
             }
         }
-        processCollectedCombatDamage(gameData, state);
+        // When combat damage uses the stack, the assignment is final but the damage is dealt (and its
+        // replacement and prevention effects apply) only when the stack object resolves.
+        if (!shouldPutCombatDamageOnStack(gameData)) {
+            processCollectedCombatDamage(gameData, state);
+        }
     }
 
     // Every original combat assignment belongs to the same damage event. Reuse its shields for
@@ -2483,6 +2499,14 @@ public class CombatDamageService {
                 for (CardEffect effect : rawEffects) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect
                             && creature.getCard().isToken()) {
+                        continue;
+                    }
+                    // "deals combat damage to an opponent" is relative to the controller of the
+                    // attached permanent's ability: damage to that controller never triggers it.
+                    if (effect instanceof ConditionalEffect opponentOnly
+                            && opponentOnly.condition() instanceof
+                            com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent
+                            && ownerId.equals(defenderId)) {
                         continue;
                     }
                     if (effect instanceof EnchantedPermanentConditionalEffect cond) {
@@ -3766,6 +3790,21 @@ public class CombatDamageService {
         }
     }
 
+    /**
+     * Last-known information of a creature that was just dealt damage, kept for its "dealt damage"
+     * triggers even if it dies before they are put on the stack. It records the keywords the creature
+     * had (CR 608.2h) so damage its trigger deals still has lifelink, deathtouch, infect or wither.
+     */
+    private Permanent lastKnownDamagedSnapshot(GameData gameData, Permanent creature) {
+        Permanent snapshot = new Permanent(creature);
+        for (Keyword keyword : List.of(Keyword.LIFELINK, Keyword.DEATHTOUCH, Keyword.INFECT, Keyword.WITHER)) {
+            if (gameQueryService.hasKeyword(gameData, creature, keyword)) {
+                snapshot.getGrantedKeywords().add(keyword);
+            }
+        }
+        return snapshot;
+    }
+
     private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId, int damageDealt,
                                           Permanent sourceSnapshot,
                                           Card sourceCard, UUID sourcePermanentId, UUID sourceControllerId,
@@ -3812,7 +3851,8 @@ public class CombatDamageService {
                 effects.removeAll(sourceSpecificEffects);
                 if (!sourceSpecificEffects.isEmpty()) {
                     sourceSpecificTriggers.add(new DealtDamageTriggerData(
-                            target.getCard(), target.getId(), controllerId, damageAmount, new Permanent(target),
+                            target.getCard(), target.getId(), controllerId, damageAmount,
+                            lastKnownDamagedSnapshot(gameData, target),
                             source.getCard(), source.getId(), sourceControllerId,
                             sourceSpecificEffects, List.of()));
                 }
@@ -3820,7 +3860,8 @@ public class CombatDamageService {
                 DealtDamageTriggerData previous = triggersByDamagedPermanent.get(targetId);
                 if (previous == null) {
                     triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
-                            target.getCard(), target.getId(), controllerId, damageAmount, new Permanent(target),
+                            target.getCard(), target.getId(), controllerId, damageAmount,
+                            lastKnownDamagedSnapshot(gameData, target),
                             source.getCard(), source.getId(), sourceControllerId,
                             effects, combatDamageReceivedEffects));
                 } else {
@@ -3913,11 +3954,10 @@ public class CombatDamageService {
                     // snapshots into the trigger event value, and the controller chooses any target
                     // when serviced.
                     if (data.damageDealt() > 0) {
-                        Permanent source = gameQueryService.findPermanentById(gameData, data.permanentId());
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                                 data.card(), data.controllerId(), new ArrayList<>(List.of(effect)),
                                 false, damageEffect.triggeredTargetFilter(), data.damageDealt(), data.permanentId(),
-                                source == null ? null : new Permanent(source)));
+                                data.sourceSnapshot()));
                     }
                     gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
@@ -3951,6 +3991,11 @@ public class CombatDamageService {
                 );
                 triggerEntry.setEventValue(data.damageDealt());
                 triggerEntry.setSourcePermanentSnapshot(data.sourceSnapshot());
+                if (effectToAdd instanceof DealDamageToPlayersEffect toPlayers
+                        && toPlayers.recipient() == DamageRecipient.CHOSEN_PLAYER
+                        && data.sourceSnapshot() != null) {
+                    triggerEntry.setTargetId(data.sourceSnapshot().getRememberedTargetPlayerId());
+                }
                 gameData.stack.add(triggerEntry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                 log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());

@@ -27,10 +27,10 @@ public class SongOfERendil extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I, new ScryEffect(2));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new DrawCardEffect(2));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
-                1, "Bird", 2, 2, CardColor.BLUE,
-                List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
+        addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofTreasureToken(1).withSimultaneousTokens(List.of(
+                new CreateTokenEffect(
+                        1, "Bird", 2, 2, CardColor.BLUE,
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()))));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.FLYING, 1,

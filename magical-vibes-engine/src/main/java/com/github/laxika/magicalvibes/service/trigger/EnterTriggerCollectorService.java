@@ -349,8 +349,10 @@ public class EnterTriggerCollectorService {
                                                              TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card enteringCharacteristics = effectiveEnteringCard(match.gameData(), pe);
+        // The entering card is judged as its own controller's permanent: grants from the trigger
+        // source's controller (e.g. an Arcane Adaptation they control) don't apply to it.
         if (!predicateEvaluationService.matchesCardPredicate(enteringCharacteristics, conditional.predicate(), null,
-                match.gameData(), match.controllerId())) {
+                match.gameData(), pe.enteringControllerId())) {
             return false;
         }
         return enqueueAnyPermanentEnter(match, conditional.wrapped(), pe);

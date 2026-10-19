@@ -43,9 +43,10 @@ public class MayCastRippleCardWithoutPayingHandler implements MayEffectHandlerBe
 
         Card card = ability.sourceCard();
         List<Card> heldCards = new ArrayList<>(group.heldCards());
-        if (!accepted) {
+        boolean castable = !accepted || mayCastHandlerService.hasLegalFreeCastTarget(gameData, player, card);
+        if (!accepted || !castable) {
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to cast ", card, "."));
+                    player.getUsername() + (accepted ? " cannot cast " : " declines to cast "), card, "."));
             if (rippleFreeCastSupport.hasPendingOffers(gameData)) {
                 gameData.queueInteraction(new PendingInteraction.RippleFreeCastGroup(
                         group.ownerId(), group.casterId(), group.cardName(), heldCards));

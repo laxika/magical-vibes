@@ -117,18 +117,17 @@ class SolfataraTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
+        // The first player skips the draw step of turn 1 (CR 103.8a), so nothing is drawn this turn.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.passUntil(player1, TurnStep.DRAW);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
 }

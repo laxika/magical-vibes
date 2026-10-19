@@ -19,8 +19,28 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record ExileTopCardMayPlayThisTurnEffect(
         DynamicAmount count,
         boolean withoutPayingManaCost,
-        CardPredicate freeCastFilter
+        CardPredicate freeCastFilter,
+        boolean duringTurnsLoreCounterPutOnSource
 ) implements ExileTopCardsMayPlayThisTurnDrawReplacementEffect {
+
+    /**
+     * Canonical-shaped constructor for the usual "until end of turn" form.
+     */
+    public ExileTopCardMayPlayThisTurnEffect(
+            DynamicAmount count,
+            boolean withoutPayingManaCost,
+            CardPredicate freeCastFilter
+    ) {
+        this(count, withoutPayingManaCost, freeCastFilter, false);
+    }
+
+    /**
+     * Single-card variant whose play permission is renewed during any turn the controller puts a lore
+     * counter on the source Saga, even once the Saga has been sacrificed (Summon: Brynhildr).
+     */
+    public static ExileTopCardMayPlayThisTurnEffect renewedOnLoreCounterTurns() {
+        return new ExileTopCardMayPlayThisTurnEffect(new Fixed(1), false, null, true);
+    }
 
     /** Single-card variant (Oracle's Vault). */
     public ExileTopCardMayPlayThisTurnEffect(boolean withoutPayingManaCost) {

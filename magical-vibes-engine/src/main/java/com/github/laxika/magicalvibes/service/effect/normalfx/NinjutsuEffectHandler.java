@@ -59,9 +59,9 @@ public class NinjutsuEffectHandler implements NormalEffectHandlerBean {
 
         Permanent permanent = new Permanent(card, Zone.HAND);
         permanent.tap();
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         permanent.setAttacking(true);
         permanent.setAttackTarget(e.attackTargetId());
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
 
         gameLogService.append(gameData, GameLog.cardThen(card, " enters the battlefield tapped and attacking."));
         log.info("Game {} - {} enters tapped and attacking via ninjutsu", gameData.id, card.getName());

@@ -317,6 +317,12 @@ public class BattlefieldEntryBatchSupport {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
                 if (controllerId != null && permanent.isFaceDown()) {
                     battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, permanent.getCard());
+                } else if (controllerId != null && !gameData.interaction.isAwaitingInput()
+                        && entersWithPlayerChoice(permanent)) {
+                    // "As this enters, pay any amount of life" / "choose a number": asked of the controller now,
+                    // and the permanent's own enter abilities follow once the choice is answered.
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(
+                            gameData, controllerId, permanent.getCard(), null, false);
                 } else if (controllerId != null) {
                     battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, permanent.getCard(), null, false);
                 }
@@ -333,6 +339,13 @@ public class BattlefieldEntryBatchSupport {
                     .map(Permanent::getId).toList();
             if (!tokenIds.isEmpty()) battlefieldEntryService.checkAllyTokenEntersTriggers(gameData, controllerId, tokenIds);
         }
+    }
+
+    private boolean entersWithPlayerChoice(Permanent permanent) {
+        return permanent.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect number
+                        && !number.chooseRandomly());
     }
 
     private boolean removeFromOrigin(GameData gameData, BattlefieldEntryCard candidate) {

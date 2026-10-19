@@ -108,7 +108,8 @@ class SystemsOverrideTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        // Stop at the end step so priority passing cannot carry on into cleanup, where control reverts.
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();

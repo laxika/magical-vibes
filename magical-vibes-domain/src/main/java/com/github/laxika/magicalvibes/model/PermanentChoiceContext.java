@@ -194,12 +194,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Attach one selected graveyard Aura to the chosen creature and continue the selection. */
+    /**
+     * Attach one selected graveyard Aura to the chosen creature and continue the selection. The
+     * choices already made ({@code placedAuraCardIds} paired by position with
+     * {@code placedCreatureIds}) are kept so every selected Aura enters the battlefield together once
+     * the last creature has been chosen.
+     */
     record AttachReturnedAuraToCreature(UUID controllerId, UUID auraCardId,
-                                        List<UUID> remainingAuraCardIds)
+                                        List<UUID> remainingAuraCardIds,
+                                        List<UUID> placedAuraCardIds,
+                                        List<UUID> placedCreatureIds)
             implements PermanentChoiceContext {
         public AttachReturnedAuraToCreature {
             remainingAuraCardIds = List.copyOf(remainingAuraCardIds);
+            placedAuraCardIds = List.copyOf(placedAuraCardIds);
+            placedCreatureIds = List.copyOf(placedCreatureIds);
         }
     }
 
@@ -280,8 +289,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ToymakersTrapOpponentChoice(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                                        int chosenNumber) implements PermanentChoiceContext {}
     /** Triarch Stalker: choose the opponent remembered by its targeting relay. */
-    record ChooseOpponentForTargetingRelay(UUID controllerId, UUID sourcePermanentId, String sourceCardName)
-            implements PermanentChoiceContext {}
+    record ChooseOpponentForTargetingRelay(UUID controllerId, UUID sourcePermanentId, String sourceCardName,
+                                           boolean secret) implements PermanentChoiceContext {
+        public ChooseOpponentForTargetingRelay(UUID controllerId, UUID sourcePermanentId, String sourceCardName) {
+            this(controllerId, sourcePermanentId, sourceCardName, false);
+        }
+    }
     /** Sylvan Offering: choose the opponent who creates tokens alongside the controller. */
     record ChooseOpponentEachCreatesTokens(UUID controllerId,
                                            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect token,
@@ -1460,6 +1473,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           int tokenCount, List<UUID> chosenAttackTargets) {
             this(controllerId, sourceCard, sourcePermanentId, targetPermanentId, copyEffect, tokenCount,
                     chosenAttackTargets, null);
+        }
+    }
+
+    /**
+     * Controller's choice of which player or planeswalker each token that entered attacking is attacking
+     * (CR 508.4); the first id in {@code tokenIds} is assigned by the next answer.
+     */
+    record TokenAttackTargetChoice(UUID controllerId, List<UUID> tokenIds) implements PermanentChoiceContext {
+        public TokenAttackTargetChoice {
+            tokenIds = List.copyOf(tokenIds);
         }
     }
 

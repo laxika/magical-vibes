@@ -6,7 +6,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "155")
 public class StampedeRider extends Card {
@@ -14,7 +18,8 @@ public class StampedeRider extends Card {
     public StampedeRider() {
         addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(
-                        new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
+                        new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(4)))),
                         new BoostSelfEffect(1, 1)));
     }
 }

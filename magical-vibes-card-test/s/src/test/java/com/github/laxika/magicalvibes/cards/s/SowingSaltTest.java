@@ -22,15 +22,20 @@ class SowingSaltTest extends BaseCardTest {
     @DisplayName("Exiles the target nonbasic land and every same-name copy from graveyard, hand, and library")
     void exilesTargetAndAllCopies() {
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new TendoIceBridge()).getId();
-        harness.setHand(player2, List.of(new TendoIceBridge()));
+        TendoIceBridge handCopy = new TendoIceBridge();
+        TendoIceBridge libraryCopy = new TendoIceBridge();
+        harness.setHand(player2, List.of(handCopy));
         harness.setGraveyard(player2, List.of(new TendoIceBridge()));
         harness.setHand(player1, List.of(new SowingSalt(), new TendoIceBridge()));
 
-        harness.setLibrary(player2, List.of(new TendoIceBridge(), new Plains()));
+        harness.setLibrary(player2, List.of(libraryCopy, new Plains()));
 
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId(), libraryCopy.getId()));
 
         harness.assertNotOnBattlefield(player2, "Tendo Ice Bridge");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

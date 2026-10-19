@@ -221,9 +221,11 @@ class SeizeTheDayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castAndResolveSorcery(player1, 0, creature.getId());
+        harness.withAutoStop(TurnStep.END_OF_COMBAT,
+                () -> harness.castAndResolveSorcery(player1, 0, creature.getId()));
 
         assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
         gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);

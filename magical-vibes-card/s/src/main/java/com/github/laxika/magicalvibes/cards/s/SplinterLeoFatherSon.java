@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -28,6 +29,7 @@ import java.util.Set;
 public class SplinterLeoFatherSon extends Card {
 
     public SplinterLeoFatherSon() {
+        setMultiTargetConstraint(MultiTargetConstraint.DISTINCT_TARGETS);
         PlayerPredicateTargetFilter playerTarget = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player.");
         SpellTarget tokenTarget = target(playerTarget);

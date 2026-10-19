@@ -602,7 +602,9 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCopyIds()),
                 exiledCardViews(gameData, interaction.validCopyIds()),
                 interaction.validCopyIds().size(),
-                "Choose any number of Eye of the Storm copies to cast without paying their mana costs.");
+                interaction.mustCastAll()
+                        ? "Choose the order in which to cast the copies without paying their mana costs."
+                        : "Choose any number of Eye of the Storm copies to cast without paying their mana costs.");
     }
 
     private InteractionPromptMessage projectExiledSpellCopyChoice(

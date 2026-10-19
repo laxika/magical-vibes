@@ -217,7 +217,7 @@ class SyrVondamSunstarExemplarTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().performSimultaneousRemovals(
                 gd, creatures, () -> creatures.forEach(creature ->
                         harness.getPermanentRemovalService().removePermanentToExile(gd, creature))));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 22);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -235,7 +235,7 @@ class SyrVondamSunstarExemplarTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().performSimultaneousRemovals(
                 gd, creatures, () -> creatures.forEach(creature ->
                         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature))));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 22);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

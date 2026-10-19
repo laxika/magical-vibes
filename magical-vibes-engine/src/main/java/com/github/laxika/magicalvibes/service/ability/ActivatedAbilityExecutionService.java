@@ -752,7 +752,7 @@ public class ActivatedAbilityExecutionService {
         boolean shouldUnattachEquipment = abilityEffects.stream().anyMatch(UnattachSourceEquipmentCost.class::isInstance);
         if (shouldUnattachEquipment) {
             Permanent equipment = ability.getGrantSourcePermanentId() == null
-                    ? null
+                    ? permanent
                     : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
             if (equipment == null || !equipment.isAttached()) {
                 throw new IllegalStateException("The granting Equipment is not attached");
@@ -2187,6 +2187,7 @@ public class ActivatedAbilityExecutionService {
         // (for proper fizzle checking and resolution by graveyard handlers)
         List<UUID> effectiveTargetCardIds;
         List<UUID> effectivePermanentTargetIds;
+        List<TargetFilter> mixedPermanentSlotFilters = new ArrayList<>();
         if (mixedBattlefieldAndGraveyardTargets) {
             List<UUID> graveyardTargetIds = new ArrayList<>();
             List<UUID> permanentTargetIds = new ArrayList<>();
@@ -2196,6 +2197,8 @@ public class ActivatedAbilityExecutionService {
                     graveyardTargetIds.add(effectiveTargetIds.get(i));
                 } else {
                     permanentTargetIds.add(effectiveTargetIds.get(i));
+                    mixedPermanentSlotFilters.add(i < ability.getMultiTargetFilters().size()
+                            ? ability.getMultiTargetFilters().get(i) : ability.getTargetFilter());
                 }
             }
             if (!permanentTargetIds.isEmpty()) {
@@ -2228,7 +2231,15 @@ public class ActivatedAbilityExecutionService {
             stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         }
         stackEntry.setTargetFilter(ability.getTargetFilter());
-        if (!ability.getMultiTargetFilters().isEmpty()) {
+        if (mixedBattlefieldAndGraveyardTargets) {
+            // The first battlefield target rides as the primary target, so its own slot filter must be
+            // rechecked on resolution (CR 608.2b); the remaining ones follow in their slot order.
+            if (!mixedPermanentSlotFilters.isEmpty()) {
+                stackEntry.setTargetFilter(mixedPermanentSlotFilters.getFirst());
+                stackEntry.setTargetFilters(new ArrayList<>(
+                        mixedPermanentSlotFilters.subList(1, mixedPermanentSlotFilters.size())));
+            }
+        } else if (!ability.getMultiTargetFilters().isEmpty()) {
             stackEntry.setTargetFilters(slotFiltersForTargets(gameData, playerId, permanent, ability,
                     effectivePermanentTargetIds, effectiveXValue));
         }
@@ -2279,6 +2290,19 @@ public class ActivatedAbilityExecutionService {
             stackEntry.setSacrificedAttachedEquipmentIds(List.copyOf(sacrificedAttachedEquipmentIds));
         }
         stackEntry.setSacrificedCardIds(sacrificedCardIds == null ? List.of() : List.copyOf(sacrificedCardIds));
+        if (sacrificedCardIds != null && !sacrificedCardIds.isEmpty()) {
+            Map<UUID, Long> sacrificedVersions = new HashMap<>();
+            for (UUID sacrificedId : sacrificedCardIds) {
+                sacrificedVersions.put(sacrificedId, gameData.graveyardEntryVersion(sacrificedId));
+            }
+            stackEntry.setSacrificedCardGraveyardVersions(sacrificedVersions);
+        }
+        if (ability.getEffects().stream().anyMatch(
+                com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect.class::isInstance)
+                && gameQueryService.findCardInGraveyardById(gameData, permanent.getCard().getId()) != null) {
+            stackEntry.setTriggeringCardGraveyardEntryVersion(
+                    gameData.graveyardEntryVersion(permanent.getCard().getId()));
+        }
         stackEntry.setActivatedAbilityExiledCardIds(activatedAbilityExiledCardIds == null
                 ? List.of() : List.copyOf(activatedAbilityExiledCardIds));
         Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());

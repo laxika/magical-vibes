@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,9 +30,10 @@ public class SummonKujata extends Card {
         setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 3)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new DiscardCardThenEffect(
+                null,
+                new DealDamageToPlayersEffect(new LastDiscardedCardManaValue(), DamageRecipient.EACH_OPPONENT),
+                "a card"));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new DrawCardEffect(2));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DealDamageToPlayersEffect(
-                new LastDiscardedCardManaValue(), DamageRecipient.EACH_OPPONENT));
     }
 }

@@ -48,7 +48,12 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), count);
-        if (entry.getSourcePermanentId() != null) {
+        // Refresh the snapshot with the new counters, but keep an older snapshot of a permanent that has
+        // transformed since the ability was put on the stack so later steps can tell it transformed.
+        Permanent previousSnapshot = entry.getSourcePermanentSnapshot();
+        if (entry.getSourcePermanentId() != null && (previousSnapshot == null
+                || !previousSnapshot.getId().equals(self.getId())
+                || previousSnapshot.getTransformationSequence() == self.getTransformationSequence())) {
             entry.setSourcePermanentSnapshot(new Permanent(self));
         }
     }

@@ -376,6 +376,7 @@ public class GraveyardReturnSupport {
                         effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
                         effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
                         effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect), entry.getCard());
+                limitHasteToThisTurn(effect, returnedPermanent);
             } else {
                 returnedPermanent = putCardOntoBattlefield(gameData, destinationPlayerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
@@ -1187,6 +1188,7 @@ public class GraveyardReturnSupport {
                                     effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
                                     effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
                                     effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect), entry.getCard());
+                            limitHasteToThisTurn(effect, returnedPermanent);
                         } else {
                             returnedPermanent = putCardOntoBattlefield(gameData, targetPlayerId, card,
                                     effect.grantColor(), effect.grantSubtype(), effect.enterTapped(),
@@ -1317,6 +1319,7 @@ public class GraveyardReturnSupport {
                                     effect.sacrificeAtEndStep(), effect.exileIfLeavesBattlefield(),
                                     effect.enterTapped(), effect.enterAttacking(), effect.exileAtYourNextEndStep(),
                                     losesAllAbilitiesBeforeEntering(effect), entry.getCard());
+                            limitHasteToThisTurn(effect, returnedPermanent);
                         } else {
                             returnedPermanent = putCardOntoBattlefield(
                                     gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
@@ -1959,6 +1962,11 @@ public class GraveyardReturnSupport {
         try {
             for (UUID cardId : targetIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && !entry.isTargetCardSameGraveyardObject(
+                        cardId, gameData.graveyardEntryVersion(cardId))) {
+                    // The card left the graveyard and came back: a new object, no longer the target.
+                    continue;
+                }
                 UUID graveyardOwnerId = card == null
                         ? null
                         : gameQueryService.findGraveyardOwnerById(gameData, cardId);
@@ -2519,6 +2527,14 @@ public class GraveyardReturnSupport {
         }
         if (grantIndestructible) {
             permanent.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        }
+    }
+
+    /** Shallow Grave: haste granted on return lasts only until end of turn, so it moves to the cleanup-cleared set. */
+    private static void limitHasteToThisTurn(ReturnCardFromGraveyardEffect effect, Permanent returnedPermanent) {
+        if (returnedPermanent != null && effect.grantHaste() && effect.hasteUntilEndOfTurn()
+                && returnedPermanent.getPersistentGrantedKeywords().remove(Keyword.HASTE)) {
+            returnedPermanent.getGrantedKeywords().add(Keyword.HASTE);
         }
     }
 
@@ -3627,6 +3643,7 @@ public class GraveyardReturnSupport {
         }
 
         if (state.disposition() == CardPileDisposition.HAND
+                || state.disposition() == CardPileDisposition.HAND_FROM_EXILE
                 || state.disposition() == CardPileDisposition.HAND_AND_THOPTER
                 || state.disposition() == CardPileDisposition.HAND_WITH_FACE_DOWN_PILE) {
             // Fact-or-Fiction (Unesh): chosen pile → controller's hand; other pile → controller's graveyard.
@@ -3650,8 +3667,18 @@ public class GraveyardReturnSupport {
                     .map(cardId -> allCards.stream().filter(card -> card.getId().equals(cardId))
                             .findFirst().orElse(null))
                     .filter(Objects::nonNull).toList();
-            List<Card> enteredGraveyard = graveyardService.addCardsFromLibraryToGraveyard(
-                    gameData, controllerId, graveyardPile);
+            List<Card> enteredGraveyard;
+            if (state.disposition() == CardPileDisposition.HAND_FROM_EXILE) {
+                enteredGraveyard = new ArrayList<>();
+                for (Card card : graveyardPile) {
+                    if (graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.EXILE)) {
+                        enteredGraveyard.add(card);
+                    }
+                }
+            } else {
+                enteredGraveyard = graveyardService.addCardsFromLibraryToGraveyard(
+                        gameData, controllerId, graveyardPile);
+            }
             int cardsPutIntoGraveyard = enteredGraveyard.size();
             for (Card card : enteredGraveyard) {
                 gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -49,6 +50,10 @@ public class SeparateCreaturesIntoPilesAndChooseBlockersEffectHandler implements
             String playerName = gameData.playerIdToName.get(defendingPlayerId);
             gameLogService.append(gameData, GameLog.text(playerName + " has no creatures to separate."));
             log.info("Game {} - {} has no creatures to separate", gameData.id, playerName);
+            // Both piles are empty, so a creature the defending player gets later is in neither pile and
+            // cannot block this turn.
+            gameData.blockableCreaturesThisTurn.merge(defendingPlayerId, Set.<UUID>of(),
+                    (existing, next) -> Set.<UUID>of());
             return;
         }
 

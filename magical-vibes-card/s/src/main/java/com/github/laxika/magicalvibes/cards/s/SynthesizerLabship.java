@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -55,7 +56,7 @@ public class SynthesizerLabship extends Card {
         target(new PermanentPredicateTargetFilter(
                 OTHER_ARTIFACT_YOU_CONTROL,
                 "Target must be another artifact you control"
-        ), 0, 1).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        ), 0, 1).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(2, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         new Fixed(2), new Fixed(2), List.of(), Set.of(Keyword.FLYING), null,
@@ -63,6 +64,12 @@ public class SynthesizerLabship extends Card {
                         OTHER_ARTIFACT_YOU_CONTROL
                 )));
 
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceCounterThreshold(9, CounterType.CHARGE),
+                new AnimatePermanentsEffect(
+                        (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
+                        Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.CONTINUOUS, null
+                )));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(9, CounterType.CHARGE),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.SELF)));

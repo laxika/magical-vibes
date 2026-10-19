@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -22,7 +23,7 @@ public class Sporocyst extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)));
+                new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)), TriggerMode.INDEPENDENT);
 
         // Spore Chimney — search your library for up to X basic land cards and put them onto the
         // battlefield tapped, then shuffle.

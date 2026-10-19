@@ -49,8 +49,29 @@ public class LegendRuleService {
      *         choice, {@code false} if no violation exists
      */
     public boolean checkLegendRule(GameData gameData, UUID controllerId) {
+        Map.Entry<String, List<UUID>> violation = findLegendRuleViolation(gameData, controllerId);
+        if (violation == null) {
+            return false;
+        }
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(violation.getKey(), violation.getValue()));
+        playerInputService.beginPermanentChoice(gameData, controllerId, violation.getValue(),
+                "You control multiple legendary permanents named " + violation.getKey() + ". Choose one to keep.");
+        return true;
+    }
+
+    /**
+     * Whether the given player currently controls legendary permanents that the legend rule would make
+     * them choose between. State-based actions are performed before a triggered ability's targets are
+     * chosen as it is put on the stack, so callers use this to hold such targeting back until the
+     * violation has been resolved.
+     */
+    public boolean hasLegendRuleViolation(GameData gameData, UUID controllerId) {
+        return findLegendRuleViolation(gameData, controllerId) != null;
+    }
+
+    private Map.Entry<String, List<UUID>> findLegendRuleViolation(GameData gameData, UUID controllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
+        if (battlefield == null) return null;
 
         Map<String, List<UUID>> legendaryByName = new HashMap<>();
         for (Permanent perm : battlefield) {
@@ -73,13 +94,10 @@ public class LegendRuleService {
                 if (nonExemptPermanents.size() < 2) {
                     continue;
                 }
-                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.LegendRule(entry.getKey(), nonExemptPermanents));
-                playerInputService.beginPermanentChoice(gameData, controllerId, nonExemptPermanents,
-                        "You control multiple legendary permanents named " + entry.getKey() + ". Choose one to keep.");
-                return true;
+                return Map.entry(entry.getKey(), nonExemptPermanents);
             }
         }
-        return false;
+        return null;
     }
 
     private boolean hasGlobalExemption(GameData gameData) {
@@ -149,9 +167,15 @@ public class LegendRuleService {
         return count;
     }
 
+    /**
+     * Counts the controller's legendary permanents with the given name, the count the controlled-name
+     * exemptions read (e.g. "exactly two legendary permanents named ..."). A nonlegendary copy with
+     * the same name does not count toward it.
+     */
     private int countControlledOnBattlefield(GameData gameData, UUID controllerId, String name) {
         return (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(perm -> name.equals(gameQueryService.getEffectiveName(gameData, perm)))
+                .filter(perm -> isLegendary(gameData, perm))
                 .count();
     }
 

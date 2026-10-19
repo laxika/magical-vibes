@@ -15,6 +15,6 @@ public class StalkingVengeance extends Card {
 
     public StalkingVengeance() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(new EventValue()));
+                DealDamageToTargetPlayerOrPlaneswalkerEffect.byTriggeringCreature(new EventValue()));
     }
 }

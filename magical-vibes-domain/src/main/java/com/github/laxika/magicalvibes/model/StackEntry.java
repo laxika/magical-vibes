@@ -475,6 +475,8 @@ public class StackEntry {
     /** Mixed-zone card targets remember their original permanent identity or graveyard incarnation. */
     private final Map<UUID, UUID> mixedZoneTargetPermanentIds = new HashMap<>();
     private final Map<UUID, Long> mixedZoneTargetGraveyardVersions = new HashMap<>();
+    /** Graveyard incarnation of each targeted card when it was chosen, keyed by card id. */
+    private final Map<UUID, Long> targetCardGraveyardVersions = new HashMap<>();
     /** Graveyard entry chosen as this spell's primary target when it was cast. */
     @Setter private long targetGraveyardEntryVersion = -1;
     @Setter private List<UUID> triggeringCardIds = List.of();
@@ -482,6 +484,8 @@ public class StackEntry {
     @Setter private UUID sacrificedCardId;
     /** Card ids of permanents sacrificed as an activated-ability cost, retained for later effects. */
     @Setter private List<UUID> sacrificedCardIds = List.of();
+    /** Graveyard incarnation of each sacrificed card when it was sacrificed as a cost, keyed by card id. */
+    @Setter private Map<UUID, Long> sacrificedCardGraveyardVersions = Map.of();
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
     /** Last-known card discarded as an activation cost, when an effect refers to that card. */
@@ -1065,10 +1069,12 @@ public class StackEntry {
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.mixedZoneTargetPermanentIds.putAll(source.mixedZoneTargetPermanentIds);
         this.mixedZoneTargetGraveyardVersions.putAll(source.mixedZoneTargetGraveyardVersions);
+        this.targetCardGraveyardVersions.putAll(source.targetCardGraveyardVersions);
         this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
+        this.sacrificedCardGraveyardVersions = source.sacrificedCardGraveyardVersions;
         this.sacrificedCardIds = source.sacrificedCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.sacrificedCardIds);
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
@@ -1451,6 +1457,21 @@ public class StackEntry {
             effectsToResolve = bombardmentOriginalEffectsToResolve;
             bombardmentOriginalEffectsToResolve = null;
         }
+    }
+
+    /** Records the graveyard incarnation of a targeted card as it is chosen as a target. */
+    public void recordTargetCardGraveyardVersion(UUID cardId, long version) {
+        targetCardGraveyardVersions.put(cardId, version);
+    }
+
+    /** Whether the card is still the same graveyard object that was targeted (it has not left and returned). */
+    public boolean isTargetCardSameGraveyardObject(UUID cardId, long currentVersion) {
+        Long recorded = targetCardGraveyardVersions.get(cardId);
+        return recorded == null || recorded == currentVersion;
+    }
+
+    public Map<UUID, Long> getTargetCardGraveyardVersions() {
+        return targetCardGraveyardVersions;
     }
 
     /**

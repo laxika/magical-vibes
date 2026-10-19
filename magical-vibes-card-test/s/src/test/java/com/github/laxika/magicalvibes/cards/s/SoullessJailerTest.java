@@ -24,13 +24,13 @@ class SoullessJailerTest extends BaseCardTest {
     @Test
     @DisplayName("Permanent cards cannot enter the battlefield from graveyards")
     void blocksPermanentCardsFromGraveyards() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addToBattlefield(player1, new SoullessJailer());
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");

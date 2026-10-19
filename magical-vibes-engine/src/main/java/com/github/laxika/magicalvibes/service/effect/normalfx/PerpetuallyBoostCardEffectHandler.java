@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,8 +33,33 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
         AmountContext context = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), context);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
-        PerpetualCardPowerToughnessSupport.remember(
-                gameData, boost.card(), powerBoost, toughnessBoost);
+        Card boosted = boostedCard(boost, source);
+        PerpetualCardPowerToughnessSupport.remember(gameData, boosted, powerBoost, toughnessBoost);
+        if (boosted != boost.card() && source.getCard() != null
+                && !source.getCard().getId().equals(boosted.getId())) {
+            // The copying permanent reads its modifier under the card it currently shows.
+            PerpetualCardPowerToughnessSupport.remember(gameData, source.getCard(), powerBoost, toughnessBoost);
+        }
 
+    }
+
+    /**
+     * The card the boost applies to. A card that boosts "itself" references its own printed instance,
+     * so when the ability is being used by a copy of that card (Clone copying it) the physical card
+     * of the copying permanent is boosted instead.
+     */
+    private static Card boostedCard(PerpetuallyBoostCardEffect boost, Permanent source) {
+        if (source == null || source.getOriginalCard() == null || source.getOriginalCard() == boost.card()) {
+            return boost.card();
+        }
+        for (EffectSlot slot : EffectSlot.values()) {
+            for (CardEffect candidate : source.getCard().getEffects(slot)) {
+                if (candidate == boost
+                        || candidate instanceof PerpetuallyBoostCardEffect other && other.card() == boost.card()) {
+                    return source.getOriginalCard();
+                }
+            }
+        }
+        return boost.card();
     }
 }

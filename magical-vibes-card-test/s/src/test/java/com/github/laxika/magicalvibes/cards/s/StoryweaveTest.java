@@ -119,6 +119,7 @@ class StoryweaveTest extends BaseCardTest {
     void controllerCanChooseTheOrderOfSimultaneouslyTriggeredChapters() {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new AzusasManyJourneys());
         saga.setCounterCount(CounterType.LORE, 1);
+        harness.setAutoOrderTriggers(player1, false);
 
         castStoryweaveSagaMode(saga);
 

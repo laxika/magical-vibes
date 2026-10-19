@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -25,7 +26,8 @@ public class Scrapshooter extends Card {
     public Scrapshooter() {
         addEffect(EffectSlot.STATIC, new GiftEffect(0));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)));
+                new ConditionalEffect(new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)),
+                TriggerMode.INDEPENDENT);
 
         PermanentPredicateTargetFilter targetArtifactOrEnchantmentAnOpponentControls =
                 new PermanentPredicateTargetFilter(

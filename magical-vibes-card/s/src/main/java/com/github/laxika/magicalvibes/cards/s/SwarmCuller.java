@@ -33,7 +33,9 @@ public class SwarmCuller extends Card {
                                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                                         )),
                                         new DrawCardEffect(1),
-                                        "another creature or artifact"),
+                                        "another creature or artifact",
+                                        false,
+                                        false),
                                 "Sacrifice another creature or artifact?")));
     }
 }

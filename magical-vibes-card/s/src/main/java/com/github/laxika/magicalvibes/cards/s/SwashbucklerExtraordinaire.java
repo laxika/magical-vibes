@@ -27,7 +27,7 @@ public class SwashbucklerExtraordinaire extends Card {
         GrantKeywordEffect grantDoubleStrike =
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGETS);
         var targetGroup = targetUpTo(new EventValue(), TargetFilters.creature(), 100);
-        targetGroup.addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        targetGroup.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new SacrificeAnyNumberOfPermanentsEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -20,7 +21,7 @@ public class SpaceMarineDevastator extends Card {
     public SpaceMarineDevastator() {
         addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
+                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")), TriggerMode.INDEPENDENT);
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

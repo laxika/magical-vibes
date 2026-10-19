@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.GameSetupService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
@@ -88,6 +89,7 @@ public class GameTestHarness {
     private static com.github.laxika.magicalvibes.service.cast.CastingCostService staticCastingCostService;
     private static com.github.laxika.magicalvibes.service.cast.CastingPermissionService staticCastingPermissionService;
     private static BattlefieldEntryService staticBattlefieldEntryService;
+    private static SagaChapterService staticSagaChapterService;
     private static TriggerCollectionService staticTriggerCollectionService;
     private static SpellCastingService staticSpellCastingService;
     private static CombatAttackService staticCombatAttackService;
@@ -126,6 +128,7 @@ public class GameTestHarness {
         staticCastingCostService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class);
         staticCastingPermissionService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class);
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
+        staticSagaChapterService = context.getBean(SagaChapterService.class);
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
         staticCombatAttackService = context.getBean(CombatAttackService.class);
@@ -180,6 +183,7 @@ public class GameTestHarness {
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final SagaChapterService sagaChapterService;
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
@@ -219,6 +223,7 @@ public class GameTestHarness {
         castingCostService = staticCastingCostService;
         castingPermissionService = staticCastingPermissionService;
         battlefieldEntryService = staticBattlefieldEntryService;
+        sagaChapterService = staticSagaChapterService;
         triggerCollectionService = staticTriggerCollectionService;
         spellCastingService = staticSpellCastingService;
         combatAttackService = staticCombatAttackService;
@@ -354,6 +359,9 @@ public class GameTestHarness {
         Permanent permanent = new Permanent(card);
         inMutationScope(() -> {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
+            if (permanent.getCard().isSaga()) {
+                sagaChapterService.initializeSaga(gameData, permanent, permanent.getCard(), player.getId());
+            }
             battlefieldEntryService.processCreatureETBEffects(
                     gameData, player.getId(), permanent.getCard(), null, false);
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);

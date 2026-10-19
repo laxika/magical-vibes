@@ -32,13 +32,11 @@ public class SusurianVoidborn extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ));
-
-        addEffect(EffectSlot.ON_DEATH, DRAIN);
+        )).addEffect(EffectSlot.ON_DEATH, DRAIN);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()), DRAIN));
         addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
-                new TriggeringArtifactControllerConditionalEffect(DRAIN));
+                TriggeringArtifactControllerConditionalEffect.another(DRAIN));
     }
 }

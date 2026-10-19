@@ -35,12 +35,16 @@ public class EnchantedCreatureDealsDamageToEachOpponentEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EnchantedCreatureDealsDamageToEachOpponentEffect) effect;
         Permanent enchantedCreature = findEnchantedCreature(gameData, entry);
+        if (enchantedCreature == null && entry.getTriggeringPermanentId() == null) {
+            enchantedCreature = entry.getSourcePermanentSnapshot();
+        }
         Card sourceCard = enchantedCreature == null ? entry.getDamageSourceCard() : enchantedCreature.getCard();
         if (sourceCard == null) return;
 
         UUID sourceControllerId = enchantedCreature == null
                 ? entry.getTriggeringPermanentControllerId()
                 : gameQueryService.findPermanentController(gameData, enchantedCreature.getId());
+        if (sourceControllerId == null) sourceControllerId = entry.getControllerId();
         if (sourceControllerId == null) return;
 
         Permanent amountSource = entry.getSourcePermanentSnapshot();

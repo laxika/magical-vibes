@@ -217,22 +217,39 @@ public class TurnProgressionService {
             gameData.additionalCombatMainPhasePairsReturnStep = null;
         }
 
+        boolean beginningPhaseBeforeQueuedCombat = gameData.currentStep == TurnStep.POSTCOMBAT_MAIN
+                && additionalCombatPhase
+                && next == TurnStep.BEGINNING_OF_COMBAT
+                && gameData.additionalBeginningPhasesBeforeQueuedCombat > 0
+                && gameData.additionalBeginningPhasesAfterPostcombatMain > 0;
         if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN
-                && next == TurnStep.END_STEP
+                && (next == TurnStep.END_STEP || beginningPhaseBeforeQueuedCombat)
                 && gameData.additionalBeginningPhasesAfterPostcombatMain > 0) {
+            // A phase created later happens before phases created earlier, so a beginning phase
+            // created during this main phase precedes an already queued extra combat phase.
+            gameData.additionalBeginningPhaseReturnStep = next;
             next = TurnStep.UNTAP;
             gameData.additionalBeginningPhasesAfterPostcombatMain--;
-            gameData.additionalBeginningPhaseReturnStep = TurnStep.END_STEP;
+            if (beginningPhaseBeforeQueuedCombat) {
+                gameData.additionalBeginningPhasesBeforeQueuedCombat--;
+            }
             additionalBeginningPhaseUntap = true;
         } else if (gameData.currentStep == TurnStep.DRAW
                 && gameData.additionalBeginningPhaseReturnStep != null) {
-            if (gameData.additionalBeginningPhasesAfterPostcombatMain > 0) {
+            boolean returningToQueuedCombat =
+                    gameData.additionalBeginningPhaseReturnStep == TurnStep.BEGINNING_OF_COMBAT;
+            if (gameData.additionalBeginningPhasesAfterPostcombatMain > 0
+                    && (!returningToQueuedCombat || gameData.additionalBeginningPhasesBeforeQueuedCombat > 0)) {
                 next = TurnStep.UNTAP;
                 gameData.additionalBeginningPhasesAfterPostcombatMain--;
+                if (returningToQueuedCombat) {
+                    gameData.additionalBeginningPhasesBeforeQueuedCombat--;
+                }
                 additionalBeginningPhaseUntap = true;
             } else {
                 next = gameData.additionalBeginningPhaseReturnStep;
                 gameData.additionalBeginningPhaseReturnStep = null;
+                additionalCombatPhase = next == TurnStep.BEGINNING_OF_COMBAT;
             }
         }
 
@@ -338,6 +355,7 @@ public class TurnProgressionService {
             next = TurnStep.UNTAP;
             gameData.additionalBeginningPhasesAfterCombat--;
         } else if (gameData.currentStep == TurnStep.DRAW
+                && !additionalBeginningPhaseUntap
                 && gameData.additionalBeginningPhaseReturnStep != null) {
             if (gameData.additionalBeginningPhasesAfterCombat > 0) {
                 next = TurnStep.UNTAP;
@@ -616,7 +634,7 @@ public class TurnProgressionService {
 
         if (skipUntapStep || untapStepService.playersSkipUntapStepApplies(gameData)) {
             untapStepService.untapPermanents(gameData, activePlayerId, null, true);
-        } else if (untapStepService.storageMatrixRestrictionApplies(gameData, activePlayerId)) {
+        } else if (untapStepService.phaseThenCheckStorageMatrixRestriction(gameData, activePlayerId)) {
             playerInputService.beginStorageMatrixUntapChoice(gameData, activePlayerId);
             invalidateForAllPlayers(gameData);
             return;
@@ -687,7 +705,8 @@ public class TurnProgressionService {
     private void processAdditionalBeginningPhaseUntap(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
         boolean skipUntapStep = untapStepService.playersSkipUntapStepApplies(gameData);
-        int queuedUntapSkips = gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
+        int queuedUntapSkips = skipUntapStep ? 0
+                : gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
         if (queuedUntapSkips > 0) {
             if (queuedUntapSkips == 1) {
                 gameData.skipNextUntapStepCount.remove(activePlayerId);
@@ -699,7 +718,7 @@ public class TurnProgressionService {
 
         if (skipUntapStep) {
             untapStepService.untapPermanents(gameData, activePlayerId, null, true);
-        } else if (untapStepService.storageMatrixRestrictionApplies(gameData, activePlayerId)) {
+        } else if (untapStepService.phaseThenCheckStorageMatrixRestriction(gameData, activePlayerId)) {
             playerInputService.beginStorageMatrixUntapChoice(gameData, activePlayerId);
             invalidateForAllPlayers(gameData);
             return;
@@ -758,7 +777,16 @@ public class TurnProgressionService {
                 gameData.skipNextCombatPhaseCount.computeIfPresent(gameData.activePlayerId,
                         (playerId, count) -> count > 1 ? count - 1 : null);
                 logSkippedPhase(gameData, "combat phase");
-                next = TurnStep.POSTCOMBAT_MAIN;
+                if (gameData.additionalCombatPhasesOnly > 0) {
+                    // Only the upcoming combat is skipped; the extra combat phase queued after it still happens.
+                    gameData.additionalCombatPhasesOnly--;
+                    if (gameData.aggressiveCombatPhasesOnly > 0) {
+                        gameData.aggressiveCombatPhasesOnly--;
+                    }
+                    next = TurnStep.BEGINNING_OF_COMBAT;
+                } else {
+                    next = TurnStep.POSTCOMBAT_MAIN;
+                }
                 continue;
             }
             if (next == TurnStep.PRECOMBAT_MAIN && skipped.contains(SkipStepOrPhaseKind.MAIN_PHASE)) {
@@ -1311,6 +1339,7 @@ public class TurnProgressionService {
         gameData.additionalUpkeepStepsAfterCombat = 0;
         gameData.additionalUpkeepReturnStep = null;
         gameData.additionalBeginningPhasesAfterCombat = 0;
+        gameData.additionalBeginningPhasesBeforeQueuedCombat = 0;
         gameData.additionalBeginningPhaseReturnStep = null;
         gameData.additionalBeginningPhaseUntapInProgress = false;
         gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.clear();
@@ -1448,7 +1477,7 @@ public class TurnProgressionService {
         } else {
             // Storage Matrix: pause the untap step so the active player chooses artifact/creature/land
             // before untapping. The choice handler resumes via resumeStorageMatrixUntap.
-            if (untapStepService.storageMatrixRestrictionApplies(gameData, nextActive)) {
+            if (untapStepService.phaseThenCheckStorageMatrixRestriction(gameData, nextActive)) {
                 playerInputService.beginStorageMatrixUntapChoice(gameData, nextActive);
                 invalidateForAllPlayers(gameData);
                 return;
@@ -1598,7 +1627,7 @@ public class TurnProgressionService {
 
         if (skipUntapStep || untapStepService.playersSkipUntapStepApplies(gameData)) {
             untapStepService.untapPermanents(gameData, activePlayerId, null, true);
-        } else if (untapStepService.storageMatrixRestrictionApplies(gameData, activePlayerId)) {
+        } else if (untapStepService.phaseThenCheckStorageMatrixRestriction(gameData, activePlayerId)) {
             playerInputService.beginStorageMatrixUntapChoice(gameData, activePlayerId);
             invalidateForAllPlayers(gameData);
             return;

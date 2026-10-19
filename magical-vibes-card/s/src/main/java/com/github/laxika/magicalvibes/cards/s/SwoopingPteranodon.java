@@ -17,8 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -32,9 +34,11 @@ public class SwoopingPteranodon extends Card {
         target(TargetFilters.creatureAnOpponentControls()).addEffect(
                 EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
-                                new PermanentHasKeywordPredicate(Keyword.FLYING))),
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsSourcePermanentPredicate(),
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
+                                        new PermanentHasKeywordPredicate(Keyword.FLYING))))),
                         SequenceEffect.of(
                                 new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
                                 new UntapPermanentsEffect(TapUntapScope.TARGET),

@@ -48,10 +48,12 @@ class SplashLasherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
+        harness.setAutoOrderTriggers(player1, false);
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
+        harness.chooseTriggerToStackNext(player1, "2:");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
@@ -104,10 +106,12 @@ class SplashLasherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
+        harness.setAutoOrderTriggers(player1, false);
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
+        harness.chooseTriggerToStackNext(player1, "2:");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

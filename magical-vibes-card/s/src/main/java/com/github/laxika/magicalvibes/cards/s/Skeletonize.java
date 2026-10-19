@@ -32,6 +32,6 @@ public class Skeletonize extends Card {
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3))
-                .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(skeletonToken));
+                .addEffect(EffectSlot.SPELL, ResolveEffectOnTargetDeathThisTurnEffect.ifDealtDamageThisWay(skeletonToken));
     }
 }

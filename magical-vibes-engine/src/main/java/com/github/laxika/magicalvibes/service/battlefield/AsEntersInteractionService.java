@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
@@ -755,6 +756,20 @@ public class AsEntersInteractionService {
             playerInputService.beginPayAnyAmountOfLifeChoice(gameData, controllerId, maxLife,
                     new ChoiceContext.PayAnyAmountOfLifeAsEnters(justEntered.getId(), controllerId, card,
                             targetId, wasCastFromHand, etbMode, kicked));
+            return;
+        }
+
+        // "As this permanent enters, choose a number" (Shapeshifter) for a permanent put onto the battlefield
+        // by an effect (a reanimation Aura, Show and Tell). A spell resolving normally already began this
+        // choice in StackResolutionService, in which case the game is awaiting that answer here.
+        NumberChoiceEffect numberChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(NumberChoiceEffect.class::isInstance)
+                .map(NumberChoiceEffect.class::cast)
+                .findFirst().orElse(null);
+        if (numberChoice != null && !numberChoice.chooseRandomly() && !gameData.interaction.isAwaitingInput()
+                && !gameQueryService.hasLostAllAbilities(gameData, enteringPermanent)) {
+            playerInputService.beginNumberChoice(gameData, controllerId, enteringPermanent.getId(),
+                    numberChoice.minNumber(), numberChoice.maxNumber());
             return;
         }
 

@@ -41,6 +41,14 @@ public class PayXManaBoostTargetCreatureEffectHandler implements NormalEffectHan
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
 
+        UUID boostTargetId = entry.getTargetId();
+        if (boostTargetId != null && gameQueryService.findPermanentById(gameData, boostTargetId) == null) {
+            gameLogService.append(gameData, GameLog.text(
+                    "The target of " + cardName + "'s pay-X ability is no longer there."));
+            log.info("Game {} - {}'s pay-X boost target {} is gone, no payment", gameData.id, cardName, boostTargetId);
+            return;
+        }
+
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
             gameData.chosenXValue = null;

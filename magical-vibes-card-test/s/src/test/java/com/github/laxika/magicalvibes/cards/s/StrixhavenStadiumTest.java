@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -150,6 +151,8 @@ class StrixhavenStadiumTest extends BaseCardTest {
     @Test
     @DisplayName("The threshold uses counters added in response to the combat trigger")
     void thresholdIsCheckedAtResolution() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent stadium = harness.addToBattlefieldAndReturn(player1, new StrixhavenStadium());
 
         stadium.setCounterCount(CounterType.POINT, 8);
@@ -169,6 +172,8 @@ class StrixhavenStadiumTest extends BaseCardTest {
     @Test
     @DisplayName("A departing Stadium with ten counters still makes the damaged opponent lose")
     void departedStadiumUsesLastKnownCounters() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent stadium = harness.addToBattlefieldAndReturn(player1, new StrixhavenStadium());
 
         stadium.setCounterCount(CounterType.POINT, 10);
@@ -176,7 +181,7 @@ class StrixhavenStadiumTest extends BaseCardTest {
 
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
-        harness.getPermanentRemovalService().removePermanentToHand(gd, stadium);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, stadium));
         resolveAllTriggers();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
@@ -186,6 +191,8 @@ class StrixhavenStadiumTest extends BaseCardTest {
     @Test
     @DisplayName("A departing Stadium with nine counters cannot receive the tenth counter")
     void departedStadiumBelowThresholdDoesNotCauseLoss() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent stadium = harness.addToBattlefieldAndReturn(player1, new StrixhavenStadium());
 
         stadium.setCounterCount(CounterType.POINT, 9);
@@ -193,7 +200,7 @@ class StrixhavenStadiumTest extends BaseCardTest {
 
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
-        harness.getPermanentRemovalService().removePermanentToHand(gd, stadium);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, stadium));
         resolveAllTriggers();
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);

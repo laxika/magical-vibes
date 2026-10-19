@@ -29,7 +29,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castSorcery(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
@@ -50,7 +50,8 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
 
@@ -67,7 +68,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castSorcery(player1, 0);
 
         List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
@@ -87,7 +88,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castSorcery(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -104,7 +105,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castSorcery(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.setGraveyard(player2, List.of());
         harness.setExile(player2, List.of(target));
@@ -123,7 +124,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castSorcery(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
         harness.setGraveyard(player2, List.of(remaining));
         harness.setExile(player2, List.of(removed));
@@ -143,7 +144,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castSorcery(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
@@ -160,7 +161,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castSorcery(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
@@ -176,7 +177,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castSorcery(player1, 0);
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -193,7 +194,7 @@ class SereneRemembranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SereneRemembrance()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castSorcery(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(4);

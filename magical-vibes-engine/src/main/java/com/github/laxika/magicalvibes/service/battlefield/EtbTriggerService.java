@@ -102,6 +102,7 @@ public class EtbTriggerService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    private LegendRuleService legendRuleService;
     private DraftProteanWarEngineSpellbookEffectHandler proteanWarEngineSpellbookDraft;
 
     public EtbTriggerService(GameQueryService gameQueryService,
@@ -126,6 +127,11 @@ public class EtbTriggerService {
         this.conditionEvaluationService = conditionEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
+    }
+
+    @Autowired
+    void setLegendRuleService(@Lazy LegendRuleService legendRuleService) {
+        this.legendRuleService = legendRuleService;
     }
 
     @Autowired
@@ -266,6 +272,11 @@ public class EtbTriggerService {
                                           List<UUID> convokeCreatureIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
+        if (kicked && enteringPermanent != null) {
+            // Non-creature permanent spells reach ETB processing without the as-enters pass that
+            // stamps this flag, but the ETB stack entry reads the kicked state from the permanent.
+            enteringPermanent.setKicked(true);
+        }
         if (wasCastFromHand || enteringPermanent != null && enteringPermanent.isCast()) {
             // A resolved permanent spell's ETB abilities choose their targets as they are put on the
             // stack (CR 603.3d), never while the spell was cast. Only an Aura's enchant target is a
@@ -482,7 +493,14 @@ public class EtbTriggerService {
                     int independentGroup = card.getEffectTargetIndex(independentEffect);
                     TargetFilter independentFilter = modeTargetFilter;
                     List<UUID> independentTargets = targetIds;
-                    if (independentGroup >= 0) {
+                    if (independentGroup < 0 && com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE
+                            .equals(independentEffect.targetSpec())) {
+                        // An ability that declares no target of its own (a second, separate "when this
+                        // enters" ability) never inherits another ability's target, so losing that
+                        // target cannot make it fizzle.
+                        independentFilter = null;
+                        independentTargets = List.of();
+                    } else if (independentGroup >= 0) {
                         int offset = 0;
                         independentTargets = List.of();
                         for (SpellTarget group : card.getSpellTargets()) {
@@ -510,7 +528,7 @@ public class EtbTriggerService {
                                 "Target must satisfy this ability's restrictions");
                     }
                     UUID independentTargetId = independentTargets.isEmpty()
-                            ? independentGroup <= 0 ? targetId : null : independentTargets.getFirst();
+                            ? independentGroup == 0 || (independentGroup < 0 && !com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(independentEffect.targetSpec())) ? targetId : null : independentTargets.getFirst();
                     queueMandatoryETBEffects(gameData, controllerId, card, independentTargetId, independentTargets,
                             List.of(independentEffect), independentFilter, extraTriggerCopies, etbMode, xValue,
                             repeatedAdditionalCosts, convokeCreatureIds);
@@ -621,15 +639,27 @@ public class EtbTriggerService {
                         repeatedAdditionalCosts, convokeCreatureIds);
             }
 
+            // Held back while the entering permanent causes a legend rule violation: state-based actions
+            // come before targets are chosen, and the auto-pass after the legend rule choice resumes this.
             if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
-                    && !gameData.interaction.isAwaitingInput()) {
+                    && !gameData.interaction.isAwaitingInput()
+                    && (legendRuleService == null || !legendRuleService.hasLegendRuleViolation(gameData, controllerId))) {
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             }
 
             if (!mandatoryEffects.isEmpty()) {
-                queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
-                        mandatoryEffects, modeTargetFilter, extraTriggerCopies, etbMode, xValue,
-                        repeatedAdditionalCosts, convokeCreatureIds);
+                // A separate "when this enters" ability that declares no target of its own never inherits the
+                // target another ability of the card chose, so losing that target cannot make it fizzle.
+                boolean mandatoryDeclaresNoTarget = independentEffects.stream().anyMatch(effect ->
+                        card.getEffectTargetIndex(effect) >= 0
+                                || !com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(effect.targetSpec()))
+                        && mandatoryEffects.stream().allMatch(effect -> card.getEffectTargetIndex(effect) < 0
+                        && com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE.equals(effect.targetSpec()));
+                queueMandatoryETBEffects(gameData, controllerId, card,
+                        mandatoryDeclaresNoTarget ? null : targetId,
+                        mandatoryDeclaresNoTarget ? List.of() : targetIds,
+                        mandatoryEffects, mandatoryDeclaresNoTarget ? null : modeTargetFilter,
+                        extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
                 if (!oncePerTurnEffects.isEmpty() && enteringPermanent != null) {
                     for (OncePerTurnTriggerEffect once : oncePerTurnEffects) {
                         OncePerTurnTriggerSupport.markIfNeeded(gameData, enteringPermanent, once);
@@ -684,6 +714,21 @@ public class EtbTriggerService {
 
     private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,
                                                int extraEtbTriggers, boolean faceDown) {
+        int stackSizeBeforeEntersTriggers = gameData.stack.size();
+        collectEntersTriggers(gameData, controllerId, card, extraEtbTriggers, faceDown);
+        // Each triggered ability the entering permanent caused (constellation, landfall, ...) is taxed
+        // like its own enters-the-battlefield ability.
+        List<StackEntry> causedTriggers = new ArrayList<>(gameData.stack.subList(
+                Math.min(stackSizeBeforeEntersTriggers, gameData.stack.size()), gameData.stack.size()));
+        for (StackEntry causedTrigger : causedTriggers) {
+            if (causedTrigger.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+                queueTriggeredAbilityCounters(gameData, causedTrigger);
+            }
+        }
+    }
+
+    private void collectEntersTriggers(GameData gameData, UUID controllerId, Card card,
+                                       int extraEtbTriggers, boolean faceDown) {
         triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyPermanentEntersTransformedTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
@@ -1045,6 +1090,11 @@ public class EtbTriggerService {
                     etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                 }
                 etbEntry.setConvokeCreatureIds(convokeCreatureIds);
+                // Dynamic amounts such as "gain 3 life for each time it was kicked" read the kicked
+                // state from the resolving entry, not from the trigger-time condition context.
+                if (enteringPermanent != null && enteringPermanent.isKicked()) {
+                    etbEntry.setKicked(true);
+                }
                 if (enteringPermanent != null && enteringPermanent.isEvoked()
                         && card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(registration -> registration.triggerMode()
@@ -1288,8 +1338,12 @@ public class EtbTriggerService {
                         dynamicMaxTargets));
             }
         }
+        // State-based actions come before a triggered ability's targets are chosen, so a legend rule
+        // violation the entering permanent causes is settled first; the auto-pass that follows the
+        // legend rule choice picks the held-back target choice up.
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()) {
+                && !gameData.interaction.isAwaitingInput()
+                && (legendRuleService == null || !legendRuleService.hasLegendRuleViolation(gameData, controllerId))) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
 
@@ -1311,8 +1365,10 @@ public class EtbTriggerService {
                     .filter(p -> p.getCard().getId().equals(card.getId()))
                     .map(Permanent::getId)
                     .findFirst().orElse(null);
-            gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                    card, controllerId, List.of(effect), spellFilter, includeAbilities, sourcePermanentId));
+            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                        card, controllerId, List.of(effect), spellFilter, includeAbilities, sourcePermanentId));
+            }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {
@@ -1368,7 +1424,7 @@ public class EtbTriggerService {
     private void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                     if (!(effect instanceof TriggeredAbilityCounterEffect counterEffect)) {
                         continue;
                     }
@@ -1378,7 +1434,7 @@ public class EtbTriggerService {
                             controllerId,
                             permanent.getCard().getName() + "'s ability",
                             List.of(new CounterUnlessPaysEffect(counterEffect.counterCost())),
-                            triggeredAbility.getCard().getId(),
+                            triggeredAbility.getTargetableId(),
                             Zone.STACK,
                             permanent.getId());
                     gameData.stack.add(counterTrigger);

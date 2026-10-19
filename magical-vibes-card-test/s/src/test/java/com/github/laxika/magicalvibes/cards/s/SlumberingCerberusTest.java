@@ -109,7 +109,7 @@ class SlumberingCerberusTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(cerberus.isTapped()).isFalse();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        // Resolving the trigger already auto-passed into the opponent's turn (stopping at its main phase).
         cerberus.tap();
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
 

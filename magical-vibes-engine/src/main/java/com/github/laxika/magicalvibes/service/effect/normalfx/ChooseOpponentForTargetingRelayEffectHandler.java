@@ -41,14 +41,15 @@ public class ChooseOpponentForTargetingRelayEffectHandler implements NormalEffec
         if (opponents.isEmpty()) {
             return;
         }
+        boolean secret = ((ChooseOpponentForTargetingRelayEffect) effect).secret();
         if (opponents.size() == 1) {
-            source.setRememberedTargetPlayerId(opponents.getFirst());
+            remember(source, opponents.getFirst(), entry.getControllerId(), secret);
             return;
         }
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.ChooseOpponentForTargetingRelay(
-                        entry.getControllerId(), sourcePermanentId, entry.getCard().getName()));
+                        entry.getControllerId(), sourcePermanentId, entry.getCard().getName(), secret));
         playerInputService.beginPlayerChoice(gameData, entry.getControllerId(), opponents,
                 entry.getCard().getName() + " — choose an opponent.");
     }
@@ -60,7 +61,18 @@ public class ChooseOpponentForTargetingRelayEffectHandler implements NormalEffec
         }
         Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
         if (source != null) {
-            source.setRememberedTargetPlayerId(chosenOpponentId);
+            remember(source, chosenOpponentId, context.controllerId(), context.secret());
+        }
+    }
+
+    private void remember(Permanent source, UUID opponentId, UUID chooserId, boolean secret) {
+        source.setRememberedTargetPlayerId(opponentId);
+        if (secret) {
+            source.getChosenPlayerIds().clear();
+            source.getChosenPlayerIds().add(opponentId);
+            source.getProtectionFromPlayerIdsPermanently().clear();
+            source.getProtectionFromPlayerIdsPermanently().add(opponentId);
+            source.setAsEntersPlayerChooserId(chooserId);
         }
     }
 

@@ -115,10 +115,10 @@ class SwanSongTest extends BaseCardTest {
         MightOfOaks instant = new MightOfOaks();
         harness.setHand(player1, List.of(instant, new SwanSong()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, instant.getId());
 
         harness.assertInGraveyard(player1, "Might of Oaks");

@@ -109,7 +109,7 @@ class ShredderShadowMasterTest extends BaseCardTest {
             declareAttackers(List.of(0));
             resolveAllTriggers();
         });
-        harness.resolveCombatDamage();
+        resolveCombat();
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);

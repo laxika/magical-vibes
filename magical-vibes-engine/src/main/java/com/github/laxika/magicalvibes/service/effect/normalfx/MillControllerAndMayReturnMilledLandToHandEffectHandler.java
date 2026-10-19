@@ -34,28 +34,34 @@ public class MillControllerAndMayReturnMilledLandToHandEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), 1);
+        // CR 701.17c: a replacement effect that exiles the milled card instead (Rest in Peace) leaves it
+        // findable in the public zone it moved to, so the follow-up still applies to it.
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, entry.getControllerId(), 1);
         entry.setEventValue(milled.stream()
                 .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(
                         card, new CardSubtypePredicate(CardSubtype.LESSON), entry.getCard().getId(),
                         gameData, entry.getControllerId())) ? 1 : 0);
 
-        Card land = milled.stream()
+        List<Card> lands = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, new CardTypePredicate(CardType.LAND), entry.getCard().getId(),
                         gameData, entry.getControllerId()))
-                .findFirst()
-                .orElse(null);
-        if (land == null) {
+                .toList();
+        if (lands.isEmpty()) {
             return;
         }
 
+        // CR 701.17d: when a replacement effect mills several cards, "a land card" is one the controller
+        // chooses, so each land is offered in turn and the first accepted offer ends the group.
         UUID groupId = UUID.randomUUID();
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                land,
-                entry.getControllerId(),
-                List.of(new ReturnMilledPermanentToHandEffect(
-                        groupId, new CardTypePredicate(CardType.LAND))),
-                "Put " + land.getName() + " into your hand?"));
+        for (int i = lands.size() - 1; i >= 0; i--) {
+            Card land = lands.get(i);
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    land,
+                    entry.getControllerId(),
+                    List.of(new ReturnMilledPermanentToHandEffect(
+                            groupId, new CardTypePredicate(CardType.LAND))),
+                    "Put " + land.getName() + " into your hand?"));
+        }
     }
 }

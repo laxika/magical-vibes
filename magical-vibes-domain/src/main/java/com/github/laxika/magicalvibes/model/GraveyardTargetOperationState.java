@@ -28,6 +28,11 @@ public class GraveyardTargetOperationState {
     public List<CardEffect> effects;
     public StackEntryType entryType;
     public int xValue;
+    /**
+     * The X chosen for the spell when it differs from the number of targets being chosen ({@link #xValue}
+     * doubles as the required target count), so the resulting stack entry carries the real X (Soul Strings).
+     */
+    public Integer spellXValueOverride;
     public CardSubtype chosenCreatureType;
     public boolean anyNumber;
     public boolean giftPromised;

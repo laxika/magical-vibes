@@ -110,10 +110,11 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
                         entry.getCard(), entry.getControllerId(), target.getId(), e.counterType(), placed));
             }
             if (e.removeAtNextEndStep() && placed > 0) {
-                for (int i = 0; i < placed; i++) {
-                    gameData.delayedActions.add(new RemoveCounterFromPermanentAtNextEndStep(
-                            entry.getCard(), entry.getControllerId(), target.getId(), e.counterType()));
-                }
+                // The removal amount is the amount assigned to this target, not the number placed, so a
+                // doubled placement still removes only the assigned counters.
+                gameData.delayedActions.add(new RemoveCounterFromPermanentAtNextEndStep(
+                        entry.getCard(), entry.getControllerId(), target.getId(), e.counterType(),
+                        assignment.getValue()));
             }
         }
     }

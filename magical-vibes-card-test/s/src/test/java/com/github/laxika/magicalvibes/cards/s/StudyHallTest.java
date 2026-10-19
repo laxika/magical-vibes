@@ -107,8 +107,8 @@ class StudyHallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, ManaColor.BLACK.name());
-        gd.playerBattlefields.get(player1.getId()).remove(studyHall);
-        harness.setGraveyard(player1, List.of(studyHall.getCard()));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, studyHall));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         gs.castCommander(gd, player1, commander.getId(),

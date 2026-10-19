@@ -138,6 +138,7 @@ class StepBetweenWorldsTest extends BaseCardTest {
     void plottedSpellCanBeCastForFreeOnALaterTurnAndIsExiledWithoutAnotherPermission() {
         StepBetweenWorlds spell = new StepBetweenWorlds();
         harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
         fillLibrary(player1, 10);
         fillLibrary(player2, 10);
         harness.addMana(player1, ManaColor.BLUE, 2);

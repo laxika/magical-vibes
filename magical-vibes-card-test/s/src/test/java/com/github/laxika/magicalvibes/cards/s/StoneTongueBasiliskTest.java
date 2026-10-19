@@ -180,7 +180,9 @@ class StoneTongueBasiliskTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
-        resolveAllTriggers();
+        // Stay in the combat damage step once the damage trigger resolves; auto-passing on would run
+        // through the end of combat destruction before the regeneration shield can be set up.
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveAllTriggers);
 
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.activateAbility(player2, 0, null, null);
@@ -202,7 +204,7 @@ class StoneTongueBasiliskTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveAllTriggers);
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(mortivore);

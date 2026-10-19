@@ -23,6 +23,6 @@ public class SubterraneanShambler extends Card {
                 false,
                 false,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{3}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{3}{R}"));
     }
 }

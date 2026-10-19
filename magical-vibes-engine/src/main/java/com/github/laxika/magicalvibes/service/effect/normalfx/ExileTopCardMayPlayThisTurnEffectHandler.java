@@ -81,6 +81,9 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             // Play permission (any card type) expiring at end of turn.
             gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
             gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+            if (exileEffect.duringTurnsLoreCounterPutOnSource() && source != null) {
+                gameData.exilePlayPermissionLoreCounterSagas.put(topCard.getId(), source.getId());
+            }
             boolean freeCast = withoutPaying || exileEffect.freeCastFilter() != null
                     && predicateEvaluationService.matchesCardPredicate(
                             topCard, exileEffect.freeCastFilter(), null);

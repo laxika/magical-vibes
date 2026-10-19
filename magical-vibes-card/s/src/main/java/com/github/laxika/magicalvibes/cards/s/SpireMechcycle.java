@@ -31,8 +31,9 @@ public class SpireMechcycle extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(1, mountOrVehicle, true),
-                        new AnimatePermanentsEffect(5, 4, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT),
+                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT,
+                                null, Set.of(), false, false),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
                                 new PermanentCount(mountOrVehicle, CountScope.CONTROLLER, true))
                 ),

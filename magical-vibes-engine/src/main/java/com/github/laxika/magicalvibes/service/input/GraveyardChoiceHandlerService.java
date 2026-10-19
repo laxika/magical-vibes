@@ -761,6 +761,17 @@ public class GraveyardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    /** An empty answer to a resolution-time {@link CollectEvidenceEffect} prompt declines the optional action. */
+    private boolean decliningOptionalCollectEvidence(GameData gameData, List<UUID> cardIds) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        return cardIds.isEmpty()
+                && gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume
+                && pendingEntry != null
+                && gameData.pendingEffectResolutionIndex < pendingEntry.getEffectsToResolve().size()
+                && pendingEntry.getEffectsToResolve().get(gameData.pendingEffectResolutionIndex)
+                instanceof CollectEvidenceEffect;
+    }
+
     public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class) == null) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
@@ -1041,7 +1052,8 @@ public class GraveyardChoiceHandlerService {
                 .mapToInt(Card::getManaValue)
                 .sum();
         if (multiGraveyardChoice.minimumTotalManaValue() != null
-                && selectedManaValue < multiGraveyardChoice.minimumTotalManaValue()) {
+                && selectedManaValue < multiGraveyardChoice.minimumTotalManaValue()
+                && !decliningOptionalCollectEvidence(gameData, cardIds)) {
             throw new IllegalStateException("Selected cards do not have enough total mana value");
         }
         if (multiGraveyardChoice.maxTotalManaValue() != null
@@ -1072,6 +1084,14 @@ public class GraveyardChoiceHandlerService {
                     && pendingEntry.getEffectsToResolve().get(gameData.pendingEffectResolutionIndex)
                     instanceof CollectEvidenceEffect effect) {
                 collectEvidence = effect;
+            }
+
+            if (collectEvidence != null && cardIds.isEmpty()) {
+                // "You may collect evidence N": choosing no cards declines the optional action.
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " does not collect evidence."));
+                gameData.pendingEffectResolutionIndex++;
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                return;
             }
 
             List<Card> exiledCards = cardIds.stream()
@@ -1926,7 +1946,10 @@ public class GraveyardChoiceHandlerService {
         Card pendingCard = gameData.graveyardTargetOperation.card;
         UUID controllerId = gameData.graveyardTargetOperation.controllerId;
         StackEntryType pendingEntryType = gameData.graveyardTargetOperation.entryType;
-        int pendingXValue = gameData.graveyardTargetOperation.xValue;
+        int pendingXValue = gameData.graveyardTargetOperation.spellXValueOverride != null
+                ? gameData.graveyardTargetOperation.spellXValueOverride
+                : gameData.graveyardTargetOperation.xValue;
+        gameData.graveyardTargetOperation.spellXValueOverride = null;
         CardSubtype pendingChosenCreatureType = gameData.graveyardTargetOperation.chosenCreatureType;
         UUID pendingTargetPlayerId = gameData.graveyardTargetOperation.targetPlayerId;
         boolean pendingFlashback = gameData.graveyardTargetOperation.flashback;

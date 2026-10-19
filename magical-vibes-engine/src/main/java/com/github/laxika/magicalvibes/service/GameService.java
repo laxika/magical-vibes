@@ -2089,6 +2089,25 @@ public class GameService {
         }
     }
 
+    public void playCardFromExileWithTargets(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                             UUID targetId, List<UUID> targetIds,
+                                             List<UUID> exileCounterCostPermanentIds,
+                                             List<UUID> convokeCreatureIds) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playCardFromExileWithTargets(gameData, actionPlayer, exileCardId, xValue, targetId,
+                        targetIds, exileCounterCostPermanentIds, convokeCreatureIds))) return;
+        synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardFromExileWithTargets(gameData, player, exileCardId, xValue, targetId,
+                    targetIds != null ? targetIds : List.of(),
+                    exileCounterCostPermanentIds != null ? exileCounterCostPermanentIds : List.of(),
+                    convokeCreatureIds != null ? convokeCreatureIds : List.of());
+        }
+    }
+
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {
         playCardFromLibraryTop(gameData, player, xValue, targetId, List.of());
     }

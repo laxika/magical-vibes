@@ -62,8 +62,8 @@ class StrengthOfTheTajuruTest extends BaseCardTest {
 
         List<UUID> targets = List.of(bears.getId(), giant.getId());
         assertThatThrownBy(() -> castWithTargets(1, targets, List.of()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Must target between");
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Strength of the Tajuru");
     }
 
     @Test

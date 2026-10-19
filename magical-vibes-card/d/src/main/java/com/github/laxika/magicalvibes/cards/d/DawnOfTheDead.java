@@ -20,6 +20,7 @@ public class DawnOfTheDead extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .grantHaste(true)
+                .hasteUntilEndOfTurn(true)
                 .exileAtEndStep(true)
                 .build(), "Return the targeted creature card to the battlefield?"));
     }

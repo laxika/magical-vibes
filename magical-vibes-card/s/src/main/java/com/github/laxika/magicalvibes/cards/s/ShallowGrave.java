@@ -27,6 +27,7 @@ public class ShallowGrave extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .topmost(true)
                 .grantHaste(true)
+                .hasteUntilEndOfTurn(true)
                 .exileAtEndStep(true)
                 .build());
     }

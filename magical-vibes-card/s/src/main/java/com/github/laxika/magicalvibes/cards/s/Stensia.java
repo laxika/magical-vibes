@@ -26,6 +26,7 @@ public class Stensia extends Card {
                         PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
         addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, putCounterOnDamagingCreature);
         addEffect(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, putCounterOnDamagingCreature);
+        addEffect(EffectSlot.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR, putCounterOnDamagingCreature);
 
         addEffect(EffectSlot.CHAOS_TRIGGERED, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(

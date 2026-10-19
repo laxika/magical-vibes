@@ -358,8 +358,9 @@ public class SpellCastTriggerCollectorService {
         }
 
         List<Card> exiledCards = match.gameData().getCardsExiledByPermanent(match.permanent().getId());
-        if (exiledCards.size() < 2
-                || exiledCards.stream().limit(2).noneMatch(card -> card.getName().equals(sc.spellCard().getName()))) {
+        // The intervening "if" asks only whether the cast card shares a name with a card exiled with the
+        // artifact; whether another exiled card exists to copy is settled when the ability resolves.
+        if (exiledCards.stream().noneMatch(card -> card.getName().equals(sc.spellCard().getName()))) {
             return false;
         }
 
@@ -2080,7 +2081,7 @@ public class SpellCastTriggerCollectorService {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (!sc.castFromHand()) return false;
 
-        int manaValue = sc.spellCard().getManaValue();
+        int manaValue = spellManaValue(match.gameData(), sc.spellCard());
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -3138,6 +3139,11 @@ public class SpellCastTriggerCollectorService {
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
         boolean countersTriggeringSpell = resolved.stream().anyMatch(CounterSpellingEffect.class::isInstance);
+        // The reveal-and-counter abilities don't target the spell: they still resolve (revealing, and
+        // offering the free cast) after it was countered in response.
+        boolean revealsAndCountersTriggeringSpell = resolved.stream().anyMatch(effect ->
+                effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect);
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX)
                 || trigger.intervening() instanceof SpellCreatureManaSpentAtLeast;
         int spellManaSpentX = trigger.intervening() instanceof SpellCreatureManaSpentAtLeast
@@ -3294,6 +3300,9 @@ public class SpellCastTriggerCollectorService {
                 if (resolved.stream().anyMatch(
                         com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAndCounterOnLossEffect.class::isInstance)) {
                     // The spell is not a target of the ability, so the caster still flips if it already left the stack.
+                    entry.setNonTargeting(true);
+                }
+                if (revealsAndCountersTriggeringSpell) {
                     entry.setNonTargeting(true);
                 }
             } else if (selfTarget) {
@@ -3502,6 +3511,11 @@ public class SpellCastTriggerCollectorService {
                 && copy.spellSnapshot() == null) {
             return new CopyTriggeringSpellEffect(
                     copy.tokenCopy(), copy.retargetToSource(), new StackEntry(spellSnapshot));
+        }
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect reveal
+                && reveal.spellSnapshot() == null) {
+            return new com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect(
+                    new StackEntry(spellSnapshot));
         }
         if (effect instanceof GandalfWestwardVoyagerEffect gandalf && gandalf.spellSnapshot() == null) {
             return new GandalfWestwardVoyagerEffect(new StackEntry(spellSnapshot));

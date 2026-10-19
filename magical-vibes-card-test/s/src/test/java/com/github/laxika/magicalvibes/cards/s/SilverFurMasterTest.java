@@ -37,7 +37,7 @@ class SilverFurMasterTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, attacker.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
         Permanent ninja = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(ninja.isTapped()).isTrue();

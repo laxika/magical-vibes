@@ -366,6 +366,7 @@ public class TurnCleanupService {
         gameData.combatDamageRedirectPlayer = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.colorDamagePreventionUntilEndOfTurn.clear();
+        gameData.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.clear();
         gameData.colorlessDamagePreventionUntilEndOfTurn.clear();
         gameData.playerSourceDamagePreventionIds.clear();
         gameData.playerSourceDamagePreventionRequiredColors.clear();
@@ -562,10 +563,12 @@ public class TurnCleanupService {
         gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
+        gameData.pendingNextInstantSorceryCopyThisTurnCountSource.clear();
         gameData.pendingNextInstantSorceryStormThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.clear();
+        gameData.pendingNextInstantSorceryCopyThisTurnDynamicSources.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
         gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
         gameData.pendingNextXActivatedAbilityCopyThisTurnCount.clear();

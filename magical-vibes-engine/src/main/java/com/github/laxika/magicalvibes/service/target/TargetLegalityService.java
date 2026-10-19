@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -3564,16 +3565,28 @@ public class TargetLegalityService {
             }
             if (multiTargetConstraint == MultiTargetConstraint.SHARE_CREATURE_TYPES) {
                 // "Share a creature type" is a relation between the targets: when the ones still
-                // around no longer share one, none of them satisfies it and all are illegal.
+                // around no longer share one, none of them satisfies it and all are illegal. A target
+                // that has left still counts with the creature types it had when it left, so a
+                // surviving target must share one of them (Secret Tunnel ruling, TLA).
                 boolean sharesType = true;
                 for (int i = 0; i < declaredTargetIds.size() && sharesType; i++) {
                     for (int j = i + 1; j < declaredTargetIds.size() && sharesType; j++) {
-                        if (!targetLegal[i] || !targetLegal[j]) {
-                            continue;
-                        }
                         Permanent a = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
                         Permanent b = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(j));
-                        sharesType = a != null && b != null && gameQueryService.shareCreatureType(gameData, a, b);
+                        boolean aParticipates = targetLegal[i] || a == null;
+                        boolean bParticipates = targetLegal[j] || b == null;
+                        if (!aParticipates || !bParticipates || (!targetLegal[i] && !targetLegal[j])) {
+                            continue;
+                        }
+                        if (a != null && b != null) {
+                            sharesType = gameQueryService.shareCreatureType(gameData, a, b);
+                        } else if (a != null) {
+                            Card departed = entry.lastKnownPermanentCard(declaredTargetIds.get(j));
+                            sharesType = departed == null || gameQueryService.shareCreatureType(gameData, a, departed);
+                        } else if (b != null) {
+                            Card departed = entry.lastKnownPermanentCard(declaredTargetIds.get(i));
+                            sharesType = departed == null || gameQueryService.shareCreatureType(gameData, b, departed);
+                        }
                     }
                 }
                 if (!sharesType) {
@@ -3820,6 +3833,15 @@ public class TargetLegalityService {
             if (anySecondaryTargetLegal) {
                 targetFizzled = false;
             }
+        }
+
+        // Battlefield primary target alongside graveyard-card targets (Spurnmage Advocate): CR 608.2b only
+        // fizzles the ability when every target is illegal, so an illegal primary is just masked off.
+        if (targetFizzled && entry.getTargetId() != null && entry.getTargetZone() == null
+                && !entry.getTargetCardIds().isEmpty()
+                && entry.getTargetCardIds().stream().anyMatch(id -> isTargetCardLegalOnResolution(gameData, entry, id))) {
+            entry.setTargetId(null);
+            targetFizzled = false;
         }
 
         if (!targetFizzled) {
@@ -5267,13 +5289,19 @@ public class TargetLegalityService {
                     new PermanentHasSubtypePredicate(source.getChosenSubtype()));
         }
         if (predicate instanceof StackEntryTypeInPredicate typeInPredicate) {
+            // Combat damage put on the stack is not an ability, so it never matches an ability type.
+            if (stackEntry.getEffectsToResolve().stream().anyMatch(CombatDamageResolutionEffect.class::isInstance)) {
+                return false;
+            }
             if (typeInPredicate.spellTypes().contains(stackEntry.getEntryType())) {
                 return true;
             }
             // A spell whose card gained a card type from a static grant (Encroaching Mycosynth) has that
             // type while on the stack, so "artifact spell" targeting matches it. A spell is entered on the
             // stack with one spell type, so an artifact creature spell also matches "creature spell".
-            if (stackEntry.getCard() == null) {
+            if (stackEntry.getCard() == null
+                    || stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                    || stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
                 return false;
             }
             return typeInPredicate.spellTypes().contains(StackEntryType.ARTIFACT_SPELL)
@@ -5315,6 +5343,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntrySourceIsCommanderPredicate) {
             Permanent sourcePermanent = sourcePermanentForStackEntry(gameData, stackEntry);
+            if (sourcePermanent == null && stackEntry.getSourcePermanentId() == null) {
+                return stackEntry.getCard() != null && gameData.isCommander(stackEntry.getCard().getId());
+            }
             return sourcePermanent != null
                     && (sourcePermanent.isCommander()
                     || sourcePermanent.getOriginalCard() != null

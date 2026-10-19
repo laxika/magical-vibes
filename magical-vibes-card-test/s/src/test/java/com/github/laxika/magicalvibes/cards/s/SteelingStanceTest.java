@@ -179,9 +179,9 @@ class SteelingStanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateHandAbility(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         harness.activateHandAbility(player1, 1, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
@@ -210,6 +210,7 @@ class SteelingStanceTest extends BaseCardTest {
     void forecastSourceRemainsPublicAfterResolutionUntilUpkeepEnds() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
         harness.setHand(player1, List.of(new SteelingStance(), new AzoriusSignet()));
+        harness.setHand(player2, List.of());
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateHandAbility(player1, 0, target.getId());
@@ -225,7 +226,7 @@ class SteelingStanceTest extends BaseCardTest {
                         && message.contains("Azorius Signet"));
 
         harness.clearMessages();
-        harness.passUntil(player1, TurnStep.DRAW);
+        harness.passUntilWithNoAttackers(player1, TurnStep.DRAW);
 
         assertThat(harness.getConn2().getSentMessages())
                 .anyMatch(message -> message.contains("\"opponentHand\":[]"));

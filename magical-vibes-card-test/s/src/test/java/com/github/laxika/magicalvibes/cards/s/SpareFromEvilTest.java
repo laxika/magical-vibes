@@ -52,8 +52,8 @@ class SpareFromEvilTest extends BaseCardTest {
 
         castSpareFromEvil();
 
-        assertThat(human.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
-        assertThat(zombie.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+        assertThat(isProtectedFromNonHumanCreatures(human)).isTrue();
+        assertThat(isProtectedFromNonHumanCreatures(zombie)).isTrue();
         harness.assertInGraveyard(player1, "Spare from Evil");
     }
 
@@ -115,10 +115,10 @@ class SpareFromEvilTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
-        assertThat(creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+        assertThat(isProtectedFromNonHumanCreatures(creature)).isTrue();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isEmpty();
+        assertThat(isProtectedFromNonHumanCreatures(creature)).isFalse();
     }
 
     @Test
@@ -129,8 +129,8 @@ class SpareFromEvilTest extends BaseCardTest {
 
         castSpareFromEvil();
 
-        assertThat(ownCreature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
-        assertThat(opponentCreature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isEmpty();
+        assertThat(isProtectedFromNonHumanCreatures(ownCreature)).isTrue();
+        assertThat(isProtectedFromNonHumanCreatures(opponentCreature)).isFalse();
     }
 
     @Test
@@ -140,8 +140,8 @@ class SpareFromEvilTest extends BaseCardTest {
 
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new DoomedTraveler());
 
-        assertThat(original.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
-        assertThat(newcomer.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).isEmpty();
+        assertThat(isProtectedFromNonHumanCreatures(original)).isTrue();
+        assertThat(isProtectedFromNonHumanCreatures(newcomer)).isFalse();
     }
 
     @Test
@@ -154,7 +154,7 @@ class SpareFromEvilTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()).contains(CardSubtype.HUMAN);
+        assertThat(isProtectedFromNonHumanCreatures(creature)).isTrue();
     }
 
     @Test
@@ -300,6 +300,10 @@ class SpareFromEvilTest extends BaseCardTest {
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Walking Corpse");
         harness.assertInGraveyard(player2, "Doomed Traveler");
+    }
+
+    private boolean isProtectedFromNonHumanCreatures(Permanent target) {
+        return gqs.hasProtectionFromSource(gd, target, new RottingFensnake());
     }
 
     private void castSpareFromEvil() {

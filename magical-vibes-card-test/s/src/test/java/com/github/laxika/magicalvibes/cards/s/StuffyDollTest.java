@@ -65,7 +65,7 @@ class StuffyDollTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passBothPriorities(); // combat damage: doll takes 1, trigger queued
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         harness.assertOnBattlefield(player2, "Stuffy Doll");

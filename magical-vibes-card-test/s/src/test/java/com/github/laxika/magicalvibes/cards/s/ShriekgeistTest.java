@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -147,7 +148,7 @@ class ShriekgeistTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(first, second, remaining));
         harness.setLibrary(player1, List.of(new StormboundGeist()));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -173,7 +174,7 @@ class ShriekgeistTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new StormboundGeist(), new StormboundGeist(),
                 new SilverclawGriffin(), new SilverclawGriffin(), new Shriekgeist()));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 

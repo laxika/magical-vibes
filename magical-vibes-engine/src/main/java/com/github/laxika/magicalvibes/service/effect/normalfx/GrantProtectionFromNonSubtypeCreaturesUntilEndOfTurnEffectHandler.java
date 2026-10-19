@@ -1,6 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,7 +41,12 @@ public class GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffectHandler i
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
-                    permanent.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().add(e.excludedSubtype());
+                    gameData.addFloatingEffect(new FloatingContinuousEffect(
+                            UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                            entry.getControllerId(),
+                            new GrantEffectEffect(new ProtectionFromNonSubtypeCreaturesEffect(e.excludedSubtype()),
+                                    GrantScope.TARGET),
+                            permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
                     count++;
                 }
             }

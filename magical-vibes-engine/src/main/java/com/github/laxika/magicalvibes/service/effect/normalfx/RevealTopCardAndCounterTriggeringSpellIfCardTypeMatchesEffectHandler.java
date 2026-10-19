@@ -55,8 +55,12 @@ public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandle
             return;
         }
 
-        StackEntry triggeringSpell = counterSupport.findCounterTargetIgnoringCounterability(
+        // A spell that was already countered or removed in response is no longer on the stack, but the
+        // rest of the ability still acts on it as it last existed (only the counter itself is skipped).
+        StackEntry liveSpell = counterSupport.findCounterTargetIgnoringCounterability(
                 gameData, triggeringCardId, entry);
+        StackEntry triggeringSpell = liveSpell != null ? liveSpell
+                : ((RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect) effect).spellSnapshot();
         if (triggeringSpell == null) {
             return;
         }
@@ -67,7 +71,8 @@ public class RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffectHandle
             return;
         }
 
-        StackEntry counterTarget = counterSupport.findCounterTarget(gameData, triggeringCardId, entry);
+        StackEntry counterTarget = liveSpell == null
+                ? null : counterSupport.findCounterTarget(gameData, triggeringCardId, entry);
         if (counterTarget != null) {
             counterSupport.counterSpell(gameData, entry, counterTarget);
         }

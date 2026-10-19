@@ -83,9 +83,11 @@ class StalwartSpeartailTest extends BaseCardTest {
         ownPlaneswalker.setCounterCount(CounterType.LOYALTY, 4);
         opposingPlaneswalker.setCounterCount(CounterType.LOYALTY, 4);
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
 
         assertThat(ownPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(opposingPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);

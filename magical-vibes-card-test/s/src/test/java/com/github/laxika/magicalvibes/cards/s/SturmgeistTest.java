@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChapelGeist;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -144,6 +145,8 @@ class SturmgeistTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage draws exactly one card for the second player's Sturmgeist")
     void secondPlayerDrawsOneCardRegardlessOfDamageAmount() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent sturmgeist = addCreatureReady(player2, new Sturmgeist());
         harness.setHand(player2, List.of(new SilverchaseFox(), new SilverchaseFox(), new SilverchaseFox()));
         harness.setHand(player1, List.of(new SilverchaseFox()));

@@ -145,8 +145,9 @@ class SunClaspTest extends BaseCardTest {
     @DisplayName("Moving Sun Clasp in response returns the creature enchanted at resolution")
     void returnsCurrentHostAfterAuraMovesInResponse() {
         Permanent original = addCreatureReady(player1, new LongbowArcher());
-        Permanent destination = addCreatureReady(player2, new LongbowArcher());
-        destination.getCard().setOwnerId(player2.getId());
+        LongbowArcher destinationCard = new LongbowArcher();
+        destinationCard.setOwnerId(player2.getId());
+        Permanent destination = addCreatureReady(player2, destinationCard);
         Permanent clasp = harness.addToBattlefieldAndReturn(player1, new SunClasp());
         clasp.setAttachedTo(original.getId());
         harness.setHand(player1, List.of(new AuraFinesse()));

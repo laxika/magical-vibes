@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FootSoldiers;
 import com.github.laxika.magicalvibes.cards.c.CloudExSOLDIER;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -140,6 +141,10 @@ class SOLDIERMilitaryProgramTest extends BaseCardTest {
         harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two Soldiers you control");
         gd.playerBattlefields.get(player1.getId()).remove(commander);
         gd.playerGraveyards.get(player1.getId()).add(commander.getOriginalCard());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CommanderReturnChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         Permanent token = soldiers(player1).getFirst();
         harness.handleMultiplePermanentsChosen(player1, List.of(token.getId()));

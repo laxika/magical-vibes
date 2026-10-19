@@ -36,6 +36,10 @@ public class ExileSacrificedCardsFromGraveyardEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<Card> exiledCards = new ArrayList<>();
         for (UUID cardId : entry.getSacrificedCardIds()) {
+            Long expectedVersion = entry.getSacrificedCardGraveyardVersions().get(cardId);
+            if (expectedVersion != null && gameData.graveyardEntryVersion(cardId) != expectedVersion) {
+                continue;
+            }
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
             if (card == null || ownerId == null) {

@@ -253,8 +253,8 @@ class SettleTheWreckageTest extends BaseCardTest {
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player2, -1);
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(originalLibrary);
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);

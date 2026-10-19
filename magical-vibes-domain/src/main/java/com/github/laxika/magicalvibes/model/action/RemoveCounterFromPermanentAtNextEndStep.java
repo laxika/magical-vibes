@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.UUID;
 
-/** Delayed trigger that removes one counter from a creature at the beginning of the next end step. */
+/**
+ * Delayed trigger that removes up to {@code count} counters of a type from a permanent at the beginning
+ * of the next end step, as one triggered ability.
+ */
 public record RemoveCounterFromPermanentAtNextEndStep(
-        Card sourceCard, UUID controllerId, UUID permanentId, CounterType counterType)
+        Card sourceCard, UUID controllerId, UUID permanentId, CounterType counterType, int count)
         implements DelayedAction {
 }

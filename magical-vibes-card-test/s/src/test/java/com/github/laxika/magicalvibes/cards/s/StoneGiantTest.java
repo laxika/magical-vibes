@@ -170,7 +170,9 @@ class StoneGiantTest extends BaseCardTest {
         Permanent elves = addCreatureReady(player1, new LlanowarElves());
 
         harness.activateAbility(player1, 0, null, elves.getId());
-        harness.passBothPriorities();
+        // Stop in the end step after the ability resolves instead of auto-passing into cleanup, which
+        // would end the "until end of turn" flying before it can be observed.
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(gqs.hasKeyword(gd, elves, Keyword.FLYING)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);

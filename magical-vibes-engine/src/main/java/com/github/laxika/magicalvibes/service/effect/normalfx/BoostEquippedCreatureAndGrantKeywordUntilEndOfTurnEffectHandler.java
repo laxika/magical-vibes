@@ -36,7 +36,13 @@ public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler imp
         // An equipment that already left the battlefield (e.g. a planeswalker-equipment whose loyalty cost
         // removed its last counter) is looked back at through the snapshot taken on activation (CR 608.2h).
         Permanent equipmentLastKnown = equipment != null ? equipment : entry.getSourcePermanentSnapshot();
-        UUID attachedCreatureId = equipmentLastKnown != null && equipmentLastKnown.getAttachedTo() != null
+        // "that creature" in an "equipped creature attacks" trigger is the creature that attacked, so the
+        // creature recorded on the trigger wins over whatever the Equipment is attached to by resolution.
+        UUID attachedCreatureId = entry.getTriggeringPermanentId() != null
+                && !entry.getTriggeringPermanentId().equals(entry.getSourcePermanentId())
+                && gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId()) != null
+                ? entry.getTriggeringPermanentId()
+                : equipmentLastKnown != null && equipmentLastKnown.getAttachedTo() != null
                 ? equipmentLastKnown.getAttachedTo()
                 : entry.getTriggeringPermanentId();
         if (attachedCreatureId == null) {

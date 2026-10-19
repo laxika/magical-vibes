@@ -63,6 +63,13 @@ public enum ActivationTimingRestriction {
     /** Activate only if this creature is attacking or blocking. Sawback Manticore. */
     ONLY_WHILE_ATTACKING_OR_BLOCKING,
     ONLY_WHILE_CREATURE,
+    /**
+     * Activate only while this permanent is a creature because its own animation ability made it one
+     * this turn. For an ability that the animation itself grants ("becomes a 1/1 creature with
+     * '{B}: Regenerate this creature'"): another effect animating the permanent does not grant it.
+     * Spawning Pool.
+     */
+    ONLY_WHILE_ANIMATED_BY_ITS_OWN_ABILITY,
     POWER_4_OR_GREATER,
     RAID,
     /** Activate only with priority, including for mana abilities. */

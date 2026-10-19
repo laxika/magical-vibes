@@ -45,7 +45,7 @@ public class SmokeSpiritsAid extends Card {
                 Map.of(
                         EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         SequenceEffect.of(
-                                new DealDamageToEnchantedPermanentControllerEffect(1),
+                                DealDamageToEnchantedPermanentControllerEffect.dealtByEnchantedPermanent(1),
                                 CreateTokenEffect.ofTreasureToken(1))),
                 List.of(),
                 false,

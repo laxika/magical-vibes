@@ -329,7 +329,7 @@ class SacredBoonTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new SacredBoon(), new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 3);
         harness.castAndResolveInstant(player2, 0, bear.getId());
         harness.castAndResolveInstant(player2, 0, bear.getId());
         harness.castAndResolveInstant(player2, 0, bear.getId());

@@ -48,6 +48,8 @@ class StubbornBurrowfiendTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, firstSaddler.getId());
+        // Saddle may tap more creatures than needed; choosing yourself finishes paying the cost.
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, burrowfiend)).isEqualTo(4);
 

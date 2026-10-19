@@ -35,10 +35,12 @@ public class Sporogenesis extends Card {
                                 nontokenCreature),
                         "Put a fungus counter on the target creature?"));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new CreateTokensForEachDyingSourceCounterEffect(
+        var saprolingsForFungusCounters = new CreateTokensForEachDyingSourceCounterEffect(
                 CounterType.FUNGUS,
                 new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
-                        List.of(CardSubtype.SAPROLING), Set.of(), Set.of())));
+                        List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, saprolingsForFungusCounters);
+        addEffect(EffectSlot.ON_DEATH, saprolingsForFungusCounters);
 
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new RemoveAllCountersFromMatchingPermanentsEffect(

@@ -73,8 +73,10 @@ class SlumberingWaterwaysTest extends BaseCardTest {
 
         assertThat(waterway.isAttacking()).isTrue();
         assertThat(waterway.isTapped()).isFalse();
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, ManaColor.BLUE.name());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, ManaColor.BLUE.name());
+        });
 
         assertThat(waterway.isTapped()).isTrue();
         assertThat(waterway.isAttacking()).isTrue();

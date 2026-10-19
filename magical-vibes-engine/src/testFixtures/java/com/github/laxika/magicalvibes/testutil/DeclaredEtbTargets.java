@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -88,6 +89,13 @@ final class DeclaredEtbTargets {
         }
         etbTargets.addAll(listed);
         if (etbTargets.isEmpty()) {
+            if (card.getMaxTargets() > 0
+                    && (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT_IF_ABLE
+                    || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE)) {
+                // Declaring no targets is only legal when each player's constraint has nothing to target.
+                targetLegalityService.validateMultiSpellTargets(gameData, card, List.of(), player.getId(), xValue,
+                        kicked);
+            }
             return new CastTargets(null, List.of(), List.of());
         }
         List<SpellTarget> etbGroups = etbTargetGroups(card);

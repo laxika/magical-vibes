@@ -57,7 +57,7 @@ class SunforgerTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new BorosRecruit());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(sunforger.getAttachedTo()).isEqualTo(creature.getId());

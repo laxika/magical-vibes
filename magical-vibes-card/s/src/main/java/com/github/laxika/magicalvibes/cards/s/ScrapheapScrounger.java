@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 import java.util.List;
 
@@ -24,7 +25,8 @@ public class ScrapheapScrounger extends Card {
                 false,
                 "{1}{B}",
                 List.of(
-                        new ExileNCardsFromGraveyardCost(1, CardType.CREATURE),
+                        new ExileNCardsFromGraveyardCost(1, CardType.CREATURE,
+                                new CardNotPredicate(new CardIsSelfPredicate())),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardIsSelfPredicate())

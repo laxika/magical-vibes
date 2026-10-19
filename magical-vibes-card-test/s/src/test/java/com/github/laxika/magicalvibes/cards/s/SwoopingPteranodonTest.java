@@ -144,7 +144,7 @@ class SwoopingPteranodonTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.handlePermanentChosen(player1, land.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -171,7 +171,7 @@ class SwoopingPteranodonTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.handlePermanentChosen(player1, land.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);

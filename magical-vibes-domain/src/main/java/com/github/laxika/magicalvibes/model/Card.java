@@ -1407,6 +1407,16 @@ public class Card {
         if (effect instanceof ConditionalEffect conditional) {
             return targetIndicesForEffect(conditional.wrapped());
         }
+        if (effect instanceof SequenceEffect sequence) {
+            // A sequence assembled at resolution (a reflexive trigger's counters-then-phase-out) targets
+            // through whichever of its steps the card bound to a target group.
+            for (CardEffect step : sequence.steps()) {
+                List<Integer> stepIndices = targetIndicesForEffect(step);
+                if (stepIndices != null) {
+                    return stepIndices;
+                }
+            }
+        }
         for (Map.Entry<CardEffect, List<Integer>> registered : effectTargetIndexMap.entrySet()) {
             CardEffect wrapped = registered.getKey() instanceof TriggeringPermanentConditionalEffect permanentConditional
                     ? permanentConditional.wrapped()

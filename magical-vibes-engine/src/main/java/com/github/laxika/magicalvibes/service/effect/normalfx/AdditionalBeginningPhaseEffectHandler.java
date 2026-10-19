@@ -27,6 +27,9 @@ public class AdditionalBeginningPhaseEffectHandler implements NormalEffectHandle
         var beginningPhase = (AdditionalBeginningPhaseEffect) effect;
         if (beginningPhase.afterPostcombatMain()) {
             gameData.additionalBeginningPhasesAfterPostcombatMain++;
+            if (gameData.additionalCombatMainPhasePairs > 0) {
+                gameData.additionalBeginningPhasesBeforeQueuedCombat++;
+            }
         } else {
             gameData.additionalBeginningPhasesAfterCombat++;
         }

@@ -27,6 +27,7 @@ class SpiderMobileTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, spider.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, mobile)).isTrue();
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(mobile)));
@@ -47,6 +48,7 @@ class SpiderMobileTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         harness.handlePermanentChosen(player2, spider.getId());
+        harness.handlePermanentChosen(player2, player2.getId());
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, mobile)).isTrue();
         prepareDeclareBlockers();
@@ -68,6 +70,7 @@ class SpiderMobileTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, spider.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
@@ -81,6 +84,7 @@ class SpiderMobileTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, mobile)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, mobile)).isEqualTo(5);
 
+        gs.declareBlockers(gd, player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -99,6 +103,7 @@ class SpiderMobileTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bear.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -118,6 +123,7 @@ class SpiderMobileTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, mobile)).isFalse();
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, spider.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         assertThat(spider.isTapped()).isTrue();
         assertThat(mobile.isTapped()).isFalse();
         assertThat(gqs.isCreature(gd, mobile)).isFalse();
@@ -140,6 +146,7 @@ class SpiderMobileTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, spider.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(List.of(0));
         harness.passBothPriorities();

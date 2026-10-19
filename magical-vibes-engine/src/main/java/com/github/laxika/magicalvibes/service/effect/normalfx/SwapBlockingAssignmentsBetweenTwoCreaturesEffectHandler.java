@@ -65,8 +65,8 @@ public class SwapBlockingAssignmentsBetweenTwoCreaturesEffectHandler implements 
             return;
         }
 
-        reassignBlocker(gameData, blockerA, attackersBlockedByB);
-        reassignBlocker(gameData, blockerB, attackersBlockedByA);
+        reassignBlocker(gameData, blockerA, attackersBlockedByB, entry.getCard().getName());
+        reassignBlocker(gameData, blockerB, attackersBlockedByA, entry.getCard().getName());
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
@@ -137,16 +137,17 @@ public class SwapBlockingAssignmentsBetweenTwoCreaturesEffectHandler implements 
         return true;
     }
 
-    private void reassignBlocker(GameData gameData, Permanent blocker, List<Permanent> attackers) {
+    /**
+     * Removes {@code blocker} from combat and has it block {@code attackers}. Each block is a new block, so
+     * "whenever this creature blocks" abilities trigger again; the attackers stay blocked throughout.
+     */
+    private void reassignBlocker(GameData gameData, Permanent blocker, List<Permanent> attackers,
+                                 String sourceCardName) {
         blocker.setBlocking(false);
         blocker.getBlockingTargets().clear();
         blocker.getBlockingTargetIds().clear();
         for (Permanent attacker : attackers) {
-            blocker.addBlockingTarget(attackerBattlefieldIndex(gameData, attacker));
-            blocker.addBlockingTargetId(attacker.getId());
-        }
-        if (!attackers.isEmpty()) {
-            blocker.setBlocking(true);
+            combatBlockService.applyBlockFromEffect(gameData, blocker, attacker, true, sourceCardName);
         }
     }
 

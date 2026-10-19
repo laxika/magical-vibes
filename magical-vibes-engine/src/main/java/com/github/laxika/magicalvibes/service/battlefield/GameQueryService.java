@@ -88,6 +88,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
 import com.github.laxika.magicalvibes.model.effect.StunCountersCantBeRemovedFromOpponentsPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -3846,18 +3848,32 @@ public class GameQueryService {
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
+    /**
+     * The static effects of {@code effectType} the permanent has right now, printed or granted by another
+     * permanent. An effect that removes them until end of turn only affects these (CR 611.2c).
+     */
+    public List<CardEffect> currentStaticEffectsOfType(GameData gameData, Permanent permanent,
+                                                       Class<? extends CardEffect> effectType) {
+        List<CardEffect> effects = new ArrayList<>(staticEffectsIncludingTemporary(
+                gameData, permanent, findPermanentController(gameData, permanent.getId())).stream()
+                .filter(effectType::isInstance).toList());
+        effects.addAll(computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .filter(effectType::isInstance).toList());
+        return effects;
+    }
+
     private List<BandsWithOtherEffect> activeBandsWithOtherEffects(GameData gameData,
                                                                     Permanent permanent,
                                                                     StaticBonus bonus) {
         List<BandsWithOtherEffect> effects = new ArrayList<>();
         effects.addAll(staticEffectsIncludingTemporary(
                 gameData, permanent, findPermanentController(gameData, permanent.getId())).stream()
-                .filter(effect -> !permanent.isStaticEffectSuppressed(effect.getClass()))
+                .filter(effect -> !permanent.isStaticEffectSuppressed(effect))
                 .filter(BandsWithOtherEffect.class::isInstance)
                 .map(BandsWithOtherEffect.class::cast)
                 .toList());
         effects.addAll(bonus.grantedEffects().stream()
-                .filter(effect -> !permanent.isStaticEffectSuppressed(effect.getClass()))
+                .filter(effect -> !permanent.isStaticEffectSuppressed(effect))
                 .filter(BandsWithOtherEffect.class::isInstance)
                 .map(BandsWithOtherEffect.class::cast)
                 .toList());
@@ -4313,7 +4329,30 @@ public class GameQueryService {
         return hasAttachmentRestriction(gameData, permanent, CantBecomeUntappedEffect.class)
                 || computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(CantBecomeUntappedEffect.class::isInstance)
-                || stunCountersLocked(gameData, permanent);
+                || stunCountersLocked(gameData, permanent)
+                || hasSpellAppliedUntapLock(gameData, permanent);
+    }
+
+    /**
+     * Returns {@code true} if a source-linked "doesn't untap" lock applied by a resolved spell or
+     * ability still holds the permanent: a floating lock whose source is still in play under the
+     * lock's controller, or a "while source on battlefield" lock whose source is still on the battlefield.
+     */
+    private boolean hasSpellAppliedUntapLock(GameData gameData, Permanent permanent) {
+        synchronized (gameData.floatingEffects) {
+            boolean floatingLock = gameData.floatingEffects.stream().anyMatch(floating ->
+                    permanent.getId().equals(floating.affectedPermanentId())
+                            && floating.effect() instanceof DoesntUntapEffect lock
+                            && (lock.condition() == UntapLockCondition.ALWAYS
+                                    || lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
+                                    && gameData.playerBattlefields.getOrDefault(floating.controllerId(), List.of())
+                                    .stream().anyMatch(source -> source.getId().equals(floating.sourcePermanentId()))));
+            if (floatingLock) {
+                return true;
+            }
+        }
+        return permanent.getUntapPreventedWhileSourceOnBattlefieldIds().stream()
+                .anyMatch(sourceId -> findPermanentById(gameData, sourceId) != null);
     }
 
     /**
@@ -5595,6 +5634,29 @@ public class GameQueryService {
     }
 
     /**
+     * Returns whether {@code playerId} is a defending player: a creature is attacking them, or attacking a
+     * planeswalker or battle they control (CR 506.2 — a defending player, the planeswalkers they
+     * control and the battles they protect may be attacked).
+     */
+    public boolean isDefendingPlayer(GameData gameData, UUID playerId) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (!perm.isAttacking()) continue;
+                UUID target = perm.getAttackTarget();
+                if (target == null) continue;
+                if (target.equals(playerId)) return true;
+                if (!gameData.playerIds.contains(target)) {
+                    Permanent attacked = findPermanentById(gameData, target);
+                    if (attacked != null && playerId.equals(gameData.findControllerOf(attacked))) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns whether a creature declared as an attacker is attacking {@code playerId}. A creature put
      * onto the battlefield attacking was never declared as an attacker, so it doesn't count (CR 508.4).
      */
@@ -5768,6 +5830,14 @@ public class GameQueryService {
 
     public int powerFromStaticBoard(Permanent permanent) {
         return ptFromBoard(LayerSystemService.activePass(), permanent, true);
+    }
+
+    /**
+     * The toughness counterpart of {@link #powerFromStaticBoard(Permanent)}: the layer 7b base
+     * (including a characteristic-defining base) plus modifiers, before any layer 7c bonus.
+     */
+    public int toughnessFromStaticBoard(Permanent permanent) {
+        return ptFromBoard(LayerSystemService.activePass(), permanent, false);
     }
 
     /** The toughness counterpart of {@link #powerForStaticFilter(Permanent)}. */
@@ -7688,19 +7758,11 @@ public class GameQueryService {
      * Returns {@code true} if the target permanent has protection from non-[subtype] creatures
      * and the source card (on the stack) is a creature card that lacks that subtype.
      */
-    private boolean hasProtectionFromNonSubtypeCreatures(Permanent target, Card sourceCard) {
+    private boolean hasProtectionFromNonSubtypeCreatures(GameData gameData, Permanent target, Card sourceCard) {
         if (target == null) {
             return false;
         }
-        Set<CardSubtype> protectedFrom = EnumSet.noneOf(CardSubtype.class);
-        protectedFrom.addAll(target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn());
-        if (!target.isLosesAllAbilitiesUntilEndOfTurn()) {
-            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ProtectionFromNonSubtypeCreaturesEffect protection) {
-                    protectedFrom.add(protection.subtype());
-                }
-            }
-        }
+        Set<CardSubtype> protectedFrom = getNonSubtypeCreatureProtection(gameData, target);
         if (protectedFrom.isEmpty()) return false;
         if (sourceCard.getType() != CardType.CREATURE
                 && !sourceCard.getAdditionalTypes().contains(CardType.CREATURE)) return false;
@@ -7999,7 +8061,7 @@ public class GameQueryService {
                 && hasProtectionFromColoredSpells(gameData, target))
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
-                || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
+                || hasProtectionFromNonSubtypeCreatures(gameData, target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardPermanentWithCounters(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
@@ -8037,7 +8099,7 @@ public class GameQueryService {
                 || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
-                || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
+                || hasProtectionFromNonSubtypeCreatures(gameData, target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardPermanentWithCounters(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
@@ -8298,11 +8360,15 @@ public class GameQueryService {
         if (source == null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
         }
+        boolean lastKnownSource = false;
         if (source == null && entry.getSourcePermanentId() != null) {
             source = entry.getSourcePermanentSnapshot();
+            lastKnownSource = source != null;
         }
         if (source != null) {
-            return hasKeyword(gameData, source, keyword);
+            // A source that already left the battlefield is read from its last known information, which
+            // includes keywords it had from counters (CR 608.2h).
+            return hasKeyword(gameData, source, keyword) || lastKnownSource && source.hasKeyword(keyword);
         }
         // No permanent source: the stack entry itself is the source (e.g. an instant/sorcery
         // spell like Puncture Blast). Its printed keywords (wither, etc.) apply. CR 702.80.
@@ -8748,7 +8814,7 @@ public class GameQueryService {
 
     private boolean hasColorModeSourceRestriction(GameData gameData, Permanent target, boolean opponentOnly,
                                                   TargetColorMode mode) {
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : getActiveStaticEffects(gameData, target)) {
             if (isColorModeSourceRestriction(effect, opponentOnly, mode)) {
                 return true;
             }

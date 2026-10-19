@@ -1030,14 +1030,17 @@ public class TriggeredAbilityQueueService {
             if (candidateTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
                 if (optionalTarget) {
-                    gameData.stack.add(new StackEntry(
+                    StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             pending.sourceCard(),
                             pending.controllerId(),
                             pending.sourceCard().getName() + "'s ability",
                             new ArrayList<>(pending.effects()),
                             null,
-                            pending.sourcePermanentId()));
+                            pending.sourcePermanentId());
+                    entry.setAttackedTargetId(pending.attackedTargetId());
+                    entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+                    gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s triggered ability triggers without a target."));
                     log.info("Game {} - {} attack trigger pushed without a target",
@@ -1777,6 +1780,13 @@ public class TriggeredAbilityQueueService {
             } else if (pending.targetFilter() != null) {
                 // Permanent-filtered path: players are not offered.
                 validPlayerTargets = pending.optionalTarget() ? List.of(pending.controllerId()) : List.of();
+            } else if (!pending.optionalTarget()
+                    && pending.effects().stream().anyMatch(effect ->
+                            effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    && pending.effects().stream().noneMatch(effect ->
+                            effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                // Permanent-only targets (e.g. "destroy target artifact"): players are not offered.
+                validPlayerTargets = List.of();
             } else {
                 validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
             }
@@ -2352,6 +2362,15 @@ public class TriggeredAbilityQueueService {
 
             gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
 
+            if (validPermanentTargets.isEmpty() && sagaChapterTargetRequired(pending)) {
+                // CR 603.3d: a required target with no legal choice means the ability is removed from the
+                // stack, so the Saga (already at its final chapter) is sacrificed right away.
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s chapter " + pending.chapterName() + " has no valid targets and is removed from the stack."));
+                log.info("Game {} - {} chapter {} has no legal target for its required target, removed",
+                        gameData.id, pending.sourceCard().getName(), pending.chapterName());
+                continue;
+            }
             if (validPermanentTargets.isEmpty()) {
                 // No valid targets, push the ability with no target
                 gameData.stack.add(new StackEntry(

@@ -183,7 +183,11 @@ public class UntapStepService {
 
         // CR 502.1: phasing is the untap step's first turn-based action, resolved before anything
         // untaps (and skipped entirely along with the rest of the step above).
-        phasingService.applyPhasing(gameData, activePlayerId);
+        if (activePlayerId.equals(gameData.untapPhasingAppliedPlayerId)) {
+            gameData.untapPhasingAppliedPlayerId = null;
+        } else {
+            phasingService.applyPhasing(gameData, activePlayerId);
+        }
         dayNightService.checkAtUntap(gameData, activePlayerId);
 
         var untapRestrictions = gameData.matchingPermanentUntapRestrictions.remove(activePlayerId);
@@ -512,6 +516,19 @@ public class UntapStepService {
                 !gameQueryService.hasLostAllAbilities(gameData, p)
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));
+    }
+
+    /**
+     * Applies the untap step's phasing, then reports whether a Storage Matrix restriction is in force
+     * (see {@link #storageMatrixRestrictionApplies}). Used where the Storage Matrix choice is made
+     * before the untap, so a phased-out Storage Matrix is already back when the player chooses.
+     */
+    public boolean phaseThenCheckStorageMatrixRestriction(GameData gameData, UUID activePlayerId) {
+        // CR 502.1: phasing is the untap step's first turn-based action, so a phased-out Storage Matrix
+        // phases in before the player chooses; the untap itself must not phase a second time.
+        phasingService.applyPhasing(gameData, activePlayerId);
+        gameData.untapPhasingAppliedPlayerId = activePlayerId;
+        return storageMatrixRestrictionApplies(gameData, activePlayerId);
     }
 
     /**

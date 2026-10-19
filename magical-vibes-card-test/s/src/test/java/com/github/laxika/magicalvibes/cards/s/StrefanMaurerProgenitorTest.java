@@ -161,6 +161,8 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     @Test
     void choosesExactlyTwoBloodWhenMoreAreAvailable() {
         Permanent strefan = prepareAttackWithBlood(2);
+        gd.lifeLostThisTurn.put(player1.getId(), 1);
+        gd.lifeLostThisTurn.put(player2.getId(), 1);
         advanceToEndStep();
         List<Permanent> blood = findPermanents(player1, "Blood");
         assertThat(blood).hasSize(4);
@@ -199,6 +201,7 @@ class StrefanMaurerProgenitorTest extends BaseCardTest {
     void cannotSacrificeNontokenCopyOfBlood() {
         Permanent strefan = prepareAttackWithBlood(1);
         Permanent blood = findPermanent(player1, "Blood");
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new SculptingSteel()));

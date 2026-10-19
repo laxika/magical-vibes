@@ -129,7 +129,10 @@ public class AuraAttachmentService {
                         log.info("Game {} - {} unattached (attached permanent left)", gameData.id, p.getCard().getName());
                     } else {
                         boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
-                        snapshotDepartingSource(gameData, p);
+                        // An Aura enchanting a card in a graveyard whose card left was enchanting nothing when it
+                        // fell off (Spellweaver Volute's triggered ability finds no enchanted card).
+                        snapshotDepartingSource(gameData, p, attachmentIsMissing
+                                && enchantsCardInZone(p, TargetPredicate.Kind.GRAVEYARD_CARD));
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         // An Aura controlled by someone else goes to its owner's graveyard (CR 400.3).
@@ -137,6 +140,13 @@ public class AuraAttachmentService {
                         if (auraOwnerId == null) {
                             auraOwnerId = p.getOriginalCard().getOwnerId() != null
                                     ? p.getOriginalCard().getOwnerId() : playerId;
+                        }
+                        if (p.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, p)) {
+                            // "If this would leave the battlefield, exile it instead" (Storm Herald's Auras).
+                            gameData.addToExile(auraOwnerId, p.getOriginalCard());
+                            gameLogService.append(gameData, GameLog.cardThen(p.getCard(),
+                                    " is exiled instead of being put into the graveyard."));
+                            continue;
                         }
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(
                                 gameData, auraOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
@@ -159,10 +169,14 @@ public class AuraAttachmentService {
         return new AttachmentSweepResult(removals, anyUnattached);
     }
 
-    private void snapshotDepartingSource(GameData gameData, Permanent permanent) {
+    private void snapshotDepartingSource(GameData gameData, Permanent permanent, boolean enchantingNothing) {
         for (var entry : gameData.stack) {
             if (permanent.getId().equals(entry.getSourcePermanentId())) {
-                entry.setSourcePermanentSnapshot(new Permanent(permanent));
+                Permanent snapshot = new Permanent(permanent);
+                if (enchantingNothing) {
+                    snapshot.setAttachedTo(null);
+                }
+                entry.setSourcePermanentSnapshot(snapshot);
             }
         }
     }
@@ -258,7 +272,7 @@ public class AuraAttachmentService {
                 } else {
                     // CR 704.5m — an illegally attached aura is put into its owner's graveyard
                     boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
-                    snapshotDepartingSource(gameData, p);
+                    snapshotDepartingSource(gameData, p, false);
                     it.remove();
                     gameData.expireFloatingEffectsForDepartedSource(p.getId());
                     boolean wentToGraveyard = graveyardService.addCardToGraveyard(

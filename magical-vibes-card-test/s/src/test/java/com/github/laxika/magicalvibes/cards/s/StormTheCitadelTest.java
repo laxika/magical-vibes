@@ -34,7 +34,7 @@ class StormTheCitadelTest extends BaseCardTest {
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownCreature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
+        assertThat(ownCreature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER))
                 .isNotEmpty();
     }
 
@@ -73,7 +73,7 @@ class StormTheCitadelTest extends BaseCardTest {
         castStormTheCitadel();
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
+        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER))
                 .isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -82,7 +82,7 @@ class StormTheCitadelTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
+        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER))
                 .isEmpty();
     }
 

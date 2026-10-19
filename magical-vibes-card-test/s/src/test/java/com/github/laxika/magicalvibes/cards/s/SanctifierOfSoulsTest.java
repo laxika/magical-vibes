@@ -160,13 +160,16 @@ class SanctifierOfSoulsTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
 
-        for (int i = 0; i < 2; i++) {
-            harness.addMana(player1, ManaColor.WHITE, 1);
-            harness.addMana(player1, ManaColor.COLORLESS, 2);
-            harness.activateAbility(player1, 0, null, null);
-            harness.handleGraveyardCardChosen(player1, 0);
-            resolveAllTriggers();
-        }
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            for (int i = 0; i < 2; i++) {
+                harness.addMana(player1, ManaColor.WHITE, 1);
+                harness.addMana(player1, ManaColor.COLORLESS, 2);
+                harness.activateAbility(player1, 0, null, null);
+                harness.handleGraveyardCardChosen(player1, 0);
+                resolveAllTriggers();
+            }
+        });
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);

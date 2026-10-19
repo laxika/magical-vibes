@@ -133,7 +133,6 @@ class SwordOfFireAndIceTest extends BaseCardTest {
     void illegalTargetPreventsDraw() {
         harness.setHand(player1, List.of(new EchoingTruth()));
         harness.setLibrary(player1, List.of(new ChitteringRats()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
         Permanent creature = addCreatureReady(player1, new ChitteringRats());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
@@ -142,6 +141,7 @@ class SwordOfFireAndIceTest extends BaseCardTest {
 
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Chittering Rats");

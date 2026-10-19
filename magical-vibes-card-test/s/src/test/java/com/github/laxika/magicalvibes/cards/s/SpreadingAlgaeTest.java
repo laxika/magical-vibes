@@ -209,6 +209,9 @@ class SpreadingAlgaeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.tapPermanent(player1, 0);
+        // The deferred trigger goes on the stack once a player would next receive priority (CR 117.5),
+        // so Aura Graft is cast in response to it rather than above it.
+        harness.passPriority(player1);
         harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.handlePermanentChosen(player1, otherSwamp.getId());
         resolveAllTriggers();

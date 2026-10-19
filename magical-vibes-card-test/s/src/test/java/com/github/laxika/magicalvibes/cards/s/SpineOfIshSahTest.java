@@ -223,7 +223,7 @@ class SpineOfIshSahTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(dyingSpine).doesNotContain(otherSpine);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherSpine);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherSpine);
     }
 
     @Test

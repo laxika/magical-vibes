@@ -71,24 +71,35 @@ public class ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler implements
         List<UUID> selected = interaction.validCardIds().stream()
                 .filter(chosen::contains)
                 .toList();
-        continueWithNextAura(gameData, interaction.playerId(), selected);
+        continueWithNextAura(gameData, interaction.playerId(), selected, List.of(), List.of());
     }
 
     public void completeCreatureChoice(GameData gameData, UUID targetId,
                                        PermanentChoiceContext.AttachReturnedAuraToCreature context) {
         Card auraCard = findGraveyardCard(gameData, context.controllerId(), context.auraCardId());
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        List<UUID> placedAuras = new ArrayList<>(context.placedAuraCardIds());
+        List<UUID> placedCreatures = new ArrayList<>(context.placedCreatureIds());
         if (auraCard != null && target != null
                 && legalCreatureIds(gameData, context.controllerId(), auraCard).contains(targetId)) {
-            returnAuraAttachedTo(gameData, context.controllerId(), auraCard, target);
+            placedAuras.add(auraCard.getId());
+            placedCreatures.add(target.getId());
         }
-        continueWithNextAura(gameData, context.controllerId(), context.remainingAuraCardIds());
+        continueWithNextAura(gameData, context.controllerId(), context.remainingAuraCardIds(),
+                placedAuras, placedCreatures);
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }
     }
 
-    private void continueWithNextAura(GameData gameData, UUID controllerId, List<UUID> auraCardIds) {
+    /**
+     * Chooses a creature for each selected Aura against the battlefield as it is now, then returns
+     * them all at once: an Aura that gives protection must not stop a later one from being attached.
+     */
+    private void continueWithNextAura(GameData gameData, UUID controllerId, List<UUID> auraCardIds,
+                                      List<UUID> placedAuraCardIds, List<UUID> placedCreatureIds) {
+        List<UUID> placedAuras = new ArrayList<>(placedAuraCardIds);
+        List<UUID> placedCreatures = new ArrayList<>(placedCreatureIds);
         for (int i = 0; i < auraCardIds.size(); i++) {
             UUID auraCardId = auraCardIds.get(i);
             Card auraCard = findGraveyardCard(gameData, controllerId, auraCardId);
@@ -103,17 +114,24 @@ public class ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler implements
 
             List<UUID> remaining = new ArrayList<>(auraCardIds.subList(i + 1, auraCardIds.size()));
             if (targetIds.size() == 1) {
-                returnAuraAttachedTo(gameData, controllerId, auraCard,
-                        gameQueryService.findPermanentById(gameData, targetIds.getFirst()));
+                placedAuras.add(auraCardId);
+                placedCreatures.add(targetIds.getFirst());
                 continue;
             }
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.AttachReturnedAuraToCreature(
-                            controllerId, auraCardId, remaining));
+                            controllerId, auraCardId, remaining, placedAuras, placedCreatures));
             playerInputService.beginPermanentChoice(gameData, controllerId, targetIds,
                     "Choose a creature you control to attach " + auraCard.getName() + " to.");
             return;
+        }
+        for (int i = 0; i < placedAuras.size(); i++) {
+            Card auraCard = findGraveyardCard(gameData, controllerId, placedAuras.get(i));
+            Permanent target = gameQueryService.findPermanentById(gameData, placedCreatures.get(i));
+            if (auraCard != null) {
+                returnAuraAttachedTo(gameData, controllerId, auraCard, target);
+            }
         }
     }
 
@@ -132,8 +150,13 @@ public class ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler implements
         if (gameQueryService.findPermanentById(gameData, aura.getId()) == null) {
             return;
         }
+        // One delayed trigger of the returning ability exiles all of its Auras at its controller's next end step.
+        StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
+        Card delayedTriggerSource = resolvingEntry != null && resolvingEntry.getCard() != null
+                ? resolvingEntry.getCard() : auraCard;
         gameData.queueDelayedAction(new DelayedPermanentAction(
-                aura.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                aura.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP, false, null,
+                controllerId, null, false, delayedTriggerSource));
         creatureControlService.reconcileControl(gameData);
         gameLogService.append(gameData, GameLog.builder()
                 .card(auraCard)

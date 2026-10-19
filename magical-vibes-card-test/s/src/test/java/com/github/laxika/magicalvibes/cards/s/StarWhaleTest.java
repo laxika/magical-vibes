@@ -162,7 +162,7 @@ class StarWhaleTest extends BaseCardTest {
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(whale.getId());
         declareAttackersAndPrepareBlockers(List.of(0));
         assertThat(findPermanent(player1, "Star Whale").isTapped()).isFalse();
-        resolveCombat(player1);
+        gs.declareBlockers(gd, player2, List.of());
         harness.assertLife(player2, 12);
     }
 

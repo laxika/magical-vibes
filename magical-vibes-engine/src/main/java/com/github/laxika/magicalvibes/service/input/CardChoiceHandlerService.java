@@ -1272,9 +1272,28 @@ public class CardChoiceHandlerService {
             throw new IllegalStateException("Invalid discard card index: " + cardIndex);
         }
 
+        Card pickedCard = hand.get(cardIndex);
+        Boolean discardToLibraryDecision = gameData.pendingDiscardToLibraryDecision;
+        if (discardToLibraryDecision == null && !pickedCard.isToken()) {
+            Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, player.getId());
+            if (replacementSource != null) {
+                gameData.pendingDiscardToLibraryChoice = discardChoice;
+                gameData.pendingDiscardToLibraryCardIndex = cardIndex;
+                gameData.interaction.clearAwaitingInput();
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        replacementSource,
+                        player.getId(),
+                        List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                        "Put " + pickedCard.getName() + " on top of your library instead of into your graveyard?"));
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+        }
+        gameData.pendingDiscardToLibraryDecision = null;
         gameData.interaction.clearAwaitingInput();
         gameData.deferredDiscardSelections.add(new EachPlayerRummageState.SelectedDiscard(
-                player.getId(), hand.get(cardIndex).getId()));
+                player.getId(), pickedCard.getId(),
+                discardToLibraryDecision == null || discardToLibraryDecision));
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
         List<Integer> remainingValidIndices = discardChoice.validIndices().stream()
                 .filter(index -> index != cardIndex)
@@ -1682,6 +1701,15 @@ public class CardChoiceHandlerService {
                 thenEffect = new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect(
                         new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
                         manaValueDamage.targetRestriction(), manaValueDamage.exileInsteadOfDie());
+            }
+            if (discardedCard != null
+                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect playerDamage
+                    && playerDamage.amount() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue) {
+                thenEffect = new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(
+                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
+                        playerDamage.recipient(), playerDamage.attachedCountFilter(), playerDamage.unpreventable(),
+                        playerDamage.recordDamageDealt(), playerDamage.triggeredTargetFilter(),
+                        playerDamage.selectedPlayerIds());
             }
             Card sourceCard = followUp.thenEffectSourceCard();
 
@@ -2934,7 +2962,7 @@ public class CardChoiceHandlerService {
             ExiledCardEntry entry = gameData.findExiledCard(cardId);
             if (entry != null) {
                 gameData.removeFromExile(cardId);
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, entry.card(), Zone.HAND);
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, entry.card(), Zone.EXILE);
             }
         }
         log.info("Game {} - alternating hand exile finished: {} cards returned, {} to graveyard",

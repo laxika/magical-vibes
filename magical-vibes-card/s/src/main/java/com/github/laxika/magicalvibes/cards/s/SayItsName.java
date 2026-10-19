@@ -15,8 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -41,7 +44,9 @@ public class SayItsName extends Card {
                 null,
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new ExileNCardsFromGraveyardCost(2, null, new CardNamedPredicate("Say Its Name")),
+                        new ExileNCardsFromGraveyardCost(2, null, new CardAllOfPredicate(List.of(
+                                new CardNamedPredicate("Say Its Name"),
+                                new CardNotPredicate(new CardIsSelfPredicate())))),
                         new SearchZonesForCardNamedToBattlefieldEffect("Altanak, the Thrice-Called")),
                 "Exile this card and two other cards named Say Its Name from your graveyard: Search your "
                         + "graveyard, hand, and/or library for a card named Altanak, the Thrice-Called and "

@@ -711,6 +711,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleCreateTokensAttacking(gameData, permanentId, createTokens);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateTokenCopiesAttacking(gameData, permanentId, tokenCopies);
+        } else if (context instanceof PermanentChoiceContext.TokenAttackTargetChoice tokenAttack) {
+            triggerHandler.handleTokenAttackTargetChoice(gameData, permanentId, tokenAttack);
         } else if (context instanceof PermanentChoiceContext.PreparedTokenCopyAttachments tokenCopies) {
             triggerHandler.handlePreparedTokenCopyAttachment(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking tokenCopies) {

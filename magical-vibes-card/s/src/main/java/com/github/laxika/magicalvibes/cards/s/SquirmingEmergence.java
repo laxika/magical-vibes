@@ -26,6 +26,7 @@ public class SquirmingEmergence extends Card {
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         new CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate())))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

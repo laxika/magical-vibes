@@ -79,7 +79,9 @@ class SergeantJohnBentonTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 1));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () ->
+                harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 1)));
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);

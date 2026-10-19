@@ -22,6 +22,6 @@ public class SmirkingSpelljacker extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetSpellUntilSourceLeavesEffect());
 
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new SourceExiledCardsThreshold(1),
-                new MayCastCardExiledWithSourceEffect()));
+                MayCastCardExiledWithSourceEffect.eachExiledCard()));
     }
 }

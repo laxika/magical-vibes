@@ -178,7 +178,7 @@ class SpellweaverVoluteTest extends BaseCardTest {
         harness.passBothPriorities();
         acceptCopyCastChoices();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
         assertThat(volute.getAttachedTo()).isEqualTo(enchantedCard.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(enchantedCard);
@@ -226,7 +226,7 @@ class SpellweaverVoluteTest extends BaseCardTest {
         acceptCopyCastChoices();
 
         assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         harness.assertLife(player2, 20);
     }
 

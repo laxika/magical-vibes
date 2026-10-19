@@ -177,13 +177,16 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         advanceToEndStep(player1);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            resolveAllTriggers();
 
-        harness.setHand(player2, List.of(new GuerrillaTactics()));
-        harness.addMana(player2, ManaColor.RED, 2);
-        harness.castInstant(player2, 0, escort.getId());
-        harness.passBothPriorities();
+            harness.setHand(player2, List.of(new GuerrillaTactics()));
+            harness.addMana(player2, ManaColor.RED, 2);
+            harness.castInstant(player2, 0, escort.getId());
+            harness.passBothPriorities();
+        });
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(escort.getMarkedDamage()).isZero();
         assertThat(escort.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
     }

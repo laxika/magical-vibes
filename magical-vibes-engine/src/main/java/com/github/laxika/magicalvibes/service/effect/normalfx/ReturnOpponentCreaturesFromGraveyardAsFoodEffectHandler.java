@@ -70,6 +70,9 @@ public class ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler implements 
 
             Permanent permanent = new Permanent(card);
             permanent.setCard(foodCard);
+            // The Food types are the effect's doing, not copiable values (CR 707.2): a copy sees the card.
+            permanent.setBecomeCreatureBaseCard(card);
+            permanent.setBecomeCreatureResultCard(foodCard);
             permanent.setEnteredFromGraveyardOwnerId(returnedCard.graveyardOwnerId());
             addFoodAbilityEffect(gameData, entry, permanent);
 

@@ -3,7 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,6 +43,7 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
     private final ExileService exileService;
     private final CopySupport copySupport;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -102,8 +108,26 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
                     ));
                 }
             }
+        } else if (copyIds.size() > 1 && copiesNeedOrderChoice(gameData, copyIds)) {
+            // The controller chooses the order the copies are cast in (CR 608.2g); copies that need a
+            // target or mode are walked through by their own choices, and identical copies have no order.
+            interactionHandlerRegistry.begin(gameData,
+                    new PendingInteraction.EyeOfTheStormCastChoice(controllerId, copyIds, true));
         } else if (!copyIds.isEmpty()) {
             exileFreeCastQueueSupport.queueCopiesForFreeCast(gameData, controllerId, copyIds);
         }
+    }
+
+    private boolean copiesNeedOrderChoice(GameData gameData, List<UUID> copyIds) {
+        List<Card> copies = copyIds.stream()
+                .map(id -> gameQueryService.findCardInExileById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        if (copies.stream().map(Card::getName).distinct().count() < 2) {
+            return false;
+        }
+        return copies.stream().noneMatch(copy -> EffectResolution.needsTarget(copy)
+                || EffectResolution.needsSpellTarget(copy)
+                || copy.getEffects(EffectSlot.SPELL).stream().anyMatch(ChooseOneEffect.class::isInstance));
     }
 }

@@ -14,6 +14,6 @@ public class SplitTheSpoils extends Card {
     public SplitTheSpoils() {
         addEffect(EffectSlot.SPELL, new ExileTargetGraveyardCardsAndSeparateIntoPilesEffect(
                 new CardIsPermanentPredicate(), 5, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                CardPileDisposition.HAND, true));
+                CardPileDisposition.HAND_FROM_EXILE, true));
     }
 }

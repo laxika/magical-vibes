@@ -137,6 +137,7 @@ class SkysovereignConsulFlagshipTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(player1, List.of(0));
 

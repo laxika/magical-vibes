@@ -50,6 +50,6 @@ public class SusurSecundiVoidAltar extends Card {
                 "{1}{B}, {T}, Pay 2 life, Sacrifice a creature: Draw cards equal to the sacrificed creature's power. "
                         + "Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
-        ));
+        ).withRequiredSourceCounters(CounterType.CHARGE, 12));
     }
 }

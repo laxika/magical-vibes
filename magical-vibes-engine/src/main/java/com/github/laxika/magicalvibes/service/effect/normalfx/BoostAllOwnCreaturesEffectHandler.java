@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -41,7 +42,10 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostAllOwnCreaturesEffect) effect;
+        // A triggering-creature filter names one creature wherever it is now, so it must not be hidden
+        // by the controller's battlefield when control of that creature changed in response.
         List<Permanent> battlefield = boost.declaredAttackers()
+                || boost.filter() instanceof PermanentIsTriggeringPermanentPredicate
                 ? gameData.playerBattlefields.values().stream().flatMap(List::stream).toList()
                 : gameData.playerBattlefields.get(entry.getControllerId());
         var declaredAttackerIds = entry.getAttackingPermanentSnapshots().stream()

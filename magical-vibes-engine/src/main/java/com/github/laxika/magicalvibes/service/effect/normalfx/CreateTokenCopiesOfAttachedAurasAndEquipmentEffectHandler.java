@@ -36,8 +36,11 @@ public class CreateTokenCopiesOfAttachedAurasAndEquipmentEffectHandler implement
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent source = entry.getSourcePermanentId() == null
+        Permanent liveSource = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // The source may have left the battlefield in response: its attachments as it left (last known
+        // information) are still copied.
+        Permanent source = liveSource != null ? liveSource : entry.getSourcePermanentSnapshot();
         if (source == null || entry.getCreatedPermanentIds().isEmpty()) {
             return;
         }
@@ -49,8 +52,10 @@ public class CreateTokenCopiesOfAttachedAurasAndEquipmentEffectHandler implement
 
         List<Permanent> attached = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (permanent.isAttached()
-                    && source.getId().equals(permanent.getAttachedTo())
+            boolean attachedToSource = permanent.isAttached()
+                    ? source.getId().equals(permanent.getAttachedTo())
+                    : liveSource == null && source.getId().equals(permanent.getLastAttachedTo());
+            if (attachedToSource
                     && (permanent.getCard().isAura()
                     || permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))) {
                 attached.add(permanent);

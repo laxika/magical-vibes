@@ -158,9 +158,9 @@ class SecretTunnelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
-        second.setLastKnownSubtypes(java.util.Set.of(CardSubtype.BEAR));
         gd.playerBattlefields.get(player1.getId()).remove(second);
         gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        gd.stack.getFirst().rememberLastKnownPermanentCard(second.getId(), second.getCard());
         first.setTransientCreatureTypeOverride(CardSubtype.FROG);
         harness.passBothPriorities();
 

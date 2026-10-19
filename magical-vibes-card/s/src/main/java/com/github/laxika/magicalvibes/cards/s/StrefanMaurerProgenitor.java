@@ -19,7 +19,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
 
@@ -41,7 +43,9 @@ public class StrefanMaurerProgenitor extends Card {
                 new MayEffect(
                         new SacrificePermanentsThenEffect(
                                 2,
-                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                                        new PermanentIsTokenPredicate())),
                                 new PutCardToBattlefieldThenEffect(
                                         VAMPIRE_CREATURE,
                                         "Vampire creature",

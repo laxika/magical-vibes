@@ -24,8 +24,10 @@ class StadiumHeadlinerTest extends BaseCardTest {
     void attackingCreatesTappedAndAttackingWarriorToken() {
         addCreatureReady(player1, new StadiumHeadliner());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())

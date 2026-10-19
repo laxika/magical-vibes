@@ -184,6 +184,12 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                         permanent -> permanent.getCard().getName() + ": remove echo counters instead",
                         (ctx, permanent) -> damageSupport.getObject().applySoulEchoCounterRemoval(
                                 ctx.gameData(), ctx.playerId(), permanent, ctx.amount())).whole(),
+                wholeEventReplacement("SoulEchoGone", "Soul Echo: remove echo counters instead",
+                        ctx -> ctx.gameData().soulEchoReplacementPlayers.contains(ctx.playerId())
+                                && ctx.gameData().playerBattlefields.getOrDefault(ctx.playerId(), List.of()).stream()
+                                .noneMatch(Permanent::isEchoDamageRedirectionActive),
+                        PlayerDamageContext::amount,
+                        " is replaced by a Soul Echo that left the battlefield.").whole(),
                 counterOnSelfPrevention());
     }
 

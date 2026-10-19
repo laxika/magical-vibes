@@ -118,6 +118,7 @@ class SymbioteSpiderManTest extends BaseCardTest {
     void combatDamageWithOneCardInLibrary() {
         addAttackingSpiderMan();
         Forest onlyCard = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(onlyCard));
 
         resolveCombat();

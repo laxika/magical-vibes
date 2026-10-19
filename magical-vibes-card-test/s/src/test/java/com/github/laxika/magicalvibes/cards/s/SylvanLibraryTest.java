@@ -126,20 +126,16 @@ class SylvanLibraryTest extends BaseCardTest {
 
     @Test
     @CardUsed(NarsetParterOfVeils.class)
-    @DisplayName("A draw-prevention effect still leaves the normal card to resolve")
-    void resolvesWithOnlyTheNormalCardWhenExtraDrawsArePrevented() {
+    @DisplayName("An opponent's draw limit means the optional extra draw can't be chosen")
+    void noChoiceIsOfferedWhenExtraDrawsArePrevented() {
         setup();
         Permanent narset = harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils());
         narset.setCounterCount(CounterType.LOYALTY, 5);
         advanceToDrawAndTrigger();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(hand()).extracting(Card::getId).containsExactly(bears.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.SylvanLibraryChoice.class).resolveCount())
-                .isEqualTo(1);
-        harness.handleMultipleCardsChosen(player1, List.of());
-
-        harness.assertLife(player1, 16);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -344,7 +340,8 @@ class SylvanLibraryTest extends BaseCardTest {
         setup();
         Card lastCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bears, elves, thirdCard, filler1, filler2, lastCard));
-        harness.addToBattlefield(player1, new AshiokWickedManipulator());
+        harness.addToBattlefieldAndReturn(player1, new AshiokWickedManipulator())
+                .setCounterCount(CounterType.LOYALTY, 3);
         advanceToDrawAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
 

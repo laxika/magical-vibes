@@ -65,6 +65,6 @@ public class SquadronCarrier extends Card {
                 )));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.CHARGE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES)));
     }
 }

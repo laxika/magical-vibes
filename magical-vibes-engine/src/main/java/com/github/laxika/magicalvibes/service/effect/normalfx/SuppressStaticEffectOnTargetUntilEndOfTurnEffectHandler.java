@@ -30,8 +30,11 @@ public class SuppressStaticEffectOnTargetUntilEndOfTurnEffectHandler implements 
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
-            target.suppressStaticEffectUntilEndOfTurn(
-                    ((SuppressStaticEffectOnTargetUntilEndOfTurnEffect) effect).effectType());
+            // Only the effects the permanent has as this resolves are removed; one it gains afterwards
+            // (a Guildhouse entering later) is unaffected.
+            gameQueryService.currentStaticEffectsOfType(gameData, target,
+                            ((SuppressStaticEffectOnTargetUntilEndOfTurnEffect) effect).effectType())
+                    .forEach(target::suppressStaticEffectInstanceUntilEndOfTurn);
         }
     }
 }

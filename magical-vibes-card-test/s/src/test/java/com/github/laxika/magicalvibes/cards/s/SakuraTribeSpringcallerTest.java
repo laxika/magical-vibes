@@ -108,10 +108,10 @@ class SakuraTribeSpringcallerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SakuraTribeSpringcaller());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 2);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
 
+        harness.passBothPriorities();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

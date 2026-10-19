@@ -19,13 +19,13 @@ public class StarkeOfRath extends Card {
 
     public StarkeOfRath() {
         // {T}: Destroy target artifact or creature. That permanent's controller gains control of
-        // Starke of Rath. The control change is listed first so the target's controller is still
-        // readable; both effects resolve in the same pass.
+        // Starke of Rath. The effects resolve in written order (CR 608.2c); the target's controller
+        // is taken from last known information once it has been destroyed (CR 608.2h).
         addActivatedAbility(new ActivatedAbility(
                 true, "",
                 List.of(
-                        new TargetPermanentControllerGainsControlOfSourceEffect(ControlDuration.PERMANENT),
-                        new DestroyTargetPermanentEffect(false)
+                        new DestroyTargetPermanentEffect(false),
+                        new TargetPermanentControllerGainsControlOfSourceEffect(ControlDuration.PERMANENT)
                 ),
                 "{T}: Destroy target artifact or creature. That permanent's controller gains control of Starke of Rath.",
                 new PermanentPredicateTargetFilter(

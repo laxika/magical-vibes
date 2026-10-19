@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.o.OmegaMyr;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -74,8 +75,7 @@ class SlithPredatorTest extends BaseCardTest {
         predator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> gs.declareBlockers(gd, player2, List.of()));
 
         harness.assertLife(player2, 17);
         assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -94,9 +94,11 @@ class SlithPredatorTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0,
-                Map.of(blocker.getId(), 2, player2.getId(), 1));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            resolveCombat();
+            harness.handleCombatDamageAssigned(player1, 0,
+                    Map.of(blocker.getId(), 2, player2.getId(), 1));
+        });
 
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player2, "Omega Myr");

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -41,7 +42,8 @@ public class SurveyMechan extends Card {
                         new AnyTargetPredicateTargetFilter(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentIsPlaneswalkerPredicate()
+                                        new PermanentIsPlaneswalkerPredicate(),
+                                        new PermanentIsBattlePredicate()
                                 )),
                                 new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be any target"),
@@ -51,6 +53,6 @@ public class SurveyMechan extends Card {
                 ),
                 2,
                 2
-        ));
+        ).withAllowSharedTargets());
     }
 }

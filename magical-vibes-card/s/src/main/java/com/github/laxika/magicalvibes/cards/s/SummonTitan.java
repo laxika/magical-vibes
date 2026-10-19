@@ -22,8 +22,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "204")
 @CardRegistration(set = "FIN", collectorNumber = "373")
@@ -48,5 +50,9 @@ public class SummonTitan extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new BoostTargetCreatureEffect(yourLands, yourLands, anotherCreatureYouControl));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
+                new PermanentPredicateTargetFilter(anotherCreatureYouControl,
+                        "Must target another creature you control")));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
     }
 }

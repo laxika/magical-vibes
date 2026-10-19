@@ -25,7 +25,7 @@ public class StormTheCitadel extends Card {
     public StormTheCitadel() {
         addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 2));
         addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                 new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

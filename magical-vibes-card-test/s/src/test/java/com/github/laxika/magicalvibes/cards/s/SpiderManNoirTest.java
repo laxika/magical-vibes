@@ -93,11 +93,9 @@ class SpiderManNoirTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(noir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
-        assertThat(surveil).isNotNull();
-        assertThat(surveil.cards()).containsExactly(top);
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        // Surveil 1 is a single "put the top card into your graveyard?" choice rather than a scry-style split.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(top);
     }
 

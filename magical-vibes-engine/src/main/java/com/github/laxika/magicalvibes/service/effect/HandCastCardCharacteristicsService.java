@@ -28,6 +28,22 @@ public final class HandCastCardCharacteristicsService {
 
     public static Card effectiveCard(GameData gameData, UUID playerId, Card card,
                                      GameQueryService gameQueryService) {
+        return effectiveCard(gameData, playerId, card, gameQueryService, false);
+    }
+
+    /**
+     * As {@link #effectiveCard}, but when a static effect grants the card an Adventure the granted one
+     * replaces the card's printed Adventure. A card with a printed Adventure that is also granted one
+     * has two; this selects the granted one for a caster who cannot or does not want to cast the
+     * printed one.
+     */
+    public static Card effectiveCardWithGrantedAdventure(GameData gameData, UUID playerId, Card card,
+                                                         GameQueryService gameQueryService) {
+        return effectiveCard(gameData, playerId, card, gameQueryService, true);
+    }
+
+    private static Card effectiveCard(GameData gameData, UUID playerId, Card card,
+                                      GameQueryService gameQueryService, boolean preferGrantedAdventure) {
         if (card == null || !card.hasType(CardType.CREATURE)) {
             return card;
         }
@@ -58,10 +74,13 @@ public final class HandCastCardCharacteristicsService {
         }
 
         Card effective = namedCopyFace == null ? card : card.createRuntimeCopyWithFace(namedCopyFace);
-        if (grantsAdventure && effective.getCastingOption(AdventureCast.class).isEmpty()) {
+        if (grantsAdventure && (preferGrantedAdventure
+                || effective.getCastingOption(AdventureCast.class).isEmpty())) {
             Card copy = effective.createRuntimeCopy();
             copy.setBackFaceCard(fetchHerbsFace());
-            copy.addCastingOption(new AdventureCast("{1}{G}"));
+            if (copy.getCastingOption(AdventureCast.class).isEmpty()) {
+                copy.addCastingOption(new AdventureCast("{1}{G}"));
+            }
             effective = copy;
         }
         if (offspringCost != null && effective.getEffects(EffectSlot.STATIC).stream()

@@ -125,6 +125,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             List<Card> library = gameData.playerDecks.get(controllerId);
             if (library != null) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+                gameLogService.append(gameData, GameLog.text(controllerName + " shuffles their library."));
             }
             return;
         }

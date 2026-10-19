@@ -139,9 +139,10 @@ class SpireMechcycleTest extends BaseCardTest {
     @Test
     void crewingAfterExhaustDoesNotEndPermanentAnimation() {
         Permanent spire = addReady(new SpireMechcycle());
-        addReady(new VoyagerGlidecar());
+        Permanent glidecar = addReady(new VoyagerGlidecar());
         addReady(new GloryheathLynx());
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, glidecar.getId());
         harness.passBothPriorities();
 
         harness.activateAbility(player1, 0, 1, null, null);

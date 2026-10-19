@@ -92,7 +92,7 @@ class ShakedownHeavyTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);

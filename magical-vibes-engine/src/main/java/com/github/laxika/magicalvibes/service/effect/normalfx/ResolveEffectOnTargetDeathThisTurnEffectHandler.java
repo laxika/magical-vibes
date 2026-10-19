@@ -38,6 +38,15 @@ public class ResolveEffectOnTargetDeathThisTurnEffectHandler implements NormalEf
             return;
         }
 
+        if (e.onlyIfDealtDamageBySource()) {
+            UUID damageSourceId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId() : entry.getCard().getId();
+            if (gameData.damageDealtToPermanentsBySourceThisTurn
+                    .getOrDefault(target.getId(), java.util.Map.of()).getOrDefault(damageSourceId, 0) <= 0) {
+                return;
+            }
+        }
+
         CardEffect delayedEffect = e.effect();
         if (delayedEffect instanceof ReturnCreatureCardFromTargetOwnerGraveyardEffect returnEffect) {
             UUID ownerId = target.getCard().getOwnerId();

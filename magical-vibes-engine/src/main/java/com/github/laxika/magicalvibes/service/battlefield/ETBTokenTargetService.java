@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -1117,7 +1118,8 @@ public class ETBTokenTargetService {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
-        if (targetFilter instanceof PlayerPredicateTargetFilter) {
+        if (targetFilter instanceof PlayerPredicateTargetFilter
+                || targetFilter instanceof StackEntryPredicateTargetFilter) {
             return false;
         }
         FilterContext filterContext = new FilterContext(

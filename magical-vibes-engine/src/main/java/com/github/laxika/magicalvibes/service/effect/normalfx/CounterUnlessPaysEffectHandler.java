@@ -47,6 +47,13 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(
                 gameData, targetCardId, entry);
         if (targetEntry == null) return;
+        if (counterSupport.findCounterTarget(gameData, targetCardId, entry) == null
+                && (e.onNotPaidEffects() == null || e.onNotPaidEffects().isEmpty())
+                && (e.onPaidEffects() == null || e.onPaidEffects().isEmpty())) {
+            // The spell can't be countered and paying changes nothing, so declining is the only sensible
+            // answer; skip the payment prompt.
+            return;
+        }
         entry.getRemovedPermanentControllers().put(targetCardId, targetEntry.getControllerId());
         int payAmount;
         if (e.dynamicAmount() != null) {

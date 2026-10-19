@@ -117,7 +117,9 @@ class StoneIdolTrapTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player1, 0);
+        // Stay in the declare attackers step after resolution: auto-passing into declare blockers
+        // would empty the mana pool before the remaining colorless mana can be observed.
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.castAndResolveInstant(player1, 0));
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);

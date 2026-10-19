@@ -212,6 +212,8 @@ class SubtletyTest extends BaseCardTest {
     void sacrificeCanResolveBeforeTuck() {
         harness.setAutoOrderTriggers(player1, false);
         GrizzlyBears creatureSpell = new GrizzlyBears();
+        Card topCard = new Island();
+        harness.setLibrary(player2, List.of(topCard));
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, creatureSpell, "{1}{G}");
         harness.forceActivePlayer(player1);
@@ -229,7 +231,7 @@ class SubtletyTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.TargetLibraryDestinationChoice.class);
         harness.handleListChoice(player2, "Bottom");
 
-        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(creatureSpell);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, creatureSpell);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 

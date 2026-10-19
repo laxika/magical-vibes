@@ -27,6 +27,6 @@ public class SowingSalt extends Card {
         target(new PermanentPredicateTargetFilter(
                 nonbasicLand,
                 "Target must be a nonbasic land"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentAndAllWithSameNameFromZonesEffect(nonbasicLand));
+        )).addEffect(EffectSlot.SPELL, ExileTargetPermanentAndAllWithSameNameFromZonesEffect.allCopiesHiddenZonesOptional(nonbasicLand));
     }
 }

@@ -176,12 +176,13 @@ class StormWindriderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new StormWindrider());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        addCreatureReady(player2, new HillGiant());
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
         prepareDeclareBlockers();
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
                 () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))));
 
-        assertThat(attacker.isBlockedThisCombat()).isTrue();
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
     }
 }

@@ -111,8 +111,10 @@ class SealAwayTest extends BaseCardTest {
     @Test
     @DisplayName("A stolen creature returns untapped under its owner's control")
     void stolenCreatureReturnsToOwnerUntapped() {
-        Permanent creature = addTappedOpponentCreature();
-        creature.getCard().setOwnerId(player1.getId());
+        CabalEvangel evangel = new CabalEvangel();
+        evangel.setOwnerId(player1.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, evangel);
+        creature.tap();
         gd.stolenCreatures.put(creature.getId(), player1.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
                 player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), creature.getId(),

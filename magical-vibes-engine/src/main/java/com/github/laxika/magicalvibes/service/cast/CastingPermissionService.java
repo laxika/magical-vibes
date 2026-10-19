@@ -394,7 +394,9 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                // A face-down permanent has no characteristics beyond those its face-down rule lists (CR 708.2), so its
+                // static restriction is off.
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {

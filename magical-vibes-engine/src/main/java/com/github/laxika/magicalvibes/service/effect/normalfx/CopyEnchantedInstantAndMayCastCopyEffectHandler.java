@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedInstantAndMayCastCopyEffect;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /** Creates and parks the copy made by Spellweaver Volute. */
 @Component
@@ -42,7 +44,16 @@ public class CopyEnchantedInstantAndMayCastCopyEffectHandler implements NormalEf
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopyEnchantedInstantAndMayCastCopyEffect copyEffect =
                 (CopyEnchantedInstantAndMayCastCopyEffect) effect;
-        Card enchantedCard = gameQueryService.findCardInGraveyardById(gameData, copyEffect.enchantedCardId());
+        // The enchanted card is read from Volute's last existence on the battlefield, so a Volute that
+        // left in response still identifies the card it was enchanting (even if that card has since been
+        // exiled), while one that fell off because its card left enchanted nothing.
+        Permanent volute = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent lastKnownVolute = volute != null ? volute : entry.getSourcePermanentSnapshot();
+        UUID enchantedCardId = lastKnownVolute != null ? lastKnownVolute.getAttachedTo() : copyEffect.enchantedCardId();
+        Card enchantedCard = enchantedCardId == null ? null
+                : volute != null ? gameQueryService.findCardInGraveyardById(gameData, enchantedCardId)
+                : gameQueryService.findCardById(gameData, enchantedCardId);
         if (enchantedCard == null || !enchantedCard.hasType(com.github.laxika.magicalvibes.model.CardType.INSTANT)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no enchanted instant card to copy."));
             return;
@@ -61,7 +72,7 @@ public class CopyEnchantedInstantAndMayCastCopyEffectHandler implements NormalEf
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 copy,
                 entry.getControllerId(),
-                List.of(copyEffect),
+                List.of(new CopyEnchantedInstantAndMayCastCopyEffect(enchantedCard.getId())),
                 "Cast the copy of " + copy.getName() + " without paying its mana cost?",
                 copy.getId(),
                 null,

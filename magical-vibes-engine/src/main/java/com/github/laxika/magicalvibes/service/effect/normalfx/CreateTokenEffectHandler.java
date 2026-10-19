@@ -210,7 +210,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (attackingOpponentId != null) {
             for (UUID createdId : createdIds) {
                 Permanent token = gameQueryService.findPermanentById(gameData, createdId);
-                if (token != null && token.isAttacking()) {
+                if (token != null) {
+                    token.enterAttacking(true);
                     token.setAttackTarget(attackingOpponentId);
                 }
             }

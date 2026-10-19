@@ -104,13 +104,15 @@ class SquiresLightbladeTest extends BaseCardTest {
     void canEnterDuringOpponentsTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.setHand(player1, List.of(new SquiresLightblade()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castArtifact(player1, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(findPermanent(player1, "Squire's Lightblade").getAttachedTo()).isEqualTo(bears.getId());
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();

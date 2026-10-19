@@ -155,8 +155,9 @@ class SwindlersSchemeTest extends BaseCardTest {
         GrizzlyBears spell = new GrizzlyBears();
         harness.setLibrary(player1, List.of(revealed));
 
-        castOpponentCreature(spell);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, spell, "{1}{G}");
         harness.setHand(player1, List.of(new Cancel()));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.ensurePriority(player1);
@@ -164,6 +165,9 @@ class SwindlersSchemeTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(spell);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())

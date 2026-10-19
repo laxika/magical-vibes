@@ -19,7 +19,16 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
                                                 boolean random, boolean withoutPayingManaCost,
                                                 DynamicAmount genericCostReduction, boolean ownOnly,
-                                                boolean returnSourceToHandIfCast) implements CardEffect {
+                                                boolean returnSourceToHandIfCast,
+                                                boolean offerEveryCard) implements CardEffect {
+
+    public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
+                                            boolean random, boolean withoutPayingManaCost,
+                                            DynamicAmount genericCostReduction, boolean ownOnly,
+                                            boolean returnSourceToHandIfCast) {
+        this(manaValue, filter, random, withoutPayingManaCost, genericCostReduction, ownOnly,
+                returnSourceToHandIfCast, false);
+    }
 
     public MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPredicate filter,
                                             boolean random, boolean withoutPayingManaCost,
@@ -56,6 +65,15 @@ public record MayCastCardExiledWithSourceEffect(DynamicAmount manaValue, CardPre
     /** "You may cast the exiled card without paying its mana cost. If you do, return this permanent to its owner's hand." */
     public static MayCastCardExiledWithSourceEffect returningSourceToHandIfCast() {
         return new MayCastCardExiledWithSourceEffect(null, null, false, true, null, false, true);
+    }
+
+    /**
+     * "You may cast the exiled card without paying its mana cost" when several cards are exiled with
+     * the source (e.g. its exile trigger was doubled): each exiled card gets its own offer and
+     * accepting one does not withdraw the others (Smirking Spelljacker).
+     */
+    public static MayCastCardExiledWithSourceEffect eachExiledCard() {
+        return new MayCastCardExiledWithSourceEffect(null, null, false, true, null, false, false, true);
     }
 
     public static MayCastCardExiledWithSourceEffect randomSelection() {

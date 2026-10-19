@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -65,7 +66,7 @@ class StalwartAvenTest extends BaseCardTest {
         Permanent aven = addCreatureReady(player1, new StalwartAven());
         declareAttackersAndPrepareBlockers(List.of(0));
 
-        harness.resolveCombatDamage();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> gs.declareBlockers(gd, player2, List.of()));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.stack).hasSize(1);

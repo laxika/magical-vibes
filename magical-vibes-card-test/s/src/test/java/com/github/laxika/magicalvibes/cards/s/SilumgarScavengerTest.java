@@ -47,8 +47,7 @@ class SilumgarScavengerTest extends BaseCardTest {
         castScavenger();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, fodder.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent scavenger = findPermanent(player1, "Silumgar Scavenger");
         assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -143,8 +142,7 @@ class Mh1SilumgarScavengerTest extends BaseCardTest {
         Permanent scavenger = castScavenger();
 
         resolveExploitMay(true, fodder);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, scavenger, Keyword.HASTE)).isTrue();
@@ -171,8 +169,7 @@ class Mh1SilumgarScavengerTest extends BaseCardTest {
         Permanent scavenger = castScavenger();
 
         resolveExploitMay(true, fodder);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, scavenger, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

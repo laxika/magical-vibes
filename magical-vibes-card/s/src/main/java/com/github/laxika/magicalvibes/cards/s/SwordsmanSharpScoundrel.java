@@ -32,6 +32,6 @@ public class SwordsmanSharpScoundrel extends Card {
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentIsEquippedPredicate(),
-                                new DrawDiscardAndConniveEffect())));
+                                DrawDiscardAndConniveEffect.forEnteringPermanent())));
     }
 }

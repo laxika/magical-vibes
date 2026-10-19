@@ -146,9 +146,9 @@ class StarfieldMysticTest extends BaseCardTest {
         UUID anthemId = harness.getPermanentId(player1, "Glorious Anthem");
         harness.setHand(player1, List.of(new Naturalize(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, anthemId);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0, mysticId);
         harness.assertNotOnBattlefield(player1, "Starfield Mystic");

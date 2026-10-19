@@ -36,14 +36,14 @@ public class SandmanShiftingScoundrel extends Card {
                 List.of(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                .filter(new CardIsSelfPredicate())
-                                .returnAll(true)
+                                .filter(new CardTypePredicate(CardType.LAND))
+                                .targetGraveyard(true)
                                 .enterTapped(true)
                                 .build(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                .filter(new CardTypePredicate(CardType.LAND))
-                                .targetGraveyard(true)
+                                .filter(new CardIsSelfPredicate())
+                                .returnAll(true)
                                 .enterTapped(true)
                                 .build()),
                 "{3}{G}{G}: Return this card and target land card from your graveyard to the battlefield tapped."

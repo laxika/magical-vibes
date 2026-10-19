@@ -44,7 +44,12 @@ public class TargetPlayerGainsControlOfAllOtherPermanentsYouControlEffectHandler
 
         List<Permanent> toGive = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            if (!permanent.getCard().getId().equals(entry.getCard().getId())) {
+            // "All other permanents": only the ability's own source permanent is excluded. A copy of the
+            // card that re-entered after the source left (a blink) is a different object and is given away.
+            boolean isSource = entry.getSourcePermanentId() != null
+                    ? permanent.getId().equals(entry.getSourcePermanentId())
+                    : permanent.getCard().getId().equals(entry.getCard().getId());
+            if (!isSource) {
                 toGive.add(permanent);
             }
         }

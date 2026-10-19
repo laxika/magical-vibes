@@ -1244,10 +1244,16 @@ public class AbilityActivationService {
                 .map(HandCardCost.class::cast)
                 .findFirst()
                 .orElse(null);
+        if (discardCost != null && discardCost.requiredCount(0) != 1) {
+            throw new IllegalStateException("This stack ability requires more than one discard choice");
+        }
+        int activationTax = castingCostService.getActivatedAbilityActivationTax(
+                gameData, player.getId(), new Permanent(sourceEntry.getCard()), ability, isManaAbility(ability));
+        if (activationTax > 0) {
+            payManaCostForSourceCard(gameData, player.getId(), sourceEntry.getCard(), "{0}", 0, false, false,
+                    activationTax);
+        }
         if (discardCost != null) {
-            if (discardCost.requiredCount(0) != 1) {
-                throw new IllegalStateException("This stack ability requires more than one discard choice");
-            }
             payDiscardCost(gameData, player, discardCost, discardHandCardIndex, 0, null, sourceEntry.getCard());
         }
 
@@ -2571,7 +2577,7 @@ public class AbilityActivationService {
                 card.getName() + "'s ability",
                 snapshotEffects,
                 xValue,
-                targetId,
+                ability.isCyclingTriggerTargets() ? null : targetId,
                 null,
                 Map.of(),
                 targetZone,
@@ -2600,7 +2606,8 @@ public class AbilityActivationService {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
                 triggerCollectionService.checkCycleTriggers(gameData, playerId, card, xValue,
-                        ability.isCyclingTriggerTargets() ? ability : null, targetIds);
+                        ability.isCyclingTriggerTargets() ? ability : null,
+                        targetIds == null && targetId != null ? List.of(targetId) : targetIds);
                 triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
                 if (!gameData.interaction.isAwaitingInput()) {
                     triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
@@ -6315,6 +6322,12 @@ public class AbilityActivationService {
                     .filter(Objects::nonNull)
                     .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
                     .sum();
+            // The source is sacrificed as part of the same cost; when it is a creature at that moment
+            // its power counts toward "the total power of the creatures sacrificed this way".
+            if (abilityEffects.stream().anyMatch(SacrificeSelfCost.class::isInstance)
+                    && gameQueryService.isCreature(gameData, source)) {
+                totalPower += gameQueryService.getEffectivePower(gameData, source);
+            }
             costDerivedXValue = Math.max(0, totalPower);
         } else {
             costDerivedXValue = permanentIds.size();
@@ -6723,6 +6736,17 @@ public class AbilityActivationService {
                 if (handler != null) {
                     handler.validateCanPay(gameData, playerId);
                 }
+                if (effect instanceof PayLifeCost) {
+                    int needed = lifePaymentAmount(gameData, playerId, permanent, effect);
+                    int life = gameData.getLife(playerId);
+                    if (needed > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                        throw new IllegalStateException("Players can't pay life to activate abilities");
+                    }
+                    if (needed > 0 && life < needed) {
+                        throw new IllegalStateException(
+                                "Not enough life to pay (need " + needed + ", have " + life + ")");
+                    }
+                }
             }
             return;
         }
@@ -6926,7 +6950,7 @@ public class AbilityActivationService {
 
         if (abilityEffects.stream().anyMatch(UnattachSourceEquipmentCost.class::isInstance)) {
             Permanent equipment = ability.getGrantSourcePermanentId() == null
-                    ? null
+                    ? permanent
                     : gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
             if (equipment == null || !equipment.isAttached()) {
                 throw new IllegalStateException("The granting Equipment is not attached");
@@ -8308,6 +8332,22 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_CREATURE) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
                     throw new IllegalStateException("This ability can only be activated while this permanent is a creature");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ANIMATED_BY_ITS_OWN_ABILITY) {
+                if (!gameQueryService.isCreature(gameData, permanent)) {
+                    throw new IllegalStateException("This ability can only be activated while this permanent is a creature");
+                }
+                boolean animatedByOwnAbility;
+                synchronized (gameData.floatingEffects) {
+                    animatedByOwnAbility = gameData.floatingEffects.stream().anyMatch(fe ->
+                            fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect
+                                    && permanent.getId().equals(fe.sourcePermanentId())
+                                    && permanent.getId().equals(fe.affectedPermanentId()));
+                }
+                if (!animatedByOwnAbility) {
+                    throw new IllegalStateException(
+                            "This ability can only be activated while this permanent is a creature because of its own ability");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN) {

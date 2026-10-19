@@ -1779,6 +1779,14 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId()
         );
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        // When the dying creature deals the damage (last-known information), its lifelink and its
+        // controller apply to the damage rather than the Aura's.
+        if (effect.enchantedPermanentIsSource()) {
+            if (epd.dyingCard() != null) {
+                entry.setDamageSourceCard(epd.dyingCard());
+            }
+            entry.setDamageSourceControllerId(epd.dyingPermanentControllerId());
+        }
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));
@@ -1834,8 +1842,25 @@ public class DeathTriggerCollectorService {
         Integer eventValue = effectReferencesEventValue(effect)
                 ? Math.max(0, epd.dyingCreaturePower())
                 : null;
-        addEnchantedPermanentDeathEntry(match, effect, eventValue, epd.dyingPermanentControllerId());
+        StackEntry entry = addEnchantedPermanentDeathEntryReturning(match, effect, eventValue,
+                epd.dyingPermanentControllerId(), null);
+        if (entry != null && enchantedPermanentDealsDamage(effect)) {
+            // The dying creature deals the damage (last-known information): its lifelink and its
+            // controller apply to that damage rather than the Aura's.
+            if (epd.dyingCard() != null) {
+                entry.setDamageSourceCard(epd.dyingCard());
+            }
+            entry.setDamageSourceControllerId(epd.dyingPermanentControllerId());
+        }
         return true;
+    }
+
+    private static boolean enchantedPermanentDealsDamage(CardEffect effect) {
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(DeathTriggerCollectorService::enchantedPermanentDealsDamage);
+        }
+        return effect instanceof DealDamageToEnchantedPermanentControllerEffect damage
+                && damage.enchantedPermanentIsSource();
     }
 
     private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect) {
@@ -3102,6 +3127,10 @@ public class DeathTriggerCollectorService {
         // "Whenever another creature dies, untap this creature." SELF-scope untap needs its source
         // permanent id to locate this creature at resolution (Galvanic Juggernaut); ENCHANTED reads
         // the same id to find the Aura/Equipment whose host untaps (Thornbite Staff).
+        if (effect.scope() == TapUntapScope.ENCHANTED && !match.permanent().isAttached()) {
+            // The ability belongs to the equipped creature, so an unattached Equipment has none.
+            return false;
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -3942,10 +3971,10 @@ public class DeathTriggerCollectorService {
     boolean handleAllyNontokenConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
-        boolean predicateMatched = conditional.predicate() instanceof CardSubtypePredicate subtypePredicate
-                && death.dyingPermanent() != null
-                ? gameQueryService.hasEffectiveSubtype(
-                        match.gameData(), death.dyingPermanent(), subtypePredicate.subtype())
+        boolean predicateMatched = death.dyingPermanent() != null
+                && isSubtypeDisjunction(conditional.predicate())
+                ? matchesEffectiveSubtypeDisjunction(
+                        match.gameData(), death.dyingPermanent(), conditional.predicate())
                 : death.dyingCard() != null && predicateEvaluationService.matchesCardPredicate(
                         death.dyingCard(), conditional.predicate(), match.permanent().getCard().getId(),
                         match.gameData(), death.dyingCreatureControllerId());
@@ -3957,6 +3986,28 @@ public class DeathTriggerCollectorService {
         }
         CardEffect wrapped = bindAllyNontokenDyingCard(conditional.wrapped(), death.dyingCard());
         return handleAllyNontokenDefault(match, wrapped, ctx);
+    }
+
+    /**
+     * True for a single subtype predicate or an any-of over subtype predicates only. Those are matched
+     * against the dying permanent's effective subtypes, so types granted until end of turn count.
+     */
+    private static boolean isSubtypeDisjunction(CardPredicate predicate) {
+        if (predicate instanceof CardSubtypePredicate) {
+            return true;
+        }
+        return predicate instanceof CardAnyOfPredicate anyOf && !anyOf.predicates().isEmpty()
+                && anyOf.predicates().stream().allMatch(CardSubtypePredicate.class::isInstance);
+    }
+
+    private boolean matchesEffectiveSubtypeDisjunction(GameData gameData, Permanent dyingPermanent,
+                                                       CardPredicate predicate) {
+        if (predicate instanceof CardSubtypePredicate subtypePredicate) {
+            return gameQueryService.hasEffectiveSubtype(gameData, dyingPermanent, subtypePredicate.subtype());
+        }
+        CardAnyOfPredicate anyOf = (CardAnyOfPredicate) predicate;
+        return anyOf.predicates().stream().anyMatch(member ->
+                matchesEffectiveSubtypeDisjunction(gameData, dyingPermanent, member));
     }
 
     private CardEffect bindAllyNontokenDyingCard(CardEffect effect, Card dyingCard) {

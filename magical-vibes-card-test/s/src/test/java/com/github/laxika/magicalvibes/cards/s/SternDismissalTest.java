@@ -89,7 +89,7 @@ class SternDismissalTest extends BaseCardTest {
     @DisplayName("An opponent-controlled creature owned by the caster returns to the caster's hand")
     void returnsStolenCreatureToOwner() {
         Permanent target = addCreatureReady(player2, new RumblingSentry());
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         castSternDismissal(target);
 
         harness.assertInHand(player1, "Rumbling Sentry");
@@ -104,9 +104,7 @@ class SternDismissalTest extends BaseCardTest {
         prepareSternDismissal();
         harness.castInstant(player1, 0, target.getId());
 
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Rumbling Sentry");

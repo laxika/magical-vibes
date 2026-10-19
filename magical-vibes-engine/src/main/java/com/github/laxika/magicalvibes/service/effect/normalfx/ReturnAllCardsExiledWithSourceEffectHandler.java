@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +36,8 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final AuraAttachmentService auraAttachmentService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -89,7 +93,27 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         entry.clearReturnedPermanentIds();
 
+        // CR 303.4f/303.4g: an Aura returning here is attached as its entering player chooses, and
+        // the choice is made from the objects already on the battlefield before this batch enters.
+        // Only one such Aura is chosen per resolution; an Aura with no legal host stays in exile.
+        ExiledCardEntry auraAwaitingHost = null;
+        List<UUID> auraHostCandidates = List.of();
+        List<ExiledCardEntry> nonAuraReturns = new ArrayList<>();
         for (ExiledCardEntry exiledEntry : toReturn) {
+            Card card = exiledEntry.card();
+            if (!card.isAura() || card.hasType(CardType.CREATURE)) {
+                nonAuraReturns.add(exiledEntry);
+                continue;
+            }
+            UUID auraControllerId = underControllerControl ? entry.getControllerId() : exiledEntry.ownerId();
+            List<UUID> hosts = legalAuraHosts(gameData, card, auraControllerId);
+            if (auraAwaitingHost == null && !hosts.isEmpty()) {
+                auraAwaitingHost = exiledEntry;
+                auraHostCandidates = hosts;
+            }
+        }
+
+        for (ExiledCardEntry exiledEntry : nonAuraReturns) {
             Card card = exiledEntry.card();
             UUID newControllerId = underControllerControl ? entry.getControllerId() : exiledEntry.ownerId();
             if (!gameData.removeFromExile(card.getId())) {
@@ -128,6 +152,50 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                     gameData.id, card.getName(), entry.getCard().getName());
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, newControllerId, card, null, false);
         }
+
+        if (auraAwaitingHost != null) {
+            beginAuraReturnChoice(gameData, entry, auraAwaitingHost, auraHostCandidates, underControllerControl);
+        }
+    }
+
+    private void beginAuraReturnChoice(GameData gameData, StackEntry entry, ExiledCardEntry auraEntry,
+                                       List<UUID> hostCandidates, boolean underControllerControl) {
+        Card auraCard = auraEntry.card();
+        UUID chooserId = underControllerControl ? entry.getControllerId() : auraEntry.ownerId();
+        if (!gameData.removeFromExile(auraCard.getId())) {
+            return;
+        }
+        gameData.interaction.setPendingAuraCard(auraCard);
+        List<UUID> permanentTargets = hostCandidates.stream()
+                .filter(id -> !gameData.playerIds.contains(id))
+                .toList();
+        List<UUID> playerTargets = hostCandidates.stream()
+                .filter(gameData.playerIds::contains)
+                .toList();
+        if (playerTargets.isEmpty()) {
+            playerInputService.beginPermanentChoice(gameData, chooserId, permanentTargets,
+                    "Choose a permanent for " + auraCard.getName() + " to enchant.");
+        } else {
+            playerInputService.beginAnyTargetChoice(gameData, chooserId, permanentTargets, playerTargets,
+                    "Choose a permanent or player for " + auraCard.getName() + " to enchant.");
+        }
+    }
+
+    private List<UUID> legalAuraHosts(GameData gameData, Card auraCard, UUID auraControllerId) {
+        List<UUID> hosts = new ArrayList<>();
+        gameData.forEachPermanent((ignored, candidate) -> {
+            if (auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, candidate)) {
+                hosts.add(candidate.getId());
+            }
+        });
+        if (auraCard.isEnchantPlayer()) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (auraAttachmentService.canEnchantPlayer(gameData, auraCard, auraControllerId, playerId)) {
+                    hosts.add(playerId);
+                }
+            }
+        }
+        return hosts;
     }
 
     private void applyPermanentCharacteristics(GameData gameData, UUID controllerId,

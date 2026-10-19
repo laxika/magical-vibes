@@ -1791,6 +1791,9 @@ public class PermanentRemovalService {
                                 : a.controllerId() == null || a.controllerId().equals(gameData.activePlayerId)));
         Map<List<Object>, List<DelayedPermanentAction>> batches = new LinkedHashMap<>();
         for (DelayedPermanentAction action : actions) {
+            if (action.recurring() && gameQueryService.findPermanentById(gameData, action.permanentId()) != null) {
+                gameData.queueDelayedAction(action);
+            }
             if (kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP) {
                 resolveDelayedPermanentAction(gameData, action);
                 continue;
@@ -2895,6 +2898,10 @@ public class PermanentRemovalService {
                             .anyMatch(component -> component.getId().equals(leaving.getId()))) {
                         mergedComponentsInGraveyard++;
                         if (leaving.hasType(CardType.ARTIFACT)) mergedArtifactComponentsInGraveyard++;
+                    } else if (!target.isMergedByMutation() && wasArtifact != leaving.hasType(CardType.ARTIFACT)) {
+                        // The graveyard service counts printed artifact cards; a permanent that was an
+                        // artifact when it left (e.g. made so by Liquimetal Coating) still counts.
+                        gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn += wasArtifact ? 1 : -1;
                     }
                     if (wasEnchantment) {
                         gameData.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn.add(ownerId);

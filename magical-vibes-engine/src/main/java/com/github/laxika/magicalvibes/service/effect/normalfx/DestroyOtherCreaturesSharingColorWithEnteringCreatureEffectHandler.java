@@ -68,6 +68,15 @@ public class DestroyOtherCreaturesSharingColorWithEnteringCreatureEffectHandler
             return gameQueryService.getEffectiveColors(gameData, enteringPermanent);
         }
 
+        // The creature left the battlefield before the trigger resolved: use its last known colors.
+        Permanent departed = enteringPermanentId == null ? null
+                : gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> enteringPermanentId.equals(snapshot.getId()))
+                .findFirst().orElse(null);
+        if (departed != null && departed.getLastKnownColors() != null) {
+            return departed.getLastKnownColors();
+        }
+
         Card enteringCard = findCardById(gameData, entry.getTriggeringCardId());
         if (enteringCard == null || enteringCard.getColors() == null || enteringCard.getColors().isEmpty()) {
             return Set.of();

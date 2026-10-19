@@ -156,7 +156,8 @@ class SurrakTheHuntCallerTest extends BaseCardTest {
         addCreatureReady(player1, new ColossodonYearling());
         Permanent tombshell = addCreatureReady(player1, new WanderingTombshell());
         harness.setHand(player1, List.of(new Flatten()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castAndResolveInstant(player1, 0, tombshell.getId());
         assertThat(gqs.getEffectivePower(gd, tombshell)).isEqualTo(-3);
 

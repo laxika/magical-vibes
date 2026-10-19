@@ -636,6 +636,8 @@ public class DamageTriggerCollectorService {
 
     @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class,
             slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class,
+            slot = EffectSlot.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR)
     private boolean handleAllySourceDealsDamageToOpponentPutCounter(TriggerMatchContext match,
             PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
         if (effect.reference() != PermanentReference.TRIGGERING) return false;
@@ -776,7 +778,14 @@ public class DamageTriggerCollectorService {
                     new ArrayList<>(List.of(trigger)),
                     playerTargetOnly,
                     targetFilter,
-                    dc.damageDealt()));
+                    dc.damageDealt(),
+                    dc.damagedCreature().getId(),
+                    null,
+                    false,
+                    null,
+                    null,
+                    gameQueryService.findPermanentController(gameData, dc.damagedCreature().getId()),
+                    null));
             gameLogService.append(gameData, GameLog.abilityTriggers(dc.damagedCreature().getCard()));
             log.info("Game {} - {} ON_DEALT_DAMAGE target trigger fires",
                     gameData.id, dc.damagedCreature().getCard().getName());
@@ -847,7 +856,8 @@ public class DamageTriggerCollectorService {
         TargetFilter targetFilter = trigger.triggeredTargetFilter();
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 damagedCreature.getCard(), controllerId, new ArrayList<>(List.of(trigger)),
-                false, targetFilter, dc.damageDealt(), damagedCreature.getId(), new Permanent(damagedCreature)));
+                false, targetFilter, dc.damageDealt(), damagedCreature.getId(),
+                lastKnownDamageSource(gameData, damagedCreature)));
 
         gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE deal-damage-to-any-target trigger fires",

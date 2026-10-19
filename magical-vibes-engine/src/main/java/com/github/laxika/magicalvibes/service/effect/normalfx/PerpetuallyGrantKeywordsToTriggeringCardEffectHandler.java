@@ -28,6 +28,17 @@ public class PerpetuallyGrantKeywordsToTriggeringCardEffectHandler
         }
 
         var grant = (PerpetuallyGrantKeywordsToTriggeringCardEffect) effect;
+        // A grant newer than an earlier perpetual loss of the keyword restores it; a keyword the card
+        // already has gains another instance, which matters for keywords that trigger separately.
+        java.util.Set<Keyword> removed = gameData.perpetualCardRemovedKeywords.get(cardId);
+        for (Keyword keyword : grant.keywords()) {
+            boolean lost = removed != null && removed.remove(keyword);
+            if (!lost && gameData.perpetualCardKeywords.getOrDefault(cardId, java.util.Set.of()).contains(keyword)) {
+                gameData.perpetualCardExtraKeywordInstances
+                        .computeIfAbsent(cardId, ignored -> new java.util.concurrent.ConcurrentHashMap<>())
+                        .merge(keyword, 1, Integer::sum);
+            }
+        }
         gameData.perpetualCardKeywords
                 .computeIfAbsent(cardId, ignored -> EnumSet.noneOf(Keyword.class))
                 .addAll(grant.keywords());

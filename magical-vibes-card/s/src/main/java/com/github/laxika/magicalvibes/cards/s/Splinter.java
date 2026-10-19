@@ -16,6 +16,6 @@ public class Splinter extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifact,
                 "Target must be an artifact"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentAndAllWithSameNameFromZonesEffect(artifact));
+        )).addEffect(EffectSlot.SPELL, ExileTargetPermanentAndAllWithSameNameFromZonesEffect.allCopiesHiddenZonesOptional(artifact));
     }
 }

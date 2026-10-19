@@ -60,6 +60,22 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // Nothing can be discarded, so there is no choice to offer and "if you do" can't happen.
             return;
         }
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect delayedReturn
+                && delayedReturn.pending().requireSourceOnBattlefield()
+                && (delayedReturn.pending().sourcePermanentId() == null
+                || gameQueryService.findPermanentById(gameData, delayedReturn.pending().sourcePermanentId()) == null)) {
+            // "If it is still on the battlefield" (Shirei) fails, so the return can't happen and there is nothing to decide.
+            return;
+        }
+        CardEffect leadingEffect = e.wrapped() instanceof SequenceEffect leadingSequence && !leadingSequence.steps().isEmpty()
+                ? leadingSequence.steps().getFirst() : e.wrapped();
+        if (leadingEffect instanceof DrawCardEffect
+                && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
+            // The controller can't draw (e.g. Narset's draw limit), so the "may have you draw" choice
+            // can't be carried out and no choice is offered; the "if they do" branch never happens.
+            insertElseEffect(entry, e);
+            return;
+        }
         if (e.wrapped() instanceof MillControllerAndMayPutMilledLandsOntoBattlefieldEffect mill
                 && e.elseEffect() == null
                 && amountEvaluationService.evaluate(gameData, mill.count(),
