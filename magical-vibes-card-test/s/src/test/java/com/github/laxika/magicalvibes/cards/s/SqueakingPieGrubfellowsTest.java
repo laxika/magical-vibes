@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SqueakingPieGrubfellowsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Kinship prompts to look when the top card shares a creature type")
+    @DisplayName("Kinship prompts to reveal when the top card shares a creature type")
     void kinshipPromptsWhenSharedType() {
         addCreatureReady(player1, new SqueakingPieGrubfellows());
         harness.setLibrary(player1, List.of(new SqueakingPieGrubfellows())); // Goblin Shaman — shares a type
@@ -35,22 +35,6 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Looking and revealing the shared-type card are separate choices")
-    void lookingAndRevealingAreSeparateChoices() {
-        addCreatureReady(player1, new SqueakingPieGrubfellows());
-        harness.setLibrary(player1, List.of(new SqueakingPieGrubfellows()));
-        harness.setHand(player2, List.of(new KithkinZephyrnaut()));
-
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-    }
-
-    @Test
     @DisplayName("Revealing the shared-type card makes each opponent discard a card")
     void revealMakesOpponentDiscard() {
         addCreatureReady(player1, new SqueakingPieGrubfellows());
@@ -59,7 +43,6 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -74,21 +57,22 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
     @DisplayName("Declining to reveal makes no opponent discard")
     void decliningDoesNothing() {
         addCreatureReady(player1, new SqueakingPieGrubfellows());
-        harness.setLibrary(player1, List.of(new SqueakingPieGrubfellows()));
+        SqueakingPieGrubfellows topCard = new SqueakingPieGrubfellows();
+        harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player2, List.of(new KithkinZephyrnaut()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     @Test
-    @DisplayName("Looking at a nonmatching top card offers no reveal choice")
+    @DisplayName("A nonmatching top card offers no reveal choice")
     void noSharedTypeNoPrompt() {
         addCreatureReady(player1, new SqueakingPieGrubfellows());
         harness.setLibrary(player1, List.of(new KithkinZephyrnaut())); // Kithkin Soldier — no shared type
@@ -96,26 +80,7 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-    }
-
-    @Test
-    @DisplayName("Declining to look neither reveals nor makes an opponent discard")
-    void decliningToLookDoesNothing() {
-        addCreatureReady(player1, new SqueakingPieGrubfellows());
-        SqueakingPieGrubfellows topCard = new SqueakingPieGrubfellows();
-        harness.setLibrary(player1, List.of(topCard));
-        harness.setHand(player2, List.of(new KithkinZephyrnaut()));
-
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     @Test
@@ -127,9 +92,6 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -147,7 +109,6 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player2, 1);
 
@@ -167,7 +128,6 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -183,7 +143,6 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -219,7 +178,6 @@ class SqueakingPieGrubfellowsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Squeaking Pie Grubfellows");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
