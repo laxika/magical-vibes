@@ -144,6 +144,13 @@ public class GameData {
     public UUID lastNormalTurnPlayerId;
     /** Whether the current turn's untap step was skipped by an extra-turn or similar effect. */
     public boolean turnUntapStepSkipped;
+    /**
+     * The current extra turn skips every untap step it has (Savor the Moment's "skip the untap step of
+     * that turn"), including the untap step of an additional beginning phase (Sphinx of the Second Sun).
+     * No official ruling covers a turn with two untap steps; the engine reads the skip as covering the
+     * whole turn, matching the card's intent.
+     */
+    public boolean extraTurnSkipsAllUntapSteps;
     /** Whether the draw step most recently entered was skipped, so it offers no priority window (rule 500.11). */
     public boolean drawStepSkippedThisStep;
     /** Whether Power-up abilities are prohibited during the current turn. */
@@ -7580,6 +7587,7 @@ public class GameData {
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
         copy.lastNormalTurnPlayerId = this.lastNormalTurnPlayerId;
         copy.turnUntapStepSkipped = this.turnUntapStepSkipped;
+        copy.extraTurnSkipsAllUntapSteps = this.extraTurnSkipsAllUntapSteps;
         copy.drawStepSkippedThisStep = this.drawStepSkippedThisStep;
         copy.powerUpAbilitiesCantBeActivatedThisTurn = this.powerUpAbilitiesCantBeActivatedThisTurn;
         copy.cardsExiledThisTurn = this.cardsExiledThisTurn;

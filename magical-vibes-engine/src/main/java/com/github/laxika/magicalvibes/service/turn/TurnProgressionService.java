@@ -704,7 +704,10 @@ public class TurnProgressionService {
 
     private void processAdditionalBeginningPhaseUntap(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
-        boolean skipUntapStep = untapStepService.playersSkipUntapStepApplies(gameData);
+        // Savor the Moment's extra turn skips this additional untap step too (see
+        // GameData.extraTurnSkipsAllUntapSteps); a queued Yosei skip is not consumed by it.
+        boolean skipUntapStep = untapStepService.playersSkipUntapStepApplies(gameData)
+                || gameData.extraTurnSkipsAllUntapSteps;
         int queuedUntapSkips = skipUntapStep ? 0
                 : gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
         if (queuedUntapSkips > 0) {
@@ -945,6 +948,7 @@ public class TurnProgressionService {
         gameData.powerUpAbilitiesCantBeActivatedThisTurn = powerUpAbilitiesDisabled;
         gameData.damageCantBePreventedThisTurn = damageCantBePrevented;
         gameData.currentExtraTurnSequence = extraTurnSequence;
+        gameData.extraTurnSkipsAllUntapSteps = skipUntapStep;
 
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
         // untap step this player would actually get (CR 614.10a). A turn whose untap step is already
@@ -1613,8 +1617,10 @@ public class TurnProgressionService {
         gameData.additionalBeginningPhaseUntapInProgress = true;
         UUID activePlayerId = gameData.activePlayerId;
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
-        boolean skipUntapStep = false;
-        int queuedUntapSkips = gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
+        // Savor the Moment's extra turn skips this additional untap step too (see
+        // GameData.extraTurnSkipsAllUntapSteps); a queued Yosei skip then waits for a later untap step.
+        boolean skipUntapStep = gameData.extraTurnSkipsAllUntapSteps;
+        int queuedUntapSkips = skipUntapStep ? 0 : gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
         if (queuedUntapSkips > 0) {
             if (queuedUntapSkips == 1) {
                 gameData.skipNextUntapStepCount.remove(activePlayerId);

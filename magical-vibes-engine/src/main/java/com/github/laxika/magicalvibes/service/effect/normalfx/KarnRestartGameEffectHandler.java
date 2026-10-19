@@ -192,6 +192,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.boons.clear();
         gameData.extraTurns.clear();
         gameData.extraTurnSkipsUntap.clear();
+        gameData.extraTurnSkipsAllUntapSteps = false;
         gameData.extraTurnPowerUpAbilitiesDisabled.clear();
         gameData.extraTurnDamageCantBePrevented.clear();
         gameData.extraTurnSequences.clear();
