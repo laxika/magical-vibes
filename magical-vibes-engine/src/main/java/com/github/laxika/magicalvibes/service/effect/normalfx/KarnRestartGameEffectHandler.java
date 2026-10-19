@@ -453,6 +453,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         }
         gameData.playerKeptHand.clear();
         gameData.playerNeedsToBottom.clear();
+        gameData.playerBottomedBeforeKeeping.clear();
         gameData.playerBottomDecisionIds.clear();
         if (gameData.planechase != null) planechaseService.restart(gameData);
         gameData.status = GameStatus.MULLIGAN;

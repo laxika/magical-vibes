@@ -99,6 +99,12 @@ public class GameData {
     public final Map<UUID, Integer> mulliganCounts = new ConcurrentHashMap<>();
     public final Set<UUID> playerKeptHand = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerNeedsToBottom = new ConcurrentHashMap<>();
+    /**
+     * Players whose current hand already had this mulligan's cards put on the bottom before keeping. The
+     * engine normally defers bottoming to keep, but a hand holding Serum Powder bottoms right after the
+     * mulligan, as CR 103.5 orders it, so Powder exiles the post-bottom hand.
+     */
+    public final Set<UUID> playerBottomedBeforeKeeping = ConcurrentHashMap.newKeySet();
     /** Stable identities for the currently open pregame decisions. */
     public final Map<UUID, UUID> playerMulliganDecisionIds = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> playerBottomDecisionIds = new ConcurrentHashMap<>();
@@ -8212,6 +8218,7 @@ public class GameData {
         copy.cardIntensities.putAll(this.cardIntensities);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
+        copy.playerBottomedBeforeKeeping.addAll(this.playerBottomedBeforeKeeping);
         copy.playerMulliganDecisionIds.putAll(this.playerMulliganDecisionIds);
         copy.playerBottomDecisionIds.putAll(this.playerBottomDecisionIds);
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);

@@ -222,6 +222,30 @@ class SerumPowderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("keeping a hand that was bottomed before keeping puts nothing more on the bottom")
+    void keepingEarlyBottomedHandBottomsNothingMore() {
+        GameTestHarness mulliganHarness = new GameTestHarness();
+        Player player = mulliganHarness.getPlayer1();
+        GameData game = mulliganHarness.getGameData();
+        SerumPowder powder = new SerumPowder();
+        List<Card> cards = new ArrayList<>(List.of(powder));
+        for (int i = 0; i < 6; i++) {
+            cards.add(new DarksteelCitadel());
+        }
+        mulliganHarness.setHand(player, List.of());
+        mulliganHarness.setLibrary(player, cards);
+
+        mulliganHarness.getGameService().mulligan(game, player);
+        int bottomIndex = game.playerHands.get(player.getId()).getFirst() == powder ? 1 : 0;
+        mulliganHarness.getGameService().bottomCards(game, player, List.of(bottomIndex));
+        mulliganHarness.getGameService().keepHand(game, player);
+
+        assertThat(game.playerKeptHand).contains(player.getId());
+        assertThat(game.playerNeedsToBottom).doesNotContainKey(player.getId());
+        assertThat(game.playerHands.get(player.getId())).hasSize(6).contains(powder);
+    }
+
+    @Test
     @DisplayName("the mana ability taps Serum Powder and does not use the stack")
     void manaAbilityTapsPowderWithoutUsingStack() {
         var powder = harness.addToBattlefieldAndReturn(player1, new SerumPowder());

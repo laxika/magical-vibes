@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.SecretMissionEffect;
+import com.github.laxika.magicalvibes.model.effect.SerumPowderEffect;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -37,6 +38,21 @@ import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+/**
+ * Runs the pregame mulligan process (CR 103.5).
+ *
+ * <p><b>Deliberate deviation from CR 103.5.</b> The rule has each mulligan draw a new seven-card hand and
+ * then put cards on the bottom of the library equal to the number of mulligans taken. Like Arena and
+ * MTGO, this service instead redraws seven and defers bottoming until the player keeps
+ * ({@link #keepHand}). For an ordinary mulligan the outcome is identical, and the player chooses which
+ * cards to bottom once, from the hand they actually keep.
+ *
+ * <p>The order only matters for a mulligan action that acts on the whole hand before keeping. Serum
+ * Powder ("you may exile all the cards from your hand, then draw that many cards") must exile the
+ * post-bottom hand, so when a mulligan leaves Serum Powder in the new hand the cards are bottomed right
+ * away, as CR 103.5 orders it ({@link #requestBottomBeforeKeeping}), and keeping that hand later bottoms
+ * nothing more.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -56,6 +72,7 @@ public class MulliganService {
 
     public void keepHand(GameData gameData, Player player) {
         ensureNoPendingMulliganAction(gameData);
+        ensureNoPendingBottomChoice(gameData, player);
         if (gameData.playerKeptHand.contains(player.getId())) {
             throw new IllegalStateException("You have already kept your hand");
         }
@@ -69,25 +86,17 @@ public class MulliganService {
                 new GameEventFact.MulliganResolved(player.getId(), true, mulliganCount),
                 GameEventAudience.allPlayers());
 
-        if (mulliganCount > 0 && !hand.isEmpty()) {
+        // A hand that was already bottomed right after its mulligan (Serum Powder) owes nothing more.
+        boolean alreadyBottomed = gameData.playerBottomedBeforeKeeping.contains(player.getId());
+        if (mulliganCount > 0 && !hand.isEmpty() && !alreadyBottomed) {
             int cardsToBottom = Math.min(mulliganCount, hand.size());
-            gameData.playerNeedsToBottom.put(player.getId(), cardsToBottom);
-            UUID decisionId = UUID.randomUUID();
-            gameData.playerBottomDecisionIds.put(player.getId(), decisionId);
-
             String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
                     " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
             gameLogService.append(gameData, GameLog.text(logEntry));
 
             log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameData.id, player.getUsername(), cardsToBottom, mulliganCount);
 
-            invalidateForAllPlayers(gameData);
-            mutationCoordinator.emit(gameData,
-                    new GameEventFact.DecisionRequested(
-                            decisionId,
-                            player.getId(),
-                            GameEventFact.DecisionKind.CARDS_TO_BOTTOM),
-                    GameEventAudience.player(player.getId()));
+            requestCardsToBottom(gameData, player, cardsToBottom);
         } else {
             String logEntry = player.getUsername() + " keeps their hand.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -138,12 +147,19 @@ public class MulliganService {
 
         log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
+        if (!gameData.playerKeptHand.contains(player.getId())) {
+            // Bottomed right after a mulligan (Serum Powder in hand): the player still decides to keep,
+            // mulligan again, or use Serum Powder on the post-bottom hand.
+            continueMulliganDecision(gameData, player);
+            return;
+        }
         invalidateForAllPlayers(gameData);
         checkStartGame(gameData);
     }
 
     public void mulligan(GameData gameData, Player player) {
         ensureNoPendingMulliganAction(gameData);
+        ensureNoPendingBottomChoice(gameData, player);
         if (gameData.playerKeptHand.contains(player.getId())) {
             throw new IllegalStateException("You have already kept your hand");
         }
@@ -240,6 +256,7 @@ public class MulliganService {
         deck.addAll(hand);
         hand.clear();
         Collections.shuffle(deck, random);
+        gameData.playerBottomedBeforeKeeping.remove(player.getId());
 
         int count = Math.min(7, deck.size());
         if (count < 7) gameData.playersAttemptedDrawFromEmptyLibrary.add(player.getId());
@@ -257,13 +274,61 @@ public class MulliganService {
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
+        if (holdsSerumPowder(newHand)) {
+            requestBottomBeforeKeeping(gameData, player, newMulliganCount);
+            return;
+        }
         invalidateForAllPlayers(gameData);
         requestMulliganDecision(gameData, player);
+    }
+
+    private static boolean holdsSerumPowder(List<Card> hand) {
+        return hand.stream().anyMatch(card -> card.getEffects(EffectSlot.MULLIGAN_ACTION).stream()
+                .anyMatch(SerumPowderEffect.class::isInstance));
+    }
+
+    /**
+     * CR 103.5 order for a hand holding Serum Powder: the cards for this mulligan go on the bottom now,
+     * before the player can use Powder, so Powder exiles and redraws the post-bottom hand. Bottoming at
+     * keep (the usual flow, see the class docs) would let Powder exile and redraw the full seven instead.
+     */
+    private void requestBottomBeforeKeeping(GameData gameData, Player player, int mulliganCount) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        int cardsToBottom = Math.min(mulliganCount, hand.size());
+        gameData.playerBottomedBeforeKeeping.add(player.getId());
+        if (cardsToBottom == 0) {
+            continueMulliganDecision(gameData, player);
+            return;
+        }
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " must put " + cardsToBottom
+                + " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library."));
+        log.info("Game {} - {} holds Serum Powder, bottoms {} card(s) before keeping",
+                gameData.id, player.getUsername(), cardsToBottom);
+        requestCardsToBottom(gameData, player, cardsToBottom);
+    }
+
+    private void requestCardsToBottom(GameData gameData, Player player, int cardsToBottom) {
+        gameData.playerNeedsToBottom.put(player.getId(), cardsToBottom);
+        UUID decisionId = UUID.randomUUID();
+        gameData.playerBottomDecisionIds.put(player.getId(), decisionId);
+        invalidateForAllPlayers(gameData);
+        mutationCoordinator.emit(gameData,
+                new GameEventFact.DecisionRequested(
+                        decisionId,
+                        player.getId(),
+                        GameEventFact.DecisionKind.CARDS_TO_BOTTOM),
+                GameEventAudience.player(player.getId()));
     }
 
     private void ensureNoPendingMulliganAction(GameData gameData) {
         if (gameData.interaction.isAwaitingInput()) {
             throw new IllegalStateException("You must answer the pending mulligan action first");
+        }
+    }
+
+    private void ensureNoPendingBottomChoice(GameData gameData, Player player) {
+        if (gameData.playerNeedsToBottom.containsKey(player.getId())) {
+            throw new IllegalStateException("You must put cards on the bottom of your library first");
         }
     }
 
