@@ -27,9 +27,9 @@ class TeferisImpTest extends BaseCardTest {
         harness.setHand(player1, List.of(discardedCard));
         harness.setHand(player2, List.of());
 
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(imp);
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(imp);
 
@@ -50,13 +50,13 @@ class TeferisImpTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island(), new Island()));
 
-        harness.passUntil(player2, TurnStep.UNTAP);
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(imp);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UNTAP);
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(imp);
 

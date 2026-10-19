@@ -61,6 +61,9 @@ public class ExileTargetNonlandPermanentAndCardWithSourceEffectHandler implement
                 continue;
             }
 
+            if (entry.isBattlefieldChosenTargetCard(cardId)) {
+                continue;
+            }
             Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
             if (graveyardCard != null && ownerId != null

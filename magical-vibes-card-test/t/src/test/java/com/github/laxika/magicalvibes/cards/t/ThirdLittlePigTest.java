@@ -36,8 +36,9 @@ class ThirdLittlePigTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(card));
 
         conjureOtherPigs(player1);
-        gd.playerGraveyards.get(player1.getId()).remove(card);
-        harness.setHand(player1, List.of(card));
+        Card boostedCard = gd.playerGraveyards.get(player1.getId()).getFirst();
+        gd.playerGraveyards.get(player1.getId()).remove(boostedCard);
+        harness.setHand(player1, List.of(boostedCard));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         resolveAllTriggers();

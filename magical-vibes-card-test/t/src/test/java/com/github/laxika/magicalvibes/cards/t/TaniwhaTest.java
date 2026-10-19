@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -67,9 +68,12 @@ class TaniwhaTest extends BaseCardTest {
     }
 
     private void advanceTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.UNTAP);
+        Player nextActivePlayer = gd.activePlayerId.equals(player1.getId()) ? player2 : player1;
+        harness.passUntilWithNoAttackers(nextActivePlayer, TurnStep.UPKEEP);
     }
 
     @Test

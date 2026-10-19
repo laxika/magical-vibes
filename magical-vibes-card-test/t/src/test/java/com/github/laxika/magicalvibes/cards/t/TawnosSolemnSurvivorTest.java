@@ -60,8 +60,8 @@ class TawnosSolemnSurvivorTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(exiledCard));
         addWubManaAndGeneric();
 
+        // Exactly two artifact tokens exist, so the two sacrifices are auto-paid without a prompt.
         harness.activateAbility(player1, battlefieldIndex(tawnos), 1, null, null);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstToken.getId(), secondToken.getId()));
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 

@@ -185,14 +185,14 @@ class TheMirariConjectureTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve chapter III
 
-        assertThat(gd.playersWithSpellCopyUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.spellCopyGrantsUntilEndOfTurn).containsKey(player1.getId());
     }
 
     @Test
     @DisplayName("After chapter III, casting an instant creates a copy on the stack")
     void chapterIIICopiesInstantSpell() {
         // Set up the copy effect directly
-        gd.playersWithSpellCopyUntilEndOfTurn.add(player1.getId());
+        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -208,7 +208,7 @@ class TheMirariConjectureTest extends BaseCardTest {
     @Test
     @DisplayName("After chapter III, casting a sorcery creates a copy on the stack")
     void chapterIIICopiesSorcerySpell() {
-        gd.playersWithSpellCopyUntilEndOfTurn.add(player1.getId());
+        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
 
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -225,7 +225,7 @@ class TheMirariConjectureTest extends BaseCardTest {
     @Test
     @DisplayName("Copy triggered ability resolves and creates a spell copy")
     void copyTriggerResolvesCreatingCopy() {
-        gd.playersWithSpellCopyUntilEndOfTurn.add(player1.getId());
+        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -245,7 +245,7 @@ class TheMirariConjectureTest extends BaseCardTest {
     @Test
     @DisplayName("Spell copy effect does not apply to creature spells")
     void spellCopyDoesNotApplyToCreatures() {
-        gd.playersWithSpellCopyUntilEndOfTurn.add(player1.getId());
+        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
 
         Card creature = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
         harness.setHand(player1, List.of(creature));
@@ -262,8 +262,8 @@ class TheMirariConjectureTest extends BaseCardTest {
     @Test
     @DisplayName("Spell copy effect is cleared at end of turn")
     void spellCopyIsClearedAtEndOfTurn() {
-        gd.playersWithSpellCopyUntilEndOfTurn.add(player1.getId());
-        assertThat(gd.playersWithSpellCopyUntilEndOfTurn).isNotEmpty();
+        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
+        assertThat(gd.spellCopyGrantsUntilEndOfTurn).isNotEmpty();
 
         // Simulate end-of-turn by advancing through the end step → cleanup
         harness.forceActivePlayer(player1);
@@ -271,7 +271,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance through end step → cleanup clears the set
 
-        assertThat(gd.playersWithSpellCopyUntilEndOfTurn).isEmpty();
+        assertThat(gd.spellCopyGrantsUntilEndOfTurn).isEmpty();
     }
 
     @Test

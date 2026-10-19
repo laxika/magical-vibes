@@ -41,10 +41,15 @@ public class BecomeCopyOfSacrificedPermanentEffectHandler implements NormalEffec
             return;
         }
 
-        List<ActivatedAbility> retainedAbilities = source.getOriginalCard().getActivatedAbilities().stream()
-                .filter(ability -> ability.getEffects().stream()
-                        .anyMatch(candidate -> candidate instanceof BecomeCopyOfSacrificedPermanentEffect))
-                .toList();
+        // "except it has this ability" is part of the copiable values once the source has copied something
+        // (a Clone of the Dane keeps it), so the retained ability is read from the source's current card.
+        boolean copiedAbilityAlreadyPresent = sacrificed.getCard().getActivatedAbilities().stream()
+                .anyMatch(BecomeCopyOfSacrificedPermanentEffectHandler::isBecomeCopyAbility);
+        List<ActivatedAbility> retainedAbilities = copiedAbilityAlreadyPresent
+                ? List.of()
+                : source.getCard().getActivatedAbilities().stream()
+                        .filter(BecomeCopyOfSacrificedPermanentEffectHandler::isBecomeCopyAbility)
+                        .toList();
         String originalName = source.getCard().getName();
         permanentCopierService.applyCloneCopy(
                 source, sacrificed.getCard(), null, null, java.util.Set.of(), retainedAbilities);
@@ -52,5 +57,10 @@ public class BecomeCopyOfSacrificedPermanentEffectHandler implements NormalEffec
                 GameLog.text(originalName + " becomes a copy of " + sacrificed.getCard().getName() + "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName,
                 sacrificed.getCard().getName());
+    }
+
+    private static boolean isBecomeCopyAbility(ActivatedAbility ability) {
+        return ability.getEffects().stream()
+                .anyMatch(candidate -> candidate instanceof BecomeCopyOfSacrificedPermanentEffect);
     }
 }

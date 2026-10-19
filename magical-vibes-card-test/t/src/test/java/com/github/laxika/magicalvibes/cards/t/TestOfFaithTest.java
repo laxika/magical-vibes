@@ -85,7 +85,7 @@ class TestOfFaithTest extends BaseCardTest {
         harness.setHand(player2, List.of(new BarbedLightning()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castModalInstant(player2, 0, 0, List.of(gargoyle.getId()));
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{0}, List.of(gargoyle.getId()));
         harness.passBothPriorities();
 
         assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

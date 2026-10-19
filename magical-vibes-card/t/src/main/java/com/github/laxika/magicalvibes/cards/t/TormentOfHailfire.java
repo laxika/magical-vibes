@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
 public class TormentOfHailfire extends Card {
 
     public TormentOfHailfire() {
-        addEffect(EffectSlot.SPELL, new TormentOfHailfireEffect(3));
+        addEffect(EffectSlot.SPELL, new TormentOfHailfireEffect(3).deferringChoicesEachIteration());
     }
 }

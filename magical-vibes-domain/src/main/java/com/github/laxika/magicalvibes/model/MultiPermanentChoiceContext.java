@@ -419,6 +419,21 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /**
+     * "Each player chooses N permanents to keep, then sacrifices the rest" (CR 101.4): {@code current} is the
+     * player being prompted, whose {@link PendingForcedSacrifice#count()} is how many permanents to keep.
+     * Sacrifices accumulate across prompts and happen simultaneously once every player has chosen.
+     */
+    record KeepForEachPlayerThenSacrificeRest(PendingForcedSacrifice current,
+                                              List<PendingForcedSacrifice> remainingChoosers,
+                                              List<UUID> accumulatedSacrificeIds)
+            implements MultiPermanentChoiceContext {
+        public KeepForEachPlayerThenSacrificeRest {
+            remainingChoosers = List.copyOf(remainingChoosers);
+            accumulatedSacrificeIds = List.copyOf(accumulatedSacrificeIds);
+        }
+    }
+
     /** Return the chosen permanents and record the number returned on the resolving stack entry. */
     record ReturnAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
     }

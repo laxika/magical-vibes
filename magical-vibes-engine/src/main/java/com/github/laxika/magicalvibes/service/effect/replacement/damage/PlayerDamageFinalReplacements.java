@@ -88,19 +88,34 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                             return ctx.event().withAmount(ctx.amount() - prevented);
                         }),
                 effect("OpponentDamageMill", REPLACEMENT,
-                        ctx -> prevention.hasControllerOpponentDamageMillReplacement(
+                        ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
+                                && prevention.hasControllerOpponentDamageMillReplacement(
                                 ctx.gameData(), ctx.sourceControllerId(), ctx.playerId(), ctx.amount()),
                         ctx -> "Mill instead of being dealt the damage",
                         ctx -> {
                             gameLogService.append(ctx.gameData(), GameLog.cardThen(ctx.source(),
                                     "'s " + ctx.amount() + " damage to " + ctx.playerName()
                                             + " is prevented and replaced with milling."));
-                            for (UUID opponentId : ctx.gameData().orderedPlayerIds) {
-                                if (!opponentId.equals(ctx.sourceControllerId())) {
-                                    graveyardService.resolveMillPlayer(ctx.gameData(), opponentId, ctx.amount());
-                                }
-                            }
+                            millOpponentsOfSource(ctx);
                             return prevented(ctx);
+                        }),
+                effect("OpponentDamageMillUnpreventable", REPLACEMENT,
+                        ctx -> !gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
+                                && !prevention.controllerOpponentDamageMillSources(
+                                        ctx.gameData(), ctx.sourceControllerId(), ctx.playerId()).isEmpty(),
+                        ctx -> "Mill that many cards instead of preventing the damage",
+                        ctx -> {
+                            // Each source's replacement mills on its own and the damage, which can't be
+                            // prevented, is still dealt, so the order they apply in changes nothing.
+                            for (Permanent source : prevention.controllerOpponentDamageMillSources(
+                                    ctx.gameData(), ctx.sourceControllerId(), ctx.playerId())) {
+                                gameLogService.append(ctx.gameData(), GameLog.cardThen(source.getCard(),
+                                        " mills that many cards from each opponent; the " + ctx.amount()
+                                                + " damage to " + ctx.playerName()
+                                                + " can't be prevented, so it is still dealt."));
+                                millOpponentsOfSource(ctx);
+                            }
+                            return ctx.event();
                         }),
                 effect("CombatDamageMill", REPLACEMENT,
                         ctx -> ctx.combat() && ctx.sourcePermanent() != null
@@ -250,6 +265,14 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                 (ctx, instance) -> ctx.event(),
                 (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(
                         ctx.amount() - replace.apply(ctx, permanent(ctx, instance)))));
+    }
+
+    private void millOpponentsOfSource(PlayerDamageContext ctx) {
+        for (UUID opponentId : ctx.gameData().orderedPlayerIds) {
+            if (!opponentId.equals(ctx.sourceControllerId())) {
+                graveyardService.resolveMillPlayer(ctx.gameData(), opponentId, ctx.amount());
+            }
+        }
     }
 
     private Permanent permanent(PlayerDamageContext ctx, String instance) {

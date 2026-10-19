@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.ControllerActivatedArtifactAbilityThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -40,7 +40,7 @@ public class TezzeretBetrayerOfFlesh extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentControlledBySourceControllerPredicate(),
-                        new PermanentNotPredicate(new PermanentActivatedThisTurnPredicate()))),
+                        new PermanentNotPredicate(new ControllerActivatedArtifactAbilityThisTurnPredicate()))),
                 2));
 
         addActivatedAbility(new ActivatedAbility(

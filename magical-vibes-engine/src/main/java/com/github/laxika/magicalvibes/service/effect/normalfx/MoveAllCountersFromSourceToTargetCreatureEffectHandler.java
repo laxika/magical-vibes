@@ -32,6 +32,10 @@ public class MoveAllCountersFromSourceToTargetCreatureEffectHandler implements N
         if (source == null || target == null) {
             return;
         }
+        // A move that cannot put its counters onto the target removes none from the source (CR 122.5).
+        if (gameQueryService.cantHaveCounters(gameData, target)) {
+            return;
+        }
 
         for (CounterType counterType : source.getCounters().keySet().stream().toList()) {
             int count = source.getCounterCount(counterType);

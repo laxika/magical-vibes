@@ -139,7 +139,8 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
     private static boolean grantsPlayPermission(LibrarySearchDestination destination) {
         return destination == LibrarySearchDestination.EXILE_PLAYABLE
-                || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP;
+                || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP
+                || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN;
     }
 
     private static String prompt(LibrarySearchDestination destination, CardPredicate filter,
@@ -148,7 +149,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                 + "'s library for a ") + CardPredicateUtils.describeFilter(filter);
         return switch (destination) {
             case EXILE -> subject + " to exile (" + count + " remaining).";
-            case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> filter == null
+            case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, EXILE_PLAYABLE_UNTIL_END_OF_TURN -> filter == null
                     ? subject + " to exile face down."
                     : subject + " to exile.";
             case EXILE_PLAYABLE_ANY_NUMBER -> subject + " to exile (any number).";

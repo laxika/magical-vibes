@@ -98,6 +98,10 @@ import lombok.Builder;
  *                             reads the {@code cardsPutIntoGraveyardFromLibraryThisTurn} tracking of the
  *                             graveyard's owner and is only meaningful when {@link #targetGraveyard} is
  *                             {@code true}
+ * @param targetMilledThisTurn {@code true} to restrict the <b>targeted</b> graveyard card to one milled
+ *                             this turn (CR 701.17a, e.g. Tato Farmer); reads the {@code cardsMilledThisTurn}
+ *                             tracking of the graveyard's owner and is only meaningful when
+ *                             {@link #targetGraveyard} is {@code true}
  * @param targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn {@code true} to restrict the <b>targeted</b>
  *                             graveyard card to one discarded or put into a graveyard from a library this turn
  * @param targetNotPutIntoGraveyardThisCombat {@code true} to exclude targeted graveyard cards put into
@@ -305,6 +309,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
         boolean targetPutIntoGraveyardFromAnywhereThisTurn,
         boolean targetPutIntoGraveyardFromLibraryThisTurn,
+        boolean targetMilledThisTurn,
         boolean targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn,
         boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
@@ -448,7 +453,7 @@ public record ReturnCardFromGraveyardEffect(
         EffectDuration battlefieldEffectGrantDuration,
         int targetGroup
 ) {
-            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, false, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, List.of(), false, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false, false);
+            this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, false, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, List.of(), false, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false, false);
         }
 
     /**

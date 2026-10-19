@@ -260,6 +260,8 @@ public class AnimationSupport {
         self.setAnimatedToughness(toughness);
         self.setAnimatedPtFromCard(effect.power() == null && effect.toughness() == null);
         self.setAnimatedColor(effect.animatedColor());
+        addAnimationColorFloatingEffect(gameData, entry, self, effect.animatedColor(),
+                untilEndOfCombat ? EffectDuration.UNTIL_END_OF_COMBAT : EffectDuration.UNTIL_END_OF_TURN);
         applyAnimatedColors(self, effect);
         // Only a crew activation makes the Vehicle "crewed" (CR 702.122a); an identical triggered
         // animation (Kolodin, Triumph Caster) does not.
@@ -976,6 +978,11 @@ public class AnimationSupport {
         Card backFace = originalCard.getBackFaceCard();
         if (backFace == null) {
             log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
+            return false;
+        }
+        // CR 701.27d: nothing happens when the face to transform into is an instant or sorcery face.
+        if (backFace.hasType(com.github.laxika.magicalvibes.model.CardType.INSTANT)
+                || backFace.hasType(com.github.laxika.magicalvibes.model.CardType.SORCERY)) {
             return false;
         }
         if (isLudevicCopy(self)) {

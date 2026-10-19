@@ -18,7 +18,7 @@ import java.util.List;
 public class TemperedSteel extends Card {
 
     public TemperedSteel() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()

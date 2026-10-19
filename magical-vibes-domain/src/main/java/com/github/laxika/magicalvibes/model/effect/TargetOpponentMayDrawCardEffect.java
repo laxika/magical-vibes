@@ -12,11 +12,25 @@ package com.github.laxika.magicalvibes.model.effect;
  * "may" is theirs — unlike a plain {@code MayEffect(DrawCardEffect())}, which offers it to the
  * source's controller.
  */
-public record TargetOpponentMayDrawCardEffect() implements CardEffect {
+public record TargetOpponentMayDrawCardEffect(boolean chosenTarget) implements CardEffect {
 
-    /** The opponent target stays legal even when the sibling creature target is gone (CR 608.2b). */
+    /** Derived-opponent form: the sole opponent is the "target" and is never chosen. */
+    public TargetOpponentMayDrawCardEffect() {
+        this(false);
+    }
+
+    /**
+     * Chosen-target form ({@code chosenTarget = true}): the card binds this effect to a real opponent
+     * target via {@code target(...).addEffect(...)}, so the ability can't be put on the stack when no
+     * opponent can be targeted and does nothing if that target becomes illegal.
+     */
+    public static TargetOpponentMayDrawCardEffect ofChosenTarget() {
+        return new TargetOpponentMayDrawCardEffect(true);
+    }
+
+    /** The derived opponent stays legal even when the sibling creature target is gone (CR 608.2b). */
     @Override
     public boolean resolvesWhenTargetIllegal() {
-        return true;
+        return !chosenTarget;
     }
 }

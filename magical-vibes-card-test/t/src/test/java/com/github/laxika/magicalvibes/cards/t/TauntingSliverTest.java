@@ -71,7 +71,7 @@ class TauntingSliverTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new SyphonSliver());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(als.getMustAttackRequirementCount(gd, target)).isZero();
     }

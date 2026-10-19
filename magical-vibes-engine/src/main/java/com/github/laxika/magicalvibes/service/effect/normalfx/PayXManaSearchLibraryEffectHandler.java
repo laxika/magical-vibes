@@ -107,8 +107,11 @@ public class PayXManaSearchLibraryEffectHandler implements NormalEffectHandlerBe
         return Math.max(0, payableFromPool(gameData.playerManaPools.get(controllerId)) + untappedSources);
     }
 
+    /**
+     * Mana that can pay this ability's {X}. Artifact-spell-only and Myr-spell-only mana may only be
+     * spent on spells of those types, so it cannot pay for a creature's triggered ability.
+     */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+        return pool.getTotal() + pool.getXCostOnlyColorless();
     }
 }

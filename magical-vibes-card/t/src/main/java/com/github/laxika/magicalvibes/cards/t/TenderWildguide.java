@@ -18,7 +18,7 @@ import java.util.List;
 public class TenderWildguide extends Card {
 
     public TenderWildguide() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addEffect(EffectSlot.STATIC, new KickerEffect("{2}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addActivatedAbility(ManaAbilities.tapForAnyColor());

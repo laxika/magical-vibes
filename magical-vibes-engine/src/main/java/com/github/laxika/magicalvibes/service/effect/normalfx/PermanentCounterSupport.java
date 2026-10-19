@@ -939,6 +939,11 @@ public class PermanentCounterSupport {
                 target.setCounterCount(CounterType.FUNGUS, target.getCounterCount(CounterType.FUNGUS) + count);
                 yield "fungus";
             }
+            case SPORE -> {
+                if (count <= 0) { yield null; }
+                target.setCounterCount(CounterType.SPORE, target.getCounterCount(CounterType.SPORE) + count);
+                yield "spore";
+            }
             case FUSE -> { target.setCounterCount(CounterType.FUSE, target.getCounterCount(CounterType.FUSE) + count); yield "fuse"; }
             case VERSE -> { target.setCounterCount(CounterType.VERSE, target.getCounterCount(CounterType.VERSE) + count); yield "verse"; }
             case ICE -> { target.setCounterCount(CounterType.ICE, target.getCounterCount(CounterType.ICE) + count); yield "ice"; }
@@ -1468,7 +1473,8 @@ public class PermanentCounterSupport {
 
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(source.getCard(), placingPlayerId, may,
-                            null, source.getId(), count);
+                            null, source.getId(), count,
+                            authoredEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance());
                 } else {
                     StackEntry triggerEntry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,

@@ -92,6 +92,7 @@ class TervigonTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2));
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);

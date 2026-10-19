@@ -1260,6 +1260,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice ctx) {
+            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
+                throw new IllegalArgumentException("Invalid card name: " + colorName);
+            }
             handleChooseCardNameForDelayedCreatureCombatDamageChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -2905,7 +2908,8 @@ public class ChoiceHandlerService {
         if (!options.contains(colorName)) {
             throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
         }
-        ManaColor manaColor = ManaColor.valueOf(colorName);
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
         gameData.interaction.clearAwaitingInput();
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.sameColor() ? ctx.amount() : 1;
@@ -7507,6 +7511,10 @@ public class ChoiceHandlerService {
     private void handleChooseNonlandCardNameRevealTopCardsChoice(GameData gameData, Player player,
                                                                   String cardName,
                                                                   ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice ctx) {
+        if (libraryRevealSupport.collectNonlandCardNamesInGame(gameData).stream()
+                .noneMatch(name -> name.equalsIgnoreCase(cardName))) {
+            throw new IllegalArgumentException("Invalid nonland card name: " + cardName);
+        }
         gameData.interaction.clearAwaitingInput();
 
         UUID controllerId = ctx.controllerId();

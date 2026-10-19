@@ -811,7 +811,8 @@ public class CombatAttackService {
             }
             // Taunt: a taunted player's attacking creatures must attack the taunter if able.
             UUID taunter = gameData.tauntedThisTurn.get(playerId);
-            if (taunter != null && validTargetIds.contains(taunter) && !taunter.equals(targetId)) {
+            if (taunter != null && validTargetIds.contains(taunter) && !taunter.equals(targetId)
+                    && attackLegalityService.canAttackDefender(gameData, attacker, taunter)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the taunting player");
             }
             if (attackLegalityService.mustAttackOtherPlayerIfAble(gameData, attacker, targetId)) {
@@ -920,6 +921,13 @@ public class CombatAttackService {
         if (!phyrexianPayments.isEmpty()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int lifeCost = payPhyrexianAttackTax(pool, phyrexianPayments, phyrexianTaxedAttackerCount);
+            // Each {W/P} symbol paid with life is unpaid mana and costs 2 life, so the mana actually paid
+            // is the symbol count minus the symbols paid with life (Tax Taker counts only that mana).
+            int manaPaid = phyrexianTaxedAttackerCount * phyrexianPayments.size() - lifeCost / 2;
+            if (manaPaid > 0) {
+                triggerCollectionService.checkTaxPaymentTriggers(
+                        gameData, playerId, gameQueryService.getOpponentId(gameData, playerId), manaPaid);
+            }
             if (lifeCost > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, lifeCost, "Phyrexian attack tax");
             }
@@ -949,7 +957,7 @@ public class CombatAttackService {
             if (gameData.isCommander(attacker.getOriginalCard().getId())) {
                 gameData.playersWhoAttackedWithCommanderThisTurn.add(playerId);
             }
-            Set<CardSubtype> subtypes = new HashSet<>(gameQueryService.effectiveCreatureSubtypes(gameData, attacker));
+            Set<CardSubtype> subtypes = new HashSet<>(gameQueryService.getEffectiveSubtypes(gameData, attacker));
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.CHANGELING)) {
                 for (CardSubtype subtype : CardSubtype.values()) {
                     if (gameQueryService.isCreatureSubtype(subtype)) {
@@ -2646,7 +2654,7 @@ public class CombatAttackService {
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
             if (attackedPlayerId == null) continue;
             triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
-                    gameData, attacker, attackedPlayerId);
+                    gameData, attacker, attackedPlayerId, attackedTargetId);
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
@@ -3070,7 +3078,8 @@ public class CombatAttackService {
                                     .withTargetId(playerId)
                                     .withXValue(attackerIndices.size());
                             if (conditionEvaluationService.isMet(gameData, conditional.condition(), attackContext)) {
-                                playerAttackEffects.add(conditional.wrapped());
+                                // Kept as a ConditionalEffect so the intervening "if" is rechecked on resolution.
+                                playerAttackEffects.add(conditional);
                             }
                             continue;
                         }
@@ -3130,8 +3139,10 @@ public class CombatAttackService {
                             CardEffect registeredEffect = registration.effect();
                             CardEffect resolvedEffect = registeredEffect instanceof ConditionalEffect conditional
                                     ? conditional.wrapped() : registeredEffect;
-                            if (bundledEffects.remove(resolvedEffect)) {
-                                triggerEffectGroups.add(List.of(resolvedEffect));
+                            CardEffect bundledEffect = bundledEffects.contains(registeredEffect)
+                                    ? registeredEffect : resolvedEffect;
+                            if (bundledEffects.remove(bundledEffect)) {
+                                triggerEffectGroups.add(List.of(bundledEffect));
                             }
                         }
                     }

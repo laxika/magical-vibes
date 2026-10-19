@@ -78,6 +78,7 @@ class TheBloodskyMassacreTest extends BaseCardTest {
         addCreatureReady(player1, new BloodskyBerserker());
         addCreatureReady(player1, new BloodskyBerserker());
         addCreatureReady(player1, new WarchanterSkald());
+        harness.setHand(player1, List.of());
 
         advanceToNextChapter();
         resolveAllTriggers();
@@ -107,7 +108,7 @@ class TheBloodskyMassacreTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
-        harness.assertLife(player1, 20);
+        harness.assertLife(player1, 19);
     }
 
     @Test

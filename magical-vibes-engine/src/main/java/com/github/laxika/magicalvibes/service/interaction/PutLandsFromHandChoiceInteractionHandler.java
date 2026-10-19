@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutLandsFromHandSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,12 +56,14 @@ public class PutLandsFromHandChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        putLandsFromHandSupport.applyPutChoice(gameData, player.getId(), chosenCardIds, interaction.cardName());
+        Map<UUID, List<UUID>> choices = new LinkedHashMap<>(interaction.choicesSoFar());
+        choices.put(player.getId(), chosenCardIds);
         inputCompletionService.publishStateAfterInput(gameData);
 
         boolean begunNext = putLandsFromHandSupport.beginNextChoice(gameData,
-                interaction.remainingPlayerIds(), interaction.cardName());
+                interaction.remainingPlayerIds(), interaction.cardName(), choices);
         if (!begunNext) {
+            putLandsFromHandSupport.applyChoices(gameData, choices, interaction.cardName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
     }

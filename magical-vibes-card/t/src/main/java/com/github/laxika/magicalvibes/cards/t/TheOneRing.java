@@ -22,7 +22,7 @@ public class TheOneRing extends Card {
 
     public TheOneRing() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new WasCast(), new GrantProtectionFromEverythingUntilNextTurnEffect()));
+                new ConditionalEffect(new WasCast(true), new GrantProtectionFromEverythingUntilNextTurnEffect()));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new LoseLifeEffect(new CountersOnSource(CounterType.BURDEN), LoseLifeRecipient.CONTROLLER));

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -33,7 +34,7 @@ public class TerraHeraldOfHope extends Card {
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayPayManaEffect(
                 "{2}",
-                ReturnCardFromGraveyardEffect.builder()
+                new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
@@ -41,7 +42,7 @@ public class TerraHeraldOfHope extends Card {
                         )))
                         .targetGraveyard(true)
                         .enterTapped(true)
-                        .build(),
+                        .build()),
                 "Pay {2} to return target creature card with power 3 or less from your graveyard to the battlefield tapped?"));
     }
 }

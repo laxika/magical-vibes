@@ -278,6 +278,8 @@ class TaleOfMomoTest extends BaseCardTest {
     void discountExpiresAtTurnBoundary() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new AardvarkSloth());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, creature));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Plains()));
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setLibrary(player1, List.of(new Plains()));

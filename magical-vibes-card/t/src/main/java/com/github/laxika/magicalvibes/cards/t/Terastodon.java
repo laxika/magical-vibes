@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -30,10 +32,12 @@ public class Terastodon extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 "Target must be a noncreature permanent"), 0, 3);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyEachTargetPermanentEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenForEachDestroyedPermanentControllerEffect(
-                        new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
-                                List.of(CardSubtype.ELEPHANT), Set.of(), Set.of())));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+                SequenceEffect.of(
+                        new DestroyEachTargetPermanentEffect(),
+                        new CreateTokenForEachDestroyedPermanentControllerEffect(
+                                new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
+                                        List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()))),
+                "Destroy the targeted noncreature permanents?"));
     }
 }

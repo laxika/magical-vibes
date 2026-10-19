@@ -79,9 +79,10 @@ class TeferisProtectionTest extends BaseCardTest {
         assertThat(gd.playersWithLifeTotalCantChangeUntilNextTurn).contains(player1.getId());
         assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).contains(player1.getId());
 
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gd.playersWithLifeTotalCantChangeUntilNextTurn).doesNotContain(player1.getId());
         assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).doesNotContain(player1.getId());
@@ -133,6 +134,7 @@ class TeferisProtectionTest extends BaseCardTest {
     @DisplayName("A borrowed creature phases in under its prior controller after temporary control expires")
     void temporaryControlExpiresWhileCreatureIsPhasedOut() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -146,7 +148,7 @@ class TeferisProtectionTest extends BaseCardTest {
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(bears);
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);

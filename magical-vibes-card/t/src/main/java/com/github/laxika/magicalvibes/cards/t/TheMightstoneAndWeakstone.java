@@ -19,6 +19,7 @@ import java.util.List;
 public class TheMightstoneAndWeakstone extends Card {
 
     public TheMightstoneAndWeakstone() {
+        setMeldCard(true);
         PermanentPredicateTargetFilter creatureFilter = TargetFilters.creature();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Draw two cards.", new DrawCardEffect(2)),

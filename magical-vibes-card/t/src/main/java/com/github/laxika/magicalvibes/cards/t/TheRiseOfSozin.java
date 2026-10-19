@@ -29,7 +29,7 @@ public class TheRiseOfSozin extends Card {
         )).addEffect(EffectSlot.SAGA_CHAPTER_II,
                 new ChooseCardNameAndExileFromZonesEffect(List.of(), 4));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

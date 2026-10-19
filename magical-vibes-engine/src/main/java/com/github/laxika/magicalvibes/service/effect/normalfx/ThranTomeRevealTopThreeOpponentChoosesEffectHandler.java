@@ -56,6 +56,9 @@ public class ThranTomeRevealTopThreeOpponentChoosesEffectHandler implements Norm
         }
 
         if (actual == 1) {
+            // The one card is still revealed to both players, though no opponent choice is needed.
+            cardRevealService.revealToAllPlayers(
+                    gameData, controllerId, GameEventFact.RevealZone.LIBRARY, List.of(deck.getFirst()));
             Card card = deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             return;

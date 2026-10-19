@@ -54,7 +54,7 @@ final class TokenCardFactory {
         Card tokenCard = new Card();
         tokenCard.setName(token.tokenName());
         tokenCard.setType(token.primaryType());
-        tokenCard.setManaCost("");
+        tokenCard.setManaCost(token.manaCost());
         tokenCard.setToken(true);
         tokenCard.setColor(token.color());
         if (token.colors() != null && !token.colors().isEmpty()) {

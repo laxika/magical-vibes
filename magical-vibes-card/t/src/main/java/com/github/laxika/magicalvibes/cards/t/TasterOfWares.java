@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
@@ -30,7 +31,13 @@ public class TasterOfWares extends Card {
                         new CardTypePredicate(CardType.SORCERY))),
                 false,
                 false,
-                0));
+                0,
+                null,
+                false,
+                false,
+                false,
+                ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE,
+                false, false, false, false, false, null, false, false, false, false));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

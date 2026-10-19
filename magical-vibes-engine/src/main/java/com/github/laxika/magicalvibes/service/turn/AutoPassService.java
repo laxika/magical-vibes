@@ -343,7 +343,8 @@ public class AutoPassService {
 
             gameData.priorityPassedBy.add(priorityHolder);
 
-            if (gameData.priorityPassedBy.size() >= 2) {
+            // CR 117.4: the step ends only once every player has passed in succession.
+            if (gameData.priorityPassedBy.size() >= gameData.orderedPlayerIds.size()) {
                 advanceStep.accept(gameData);
                 checkAfterStepAdvance = true;
             }

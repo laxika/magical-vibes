@@ -49,7 +49,7 @@ class TegwyllsScouringTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, flyerIds);
 
-        assertThat(gd.playerBattlefields.get(player1).stream()
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> flyerIds.contains(permanent.getId())))
                 .allMatch(Permanent::isTapped);
         harness.passBothPriorities();

@@ -70,6 +70,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         harness.castFromHand(player1, new TheMasterFormedAnew(), "{U}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, chosenPermanent.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherPermanent).doesNotContain(chosenPermanent);
@@ -140,6 +141,7 @@ class TheMasterFormedAnewTest extends BaseCardTest {
         harness.castFromHand(player1, new TheMasterFormedAnew(), "{U}{B}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(firstMaster);
         assertThat(gd.exiledCardsWithTakeoverCounters).contains(firstMaster.getId());

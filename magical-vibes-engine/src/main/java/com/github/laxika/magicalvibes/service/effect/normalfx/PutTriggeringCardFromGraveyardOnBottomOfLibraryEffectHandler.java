@@ -41,7 +41,11 @@ public class PutTriggeringCardFromGraveyardOnBottomOfLibraryEffectHandler
 
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
         Card deadCard = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
-        if (ownerId == null || deadCard == null) {
+        // CR 400.7: if the dying card has left and re-entered a graveyard since it died, it is a new
+        // object and the trigger's "it" no longer refers to it.
+        boolean newGraveyardStay = entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(dyingCardId) != entry.getTriggeringCardGraveyardEntryVersion();
+        if (ownerId == null || deadCard == null || newGraveyardStay) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} death trigger fizzles (card {} not in graveyard)",

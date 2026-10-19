@@ -80,7 +80,10 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created", gameData.id, spellCard.getName());
 
-        if (!triggeringSpellEffect.retargetToSource() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
+        if (!triggeringSpellEffect.mayChooseNewTargets() || triggeringSpellEffect.retargetToSource()) {
+            return;
+        }
+        if (psychicBattleSupport.targetIds(copyEntry).size() > 1) {
             psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), spell.getControllerId(),
                     copyEntry.getTargetableId(), 0);
         } else if (!triggeringSpellEffect.retargetToSource()

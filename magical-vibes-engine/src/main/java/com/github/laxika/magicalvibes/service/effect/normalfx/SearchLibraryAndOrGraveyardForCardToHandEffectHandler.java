@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -80,9 +82,13 @@ public class SearchLibraryAndOrGraveyardForCardToHandEffectHandler implements No
 
         List<Card> pool = new ArrayList<>(libraryMatches);
         pool.addAll(graveyardMatches);
+        UUID oppositionAgentControllerId = librarySearchAllowed
+                ? librarySearchSupport.oppositionAgentControllerId(gameData, playerId)
+                : null;
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
                 playerId, pool, new HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
-                librarySearchAllowed, cardLabel, search.shuffleAfterSearch()));
+                Set.of(), Set.of(), librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0,
+                1, false, search.shuffleAfterSearch(), oppositionAgentControllerId));
         gameLogService.append(gameData, GameLog.text(playerName + " searches their library and/or graveyard."));
     }
 }

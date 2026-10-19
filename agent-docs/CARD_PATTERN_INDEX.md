@@ -419,7 +419,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | directional multiplayer creature-choice control spell | CARD_PATTERNS_LANDS_SPELLS.md and EFFECTS_QUICK_REFERENCE.md |
 | auction, bid life | CARD_PATTERNS_LANDS_SPELLS.md |
 | tempting offer, each opponent may accept an effect | EFFECTS_QUICK_REFERENCE.md and ORACLE_TEXT_EFFECT_MAP.md |
-| tempting offer, copy target instant or sorcery and copy again for each accepting opponent | `t/TemptWithMayhem.java` + `TemptingOfferCopySpellEffect()` |
+| tempting offer, each opponent may copy target instant or sorcery, then copy it once plus once per accepting opponent | `t/TemptWithMayhem.java` + `TemptingOfferCopySpellEffect()` |
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
 | creature becomes target of an opponent's spell or ability, targeted trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |

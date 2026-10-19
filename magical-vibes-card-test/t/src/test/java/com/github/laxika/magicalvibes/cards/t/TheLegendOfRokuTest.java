@@ -141,6 +141,8 @@ class TheLegendOfRokuTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.setLibrary(player1, List.of(new Mountain(), new Mountain(), new Mountain()));
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain(), new Mountain()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
@@ -183,7 +185,7 @@ class TheLegendOfRokuTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
-                List.of(new BlockerAssignment(0, 0))))
+                List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
     }

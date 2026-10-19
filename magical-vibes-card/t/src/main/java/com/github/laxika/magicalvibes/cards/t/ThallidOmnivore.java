@@ -5,12 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeIfSacrificedCardMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
 
@@ -18,34 +15,15 @@ import java.util.List;
 public class ThallidOmnivore extends Card {
 
     public ThallidOmnivore() {
-        // {1}, Sacrifice a Saproling: Thallid Omnivore gets +2/+2 until end of turn. You gain 2 life.
-        addActivatedAbility(new ActivatedAbility(
-                false,
-                "{1}",
-                List.of(
-                        new SacrificePermanentCost(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
-                                )),
-                                "Sacrifice a Saproling",
-                                false
-                        ),
-                        new BoostSelfEffect(2, 2),
-                        new GainLifeEffect(2)
-                ),
-                "{1}, Sacrifice a Saproling: Thallid Omnivore gets +2/+2 until end of turn. You gain 2 life."
-        ));
-
-        // {1}, Sacrifice another creature: Thallid Omnivore gets +2/+2 until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new BoostSelfEffect(2, 2)
+                        new BoostSelfEffect(2, 2),
+                        new GainLifeIfSacrificedCardMatchesEffect(new CardSubtypePredicate(CardSubtype.SAPROLING), 2)
                 ),
-                "{1}, Sacrifice another creature: Thallid Omnivore gets +2/+2 until end of turn."
+                "{1}, Sacrifice another creature: This creature gets +2/+2 until end of turn. If a Saproling was sacrificed this way, you gain 2 life."
         ));
     }
 }

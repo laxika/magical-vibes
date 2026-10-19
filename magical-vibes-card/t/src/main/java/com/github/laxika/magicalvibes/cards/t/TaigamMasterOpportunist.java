@@ -16,7 +16,7 @@ public class TaigamMasterOpportunist extends Card {
                 2,
                 null,
                 List.of(
-                        new CopyTriggeringSpellEffect(),
+                        new CopyTriggeringSpellEffect().withoutNewTargetChoice(),
                         new ExileTriggeringSpellWithSuspendCountersEffect(4)
                 )));
     }

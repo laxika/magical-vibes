@@ -33,6 +33,8 @@ public class CopyNextInstantOrSorceryCastThisTurnEffectHandler implements Normal
                     .add(entry.getCard());
         } else if (copyEffect.maxManaValue() == null) {
             gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
+            gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(
+                    entry.getControllerId(), 1, Integer::sum);
             gameData.pendingNextInstantSorceryCopyThisTurnCountSource.put(entry.getControllerId(), entry.getCard());
         } else {
             gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues

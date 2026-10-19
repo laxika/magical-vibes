@@ -6,12 +6,16 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardAnyNumberThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -22,12 +26,15 @@ import java.util.Set;
 public class TheElderDragonWar extends Card {
 
     public TheElderDragonWar() {
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+
         addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToEachMatchingPermanentEffect(
                 2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToPlayersEffect(
                 2, DamageRecipient.EACH_OPPONENT));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardAnyNumberThenEffect(
+                new CardTruePredicate(), new DrawCardEffect(new EventValue()), "cards"));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenEffect(
                 "Dragon", 4, 4, CardColor.RED, List.of(CardSubtype.DRAGON),

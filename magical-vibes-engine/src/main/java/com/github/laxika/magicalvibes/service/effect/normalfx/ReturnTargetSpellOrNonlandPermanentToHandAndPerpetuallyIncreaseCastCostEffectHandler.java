@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrNonlandPermanentToHandAndPerpetuallyIncreaseCastCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
@@ -18,7 +20,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves Talion's bargained mixed-zone bounce and perpetual generic cost increase. */
+/**
+ * Resolves a mixed-zone bounce of a spell or nonland permanent, with its perpetual generic cost increase
+ * applied only when the effect's perpetual condition is met (Talion's Throneguard, when bargained).
+ */
 @Component
 @RequiredArgsConstructor
 public class ReturnTargetSpellOrNonlandPermanentToHandAndPerpetuallyIncreaseCastCostEffectHandler
@@ -28,6 +33,7 @@ public class ReturnTargetSpellOrNonlandPermanentToHandAndPerpetuallyIncreaseCast
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final BounceSupport bounceSupport;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,18 +49,24 @@ public class ReturnTargetSpellOrNonlandPermanentToHandAndPerpetuallyIncreaseCast
             targetIds = List.of(entry.getTargetId());
         }
 
+        boolean taxApplies = bounceEffect.perpetualCondition() == null
+                || conditionEvaluationService.isMet(gameData, bounceEffect.perpetualCondition(),
+                ConditionContext.forStackEntry(entry));
         boolean returnedPermanent = false;
         for (UUID targetId : targetIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
             if (permanent != null) {
                 Card card = permanent.getCard();
                 if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
-                    if (!card.isToken()) {
+                    if (taxApplies && !card.isToken()) {
                         PerpetualCardCastCostSupport.rememberIncrease(gameData, card, bounceEffect.amount());
+                        gameLogService.append(gameData, GameLog.cardThen(card,
+                                " is returned to its owner's hand and perpetually costs "
+                                        + bounceEffect.amount() + " generic mana more to cast."));
+                    } else {
+                        gameLogService.append(gameData, GameLog.cardThen(card,
+                                " is returned to its owner's hand."));
                     }
-                    gameLogService.append(gameData, GameLog.cardThen(card,
-                            " is returned to its owner's hand and perpetually costs "
-                                    + bounceEffect.amount() + " generic mana more to cast."));
                     returnedPermanent = true;
                 }
                 continue;
@@ -66,7 +78,7 @@ public class ReturnTargetSpellOrNonlandPermanentToHandAndPerpetuallyIncreaseCast
             }
             Card card = spell.getPhysicalCard();
             bounceSupport.returnSpellToOwnerHand(gameData, entry, targetId);
-            if (card != null) {
+            if (taxApplies && card != null) {
                 PerpetualCardCastCostSupport.rememberIncrease(gameData, card, bounceEffect.amount());
             }
         }

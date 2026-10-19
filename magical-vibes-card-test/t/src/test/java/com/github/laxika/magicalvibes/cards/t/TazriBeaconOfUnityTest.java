@@ -141,6 +141,7 @@ class TazriBeaconOfUnityTest extends BaseCardTest {
     @DisplayName("The activated ability can be paid entirely with colored mana")
     void abilityAcceptsColoredManaAndEmptyLibrary() {
         harness.addToBattlefield(player1, new TazriBeaconOfUnity());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -160,6 +161,7 @@ class TazriBeaconOfUnityTest extends BaseCardTest {
     @DisplayName("The activated ability accepts mixed generic and colored payments")
     void abilityAcceptsMixedPaymentWithNoMatchingCards() {
         harness.addToBattlefield(player1, new TazriBeaconOfUnity());
+        harness.setHand(player1, List.of());
         CanopyBaloth first = new CanopyBaloth();
         CanopyBaloth second = new CanopyBaloth();
         harness.setLibrary(player1, List.of(first, second));
@@ -180,6 +182,7 @@ class TazriBeaconOfUnityTest extends BaseCardTest {
     @DisplayName("Choosing no cards bottoms only the top six and preserves the untouched library")
     void mayChooseZeroCards() {
         harness.addToBattlefield(player1, new TazriBeaconOfUnity());
+        harness.setHand(player1, List.of());
         List<TazriBeaconOfUnity> topSix = List.of(new TazriBeaconOfUnity(),
                 new TazriBeaconOfUnity(), new TazriBeaconOfUnity(),
                 new TazriBeaconOfUnity(), new TazriBeaconOfUnity(), new TazriBeaconOfUnity());
@@ -204,6 +207,7 @@ class TazriBeaconOfUnityTest extends BaseCardTest {
     @DisplayName("A short library allows choosing one Ally without any party role")
     void mayChooseOneAllyFromShortLibrary() {
         harness.addToBattlefield(player1, new TazriBeaconOfUnity());
+        harness.setHand(player1, List.of());
         GeneralTazri ally = new GeneralTazri();
         CanopyBaloth nonmatching = new CanopyBaloth();
         TazriBeaconOfUnity warrior = new TazriBeaconOfUnity();
@@ -224,6 +228,7 @@ class TazriBeaconOfUnityTest extends BaseCardTest {
     @DisplayName("Subtype defining abilities apply to cards in the library")
     void maySelectPackbeastFromLibrary() {
         harness.addToBattlefield(player1, new TazriBeaconOfUnity());
+        harness.setHand(player1, List.of());
         StoneworkPackbeast packbeast = new StoneworkPackbeast();
         harness.setLibrary(player1, List.of(packbeast));
         harness.addMana(player1, ManaColor.COLORLESS, 8);

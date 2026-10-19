@@ -37,6 +37,9 @@ public enum LibrarySearchDestination {
     /** Like {@link #EXILE_PLAYABLE}, but the play permission lasts only until the searcher's next
      *  upkeep; if the card is still exiled then, it is put into its owner's graveyard (Grinning Totem). */
     EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+    /** Exile the chosen card face up with permission to play it only until the end of this turn
+     *  (Thada Adel, Acquisitor). */
+    EXILE_PLAYABLE_UNTIL_END_OF_TURN,
     /** Heist: exile one of three random nonland cards from an opponent's library face down with persistent cast permission. */
     HEIST,
     TOP_OF_LIBRARY,

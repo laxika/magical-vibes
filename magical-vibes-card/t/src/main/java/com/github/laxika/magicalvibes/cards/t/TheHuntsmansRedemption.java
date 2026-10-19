@@ -41,7 +41,7 @@ public class TheHuntsmansRedemption extends Card {
                                         new CardTypePredicate(CardType.CREATURE),
                                         CardPredicateUtils.basicLand())),
                                 LibrarySearchDestination.HAND),
-                        "a creature"),
+                        "a creature", false, false),
                 "Sacrifice a creature?"));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostTargetCreatureEffect(2, 2));

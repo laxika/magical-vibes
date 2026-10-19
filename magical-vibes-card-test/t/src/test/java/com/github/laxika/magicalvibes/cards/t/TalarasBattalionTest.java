@@ -99,6 +99,7 @@ class TalarasBattalionTest extends BaseCardTest {
     @DisplayName("A green spell from the previous turn does not qualify")
     void previousTurnGreenSpellDoesNotQualify() {
         harness.setHand(player1, List.of(new SlipperyBogle(), new TalarasBattalion()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

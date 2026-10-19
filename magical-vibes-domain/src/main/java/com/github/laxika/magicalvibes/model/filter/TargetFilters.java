@@ -97,6 +97,13 @@ public final class TargetFilters {
                 "Target must be a nonland permanent");
     }
 
+    /** "Target must be a permanent an opponent controls" */
+    public static PermanentPredicateTargetFilter permanentAnOpponentControls() {
+        return new PermanentPredicateTargetFilter(
+                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                "Target must be a permanent an opponent controls");
+    }
+
     /** "Target must be a nonland permanent an opponent controls" */
     public static PermanentPredicateTargetFilter nonlandPermanentAnOpponentControls() {
         return new PermanentPredicateTargetFilter(

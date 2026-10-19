@@ -15,7 +15,7 @@ public class TheArkenstone extends Card {
     public TheArkenstone() {
         setBackFaceCard(new SeekTheHeart());
         addCastingOption(new AdventureCast("{2}{W}"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DrawCardEffect());
     }
 

@@ -78,12 +78,11 @@ class TheThirdDoctorTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Food")).isEmpty();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
 
-        harness.passBothPriorities();
-        assertThat(findPermanents(player1, "Clue")).isEmpty();
-        assertThat(findPermanents(player1, "Food")).isEmpty();
-        assertThat(findPermanents(player1, "Treasure")).isEmpty();
         harness.handleListChoice(player1, FOOD_MODE);
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, doctor)).isEqualTo(2);
 
+        harness.passBothPriorities();
         assertThat(findPermanents(player1, "Food")).hasSize(1);
         assertThat(findPermanents(player1, "Clue")).isEmpty();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
@@ -94,8 +93,8 @@ class TheThirdDoctorTest extends BaseCardTest {
     @Test
     void canChooseTreasureWhenEnteringWithoutBeingCast() {
         harness.enterBattlefieldAndReturn(player1, new TheThirdDoctor());
-        harness.passBothPriorities();
         harness.handleListChoice(player1, TREASURE_MODE);
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(findPermanents(player1, "Clue")).isEmpty();
@@ -122,8 +121,8 @@ class TheThirdDoctorTest extends BaseCardTest {
     private Permanent castDoctor(String mode) {
         harness.castFromHand(player1, new TheThirdDoctor(), "{2}{G}{U}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
+        harness.passBothPriorities();
 
         return findPermanent(player1, "The Third Doctor");
     }

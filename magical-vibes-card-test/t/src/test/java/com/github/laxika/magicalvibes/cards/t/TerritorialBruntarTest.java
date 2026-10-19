@@ -125,6 +125,7 @@ class TerritorialBruntarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TerritorialBruntar());
         harness.setLibrary(player1, List.of(bears, new Forest(), new Forest()));
         harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
@@ -14,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -34,9 +32,9 @@ public class TheEleventhHour extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
                 1, "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of(),
                 Map.of(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
-                        new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.SELF))));
+                        new CardSubtypePredicate(CardSubtype.DOCTOR), 1, CostModificationScope.SELF))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenCopyOfTargetPermanentEffect(
+        addEffect(EffectSlot.SAGA_CHAPTER_III, CreateTokenCopyOfTargetPermanentEffect.withNameAndCreatureSubtypeOverride(
                 "Prisoner Zero", List.of(CardSubtype.ALIEN), Set.of(CardSupertype.LEGENDARY)));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),

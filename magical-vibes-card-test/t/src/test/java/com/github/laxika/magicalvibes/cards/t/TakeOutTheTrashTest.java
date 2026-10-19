@@ -121,8 +121,8 @@ class TakeOutTheTrashTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
         assertThat(gd.interaction.activeInteraction()).isNull();

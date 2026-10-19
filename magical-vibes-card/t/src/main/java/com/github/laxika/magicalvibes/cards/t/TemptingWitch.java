@@ -29,7 +29,8 @@ public class TemptingWitch extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD),
-                                "Sacrifice a Food"
+                                "Sacrifice a Food",
+                                false
                         ),
                         new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER)
                 ),

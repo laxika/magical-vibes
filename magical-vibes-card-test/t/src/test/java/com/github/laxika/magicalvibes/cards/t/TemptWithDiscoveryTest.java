@@ -148,10 +148,12 @@ class TemptWithDiscoveryTest extends BaseCardTest {
         castTemptWithDiscovery();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        assertThat(gd.stack).isEmpty();
+        // The offer is still resolving (it stays on the stack), but no shuffle trigger may exist yet.
+        assertThat(gd.stack).noneMatch(stackEntry -> stackEntry.getCard() instanceof CosisTrickster);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
-        assertThat(gd.stack).isEmpty();
+        // The offer is still resolving (it stays on the stack), but no shuffle trigger may exist yet.
+        assertThat(gd.stack).noneMatch(stackEntry -> stackEntry.getCard() instanceof CosisTrickster);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).hasSize(1);

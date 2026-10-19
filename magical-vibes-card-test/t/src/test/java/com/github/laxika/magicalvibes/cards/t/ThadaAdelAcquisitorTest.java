@@ -130,6 +130,7 @@ class ThadaAdelAcquisitorTest extends BaseCardTest {
         Card millstone = new Millstone();
         harness.setLibrary(player2, List.of(millstone, new GrizzlyBears(), new Forest()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
 
         resolveCombat();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));

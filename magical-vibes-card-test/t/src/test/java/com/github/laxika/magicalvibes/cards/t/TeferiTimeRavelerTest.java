@@ -136,7 +136,7 @@ class TeferiTimeRavelerTest extends BaseCardTest {
     @Test
     @DisplayName("The opponent cannot respond to a spell even during their own main phase")
     void opponentCannotCastWithNonemptyStack() {
-        harness.addToBattlefield(player1, new TeferiTimeRaveler());
+        addReadyTeferi(player1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Shock(), new Shock()));

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 /**
  * Resolves the payment and reflexive-target portion of Tester of the Tangential's ability.
@@ -39,6 +39,7 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
     private final PotentialManaService potentialManaService;
+    private final TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,12 +57,6 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
             int chosenValue = gameData.chosenXValue;
             gameData.chosenXValue = null;
 
-            if (chosenValue == 0) {
-                gameLogService.append(gameData, GameLog.text(playerName + " declines to pay for " + cardName + "'s ability."));
-                log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
-                return;
-            }
-
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             if (!cost.canPay(pool, chosenValue)) {
                 gameLogService.append(gameData, GameLog.text(
@@ -78,11 +73,6 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
             return;
         }
 
-        if (maxPotentialX(gameData, controllerId) <= 0) {
-            gameLogService.append(gameData, GameLog.text(playerName + " has no mana to pay for " + cardName + "'s ability."));
-            log.info("Game {} - {} has no mana for {}'s pay-X ability", gameData.id, playerName, cardName);
-            return;
-        }
         beginXPrompt(gameData, controllerId, cardName);
     }
 
@@ -101,7 +91,9 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (!permanent.getId().equals(sourcePermanentId)
-                        && gameQueryService.isCreature(gameData, permanent)) {
+                        && gameQueryService.isCreature(gameData, permanent)
+                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, permanent, entry.getCard(), entry.getControllerId()).isEmpty()) {
                     validTargets.add(permanent.getId());
                 }
             }
@@ -112,10 +104,8 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
             return;
         }
 
-        List<CardEffect> moveEffects = IntStream.range(0, counterCount)
-                .mapToObj(ignored -> (CardEffect) new MoveCounterFromSourceToTargetCreatureEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE))
-                .toList();
+        List<CardEffect> moveEffects = List.of(new MoveCounterFromSourceToTargetCreatureEffect(
+                CounterType.PLUS_ONE_PLUS_ONE, counterCount));
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 entry.getCard(), entry.getControllerId(), moveEffects, sourcePermanentId, null));
         playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validTargets,

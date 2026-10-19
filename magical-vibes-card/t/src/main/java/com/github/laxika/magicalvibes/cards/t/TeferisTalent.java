@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInsta
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -40,6 +40,6 @@ public class TeferisTalent extends Card {
         ));
 
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
-                new PutCounterOnTargetPermanentEffect(CounterType.LOYALTY));
+                new PutCounterOnReferencedPermanentEffect(CounterType.LOYALTY));
     }
 }

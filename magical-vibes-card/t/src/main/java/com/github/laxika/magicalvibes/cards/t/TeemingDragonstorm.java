@@ -20,7 +20,7 @@ public class TeemingDragonstorm extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenEffect(2, "Soldier", 2, 2, CardColor.WHITE,
                         List.of(CardSubtype.SOLDIER), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON),
                         ReturnToHandEffect.self()));
     }

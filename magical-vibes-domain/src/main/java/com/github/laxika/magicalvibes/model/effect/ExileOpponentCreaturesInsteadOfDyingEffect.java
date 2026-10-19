@@ -51,7 +51,12 @@ public record ExileOpponentCreaturesInsteadOfDyingEffect(boolean nontokenOnly, b
         return new ExileOpponentCreaturesInsteadOfDyingEffect(false, false, null, true);
     }
 
+    /**
+     * Nontoken creatures an opponent controls are exiled with this permanent instead of dying, and
+     * the controller gains {@code amount} life for each (The Darkness Crystal). The exiled cards stay
+     * tracked with the source so its "creature card exiled with ..." ability can return them.
+     */
     public static ExileOpponentCreaturesInsteadOfDyingEffect withLifeGain(int amount) {
-        return new ExileOpponentCreaturesInsteadOfDyingEffect(true, false, null, false, amount);
+        return new ExileOpponentCreaturesInsteadOfDyingEffect(true, false, null, true, amount);
     }
 }

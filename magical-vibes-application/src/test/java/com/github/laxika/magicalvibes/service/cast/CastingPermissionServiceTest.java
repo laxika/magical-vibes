@@ -229,7 +229,7 @@ class CastingPermissionServiceTest {
         CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
         gd.playerStaticEffectsUntilEndOfTurn.put(player1Id, new ArrayList<>(List.of(
                 new GrantEscapeToGraveyardCardsEffect(filter, "{3}{B}", 4))));
-        when(predicateEvaluationService.matchesCardPredicate(spell, filter, null)).thenReturn(true);
+        when(predicateEvaluationService.matchesCardPredicate(spell, filter, null, gd, player1Id)).thenReturn(true);
 
         var permission = svc.findFilteredGraveyardPermission(gd, player1Id, spell).orElseThrow();
         assertThat(permission.sourcePermanentId()).isNull();

@@ -114,6 +114,7 @@ class TajuruPreserverTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Tajuru Preserver");

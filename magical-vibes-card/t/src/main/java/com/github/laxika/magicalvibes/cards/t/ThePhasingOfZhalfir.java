@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentWhileSourceControlledEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -29,6 +30,7 @@ public class ThePhasingOfZhalfir extends Card {
             new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
     public ThePhasingOfZhalfir() {
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
         addChapterPhaseOut(EffectSlot.SAGA_CHAPTER_I);
         addChapterPhaseOut(EffectSlot.SAGA_CHAPTER_II);
 

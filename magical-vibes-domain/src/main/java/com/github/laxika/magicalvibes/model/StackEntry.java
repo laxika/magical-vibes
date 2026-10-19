@@ -163,6 +163,8 @@ public class StackEntry {
     @Setter private List<UUID> targetCardIds;
     /** Target counts per independently optional graveyard target group, in group order. */
     @Setter private List<Integer> targetCardGroupSizes = List.of();
+    /** Cards chosen from the battlefield by a mixed battlefield-and-graveyard target choice. */
+    private final Set<UUID> battlefieldChosenTargetCardIds = new HashSet<>();
     private Map<CardEffect, List<UUID>> targetCardIdsByEffect = Map.of();
     @Setter private TargetFilter targetFilter;
     /** Per-position filters declared by a multi-target activated ability. */
@@ -173,6 +175,11 @@ public class StackEntry {
     /** Whether this copy was created and then cast (CR 707.12), so it resolves as a cast spell. */
     @Setter private boolean castCopy;
     @Setter private boolean nonTargeting;
+    /**
+     * Whether this triggered ability is a reflexive trigger ("When you do, ...", CR 603.12) created
+     * while another ability resolved. It is not a Saga chapter ability even when a Saga is its source.
+     */
+    @Setter private boolean reflexiveTrigger;
     /** Whether an effect already placed the physical spell card in its final zone. */
     @Setter private boolean spellDispositionHandled;
     @Setter private boolean returnToHandAfterResolving;
@@ -915,6 +922,7 @@ public class StackEntry {
         this.resolutionSourcePermanentId = source.resolutionSourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
+        this.battlefieldChosenTargetCardIds.addAll(source.battlefieldChosenTargetCardIds);
         this.lastKnownPermanentPowers.putAll(source.lastKnownPermanentPowers);
         this.lastKnownPermanentToughnesses.putAll(source.lastKnownPermanentToughnesses);
         source.lastKnownPermanentCounters.forEach((id, counts) ->
@@ -941,6 +949,7 @@ public class StackEntry {
         this.copy = source.copy;
         this.castCopy = source.castCopy;
         this.nonTargeting = source.nonTargeting;
+        this.reflexiveTrigger = source.reflexiveTrigger;
         this.spellDispositionHandled = source.spellDispositionHandled;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
@@ -1866,6 +1875,20 @@ public class StackEntry {
             }
         }
         return false;
+    }
+
+    public void rememberBattlefieldChosenTargetCard(UUID cardId) {
+        if (cardId != null) {
+            battlefieldChosenTargetCardIds.add(cardId);
+        }
+    }
+
+    /**
+     * Whether the card was chosen as a battlefield target. Per CR 608.2b a target that is no longer
+     * in the zone it was targeted in is illegal, so such a card must not be treated as a graveyard target.
+     */
+    public boolean isBattlefieldChosenTargetCard(UUID cardId) {
+        return battlefieldChosenTargetCardIds.contains(cardId);
     }
 
     public void rememberLastKnownPermanentCard(UUID permanentId, Card card) {

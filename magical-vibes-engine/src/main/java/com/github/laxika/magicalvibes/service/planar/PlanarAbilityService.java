@@ -64,11 +64,19 @@ public class PlanarAbilityService {
         return abilities.get(index);
     }
 
+    /** Whether the indexed ability of a face-up planar object is a special action rather than an activated ability. */
+    public boolean isSpecialAction(GameData game, UUID sourceId, int index) {
+        return ability(source(game, sourceId), index).isSpecialAction();
+    }
+
     public boolean available(GameData game, UUID playerId, PlanarObject source, ActivatedAbility ability) {
         if (game.status != GameStatus.RUNNING || game.interaction.isAwaitingInput()
-                || !Objects.equals(query.getPriorityPlayerId(game), playerId)
-                || game.playersCantActivateAbilitiesThisTurn.contains(playerId)
-                || (!ability.isManaAbility() && game.playersCantActivateNonManaAbilitiesThisTurn.contains(playerId))) return false;
+                || !Objects.equals(query.getPriorityPlayerId(game), playerId)) return false;
+        if (!ability.isSpecialAction()
+                && (game.playersCantActivateAbilitiesThisTurn.contains(playerId)
+                || (!ability.isManaAbility() && game.playersCantActivateNonManaAbilitiesThisTurn.contains(playerId)))) {
+            return false;
+        }
         if (!ability.isActivatableByAnyPlayer() && !Objects.equals(game.planechase.controllerId, playerId)) return false;
         if (ability.isActivatableOnlyByOwner() && !Objects.equals(game.planechase.controllerId, playerId)) return false;
         if (game.pendingEffectResolutionEntry != null || !game.pendingMayAbilities.isEmpty()) return false;
@@ -211,6 +219,9 @@ public class PlanarAbilityService {
             } finally {
                 game.manaAbilityResolutionDepth--;
             }
+        } else if (ability.isSpecialAction()) {
+            // CR 116.1: a special action doesn't use the stack, so its effects happen immediately.
+            resolution.resolveEffects(game, entry);
         } else {
             game.stack.add(entry);
         }

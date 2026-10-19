@@ -23,7 +23,7 @@ public class TerritorialKavu extends Card {
         addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Discard a card. If you do, draw a card.",
-                        new DiscardCardThenEffect(null, new DrawCardEffect(), "a card")),
+                        DiscardCardThenEffect.continuing(null, new DrawCardEffect(), "a card")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile up to one target card from a graveyard.",
                         ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard())

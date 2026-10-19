@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -67,6 +68,7 @@ class TezzeretsStriderTest extends BaseCardTest {
     void losesMenaceWhenTezzeretLeavesTheBattlefield() {
         Permanent strider = addCreatureReady(player1, new TezzeretsStrider());
         Permanent tezzeret = harness.addToBattlefieldAndReturn(player1, new TezzeretCruelMachinist());
+        tezzeret.setCounterCount(CounterType.LOYALTY, 3);
         assertThat(gqs.hasKeyword(gd, strider, Keyword.MENACE)).isTrue();
 
         harness.setHand(player1, List.of(new Disperse()));
@@ -109,7 +111,8 @@ class TezzeretsStriderTest extends BaseCardTest {
     @Test
     void cannotBeBlockedByOneCreatureWhileControllingTezzeret() {
         addCreatureReady(player1, new TezzeretsStrider());
-        harness.addToBattlefield(player1, new TezzeretCruelMachinist());
+        Permanent tezzeret = harness.addToBattlefieldAndReturn(player1, new TezzeretCruelMachinist());
+        tezzeret.setCounterCount(CounterType.LOYALTY, 3);
         addCreatureReady(player2, new GreenwoodSentinel());
 
         declareAttackersAndPrepareBlockers(List.of(0));

@@ -45,20 +45,23 @@ public class GainControlOfAllCommandersAndPutThemOntoBattlefieldEffectHandler
         }
 
         Set<UUID> commandZoneCardIds = commandZoneCards.stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
+        Set<UUID> designatedCommanderCardIds = new HashSet<>();
+        gameData.playerCommanders.values().forEach(cards ->
+                cards.forEach(card -> designatedCommanderCardIds.add(card.getId())));
         List<Permanent> commandersOnBattlefield = new ArrayList<>();
         Set<UUID> battlefieldCardIds = new HashSet<>();
-        gameData.forEachPermanent((currentControllerId, permanent) -> {
+        gameData.forEachPermanent((ignoredControllerId, permanent) -> {
             Card card = permanent.getCard();
             Card originalCard = permanent.getOriginalCard();
             boolean identifiedByCommandZone = commandZoneCardIds.contains(card.getId())
                     || commandZoneCardIds.contains(originalCard.getId());
-            if (identifiedByCommandZone) {
+            boolean identifiedAsDesignated = designatedCommanderCardIds.contains(card.getId())
+                    || designatedCommanderCardIds.contains(originalCard.getId());
+            if (identifiedByCommandZone || identifiedAsDesignated) {
                 permanent.setCommander(true);
             }
             if (permanent.isCommander()) {
-                if (!currentControllerId.equals(controllerId)) {
-                    commandersOnBattlefield.add(permanent);
-                }
+                commandersOnBattlefield.add(permanent);
                 battlefieldCardIds.add(card.getId());
                 battlefieldCardIds.add(originalCard.getId());
             }

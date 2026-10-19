@@ -87,7 +87,6 @@ class TempestOwlTest extends BaseCardTest {
         Permanent owl = findPermanent(player1, "Tempest Owl");
 
         harness.handlePermanentChosen(player1, owl.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         assertThat(owl.isTapped()).isTrue();

@@ -88,6 +88,7 @@ class TectonicHellionTest extends BaseCardTest {
                 findPermanents(player2, "Forest").stream().map(Permanent::getId).toList());
         List<UUID> chosen = choice.validIds().subList(1, 3);
         harness.handleMultiplePermanentsChosen(player2, chosen);
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(landCount(player1)).isEqualTo(2);
         assertThat(landCount(player2)).isEqualTo(2);
@@ -185,6 +186,7 @@ class TectonicHellionTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(hellion)));
         harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
 
         harness.assertOnBattlefield(player1, "Tectonic Hellion");
         harness.assertOnBattlefield(player2, "Tectonic Hellion");

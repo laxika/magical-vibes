@@ -48,7 +48,7 @@ public class TemptingOfferCreateTokenCopyEffectHandler implements NormalEffectHa
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (!opponents.isEmpty()) {
             promptNext(gameData, entry.getCard(), new TemptingOfferCreateTokenCopyEffect(
-                    offer.tokenCopyEffect(), List.copyOf(opponents), controllerId, targetId));
+                    offer.tokenCopyEffect(), List.copyOf(opponents), controllerId, targetId, List.of()));
         }
     }
 
@@ -67,10 +67,9 @@ public class TemptingOfferCreateTokenCopyEffectHandler implements NormalEffectHa
 
     public void completeChoice(GameData gameData, PendingMayAbility ability,
                                TemptingOfferCreateTokenCopyEffect effect, boolean accepted) {
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (accepted && entry != null) {
-            createTokenCopy(gameData, entry, effect, effect.targetId(), ability.controllerId());
-            createTokenCopy(gameData, entry, effect, effect.targetId(), effect.abilityControllerId());
+        List<UUID> accepting = new ArrayList<>(effect.acceptedOpponentIds());
+        if (accepted) {
+            accepting.add(ability.controllerId());
         }
 
         List<UUID> remaining = new ArrayList<>(effect.remainingOpponentIds());
@@ -79,7 +78,19 @@ public class TemptingOfferCreateTokenCopyEffectHandler implements NormalEffectHa
         if (!remaining.isEmpty()) {
             promptNext(gameData, ability.sourceCard(), new TemptingOfferCreateTokenCopyEffect(
                     effect.tokenCopyEffect(), List.copyOf(remaining), effect.abilityControllerId(),
-                    effect.targetId()));
+                    effect.targetId(), List.copyOf(accepting)));
+            return;
+        }
+
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            return;
+        }
+        for (UUID opponentId : accepting) {
+            createTokenCopy(gameData, entry, effect, effect.targetId(), opponentId);
+        }
+        for (int i = 0; i < accepting.size(); i++) {
+            createTokenCopy(gameData, entry, effect, effect.targetId(), effect.abilityControllerId());
         }
     }
 

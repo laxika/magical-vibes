@@ -49,10 +49,12 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
         }
 
         int manaValue = chosenEntry.card().getManaValue();
-        gameData.exiledCardsWithAlaundoCastAbility.add(chosenCardId);
-        if (chosenEntry.card().getHandActivatedAbilities().stream()
-                .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
-            gameData.exiledCardsWithNonSuspendTimeCounters.add(chosenCardId);
+        if (!alaundoEffect.gainsSuspend()) {
+            gameData.exiledCardsWithAlaundoCastAbility.add(chosenCardId);
+            if (chosenEntry.card().getHandActivatedAbilities().stream()
+                    .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
+                gameData.exiledCardsWithNonSuspendTimeCounters.add(chosenCardId);
+            }
         }
         if (manaValue > 0) {
             gameData.exiledCardTimeCounters.put(chosenCardId, manaValue);
@@ -60,6 +62,9 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
                     GameLog.cardThen(chosenEntry.card(), " gets " + manaValue + " time counters."));
         }
 
+        if (!alaundoEffect.advancesOtherExiledCards()) {
+            return;
+        }
         for (ExiledCardEntry otherEntry : List.copyOf(gameData.exiledCards)) {
             if (!controllerId.equals(otherEntry.ownerId())
                     || chosenCardId.equals(otherEntry.card().getId())) {

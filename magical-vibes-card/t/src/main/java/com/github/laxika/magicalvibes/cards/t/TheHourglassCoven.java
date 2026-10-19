@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.HoldDraftedSpellbookCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutHeldSpellbookCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -29,8 +31,9 @@ public class TheHourglassCoven extends Card {
 
     public TheHourglassCoven() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new DraftCardFromSpellbookEffect(SPELLBOOK, false, true),
-                new DraftCardFromSpellbookEffect(SPELLBOOK, false, true)));
+                new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new HoldDraftedSpellbookCardEffect())),
+                new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new HoldDraftedSpellbookCardEffect())),
+                new PutHeldSpellbookCardsOntoBattlefieldEffect()));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WARLOCK))));
     }

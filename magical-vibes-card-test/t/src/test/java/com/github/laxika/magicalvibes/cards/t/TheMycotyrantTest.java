@@ -167,7 +167,7 @@ class TheMycotyrantTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Fungus")).hasSize(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 

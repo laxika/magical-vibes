@@ -287,6 +287,8 @@ public class Card {
     private Card backFaceCard;
     /** True when this card's face is chosen while it is played from a zone, rather than transformed. */
     private boolean modalDoubleFaced;
+    /** True when this card is one half of a meld pair (CR 712.4), a kind of double-faced card that can't transform. */
+    private boolean meldCard;
     private List<CastingOption> castingOptions = new ArrayList<>();
     /** Mana costs of the two Room doors, in door order, when this card is a Room. */
     private List<String> roomDoorManaCosts = List.of();
@@ -480,6 +482,7 @@ public class Card {
         this.watermark = source.watermark;
         this.backFaceCard = source.backFaceCard;
         this.modalDoubleFaced = source.modalDoubleFaced;
+        this.meldCard = source.meldCard;
         this.castingOptions = new ArrayList<>(source.castingOptions);
         this.roomDoorManaCosts = List.copyOf(source.roomDoorManaCosts);
         this.selectedRoomDoor = source.selectedRoomDoor;
@@ -795,6 +798,7 @@ public class Card {
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
     public void setModalDoubleFaced(boolean modalDoubleFaced) { assertMutable(); this.modalDoubleFaced = modalDoubleFaced; }
+    public void setMeldCard(boolean meldCard) { assertMutable(); this.meldCard = meldCard; }
 
     /** Replaces this unfrozen runtime copy with Bombardment's Missile characteristics. */
     public void becomeMissile() {

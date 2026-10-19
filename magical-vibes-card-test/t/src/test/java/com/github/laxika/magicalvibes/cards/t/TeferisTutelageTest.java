@@ -28,6 +28,8 @@ class TeferisTutelageTest extends BaseCardTest {
 
         advanceToDraw(player1);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -51,6 +53,8 @@ class TeferisTutelageTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -97,6 +101,8 @@ class TeferisTutelageTest extends BaseCardTest {
 
         advanceToDraw(player1);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remaining);
@@ -111,6 +117,10 @@ class TeferisTutelageTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
 
         advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

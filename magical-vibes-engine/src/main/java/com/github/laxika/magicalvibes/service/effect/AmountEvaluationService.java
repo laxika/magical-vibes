@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.amount.CaveManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DesertManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
+import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnCreatedPermanent;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
@@ -248,6 +249,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.TotalPowerOfTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.ManaValueOfLastCardExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
@@ -259,6 +261,7 @@ import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.TreasuresCreatedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorManaSymbols;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
@@ -899,6 +902,8 @@ public class AmountEvaluationService {
                     damageDealtToSourcePermanentBySourceNameThisTurn(gameData, ctx, sourceDamage.sourceName());
             case TotalManaValueOfCardsExiledWithSource ignored ->
                     totalManaValueOfCardsExiledWithSource(gameData, ctx);
+            case ManaValueOfLastCardExiledWithSource ignored ->
+                    manaValueOfLastCardExiledWithSource(gameData, ctx);
             case TotalManaValueOfCardsInGraveyard a ->
                     totalManaValueOfCardsInGraveyard(gameData, a, ctx);
             case TotalManaValueOfCardsOwnedInExile ignored ->
@@ -1017,6 +1022,8 @@ public class AmountEvaluationService {
                     targetSpellPower(gameData, ctx);
             case TriggeringSpellColorCount ignored ->
                     triggeringSpellColorCount(gameData, ctx);
+            case TriggeringSpellChosenColorCount chosenAmount ->
+                    triggeringSpellChosenColorCount(gameData, ctx, chosenAmount);
             case TriggeringSpellColorManaSymbols symbolAmount ->
                     triggeringSpellColorManaSymbols(gameData, ctx, symbolAmount);
             case TriggeringSpellTargetCount targetAmount ->
@@ -1033,7 +1040,18 @@ public class AmountEvaluationService {
                     chosenCreatureOrWarpedCardPower(gameData, ctx);
             case ChosenNumberOnSource ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getChosenNumber();
+            case ChosenNumberOnCreatedPermanent ignored -> chosenNumberOnCreatedPermanent(gameData, ctx);
         };
+    }
+
+    /** The chosen number of the first permanent created earlier in the resolving entry; 0 if none. */
+    private int chosenNumberOnCreatedPermanent(GameData gameData, AmountContext ctx) {
+        if (ctx.stackEntry() == null) return 0;
+        for (UUID permanentId : ctx.stackEntry().getCreatedPermanentIds()) {
+            Permanent created = gameQueryService.findPermanentById(gameData, permanentId);
+            if (created != null) return created.getChosenNumber();
+        }
+        return 0;
     }
 
     /**
@@ -1120,7 +1138,8 @@ public class AmountEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(permanent ->
-                !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                !permanent.isFaceDown()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         && !gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
                         && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof StationPowerModifierEffect modifier
@@ -1259,11 +1278,21 @@ public class AmountEvaluationService {
         if (lastKnownPower != null) {
             return allowNegative ? lastKnownPower : Math.max(0, lastKnownPower);
         }
-        return ctx.stackEntry() != null && ctx.stackEntry().isNonTargeting()
+        if (ctx.stackEntry() != null && ctx.stackEntry().isNonTargeting()
                 && ctx.targetPermanentId().equals(ctx.stackEntry().getTriggeringPermanentId())
-                && ctx.triggeringPermanentPowerAtTrigger() != null
-                ? allowNegative ? ctx.triggeringPermanentPowerAtTrigger()
-                        : Math.max(0, ctx.triggeringPermanentPowerAtTrigger()) : 0;
+                && ctx.triggeringPermanentPowerAtTrigger() != null) {
+            return allowNegative ? ctx.triggeringPermanentPowerAtTrigger()
+                    : Math.max(0, ctx.triggeringPermanentPowerAtTrigger());
+        }
+        // Last known information: a permanent that has left the battlefield still has the power it
+        // had as it last existed there.
+        Permanent departed = gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> ctx.targetPermanentId().equals(snapshot.getId()))
+                .findFirst().orElse(null);
+        if (departed != null && departed.getLastKnownPower() != null) {
+            return allowNegative ? departed.getLastKnownPower() : Math.max(0, departed.getLastKnownPower());
+        }
+        return 0;
     }
 
     private int targetEffectivePowerPlusToughness(GameData gameData, AmountContext ctx) {
@@ -2312,6 +2341,16 @@ public class AmountEvaluationService {
         return triggeringSpell == null
                 ? 0
                 : gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).size();
+    }
+
+    private int triggeringSpellChosenColorCount(GameData gameData, AmountContext ctx,
+                                                TriggeringSpellChosenColorCount amount) {
+        Card triggeringSpell = findTriggeringSpell(gameData, ctx);
+        return triggeringSpell == null
+                ? 0
+                : (int) gameQueryService.getEffectiveCardColors(gameData, triggeringSpell).stream()
+                        .filter(amount.chosenColors()::contains)
+                        .count();
     }
 
     private int triggeringSpellColorManaSymbols(GameData gameData, AmountContext ctx,
@@ -3610,6 +3649,12 @@ public class AmountEvaluationService {
                 .sum();
     }
 
+    private int manaValueOfLastCardExiledWithSource(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+        List<Card> exiled = gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId());
+        return exiled.isEmpty() ? 0 : exiled.getLast().getManaValue();
+    }
+
     private int totalManaValueOfCardsOwnedInExile(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
         return gameData.exiledCards.stream()
@@ -3676,7 +3721,10 @@ public class AmountEvaluationService {
 
     private int greatestManaValueAmongCardsExiledWithSource(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
+        List<java.util.UUID> thisWayCardIds = ctx.targetCardIds();
         return gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
+                .filter(card -> thisWayCardIds == null || thisWayCardIds.isEmpty()
+                        || thisWayCardIds.contains(card.getId()))
                 .mapToInt(Card::getManaValue)
                 .max()
                 .orElse(0);

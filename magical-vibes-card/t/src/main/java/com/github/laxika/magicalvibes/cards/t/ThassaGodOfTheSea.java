@@ -11,12 +11,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "66")
 @CardRegistration(set = "SLD", collectorNumber = "71")
@@ -27,7 +26,7 @@ public class ThassaGodOfTheSea extends Card {
     public ThassaGodOfTheSea() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLUE, 5)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ScryEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 false,

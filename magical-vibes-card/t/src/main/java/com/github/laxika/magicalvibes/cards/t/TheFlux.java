@@ -32,6 +32,7 @@ public class TheFlux extends Card {
                 new PermanentPredicateTargetFilter(OPPONENT_CREATURE,
                         "Must target a creature an opponent controls")
         ));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new ExileTopCardMayPlayThisTurnEffect(false));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileTopCardMayPlayThisTurnEffect(false));

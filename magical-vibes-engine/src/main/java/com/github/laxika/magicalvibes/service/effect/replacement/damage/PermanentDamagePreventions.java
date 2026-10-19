@@ -40,7 +40,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
             "ControllerAndCreaturesPerSource", "AllButOneToHero", "PermanentSourceToCreature",
             "ArtifactToEnchantedCreature", "ArtifactToSelf", "CreatureSourceToSelf", "DesertsToSelf",
             "DesertsToCamelOrBanded", "SelfDamagePrevention", "ControlledCreaturesReduction", "HalfDamage",
-            "AttachedPerSourceReduction");
+            "AttachedPerSourceReduction", "ControlledCreatureDamageLimit");
 
     PermanentDamagePreventions(GameQueryService gameQueryService, GameLogService gameLogService,
                                DamagePreventionService prevention, ObjectProvider<DamageSupport> damageSupport,

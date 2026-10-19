@@ -28,6 +28,10 @@ public class TormentState {
     public String chosenMode;
     /** Whether choices are collected first and carried out together at the end. */
     public boolean deferred;
+    /** Whether each repetition of the process collects every opponent's choice before applying any. */
+    public boolean deferEachIteration;
+    /** Whether the process affects the spell's target instead of each opponent. */
+    public boolean targetedFlow;
     /** Passes each opponent still has to make in deferred mode, counting the one in progress. */
     public int opponentPassesLeft;
     /** Passes each opponent makes in deferred mode. */
@@ -39,6 +43,8 @@ public class TormentState {
 
     public void reset() {
         deferred = false;
+        deferEachIteration = false;
+        targetedFlow = false;
         opponentPassesLeft = 0;
         totalPasses = 0;
         chosenSacrifices.clear();

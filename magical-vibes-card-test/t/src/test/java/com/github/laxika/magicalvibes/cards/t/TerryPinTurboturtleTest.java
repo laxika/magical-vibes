@@ -68,7 +68,8 @@ class TerryPinTurboturtleTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player1, List.of(0));
 
-        assertThat(terry.isAttacking()).isTrue();
+        assertThat(terry.isTapped()).isTrue();
+        harness.assertLife(player2, 16);
     }
 
     @Test

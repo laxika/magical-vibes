@@ -75,8 +75,10 @@ public class PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent, enterTappedTypes);
         graveyardReturnSupport.trackStolenCreature(
                 gameData, permanent.getId(), targetPlayerId, entry.getControllerId());
+        // CR 603.7e: the delayed exile trigger is controlled by this ability's controller and keeps its source.
         gameData.queueDelayedAction(new DelayedPermanentAction(
-                permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP, false, null, null, null, false,
+                entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId()));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                 new GoadTargetCreatureUntilNextTurnEffect(), permanent.getId(), null, null,

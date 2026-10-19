@@ -54,10 +54,11 @@ class TangleAspTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Arachnoid");
     }
@@ -73,10 +74,11 @@ class TangleAspTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Arachnoid");
     }

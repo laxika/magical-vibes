@@ -673,7 +673,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             returned.setAttackTarget(attackTargetId);
-            returned.setAttacking(true);
+            // Put onto the battlefield attacking without being declared: attacking, but never "attacked" (CR 508.4).
+            returned.enterAttacking(true);
         }
         if (e.returnFaceDown()) {
             returned.setFaceDown(2, 2, Set.of(CardType.CREATURE));

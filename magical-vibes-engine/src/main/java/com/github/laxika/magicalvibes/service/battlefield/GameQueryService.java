@@ -702,7 +702,7 @@ public class GameQueryService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent permanent : bf) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : getActiveStaticEffects(gameData, permanent)) {
                 if (effect instanceof EchoCostAlternativeEffect alternative) {
                     return alternative.alternativeEchoCost();
                 }
@@ -3173,7 +3173,7 @@ public class GameQueryService {
                 && permanent.getFaceDownCardTypes().contains(CardType.CREATURE)) {
             return true;
         }
-        return isCreatureWithBonus(gameData, permanent, bonus);
+        return isCreatureWithBonus(gameData, permanent, bonus, controllerId);
     }
 
     /** Returns whether a permanent currently has token status, including continuous effects. */
@@ -3182,6 +3182,11 @@ public class GameQueryService {
     }
 
     private boolean isCreatureWithBonus(GameData gameData, Permanent permanent, StaticBonus bonus) {
+        return isCreatureWithBonus(gameData, permanent, bonus, null);
+    }
+
+    private boolean isCreatureWithBonus(GameData gameData, Permanent permanent, StaticBonus bonus,
+                                        UUID enteringControllerId) {
         if (hasEffectiveCardType(permanent, bonus, CardType.CREATURE)) return true;
         if (bonus.cardTypeOverriding()) return false;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
@@ -3194,7 +3199,7 @@ public class GameQueryService {
         if (isAnimatedByStarfield(gameData, permanent)) return true;
         if (hasEffectiveCardType(permanent, bonus, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
-        return hasSelfBecomeCreatureEffect(gameData, permanent);
+        return hasSelfBecomeCreatureEffect(gameData, permanent, enteringControllerId);
     }
 
     /**
@@ -3341,11 +3346,20 @@ public class GameQueryService {
      * through the layered {@code isArtifact}) re-enters the assembly and recurses forever.
      */
     public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent) {
+        return hasSelfBecomeCreatureEffect(gameData, permanent, null);
+    }
+
+    /**
+     * As {@link #hasSelfBecomeCreatureEffect(GameData, Permanent)}; a permanent that is not on a
+     * battlefield yet (it is still entering) uses {@code enteringControllerId} as its controller.
+     */
+    public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent, UUID enteringControllerId) {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof AnimatePermanentsEffect animate
                     && animate.scope() == GrantScope.SELF) {
                 UUID controllerId = findPermanentController(gameData, permanent.getId());
+                if (controllerId == null) controllerId = enteringControllerId;
                 if (controllerId == null) continue;
                 ConditionContext context = ConditionContext.forPermanent(permanent, controllerId);
                 if (conditionEvaluationService.isMet(gameData, conditional.condition(), context)) {
@@ -4151,9 +4165,18 @@ public class GameQueryService {
 
     /** Returns the current toughness of a non-battlefield card, including temporary graveyard changes. */
     public Integer getEffectiveCardToughness(GameData gameData, Card card) {
+        return getEffectiveCardToughness(gameData, card, null);
+    }
+
+    /**
+     * Returns the current toughness of a non-battlefield card as seen by {@code holderId}, the player whose
+     * hand, library, graveyard or exile the card is in. Used when the card has already left that zone, so a
+     * characteristic-defining toughness still reads that player's permanents.
+     */
+    public Integer getEffectiveCardToughness(GameData gameData, Card card, UUID holderId) {
         GameData.GraveyardCardAnimation animation = activeGraveyardCardAnimation(gameData, card);
         if (animation == null) {
-            return characteristicPowerToughness(gameData, card, false);
+            return characteristicPowerToughness(gameData, card, false, holderId);
         }
         return animation.toughness();
     }
@@ -4179,6 +4202,10 @@ public class GameQueryService {
     }
 
     private Integer characteristicPowerToughness(GameData gameData, Card card, boolean power) {
+        return characteristicPowerToughness(gameData, card, power, null);
+    }
+
+    private Integer characteristicPowerToughness(GameData gameData, Card card, boolean power, UUID holderId) {
         // Callers without game state (e.g. static predicate checks) only see the printed characteristics.
         if (gameData == null) {
             return power ? card.getPower() : card.getToughness();
@@ -4191,7 +4218,7 @@ public class GameQueryService {
             value = perpetualValue;
         } else {
             value = power ? card.getPower() : card.getToughness();
-            UUID ownerId = findNonBattlefieldCardOwner(gameData, card);
+            UUID ownerId = holderId != null ? holderId : findNonBattlefieldCardOwner(gameData, card);
             if (ownerId != null && amountEvaluationService != null) {
                 for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof SetPowerToughnessToAmountEffect characteristic) {
@@ -5179,6 +5206,9 @@ public class GameQueryService {
         }
         int result = count;
         for (Permanent permanent : battlefield) {
+            if (hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ProliferateReplacementEffect replacement) {
                     result = MaroGoneNutsSupport.apply(
@@ -6090,6 +6120,20 @@ public class GameQueryService {
     private boolean hasControllerToughnessAssignEffect(GameData gameData, Permanent creature) {
         UUID controllerId = findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
+
+        // A player-wide "until end of turn" grant modifies the rules rather than any characteristic, so it
+        // follows the creature's current controller (CR 611.2c) instead of a set fixed on resolution.
+        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn.getOrDefault(controllerId, List.of())) {
+            if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
+                    && acdt.scope() == GrantScope.ALL_OWN_CREATURES
+                    && (acdt.affectedPredicate() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(
+                            creature,
+                            acdt.affectedPredicate(),
+                            FilterContext.of(gameData).withSourceControllerId(controllerId)))) {
+                return true;
+            }
+        }
 
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
         if (bf == null) return false;
@@ -8676,13 +8720,14 @@ public class GameQueryService {
     /**
      * Returns {@code true} if an attachment restriction on the permanent puts Auras already attached
      * to it into their owner's graveyard. Restrictions marked to keep existing Auras attached (Guardian
-     * Beast) only stop new attachment and are excluded.
+     * Beast) only stop new attachment and are excluded, as are Aura-spell-only targeting restrictions
+     * (Tetsuo Umezawa), which never make an attached Aura illegal.
      */
     public boolean cantBeEnchantedByOtherAurasRemovingExisting(GameData gameData, Permanent target) {
         List<CardEffect> effects = new ArrayList<>(getActiveStaticEffects(gameData, target));
         effects.addAll(getGrantedEffects(gameData, target));
         return effects.stream().anyMatch(effect -> effect instanceof CantBeEnchantedByOtherAurasEffect restriction
-                && !restriction.keepsExistingAuras());
+                && !restriction.auraSpellsOnly() && !restriction.keepsExistingAuras());
     }
 
     private boolean hasAuraAttachmentRestriction(GameData gameData, Permanent target, boolean auraSpell) {
@@ -9525,7 +9570,8 @@ public class GameQueryService {
         if (!isPlaneswalker(gameData, permanent)) {
             return false;
         }
-        return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+        return gameData.anyPermanentMatches(source -> !hasLostPrintedAbilities(gameData, source)
+                && source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect.class::isInstance));
     }
 
@@ -10097,6 +10143,18 @@ public class GameQueryService {
                     filterContext.withSourcePermanentSnapshot(staticSource)
                             .withSourcePermanentId(staticSource.getId()));
         }
+
+        // An Equipment or Aura grants its creature-death effect to the creature it is attached to, whoever
+        // controls the attachment (Masamune controlled by an opponent still doubles its equipped creature's death triggers).
+        for (List<Permanent> otherBattlefield : gameData.playerBattlefields.values()) {
+            for (Permanent staticSource : otherBattlefield) {
+                if (!staticSource.isAttached() || !triggeringPermanent.getId().equals(staticSource.getAttachedTo())) continue;
+                if (!checkedSources.add(staticSource.getId())) continue;
+                count += countAdditionalCreatureDeathEffects(staticSource, triggeringPermanent,
+                        filterContext.withSourcePermanentSnapshot(staticSource)
+                                .withSourcePermanentId(staticSource.getId()));
+            }
+        }
         return count;
     }
 
@@ -10152,7 +10210,8 @@ public class GameQueryService {
         if (equippedCreature == null) {
             equippedCreature = gameData.simultaneousDyingCreatures.get(staticSource.getAttachedTo());
         }
-        if (equippedCreature == null || !isCreature(gameData, equippedCreature)) return 0;
+        if (equippedCreature == null || !isCreature(gameData, equippedCreature)
+                || equippedCreature.isLosesAllAbilitiesUntilEndOfTurn()) return 0;
 
         UUID equippedCreatureController = gameData.findControllerOf(equippedCreature);
         if (equippedCreatureController == null) {
@@ -11097,12 +11156,14 @@ public class GameQueryService {
     /**
      * Finds a permanent on the given player's battlefield that itself carries the given static
      * effect type, returning that permanent (e.g. Empyrial Archangel redirecting damage to itself),
-     * or {@code null} if none is found.
+     * or {@code null} if none is found. A permanent that has lost its printed abilities (Song of the
+     * Dryads on The Golden Throne) no longer provides its static effects.
      */
     public Permanent findControlledPermanentWithStaticEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectClass) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent p : bf) {
+            if (hasLostPrintedAbilities(gameData, p)) continue;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effectClass.isInstance(effect)) {
                     return p;
@@ -11508,7 +11569,8 @@ public class GameQueryService {
             if (controllerId.equals(playerId)) continue;
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
-            if (battlefield.stream().anyMatch(p -> p.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (battlefield.stream().anyMatch(p -> !hasLostAllAbilities(gameData, p)
+                    && p.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect.class::isInstance))) {
                 return true;
             }

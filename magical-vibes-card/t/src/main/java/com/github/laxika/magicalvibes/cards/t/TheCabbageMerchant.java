@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
 
@@ -33,7 +35,9 @@ public class TheCabbageMerchant extends Card {
         addEffect(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
                 new SacrificePermanentsEffect(
                         1,
-                        new PermanentHasSubtypePredicate(CardSubtype.FOOD),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.FOOD),
+                                new PermanentIsTokenPredicate())),
                         SacrificeRecipient.CONTROLLER
                 ));
 

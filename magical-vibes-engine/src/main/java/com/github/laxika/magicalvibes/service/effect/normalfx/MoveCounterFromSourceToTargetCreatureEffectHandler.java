@@ -29,12 +29,13 @@ public class MoveCounterFromSourceToTargetCreatureEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        CounterType counterType = ((MoveCounterFromSourceToTargetCreatureEffect) effect).counterType();
+        MoveCounterFromSourceToTargetCreatureEffect moveEffect = (MoveCounterFromSourceToTargetCreatureEffect) effect;
+        CounterType counterType = moveEffect.counterType();
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (source == null || target == null || source.getId().equals(target.getId())
-                || source.getCounterCount(counterType) <= 0) {
+                || moveEffect.amount() <= 0 || source.getCounterCount(counterType) <= 0) {
             return;
         }
         if (gameQueryService.cantHaveCounters(gameData, target)
@@ -45,10 +46,11 @@ public class MoveCounterFromSourceToTargetCreatureEffectHandler implements Norma
             return;
         }
 
-        source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
+        int moved = Math.min(moveEffect.amount(), source.getCounterCount(counterType));
+        source.setCounterCount(counterType, source.getCounterCount(counterType) - moved);
         if (counterType == CounterType.OIL) {
-            gameData.recordOilCounterRemoved(source, 1);
+            gameData.recordOilCounterRemoved(source, moved);
         }
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, counterType, 1);
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, counterType, moved);
     }
 }

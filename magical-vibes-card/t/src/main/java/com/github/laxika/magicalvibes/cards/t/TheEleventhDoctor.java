@@ -24,7 +24,7 @@ public class TheEleventhDoctor extends Card {
 
     public TheEleventhDoctor() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new MayEffect(new ExileCardFromHandWithManaValueTimeCountersEffect(),
+                new MayEffect(ExileCardFromHandWithManaValueTimeCountersEffect.gainingSuspend(),
                         "Exile a card from your hand with time counters equal to its mana value?"));
 
         addActivatedAbility(new ActivatedAbility(

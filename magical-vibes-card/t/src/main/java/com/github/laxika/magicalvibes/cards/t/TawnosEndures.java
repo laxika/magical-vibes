@@ -18,13 +18,13 @@ public class TawnosEndures extends Card {
 
     public TawnosEndures() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
                 .addEffect(EffectSlot.SPELL,
                         new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                                 EffectSlot.EXILED_UPKEEP_TRIGGERED,
                                 new ConditionalEffect(new SourceCardInExile(), SequenceEffect.of(
                                         new PerpetuallyBoostSourceEffect(1, 1),
                                         new MayEffect(new ReturnSourceCardFromExileToBattlefieldEffect(false),
-                                                "Return it to the battlefield?")))));
+                                                "Return it to the battlefield?")))))
+                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
     }
 }

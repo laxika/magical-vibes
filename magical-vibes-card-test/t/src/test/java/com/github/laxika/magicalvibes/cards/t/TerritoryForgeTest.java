@@ -118,7 +118,6 @@ class TerritoryForgeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 5);
         harness.castInstant(player2, 0, forge.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Territory Forge");

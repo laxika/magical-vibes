@@ -250,6 +250,24 @@ public class DestructionSupport {
      */
     public List<Permanent> destroyBatchCollecting(GameData gameData, List<Permanent> toDestroy, String sourceName,
                               boolean cannotBeRegenerated) {
+        return destroyBatchWithOutcome(gameData, toDestroy, sourceName, cannotBeRegenerated).died();
+    }
+
+    /**
+     * Same batch destruction as {@link #destroyBatch}, but returns every permanent that was destroyed,
+     * whether it then went to a graveyard or a replacement such as Rest in Peace moved it elsewhere.
+     * Indestructible, shield-countered and regenerated permanents are not included.
+     */
+    public List<Permanent> destroyBatchDestroyed(GameData gameData, List<Permanent> toDestroy, String sourceName,
+                                                 boolean cannotBeRegenerated) {
+        return destroyBatchWithOutcome(gameData, toDestroy, sourceName, cannotBeRegenerated).destroyed();
+    }
+
+    private record BatchOutcome(List<Permanent> destroyed, List<Permanent> died) {
+    }
+
+    private BatchOutcome destroyBatchWithOutcome(GameData gameData, List<Permanent> toDestroy, String sourceName,
+                                                 boolean cannotBeRegenerated) {
         Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
             if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
@@ -293,7 +311,7 @@ public class DestructionSupport {
         } finally {
             endSimultaneousCreatureDeaths(gameData);
         }
-        return died;
+        return new BatchOutcome(actuallyDying, died);
     }
 
     /**
@@ -575,6 +593,7 @@ public class DestructionSupport {
         beginSimultaneousCreatureDeaths(gameData, permanents);
         // Sacrificed at the same time, so "another creature leaves" watchers that are also sacrificed still see the others leave.
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        gameData.simultaneousSacrificeDepth++;
         try {
             for (Permanent perm : permanents) {
                 UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(perm.getId());
@@ -583,6 +602,9 @@ public class DestructionSupport {
             triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
+            if (--gameData.simultaneousSacrificeDepth == 0) {
+                gameData.sacrificeBoonBatchPlayerIds.clear();
+            }
             permanentRemovalService.endPermanentLeaveBatch(gameData);
             endSimultaneousCreatureDeaths(gameData);
         }

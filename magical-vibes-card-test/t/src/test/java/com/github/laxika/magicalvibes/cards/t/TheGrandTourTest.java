@@ -42,6 +42,7 @@ class TheGrandTourTest extends BaseCardTest {
                 .containsExactly(unrelated.getId(), target.getCard().getId());
 
         harness.handleCardChosen(player2, 1);
+        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -94,8 +95,8 @@ class TheGrandTourTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A discard-to-battlefield replacement does not stop the remaining tour")
-    void continuesAfterDiscardToBattlefieldReplacement() {
+    @DisplayName("A discard-to-battlefield replacement leaves the card on the battlefield once")
+    void discardToBattlefieldReplacementEntersOnce() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ObstinateBaloth());
         harness.setLife(player2, 20);
         harness.setHand(player2, List.of());
@@ -109,7 +110,9 @@ class TheGrandTourTest extends BaseCardTest {
         }
 
         harness.assertOnBattlefield(player2, "Obstinate Baloth");
-        harness.assertLife(player2, 28);
+        // CR 400.7: the Baloth that entered through its discard replacement is a new object, so the
+        // remaining steps (library, battlefield) cannot find it and it enters only once.
+        harness.assertLife(player2, 24);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
@@ -117,6 +120,7 @@ class TheGrandTourTest extends BaseCardTest {
     @DisplayName("An Aura returning from its owner's library chooses a legal creature to enchant")
     void returningAuraChoosesAttachment() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         aura.setAttachedTo(creature.getId());
         harness.setHand(player2, List.of());

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -13,9 +14,9 @@ public class ThassasIre extends Card {
 
     public ThassasIre() {
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{3}{U}",
-                List.of(new TapOrUntapTargetPermanentEffect()),
+                List.of(new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target creature?")),
                 "{3}{U}: You may tap or untap target creature.",
                 TargetFilters.creature()
         ));

@@ -187,8 +187,8 @@ class TariffTest extends BaseCardTest {
     @DisplayName("Mana abilities can be used to pay during resolution")
     void availableManaAbilitiesPreventAutomaticSacrifice() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        addCreatureReady(player2, new LlanowarElves());
+        addCreatureReady(player2, new LlanowarElves());
         harness.castFromHand(player1, new Tariff(), "{1}{W}");
         harness.passBothPriorities();
 

@@ -75,7 +75,7 @@ public class RevealTopCardMayPutMatchingOntoBattlefieldOrBottomHandler implement
         }
 
         if (accepted) {
-            mayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, true);
+            mayMiscHandlerService.handleRevealedPermanentPutOntoBattlefieldOrBottomChoice(gameData, player);
         } else {
             mayMiscHandlerService.handleRevealTopCardMayBottomChoice(gameData, player, true);
         }

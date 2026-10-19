@@ -606,8 +606,10 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst().orElseThrow();
 
         UUID targetCardId = ability.targetCardId();
+        // Matches the stack object's targetable id so an activated or triggered ability is found,
+        // not only a spell (whose targetable id is its card id).
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
 

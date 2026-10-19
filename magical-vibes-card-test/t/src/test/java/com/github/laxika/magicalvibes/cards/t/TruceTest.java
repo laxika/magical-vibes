@@ -87,26 +87,30 @@ class TruceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolves a draw replacement before asking the next player's draw choice")
-    void resolvesDrawReplacementBeforeNextPlayersChoice() {
+    @DisplayName("Both players choose before drawing, then a draw replacement resolves before any life is gained")
+    void resolvesDrawReplacementAfterEveryChoiceAndBeforeLifeGain() {
         harness.addToBattlefield(player1, new ZursWeirding());
         castTruce();
 
         harness.handleXValueChosen(player1, 1);
+
+        // CR 608.2e: the next player chooses before anyone draws, so no replacement prompt exists yet.
+        PendingInteraction.XValueChoice nextChoice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(nextChoice).isNotNull();
+        assertThat(nextChoice.playerId()).isEqualTo(player2.getId());
+        harness.assertLife(player1, 20);
+
+        harness.handleXValueChosen(player2, 0);
 
         PendingInteraction.MayAbilityChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
 
         harness.handleMayAbilityChosen(player2, true);
-
-        harness.assertLife(player1, 20);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
-                .isEqualTo(player2.getId());
-
-        harness.handleXValueChosen(player2, 0);
 
         harness.assertLife(player1, 24);
         harness.assertLife(player2, 22);

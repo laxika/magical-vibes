@@ -600,6 +600,30 @@ public class MayMiscHandlerService {
      * confirmed to be a land or a low-enough-cost creature) onto the battlefield; otherwise it
      * stays on top of the library.
      */
+    /**
+     * The Maelstrom's reveal: the revealed permanent card goes onto the battlefield. An Aura with no legal
+     * object to enchant can't enter, so it is not put onto the battlefield and goes to the bottom of the
+     * library instead (The Maelstrom: "If you revealed a card but didn't put it onto the battlefield, put it
+     * on the bottom of your library.").
+     */
+    public void handleRevealedPermanentPutOntoBattlefieldOrBottomChoice(GameData gameData, Player player) {
+        List<Card> deck = gameData.playerDecks.get(player.getId());
+        if (!deck.isEmpty() && deck.getFirst().isAura() && !hasLegalAuraHost(gameData, deck.getFirst(), player.getId())) {
+            handleRevealTopCardMayBottomChoice(gameData, player, true);
+            return;
+        }
+        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, true);
+    }
+
+    private boolean hasLegalAuraHost(GameData gameData, Card aura, UUID controllerId) {
+        boolean permanentHost = gameData.orderedPlayerIds.stream()
+                .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
+                .anyMatch(candidate -> auraAttachmentService.canEnchant(gameData, aura, controllerId, candidate));
+        boolean playerHost = aura.isEnchantPlayer() && gameData.orderedPlayerIds.stream()
+                .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
+        return permanentHost || playerHost;
+    }
+
     public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted) {
         handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted, false);
     }

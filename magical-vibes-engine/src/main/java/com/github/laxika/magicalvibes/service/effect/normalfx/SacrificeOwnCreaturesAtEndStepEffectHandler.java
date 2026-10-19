@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Captures matching creatures at resolution and queues their individual sacrifice actions for the
- * next end step.
+ * Captures matching creatures at resolution and schedules their sacrifice for the next end step as
+ * one delayed trigger of the spell, controlled by the spell's controller.
  */
 @Component
 @RequiredArgsConstructor
@@ -56,8 +56,11 @@ public class SacrificeOwnCreaturesAtEndStepEffectHandler implements NormalEffect
         }
 
         for (UUID creatureId : creatureIds) {
+            // The spell is the source and the controller is the sacrificing player, so the scheduled
+            // sacrifices share one delayed trigger and a creature that changed control is skipped.
             gameData.queueDelayedAction(new DelayedPermanentAction(
-                    creatureId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                    creatureId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                    false, null, null, entry.getControllerId(), false, entry.getCard()));
         }
         log.info("Game {} - {} creature(s) scheduled for sacrifice at end step by {}",
                 gameData.id, creatureIds.size(), entry.getCard().getName());

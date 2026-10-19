@@ -31,8 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MimeoplasmCopyOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -421,11 +419,8 @@ public class CloneService {
         gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
-        gameData.cloneOperation.additionalSlotEffects = copyEffect.grantHaste()
-                ? Map.of(EffectSlot.ON_ENTER_BATTLEFIELD,
-                List.of(new GrantKeywordEffect(com.github.laxika.magicalvibes.model.Keyword.HASTE,
-                        GrantScope.SELF)))
-                : Map.of();
+        gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.grantHasteUntilEndOfTurn = copyEffect.grantHaste();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
         gameData.cloneOperation.xValue = xValue;
@@ -645,6 +640,7 @@ public class CloneService {
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
+        boolean grantHasteUntilEndOfTurn = gameData.cloneOperation.grantHasteUntilEndOfTurn;
         List<CardEffect> reflexiveEffects = gameData.cloneOperation.reflexiveEffects;
         boolean shieldCounterIfControllerControlsCopiedPermanent =
                 gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
@@ -687,6 +683,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.grantHasteUntilEndOfTurn = false;
         gameData.cloneOperation.reflexiveEffects = List.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
@@ -799,9 +796,16 @@ public class CloneService {
             perm.tap();
         }
 
+        if (grantHasteUntilEndOfTurn && copiedCard != null) {
+            perm.getGrantedKeywords().add(Keyword.HASTE);
+        }
+
         gameData.cloneOperation.entryRequest = entryRequest;
         gameData.cloneOperation.copyablePermanentIds = copyablePermanentIds;
-        if (copiedCard != null && prepareCloneReplacementEffect(gameData, controllerId,
+        // A graveyard copy whose card has been chosen is completed here; its own copy-from-graveyard
+        // choice must not be offered again.
+        boolean graveyardCopyAlreadyChosen = copiedCard != null && findGraveyardCopyEffect(perm.getCard()) != null;
+        if (copiedCard != null && !graveyardCopyAlreadyChosen && prepareCloneReplacementEffect(gameData, controllerId,
                 perm.getCard(), etbTargetId, xValue, perm.getOriginalCard(), transformed)) {
             gameData.cloneOperation.preparedPermanent = perm;
             gameData.cloneOperation.battlefieldEntryBatch = battlefieldEntryBatch;

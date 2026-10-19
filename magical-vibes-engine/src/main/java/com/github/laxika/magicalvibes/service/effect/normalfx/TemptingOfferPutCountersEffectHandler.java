@@ -93,7 +93,7 @@ public class TemptingOfferPutCountersEffectHandler implements NormalEffectHandle
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .toList();
         for (Permanent creature : creatures) {
-            permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, creature, 1);
+            permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, creature, 1, playerId);
         }
     }
 }

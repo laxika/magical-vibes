@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -36,12 +35,12 @@ public class TezzeretArtificeMaster extends Card {
                 "+1: Create a 1/1 colorless Thopter artifact creature token with flying."
         ));
 
-        // 0: the "draw two instead" is encoded as two mutually exclusive conditional draws
-        // (Visions of Beyond pattern); Metalcraft is exactly "you control three or more artifacts".
+        // 0: the draw count is decided once, when the ability resolves; Metalcraft is exactly
+        // "you control three or more artifacts". Re-checking it per draw would let a draw replacement
+        // that removes an artifact add an extra card.
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new ConditionalEffect(new Metalcraft(), new DrawCardEffect(2)),
-                        new ConditionalEffect(new NotCondition(new Metalcraft()), new DrawCardEffect(1))),
+                List.of(new DrawCardEffect(new FixedIfCondition(new Metalcraft(), 2, 1))),
                 "0: Draw a card. If you control three or more artifacts, draw two cards instead."
         ));
 

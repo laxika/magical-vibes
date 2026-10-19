@@ -109,6 +109,8 @@ class TamObservantSequencerDeepSightTest extends BaseCardTest {
         UUID copyId = tam.getPreparedSpellCardId();
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Forest()));
@@ -133,6 +135,8 @@ class TamObservantSequencerDeepSightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, originalCopyId);
         harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Forest()));

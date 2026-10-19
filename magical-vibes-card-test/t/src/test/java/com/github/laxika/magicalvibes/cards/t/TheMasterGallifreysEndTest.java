@@ -112,7 +112,7 @@ class TheMasterGallifreysEndTest extends BaseCardTest {
     @Test
     void masterTriggersForItsOwnDeathWhenItIsAnArtifactCreature() {
         Permanent master = harness.addToBattlefieldAndReturn(player1, new TheMasterGallifreysEnd());
-        master.getGrantedCardTypes().add(CardType.ARTIFACT);
+        master.getPersistentGrantedCardTypes().add(CardType.ARTIFACT);
         master.setMarkedDamage(3);
         harness.runStateBasedActions();
         resolveAllTriggers();

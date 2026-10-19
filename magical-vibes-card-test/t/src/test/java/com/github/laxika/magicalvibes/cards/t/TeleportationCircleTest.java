@@ -148,7 +148,9 @@ class TeleportationCircleTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dire Wolf Prowler");
         Permanent returned = findPermanent(player2, "Dire Wolf Prowler");
         assertThat(returned.getId()).isNotEqualTo(creature.getId());
-        assertThat(returned.isSummoningSick()).isTrue();
+        // Resolving the trigger lets the end step pass into Bob's turn 2, which begins after the creature
+        // came under his control, so it is no longer summoning sick (CR 302.6).
+        assertThat(returned.isSummoningSick()).isFalse();
     }
 
     @Test

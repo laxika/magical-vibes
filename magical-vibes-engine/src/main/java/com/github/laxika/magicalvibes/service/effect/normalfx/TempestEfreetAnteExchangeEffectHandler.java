@@ -28,8 +28,9 @@ import org.springframework.stereotype.Component;
  * accept/decline branch lives in {@code TempestEfreetAnteExchangeHandler}); an opponent who can't
  * pay exchanges immediately.
  *
- * <p>The ante "exchange ownership … permanent" is resolved as the single-game observable zone
- * movements — see {@link TempestEfreetAnteExchangeEffect} — never a runtime {@code ownerId} change.
+ * <p>The ante "exchange ownership" swaps the two cards' owners for the rest of the game through
+ * {@link GameData#cardOwnerOverrides} (a frozen card's stamped owner is never rewritten); the cross-game
+ * permanence of an ante is not modeled — see {@link TempestEfreetAnteExchangeEffect}.
  */
 @Slf4j
 @Component
@@ -53,7 +54,8 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
         UUID controllerId = entry.getControllerId();
         UUID opponentId = entry.getTargetId();
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, opponentId)
+        // CR 119.8: a cost that has the player pay life can't be paid by a player who can't lose life.
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, opponentId)
                 && gameData.getLife(opponentId) >= e.lifeCost();
 
         if (!canPay) {
@@ -97,6 +99,8 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
                 GameEventFact.RevealZone.HAND,
                 List.of(revealed));
 
+        gameData.cardOwnerOverrides.put(revealed.getId(), controllerId);
+        gameData.cardOwnerOverrides.put(efreetCard.getId(), opponentId);
         gameData.addCardToHand(controllerId, revealed);
         moveSourceToOpponentsGraveyard(gameData, efreetCard, opponentId);
 

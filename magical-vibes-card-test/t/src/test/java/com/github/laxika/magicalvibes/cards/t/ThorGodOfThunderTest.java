@@ -154,6 +154,7 @@ class ThorGodOfThunderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(shock.getId(), player1.getId());

@@ -145,7 +145,9 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
 
         gd.turnNumber = 1;
         advanceToUpkeep(player1);
-        harness.passUntil(player1, TurnStep.DRAW);
+        // The starting player skips the draw step of their first turn (CR 103.8a), so that step never
+        // becomes a stop; observe the result once the turn reaches its precombat main phase.
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topLibraryCard);

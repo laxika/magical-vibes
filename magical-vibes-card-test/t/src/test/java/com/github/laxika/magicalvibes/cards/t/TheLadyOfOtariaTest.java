@@ -135,7 +135,9 @@ class TheLadyOfOtariaTest extends BaseCardTest {
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
         assertThat(choice.validCardIds()).containsExactly(dwarf.getId());
-        harness.handleMultipleCardsChosen(player1, List.of());
+        // Stay in the opponent's end step so the auto-pass after the choice does not carry on into
+        // player1's own turn, where they would draw one of the cards just put on the bottom.
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMultipleCardsChosen(player1, List.of()));
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(dwarf);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(dwarf, forest);

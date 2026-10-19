@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class TestamentBearer extends Card {
 
     public TestamentBearer() {
-        addEffect(EffectSlot.ON_DEATH, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1));
+        addEffect(EffectSlot.ON_DEATH, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
     }
 }

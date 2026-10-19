@@ -15,7 +15,7 @@ import java.util.UUID;
  * The copy's controller may choose new targets.
  *
  * <p>Populated at trigger time by {@code TriggerCollectionService} when a player
- * in {@code GameData.playersWithSpellCopyUntilEndOfTurn} casts an instant or sorcery.
+ * in {@code GameData.spellCopyGrantsUntilEndOfTurn} casts an instant or sorcery.
  * The snapshot preserves the spell's state at cast time.</p>
  *
  * <p>Used by The Mirari Conjecture chapter III's delayed triggered ability.</p>

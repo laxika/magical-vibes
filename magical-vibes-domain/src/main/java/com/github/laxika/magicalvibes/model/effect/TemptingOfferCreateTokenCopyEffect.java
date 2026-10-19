@@ -6,13 +6,16 @@ import java.util.UUID;
 
 /**
  * Tempting offer that creates a copy for the spell's controller, then offers each opponent a
- * copy; an opponent who accepts also gives the spell's controller another copy.
+ * copy; an opponent who accepts also gives the spell's controller another copy. The accepting
+ * opponents' copies and the controller's matching copies are only created once every opponent has
+ * chosen, so {@code acceptedOpponentIds} accumulates the acceptances until then.
  */
 public record TemptingOfferCreateTokenCopyEffect(
         CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect,
         List<UUID> remainingOpponentIds,
         UUID abilityControllerId,
-        UUID targetId
+        UUID targetId,
+        List<UUID> acceptedOpponentIds
 ) implements CardEffect {
 
     public TemptingOfferCreateTokenCopyEffect {
@@ -20,10 +23,11 @@ public record TemptingOfferCreateTokenCopyEffect(
         if (remainingOpponentIds != null) {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
         }
+        acceptedOpponentIds = acceptedOpponentIds == null ? List.of() : List.copyOf(acceptedOpponentIds);
     }
 
     public TemptingOfferCreateTokenCopyEffect() {
-        this(new CreateTokenCopyOfTargetPermanentEffect(), null, null, null);
+        this(new CreateTokenCopyOfTargetPermanentEffect(), null, null, null, List.of());
     }
 
     @Override

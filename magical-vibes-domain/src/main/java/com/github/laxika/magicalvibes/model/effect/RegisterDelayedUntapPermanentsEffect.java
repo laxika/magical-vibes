@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * When resolved, registers a delayed trigger that fires at the beginning of the next end step,
- * untapping up to {@code count} permanents the controller controls that match {@code filter}.
+ * letting its controller untap up to {@code count} tapped permanents on any battlefield that match
+ * {@code filter} ("untap up to two lands" does not restrict to the controller's lands).
  * If {@code filter} is null, any tapped permanent qualifies.
  *
  * @param count  the maximum number of permanents to untap at the next end step

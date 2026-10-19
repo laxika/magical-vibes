@@ -98,11 +98,8 @@ class TheMomentTest extends BaseCardTest {
     @DisplayName("The Moment does not gain a counter during an opponent's upkeep")
     void opponentUpkeepDoesNotAddTimeCounter() {
         Permanent moment = harness.addToBattlefieldAndReturn(player1, new TheMoment());
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
 
-        harness.passUntil(TurnStep.DRAW);
+        advanceToUpkeep(player2);
 
         assertThat(moment.getCounterCount(CounterType.TIME)).isZero();
     }

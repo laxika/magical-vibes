@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
@@ -107,6 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOr
 import com.github.laxika.magicalvibes.model.effect.FirstNoncreatureSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCount;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -913,6 +915,25 @@ public class SpellCastTriggerCollectorService {
                         && spellTargetableIds.contains(permanent.getId()));
     }
 
+    /**
+     * The cast spell's mana value while it is on the stack (CR 202.3e): an X in its cost counts as the
+     * value chosen for it, which the stack entry holds. Falls back to the printed value when the spell
+     * is no longer on the stack.
+     */
+    private int spellManaValueOnStack(GameData gameData, TriggerContext.SpellCast sc) {
+        Card spellCard = sc.spellCard();
+        ManaCost cost = spellCard.getParsedManaCost();
+        if (cost == null || cost.getXSymbolCount() == 0) {
+            return spellCard.getManaValue();
+        }
+        for (StackEntry se : gameData.stack) {
+            if (se.getTargetableId().equals(spellCard.getId())) {
+                return spellCard.getManaValue() + se.getXValue() * cost.getXSymbolCount();
+            }
+        }
+        return spellCard.getManaValue();
+    }
+
     private StackEntry findInstantOrSorceryOnStack(TriggerMatchContext match, TriggerContext.SpellCast sc) {
         Card spellCard = sc.spellCard();
         if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return null;
@@ -1057,7 +1078,7 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
         // "that player" = the caster; preset the target so the loss falls on them, not a choice.
-        int amount = trigger.useSpellManaValue() ? sc.spellCard().getManaValue() : trigger.amount();
+        int amount = trigger.useSpellManaValue() ? spellManaValueOnStack(match.gameData(), sc) : trigger.amount();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -1483,15 +1504,20 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
-        match.gameData().stack.add(new StackEntry(
+        // The intervening "if" (CR 603.4) is rechecked on resolution: the spell's colors are read
+        // then, so a spell that became colorless in response gains no life.
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new GainLifeEffect(lifeGain))),
+                new ArrayList<>(List.of(new GainLifeEffect(
+                        new TriggeringSpellChosenColorCount(match.permanent().getChosenColors())))),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        entry.setTriggeringCardId(sc.spellCard().getId());
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -1782,8 +1808,14 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
-        int copies = (int) match.gameData().getSpellsCastThisTurn(sc.castingPlayerId()).stream()
-                .filter(card -> !card.getId().equals(spellCard.getId()))
+        // The spell just cast is the newest record of this turn's casts; drop only that record, so
+        // earlier casts of the same card (a returned and recast instant) still count.
+        List<Card> castThisTurn = match.gameData().getSpellsCastThisTurn(sc.castingPlayerId());
+        List<Card> priorCasts = !castThisTurn.isEmpty()
+                && castThisTurn.getLast().getId().equals(spellCard.getId())
+                ? castThisTurn.subList(0, castThisTurn.size() - 1)
+                : castThisTurn;
+        int copies = (int) priorCasts.stream()
                 .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 .count();
         StackEntry snapshot = new StackEntry(spellEntry);
@@ -3510,7 +3542,8 @@ public class SpellCastTriggerCollectorService {
         if (effect instanceof CopyTriggeringSpellEffect copy
                 && copy.spellSnapshot() == null) {
             return new CopyTriggeringSpellEffect(
-                    copy.tokenCopy(), copy.retargetToSource(), new StackEntry(spellSnapshot));
+                    copy.tokenCopy(), copy.retargetToSource(), new StackEntry(spellSnapshot),
+                    copy.mayChooseNewTargets());
         }
         if (effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect reveal
                 && reveal.spellSnapshot() == null) {
@@ -3703,6 +3736,10 @@ public class SpellCastTriggerCollectorService {
         }
         if (effect instanceof DealDamageToAnyTargetEffect damage
                 && amountEvaluationService.referencesTargetSpellManaValue(damage.damage())) {
+            return true;
+        }
+        if (effect instanceof LoseLifeEffect loseLife
+                && amountEvaluationService.referencesTargetSpellManaValue(loseLife.amount())) {
             return true;
         }
         if (effect instanceof PutCounterOnTargetPermanentEffect putCounter) {

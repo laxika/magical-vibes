@@ -73,6 +73,7 @@ class TanJolomTheWorldwalkerTest extends BaseCardTest {
 
     @Test
     void animatedLandRetainsItsLandTypeAndAttacksWithoutTapping() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new TanJolomTheWorldwalker());
         Permanent land = addCreatureReady(player1, new Forest());
 
@@ -107,6 +108,7 @@ class TanJolomTheWorldwalkerTest extends BaseCardTest {
 
     @Test
     void canGrantDoubleTeamAgainAfterItWasPerpetuallyRemoved() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new TanJolomTheWorldwalker());
         Permanent land = addCreatureReady(player1, new Forest());
 

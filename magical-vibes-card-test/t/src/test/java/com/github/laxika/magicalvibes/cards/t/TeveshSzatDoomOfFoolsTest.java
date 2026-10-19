@@ -114,6 +114,7 @@ class TeveshSzatDoomOfFoolsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, jace.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(jace);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);

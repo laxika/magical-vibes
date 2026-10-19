@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.ControllerActivatedArtifactAbilityThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
@@ -1470,6 +1471,20 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm,
                     new PermanentActivatedThisTurnPredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("ControllerActivatedArtifactAbilityThisTurnPredicate matches once the source controller activated an artifact ability")
+        void controllerActivatedArtifactAbilityMatches() {
+            Permanent perm = addPermanent(player1Id, createCreature("Discounted Permanent", 2, 2, CardColor.GREEN));
+            gd.playersWhoActivatedArtifactAbilityThisTurn.add(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new ControllerActivatedArtifactAbilityThisTurnPredicate(),
+                    FilterContext.of(gd).withSourceControllerId(player1Id))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(perm,
+                    new ControllerActivatedArtifactAbilityThisTurnPredicate(),
+                    FilterContext.of(gd).withSourceControllerId(player2Id))).isFalse();
         }
 
         @Test

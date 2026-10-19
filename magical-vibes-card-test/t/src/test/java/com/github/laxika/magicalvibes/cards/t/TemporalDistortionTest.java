@@ -121,7 +121,8 @@ class TemporalDistortionTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(land.getCounterCount(CounterType.HOURGLASS)).isZero();
-        assertThat(gd.stack).hasSize(1);
+        // A trigger caused by a mana ability waits in the deferred queue until a player next receives priority.
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
         resolveAllTriggers();
 

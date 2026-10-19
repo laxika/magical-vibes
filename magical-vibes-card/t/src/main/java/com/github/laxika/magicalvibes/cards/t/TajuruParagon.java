@@ -22,6 +22,6 @@ public class TajuruParagon extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
-                        6, new CardSharesCreatureTypeWithSourcePredicate())));
+                        6, new CardSharesCreatureTypeWithSourcePredicate()).withRevealedTopCards()));
     }
 }

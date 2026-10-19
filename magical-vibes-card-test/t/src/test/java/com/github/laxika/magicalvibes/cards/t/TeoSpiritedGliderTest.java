@@ -114,6 +114,7 @@ class TeoSpiritedGliderTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GiantKoi()));
 
         declareAttackers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();

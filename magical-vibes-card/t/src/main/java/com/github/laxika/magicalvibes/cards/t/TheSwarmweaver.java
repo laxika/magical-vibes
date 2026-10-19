@@ -27,7 +27,7 @@ public class TheSwarmweaver extends Card {
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new Delirium(), new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH),
-                        GrantScope.OWN_CREATURES,
+                        GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.INSECT, CardSubtype.SPIDER)))));
     }
 }

@@ -31,12 +31,12 @@ public class TheAntiquitiesWar extends Card {
     public TheAntiquitiesWar() {
         // Chapter I: Look at top 5 cards, may reveal an artifact to hand, rest on bottom
         addEffect(EffectSlot.SAGA_CHAPTER_I,
-                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                         5, new CardTypePredicate(CardType.ARTIFACT)));
 
         // Chapter II: Same as chapter I
         addEffect(EffectSlot.SAGA_CHAPTER_II,
-                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                         5, new CardTypePredicate(CardType.ARTIFACT)));
 
         // Chapter III: Artifacts you control become artifact creatures with base P/T 5/5 until end of turn

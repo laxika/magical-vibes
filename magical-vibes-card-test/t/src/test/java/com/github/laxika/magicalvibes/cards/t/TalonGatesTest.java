@@ -154,7 +154,7 @@ class TalonGatesTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bear);
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
     }
 
     @Test

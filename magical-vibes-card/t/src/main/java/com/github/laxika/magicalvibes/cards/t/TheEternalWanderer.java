@@ -61,7 +61,7 @@ public class TheEternalWanderer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -4,
                 List.of(new EachPlayerSacrificesDownToCountEffect(
-                        1, new PermanentIsCreaturePredicate())),
+                        1, new PermanentIsCreaturePredicate(), true)),
                 "−4: For each player, choose a creature that player controls. Each player sacrifices all creatures they control not chosen this way."));
     }
 }

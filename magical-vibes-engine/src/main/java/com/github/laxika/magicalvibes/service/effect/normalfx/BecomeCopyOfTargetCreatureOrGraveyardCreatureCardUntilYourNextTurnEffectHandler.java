@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -21,7 +20,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -76,20 +74,17 @@ public class BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnE
 
         String originalName = source.getCard().getName();
         String targetName = targetCard.getName();
-        permanentCopierService.applyCloneCopy(source, targetCard, null, null,
-                copyEffect.additionalTypesOverride());
+        permanentCopierService.applyCloneCopy(source, targetCard, null, null, null);
+        // "except ... he's a legendary Human Mercenary Villain creature" has no "in addition to its other
+        // types" wording, so the copied card types (e.g. artifact) are replaced rather than kept (CR 205.1b).
+        permanentCopierService.applyCardTypesOverride(source, copyEffect.additionalTypesOverride());
 
         if (copyEffect.nameOverride() != null) {
             source.getCard().setName(copyEffect.nameOverride());
         }
         if (!copyEffect.additionalSubtypesOverride().isEmpty()) {
-            List<CardSubtype> subtypes = new ArrayList<>(source.getCard().getSubtypes());
-            for (CardSubtype subtype : copyEffect.additionalSubtypesOverride()) {
-                if (!subtypes.contains(subtype)) {
-                    subtypes.add(subtype);
-                }
-            }
-            source.getCard().setSubtypes(List.copyOf(subtypes));
+            // "except ... he's a legendary Human Mercenary Villain creature" replaces the copied creature types.
+            source.getCard().setSubtypes(List.copyOf(copyEffect.additionalSubtypesOverride()));
         }
         if (!copyEffect.additionalSupertypesOverride().isEmpty()) {
             EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);

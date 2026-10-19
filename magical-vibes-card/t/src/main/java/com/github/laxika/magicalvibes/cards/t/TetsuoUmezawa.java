@@ -20,7 +20,7 @@ import java.util.List;
 public class TetsuoUmezawa extends Card {
 
     public TetsuoUmezawa() {
-        addEffect(EffectSlot.STATIC, new CantBeEnchantedByOtherAurasEffect());
+        addEffect(EffectSlot.STATIC, new CantBeEnchantedByOtherAurasEffect(true));
 
         var targetPredicate = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

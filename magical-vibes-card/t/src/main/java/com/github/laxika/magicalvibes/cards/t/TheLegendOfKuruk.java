@@ -19,7 +19,7 @@ public class TheLegendOfKuruk extends Card {
                 SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)));
         addEffect(EffectSlot.SAGA_CHAPTER_II,
                 SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

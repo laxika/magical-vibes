@@ -144,6 +144,14 @@ public class GraveyardTargetValidators {
                         "Target must be a card put into a graveyard from a library this turn");
             }
         }
+        if (effect.targetMilledThisTurn()) {
+            boolean milled = graveyardOwnerId != null
+                    && ctx.gameData().cardsMilledThisTurn
+                    .getOrDefault(graveyardOwnerId, Set.of()).contains(ctx.targetId());
+            if (!milled) {
+                throw new IllegalStateException("Target must be a card milled this turn");
+            }
+        }
         if (effect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()) {
             boolean discardedOrMilled = graveyardOwnerId != null
                     && (ctx.gameData().cardsDiscardedOrCycledThisTurn

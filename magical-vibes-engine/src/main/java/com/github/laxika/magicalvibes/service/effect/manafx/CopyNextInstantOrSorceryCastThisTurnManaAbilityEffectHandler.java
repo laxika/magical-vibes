@@ -23,6 +23,7 @@ public class CopyNextInstantOrSorceryCastThisTurnManaAbilityEffectHandler implem
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         int manaMultiplier, boolean creatureSource) {
         gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(playerId, 1, Integer::sum);
+        gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(playerId, 1, Integer::sum);
         log.info("Game {} - {} will copy their next instant or sorcery spell this turn",
                 gameData.id, playerId);
     }

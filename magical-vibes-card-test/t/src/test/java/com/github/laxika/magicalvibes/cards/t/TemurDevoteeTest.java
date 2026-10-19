@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -91,6 +93,8 @@ class TemurDevoteeTest extends BaseCardTest {
 
     @Test
     void activationLimitResetsOnOpponentsTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new TemurDevotee());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
@@ -101,8 +105,9 @@ class TemurDevoteeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, "BLUE");
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleListChoice(player1, "BLUE"));
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.ZoneToLibraryService;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,9 @@ public class EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         String cardName = entry.getCard().getName();
 
+        // Every player shuffles away first, so no draw replacement from a permanent that is still on
+        // the battlefield (Notion Thief) can apply to another player's draw.
+        Map<UUID, Integer> drawCounts = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             String playerName = gameData.playerIdToName.get(playerId);
 
@@ -58,6 +63,7 @@ public class EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffectHandler
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
             int total = handCount + permanentCount;
+            drawCounts.put(playerId, total);
             gameLogService.append(gameData, GameLog.text(playerName + " shuffles their hand ("
                     + LibraryShuffleSupport.pluralCards(handCount) + ") and " + permanentCount
                     + (permanentCount == 1 ? " permanent" : " permanents")
@@ -65,9 +71,11 @@ public class EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffectHandler
                     + " (" + cardName + ")."));
             log.info("Game {} - {} shuffles hand ({}) and permanents ({}) into library and draws {} ({})",
                     gameData.id, playerName, handCount, permanentCount, total, cardName);
+        }
 
-            for (int i = 0; i < total; i++) {
-                drawService.resolveDrawCard(gameData, playerId);
+        for (Map.Entry<UUID, Integer> draw : drawCounts.entrySet()) {
+            for (int i = 0; i < draw.getValue(); i++) {
+                drawService.resolveDrawCard(gameData, draw.getKey());
             }
         }
     }

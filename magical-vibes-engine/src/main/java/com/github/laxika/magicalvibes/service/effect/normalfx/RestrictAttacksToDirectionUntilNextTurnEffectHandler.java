@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AttackDirectionRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUntilNextTurnEffect;
@@ -22,6 +23,11 @@ public class RestrictAttacksToDirectionUntilNextTurnEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId != null) {
+            gameData.floatingEffects.removeIf(floating -> sourcePermanentId.equals(floating.sourcePermanentId())
+                    && floating.effect() instanceof AttackDirectionRestrictionEffect);
+        }
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(),
                 entry.getCard() == null ? "Attack Direction Restriction" : entry.getCard().getName(),

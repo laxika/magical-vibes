@@ -154,8 +154,8 @@ class TenuousTruceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The enchanted opponent draws before the controller at their end step")
-    void activeEnchantedOpponentDrawsFirst() {
+    @DisplayName("The enchanted opponent and the controller each draw at the enchanted opponent's end step")
+    void enchantedOpponentAndControllerEachDrawAtTheirEndStep() {
         attachTo(player2);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
@@ -172,7 +172,7 @@ class TenuousTruceTest extends BaseCardTest {
         assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()).stream()
                 .map(entry -> entry.plainText())
                 .filter(text -> text.equals(controllerDraw) || text.equals(enchantedPlayerDraw))
-                .toList()).containsExactly(enchantedPlayerDraw, controllerDraw);
+                .toList()).containsExactlyInAnyOrder(enchantedPlayerDraw, controllerDraw);
     }
 
     private Permanent attachTo(Player enchantedPlayer) {

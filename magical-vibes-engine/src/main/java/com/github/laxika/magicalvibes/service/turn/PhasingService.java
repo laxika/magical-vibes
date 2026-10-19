@@ -71,15 +71,7 @@ public class PhasingService {
             return;
         }
 
-        phasingIn.forEach((permanent, controllerId) -> {
-            phasedOutList(gameData, controllerId).remove(permanent);
-            permanent.setPhasedOutIndirectly(false);
-            gameData.playerBattlefields
-                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
-                    .add(permanent);
-            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
-            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
-        });
+        phasingIn.forEach((permanent, phasedOutUnder) -> phaseIn(gameData, permanent, phasedOutUnder));
 
         clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
         movePhasedOut(gameData, phasingOut);
@@ -104,15 +96,7 @@ public class PhasingService {
             return;
         }
 
-        phasingIn.forEach((permanent, controllerId) -> {
-            phasedOutList(gameData, controllerId).remove(permanent);
-            permanent.setPhasedOutIndirectly(false);
-            gameData.playerBattlefields
-                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
-                    .add(permanent);
-            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
-            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
-        });
+        phasingIn.forEach((permanent, phasedOutUnder) -> phaseIn(gameData, permanent, phasedOutUnder));
 
         clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
         movePhasedOut(gameData, phasingOut);
@@ -185,15 +169,7 @@ public class PhasingService {
 
         Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
                 ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
-        phasingIn.forEach((permanent, controllerId) -> {
-            phasedOutList(gameData, controllerId).remove(permanent);
-            permanent.setPhasedOutIndirectly(false);
-            gameData.playerBattlefields
-                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
-                    .add(permanent);
-            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
-            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
-        });
+        phasingIn.forEach((permanent, phasedOutUnder) -> phaseIn(gameData, permanent, phasedOutUnder));
 
         gameData.phasedOutUntilPlaneswalk.removeAll(targetIds);
         clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
@@ -270,7 +246,7 @@ public class PhasingService {
         }
 
         phaseOut(gameData, List.of(target));
-        if (source == null || source.getId() == null || !source.isTapped()
+        if (source == null || source.getId() == null
                 || findPhasedOutPermanent(gameData, target.getId()) == null) {
             return;
         }
@@ -289,15 +265,7 @@ public class PhasingService {
 
         Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
                 ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
-        phasingIn.forEach((permanent, controllerId) -> {
-            phasedOutList(gameData, controllerId).remove(permanent);
-            permanent.setPhasedOutIndirectly(false);
-            gameData.playerBattlefields
-                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
-                    .add(permanent);
-            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
-            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
-        });
+        phasingIn.forEach((permanent, phasedOutUnder) -> phaseIn(gameData, permanent, phasedOutUnder));
         clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
 
         if (!phasingIn.isEmpty()) {
@@ -317,17 +285,11 @@ public class PhasingService {
 
         Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
                 ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
-        phasingIn.forEach((permanent, controllerId) -> {
-            phasedOutList(gameData, controllerId).remove(permanent);
-            permanent.setPhasedOutIndirectly(false);
-            gameData.playerBattlefields
-                    .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
-                    .add(permanent);
+        phasingIn.forEach((permanent, phasedOutUnder) -> {
+            phaseIn(gameData, permanent, phasedOutUnder);
             if (gameData.tappedWhenSourceLeavesPhasesIn.remove(permanent.getId())) {
                 permanent.tap();
             }
-            preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
-            triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
         });
 
         if (!phasingIn.isEmpty()) {
@@ -335,6 +297,42 @@ public class PhasingService {
             gameLogService.append(gameData, GameLog.text(names + " phases in."));
             log.info("Game {} - {} phases in when source leaves", gameData.id, names);
         }
+    }
+
+    /**
+     * Phases one permanent back in. It leaves the phased-out list of the player it phased out under
+     * (CR 702.26a) and returns to the battlefield of whoever controls it now: a control effect that
+     * ended or began while it was phased out has already settled who that is (CR 613.1b), so the
+     * permanent arrives under that player and counts as a new control change (CR 302.6).
+     * Phasing itself never changes control, so without such an effect it returns to the same player.
+     */
+    private void phaseIn(GameData gameData, Permanent permanent, UUID phasedOutUnder) {
+        phasedOutList(gameData, phasedOutUnder).remove(permanent);
+        permanent.setPhasedOutIndirectly(false);
+        UUID controllerId = phaseInController(gameData, permanent, phasedOutUnder);
+        gameData.playerBattlefields
+                .computeIfAbsent(controllerId, id -> gameData.newBattlefieldList())
+                .add(permanent);
+        if (!controllerId.equals(phasedOutUnder)) {
+            permanent.recordControlChange();
+            permanent.setSummoningSick(true);
+            UUID ownerId = permanent.getOriginalCard().getOwnerId();
+            if (controllerId.equals(gameData.stolenCreatures.get(permanent.getId()))
+                    || controllerId.equals(ownerId)) {
+                gameData.stolenCreatures.remove(permanent.getId());
+            }
+        }
+        preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
+        triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
+    }
+
+    private UUID phaseInController(GameData gameData, Permanent permanent, UUID phasedOutUnder) {
+        if (gameData.newestControlEffectFor(permanent.getId()) == null
+                && !gameData.stolenCreatures.containsKey(permanent.getId())) {
+            return phasedOutUnder;
+        }
+        UUID derived = gameData.deriveControllerOf(permanent.getId());
+        return derived != null && gameData.playerBattlefields.containsKey(derived) ? derived : phasedOutUnder;
     }
 
     /**

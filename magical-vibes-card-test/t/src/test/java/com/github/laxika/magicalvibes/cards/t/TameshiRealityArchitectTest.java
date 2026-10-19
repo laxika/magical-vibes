@@ -136,6 +136,7 @@ class TameshiRealityArchitectTest extends BaseCardTest {
     void returnsAZeroManaArtifactWithXZero() {
         FountainOfYouth fountain = new FountainOfYouth();
         harness.setGraveyard(player1, List.of(fountain));
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Plains()));
         harness.addToBattlefield(player1, new TameshiRealityArchitect());
         harness.addToBattlefield(player1, new Plains());
@@ -198,6 +199,7 @@ class TameshiRealityArchitectTest extends BaseCardTest {
     void drawsForAnOpponentsNoncreaturePermanentReturningToHand() {
         harness.setLibrary(player1, List.of(new Plains()));
         harness.setHand(player1, List.of(new Boomerang()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addToBattlefield(player1, new TameshiRealityArchitect());
         Permanent prototype = harness.addToBattlefieldAndReturn(player2, new MoonsnarePrototype());

@@ -12,8 +12,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -217,9 +222,13 @@ class TheLegendOfKyoshiTest extends BaseCardTest {
     void chapterThreeReturnsAnOpponentsSagaUnderTheAbilityControllersControl() {
         TheLegendOfKyoshi card = new TheLegendOfKyoshi();
         card.setOwnerId(player2.getId());
-        Permanent saga = harness.addToBattlefieldAndReturn(player1, card);
-        saga.setCounterCount(CounterType.LORE, 2);
+        Permanent saga = harness.addToBattlefieldAndReturn(player2, card);
         gd.stolenCreatures.put(saga.getId(), player2.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), saga,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
+        saga.setCounterCount(CounterType.LORE, 2);
 
         advanceToNextChapter();
         harness.passBothPriorities();

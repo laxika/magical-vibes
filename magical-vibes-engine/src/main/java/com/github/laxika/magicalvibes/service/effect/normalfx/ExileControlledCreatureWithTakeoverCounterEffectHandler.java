@@ -64,10 +64,13 @@ public class ExileControlledCreatureWithTakeoverCounterEffectHandler implements 
             return;
         }
 
-        Card card = permanent.getCard();
+        // A copy's physical card is not the face it shows, so the counter goes on what actually moves.
+        List<Card> leavingCards = permanent.cardsLeavingBattlefield();
         exileSupport.exilePermanentAndLog(gameData, permanent, context.sourceCard().getName());
-        if (gameData.findExiledCard(card.getId()) != null) {
-            gameData.exiledCardsWithTakeoverCounters.add(card.getId());
+        for (Card card : leavingCards) {
+            if (gameData.findExiledCard(card.getId()) != null) {
+                gameData.exiledCardsWithTakeoverCounters.add(card.getId());
+            }
         }
     }
 }

@@ -46,6 +46,7 @@ class TeysaOfTheGhostCouncilTest extends BaseCardTest {
         assertThat(findTeysa(player1)).isNull();
 
         runUpkeepOf(player1);
+        harness.passBothPriorities();
 
         Permanent returned = findTeysa(player1);
         assertThat(returned).isNotNull();

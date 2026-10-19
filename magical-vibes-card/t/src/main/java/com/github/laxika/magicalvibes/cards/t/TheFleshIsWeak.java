@@ -25,7 +25,7 @@ public class TheFleshIsWeak extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(
-                -1, -1, GrantScope.ALL_CREATURES,
+                -1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
     }
 }

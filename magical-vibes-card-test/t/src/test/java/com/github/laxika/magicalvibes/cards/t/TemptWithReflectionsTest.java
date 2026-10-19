@@ -73,6 +73,7 @@ class TemptWithReflectionsTest extends BaseCardTest {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.setLibrary(player1, List.of(new BalefulStrix(), new BalefulStrix()));
         harness.setLibrary(player2, List.of(new BalefulStrix()));
+        harness.setHand(player2, List.of());
 
         castTemptWithReflections(target.getId());
         harness.handleMayAbilityChosen(player2, true);

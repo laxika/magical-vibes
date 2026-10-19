@@ -55,6 +55,7 @@ class TheElderDragonWarTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
         harness.handleXValueChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(player1Discard);

@@ -24,6 +24,7 @@ class TheHauntOfHightowerTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(haunt)));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())

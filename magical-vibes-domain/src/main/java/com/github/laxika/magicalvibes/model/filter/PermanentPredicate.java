@@ -41,6 +41,7 @@ public sealed interface PermanentPredicate permits
         PermanentControlledByDefendingPlayerPredicate,
         PermanentControlledBySourceControllerPredicate,
         PermanentControlledBySourceChosenPlayerPredicate,
+        ControllerActivatedArtifactAbilityThisTurnPredicate,
         PermanentControlledContinuouslySinceBeginningOfTurnPredicate,
         PermanentCouldProduceManaPredicate,
         PermanentControllerControlsPermanentPredicate,

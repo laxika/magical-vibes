@@ -178,8 +178,8 @@ class TheMasterMesmeristTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player2);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(master.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -189,11 +189,11 @@ class TheMasterMesmeristTest extends BaseCardTest {
         Permanent master = addCreatureReady(player1, new TheMasterMesmerist());
         harness.setHand(player1, List.of(new Unsummon()));
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         Permanent attacker = addCreatureReady(player1, new FurtiveHomunculus());
         attacker.setAttacking(true);
 
         resolveCombat();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, master.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

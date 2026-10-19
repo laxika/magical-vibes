@@ -42,13 +42,21 @@ public class BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffectHandl
         }
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        StackEntry triggeringSpell = gameQueryService.findStackEntryByCardId(gameData, triggeringCardId);
-        if (target == null || triggeringSpell == null) {
-            log.info("Game {} - Triggering-spell copy target or spell no longer exists", gameData.id);
+        if (target == null) {
+            log.info("Game {} - Triggering-spell copy target no longer exists", gameData.id);
             return;
         }
 
-        Card spellCard = triggeringSpell.getCard();
+        // The spell may already have left the stack (countered in response); its last known card is
+        // still copied, so the copy uses the card wherever it now is.
+        StackEntry triggeringSpell = gameQueryService.findStackEntryByCardId(gameData, triggeringCardId);
+        Card spellCard = triggeringSpell != null
+                ? triggeringSpell.getCard()
+                : gameQueryService.findCardById(gameData, triggeringCardId);
+        if (spellCard == null) {
+            log.info("Game {} - Triggering spell no longer exists", gameData.id);
+            return;
+        }
         if (spellCard.isCantBeCopied()) {
             return;
         }

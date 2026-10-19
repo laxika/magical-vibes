@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,15 @@ public class PutLandsFromHandSupport {
      * interaction was begun (resolution must pause), {@code false} when nobody has a land in hand.
      */
     public boolean beginNextChoice(GameData gameData, List<UUID> orderedPlayerIds, String cardName) {
+        return beginNextChoice(gameData, orderedPlayerIds, cardName, Map.of());
+    }
+
+    /**
+     * As {@link #beginNextChoice(GameData, List, String)}, carrying the lands earlier players already
+     * chose so they are applied only once every player has chosen.
+     */
+    public boolean beginNextChoice(GameData gameData, List<UUID> orderedPlayerIds, String cardName,
+                                   Map<UUID, List<UUID>> choicesSoFar) {
         for (int i = 0; i < orderedPlayerIds.size(); i++) {
             UUID playerId = orderedPlayerIds.get(i);
             List<UUID> landCardIds = landCardIds(gameData, playerId);
@@ -47,7 +58,8 @@ public class PutLandsFromHandSupport {
             }
             List<UUID> remaining = new ArrayList<>(orderedPlayerIds.subList(i + 1, orderedPlayerIds.size()));
             interactionHandlerRegistry.begin(gameData,
-                    new PendingInteraction.PutLandsFromHandChoice(playerId, landCardIds, remaining, cardName));
+                    new PendingInteraction.PutLandsFromHandChoice(playerId, landCardIds, remaining, cardName,
+                            choicesSoFar));
             log.info("Game {} - Awaiting {} to put any number of {} lands onto the battlefield ({})",
                     gameData.id, gameData.playerIdToName.get(playerId), landCardIds.size(), cardName);
             return true;
@@ -62,6 +74,16 @@ public class PutLandsFromHandSupport {
             return List.of();
         }
         return hand.stream().filter(card -> card.hasType(CardType.LAND)).map(Card::getId).toList();
+    }
+
+    /**
+     * Applies every player's chosen lands once the whole round of choices is complete, in the order
+     * the choices were made.
+     */
+    public void applyChoices(GameData gameData, Map<UUID, List<UUID>> chosenByPlayer, String cardName) {
+        for (Map.Entry<UUID, List<UUID>> choice : new LinkedHashMap<>(chosenByPlayer).entrySet()) {
+            applyPutChoice(gameData, choice.getKey(), choice.getValue(), cardName);
+        }
     }
 
     /**

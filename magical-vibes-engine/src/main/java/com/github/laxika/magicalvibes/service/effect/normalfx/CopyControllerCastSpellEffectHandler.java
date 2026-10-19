@@ -132,7 +132,8 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), castingPlayerId,
                     copyEntry.getTargetableId(), 0);
         } else if (e.mayChooseNewTargets()
-                && (copyEntry.getTargetId() != null || copyEntry.getTargetIds().size() == 1)) {
+                && (copyEntry.getTargetId() != null || copyEntry.getTargetIds().size() == 1
+                || (copyEntry.getTargetCardIds() != null && copyEntry.getTargetCardIds().size() == 1))) {
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     castingPlayerId,

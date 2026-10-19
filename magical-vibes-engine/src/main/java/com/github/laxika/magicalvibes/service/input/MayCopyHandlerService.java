@@ -368,7 +368,8 @@ public class MayCopyHandlerService {
                     // Invalid target for copied spell filter; skip.
                 }
             }
-        } else if (EffectResolution.needsTarget(copyEntry.getEffectsToResolve(), List.of(), false, false)) {
+        } else if (EffectResolution.needsTarget(copyEntry.getEffectsToResolve(), List.of(),
+                copiedCard.isAuraThatRequiresAttachment(), copiedCard.isEnchantPlayer())) {
             Zone targetZone = copyEntry.getTargetZone() != null ? copyEntry.getTargetZone() : Zone.BATTLEFIELD;
 
             List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);

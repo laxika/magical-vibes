@@ -20,13 +20,13 @@ import java.util.Set;
 public class ThallidShellDweller extends Card {
 
     public ThallidShellDweller() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.FUNGUS));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.SPORE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
-                        new RemoveCounterFromSourceCost(3, CounterType.FUNGUS),
+                        new RemoveCounterFromSourceCost(3, CounterType.SPORE),
                         new CreateTokenEffect(
                                 "Saproling",
                                 1,

@@ -77,7 +77,7 @@ class TerraMagicalAdeptTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(terra.getCounterCount(CounterType.LORE)).isEqualTo(1);
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }

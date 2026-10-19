@@ -26,7 +26,8 @@ public class TheLegendOfKyoshi extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_II, SequenceEffect.of(
                 new EarthbendTargetLandEffect(new CardsInHand(CountScope.CONTROLLER)),
                 new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET)));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

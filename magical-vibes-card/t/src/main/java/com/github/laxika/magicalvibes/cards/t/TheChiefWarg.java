@@ -19,7 +19,7 @@ import java.util.List;
 public class TheChiefWarg extends Card {
 
     public TheChiefWarg() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.atTriggerTime(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4)

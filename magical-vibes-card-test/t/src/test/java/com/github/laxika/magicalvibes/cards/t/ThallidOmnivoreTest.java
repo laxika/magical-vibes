@@ -28,13 +28,13 @@ class ThallidOmnivoreTest extends BaseCardTest {
         addThallidOmnivoreReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Thallid Omnivore");
     }
 
     @Test
-    @DisplayName("Sacrificing a Saproling via ability 0 gives +2/+2 and 2 life")
+    @DisplayName("Sacrificing a Saproling gives +2/+2 and 2 life")
     void sacrificeSaprolingGivesBoostAndLifeGain() {
         addThallidOmnivoreReady(player1);
         addSaprolingToken();
@@ -43,6 +43,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
         int lifeBefore = harness.getGameData().getLife(player1.getId());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Saproling"));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -57,7 +58,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrificing a non-Saproling creature via ability 1 gives +2/+2 but no life gain")
+    @DisplayName("Sacrificing a non-Saproling creature gives +2/+2 but no life gain")
     void sacrificeNonSaprolingGivesBoostNoLifeGain() {
         addThallidOmnivoreReady(player1);
         harness.addToBattlefield(player1, new BalothGorger());
@@ -65,7 +66,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().getLife(player1.getId());
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -80,13 +81,13 @@ class ThallidOmnivoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot sacrifice Thallid Omnivore to its own second ability (excludeSelf)")
+    @DisplayName("Cannot sacrifice Thallid Omnivore to its own ability")
     void cannotSacrificeItself() {
         addThallidOmnivoreReady(player1);
         harness.addToBattlefield(player1, new BalothGorger());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
 
         harness.assertOnBattlefield(player1, "Thallid Omnivore");
         harness.assertInGraveyard(player1, "Baloth Gorger");
@@ -99,7 +100,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BalothGorger());
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 1, null, null)
+                harness.activateAbility(player1, 0, null, null)
         ).isInstanceOf(IllegalStateException.class);
     }
 
@@ -110,7 +111,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BalothGorger());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
@@ -135,9 +136,10 @@ class ThallidOmnivoreTest extends BaseCardTest {
         int lifeBefore = harness.getGameData().getLife(player1.getId());
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Saproling"));
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Baloth Gorger"));
         harness.passBothPriorities();
 
@@ -158,7 +160,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Saproling"));
 
         harness.assertNotOnBattlefield(player1, "Saproling");
@@ -197,7 +199,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BalothGorger());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player2, "Baloth Gorger");
     }
@@ -211,6 +213,7 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBefore = gd.getLife(player1.getId());
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Saproling"));
 
         harness.setHand(player2, List.of(new CastDown()));
         harness.addMana(player2, ManaColor.BLACK, 1);

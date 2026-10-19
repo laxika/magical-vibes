@@ -100,7 +100,7 @@ class TakeTheBaitTest extends BaseCardTest {
         gd.combatPhasesThisTurn = 1;
         harness.clearPriorityPassed();
         harness.castFromHand(player2, new TakeTheBait(), "{2}{R}{W}");
-        harness.passBothPriorities();
+        harness.withAutoStop(step, harness::passBothPriorities);
 
         if (step == TurnStep.BEGINNING_OF_COMBAT) {
             harness.passUntil(player1, TurnStep.END_OF_COMBAT);
@@ -124,7 +124,7 @@ class TakeTheBaitTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.castFromHand(player2, new TakeTheBait(), "{2}{R}{W}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
         assertThat(attacker.isTapped()).isFalse();
         assertThat(attacker.isAttacking()).isTrue();

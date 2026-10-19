@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class TerraEternal extends Card {
 
     public TerraEternal() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_LANDS));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_LANDS_INCLUDING_SELF));
     }
 }

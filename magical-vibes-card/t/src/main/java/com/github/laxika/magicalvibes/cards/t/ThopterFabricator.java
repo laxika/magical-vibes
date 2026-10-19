@@ -7,12 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -22,10 +20,9 @@ import java.util.Set;
 public class ThopterFabricator extends Card {
 
     public ThopterFabricator() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new OncePerTurnTriggerEffect(new ConditionalEffect(
-                new ControllerDrewAtLeastCardsThisTurn(2),
+        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new NthCardDrawTriggerEffect(2,
                 new CreateTokenEffect("Thopter", 1, 1, null,
-                        List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)))));
+                        List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

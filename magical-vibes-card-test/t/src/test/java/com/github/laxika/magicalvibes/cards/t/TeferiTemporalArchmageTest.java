@@ -185,14 +185,14 @@ class TeferiTemporalArchmageTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(pilgrim.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
         harness.performUntapStep(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(pilgrim.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }

@@ -26,7 +26,7 @@ public class GrantInstantSorceryCopyUntilEndOfTurnEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.playersWithSpellCopyUntilEndOfTurn.add(controllerId);
+        gameData.spellCopyGrantsUntilEndOfTurn.merge(controllerId, 1, Integer::sum);
 
         String logMsg = gameData.playerIdToName.get(controllerId)
                 + "'s instant and sorcery spells will be copied for the rest of the turn.";

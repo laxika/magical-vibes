@@ -30,6 +30,8 @@ import java.util.Set;
 public class TheWarGames extends Card {
 
     private static final PermanentPredicate WARRIOR = new PermanentHasSubtypePredicate(CardSubtype.WARRIOR);
+    private static final PermanentPredicate WARRIOR_CREATURE = new PermanentAllOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(), WARRIOR));
     private static final PermanentPredicate NONTOKEN_CREATURE = new PermanentAllOfPredicate(List.of(
             new PermanentIsCreaturePredicate(),
             new PermanentNotPredicate(new PermanentIsTokenPredicate()),
@@ -43,7 +45,7 @@ public class TheWarGames extends Card {
                 ),
                 new GoadCreatedPermanentsUntilSourceLeavesEffect()));
         PutCounterOnEachMatchingPermanentEffect warriorCounter = new PutCounterOnEachMatchingPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, 1, WARRIOR, EachPermanentScope.ALL_PLAYERS);
+                CounterType.PLUS_ONE_PLUS_ONE, 1, WARRIOR_CREATURE, EachPermanentScope.ALL_PLAYERS);
         addEffect(EffectSlot.SAGA_CHAPTER_II, warriorCounter);
         addEffect(EffectSlot.SAGA_CHAPTER_III, warriorCounter);
         addEffect(EffectSlot.SAGA_CHAPTER_IV, new MayEffect(

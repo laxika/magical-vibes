@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class ThopterArchitect extends Card {
 
     public ThopterArchitect() {
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, new PermanentIsCreaturePredicate()));
     }
 }

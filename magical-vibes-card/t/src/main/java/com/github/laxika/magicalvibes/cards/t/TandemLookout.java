@@ -28,7 +28,7 @@ public class TandemLookout extends Card {
         // opponent, draw a card."
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceIsPaired(),
-                new GrantTriggeredAbilityEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+                new GrantTriggeredAbilityEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                         new DrawCardEffect(1), GrantScope.SELF_AND_PAIRED)));
     }
 }

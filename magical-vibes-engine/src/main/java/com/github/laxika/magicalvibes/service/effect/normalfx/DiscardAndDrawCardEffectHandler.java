@@ -39,6 +39,13 @@ public class DiscardAndDrawCardEffectHandler implements NormalEffectHandlerBean 
             }
             return;
         }
+        if (!e.drawRegardless() && hand.size() < e.discardAmount()) {
+            // An "if you do" discard that the hand can't cover in full is not paid, so nothing is
+            // discarded and the draw never happens.
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
+                    + " can't discard " + e.discardAmount() + " cards."));
+            return;
+        }
         gameData.discardCausedByOpponent = false;
         if (e.random()) {
             playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId,

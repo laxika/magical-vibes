@@ -25,7 +25,7 @@ public class TerritoryForge extends Card {
                 )),
                 "Target must be an artifact or land"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new WasCast(), new ExileTargetPermanentAndTrackWithSourceEffect()));
+                new ConditionalEffect(new WasCast(true), new ExileTargetPermanentAndTrackWithSourceEffect()));
 
         addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfExiledCardsEffect());
     }

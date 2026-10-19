@@ -42,6 +42,9 @@ public class BattlefieldEntryBatchSupport {
     @Autowired
     @Lazy
     private BattlefieldPlacementService battlefieldPlacementService;
+    @Autowired
+    @Lazy
+    private SagaChapterService sagaChapterService;
 
     public void begin(GameData gameData, List<BattlefieldEntryCard> cards) {
         begin(gameData, cards, List.of());
@@ -301,6 +304,10 @@ public class BattlefieldEntryBatchSupport {
                     gameLogService.append(gameData, permanent.isFaceDown()
                             ? GameLog.text("A face-down card enters the battlefield.")
                             : GameLog.cardThen(permanent.getCard(), " enters the battlefield."));
+                    if (!permanent.isFaceDown() && permanent.getCard().isSaga()) {
+                        sagaChapterService.initializeSaga(gameData, permanent, permanent.getCard(),
+                                candidate.controllerId());
+                    }
                 }
             }
         } finally {

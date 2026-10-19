@@ -32,7 +32,7 @@ public class TheMysticalArchive extends Card {
                         ManaSpendRestriction.OUTSIDE_STARTING_DECK_SPELL_ONLY, true)),
                 "{1}, {T}: Add two mana in any combination of colors. Spend this mana only to cast spells that aren't from your starting deck."));
         addActivatedAbility(new ActivatedAbility(true, "{2}",
-                List.of(new PutCardExiledWithSourceIntoHandEffect()),
+                List.of(PutCardExiledWithSourceIntoHandEffect.returningToOwner()),
                 "{2}, {T}: Put a card exiled with this land into its owner's hand."));
     }
 }

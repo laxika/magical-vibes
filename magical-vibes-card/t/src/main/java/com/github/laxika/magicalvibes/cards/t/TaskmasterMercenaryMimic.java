@@ -18,7 +18,7 @@ public class TaskmasterMercenaryMimic extends Card {
                 EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect(
                         "Taskmaster, Mercenary Mimic",
-                        Set.of(CardSubtype.HUMAN, CardSubtype.VILLAIN),
+                        Set.of(CardSubtype.HUMAN, CardSubtype.MERCENARY, CardSubtype.VILLAIN),
                         Set.of(CardType.CREATURE),
                         Set.of(CardSupertype.LEGENDARY),
                         Set.of()));

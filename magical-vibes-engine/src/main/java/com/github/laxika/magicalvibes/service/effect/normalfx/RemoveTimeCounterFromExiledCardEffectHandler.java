@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
@@ -24,11 +25,14 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
 
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final GameQueryService gameQueryService;
 
     public RemoveTimeCounterFromExiledCardEffectHandler(GameLogService gameLogService,
-            @Lazy TriggerCollectionService triggerCollectionService) {
+            @Lazy TriggerCollectionService triggerCollectionService,
+            GameQueryService gameQueryService) {
         this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
+        this.gameQueryService = gameQueryService;
     }
 
     @Override
@@ -97,6 +101,12 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
     }
 
     public void queueCastTrigger(GameData gameData, ExiledCardEntry exiledEntry, boolean suspendHaste) {
+        // A suspend cast is still a cast: an owner locked to sorcery timing by an opponent's static
+        // effect (Teferi, Mage of Zhalfir) is never offered it outside sorcery timing, so the card stays exiled.
+        if (suspendHaste && gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(
+                gameData, exiledEntry.ownerId())) {
+            return;
+        }
         StackEntry castTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                 exiledEntry.card(), exiledEntry.ownerId(), exiledEntry.card().getName() + "'s casting ability",
                 new ArrayList<>(List.of(new MayEffect(new CastExiledCardWithoutPayingManaCostEffect(

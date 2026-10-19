@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
@@ -22,7 +23,7 @@ public class TheCauldronOfEternity extends Card {
 
     public TheCauldronOfEternity() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
-                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
+                new Scaled(new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER), 2)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect());
 

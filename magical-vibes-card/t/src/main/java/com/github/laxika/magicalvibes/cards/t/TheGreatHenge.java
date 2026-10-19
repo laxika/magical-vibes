@@ -36,7 +36,7 @@ public class TheGreatHenge extends Card {
                 "{T}: Add {G}{G}. You gain 2 life."
         ));
 
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, SequenceEffect.of(
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, SequenceEffect.of(
                 new PutCounterOnReferencedPermanentEffect(
                         PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect()

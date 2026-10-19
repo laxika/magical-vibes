@@ -8,12 +8,17 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Tempting offer that offers each opponent the same token creation; an opponent who accepts also
- * gives the ability controller another batch.
+ * Tempting offer that offers each opponent the same token creation. Opponents decide in turn order;
+ * once every opponent has decided, each opponent who accepted creates their tokens and the ability
+ * controller creates another batch for each of them.
+ *
+ * <p>{@code acceptedOpponentIds} records the opponents who have accepted so far, so their batches
+ * are created together after the last decision rather than as each opponent answers.</p>
  */
 public record TemptingOfferCreateTokensEffect(
         CreateTokenEffect tokenEffect,
         List<UUID> remainingOpponentIds,
+        List<UUID> acceptedOpponentIds,
         UUID abilityControllerId,
         boolean controllerCreatesFirst
 ) implements TokenCreatingEffect {
@@ -23,15 +28,16 @@ public record TemptingOfferCreateTokensEffect(
         if (remainingOpponentIds != null) {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
         }
+        acceptedOpponentIds = acceptedOpponentIds == null ? List.of() : List.copyOf(acceptedOpponentIds);
     }
 
     public TemptingOfferCreateTokensEffect(CreateTokenEffect tokenEffect) {
-        this(tokenEffect, null, null, true);
+        this(tokenEffect, null, List.of(), null, true);
     }
 
     public TemptingOfferCreateTokensEffect(CreateTokenEffect tokenEffect,
                                            boolean controllerCreatesFirst) {
-        this(tokenEffect, null, null, controllerCreatesFirst);
+        this(tokenEffect, null, List.of(), null, controllerCreatesFirst);
     }
 
     @Override

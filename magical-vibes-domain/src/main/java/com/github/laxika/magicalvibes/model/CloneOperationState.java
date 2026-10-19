@@ -39,6 +39,8 @@ public class CloneOperationState {
     // Altered Ego: "except it enters with X additional +1/+1 counters" — only when copying.
     public DynamicAmount additionalPlusOnePlusOneCounters;
     public Set<Keyword> additionalKeywordsOverride = Set.of();
+    // The Fourteenth Doctor: a copy from a graveyard that "gains haste until end of turn" on entry.
+    public boolean grantHasteUntilEndOfTurn;
     public Set<CardColor> additionalColorsOverride = Set.of();
     public boolean additionalCreatureOnlyCharacteristics;
     // Phantasmal Image: "except it's an Illusion in addition to its other types and it has ..." — only when copying.

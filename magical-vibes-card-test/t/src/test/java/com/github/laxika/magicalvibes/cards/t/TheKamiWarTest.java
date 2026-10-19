@@ -200,6 +200,7 @@ class TheKamiWarTest extends BaseCardTest {
         Card returned = new HillGiant();
         Card land = new Forest();
         harness.setGraveyard(player1, List.of(returned, land));
+        harness.setHand(player1, List.of());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         resolveAllTriggers();
@@ -222,6 +223,7 @@ class TheKamiWarTest extends BaseCardTest {
         kami.setTransformed(true);
         Card land = new Forest();
         harness.setGraveyard(player1, List.of(land));
+        harness.setHand(player1, List.of());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         resolveAllTriggers();

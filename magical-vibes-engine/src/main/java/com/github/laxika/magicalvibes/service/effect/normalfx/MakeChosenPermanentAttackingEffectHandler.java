@@ -75,6 +75,11 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
             }
         });
 
+        if (validPlayerIds.isEmpty() && permanentTargetIds.isEmpty()) {
+            // Nothing legal to attack (e.g. the only attacked object is a battle this player protects),
+            // so the permanent does not attack and there is no choice to offer.
+            return;
+        }
         if (validPlayerIds.size() + permanentTargetIds.size() == 1) {
             permanent.enterAttacking(true);
             permanent.setAttackedOrBlockedSinceLastUpkeep(true);

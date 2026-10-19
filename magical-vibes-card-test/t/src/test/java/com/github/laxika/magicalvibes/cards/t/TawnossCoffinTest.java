@@ -237,13 +237,13 @@ class TawnossCoffinTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         activate(coffin, creature);
 
-        harness.performUntapStep(player1);
+        untapStepWithMayPrompt(player1);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(coffin.isTapped()).isTrue();
         assertThat(findPermanent(player2, creature.getCard().getId())).isNull();
 
-        harness.performUntapStep(player1);
+        untapStepWithMayPrompt(player1);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -299,12 +299,18 @@ class TawnossCoffinTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, coffin.getId());
         harness.handleMayAbilityChosen(player1, true);
         assertThat(coffin.isTapped()).isTrue();
-        harness.performUntapStep(player1);
+        untapStepWithMayPrompt(player1);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(findByCardId(player2, creature.getCard().getId()).isTapped()).isTrue();
     }
+
+    private void untapStepWithMayPrompt(Player player) {
+        harness.performUntapStep(player);
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+    }
+
     private void activateCoffin(Permanent coffin, UUID targetId) {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, battlefieldIndex(coffin), null, targetId);

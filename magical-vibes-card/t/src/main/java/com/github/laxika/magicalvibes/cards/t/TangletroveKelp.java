@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,6 +25,9 @@ import java.util.Set;
 public class TangletroveKelp extends Card {
 
     public TangletroveKelp() {
+        // Ward {2}.
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+
         addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new AnimatePermanentsEffect(
                 new Fixed(6), new Fixed(6),
                 List.of(CardSubtype.PLANT),

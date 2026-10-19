@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
@@ -33,13 +34,13 @@ public class TheThirdDoctor extends Card {
 
         addEffect(EffectSlot.STATIC,
                 new DynamicStaticBoostEffect(noncreatureTokens, noncreatureTokens, GrantScope.SELF));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Clue token", CreateTokenEffect.ofClueToken(1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Food token", CreateTokenEffect.ofFoodToken(1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Treasure token", CreateTokenEffect.ofTreasureToken(1))
-        )));
+        ))));
     }
 }

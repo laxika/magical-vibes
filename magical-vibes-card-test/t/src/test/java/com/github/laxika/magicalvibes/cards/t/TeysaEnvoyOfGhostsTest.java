@@ -117,7 +117,8 @@ class TeysaEnvoyOfGhostsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        resolveCombat(player1);
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
         assertThat(gd.stack).isNotEmpty();
         harness.castAndResolveInstant(player1, 0, attacker.getId());
         harness.assertInGraveyard(player1, "Grizzly Bears");

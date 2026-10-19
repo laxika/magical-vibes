@@ -32,7 +32,7 @@ public class TatoFarmer extends Card {
                         .filter(new CardTypePredicate(CardType.LAND))
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .targetGraveyard(true)
-                        .targetPutIntoGraveyardFromLibraryThisTurn(true)
+                        .targetMilledThisTurn(true)
                         .enterTapped(true)
                         .build()),
                 "Put target land card in a graveyard that was milled this turn onto the battlefield tapped under your control."));

@@ -21,6 +21,7 @@ public class TheMaelstrom extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

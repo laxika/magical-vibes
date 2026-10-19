@@ -48,8 +48,6 @@ public class TemptingOfferCopySpellEffectHandler implements NormalEffectHandlerB
             return;
         }
 
-        copyFor(gameData, entry, spellSnapshot, controllerId);
-
         List<UUID> opponents = offer.remainingOpponentIds() == null
                 ? new ArrayList<>(AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
                         .apnapOpponents(gameData, controllerId))
@@ -57,7 +55,12 @@ public class TemptingOfferCopySpellEffectHandler implements NormalEffectHandlerB
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (!opponents.isEmpty()) {
             promptNext(gameData, entry.getCard(), new TemptingOfferCopySpellEffect(
-                    spellSnapshot, List.copyOf(opponents), controllerId));
+                    spellSnapshot, List.copyOf(opponents), controllerId, offer.controllerCopies()));
+            return;
+        }
+
+        for (int i = 0; i < offer.controllerCopies(); i++) {
+            copyFor(gameData, entry, spellSnapshot, controllerId);
         }
     }
 
@@ -73,20 +76,27 @@ public class TemptingOfferCopySpellEffectHandler implements NormalEffectHandlerB
                 gameData.playerIdToName.get(opponentId), sourceCard.getName());
     }
 
+    /**
+     * Applies one opponent's answer: an accepting opponent copies the spell now (and answers the
+     * new-target prompt that comes with it), and the offer then continues with the next opponent, or with
+     * the controller's copies once every opponent has decided, after those prompts have been answered.
+     */
     public void completeChoice(GameData gameData, PendingMayAbility ability,
                                TemptingOfferCopySpellEffect effect, boolean accepted) {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
+        int controllerCopies = effect.controllerCopies();
         if (accepted && entry != null && effect.spellSnapshot() != null) {
             copyFor(gameData, entry, effect.spellSnapshot(), ability.controllerId());
-            copyFor(gameData, entry, effect.spellSnapshot(), effect.abilityControllerId());
+            controllerCopies++;
         }
 
         List<UUID> remaining = new ArrayList<>(effect.remainingOpponentIds());
         remaining.remove(ability.controllerId());
         remaining.removeIf(id -> !gameData.playerIds.contains(id));
-        if (!remaining.isEmpty()) {
-            promptNext(gameData, ability.sourceCard(), new TemptingOfferCopySpellEffect(
-                    effect.spellSnapshot(), List.copyOf(remaining), effect.abilityControllerId()));
+        if (entry != null) {
+            entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(
+                    new TemptingOfferCopySpellEffect(effect.spellSnapshot(), List.copyOf(remaining),
+                            effect.abilityControllerId(), controllerCopies)));
         }
     }
 

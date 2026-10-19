@@ -253,6 +253,15 @@ public record CopyControllerCastSpellOnSpellCastEffect(
                 firstSpellFilters, beforeCopyEffect, null, null, false, false, removedSupertypes);
     }
 
+    /** Free mandatory token copy of every matching spell (no "first spell" gate), with copy exceptions. */
+    public static CopyControllerCastSpellOnSpellCastEffect tokenCopyWithExceptions(
+            CardPredicate spellFilter, Set<CardSupertype> removedSupertypes, boolean mayChooseNewTargets) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                spellFilter, null, null, null, null, Set.of(), null,
+                false, Set.of(), true, mayChooseNewTargets, false, false, null,
+                List.of(), null, null, null, false, false, removedSupertypes);
+    }
+
     /** Free mandatory copy trigger gated by a source condition checked when the spell is cast. */
     public static CopyControllerCastSpellOnSpellCastEffect withTriggerCondition(
             CardPredicate spellFilter, Condition triggerCondition) {

@@ -46,6 +46,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  ({@code CreateTokenCopyOfTargetPermanentEffect}) knows which creature to copy. Checked in
      *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. Used by Minion Reflector. */
     ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever a nontoken creature enters under your control" (no "another"): also triggers when the
+     *  source is a nontoken creature as it enters (CR 603.6a), e.g. The Great Henge made a creature by
+     *  March of the Machines. Checked in {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}
+     *  without the self-exclusion. */
+    ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     /** "Whenever a nontoken creature enters under your control" for an Eminence ability whose
      *  source card is in the controller's command zone. Checked in
      *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. */
@@ -887,6 +892,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever the controller surveils, while this card is in the controller's
      *  graveyard. Checked per-card inside {@code TriggerCollectionService.checkSurveilTriggers}. */
     GRAVEYARD_ON_CONTROLLER_SURVEILS,
+    /** Triggers whenever the controller conjures one or more cards, while this card is in the
+     *  controller's graveyard. Checked per-card inside {@code TriggerCollectionService.checkConjureTriggers}. */
+    GRAVEYARD_ON_CONTROLLER_CONJURES,
     /** Triggers whenever the controller rolls a natural 20, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20,
     /** Triggers whenever the controller activates an exhaust ability, while this card is in the

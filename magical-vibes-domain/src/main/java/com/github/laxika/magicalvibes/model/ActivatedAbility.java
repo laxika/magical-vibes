@@ -32,7 +32,7 @@ public class ActivatedAbility {
 
     /** Special-action payments share the action menu but are not activated abilities. */
     public boolean isSpecialAction() {
-        return discardSourceAsSpecialAction || effects.stream().anyMatch(CardEffect::isSpecialAction)
+        return specialAction || discardSourceAsSpecialAction || effects.stream().anyMatch(CardEffect::isSpecialAction)
                 && effects.stream().allMatch(effect -> effect instanceof CostEffect || effect.isSpecialAction());
     }
 
@@ -216,6 +216,13 @@ public class ActivatedAbility {
     private PermanentPredicate ninjutsuAttackerPredicate;
     /** Whether this hand-activated ability leaves its source card in hand as part of its cost. */
     private boolean sourceStaysInHand;
+    /**
+     * When true this is not a true activated ability but an action the player may take while holding
+     * priority that never uses the stack (Talon Gates' "Any time you could cast a sorcery, you may exile a
+     * nonland card from your hand ..."). Its effects resolve immediately and it is not stopped by effects
+     * that prevent activated abilities from being activated. Set via {@link #withSpecialAction()}.
+     */
+    private boolean specialAction;
     /** Whether this ability can be activated only while its source card is in exile. */
     private boolean exileOnly;
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
@@ -372,6 +379,7 @@ public class ActivatedAbility {
         copy.ninjutsuAbility = this.ninjutsuAbility;
         copy.ninjutsuAttackerPredicate = this.ninjutsuAttackerPredicate;
         copy.sourceStaysInHand = this.sourceStaysInHand;
+        copy.specialAction = this.specialAction;
         copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
         copy.suspendTimeCounters = this.suspendTimeCounters;
         copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
@@ -515,6 +523,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withRevealsSourceFromHand() {
         this.revealsSourceFromHand = true;
+        return this;
+    }
+
+    /** Marks an ability that is taken as an action without using the stack and ignores activation bans. */
+    public ActivatedAbility withSpecialAction() {
+        this.specialAction = true;
         return this;
     }
 

@@ -6,11 +6,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * is put into the ability's controller's hand, and Tempest Efreet is put into that player's
  * graveyard.
  *
- * <p>The oracle "Exchange ownership … This change in ownership is permanent" is an ante concept: the
- * permanent, cross-game transfer of card ownership is outside a single game's scope and is not
- * modeled. Within one game this effect resolves to the observable zone movements only (the revealed
- * card into the controller's hand, Tempest Efreet into the opponent's graveyard); the {@code ownerId}
- * stamped at game setup is frozen and left unchanged.
+ * <p>The oracle "Exchange ownership … This change in ownership is permanent" is modeled within one
+ * game: the revealed card moves to the controller's hand and Tempest Efreet to the opponent's graveyard,
+ * and the two cards swap owners in {@code GameData.cardOwnerOverrides}, so the revealed card later
+ * returns to its new owner's hand or graveyard. The permanent, cross-game transfer an ante implies is
+ * outside a single game's scope and is not modeled.
  *
  * <p>Targets the opponent player — the ability declares "target opponent" through a
  * {@code PlayerRelationPredicate}; {@link #targetSpec()} declares the player category. The paying

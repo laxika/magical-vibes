@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "2095")
@@ -23,9 +24,12 @@ public class TheReaverCleaver extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
 
-        // Whenever equipped creature deals combat damage to a player or planeswalker, create that
-        // many Treasure tokens.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, CreateTokenEffect.ofTreasureToken(new EventValue()));
+        // The equipped creature has "Whenever this creature deals combat damage to a player or
+        // planeswalker, create that many Treasure tokens", so its controller creates them.
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                CreateTokenEffect.ofTreasureToken(new EventValue()),
+                GrantScope.EQUIPPED_CREATURE));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

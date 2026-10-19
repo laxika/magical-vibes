@@ -134,6 +134,9 @@ class TearsOfRageTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         harness.castAndResolveInstant(player1, 0);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, opposingAttacker)).isEqualTo(2);

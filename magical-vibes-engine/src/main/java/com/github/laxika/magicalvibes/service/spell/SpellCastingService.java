@@ -10305,8 +10305,12 @@ public class SpellCastingService {
                     && delveIndices.contains(graveyardCardIndex)) {
                 throw new IllegalStateException("The card being cast cannot be exiled for delve");
             }
+            String delveManaCost = flashbackOpt
+                    .flatMap(flashback -> flashback.getCost(ManaCastingCost.class))
+                    .map(ManaCastingCost::manaCost)
+                    .orElse(card.getManaCost());
             ManaCost delveCost = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, card, new ManaCost(card.getManaCost()));
+                    gameData, playerId, card, new ManaCost(delveManaCost));
             int maximumDelveReduction = maximumDelveReductionForGraveyardCast(
                     gameData, playerId, card, delveCost, additionalCost);
             additionalSpellCostService.validateDelveCost(gameData, player, card, additionalCosts.delveCost(),
@@ -12669,10 +12673,17 @@ public class SpellCastingService {
         // pay its whole cost with mana.
         boolean onlyDelveCost = additionalCosts.delveCost() != null
                 && !additionalSpellCostService.extractAndRemove(gameData, playerId, card, effectsWithoutDelve).any();
+        // With an empty hand, a sole "discard a card or pay N life" cost can only be paid with life.
+        List<CardEffect> effectsWithoutDiscardOrPayLife = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        effectsWithoutDiscardOrPayLife.removeIf(effect -> effect instanceof DiscardCardOrPayLifeCost);
+        boolean onlyDiscardOrPayLifeWithEmptyHand = additionalCosts.discardCardOrPayLifeCost() != null
+                && gameData.playerHands.get(playerId).isEmpty()
+                && !additionalSpellCostService.extractAndRemove(gameData, playerId, card, effectsWithoutDiscardOrPayLife).any();
         if (additionalCosts.any() && !onlyOptionalCasualtyCost && !onlyDelveCost
                 && additionalCosts.chooseXValueCost() == null
                 && !hasPlainSacrificeCreatureCost && !hasSacrificeOrManaCost
-                && plainSacrificePermanentCost == null) {
+                && plainSacrificePermanentCost == null
+                && !onlyDiscardOrPayLifeWithEmptyHand) {
             throw new IllegalStateException("Cannot cast " + card.getName()
                     + " from the library — paying its additional cast cost is not supported from this zone");
         }
@@ -12730,6 +12741,9 @@ public class SpellCastingService {
             }
         }
         payTopLibraryAdditionalCosts(gameData, player, card, topLibraryAdditionalCosts, topLibrarySacrificeIds);
+        if (onlyDiscardOrPayLifeWithEmptyHand) {
+            payLifeCost(gameData, player, card, new PayLifeCost(additionalCosts.discardCardOrPayLifeCost().lifeAmount()));
+        }
         payExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
         deck.remove(physicalCard);
         if (freeTopPlay) {
@@ -13193,7 +13207,8 @@ public class SpellCastingService {
         } finally {
             pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousClassLevelManaPermission);
         }
-        notifyTaxPayment(gameData, playerId, card, effectiveXValue, Zone.HAND, kicked, collectEvidenceCostPaid);
+        notifyTaxPayment(gameData, playerId, card, effectiveXValue, Zone.HAND, kicked, collectEvidenceCostPaid,
+                castTargetIds);
         gameData.addSpellCastManaSpent(card.getId(), payment.manaSpent());
         gameData.setSpellCastCreatureManaSpent(card.getId(),
                 Math.max(0, creatureManaBefore - creatureSourceManaAvailable(pool)));
@@ -13350,10 +13365,25 @@ public class SpellCastingService {
 
     private void notifyTaxPayment(GameData gameData, UUID payingPlayerId, Card card, int xValue,
                                   Zone sourceZone, boolean kicked, boolean collectEvidenceCostPaid) {
-        castingCostService.getOpponentSpellTaxByController(
-                        gameData, payingPlayerId, card, xValue, sourceZone, kicked, collectEvidenceCostPaid)
-                .forEach((taxingPlayerId, amount) -> triggerCollectionService.checkTaxPaymentTriggers(
-                        gameData, payingPlayerId, taxingPlayerId, amount));
+        notifyTaxPayment(gameData, payingPlayerId, card, xValue, sourceZone, kicked, collectEvidenceCostPaid,
+                List.of());
+    }
+
+    /**
+     * Fires "opponent pays a tax" triggers for each opponent whose spell-cost increase was paid, including
+     * targeting taxes ("spells your opponents cast that target ~ cost {N} more", Icefall Regent) for the
+     * announced targets.
+     */
+    private void notifyTaxPayment(GameData gameData, UUID payingPlayerId, Card card, int xValue,
+                                  Zone sourceZone, boolean kicked, boolean collectEvidenceCostPaid,
+                                  List<UUID> castTargetIds) {
+        Map<UUID, Integer> taxes = new HashMap<>(castingCostService.getOpponentSpellTaxByController(
+                gameData, payingPlayerId, card, xValue, sourceZone, kicked, collectEvidenceCostPaid));
+        castingCostService.getTargetingSubtypeTaxByController(
+                        gameData, payingPlayerId, null, castTargetIds, false)
+                .forEach((taxingPlayerId, amount) -> taxes.merge(taxingPlayerId, amount, Integer::sum));
+        taxes.forEach((taxingPlayerId, amount) -> triggerCollectionService.checkTaxPaymentTriggers(
+                gameData, payingPlayerId, taxingPlayerId, amount));
     }
 
     private void recordSpellCastTreasureManaSpent(GameData gameData, Card card,
@@ -13666,7 +13696,7 @@ public class SpellCastingService {
                 List<ManaColor> withoutCreature = new ArrayList<>(result);
                 withoutCreature.remove(i);
                 if (cost.canPayWithConvoke(pool, extraCost, withoutCreature)) {
-                    throw new IllegalStateException("Too many creatures tapped to pay for " + card.getName());
+                    throw new IllegalStateException("Cannot convoke more creatures than the spell's total cost for " + card.getName());
                 }
             }
         }
@@ -16132,7 +16162,7 @@ public class SpellCastingService {
                 int manaXValue = cost.hasX() ? effectiveXValue : 0;
                 withMulticoloredSpellMana(gameData, playerId, card, () -> {
                     ManaCost payableCost = cost;
-                    if (!payableCost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost)
+                    if (!payableCost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost - delveReduction)
                             && flashback.costs().size() == 1
                             && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())) {
                         // A separate flashback grant remains available when the printed cost cannot be paid.
@@ -16142,10 +16172,10 @@ public class SpellCastingService {
                                 gameData, playerId, card, new ManaCost(grantedCost), true);
                     }
                     int payableXValue = payableCost.hasX() ? effectiveXValue : 0;
-                    if (!payableCost.canPayFlashbackFromGraveyard(pool, payableXValue + additionalCost)) {
+                    if (!payableCost.canPayFlashbackFromGraveyard(pool, payableXValue + additionalCost - delveReduction)) {
                         throw new IllegalStateException("Not enough mana to pay flashback cost");
                     }
-                    payableCost.payFlashbackFromGraveyard(pool, payableXValue + additionalCost);
+                    payableCost.payFlashbackFromGraveyard(pool, payableXValue + additionalCost - delveReduction);
                     return null;
                 });
                 manaSpent = before - pool.getTotalAllMana();

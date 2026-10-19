@@ -26,9 +26,10 @@ class TectonicGiantTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleListChoice(player1, "This creature deals 3 damage to each opponent.");
+        harness.passBothPriorities();
 
+        // 3 from the trigger plus 3 unblocked combat damage from the 3/4 Giant.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 6);
     }
 
@@ -41,9 +42,9 @@ class TectonicGiantTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(chosen, other));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Exile the top two cards of your library. Choose one of them. Until the end of your next turn, you may play that card.");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExiledCardMayPlayChoice.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen, other);
@@ -68,8 +69,8 @@ class TectonicGiantTest extends BaseCardTest {
         harness.castInstant(player2, 0, giant.getId());
 
         assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
         harness.handleListChoice(player1, "This creature deals 3 damage to each opponent.");
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 3);
     }
@@ -147,9 +148,9 @@ class TectonicGiantTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(land));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Exile the top two cards of your library. Choose one of them. Until the end of your next turn, you may play that card.");
+        harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land);
@@ -186,11 +187,13 @@ class TectonicGiantTest extends BaseCardTest {
         Forest other = new Forest();
         harness.setLibrary(player1, List.of(chosen, other, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Exile the top two cards of your library. Choose one of them. Until the end of your next turn, you may play that card.");
+        harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);

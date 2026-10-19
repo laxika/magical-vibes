@@ -61,6 +61,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -390,7 +392,9 @@ public class GraveyardReturnSupport {
                             if (effect.battlefieldEffectGrants() != null) {
                                 for (CardEffect grant : effect.battlefieldEffectGrants()) {
                                     if (grant instanceof GrantColorEffect || grant instanceof SetCardTypesEffect
-                                            || grant instanceof GrantCardTypeEffect) {
+                                            || grant instanceof GrantCardTypeEffect
+                                            || grant instanceof GrantSubtypeEffect
+                                            || grant instanceof SetBasePowerToughnessEffect) {
                                         gameData.addFloatingEffect(new FloatingContinuousEffect(
                                                 UUID.randomUUID(), entry.getCard().getName(),
                                                 entry.getSourcePermanentId(), entry.getControllerId(), grant,
@@ -541,6 +545,12 @@ public class GraveyardReturnSupport {
         if (effect.targetPutIntoGraveyardFromLibraryThisTurn()
                 && (cardOwnerId == null
                 || !gameData.cardsPutIntoGraveyardFromLibraryThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
+            return false;
+        }
+        if (effect.targetMilledThisTurn()
+                && (cardOwnerId == null
+                || !gameData.cardsMilledThisTurn
                 .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
             return false;
         }
@@ -801,7 +811,9 @@ public class GraveyardReturnSupport {
                 UUID sourcePermanentId = entry == null ? null : entry.getSourcePermanentId();
                 for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
                     if ((grantedEffect instanceof GrantColorEffect || grantedEffect instanceof SetCardTypesEffect
-                            || grantedEffect instanceof GrantCardTypeEffect)
+                            || grantedEffect instanceof GrantCardTypeEffect
+                            || grantedEffect instanceof GrantSubtypeEffect
+                            || grantedEffect instanceof SetBasePowerToughnessEffect)
                             && gameData.floatingEffects.stream().anyMatch(floating ->
                             grantedEffect.equals(floating.effect())
                                     && p.getId().equals(floating.affectedPermanentId())
@@ -850,7 +862,7 @@ public class GraveyardReturnSupport {
                 && cardOwnerId != null) {
             boundEffect = new TargetPlayerLosesGameEffect(cardOwnerId);
         }
-        permanent.addPersistentTriggeredEffect(EffectSlot.ON_DEATH, boundEffect);
+        permanent.addDelayedDeathEffect(boundEffect);
     }
 
     /**
@@ -3013,9 +3025,41 @@ public class GraveyardReturnSupport {
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                     gameData, controllerId, tokenCard);
 
+            if (tokenCard.isAura() && !tokenCard.isEnchantZone()) {
+                List<UUID> permanentHosts = new ArrayList<>();
+                if (!tokenCard.isEnchantPlayer()) {
+                    for (UUID ownerId : gameData.orderedPlayerIds) {
+                        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(ownerId, List.of())) {
+                            if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                                    && auraAttachmentService.canEnchant(gameData, tokenCard, controllerId, permanent)) {
+                                permanentHosts.add(permanent.getId());
+                            }
+                        }
+                    }
+                }
+                List<UUID> playerHosts = new ArrayList<>();
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    if (auraAttachmentService.canEnchantPlayer(gameData, tokenCard, controllerId, playerId)) {
+                        playerHosts.add(playerId);
+                    }
+                }
+                if (permanentHosts.isEmpty() && playerHosts.isEmpty()) {
+                    continue;
+                }
+                // CR 303.4f: the Aura's controller chooses what it will enchant as it enters.
+                gameData.interaction.setPendingAuraCard(tokenCard);
+                gameData.interaction.setPendingAuraOwnerId(controllerId);
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, permanentHosts, playerHosts,
+                        "Choose what " + tokenCard.getName() + " will enchant.");
+                return;
+            }
+
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (grantHasteUntilEndOfTurn) {
                 tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
+            }
+            if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
+                tokenPermanent.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
             }
             if (enterTappedAndAttacking) {
                 UUID attackTargetId = sourcePermanent == null
@@ -3097,6 +3141,8 @@ public class GraveyardReturnSupport {
         }
         tokenCard.setPower(powerOverride != null ? powerOverride : sourceCard.getPower());
         tokenCard.setToughness(toughnessOverride != null ? toughnessOverride : sourceCard.getToughness());
+        tokenCard.setLoyalty(sourceCard.getLoyalty());
+        tokenCard.setAttachRestriction(sourceCard.getAttachRestriction());
         tokenCard.setCardText(sourceCard.getCardText());
         tokenCard.setSetCode(sourceCard.getSetCode());
         tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
@@ -3464,6 +3510,17 @@ public class GraveyardReturnSupport {
             }
         }
 
+        if (state.disposition() == CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE) {
+            // Both piles are exiled before the chooser picks one (The Celestial Toymaker): the chosen pile
+            // is then taken from exile into hand, and the other pile stays exiled.
+            boolean pile1FaceDown = state.controllerChoosesPile();
+            for (Card card : state.cards()) {
+                UUID ownerId = state.cardOwners().getOrDefault(card.getId(), state.controllerId());
+                boolean faceDown = pile1FaceDown == pile1.contains(card.getId());
+                gameData.addToExile(ownerId, card, null, faceDown);
+            }
+        }
+
         // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it. Preserve the
         // disposition so BATTLEFIELD (Boneyard Parley), HAND (Unesh), and Fortune's Favor's
         // face-down/face-up variant all survive the re-queue.
@@ -3625,12 +3682,6 @@ public class GraveyardReturnSupport {
         }
 
         if (state.disposition() == CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE) {
-            boolean pile1FaceDown = state.controllerChoosesPile();
-            for (Card card : allCards) {
-                UUID ownerId = cardOwners.getOrDefault(card.getId(), controllerId);
-                boolean faceDown = pile1FaceDown == state.pile1Ids().contains(card.getId());
-                gameData.addToExile(ownerId, card, null, faceDown);
-            }
             for (UUID cardId : chosenPileCardIds) {
                 Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
                 if (card != null && gameData.removeFromExile(cardId)) {

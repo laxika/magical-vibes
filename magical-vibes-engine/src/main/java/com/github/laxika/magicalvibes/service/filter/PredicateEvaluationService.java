@@ -138,6 +138,7 @@ import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControllerActivatedArtifactAbilityThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAdjacentToSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -411,6 +412,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsColorlessPr
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsFromSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
@@ -825,7 +827,9 @@ public class PredicateEvaluationService {
                             || card.getGraveyardActivatedAbilities().stream()
                             .anyMatch(AbilityActivationService::isManaAbility);
             case CardHasNonManaActivatedAbilityPredicate ignored ->
-                    card.getActivatedAbilities().stream()
+                    Stream.of(card.getActivatedAbilities(), card.getHandActivatedAbilities(),
+                                    card.getGraveyardActivatedAbilities(), card.getStackActivatedAbilities())
+                            .flatMap(List::stream)
                             .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
             case CardHasNoAbilitiesPredicate ignored ->
                     card.hasKeyword(Keyword.DEWORDED)
@@ -1290,6 +1294,9 @@ public class PredicateEvaluationService {
         return switch (predicate) {
             case PermanentActivatedThisTurnPredicate ignored ->
                     gameData != null && gameData.activatedAbilityUsesThisTurn.containsKey(permanent.getId());
+            case ControllerActivatedArtifactAbilityThisTurnPredicate ignored ->
+                    gameData != null && sourceControllerId != null
+                            && gameData.playersWhoActivatedArtifactAbilityThisTurn.contains(sourceControllerId);
             case PermanentHasKeywordPredicate hasKeywordPredicate -> {
                 if (hasKeywordPredicate.printedOnly()) {
                     yield hasPrintedKeyword(permanent, hasKeywordPredicate.keyword());
@@ -1514,7 +1521,8 @@ public class PredicateEvaluationService {
                 yield gameQueryService.isArtifact(gameData, permanent);
             }
             case PermanentIsDoubleFacedPredicate ignored ->
-                    permanent.getOriginalCard().getBackFaceCard() != null
+                    permanent.getOriginalCard().isMeldCard()
+                            || permanent.getOriginalCard().getBackFaceCard() != null
                             && (permanent.getOriginalCard().isModalDoubleFaced()
                             || permanent.getOriginalCard().hasType(CardType.BATTLE)
                             || permanent.getOriginalCard().getKeywords().contains(Keyword.TRANSFORM)
@@ -4830,10 +4838,21 @@ public class PredicateEvaluationService {
     }
 
     private boolean isAttackingAlone(GameData gameData, Permanent permanent) {
-        return gameData != null
-                && permanent.isAttacking()
-                && gameData.playerBattlefields.values().stream().flatMap(List::stream)
-                        .filter(Permanent::isAttacking).count() == 1;
+        if (gameData == null || !permanent.isAttacking()) {
+            return false;
+        }
+        Set<UUID> attackingPermanentIds = new HashSet<>();
+        attackingPermanentIds.add(permanent.getId());
+        gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(Permanent::isAttacking)
+                .map(Permanent::getId)
+                .forEach(attackingPermanentIds::add);
+        gameData.simultaneousDyingPermanents.values().stream()
+                .filter(Permanent::isAttacking)
+                .map(Permanent::getId)
+                .forEach(attackingPermanentIds::add);
+        return attackingPermanentIds.size() == 1;
     }
 
     private boolean isAttackingOrBlockingAlone(GameData gameData, Permanent permanent) {
@@ -5088,6 +5107,7 @@ public class PredicateEvaluationService {
             case StackEntryNotTargetedByNamedCreatureAbilityPredicate ignored -> false;
             case StackEntryTargetsYourPermanentPredicate ignored -> false;
             case StackEntryTargetsSourcePredicate ignored -> false;
+            case StackEntryIsFromSourcePermanentPredicate ignored -> false;
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
             case StackEntryTargetsYouPredicate ignored -> false;
             case StackEntryTargetsAnyPlayerPredicate ignored -> false;
@@ -5247,9 +5267,6 @@ public class PredicateEvaluationService {
 
     private boolean requiresCreature(PermanentPredicate predicate) {
         if (predicate instanceof PermanentIsCreaturePredicate) return true;
-        if (predicate instanceof PermanentAllOfPredicate all) {
-            return all.predicates().stream().anyMatch(this::requiresCreature);
-        }
         return false;
     }
 

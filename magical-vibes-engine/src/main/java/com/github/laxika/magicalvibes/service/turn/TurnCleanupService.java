@@ -561,9 +561,10 @@ public class TurnCleanupService {
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();
         gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
-        gameData.playersWithSpellCopyUntilEndOfTurn.clear();
+        gameData.spellCopyGrantsUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCountSource.clear();
+        gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.clear();
         gameData.pendingNextInstantSorceryStormThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
@@ -955,7 +956,13 @@ public class TurnCleanupService {
     public boolean hasNoMaximumHandSize(GameData gameData, UUID playerId) {
         if (gameData.playersWithNoMaximumHandSize.contains(playerId)
                 || gameData.playersWithNoMaximumHandSizeUntilNextTurn.contains(playerId)) {
-            return true;
+            // A hand-size setter that entered after the grant overrides it (CR 613.7).
+            Long grantedAt = gameData.noMaximumHandSizeGrantTimestamps.get(playerId);
+            HandSizeStamp setterStamp = latestHandSizeSettingStamp(gameData, playerId);
+            if (grantedAt == null || setterStamp == null
+                    || new HandSizeStamp(grantedAt, Integer.MAX_VALUE).isNewerThan(setterStamp)) {
+                return true;
+            }
         }
         synchronized (gameData.emblems) {
             for (var emblem : gameData.emblems) {
@@ -1021,8 +1028,11 @@ public class TurnCleanupService {
                 continue;
             }
             for (Permanent perm : battlefield) {
-                if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
+                // A face-down or ability-losing permanent has no printed static abilities (CR 708.2).
+                List<CardEffect> staticEffects = gameQueryService == null
+                        ? perm.getCard().getEffects(EffectSlot.STATIC)
+                        : gameQueryService.getActiveStaticEffects(gameData, perm);
+                if (staticEffects.stream().anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
                 }
             }

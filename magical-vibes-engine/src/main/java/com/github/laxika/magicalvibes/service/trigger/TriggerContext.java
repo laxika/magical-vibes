@@ -851,16 +851,24 @@ public sealed interface TriggerContext {
     record PermanentCardPutIntoGraveyard(Card permanentCard, UUID graveyardOwnerId) implements TriggerContext {}
 
     /**
-     * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
+     * Context for ON_SELF_LEAVES_BATTLEFIELD triggers. {@code causedByCreatureDeath} is set when the
+     * leaving permanent was a creature put into the graveyard from the battlefield, so the leave
+     * trigger counts as a creature-death trigger for multipliers such as Teysa Karlov.
      */
-    record SelfLeaves(UUID controllerId, Zone destination, boolean exiledWhileActivatingCraftAbility)
+    record SelfLeaves(UUID controllerId, Zone destination, boolean exiledWhileActivatingCraftAbility,
+                      boolean causedByCreatureDeath)
             implements TriggerContext {
         public SelfLeaves(UUID controllerId) {
-            this(controllerId, Zone.GRAVEYARD, false);
+            this(controllerId, Zone.GRAVEYARD, false, false);
         }
 
         public SelfLeaves(UUID controllerId, Zone destination) {
-            this(controllerId, destination, false);
+            this(controllerId, destination, false, false);
+        }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return causedByCreatureDeath;
         }
     }
 

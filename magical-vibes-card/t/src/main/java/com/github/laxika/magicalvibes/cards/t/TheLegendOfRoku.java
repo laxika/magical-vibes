@@ -16,7 +16,7 @@ public class TheLegendOfRoku extends Card {
 
         addEffect(EffectSlot.SAGA_CHAPTER_I, new ExileTopCardsMayPlayUntilNextTurnEffect(3));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new AwardAnyColorManaEffect(1));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

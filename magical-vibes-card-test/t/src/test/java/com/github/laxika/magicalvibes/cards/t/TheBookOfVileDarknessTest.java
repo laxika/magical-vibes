@@ -165,7 +165,7 @@ class TheBookOfVileDarknessTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         harness.assertLife(player1, 18);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

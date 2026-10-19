@@ -56,8 +56,10 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
             gameData.chosenXValue = null;
 
             if (chosenValue == 0) {
+                // Paying {0} is still paying, so the reflexive trigger happens (for total mana value 0 or less).
                 gameLogService.append(gameData,
-                        GameLog.text(playerName + " chooses X=0 for " + cardName + "'s ability."));
+                        GameLog.text(playerName + " pays {0} for " + cardName + "."));
+                beginReflexiveTrigger(gameData, entry, controllerId, 0);
                 return;
             }
 
@@ -77,9 +79,11 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
             return;
         }
 
-        if (maxPotentialX(gameData, controllerId) <= 0) {
+        int maxX = maxPotentialX(gameData, controllerId);
+        if (reanimationCandidates(gameData, entry, controllerId, maxX).isEmpty()) {
             gameLogService.append(gameData,
-                    GameLog.textCardText(playerName + " has no mana to pay for ", sourceCard, "'s ability."));
+                    GameLog.textCardText(playerName + " can't return any creature card with ", sourceCard,
+                            "'s ability."));
             return;
         }
         beginXPrompt(gameData, controllerId, cardName);
@@ -89,22 +93,11 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
                                        UUID controllerId, int x) {
         UUID damagedPlayerId = entry.getTargetId();
         Card sourceCard = entry.getCard();
-        CardPredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);
         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect =
                 ReturnTargetCardsFromGraveyardToBattlefieldEffect.withinTotalManaValueFromAllGraveyards(
-                        creatureFilter, x);
+                        new CardTypePredicate(CardType.CREATURE), x);
 
-        List<Card> candidates = new ArrayList<>();
-        if (damagedPlayerId != null && gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
-            for (Card card : gameData.playerGraveyards.getOrDefault(damagedPlayerId, List.of())) {
-                if (card.getManaValue() <= x
-                        && !gameQueryService.isLandCardTargetRestricted(gameData, card, controllerId)
-                        && predicateEvaluationService.matchesCardPredicate(
-                        card, creatureFilter, sourceCard.getId())) {
-                    candidates.add(card);
-                }
-            }
-        }
+        List<Card> candidates = reanimationCandidates(gameData, entry, controllerId, x);
 
         if (candidates.isEmpty()) {
             putReflexiveTriggerOnStack(gameData, entry, controllerId, x, returnEffect, List.of());
@@ -123,6 +116,24 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
                 + "with total mana value " + x + " or less.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
                 controllerId, candidates, candidates.size(), prompt, 0, x));
+    }
+
+    /** Creature cards in the damaged player's graveyard with mana value at most {@code x} that can be targeted. */
+    private List<Card> reanimationCandidates(GameData gameData, StackEntry entry, UUID controllerId, int x) {
+        List<Card> candidates = new ArrayList<>();
+        UUID damagedPlayerId = entry.getTargetId();
+        if (damagedPlayerId != null && gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            CardPredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);
+            for (Card card : gameData.playerGraveyards.getOrDefault(damagedPlayerId, List.of())) {
+                if (card.getManaValue() <= x
+                        && !gameQueryService.isLandCardTargetRestricted(gameData, card, controllerId)
+                        && predicateEvaluationService.matchesCardPredicate(
+                        card, creatureFilter, entry.getCard().getId())) {
+                    candidates.add(card);
+                }
+            }
+        }
+        return candidates;
     }
 
     private void putReflexiveTriggerOnStack(GameData gameData, StackEntry entry, UUID controllerId,

@@ -908,6 +908,10 @@ public class DeathTriggerCollectorService {
             MayEffect may, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         MayEffect resolvedMay = (MayEffect) snapshotDynamicMaxManaValue(match, may, sd);
+        if (resolvedMay.wrapped() instanceof DyingCreatureCardAwareEffect aware && sd.dyingPermanent() != null) {
+            resolvedMay = new MayEffect(aware.boundToDyingCard(sd.dyingPermanent().getOriginalCard().getId()),
+                    resolvedMay.prompt(), resolvedMay.elseEffect());
+        }
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking — including one
         // whose targets are cards in a graveyard (Iname, Life Aspect's "you may exile it. If you do,
         // return any number of target Spirit cards from your graveyard to your hand").
@@ -3975,6 +3979,10 @@ public class DeathTriggerCollectorService {
                 && isSubtypeDisjunction(conditional.predicate())
                 ? matchesEffectiveSubtypeDisjunction(
                         match.gameData(), death.dyingPermanent(), conditional.predicate())
+                : death.dyingPermanent() != null && isCardTypeCombination(conditional.predicate())
+                ? matchesEffectiveCardTypes(
+                        gameQueryService.getEffectiveCardTypes(match.gameData(), death.dyingPermanent()),
+                        conditional.predicate())
                 : death.dyingCard() != null && predicateEvaluationService.matchesCardPredicate(
                         death.dyingCard(), conditional.predicate(), match.permanent().getCard().getId(),
                         match.gameData(), death.dyingCreatureControllerId());
@@ -3996,14 +4004,54 @@ public class DeathTriggerCollectorService {
         if (predicate instanceof CardSubtypePredicate) {
             return true;
         }
+        if (predicate instanceof CardNotPredicate not) {
+            return isSubtypeDisjunction(not.predicate());
+        }
         return predicate instanceof CardAnyOfPredicate anyOf && !anyOf.predicates().isEmpty()
-                && anyOf.predicates().stream().allMatch(CardSubtypePredicate.class::isInstance);
+                && anyOf.predicates().stream().allMatch(DeathTriggerCollectorService::isSubtypeDisjunction);
+    }
+
+    /**
+     * True for a card-type predicate or an all-of/any-of/not combination of them only. Those are
+     * matched against the dying permanent's effective card types (face-down characteristics and
+     * granted types) rather than the printed card.
+     */
+    private static boolean isCardTypeCombination(CardPredicate predicate) {
+        if (predicate instanceof CardTypePredicate) {
+            return true;
+        }
+        if (predicate instanceof CardNotPredicate not) {
+            return isCardTypeCombination(not.predicate());
+        }
+        if (predicate instanceof CardAllOfPredicate allOf) {
+            return !allOf.predicates().isEmpty()
+                    && allOf.predicates().stream().allMatch(DeathTriggerCollectorService::isCardTypeCombination);
+        }
+        return predicate instanceof CardAnyOfPredicate anyOf && !anyOf.predicates().isEmpty()
+                && anyOf.predicates().stream().allMatch(DeathTriggerCollectorService::isCardTypeCombination);
+    }
+
+    private boolean matchesEffectiveCardTypes(Set<CardType> types, CardPredicate predicate) {
+        if (predicate instanceof CardTypePredicate typePredicate) {
+            return types.contains(typePredicate.cardType());
+        }
+        if (predicate instanceof CardNotPredicate not) {
+            return !matchesEffectiveCardTypes(types, not.predicate());
+        }
+        if (predicate instanceof CardAllOfPredicate allOf) {
+            return allOf.predicates().stream().allMatch(member -> matchesEffectiveCardTypes(types, member));
+        }
+        CardAnyOfPredicate anyOf = (CardAnyOfPredicate) predicate;
+        return anyOf.predicates().stream().anyMatch(member -> matchesEffectiveCardTypes(types, member));
     }
 
     private boolean matchesEffectiveSubtypeDisjunction(GameData gameData, Permanent dyingPermanent,
                                                        CardPredicate predicate) {
         if (predicate instanceof CardSubtypePredicate subtypePredicate) {
             return gameQueryService.hasEffectiveSubtype(gameData, dyingPermanent, subtypePredicate.subtype());
+        }
+        if (predicate instanceof CardNotPredicate not) {
+            return !matchesEffectiveSubtypeDisjunction(gameData, dyingPermanent, not.predicate());
         }
         CardAnyOfPredicate anyOf = (CardAnyOfPredicate) predicate;
         return anyOf.predicates().stream().anyMatch(member ->

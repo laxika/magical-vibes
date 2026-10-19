@@ -11,9 +11,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -54,8 +53,7 @@ public class TatsunariToadRider extends Card {
                                 new SpellCastTriggerEffect(
                                         new CardTypePredicate(CardType.ENCHANTMENT),
                                         List.of(
-                                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                                                new GainLifeEffect(1)))),
+                                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)))),
                         List.of(), false, false, true, 0, Set.of())),
                 new NotCondition(new ControlsPermanent(KEIMI))));
 

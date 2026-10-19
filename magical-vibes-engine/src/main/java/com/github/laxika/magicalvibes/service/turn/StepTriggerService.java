@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextE
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
@@ -1765,6 +1766,7 @@ public class StepTriggerService {
         // Check all battlefields for OPPONENT_UPKEEP_TRIGGERED effects (only opponents of the active player)
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
+                if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> opponentUpkeepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED);
                 if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
 
@@ -3376,6 +3378,11 @@ public class StepTriggerService {
                     // "that player draws" refers to the active player without targeting them.
                     drawTrigger.setNonTargeting(true);
                 }
+                // "that player" in Teferi's Puzzle Box is not a target, so shroud or hexproof on the
+                // active player does not make the trigger fizzle.
+                if (effect instanceof PutHandOnBottomOfLibraryAndDrawEffect) {
+                    drawTrigger.setNonTargeting(true);
+                }
                 gameData.stack.add(drawTrigger);
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
@@ -4009,10 +4016,22 @@ public class StepTriggerService {
                 .filter(p -> p.getCard().isSaga() && !p.getCard().isBedtimeStory())
                 .toList();
 
+        // Each lore counter is placed through the replacement pipeline (Vorinclex doubles or halves it),
+        // and every chapter reached by a placed counter triggers in order.
+        List<Map.Entry<Permanent, Integer>> loreSteps = new ArrayList<>();
         for (Permanent saga : sagas) {
+            int previousLoreCount = saga.getCounterCount(CounterType.LORE);
+            int placed = gameQueryService.replaceCounters(gameData, saga, CounterType.LORE, 1, activePlayerId);
+            for (int step = 1; step <= placed; step++) {
+                loreSteps.add(Map.entry(saga, previousLoreCount + step));
+            }
+            saga.setCounterCount(CounterType.LORE, previousLoreCount + placed);
+        }
+
+        for (Map.Entry<Permanent, Integer> loreStep : loreSteps) {
+            Permanent saga = loreStep.getKey();
             Card card = saga.getCard();
-            int newLoreCount = saga.getCounterCount(CounterType.LORE) + 1;
-            saga.setCounterCount(CounterType.LORE, newLoreCount);
+            int newLoreCount = loreStep.getValue();
             sagaChapterService.renewLoreCounterPlayPermissions(gameData, saga, activePlayerId);
 
             gameLogService.append(gameData,
@@ -4374,7 +4393,9 @@ public class StepTriggerService {
                         new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.TARGET),
                         perm.getId(), null, null, EffectDuration.UNTIL_END_OF_COMBAT, 0));
             }
-            boolean isCreature = card.hasType(CardType.CREATURE);
+            boolean isCreature = card.hasType(CardType.CREATURE)
+                    || (pending.plusOnePlusOneCountersOnlyOnCreatures() && gameQueryService.isCreature(
+                    gameData, perm, pending.returnControllerByCardId().getOrDefault(card.getId(), controllerId)));
             if (pending.plusOnePlusOneCounters() > 0
                     && (!pending.plusOnePlusOneCountersOnlyOnCreatures() || isCreature)
                     && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, perm, controllerId)) {
@@ -4812,24 +4833,21 @@ public class StepTriggerService {
         }
 
         if (gameData.hasDelayedAction(SacrificeSelfAtNextEndStepTrigger.class,
-                action -> action.registeredTurnNumber() == null
-                        || (action.registeredTurnNumber() < gameData.turnNumber
-                        && action.controllerId() != null
-                        && action.controllerId().equals(gameData.activePlayerId)))) {
+                action -> isSacrificeAtNextEndStepDue(gameData, action))) {
             List<SacrificeSelfAtNextEndStepTrigger> pendingSacrifices =
                     gameData.drainDelayedActions(SacrificeSelfAtNextEndStepTrigger.class,
-                            action -> action.registeredTurnNumber() == null
-                                    || (action.registeredTurnNumber() < gameData.turnNumber
-                                    && action.controllerId() != null
-                                    && action.controllerId().equals(gameData.activePlayerId)));
+                            action -> isSacrificeAtNextEndStepDue(gameData, action));
             for (SacrificeSelfAtNextEndStepTrigger pending : pendingSacrifices) {
                 if (gameQueryService.findPermanentById(gameData, pending.permanentId()) == null) {
                     continue;
                 }
+                UUID triggerControllerId = pending.currentControllersEndStepOnly()
+                        ? gameQueryService.findPermanentController(gameData, pending.permanentId())
+                        : pending.controllerId();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
-                        pending.controllerId(),
+                        triggerControllerId,
                         pending.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new SacrificeSelfEffect(
                                 pending.currentControllerSacrifices()))),
@@ -5365,7 +5383,7 @@ public class StepTriggerService {
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — untap up to " + pending.count() + " permanent(s)",
                         new ArrayList<>(List.of(new UntapPermanentsEffect(
-                                TapUntapScope.CONTROLLED, pending.filter(), pending.count())))
+                                TapUntapScope.ALL_PERMANENTS, pending.filter(), pending.count())))
                 ));
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed trigger — untap up to " + pending.count() + " permanent(s)."));
@@ -5803,8 +5821,13 @@ public class StepTriggerService {
         for (UUID playerId : triggerOrder) {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                List<CardEffect> endStepEffects = perm.getCard().getEffects(EffectSlot.END_STEP_TRIGGERED);
-                if (endStepEffects == null || endStepEffects.isEmpty()) continue;
+                List<CardEffect> endStepEffects = new ArrayList<>();
+                List<CardEffect> printedEndStepEffects = perm.getCard().getEffects(EffectSlot.END_STEP_TRIGGERED);
+                if (printedEndStepEffects != null) {
+                    endStepEffects.addAll(printedEndStepEffects);
+                }
+                endStepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.END_STEP_TRIGGERED));
+                if (endStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : endStepEffects) {
                     if (effect instanceof MonarchEndStepTriggeredEffect
@@ -7623,16 +7646,19 @@ public class StepTriggerService {
             }
             // CR 603.7e: an ability that created the delayed trigger keeps controlling it (recorded as the
             // action's player), even if the permanent has since changed controllers.
-            UUID controllerId = action.sacrificingPlayerId() != null
+            UUID controllerId = action.triggerControllerId() != null
+                    ? action.triggerControllerId()
+                    : action.sacrificingPlayerId() != null
                     ? action.sacrificingPlayerId()
                     : action.controllerId() != null
                     ? action.controllerId()
                     : gameQueryService.findPermanentController(gameData, permanent.getId());
+            Card triggerCard = action.sourceCard() != null ? action.sourceCard() : permanent.getCard();
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
-                    permanent.getCard(),
+                    triggerCard,
                     controllerId,
-                    permanent.getCard().getName() + "'s delayed ability",
+                    triggerCard.getName() + "'s delayed ability",
                     new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
                     permanent.getId(),
                     permanent.getId());
@@ -7641,6 +7667,29 @@ public class StepTriggerService {
             gameLogService.append(gameData,
                     GameLog.cardThen(permanent.getCard(), "'s delayed exile ability triggers."));
         }
+    }
+
+    /**
+     * A delayed sacrifice fires at the end step of the turn after it was registered (or any end step when
+     * registered without a turn number). A "your end step" sacrifice is only due during an end step of the
+     * permanent's current controller.
+     */
+    private boolean isSacrificeAtNextEndStepDue(GameData gameData, SacrificeSelfAtNextEndStepTrigger action) {
+        UUID dueControllerId;
+        if (action.currentControllersEndStepOnly()) {
+            if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
+                return true;
+            }
+            dueControllerId = gameQueryService.findPermanentController(gameData, action.permanentId());
+            if (dueControllerId == null || !dueControllerId.equals(gameData.activePlayerId)) {
+                return false;
+            }
+            return action.registeredTurnNumber() == null || action.registeredTurnNumber() < gameData.turnNumber;
+        }
+        return action.registeredTurnNumber() == null
+                || (action.registeredTurnNumber() < gameData.turnNumber
+                && action.controllerId() != null
+                && action.controllerId().equals(gameData.activePlayerId));
     }
 
 }

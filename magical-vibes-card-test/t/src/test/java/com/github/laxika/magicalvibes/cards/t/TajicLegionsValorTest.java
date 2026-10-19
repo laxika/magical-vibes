@@ -56,8 +56,9 @@ class TajicLegionsValorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, vindicator, Keyword.HASTE)).isTrue();
         assertThat(findPermanents(player1, "Boros Recruit")).isEmpty();
 
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         assertThat(gqs.hasKeyword(gd, vindicator, Keyword.HASTE)).isFalse();
     }
 

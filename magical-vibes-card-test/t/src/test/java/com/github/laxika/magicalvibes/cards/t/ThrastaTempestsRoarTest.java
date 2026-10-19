@@ -35,7 +35,7 @@ class ThrastaTempestsRoarTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castInstant(player2, 0, player1.getId());
         harness.castInstant(player2, 0, player1.getId());
-        harness.passPriority(player1);
+        harness.passPriority(player2);
         resolveAllTriggers();
 
         harness.castCreature(player1, 0);

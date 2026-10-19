@@ -140,6 +140,7 @@ class TheRuinousPowersTest extends BaseCardTest {
     void playPermissionExpiresAtEndOfTurn() {
         Card topCard = ownedByPlayer2(new Biophagus());
         resolveUpkeepTrigger(topCard);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player2, List.of(ownedByPlayer2(new Forest())));
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

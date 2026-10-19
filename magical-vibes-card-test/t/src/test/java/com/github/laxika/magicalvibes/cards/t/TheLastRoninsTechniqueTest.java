@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -131,6 +132,7 @@ class TheLastRoninsTechniqueTest extends BaseCardTest {
         attacker.setAttackTarget(player2.getId());
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
         battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
 
         harness.setHand(player1, List.of(new TheLastRoninsTechnique()));
         harness.addMana(player1, ManaColor.WHITE, 1);

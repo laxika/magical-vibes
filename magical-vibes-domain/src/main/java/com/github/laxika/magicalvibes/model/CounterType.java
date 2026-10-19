@@ -188,6 +188,7 @@ public enum CounterType {
     SORCERY,
     SOUL,
     SPITE,
+    SPORE,
     STASH,
     STORY,
     STRIFE,

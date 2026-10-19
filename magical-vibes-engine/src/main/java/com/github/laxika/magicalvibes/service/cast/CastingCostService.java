@@ -846,13 +846,21 @@ public class CastingCostService {
 
     public int getTargetingSubtypeTax(GameData gameData, UUID casterId, UUID targetId, List<UUID> targetIds,
                                       boolean activatedAbility) {
+        return getTargetingSubtypeTaxByController(gameData, casterId, targetId, targetIds, activatedAbility)
+                .values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Targeting taxes ("spells your opponents cast that target ... cost {N} more") grouped by the player imposing each. */
+    public Map<UUID, Integer> getTargetingSubtypeTaxByController(GameData gameData, UUID casterId, UUID targetId,
+                                                                 List<UUID> targetIds, boolean activatedAbility) {
         Set<UUID> allTargetIds = new HashSet<>();
         if (targetId != null) allTargetIds.add(targetId);
         if (targetIds != null) allTargetIds.addAll(targetIds);
-        if (allTargetIds.isEmpty()) return 0;
+        Map<UUID, Integer> taxByController = new HashMap<>();
+        if (allTargetIds.isEmpty()) return taxByController;
 
-        int tax = 0;
         for (UUID controllerId : gameData.orderedPlayerIds) {
+            int tax = 0;
             if (controllerId.equals(casterId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             if (bf == null) continue;
@@ -905,8 +913,11 @@ public class CastingCostService {
                     }
                 }
             }
+            if (tax > 0) {
+                taxByController.put(controllerId, tax);
+            }
         }
-        return tax;
+        return taxByController;
     }
 
     /**

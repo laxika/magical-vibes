@@ -82,8 +82,7 @@ public class GainControlOfDefendingPlayerCreatureAndAttackEffectHandler implemen
         }
 
         tapUntapSupport.tapPermanent(gameData, creature, newControllerId);
-        creature.setAttacking(true);
-        creature.setAttackedOrBlockedSinceLastUpkeep(true);
+        creature.enterAttacking(true);
         creature.setAttackTarget(defendingPlayerId);
         log.info("Game {} - {} gains control of {} until end of turn and attacks {} via {}",
                 gameData.id, gameData.playerIdToName.get(newControllerId), creature.getCard().getName(),

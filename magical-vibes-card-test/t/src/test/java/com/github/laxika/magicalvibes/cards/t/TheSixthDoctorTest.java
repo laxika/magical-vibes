@@ -145,10 +145,11 @@ class TheSixthDoctorTest extends BaseCardTest {
         addCreatureReady(player1, new TheSixthDoctor());
         harness.setLibrary(player1, List.of(new SolRing(), new SolRing()));
         harness.setLibrary(player2, List.of(new SolRing(), new SolRing()));
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new SolRing(), "{1}");
         resolveAllTriggers();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new SolRing(), "{1}");
         resolveAllTriggers();
 

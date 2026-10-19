@@ -23,7 +23,7 @@ public class TanazirQuandrix extends Card {
 
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SetAllOwnCreaturesBasePowerToughnessEffect(
-                        new SourcePower(),
+                        new SourcePower(true),
                         new SourceToughness(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
                 "Have other creatures you control become equal to Tanazir Quandrix's power and toughness?"

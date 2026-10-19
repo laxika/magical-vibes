@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -55,6 +58,10 @@ public class BecomeEverflameEffectHandler implements NormalEffectHandlerBean {
         }
         source.setLosesAllAbilitiesPermanently(true);
 
+        // "It loses all other card types": a layer-4 effect stamped now, so it overrides an earlier
+        // animation that made the permanent a creature.
+        addFloatingEffect(gameData, entry, source,
+                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT));
         addFloatingEffect(gameData, entry, source,
                 new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT));
         addFloatingEffect(gameData, entry, source,

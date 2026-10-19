@@ -212,6 +212,7 @@ class TheCloneSagaTest extends BaseCardTest {
         addSagaWithLore(1);
         harness.setLibrary(player1, List.of(new Forest(), new Island(), new Forest()));
         harness.setLibrary(player2, List.of(new Island(), new Forest()));
+        harness.setHand(player2, List.of());
         advanceToNextChapter();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

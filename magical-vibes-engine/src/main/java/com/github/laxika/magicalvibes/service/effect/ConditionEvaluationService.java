@@ -501,6 +501,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
@@ -982,8 +983,8 @@ public class ConditionEvaluationService {
                             && gameData.orderedPlayerIds.stream()
                             .filter(playerId -> !playerId.equals(ctx.controllerId()))
                             .count() >= c.minimum();
-            case AnOpponentHasMoreCardsInHandThanController ignored ->
-                    anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
+            case AnOpponentHasMoreCardsInHandThanController c ->
+                    anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId(), c.minimumDifference());
             case AnOpponentHasMoreLifeThanController ignored ->
                     anOpponentHasMoreLifeThanController(gameData, ctx.controllerId());
             case WayBehind ignored -> wayBehind(gameData, ctx.controllerId());
@@ -1632,6 +1633,12 @@ public class ConditionEvaluationService {
                     target = gameData.departedPermanentSnapshots.values().stream()
                             .filter(departed -> ctx.targetId().equals(departed.getId()))
                             .findFirst().orElse(null);
+                    if (target != null && c.filter() instanceof PermanentHasSupertypePredicate supertypePredicate
+                            && target.getLastKnownSupertypes() != null) {
+                        // Layer-granted supertypes (e.g. snow from Rimefeather Owl) are read as they were
+                        // when the target left the battlefield, since its layer state is gone.
+                        yield target.getLastKnownSupertypes().contains(supertypePredicate.supertype());
+                    }
                 }
                 yield target != null && matchesPermanent(gameData, target, c.filter(), ctx);
             }
@@ -2219,12 +2226,13 @@ public class ConditionEvaluationService {
                 .anyMatch(playerId -> attackedOpponentLife > gameData.getLife(playerId));
     }
 
-    private boolean anOpponentHasMoreCardsInHandThanController(GameData gameData, UUID controllerId) {
+    private boolean anOpponentHasMoreCardsInHandThanController(GameData gameData, UUID controllerId,
+                                                               int minimumDifference) {
         if (controllerId == null) return false;
         int yourHandSize = countCardsInHand(gameData, controllerId);
         for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
             if (candidateOpponentId.equals(controllerId)) continue;
-            if (countCardsInHand(gameData, candidateOpponentId) > yourHandSize) {
+            if (countCardsInHand(gameData, candidateOpponentId) - yourHandSize >= minimumDifference) {
                 return true;
             }
         }

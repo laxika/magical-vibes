@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -225,7 +226,9 @@ public class PlayerInteractionSupport {
                 returnExiledSourceCardId, effect.returnToHandAtEndStep(), effect.cloaked(),
                 thenEffect, thenCondition, effect.enterTappedAndAttackingIf(), blockingAttackerId,
                 sourcePermanentId, effect.untapSourceIfEnteredCardHasAnySubtype(),
-                effect.suppressesTriggeringPermanentEntry());
+                effect.suppressesTriggeringPermanentEntry(),
+                // "Put this card from your hand onto the battlefield" is an instruction, not a "you may" choice.
+                effect.predicate() instanceof CardIsSelfPredicate);
 
     }
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,

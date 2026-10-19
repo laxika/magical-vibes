@@ -593,6 +593,18 @@ public class GameData {
     public final List<StackEntry> pendingSpellCastCostTriggers = Collections.synchronizedList(new ArrayList<>());
     /** Triggered abilities collected while an activated ability's discard cost is being paid. */
     public final List<StackEntry> pendingActivatedAbilityCostTriggers = Collections.synchronizedList(new ArrayList<>());
+
+    /**
+     * Set while a multi-card discard cost is being paid one card at a time: the cards are put into the
+     * graveyard simultaneously (CR 601.2h), so "one or more" graveyard triggers wait for the last card.
+     */
+    public boolean deferOncePerBatchGraveyardTriggers;
+    /** Spellbook cards drafted but not yet put onto the battlefield (The Hourglass Coven). */
+    public final List<Card> heldSpellbookCards = Collections.synchronizedList(new ArrayList<>());
+    /** The first permanent card (and first land card) discarded while {@link #deferOncePerBatchGraveyardTriggers} was set. */
+    public Card deferredBatchPermanentCard;
+    public Card deferredBatchLandCard;
+    public UUID deferredBatchOwnerId;
     /** Permanents chosen to be sacrificed for the activated ability whose costs are being paid. They
      *  stay on the battlefield until every cost choice is made, then leave together with any
      *  sacrificed source as one simultaneous event (CR 603.10a look-back for their dies triggers). */
@@ -1012,6 +1024,11 @@ public class GameData {
     /** Tariff: players (APNAP order) still to be processed after the one currently being resolved. */
     public final List<UUID> tariffRemainingPlayers = new ArrayList<>();
     /**
+     * Tariff: creatures whose controllers declined to pay, sacrificed together once every player has
+     * decided (CR 101.4).
+     */
+    public final List<UUID> tariffPendingSacrificeIds = new ArrayList<>();
+    /**
      * ForcedCostOrElse ({@code anyPlayerMayPay}): players still to be offered the pay prompt after
      * the one currently deciding (APNAP remainder). Cleared when someone pays or the queue drains.
      */
@@ -1343,6 +1360,8 @@ public class GameData {
     public final Set<UUID> playersWhoActivatedAbilityOfGraveyardCardThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated an equip ability this turn. */
     public final Set<UUID> playersWhoActivatedEquipAbilityThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who activated an ability of an artifact this turn (the first such activation each turn is discounted by Tezzeret, Betrayer of Flesh). */
+    public final Set<UUID> playersWhoActivatedArtifactAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a Power-up ability this turn. */
     public final Set<UUID> playersWhoActivatedPowerUpAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a loyalty ability of a planeswalker this turn, backing the
@@ -1367,6 +1386,10 @@ public class GameData {
      *  right graveyard/hand/library on leave; which player CONTROLS the permanent is derived from
      *  the floating {@code L2_CONTROL} effects (see {@link #deriveControllerOf}). */
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
+    /** Cards whose ownership changed during this game (Tempest Efreet's ante exchange), mapped to
+     *  their current owner. A frozen {@link Card} keeps its stamped owner, so this record overrides
+     *  it; read it through {@link #ownerOf(Card)}. */
+    public final Map<UUID, UUID> cardOwnerOverrides = new ConcurrentHashMap<>();
     /** Reflexive Equipment-unattach triggers registered until the end of the current turn. */
     public final Map<UUID, List<ControlLossUnattachTrigger>> controlLossUnattachTriggers =
             new ConcurrentHashMap<>();
@@ -1725,6 +1748,10 @@ public class GameData {
     /** Finite sacrifice-trigger boons, retained until all of their uses have fired. */
     public final List<SacrificeBoonWatcher> sacrificeBoonWatchers =
             Collections.synchronizedList(new ArrayList<>());
+    /** Depth of simultaneous-sacrifice batches; a "one or more permanents" boon fires once per player per batch. */
+    public int simultaneousSacrificeDepth;
+    /** Players whose sacrifice boon has already fired during the current simultaneous-sacrifice batch. */
+    public final Set<UUID> sacrificeBoonBatchPlayerIds = new HashSet<>();
     /** Active "whenever a creature dies this turn" delayed triggers, cleared at turn cleanup. */
     public final List<CreatureDeathTriggerWatcher> creatureDeathTriggerWatchers =
             Collections.synchronizedList(new ArrayList<>());
@@ -1820,10 +1847,14 @@ public class GameData {
     public boolean suppressNextLibrarySearchTriggers;
     /** Cards chosen but not yet returned while {@link #holdGraveyardHandReturns} is set, mapped to the player returning each. */
     public final Map<UUID, UUID> heldGraveyardHandReturns = Collections.synchronizedMap(new LinkedHashMap<>());
-    /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
+    /** APNAP-ordered queue of players still to act in an "each player may draw" effect (Temporary Truce): the head player is prompted while choices are made, then each player in turn draws their chosen count. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
+    /** Each player's chosen draw count for the current "each player may draw up to N" effect, in APNAP order. */
+    public final Map<UUID, Integer> pendingEachPlayerDrawUpToChoices = Collections.synchronizedMap(new LinkedHashMap<>());
     /** Draw count before the current optional draw instruction, retained across replacement choices. */
     public Integer pendingEachPlayerDrawUpToInitialCount;
+    /** Each player's draw count before the simultaneous optional draw of the current "each player may draw up to N" effect began, retained across replacement choices; null until every player has chosen. */
+    public Map<UUID, Integer> pendingEachPlayerDrawUpToInitialCounts;
     /** Hypergenesis-style put-from-hand process paused behind the prompt opened by the card just put. */
     public PendingEachPlayerPutContinuation pendingEachPlayerPutContinuation;
     /** Chosen count for the current optional draw instruction, retained across replacement choices. */
@@ -1847,6 +1878,8 @@ public class GameData {
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
     /** Players who have no maximum hand size until the beginning of their next turn. */
     public final Set<UUID> playersWithNoMaximumHandSizeUntilNextTurn = ConcurrentHashMap.newKeySet();
+    /** Timestamp of each player's latest set-based "no maximum hand size" grant, so later hand-size setters can override it (CR 613.7). */
+    public final Map<UUID, Long> noMaximumHandSizeGrantTimestamps = new ConcurrentHashMap<>();
     /** Players who can't gain life for the rest of the game (e.g. Stigma Lasher). */
     public final Set<UUID> playersWhoCantGainLifeRestOfGame = ConcurrentHashMap.newKeySet();
     /** Players who play with their hand revealed for the rest of the game (e.g. Truth or Dare). */
@@ -2339,9 +2372,10 @@ public class GameData {
     public final Map<UUID, List<GraveyardCardCastPermission>> graveyardCardCastPermissionGrantsUntilEndOfTurn =
             new ConcurrentHashMap<>();
 
-    /** Players whose instant/sorcery spells are automatically copied until end of turn
-     *  (e.g. The Mirari Conjecture chapter III). Cleared at end of turn. */
-    public final Set<UUID> playersWithSpellCopyUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+    /** Number of separate "whenever you cast an instant or sorcery spell, copy it" abilities each player
+     *  controls until end of turn (e.g. one per The Mirari Conjecture chapter III resolution). Each one
+     *  triggers on its own. Cleared at end of turn. */
+    public final Map<UUID, Integer> spellCopyGrantsUntilEndOfTurn = new ConcurrentHashMap<>();
 
     /** Number of conspire copies still to queue for each spell cast with conspire cost(s) paid
      *  (CR 702.78). Each instance of conspire is paid separately and queues its own "copy it, you
@@ -2375,6 +2409,10 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+    /** How many of the copies in {@link #pendingNextInstantSorceryCopyThisTurnCount} come from separate
+     *  one-copy delayed triggers (Teach by Example). Each one triggers on its own (CR 603.7), so when the next
+     *  spell is cast they are queued as separate copy triggers rather than one trigger copying several times. */
+    public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnSingleTriggerCount = new ConcurrentHashMap<>();
     /** The source card of the delayed trigger counted in {@link #pendingNextInstantSorceryCopyThisTurnCount},
      *  so the copy trigger's source is the object that created it (CR 603.7e), not the spell it copies. */
     public final Map<UUID, Card> pendingNextInstantSorceryCopyThisTurnCountSource = new ConcurrentHashMap<>();
@@ -4332,6 +4370,15 @@ public class GameData {
     }
 
     /**
+     * The card's current owner: an in-game ownership change (see {@link #cardOwnerOverrides}) wins
+     * over the owner stamped on the card at game setup. May be null for hand-built test cards.
+     */
+    public UUID ownerOf(Card card) {
+        UUID overridden = cardOwnerOverrides.get(card.getId());
+        return overridden != null ? overridden : card.getOwnerId();
+    }
+
+    /**
      * The player who controls the given permanent per CR 613.2: the newest active control
      * effect wins; with none active, the default controller (see {@link #defaultControllerOf}).
      * Purely derived — moving the permanent between battlefield lists to match is
@@ -4370,7 +4417,7 @@ public class GameData {
             if (permanent != null) break;
         }
         if (permanent != null) {
-            UUID cardOwner = permanent.getCard().getOwnerId();
+            UUID cardOwner = ownerOf(permanent.getCard());
             if (cardOwner != null && playerIds.contains(cardOwner)) {
                 return cardOwner;
             }
@@ -7940,6 +7987,9 @@ public class GameData {
         copy.heldGraveyardHandReturns.putAll(this.heldGraveyardHandReturns);
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
+        copy.pendingEachPlayerDrawUpToChoices.putAll(this.pendingEachPlayerDrawUpToChoices);
+        copy.pendingEachPlayerDrawUpToInitialCounts = this.pendingEachPlayerDrawUpToInitialCounts == null
+                ? null : new LinkedHashMap<>(this.pendingEachPlayerDrawUpToInitialCounts);
         copy.pendingEachPlayerPutContinuation = this.pendingEachPlayerPutContinuation;
         copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
         copy.pendingEachPlayerMayDrawThenGainLifeQueue.addAll(this.pendingEachPlayerMayDrawThenGainLifeQueue);
@@ -8022,6 +8072,7 @@ public class GameData {
         copy.playersWhoActivatedAbilityOfGraveyardCardThisTurn
                 .addAll(this.playersWhoActivatedAbilityOfGraveyardCardThisTurn);
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
+        copy.playersWhoActivatedArtifactAbilityThisTurn.addAll(this.playersWhoActivatedArtifactAbilityThisTurn);
         copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
@@ -8360,6 +8411,7 @@ public class GameData {
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
+        copy.cardOwnerOverrides.putAll(this.cardOwnerOverrides);
         copy.sacrificeForbiddenThisTurn.putAll(this.sacrificeForbiddenThisTurn);
         this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
                 copy.controlLossUnattachTriggers.put(equipmentId,
@@ -8758,6 +8810,7 @@ public class GameData {
                 .forEach(copy.pendingMayAbilities::add);
         copy.pendingGemstoneCavernsChoice = this.pendingGemstoneCavernsChoice;
         copy.tariffRemainingPlayers.addAll(this.tariffRemainingPlayers);
+        copy.tariffPendingSacrificeIds.addAll(this.tariffPendingSacrificeIds);
         copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
@@ -9103,6 +9156,7 @@ public class GameData {
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
         copy.playersWithNoMaximumHandSizeUntilNextTurn.addAll(this.playersWithNoMaximumHandSizeUntilNextTurn);
+        copy.noMaximumHandSizeGrantTimestamps.putAll(this.noMaximumHandSizeGrantTimestamps);
 
         // --- Permanent "can't gain life" grants (Stigma Lasher) ---
         copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
@@ -9190,7 +9244,7 @@ public class GameData {
         copy.senControlledPlayerId = this.senControlledPlayerId;
 
         // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
-        copy.playersWithSpellCopyUntilEndOfTurn.addAll(this.playersWithSpellCopyUntilEndOfTurn);
+        copy.spellCopyGrantsUntilEndOfTurn.putAll(this.spellCopyGrantsUntilEndOfTurn);
         copy.conspiredSpellCopyCounts.putAll(this.conspiredSpellCopyCounts);
         copy.casualtySpellCopyCounts.putAll(this.casualtySpellCopyCounts);
 
@@ -9201,6 +9255,7 @@ public class GameData {
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
         copy.pendingNextInstantSorceryCopyThisTurnCountSource.putAll(this.pendingNextInstantSorceryCopyThisTurnCountSource);
+        copy.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.putAll(this.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount);
         copy.pendingNextInstantSorceryStormThisTurnCount.putAll(this.pendingNextInstantSorceryStormThisTurnCount);
         copy.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
                 .putAll(this.pendingNextInstantSorceryCastFromHandToHandThisTurnCount);

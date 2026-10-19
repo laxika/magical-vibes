@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -22,7 +23,10 @@ public class TheWorldSpell extends Card {
                 new CardNotPredicate(new CardSubtypePredicate(CardSubtype.SAGA))
         ));
 
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
         addEffect(EffectSlot.SAGA_CHAPTER_I,
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(7, nonSagaPermanent));
+        addEffect(EffectSlot.SAGA_CHAPTER_II,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(7, nonSagaPermanent));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new PutUpToCardsFromHandOntoBattlefieldEffect(nonSagaPermanent, "non-Saga permanent", 2));

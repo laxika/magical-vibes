@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
+import com.github.laxika.magicalvibes.model.amount.ManaValueOfLastCardExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -23,7 +24,8 @@ public class TheAesirEscapeValhalla extends Card {
     public TheAesirEscapeValhalla() {
         addEffect(EffectSlot.SAGA_CHAPTER_I, new ExileOwnGraveyardCardThenEffect(
                 new CardIsPermanentPredicate(),
-                new GainLifeEffect(new TotalManaValueOfCardsExiledWithSource()),
+                new GainLifeEffect(new ManaValueOfLastCardExiledWithSource()),
+                true,
                 true,
                 true));
 

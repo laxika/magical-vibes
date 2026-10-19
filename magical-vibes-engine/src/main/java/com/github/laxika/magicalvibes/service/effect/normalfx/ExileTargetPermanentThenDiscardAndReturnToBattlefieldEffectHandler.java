@@ -55,6 +55,11 @@ public class ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffectHandler
         gameLogService.append(gameData, GameLog.isExiled(targetCard));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
+        if (targetCard.isToken()) {
+            gameData.removeFromExile(targetCardId);
+            return;
+        }
+
         ExiledCardEntry exiled = gameData.findExiledCard(targetCardId);
         if (exiled == null || !gameData.removeFromExile(targetCardId)) {
             return;

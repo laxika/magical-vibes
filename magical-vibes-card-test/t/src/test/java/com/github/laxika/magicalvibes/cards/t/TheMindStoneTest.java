@@ -8,8 +8,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -150,8 +155,14 @@ class TheMindStoneTest extends BaseCardTest {
     @DisplayName("Returns a stolen permanent under its owner's control")
     void returnsStolenPermanentToOwner() {
         harnessStone();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GrizzlyBears ownedByPlayer2 = new GrizzlyBears();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, ownedByPlayer2);
         gd.stolenCreatures.put(bears.getId(), player2.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), bears,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
 
         advanceToEndStep();
         harness.handlePermanentChosen(player1, bears.getId());

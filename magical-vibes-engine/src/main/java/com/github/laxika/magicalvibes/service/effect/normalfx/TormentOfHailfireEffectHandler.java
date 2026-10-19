@@ -106,6 +106,18 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
                         ? targetedPlayer(gameData, entry.getTargetId())
                         : apnapOpponents(gameData, entry.getControllerId()));
             }
+            if (!torment.deferChoices() && torment.deferEachIteration() && state.remainingIterations > 0) {
+                // Every opponent chooses before the penalties of this repetition are applied; the next
+                // repetition starts once they have been.
+                state.deferred = true;
+                state.deferEachIteration = true;
+                state.targetedFlow = torment.targeted();
+                state.totalPasses = 1;
+                state.remainingIterations--;
+                state.remaining.addAll(torment.targeted()
+                        ? targetedPlayer(gameData, entry.getTargetId())
+                        : apnapOpponents(gameData, entry.getControllerId()));
+            }
             advance(gameData, entry, sourceName, lifeLoss, discardCount,
                     torment.sacrificePredicate(), torment.targeted());
             return;
@@ -199,7 +211,7 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             if (state.opponentPassesLeft <= 0) {
                 UUID next = state.remaining.pollFirst();
                 if (next == null) {
-                    finishDeferred(gameData, entry, sourceName, lifeLoss);
+                    finishDeferred(gameData, entry, sourceName, lifeLoss, discardCount, sacrificePredicate);
                     return;
                 }
                 if (gameData.playerIds.contains(next)) {
@@ -274,8 +286,12 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
         return indices;
     }
 
-    private void finishDeferred(GameData gameData, StackEntry entry, String sourceName, int lifeLoss) {
+    private void finishDeferred(GameData gameData, StackEntry entry, String sourceName, int lifeLoss,
+            int discardCount, PermanentPredicate sacrificePredicate) {
         TormentState state = gameData.torment;
+        boolean nextIteration = state.deferEachIteration && state.remainingIterations > 0;
+        int iterationsLeft = state.remainingIterations;
+        boolean targeted = state.targetedFlow;
         List<UUID> sacrifices = List.copyOf(state.chosenSacrifices);
         Map<UUID, Integer> lifeLosses = new LinkedHashMap<>(state.lifeLossCounts);
         gameData.deferredDiscardChooserId = null;
@@ -294,6 +310,18 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
                 lifeSupport.applyLifeLoss(gameData, playerId, lifeLoss, sourceName);
             }
         });
+        if (nextIteration) {
+            state.active = true;
+            state.deferred = true;
+            state.deferEachIteration = true;
+            state.targetedFlow = targeted;
+            state.totalPasses = 1;
+            state.remainingIterations = iterationsLeft - 1;
+            state.remaining.addAll(targeted
+                    ? targetedPlayer(gameData, entry.getTargetId())
+                    : apnapOpponents(gameData, entry.getControllerId()));
+            advanceDeferred(gameData, entry, sourceName, lifeLoss, discardCount, sacrificePredicate);
+        }
     }
 
     /**

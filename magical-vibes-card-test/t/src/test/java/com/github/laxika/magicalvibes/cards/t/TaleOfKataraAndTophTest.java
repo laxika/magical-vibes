@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TaleOfKataraAndToph.class, KoalaSheep.class})
@@ -43,6 +45,7 @@ class TaleOfKataraAndTophTest extends BaseCardTest {
 
     @Test
     void canTriggerAgainOnYourNextTurn() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new TaleOfKataraAndToph());
         Permanent creature = addCreatureReady(player1, new KoalaSheep());
         tapAndCollect(creature);

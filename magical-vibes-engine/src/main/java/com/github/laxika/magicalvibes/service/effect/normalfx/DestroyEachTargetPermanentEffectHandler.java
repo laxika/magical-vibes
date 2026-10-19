@@ -72,8 +72,9 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
             manaValueByPermanentId.put(target.getId(), target.getCard().getManaValue());
         }
 
-        List<Permanent> actuallyDestroyed = destructionSupport.destroyBatchCollecting(
-                gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated()).stream()
+        List<Permanent> destroyed = destructionSupport.destroyBatchDestroyed(
+                gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated());
+        List<Permanent> actuallyDestroyed = destroyed.stream()
                 .filter(permanent -> gameData.playerGraveyards.values().stream().flatMap(List::stream)
                         .anyMatch(card -> card.getId().equals(permanent.getOriginalCard().getId())))
                 .toList();
@@ -89,7 +90,7 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
                 }
             }
         }
-        entry.setEventValue(actuallyDestroyed.size());
+        entry.setEventValue(destroyed.size());
         entry.setEventManaValues(actuallyDestroyed.stream()
                 .map(permanent -> manaValueByPermanentId.getOrDefault(permanent.getId(), 0))
                 .toList());

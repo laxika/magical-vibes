@@ -167,6 +167,7 @@ class TheMaelstromTest extends BaseCardTest {
     void chaosReturnsAuraAttachedToChosenCreature() {
         Card aura = new HolyStrength();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(aura));
 
         harness.inMutationScope(() -> planar.chaos(gd));

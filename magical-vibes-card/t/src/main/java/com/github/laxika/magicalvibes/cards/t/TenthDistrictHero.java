@@ -31,7 +31,7 @@ public class TenthDistrictHero extends Card {
                 "{1}{W}",
                 List.of(
                         new CollectEvidenceCost(2),
-                        new BecomeCreatureTypeWithBasePowerToughnessEffect(4, 4, CardSubtype.DETECTIVE),
+                        BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(4, 4, null, CardSubtype.HUMAN, CardSubtype.DETECTIVE),
                         new SetSelfKeywordIndefinitelyEffect(Keyword.VIGILANCE, true)
                 ),
                 "{1}{W}, Collect evidence 2: This creature becomes a Human Detective with base power and toughness 4/4 and gains vigilance."

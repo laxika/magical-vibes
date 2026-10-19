@@ -39,7 +39,7 @@ public class TerminalVelocity extends Card {
                                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF, GrantDuration.INDEFINITE),
                                 GrantEffectToTargetEffect.toSourcePermanent(
                                         EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, leavesDamage),
-                                new SacrificeSelfAtEndStepEffect())),
+                                SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep())),
                 "Put an artifact or creature card from your hand onto the battlefield?"));
     }
 }

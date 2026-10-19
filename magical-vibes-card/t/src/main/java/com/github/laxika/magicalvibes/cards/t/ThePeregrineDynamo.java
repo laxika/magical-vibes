@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsFromSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySourceHasSupertypePredicate;
@@ -36,7 +36,7 @@ public class ThePeregrineDynamo extends Card {
                                 new StackEntryControlledByPredicate(),
                                 new StackEntrySourceHasSupertypePredicate(CardSupertype.LEGENDARY),
                                 new StackEntryNotPredicate(new StackEntrySourceIsCommanderPredicate()),
-                                new StackEntryNotPredicate(new StackEntryCardIdPredicate(getId())))),
+                                new StackEntryNotPredicate(new StackEntryIsFromSourcePermanentPredicate()))),
                         "Target must be an activated or triggered ability you control from another legendary source that's not a commander.")));
     }
 }

@@ -46,7 +46,7 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
         opponents.removeIf(id -> !gameData.playerIds.contains(id));
         if (!opponents.isEmpty()) {
             promptNext(gameData, entry.getCard(), new TemptingOfferCreateTokensEffect(
-                    offer.tokenEffect(), List.copyOf(opponents), controllerId,
+                    offer.tokenEffect(), List.copyOf(opponents), List.of(), controllerId,
                     offer.controllerCreatesFirst()));
         }
     }
@@ -65,10 +65,9 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
 
     public void completeChoice(GameData gameData, PendingMayAbility ability,
                                TemptingOfferCreateTokensEffect effect, boolean accepted) {
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (accepted && entry != null) {
-            createTokens(gameData, entry, effect, ability.controllerId());
-            createTokens(gameData, entry, effect, effect.abilityControllerId());
+        List<UUID> acceptedOpponents = new ArrayList<>(effect.acceptedOpponentIds());
+        if (accepted) {
+            acceptedOpponents.add(ability.controllerId());
         }
 
         List<UUID> remaining = new ArrayList<>(effect.remainingOpponentIds());
@@ -76,8 +75,18 @@ public class TemptingOfferCreateTokensEffectHandler implements NormalEffectHandl
         remaining.removeIf(id -> !gameData.playerIds.contains(id));
         if (!remaining.isEmpty()) {
             promptNext(gameData, ability.sourceCard(), new TemptingOfferCreateTokensEffect(
-                    effect.tokenEffect(), List.copyOf(remaining), effect.abilityControllerId(),
-                    effect.controllerCreatesFirst()));
+                    effect.tokenEffect(), List.copyOf(remaining), List.copyOf(acceptedOpponents),
+                    effect.abilityControllerId(), effect.controllerCreatesFirst()));
+            return;
+        }
+
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            return;
+        }
+        for (UUID opponentId : acceptedOpponents) {
+            createTokens(gameData, entry, effect, opponentId);
+            createTokens(gameData, entry, effect, effect.abilityControllerId());
         }
     }
 

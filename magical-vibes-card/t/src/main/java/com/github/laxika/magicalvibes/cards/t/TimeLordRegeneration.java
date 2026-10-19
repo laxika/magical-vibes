@@ -32,6 +32,7 @@ public class TimeLordRegeneration extends Card {
                 new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH,
                         new RevealUntilCardPredicateRestOnBottomRandomEffect(
-                                TIME_LORD_CREATURE_CARD, LibrarySearchDestination.BATTLEFIELD)));
+                                TIME_LORD_CREATURE_CARD, LibrarySearchDestination.BATTLEFIELD),
+                        false, true));
     }
 }

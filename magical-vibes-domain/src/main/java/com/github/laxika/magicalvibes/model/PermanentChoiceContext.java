@@ -2807,12 +2807,35 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                              Set<TargetFilter> targetFilters,
                              List<SagaChapterTargetGroup> targetGroups,
                              List<UUID> chosenTargetsSoFar,
-                             int currentGroupIndex) implements PermanentChoiceContext {
+                             int currentGroupIndex,
+                             List<Integer> completedGroupTargetCounts) implements PermanentChoiceContext {
         public SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                  UUID sourcePermanentId, String chapterName,
                                  Set<TargetFilter> targetFilters) {
             this(sourceCard, controllerId, effects, sourcePermanentId, chapterName, targetFilters,
-                    List.of(), List.of(), 0);
+                    List.of(), List.of(), 0, List.of());
+        }
+
+        public SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                 UUID sourcePermanentId, String chapterName,
+                                 Set<TargetFilter> targetFilters,
+                                 List<SagaChapterTargetGroup> targetGroups,
+                                 List<UUID> chosenTargetsSoFar,
+                                 int currentGroupIndex) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chapterName, targetFilters,
+                    targetGroups, chosenTargetsSoFar, currentGroupIndex, List.of());
+        }
+
+        /**
+         * The per-group target counts once the current group is closed with {@code chosenTargetCount}
+         * targets chosen across all groups so far. Lets the chapter ability's flat target list be split
+         * back into its groups, so each target keeps its own group's filter.
+         */
+        public List<Integer> closeCurrentGroup(int chosenTargetCount) {
+            int completed = completedGroupTargetCounts.stream().mapToInt(Integer::intValue).sum();
+            List<Integer> counts = new java.util.ArrayList<>(completedGroupTargetCounts);
+            counts.add(chosenTargetCount - completed);
+            return List.copyOf(counts);
         }
     }
 

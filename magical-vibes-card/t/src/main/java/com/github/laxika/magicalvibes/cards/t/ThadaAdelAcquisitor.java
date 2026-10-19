@@ -14,6 +14,6 @@ public class ThadaAdelAcquisitor extends Card {
     public ThadaAdelAcquisitor() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new SearchTargetLibraryEffect(1, new CardTypePredicate(CardType.ARTIFACT),
-                        LibrarySearchDestination.EXILE_PLAYABLE, true));
+                        LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN, true));
     }
 }

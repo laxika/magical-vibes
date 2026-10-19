@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TempestTechnique.class, BloodMoon.class, GrizzlyBears.class})
+@CardUsed({TempestTechnique.class, BloodMoon.class, GrizzlyBears.class, DarkRitual.class})
 class TempestTechniqueTest extends BaseCardTest {
 
     @Test
@@ -95,7 +96,7 @@ class TempestTechniqueTest extends BaseCardTest {
     void stormCountsOpponentSpellAndRetargetsCopy() {
         Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent copyTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
         harness.passBothPriorities();
         harness.ensurePriority(player1);
         castTechnique(player1, originalTarget);

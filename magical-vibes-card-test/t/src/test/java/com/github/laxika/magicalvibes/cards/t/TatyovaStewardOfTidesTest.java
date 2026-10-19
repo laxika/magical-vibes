@@ -96,7 +96,7 @@ class TatyovaStewardOfTidesTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, enteringLand)).isTrue();
         assertThat(gqs.hasKeyword(gd, enteringLand, Keyword.HASTE)).isTrue();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isLand(gd, enteringLand)).isTrue();
         assertThat(gqs.isCreature(gd, enteringLand)).isTrue();

@@ -22,7 +22,7 @@ public class TheSuperHeroCivilWar extends Card {
     public TheSuperHeroCivilWar() {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 GainControlOfTargetEffect.withTargetPredicate(
-                        ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD,
+                        ControlDuration.WHILE_SOURCE_REMAINS,
                         new PermanentIsCreaturePredicate()));
         setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2, 6)));

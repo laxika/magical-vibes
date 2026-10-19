@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,12 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesDownToCou
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -31,6 +35,7 @@ public class EachPlayerSacrificesDownToCountEffectHandler implements NormalEffec
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,7 +61,7 @@ public class EachPlayerSacrificesDownToCountEffectHandler implements NormalEffec
             if (toSacrifice >= matching.size()) {
                 matching.stream().map(Permanent::getId).forEach(autoSacrificeIds::add);
             } else {
-                choosers.add(new PendingForcedSacrifice(playerId, toSacrifice,
+                choosers.add(new PendingForcedSacrifice(playerId, downTo.choosesKept() ? downTo.count() : toSacrifice,
                         matching.stream().map(Permanent::getId).toList()));
             }
         }
@@ -69,10 +74,47 @@ public class EachPlayerSacrificesDownToCountEffectHandler implements NormalEffec
         if (choosers.isEmpty()) {
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
         } else {
-            destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
+            if (downTo.choosesKept()) {
+                beginNextKeepChoice(gameData, choosers, autoSacrificeIds);
+            } else {
+                destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
+            }
         }
         log.info("Game {} - {} sacrifices permanents down to {}", gameData.id, entry.getCard().getName(),
                 downTo.count());
+    }
+
+    /**
+     * Completes one player's keep choice: every matching permanent that player did not keep is added to the
+     * sacrifices, and the next player is prompted or the sacrifices happen together.
+     */
+    public void completeKeepChoice(GameData gameData, List<UUID> keptIds,
+                                   MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest context) {
+        Set<UUID> kept = new HashSet<>(keptIds);
+        List<UUID> allSacrificeIds = new ArrayList<>(context.accumulatedSacrificeIds());
+        context.current().validPermanentIds().stream()
+                .filter(permanentId -> !kept.contains(permanentId))
+                .forEach(allSacrificeIds::add);
+
+        if (!context.remainingChoosers().isEmpty()) {
+            beginNextKeepChoice(gameData, context.remainingChoosers(), allSacrificeIds);
+            return;
+        }
+        destructionSupport.performSimultaneousSacrifice(gameData, allSacrificeIds);
+    }
+
+    private void beginNextKeepChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                     List<UUID> accumulatedSacrificeIds) {
+        PendingForcedSacrifice next = choosers.getFirst();
+        List<PendingForcedSacrifice> remaining = List.copyOf(choosers.subList(1, choosers.size()));
+        playerInputService.beginMultiPermanentChoice(
+                gameData,
+                next.playerId(),
+                next.validPermanentIds(),
+                next.count(),
+                new MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest(
+                        next, remaining, accumulatedSacrificeIds),
+                "Choose " + next.count() + " permanent" + (next.count() > 1 ? "s" : "") + " to keep.");
     }
 
     private List<Permanent> matching(GameData gameData, UUID playerId,

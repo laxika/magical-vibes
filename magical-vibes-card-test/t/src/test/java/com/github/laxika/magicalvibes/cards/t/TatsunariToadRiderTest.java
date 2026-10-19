@@ -252,7 +252,7 @@ class TatsunariToadRiderTest extends BaseCardTest {
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0))))
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), gd.playerBattlefields.get(player1.getId()).indexOf(keimi)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying or reach");
     }
@@ -269,7 +269,7 @@ class TatsunariToadRiderTest extends BaseCardTest {
         keimi.setAttacking(true);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), gd.playerBattlefields.get(player1.getId()).indexOf(keimi))));
 
         assertThat(blocker.isBlocking()).isTrue();
     }

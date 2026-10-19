@@ -126,6 +126,7 @@ class TheBlueSpiritTest extends BaseCardTest {
     void opponentsCreatureDoesNotDraw() {
         harness.addToBattlefield(player1, new TheBlueSpirit());
         harness.setLibrary(player1, List.of(new AardvarkSloth()));
+        harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
         harness.enterBattlefieldAndReturn(player2, new AardvarkSloth());
@@ -139,6 +140,8 @@ class TheBlueSpiritTest extends BaseCardTest {
     void multipleEntriesDuringOpponentsCombatDrawSeparately() {
         harness.addToBattlefield(player1, new TheBlueSpirit());
         harness.setLibrary(player1, List.of(new AardvarkSloth(), new AardvarkSloth()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_OF_COMBAT);
 
@@ -178,6 +181,8 @@ class TheBlueSpiritTest extends BaseCardTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
         harness.castAndResolveInstant(player1, 0);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         resolveAllTriggers();

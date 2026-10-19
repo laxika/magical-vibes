@@ -132,6 +132,7 @@ class TheLunarWhaleTest extends BaseCardTest {
     void permissionExpiresAtNextTurn() {
         Permanent whale = crewAndAttack();
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
@@ -174,7 +175,8 @@ class TheLunarWhaleTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
-        harness.handlePermanentChosen(player1, whale.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handlePermanentChosen(player1, whale.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(whale);
         assertThat(whale.isAttacking()).isTrue();

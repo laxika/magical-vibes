@@ -40,6 +40,7 @@ class TheGooseMotherTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, food.getId());
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);

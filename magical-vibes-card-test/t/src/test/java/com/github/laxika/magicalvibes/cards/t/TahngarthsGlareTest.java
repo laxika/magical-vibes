@@ -79,13 +79,6 @@ class TahngarthsGlareTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
 
-        PendingInteraction.LibraryReorder ownLibraryLook =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
-        assertThat(ownLibraryLook.playerId()).isEqualTo(player2.getId());
-        assertThat(ownLibraryLook.deckOwnerId()).isEqualTo(player1.getId());
-        assertThat(ownLibraryLook.cards()).containsExactlyElementsOf(ownTopCards);
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(0)));
-
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(
                 opponentTopCards.get(1), opponentTopCards.get(0));

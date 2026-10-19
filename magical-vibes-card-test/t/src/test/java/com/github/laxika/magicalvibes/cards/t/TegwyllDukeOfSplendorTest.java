@@ -92,7 +92,7 @@ class TegwyllDukeOfSplendorTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
 
         harness.setHand(player1, List.of(new Murder()));
-        killCreature(player1, "Willow Faerie");
+        killCreature(player2, "Willow Faerie");
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);

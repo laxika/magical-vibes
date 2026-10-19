@@ -151,6 +151,12 @@ public class UntapStepService {
                                  boolean skipUntapStep, Set<UUID> chosenUntapIds, PermanentPredicate staticOrbFilter) {
         if (!gameData.additionalBeginningPhaseUntapInProgress) {
             snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
+            // Loyalty activation limits reset each turn for every planeswalker, including one an opponent
+            // controls and activated during its controller's previous turn.
+            gameData.playerBattlefields.values().forEach(battlefield -> battlefield.forEach(p -> {
+                p.setLoyaltyActivationsThisTurn(0);
+                p.setExtraLoyaltyActivationsThisTurn(0);
+            }));
         }
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
         gameData.untapStepPlayerId = activePlayerId;

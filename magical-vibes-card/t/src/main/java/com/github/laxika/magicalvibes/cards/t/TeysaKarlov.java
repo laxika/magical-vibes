@@ -26,7 +26,7 @@ public class TeysaKarlov extends Card {
         addEffect(EffectSlot.STATIC,
                 new AdditionalCreatureDeathTriggerEffect(new PermanentTruePredicate()));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Set.of(Keyword.VIGILANCE, Keyword.LIFELINK), GrantScope.OWN_CREATURES,
+                Set.of(Keyword.VIGILANCE, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsTokenPredicate()));
     }
 }

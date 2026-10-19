@@ -514,7 +514,13 @@ public class BattlefieldPlacementService {
             if (permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)) {
                 gameData.recordTreasureTokenCreated(puttingPlayerId);
             }
-            gameData.tokensCreatedThisTurn.merge(puttingPlayerId, 1, Integer::sum);
+            // A copy of a permanent spell becomes a token but is never "created" (Thalisse, Reverent
+            // Medium ruling, 2020-11-10), so it doesn't count toward "tokens you created this turn".
+            boolean copiedPermanentSpellToken = request.sourceStackEntry() != null
+                    && request.sourceStackEntry().isCopy();
+            if (!copiedPermanentSpellToken) {
+                gameData.tokensCreatedThisTurn.merge(puttingPlayerId, 1, Integer::sum);
+            }
         }
         if (permanent.getCard().isAura() && permanent.getAttachedTo() != null) {
             triggerCollectionService.checkAuraAttachedTriggers(gameData, permanent, permanent.getAttachedTo());

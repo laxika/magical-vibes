@@ -121,7 +121,7 @@ class TerritorialHammerskullTest extends BaseCardTest {
 
             declareAttackers(List.of(0));
 
-            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.stack).isEmpty();
             assertThat(ownCreature.isTapped()).isFalse();
         }

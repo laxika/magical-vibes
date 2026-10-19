@@ -265,6 +265,7 @@ class TheEldestRebornTest extends BaseCardTest {
     void chapterILetsOpponentChoosePlaneswalkerInsteadOfCreature() {
         harness.addToBattlefield(player2, new BalothGorger());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new KarnScionOfUrza());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new TheEldestReborn()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

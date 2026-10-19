@@ -88,7 +88,7 @@ class TheEternalWandererTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
         harness.handleMultiplePermanentsChosen(player1, List.of(p1Bears.getId()));
-        harness.handleMultiplePermanentsChosen(player1, List.of(p2Elves.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(p2Elves.getId()));
 
         assertThat(wanderer.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(p1Bears);
@@ -199,8 +199,8 @@ class TheEternalWandererTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("-4's controller chooses one of three opposing creatures to keep")
-    void minusFourControllerChoosesOpponentsSurvivor() {
+    @DisplayName("-4 lets the opponent choose which of its three creatures to keep")
+    void minusFourOpponentChoosesOwnSurvivor() {
         addReadyWanderer(player1, 5);
         Permanent survivor = addCreatureReady(player2, new LlanowarElves());
         Permanent firstBears = addCreatureReady(player2, new GrizzlyBears());
@@ -208,7 +208,7 @@ class TheEternalWandererTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(survivor.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(survivor.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
         assertThat(gd.playerGraveyards.get(player2.getId()))

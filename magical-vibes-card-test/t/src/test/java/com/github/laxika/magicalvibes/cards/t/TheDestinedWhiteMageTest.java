@@ -29,6 +29,7 @@ class TheDestinedWhiteMageTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         gainLife(1);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -46,6 +47,7 @@ class TheDestinedWhiteMageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FugitiveWizard());
 
         gainLife(1);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -55,7 +57,7 @@ class TheDestinedWhiteMageTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability grants another creature you control lifelink until end of turn")
     void activatedAbilityGrantsLifelinkUntilEndOfTurn() {
-        harness.addToBattlefield(player1, new TheDestinedWhiteMage());
+        addCreatureReady(player1, new TheDestinedWhiteMage());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 1);
 

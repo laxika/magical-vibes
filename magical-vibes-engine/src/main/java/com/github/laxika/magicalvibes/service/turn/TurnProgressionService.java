@@ -1151,6 +1151,7 @@ public class TurnProgressionService {
         gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
         gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
+        gameData.playersWhoActivatedArtifactAbilityThisTurn.clear();
         gameData.playersWhoActivatedPowerUpAbilityThisTurn.clear();
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.clear();
         gameData.playersWhoActivatedSparkAbilityThisTurn.clear();

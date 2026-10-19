@@ -96,7 +96,7 @@ class TakenumaTest extends BaseCardTest {
     @Test
     void chaosReturnsStolenCreatureToOwnerButControllerDraws() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
         GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

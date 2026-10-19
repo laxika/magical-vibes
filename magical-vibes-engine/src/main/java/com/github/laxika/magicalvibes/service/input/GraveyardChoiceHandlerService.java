@@ -557,7 +557,9 @@ public class GraveyardChoiceHandlerService {
                         }
                     }
 
-                    if (card.hasType(CardType.CREATURE)) {
+                    if (card.hasType(CardType.CREATURE)
+                            || attachToSourcePermanentId == null && (card.hasType(CardType.LAND)
+                            || card.hasType(CardType.ARTIFACT) || card.hasType(CardType.ENCHANTMENT))) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, battlefieldControllerId, card, null, false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
@@ -2147,6 +2149,11 @@ public class GraveyardChoiceHandlerService {
             }
             triggeredEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
             triggeredEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
+            if (mixedZoneEffect != null) {
+                cardIds.stream()
+                        .filter(cardId -> findPermanentByCardId(gameData, cardId) != null)
+                        .forEach(triggeredEntry::rememberBattlefieldChosenTargetCard);
+            }
             if (pendingTargetPlayerId != null) {
                 triggeredEntry.setTargetId(pendingTargetPlayerId);
             }

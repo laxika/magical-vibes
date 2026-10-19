@@ -68,6 +68,16 @@ public record ForcedCostOrElseEffect(
         return TargetSpec.NONE;
     }
 
+    /**
+     * A paid effect wrapped in {@link QueueReflexiveAbilityEffect} ("you may pay ... When you do,
+     * [targeted effect]") chooses its targets only once the cost is paid, so the carrying trigger
+     * does not choose them when it triggers.
+     */
+    @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return paidEffects.stream().anyMatch(CardEffect::targetsChosenByReflexiveAbility);
+    }
+
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects,
                                   boolean optional, boolean anyPlayerMayPay,
                                   boolean payerIsEnchantedController, boolean payerIsDefendingPlayer,

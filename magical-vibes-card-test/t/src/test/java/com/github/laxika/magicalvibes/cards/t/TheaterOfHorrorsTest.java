@@ -128,8 +128,8 @@ class TheaterOfHorrorsTest extends BaseCardTest {
         Permanent theater = addTheater(player1);
         Card card = new SauroformHybrid();
         gd.addToExile(player1.getId(), card, theater.getId());
-        harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment");
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment"));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -152,7 +152,7 @@ class TheaterOfHorrorsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromExile(player1, first.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment"));
         harness.castFromExile(player1, first.getId());
 
         harness.assertOnBattlefield(player1, "Forest");
@@ -166,7 +166,7 @@ class TheaterOfHorrorsTest extends BaseCardTest {
         Permanent theater = addTheater(player1);
         Card card = new SauroformHybrid();
         gd.addToExile(player1.getId(), card, theater.getId());
-        harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment"));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -180,7 +180,7 @@ class TheaterOfHorrorsTest extends BaseCardTest {
         Permanent theater = addTheater(player1);
         Card card = new SauroformHybrid();
         gd.addToExile(player1.getId(), card, theater.getId());
-        harness.getLifeSupport().applyLifePayment(gd, player1.getId(), 1, "Life payment");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player1.getId(), 1, "Life payment"));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -194,7 +194,7 @@ class TheaterOfHorrorsTest extends BaseCardTest {
         Permanent theater = addTheater(player1);
         Card card = new SauroformHybrid();
         gd.addToExile(player1.getId(), card, theater.getId());
-        harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment"));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -209,7 +209,7 @@ class TheaterOfHorrorsTest extends BaseCardTest {
         Card card = new SauroformHybrid();
         gd.addToExile(player1.getId(), card, theater.getId());
         gd.turnNumber++;
-        harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment"));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -231,7 +231,7 @@ class TheaterOfHorrorsTest extends BaseCardTest {
         gd.addToExile(player1.getId(), card, original.getId());
         gd.playerBattlefields.get(player1.getId()).remove(original);
         addTheater(player1);
-        harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifePayment(gd, player2.getId(), 1, "Life payment"));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -244,6 +244,7 @@ class TheaterOfHorrorsTest extends BaseCardTest {
     void damageCanTargetOwnPlaneswalkerWithoutEnablingExilePermission() {
         Permanent theater = addTheater(player1);
         Permanent dovin = harness.addToBattlefieldAndReturn(player1, new DovinGrandArbiter());
+        dovin.setCounterCount(CounterType.LOYALTY, 3);
         int loyaltyBefore = dovin.getCounterCount(CounterType.LOYALTY);
         Card card = new SauroformHybrid();
         gd.addToExile(player1.getId(), card, theater.getId());

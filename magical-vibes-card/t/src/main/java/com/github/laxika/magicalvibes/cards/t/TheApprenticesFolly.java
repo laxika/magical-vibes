@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEachMatchingPermanentEffect;
@@ -44,10 +45,11 @@ public class TheApprenticesFolly extends Card {
                         new PermanentControlledBySourceControllerPredicate()))));
     }
 
+    /** "Has haste" is an exception to the copy (CR 707.9b), so copies of a Reflection also have haste. */
     private CreateTokenCopyOfTargetPermanentEffect copyEffect() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(CardSubtype.REFLECTION), Set.of(), null, null, Map.of(),
-                true, false, false, false, false, false, null, Set.of(), true);
+                false, false, false, false, false, false, null, Set.of(Keyword.HASTE), true);
     }
 
     private SagaChapterTargetGroup copyTargetGroup() {

@@ -1077,7 +1077,10 @@ class TurnCleanupServiceTest {
         void playersHaveNoMaximumHandSizeAffectsEveryone() {
             Card card = createCardWithName("Anvil of Bogardan");
             card.addEffect(EffectSlot.STATIC, new PlayersHaveNoMaximumHandSizeEffect());
-            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player2Id).add(permanent);
+            lenient().when(gameQueryService.getActiveStaticEffects(gd, permanent))
+                    .thenReturn(card.getEffects(EffectSlot.STATIC));
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();
             assertThat(sut.hasNoMaximumHandSize(gd, player2Id)).isTrue();

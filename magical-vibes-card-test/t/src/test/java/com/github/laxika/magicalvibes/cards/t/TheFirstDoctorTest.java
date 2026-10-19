@@ -152,6 +152,8 @@ class TheFirstDoctorTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
                 harness.handlePermanentChosen(player1, crew.getId());
+                // Crew lets the player keep tapping creatures; choosing themselves finishes the payment.
+                harness.handlePermanentChosen(player1, player1.getId());
             }
             harness.passBothPriorities();
         });

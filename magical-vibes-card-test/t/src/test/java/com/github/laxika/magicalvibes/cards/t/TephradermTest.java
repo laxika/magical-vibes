@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -87,7 +88,7 @@ class TephradermTest extends BaseCardTest {
     void animatedLandDamageIsReflected() {
         addCreatureReady(player1, new KamahlFistOfKrosa());
         Permanent forest = addCreatureReady(player1, new Forest());
-        addCreatureReady(player2, new Tephraderm());
+        Permanent tephraderm = addCreatureReady(player2, new Tephraderm());
         harness.addMana(player1, ManaColor.GREEN, 11);
 
         harness.activateAbility(player1, 0, 0, null, forest.getId());
@@ -100,6 +101,7 @@ class TephradermTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player1, List.of(1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         resolveCombat(player1);
+        harness.handleCombatDamageAssigned(player1, 1, Map.of(tephraderm.getId(), 7));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Tephraderm");

@@ -1992,6 +1992,11 @@ public class ValidTargetService {
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())) {
                             continue;
                         }
+                        if (rge.targetMilledThisTurn()
+                                && !gameData.cardsMilledThisTurn
+                                        .getOrDefault(playerId, Set.of()).contains(c.getId())) {
+                            continue;
+                        }
                         if (rge.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
                                 && !gameData.cardsDiscardedOrCycledThisTurn
                                         .getOrDefault(playerId, Set.of()).contains(c.getId())
@@ -2234,6 +2239,12 @@ public class ValidTargetService {
         UUID cardOwnerId = card.getOwnerId() != null
                 ? card.getOwnerId()
                 : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (effect.targetMilledThisTurn()
+                && (cardOwnerId == null
+                || !gameData.cardsMilledThisTurn
+                .getOrDefault(cardOwnerId, Set.of()).contains(card.getId()))) {
+            return false;
+        }
         if (effect.targetPutIntoGraveyardFromLibraryThisTurn()
                 && (cardOwnerId == null
                 || !gameData.cardsPutIntoGraveyardFromLibraryThisTurn

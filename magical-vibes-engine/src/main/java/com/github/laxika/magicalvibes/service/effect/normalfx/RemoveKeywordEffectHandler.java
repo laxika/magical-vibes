@@ -87,11 +87,6 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
                             && !gameQueryService.isCreature(gameData, p)) {
                         continue;
                     }
-                    if (remove.scope() == GrantScope.ALL_PERMANENTS
-                            && entry.getSourcePermanentId() != null
-                            && entry.getSourcePermanentId().equals(p.getId())) {
-                        continue;
-                    }
                     if (remove.filter() != null
                             && !predicateEvaluationService.matchesPermanentPredicate(
                                     p, remove.filter(), filterContext)) {

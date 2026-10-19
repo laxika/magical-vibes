@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.StartingLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -22,6 +21,6 @@ public class TheEndstone extends Card {
         ));
         addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, new DrawCardEffect(1));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new SetLifeTotalEffect(new HalvedRoundedUp(new Fixed(GameData.STARTING_LIFE_TOTAL))));
+                new SetLifeTotalEffect(new HalvedRoundedUp(new StartingLifeTotal())));
     }
 }

@@ -1806,7 +1806,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof SacrificeSelfAtEndStepEffect sacrifice) {
                 gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
                         permanent.getId(), playerId, permanent.getCard(),
-                        sacrifice.currentControllerSacrifices()));
+                        sacrifice.currentControllerSacrifices(), sacrifice.currentControllersEndStepOnly()));
             } else if (effect instanceof SacrificeSelfEffect
                     && !gameQueryService.cantBeSacrificed(gameData, permanent)
                     && permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {

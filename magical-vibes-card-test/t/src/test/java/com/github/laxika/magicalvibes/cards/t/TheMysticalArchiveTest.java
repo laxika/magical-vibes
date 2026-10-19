@@ -19,8 +19,7 @@ class TheMysticalArchiveTest extends BaseCardTest {
 
     @Test
     void draftsFaceDownCardWithSourceAndReturnsItToHand() {
-        Permanent archive = harness.enterBattlefieldAndReturn(player1, new TheMysticalArchive());
-        resolveAllTriggers();
+        Permanent archive = harness.enterLandBattlefieldAndReturn(player1, new TheMysticalArchive());
 
         PendingInteraction.SpellbookDraftToExileChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftToExileChoice.class);

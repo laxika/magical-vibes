@@ -32,8 +32,8 @@ class TerraformerTest extends BaseCardTest {
 
         activateAndChoose("ISLAND");
 
-        assertThat(forestA.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-        assertThat(forestB.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forestA)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forestB)).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test
@@ -45,7 +45,7 @@ class TerraformerTest extends BaseCardTest {
 
         activateAndChoose("ISLAND");
 
-        assertThat(opponentForest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveBasicLandTypes(gd, opponentForest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test
@@ -57,8 +57,8 @@ class TerraformerTest extends BaseCardTest {
 
         activateAndChoose("ISLAND");
 
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-        assertThat(forest.getTransientSubtypes()).isEmpty();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isFalse();
     }
 
     @Test
@@ -71,7 +71,7 @@ class TerraformerTest extends BaseCardTest {
 
         Permanent laterForest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(laterForest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveBasicLandTypes(gd, laterForest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test
@@ -99,7 +99,7 @@ class TerraformerTest extends BaseCardTest {
         activateAndChoose("ISLAND");
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
         assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
     }
 
@@ -116,7 +116,7 @@ class TerraformerTest extends BaseCardTest {
 
         activateAndChoose("ISLAND");
 
-        assertThat(enchantedCreature.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, enchantedCreature)).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test

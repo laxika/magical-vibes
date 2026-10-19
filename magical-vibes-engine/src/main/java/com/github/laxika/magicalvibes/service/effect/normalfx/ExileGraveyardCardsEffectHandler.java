@@ -88,9 +88,9 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             List<Card> toExile = new ArrayList<>(graveyard);
             graveyard.clear();
             graveyardService.notifyCardsExiledFromGraveyard(gameData, affectedPlayerId, toExile);
-            for (Card card : toExile) {
-                exileService.exileCard(gameData, affectedPlayerId, card);
-            }
+            UUID batchPlayerId = affectedPlayerId;
+            gameData.runAsSingleCardExileBatch(() -> toExile.forEach(
+                    card -> exileService.exileCard(gameData, batchPlayerId, card)));
             GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
             appendCardList(builder, toExile);
             builder.text(" from their graveyard.");
@@ -339,13 +339,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
             List<Card> toExile = new ArrayList<>(graveyard);
             int count = toExile.size();
-            for (Card card : toExile) {
+            gameData.runAsSingleCardExileBatch(() -> toExile.forEach(card -> {
                 if (sourcePermanentId == null) {
                     exileService.exileCard(gameData, targetPlayerId, card);
                 } else {
                     exileService.exileCard(gameData, targetPlayerId, card, sourcePermanentId);
                 }
-            }
+            }));
             graveyard.clear();
             graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
 

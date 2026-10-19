@@ -46,7 +46,7 @@ class ThrillingEncoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Grizzly Bears", "Thrilling Encore");
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Bonesplitter");
@@ -64,6 +64,6 @@ class ThrillingEncoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
-                .containsExactly("Grizzly Bears", "Annul");
+                .containsExactly("Grizzly Bears", "Annul", "Thrilling Encore");
     }
 }

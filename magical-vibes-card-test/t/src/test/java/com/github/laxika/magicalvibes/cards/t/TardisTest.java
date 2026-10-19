@@ -177,6 +177,10 @@ class TardisTest extends BaseCardTest {
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
             harness.handlePermanentChosen(player1, findPermanent(player1, "Grizzly Bears").getId());
         }
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            // Crew power is already met; declining to tap more creatures finishes the cost.
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
         harness.passBothPriorities();
     }
 

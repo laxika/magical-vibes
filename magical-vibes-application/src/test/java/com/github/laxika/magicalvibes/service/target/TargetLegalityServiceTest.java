@@ -205,6 +205,10 @@ class TargetLegalityServiceTest {
                         invocation.<Permanent>getArgument(1).getCard().hasType(CardType.LAND));
         lenient().when(gameQueryService.getEffectiveCardColors(eq(gd), any(Card.class)))
                 .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
+        lenient().when(gameQueryService.getEffectiveCardPower(eq(gd), any(Card.class)))
+                .thenAnswer(invocation -> invocation.<Card>getArgument(1).getPower());
+        lenient().when(gameQueryService.getEffectiveCardToughness(eq(gd), any(Card.class)))
+                .thenAnswer(invocation -> invocation.<Card>getArgument(1).getToughness());
     }
 
     private static Set<CardColor> effectiveColors(Card card) {

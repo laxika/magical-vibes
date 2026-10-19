@@ -37,7 +37,12 @@ public class TargetOpponentMayDrawCardEffectHandler implements NormalEffectHandl
             return;
         }
 
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        UUID opponentId;
+        if (effect instanceof TargetOpponentMayDrawCardEffect draw && draw.chosenTarget()) {
+            opponentId = entry.targetsForEffect(effect).stream().findFirst().orElse(null);
+        } else {
+            opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        }
         if (opponentId == null) {
             return;
         }

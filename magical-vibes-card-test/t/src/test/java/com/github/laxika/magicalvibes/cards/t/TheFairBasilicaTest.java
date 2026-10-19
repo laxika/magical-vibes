@@ -59,6 +59,7 @@ class TheFairBasilicaTest extends BaseCardTest {
     void sacrificeIsPaidBeforeDrawResolves() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new TheFairBasilica());
         TheFairBasilica draw = new TheFairBasilica();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(draw));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);

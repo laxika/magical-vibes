@@ -25,16 +25,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param deferChoices     whether every opponent makes all of their choices first, never picking the same
  *                         permanent or card twice, and the sacrifices, discards and life loss then happen
  *                         together (Rottenmouth Viper)
+ * @param deferEachIteration whether, within each repetition of the process, every opponent makes their
+ *                         choice before any sacrifice, discard or life loss of that repetition happens;
+ *                         repetitions still follow one another (Torment of Hailfire)
  */
 public record TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
                                       PermanentPredicate sacrificePredicate, int discardCount,
                                       boolean targeted, DynamicAmount dynamicIterations,
-                                      boolean deferChoices) implements CardEffect {
+                                      boolean deferChoices, boolean deferEachIteration) implements CardEffect {
+
+    public TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
+                                   PermanentPredicate sacrificePredicate, int discardCount,
+                                   boolean targeted, DynamicAmount dynamicIterations,
+                                   boolean deferChoices) {
+        this(lifeLoss, fixedIterations, sacrificePredicate, discardCount, targeted, dynamicIterations,
+                deferChoices, false);
+    }
 
     public TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
                                    PermanentPredicate sacrificePredicate, int discardCount,
                                    boolean targeted, DynamicAmount dynamicIterations) {
-        this(lifeLoss, fixedIterations, sacrificePredicate, discardCount, targeted, dynamicIterations, false);
+        this(lifeLoss, fixedIterations, sacrificePredicate, discardCount, targeted, dynamicIterations,
+                false, false);
     }
 
     /** Uses the stack entry's {@code xValue} as the iteration count (Torment of Hailfire). */
@@ -83,6 +95,12 @@ public record TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
     public TormentOfHailfireEffect deferringChoices() {
         return new TormentOfHailfireEffect(lifeLoss, fixedIterations, sacrificePredicate, discardCount,
                 targeted, dynamicIterations, true);
+    }
+
+    /** The same process, with all opponents choosing before any penalty of each repetition is applied. */
+    public TormentOfHailfireEffect deferringChoicesEachIteration() {
+        return new TormentOfHailfireEffect(lifeLoss, fixedIterations, sacrificePredicate, discardCount,
+                targeted, dynamicIterations, false, true);
     }
 
     @Override

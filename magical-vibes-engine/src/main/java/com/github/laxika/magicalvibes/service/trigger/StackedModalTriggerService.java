@@ -15,11 +15,14 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HullbreakerHorrorTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -52,19 +55,22 @@ public class StackedModalTriggerService {
     private final PlayerInputService playerInputService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     public StackedModalTriggerService(TriggerTargetCollector triggerTargetCollector,
                                       GameQueryService gameQueryService,
                                       GameLogService gameLogService,
                                       @Lazy PlayerInputService playerInputService,
                                       @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
-                                      @Lazy InputCompletionService inputCompletionService) {
+                                      @Lazy InputCompletionService inputCompletionService,
+                                      @Lazy ConditionEvaluationService conditionEvaluationService) {
         this.triggerTargetCollector = triggerTargetCollector;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.inputCompletionService = inputCompletionService;
+        this.conditionEvaluationService = conditionEvaluationService;
     }
 
     /**
@@ -82,7 +88,15 @@ public class StackedModalTriggerService {
             if (!awaitingModeAnnouncement(gameData, entry)) {
                 continue;
             }
-            ChooseOneEffect modal = (ChooseOneEffect) entry.getEffectsToResolve().getFirst();
+            if (!interveningConditionHolds(gameData, entry)) {
+                gameData.stack.remove(entry);
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                        "'s triggered ability's condition is no longer met and it is removed from the stack."));
+                log.info("Game {} - {} modal trigger removed (intervening if no longer met)",
+                        gameData.id, entry.getCard().getName());
+                continue;
+            }
+            ChooseOneEffect modal = announcedModal(entry);
             List<ChooseOneEffect.ChooseOneOption> legalModes = modal.options().stream()
                     .filter(mode -> modeTargets(gameData, entry, mode) != null)
                     .toList();
@@ -128,7 +142,15 @@ public class StackedModalTriggerService {
             return;
         }
         List<UUID> validTargets = modeTargets(gameData, entry, mode);
-        entry.replaceEffectsToResolve(mode.effects());
+        List<CardEffect> modeEffects = mode.effects();
+        if (entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional
+                && conditional.interveningIf()) {
+            // The intervening "if" is checked again as the chosen mode resolves (CR 603.4).
+            modeEffects = modeEffects.stream()
+                    .<CardEffect>map(effect -> new ConditionalEffect(conditional.condition(), effect, true))
+                    .toList();
+        }
+        entry.replaceEffectsToResolve(modeEffects);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses \"" + mode.label() + "\" for ", ctx.sourceCard(), "."));
         log.info("Game {} - {} chooses mode \"{}\" for {} as it goes on the stack",
@@ -265,9 +287,9 @@ public class StackedModalTriggerService {
     }
 
     private static boolean awaitingModeAnnouncement(GameData gameData, StackEntry entry) {
+        ChooseOneEffect modal = announcedModal(entry);
         if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                || entry.getEffectsToResolve().size() != 1
-                || !(entry.getEffectsToResolve().getFirst() instanceof ChooseOneEffect modal)
+                || modal == null
                 || modal.optional() || modal.choicesRequired() != 1 || modal.choicesMax() != 1
                 || modal.choicesMaxCondition() != null || modal.isBudgeted()
                 || !entry.getTargetIds().isEmpty()
@@ -275,6 +297,35 @@ public class StackedModalTriggerService {
             return false;
         }
         return modal.options().stream().allMatch(StackedModalTriggerService::announceableMode);
+    }
+
+    /**
+     * The "choose one" a trigger announces its mode for: the bare modal, or the modal under an
+     * intervening "if" (CR 603.4), whose condition is checked when the mode is announced.
+     *
+     * @return the modal effect, or {@code null} if the entry is not a single modal (possibly conditional)
+     */
+    private static ChooseOneEffect announcedModal(StackEntry entry) {
+        if (entry.getEffectsToResolve().size() != 1) {
+            return null;
+        }
+        CardEffect effect = entry.getEffectsToResolve().getFirst();
+        if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
+            effect = conditional.wrapped();
+        }
+        return effect instanceof ChooseOneEffect modal ? modal : null;
+    }
+
+    private boolean interveningConditionHolds(GameData gameData, StackEntry entry) {
+        if (!(entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional)
+                || !conditional.interveningIf()) {
+            return true;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        ConditionContext context = source == null
+                ? ConditionContext.forCard(entry.getCard(), entry.getControllerId())
+                : ConditionContext.forPermanent(source, entry.getControllerId());
+        return conditionEvaluationService.isMet(gameData, conditional.condition(), context);
     }
 
     private static boolean announceableMode(ChooseOneEffect.ChooseOneOption mode) {
@@ -320,8 +371,9 @@ public class StackedModalTriggerService {
      */
     private static boolean usesBoundDamagedPlayer(GameData gameData, StackEntry entry,
                                                   ChooseOneEffect.ChooseOneOption mode) {
-        ChooseOneEffect modal = (ChooseOneEffect) entry.getEffectsToResolve().getFirst();
+        ChooseOneEffect modal = announcedModal(entry);
         return boundPlayerTarget(gameData, entry)
+                && modal != null
                 && modal.combatDamageTriggerContext() == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
                 && mode.effects().stream().noneMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));

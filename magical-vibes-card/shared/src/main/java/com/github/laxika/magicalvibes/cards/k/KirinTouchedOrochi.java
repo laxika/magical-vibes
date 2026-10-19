@@ -9,10 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,8 +29,9 @@ public class KirinTouchedOrochi extends Card {
         var creatureYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
-        CardEffect creatureCardMode = new ExileTargetCardFromGraveyardAndCreateTokenEffect(
-                new CardTypePredicate(CardType.CREATURE), false, spiritToken, false);
+        CardEffect creatureCardMode = new ExileTargetCardFromGraveyardThenEffect(
+                new CardTypePredicate(CardType.CREATURE),
+                new QueueReflexiveAbilityEffect(spiritToken));
         CardEffect noncreatureCardMode = new ExileTargetCardFromGraveyardThenEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 new QueueReflexiveAbilityEffect(

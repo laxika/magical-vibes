@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MachineOverMatter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -48,7 +49,7 @@ class TerisianMindbreakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mindbreaker = findPermanent(player1, "Terisian Mindbreaker");
-        assertThat(mindbreaker.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(mindbreaker.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -102,6 +103,7 @@ class TerisianMindbreakerTest extends BaseCardTest {
     void attackTriggerStillMillsAfterAttackedPlaneswalkerLeaves() {
         addCreatureReady(player1, new TerisianMindbreaker());
         Permanent teferi = harness.addToBattlefieldAndReturn(player2, new TeferiTemporalPilgrim());
+        teferi.setCounterCount(CounterType.LOYALTY, 5);
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island(), new Island(), new Island()));
         harness.setHand(player1, List.of(new MachineOverMatter()));
         harness.addMana(player1, ManaColor.BLUE, 1);

@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -12,6 +14,9 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -54,8 +59,21 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
             return;
         }
 
+        if (card != null && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card can't enter the battlefield from a graveyard)."));
+            return;
+        }
+
         var returnEffect = (ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect;
         permanentRemovalService.removeCardFromGraveyardById(gameData, triggeringCardId);
+        if (card.isAura() && returnEffect.counterType() == null) {
+            // CR 303.4f: an Aura entering without being cast lets its entering player choose what it enchants.
+            graveyardReturnSupport.putCardsOntoBattlefieldSimultaneouslyUnderController(gameData,
+                    new PendingGraveyardReturnBatch(entry.getControllerId(), List.of(card),
+                            Map.of(card.getId(), ownerId), !returnEffect.returnUnderController(), false,
+                            returnEffect.enterTapped(), null, null, returnEffect.grantSubtype(), Set.of()));
+            return;
+        }
         UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
         graveyardReturnSupport.putCardOntoBattlefield(
                 gameData, battlefieldControllerId, card, null, returnEffect.grantSubtype(), returnEffect.enterTapped(), false,

@@ -35,7 +35,8 @@ class TheBeamtownBulliesTest extends BaseCardTest {
         assertThat(als.getMustAttackRequirementCount(gd, returned)).isEqualTo(1);
         assertThat(gd.stolenCreatures).containsEntry(returned.getId(), player1.getId());
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                .anyMatch(action -> action.permanentId().equals(returned.getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_AT_END_STEP);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(bullies.isTapped()).isTrue();
     }
@@ -189,7 +190,7 @@ class TheBeamtownBulliesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.passBothPriorities();
 

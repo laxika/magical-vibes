@@ -197,7 +197,9 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            requireCanActivateAbilities(gameData, player);
+            if (!planarAbilities.isSpecialAction(gameData, sourceId, index)) {
+                requireCanActivateAbilities(gameData, player);
+            }
             planarAbilities.activate(gameData, player.getId(), sourceId, index, x == null ? 0 : x, targetId, zone);
             stateBasedActionService.performStateBasedActions(gameData);
             mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -417,10 +419,12 @@ public class GameService {
             }
 
             gameData.priorityPassedBy.add(player.getId());
-            log.info("Game {} - {} passed priority on step {} (passed: {}/2)",
-                    gameData.id, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());
+            log.info("Game {} - {} passed priority on step {} (passed: {}/{})",
+                    gameData.id, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size(),
+                    gameData.orderedPlayerIds.size());
 
-            if (gameData.priorityPassedBy.size() >= 2) {
+            // CR 117.4: the top object resolves only once every player has passed in succession.
+            if (gameData.priorityPassedBy.size() >= gameData.orderedPlayerIds.size()) {
                 if (!gameData.stack.isEmpty()) {
                     stackResolutionService.resolveTopOfStack(gameData);
                     if (gameData.waitingForSubgame) return;
@@ -2167,6 +2171,7 @@ public class GameService {
                 activateDuringManaPayment(gameData, activation);
             } else {
                 activation.run();
+                flushManaAbilityTriggersAfterActivation(gameData);
             }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
         }

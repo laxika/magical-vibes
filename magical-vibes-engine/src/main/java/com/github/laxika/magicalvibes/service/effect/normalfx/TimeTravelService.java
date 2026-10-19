@@ -32,7 +32,8 @@ public class TimeTravelService {
     public void begin(GameData gameData, StackEntry entry, int times) {
         List<ChoiceContext.TimeTravelTarget> targets = eligibleTargets(gameData, entry.getControllerId());
         if (!targets.isEmpty()) {
-            beginChoice(gameData, entry.getControllerId(), entry.getCard().getName(), targets, 0, times);
+            beginChoice(gameData, entry.getControllerId(), entry.getCard().getName(), targets, 0, times,
+                    List.of());
         }
     }
 
@@ -43,22 +44,29 @@ public class TimeTravelService {
         }
 
         gameData.interaction.clearAwaitingInput();
+        List<ChoiceContext.TimeTravelTargetChoice> choices = new ArrayList<>(context.choicesSoFar());
         if (!ChoiceContext.TimeTravelActionChoice.SKIP.equals(choice)) {
-            applyChoice(gameData, choice, context);
+            choices.add(new ChoiceContext.TimeTravelTargetChoice(context.target(), choice));
         }
 
         int nextTargetIndex = context.targetIndex() + 1;
         if (nextTargetIndex < context.targets().size()) {
             beginChoice(gameData, context.controllerId(), context.sourceCardName(), context.targets(),
-                    nextTargetIndex, context.remainingTravels());
+                    nextTargetIndex, context.remainingTravels(), choices);
             return;
+        }
+
+        // CR 701.56a: time travel chooses every object first and then adds or removes its counter, so
+        // all of this event's counter changes happen together once the last decision is made.
+        for (ChoiceContext.TimeTravelTargetChoice made : choices) {
+            applyChoice(gameData, made.choice(), made.target(), context.controllerId());
         }
 
         if (context.remainingTravels() > 1) {
             List<ChoiceContext.TimeTravelTarget> nextTargets = eligibleTargets(gameData, context.controllerId());
             if (!nextTargets.isEmpty()) {
                 beginChoice(gameData, context.controllerId(), context.sourceCardName(), nextTargets,
-                        0, context.remainingTravels() - 1);
+                        0, context.remainingTravels() - 1, List.of());
                 return;
             }
         }
@@ -68,10 +76,11 @@ public class TimeTravelService {
 
     private void beginChoice(GameData gameData, UUID controllerId, String sourceCardName,
                              List<ChoiceContext.TimeTravelTarget> targets, int targetIndex,
-                             int remainingTravels) {
+                             int remainingTravels,
+                             List<ChoiceContext.TimeTravelTargetChoice> choicesSoFar) {
         playerInputService.beginTimeTravelChoice(gameData,
                 new ChoiceContext.TimeTravelActionChoice(
-                        controllerId, sourceCardName, targets, targetIndex, remainingTravels));
+                        controllerId, sourceCardName, targets, targetIndex, remainingTravels, choicesSoFar));
     }
 
     private List<ChoiceContext.TimeTravelTarget> eligibleTargets(GameData gameData, UUID controllerId) {
@@ -105,15 +114,14 @@ public class TimeTravelService {
     }
 
     private void applyChoice(GameData gameData, String choice,
-                             ChoiceContext.TimeTravelActionChoice context) {
-        ChoiceContext.TimeTravelTarget selected = context.target();
+                             ChoiceContext.TimeTravelTarget selected, UUID controllerId) {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
         if (selected.zone() == Zone.EXILE) {
             ExiledCardEntry exiled = gameData.findExiledCard(selected.id());
             for (int i = 0; i < gameData.suspendedSpellExiles.size(); i++) {
                 GameData.SuspendedSpellExile suspended = gameData.suspendedSpellExiles.get(i);
                 if (!suspended.cardId().equals(selected.id())) continue;
-                if (exiled == null || !Objects.equals(suspended.ownerId(), context.controllerId())) return;
+                if (exiled == null || !Objects.equals(suspended.ownerId(), controllerId)) return;
                 if (ChoiceContext.TimeTravelActionChoice.ADD.equals(choice)) {
                     gameData.suspendedSpellExiles.set(i, new GameData.SuspendedSpellExile(
                             suspended.cardId(), suspended.ownerId(), suspended.counters() + 1));
@@ -124,7 +132,7 @@ public class TimeTravelService {
                 return;
             }
             Integer counters = gameData.exiledCardTimeCounters.get(selected.id());
-            if (exiled == null || exiled.faceDown() || !Objects.equals(exiled.ownerId(), context.controllerId())
+            if (exiled == null || exiled.faceDown() || !Objects.equals(exiled.ownerId(), controllerId)
                     || counters == null || counters <= 0) {
                 return;
             }
@@ -138,7 +146,7 @@ public class TimeTravelService {
 
         Permanent permanent = gameQueryService.findPermanentById(gameData, selected.id());
         if (permanent == null
-                || !Objects.equals(context.controllerId(),
+                || !Objects.equals(controllerId,
                 gameQueryService.findPermanentController(gameData, permanent.getId()))) {
             return;
         }

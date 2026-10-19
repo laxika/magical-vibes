@@ -32,6 +32,7 @@ public enum Keyword {
     FIGHT,
     RIOT,
     TRAMPLE,
+    TRAMPLE_OVER_PLANESWALKERS,
     LIFELINK,
     PROLIFERATELINK,
     FORESTWALK,

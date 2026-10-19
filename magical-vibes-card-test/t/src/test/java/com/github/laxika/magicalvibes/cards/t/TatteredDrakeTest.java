@@ -79,9 +79,11 @@ class TatteredDrakeTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.activateAbility(player1, 0, null, null);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.activateAbility(player1, 0, null, null);
+            resolveAllTriggers();
+        });
 
         assertThat(drake.getRegenerationShield()).isEqualTo(2);
         assertThat(drake.isTapped()).isFalse();

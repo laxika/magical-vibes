@@ -1179,20 +1179,29 @@ public class DamagePreventionService {
         return Math.min(damage, reduction);
     }
 
-    /** Prevents noncombat damage to a permanent controlled by a protected player. */
+    /**
+     * Prevents noncombat damage to a permanent controlled by a protected player. The protecting permanent
+     * itself is not covered by its own "other permanents you control" wording (The Wanderer, WAR 37).
+     */
     public int applyControllerAndPermanentsNoncombatDamagePrevention(
             GameData gameData, Permanent permanent, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData) || damage <= 0) return damage;
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
         return controllerId != null
-                && hasControllerAndPermanentsNoncombatDamagePrevention(gameData, controllerId)
+                && hasControllerAndPermanentsNoncombatDamagePrevention(gameData, controllerId, permanent.getId())
                 ? 0
                 : damage;
     }
 
     public boolean hasControllerAndPermanentsNoncombatDamagePrevention(GameData gameData, UUID playerId) {
+        return hasControllerAndPermanentsNoncombatDamagePrevention(gameData, playerId, null);
+    }
+
+    private boolean hasControllerAndPermanentsNoncombatDamagePrevention(GameData gameData, UUID playerId,
+                                                                        UUID excludedPermanentId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         return battlefield != null && battlefield.stream()
+                .filter(permanent -> !permanent.getId().equals(excludedPermanentId))
                 .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
                         gameData, permanent, ControllerAndPermanentsNoncombatDamagePreventionEffect.class));
     }
@@ -3250,22 +3259,31 @@ public class DamagePreventionService {
     /** Returns whether a source controlled by the given player must replace damage to an opponent with milling. */
     public boolean hasControllerOpponentDamageMillReplacement(GameData gameData, UUID sourceControllerId,
                                                                UUID targetPlayerId, int damage) {
-        if (!gameQueryService.isDamagePreventable(gameData)
-                || damage <= 0
-                || sourceControllerId == null
+        return damage > 0 && !controllerOpponentDamageMillSources(
+                gameData, sourceControllerId, targetPlayerId).isEmpty();
+    }
+
+    /**
+     * The permanents controlled by {@code sourceControllerId} whose static effect mills the opponent
+     * {@code targetPlayerId} instead of dealing damage to them. Each one is a separate prevention effect.
+     */
+    public List<Permanent> controllerOpponentDamageMillSources(GameData gameData, UUID sourceControllerId,
+                                                               UUID targetPlayerId) {
+        if (sourceControllerId == null
                 || targetPlayerId == null
                 || sourceControllerId.equals(targetPlayerId)) {
-            return false;
+            return List.of();
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
-        if (battlefield == null) return false;
+        if (battlefield == null) return List.of();
 
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown()
                         && !permanent.isLosesAllAbilitiesUntilEndOfTurn())
-                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
-                        gameData, permanent, ControllerOpponentDamageMillReplacementEffect.class));
+                .filter(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, ControllerOpponentDamageMillReplacementEffect.class))
+                .toList();
     }
 
     /**

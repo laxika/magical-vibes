@@ -38,6 +38,7 @@ public record SearchTargetLibraryEffect(DynamicAmount count,
             LibrarySearchDestination.EXILE,
             LibrarySearchDestination.EXILE_PLAYABLE,
             LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+            LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN,
             LibrarySearchDestination.GRAVEYARD,
             LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER,
             LibrarySearchDestination.HAND);

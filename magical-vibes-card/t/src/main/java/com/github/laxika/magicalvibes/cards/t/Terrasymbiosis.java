@@ -13,7 +13,7 @@ public class Terrasymbiosis extends Card {
 
     public Terrasymbiosis() {
         addEffect(EffectSlot.ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
-                new OncePerTurnTriggerEffect(
+                OncePerTurnTriggerEffect.markOnAcceptance(
                         new MayEffect(new DrawCardEffect(new EventValue()), "Draw that many cards?")));
     }
 }

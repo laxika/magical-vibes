@@ -163,9 +163,9 @@ class TheKingpinOfCrimeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheKingpinOfCrime());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -198,9 +198,9 @@ class TheKingpinOfCrimeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheKingpinOfCrime());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player1, 20);

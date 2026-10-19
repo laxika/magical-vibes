@@ -51,8 +51,14 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
 
     private void beginTargetChoice(GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());
-        List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+        // CR 508.4: a token put onto the battlefield attacking may attack a planeswalker the defending
+        // player controls or a battle the defending player protects.
+        List<UUID> planeswalkerIds = gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
+                        && opponentId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                        || (gameQueryService.isBattle(gameData, permanent)
+                        && opponentId.equals(permanent.getProtectorPlayerId())))
                 .map(Permanent::getId)
                 .toList();
 

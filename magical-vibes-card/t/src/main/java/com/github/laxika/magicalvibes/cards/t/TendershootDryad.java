@@ -34,7 +34,7 @@ public class TendershootDryad extends Card {
                 Set.of()
         ));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCityBlessing(),
-                new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+                new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SAPROLING)))));
     }
 }

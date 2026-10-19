@@ -33,7 +33,7 @@ public class TChakaVenerableKing extends Card {
                 List.of(new ExileSelfFromGraveyardCost(), new BecomeMonarchEffect()),
                 "{3}, Exile this card from your graveyard: You become the monarch. Activate only if you control your commander."
         ).withActivationCondition(
-                new ControlsPermanent(new PermanentIsCommanderPredicate()),
+                new ControlsPermanent(new PermanentIsCommanderPredicate(true)),
                 "Activate only if you control your commander."
         ));
     }

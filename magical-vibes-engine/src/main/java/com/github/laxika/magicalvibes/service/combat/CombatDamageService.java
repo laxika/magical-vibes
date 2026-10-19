@@ -4735,6 +4735,23 @@ public class CombatDamageService {
                     && gameQueryService.hasProtectionFromDamageSource(gameData, pw, atk)) {
                 return;
             }
+            if (pw.getCard().hasType(CardType.PLANESWALKER)
+                    && gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE_OVER_PLANESWALKERS)) {
+                // CR 702.19c: once damage at least equal to the planeswalker's loyalty (counting damage
+                // other creatures assign to it in this step) is assigned to it, the excess is assigned
+                // to the planeswalker's controller.
+                int alreadyAssigned = state.collectedPortions.getOrDefault(pw.getId(), List.of()).stream()
+                        .mapToInt(DamagePortion::amount).sum();
+                int toPlaneswalker = Math.min(damage,
+                        Math.max(0, pw.getCounterCount(CounterType.LOYALTY) - alreadyAssigned));
+                UUID planeswalkerControllerId = gameQueryService.findPermanentController(gameData, pw.getId());
+                collectCombatDamage(gameData, state, atk, atkStats, pw.getId(), pw, toPlaneswalker, sourceUnblocked);
+                if (damage > toPlaneswalker && planeswalkerControllerId != null) {
+                    collectCombatDamage(gameData, state, atk, atkStats, planeswalkerControllerId, null,
+                            damage - toPlaneswalker, sourceUnblocked);
+                }
+                return;
+            }
             collectCombatDamage(gameData, state, atk, atkStats, pw.getId(), pw, damage, sourceUnblocked);
             return;
         }

@@ -147,7 +147,7 @@ class TheNeutrinosTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, neutrinos)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, neutrinos)).isEqualTo(4);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, neutrinos)).isEqualTo(2);
     }
 }

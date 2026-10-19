@@ -22,6 +22,7 @@ class TalionsThroneguardTest extends BaseCardTest {
     void withoutBargainReturnsPermanentWithoutIncreasingItsCost() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TalionsThroneguard()));
+        harness.setHand(player2, List.of());
         addTalionMana(4);
 
         harness.castCreature(player1, 0);
@@ -46,8 +47,9 @@ class TalionsThroneguardTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TalionsThroneguard()));
         addTalionMana(4);
 
-        castBargained(target.getId(), sacrifice.getId());
+        castBargained(sacrifice.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Grizzly Bears");
@@ -73,8 +75,9 @@ class TalionsThroneguardTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
         harness.setHand(player1, List.of(new TalionsThroneguard()));
         addTalionMana(4);
-        castBargained(shockId, sacrifice.getId());
+        castBargained(sacrifice.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shockId);
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Shock");
@@ -91,19 +94,22 @@ class TalionsThroneguardTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TalionsThroneguard()));
         addTalionMana(4);
 
-        assertThatThrownBy(() -> castBargained(land.getId(), sacrifice.getId()))
+        castBargained(sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("nonland permanent");
+                .hasMessageContaining("Invalid permanent");
     }
 
     @Test
     void cannotBargainBySacrificingANontokenLand() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Island());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new TalionsThroneguard()));
         addTalionMana(4);
 
-        assertThatThrownBy(() -> castBargained(target.getId(), sacrifice.getId()))
+        assertThatThrownBy(() -> castBargained(sacrifice.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Island");
     }
@@ -117,8 +123,9 @@ class TalionsThroneguardTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TalionsThroneguard()));
         addTalionMana(4);
 
-        castBargained(target.getId(), sacrifice.getId());
+        castBargained(sacrifice.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -138,9 +145,9 @@ class TalionsThroneguardTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Darksteel Relic");
     }
 
-    private void castBargained(UUID targetId, UUID sacrificeId) {
+    private void castBargained(UUID sacrificeId) {
         harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 0, targetId, null,
+        gs.playCard(gd, player1, 0, 0, null, null,
                 List.of(), List.of(), false, sacrificeId, null, null, null, null, true);
     }
 

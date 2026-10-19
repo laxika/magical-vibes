@@ -459,6 +459,10 @@ public class CreatureControlService {
         }
         for (UUID permanentId : affectedIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent == null && isPhasedOut(gameData, permanentId)) {
+                // Still in the game: its control is settled when it phases back in (PhasingService).
+                continue;
+            }
             if (permanent == null) {
                 gameData.stolenCreatures.remove(permanentId);
                 gameData.expireControlEffectsForDepartedPermanent(permanentId);
@@ -466,6 +470,11 @@ public class CreatureControlService {
             }
             recomputeControl(gameData, permanent);
         }
+    }
+
+    private boolean isPhasedOut(GameData gameData, UUID permanentId) {
+        return gameData.phasedOutPermanents.values().stream()
+                .anyMatch(list -> list.stream().anyMatch(p -> p.getId().equals(permanentId)));
     }
 
     /**

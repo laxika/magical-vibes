@@ -1549,15 +1549,22 @@ public class PermanentChoiceTriggerHandlerService {
     private void beginCreateTokensAttackingTargetChoice(
             GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());
-        List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+        // CR 508.4: a token put onto the battlefield attacking may attack a planeswalker the defending
+        // player controls or a battle the defending player protects.
+        List<UUID> planeswalkerIds = gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
+                        && opponentId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                        || (gameQueryService.isBattle(gameData, permanent)
+                        && opponentId.equals(permanent.getProtectorPlayerId())))
                 .map(Permanent::getId)
                 .toList();
 
         gameData.interaction.setPermanentChoiceContext(context);
         playerInputService.beginAnyTargetChoice(
                 gameData, context.controllerId(), planeswalkerIds, List.of(opponentId),
-                "Choose the player or planeswalker for the next Soldier token to attack.");
+                "Choose the player, planeswalker, or battle for the next " + context.tokenEffect().tokenName()
+                        + " token to attack.");
     }
 
     private void beginCreateTokenCopiesOfEnteredThisTurnAttackingTargetChoice(
@@ -1685,6 +1692,11 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setSourcePermanentSnapshot(
                         gameQueryService.findPermanentById(gameData, ett.enteringPermanentId()));
             }
+            Permanent kickedSource = sourcePermanentId == null ? null
+                    : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (kickedSource != null && kickedSource.isKicked()) {
+                entry.setKicked(true);
+            }
             pushTriggeredEntry(gameData, entry);
 
             if (declined) {
@@ -1772,6 +1784,11 @@ public class PermanentChoiceTriggerHandlerService {
                     new ArrayList<>(ett.effects())
             );
             entry.setTargetId(permanentId);
+            if (ett.opponentControlledOnly()) {
+                // The opponent-control restriction is re-checked on resolution (CR 608.2b), so the target
+                // is illegal once its controller changes.
+                entry.setTargetFilter(TargetFilters.permanentAnOpponentControls());
+            }
             pushTriggeredEntry(gameData, entry);
 
             
@@ -3133,7 +3150,10 @@ public class PermanentChoiceTriggerHandlerService {
         gameData.queueInteractionFirst(new PermanentChoiceContext.SagaChapterTarget(
                 sct.sourceCard(), sct.controllerId(), sct.effects(), sct.sourcePermanentId(),
                 sct.chapterName(), sct.targetFilters(), sct.targetGroups(), chosenTargets,
-                repeatVariableLastGroup ? sct.currentGroupIndex() : sct.currentGroupIndex() + 1));
+                repeatVariableLastGroup ? sct.currentGroupIndex() : sct.currentGroupIndex() + 1,
+                repeatVariableLastGroup
+                        ? sct.completedGroupTargetCounts()
+                        : sct.closeCurrentGroup(chosenTargets.size())));
         triggerCollectionService.processNextSagaChapterTarget(gameData);
         if (gameData.interaction.isAwaitingInput()) {
             return;

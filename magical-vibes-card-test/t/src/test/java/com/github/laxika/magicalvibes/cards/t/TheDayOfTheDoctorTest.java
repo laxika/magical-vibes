@@ -189,6 +189,7 @@ class TheDayOfTheDoctorTest extends BaseCardTest {
         advanceToNextChapter();
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(doctor.getCard().getId())).isNotNull();
         assertThat(gd.findExiledCard(creature.getCard().getId())).isNotNull();
@@ -203,6 +204,7 @@ class TheDayOfTheDoctorTest extends BaseCardTest {
         advanceToNextChapter();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         harness.assertLife(player1, lifeBefore - 13);
     }
@@ -224,6 +226,7 @@ class TheDayOfTheDoctorTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1,
                 List.of(ownTenth.getId(), ownFourth.getId(), opposingTenth.getId()));
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownTenth, ownFourth);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingTenth);

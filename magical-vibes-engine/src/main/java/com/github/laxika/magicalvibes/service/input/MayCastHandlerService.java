@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
@@ -563,15 +564,13 @@ public class MayCastHandlerService {
     }
 
     /**
-     * Whether {@code card} can legally be cast without paying its mana cost right now: a targeted
-     * non-split spell needs at least one legal target (CR 601.2c). Split cards are left to their own
-     * half-selection flow and are reported as castable.
+     * Whether {@code card} can legally be cast without paying its mana cost right now: its required
+     * creature sacrifice (an additional cost, not waived by a free cast) must be payable, and a
+     * targeted non-split spell needs at least one legal target (CR 601.2c). Split cards are left to
+     * their own half-selection flow and are reported as castable.
      */
     public boolean hasLegalFreeCastTarget(GameData gameData, Player player, Card card) {
         if (SplitCardCastSupport.isSplitCard(card)) {
-            return true;
-        }
-        if (!EffectResolution.needsTarget(card) && !EffectResolution.needsSpellTarget(card)) {
             return true;
         }
         boolean permanentSpell = card.hasType(CardType.CREATURE)
@@ -581,7 +580,22 @@ public class MayCastHandlerService {
         List<CardEffect> spellEffects = permanentSpell
                 ? List.of()
                 : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        if (!canPayFreeCastCreatureSacrifice(gameData, player, spellEffects)) {
+            return false;
+        }
+        if (!EffectResolution.needsTarget(card) && !EffectResolution.needsSpellTarget(card)) {
+            return true;
+        }
         return !buildValidSpellTargets(gameData, card, spellEffects, player.getId()).isEmpty();
+    }
+
+    private boolean canPayFreeCastCreatureSacrifice(GameData gameData, Player player, List<CardEffect> spellEffects) {
+        if (spellEffects.stream().noneMatch(SacrificeCreatureCost.class::isInstance)) {
+            return true;
+        }
+        return gameData.playerBattlefields.getOrDefault(player.getId(), List.of()).stream()
+                .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeSacrificed(gameData, permanent));
     }
 
     public void castRevealedCardWithoutPaying(GameData gameData, Player player, Card card, UUID ownerId,
@@ -632,7 +646,8 @@ public class MayCastHandlerService {
             } else {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.LibraryCastSpellTarget(
-                                card, player.getId(), spellEffects, spellType, cardsToBottom));
+                                card, player.getId(), spellEffects, spellType, cardsToBottom, null,
+                                ownerId.equals(player.getId()) ? null : ownerId));
                 playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                         "Choose a target for " + card.getName() + ".");
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card,
@@ -640,8 +655,12 @@ public class MayCastHandlerService {
                 return;
             }
         } else {
-            gameData.stack.add(new StackEntry(
-                    spellType, card, player.getId(), card.getName(), spellEffects, 0, (UUID) null, null));
+            StackEntry revealedEntry = new StackEntry(
+                    spellType, card, player.getId(), card.getName(), spellEffects, 0, (UUID) null, null);
+            if (!ownerId.equals(player.getId())) {
+                revealedEntry.setOwnerIdOverride(ownerId);
+            }
+            gameData.stack.add(revealedEntry);
 
             gameData.recordSpellCast(player.getId(), card);
             gameData.priorityPassedBy.clear();

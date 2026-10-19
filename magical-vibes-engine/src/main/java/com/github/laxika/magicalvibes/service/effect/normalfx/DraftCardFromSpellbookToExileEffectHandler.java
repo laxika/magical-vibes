@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -33,7 +34,16 @@ public class DraftCardFromSpellbookToExileEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        DraftCardFromSpellbookToExileEffect draft = (DraftCardFromSpellbookToExileEffect) effect;
+        beginDraft(gameData, entry.getControllerId(), entry.getSourcePermanentId(), entry.getCard().getName(),
+                (DraftCardFromSpellbookToExileEffect) effect);
+    }
+
+    /**
+     * Offers the controller up to three distinct spellbook cards; the chosen one is exiled with the source.
+     * Shared by the stack resolution and the as-enters draft of a land ({@code EtbTriggerService}).
+     */
+    public void beginDraft(GameData gameData, UUID controllerId, UUID sourcePermanentId, String sourceName,
+                           DraftCardFromSpellbookToExileEffect draft) {
         List<Card> spellbook = draft.cardNames().stream()
                 .map(this::findCard)
                 .filter(card -> card != null)
@@ -45,8 +55,7 @@ public class DraftCardFromSpellbookToExileEffectHandler implements NormalEffectH
         Collections.shuffle(spellbook);
         List<Card> offeredCards = new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookDraftToExileChoice(
-                entry.getControllerId(), entry.getSourcePermanentId(), offeredCards,
-                entry.getCard().getName(), draft.faceDown()));
+                controllerId, sourcePermanentId, offeredCards, sourceName, draft.faceDown()));
     }
 
     private Card findCard(String cardName) {

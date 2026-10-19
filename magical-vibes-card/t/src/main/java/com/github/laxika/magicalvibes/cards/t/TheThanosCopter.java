@@ -22,6 +22,9 @@ public class TheThanosCopter extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect(
                         CardType.CREATURE, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect(
+                        CardType.ARTIFACT, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(

@@ -46,6 +46,7 @@ class TerritorialHellkiteTest extends BaseCardTest {
     @Test
     @DisplayName("The last controller combat remains relevant after an opponent's combat")
     void remembersAttackAcrossOpponentsCombat() {
+        harness.setHand(player2, List.of());
         Permanent hellkite = addReadyHellkite(player1);
 
         advanceToBeginningOfCombat(player1);
@@ -81,7 +82,7 @@ class TerritorialHellkiteTest extends BaseCardTest {
         hellkite.tap();
 
         advanceToBeginningOfCombat(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
 
         assertThat(hellkite.isTapped()).isTrue();
         assertThat(hellkite.getMustAttackTargetId()).isEqualTo(player2.getId());

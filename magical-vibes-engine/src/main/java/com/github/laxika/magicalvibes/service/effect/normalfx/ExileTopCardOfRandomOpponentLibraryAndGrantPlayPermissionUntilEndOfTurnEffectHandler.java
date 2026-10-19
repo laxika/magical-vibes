@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeToOwnerOfTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +55,24 @@ public class ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOf
         if (!topCard.hasType(CardType.LAND)) {
             gameData.exilePlayAnyManaType.add(topCard.getId());
         }
+        // CR 603.7: "When you cast a spell this way" is a delayed triggered ability created by this
+        // resolution. It is tied to the exiled card rather than to The Ruinous Powers, so it still
+        // fires if the enchantment has left the battlefield.
+        gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
+                entry.getControllerId(),
+                entry.getSourcePermanentId(),
+                entry.getCard(),
+                null,
+                new StackEntryCardIdPredicate(topCard.getId()),
+                List.of(new LoseLifeToOwnerOfTriggeringSpellEffect()),
+                true,
+                false,
+                null,
+                null,
+                null,
+                false,
+                false,
+                gameData.turnNumber));
 
         String opponentName = gameData.playerIdToName.getOrDefault(opponentId, "that player");
         gameLogService.append(gameData, GameLog.builder()

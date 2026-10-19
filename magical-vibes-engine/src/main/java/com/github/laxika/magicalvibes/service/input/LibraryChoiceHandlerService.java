@@ -69,7 +69,9 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOr
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -534,9 +536,15 @@ public class LibraryChoiceHandlerService {
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
-                            librarySearch.sourcePermanentId());
+                            librarySearch.sourcePermanentId(), playerId);
+                    if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
+                        // The permission is to cast the card, not to play it, so an exiled land stays unplayable.
+                        gameData.exilePlayPermissionSpellFilters.put(chosenCard.getId(),
+                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)));
+                    }
                     if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM) {
                         gameData.exiledCardsWithHatchingCounters.add(chosenCard.getId());
+                        gameData.exileLookPermissions.put(chosenCard.getId(), playerId);
                     }
                     if (followUp != null && followUp.imprintSourcePermanentId() != null) {
                         exileService.setImprintedCardOnPermanent(gameData,
@@ -1630,15 +1638,20 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE
-                || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
+                || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP
+                || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN) {
             boolean faceUp = filterPredicate != null
-                    || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP;
+                    || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP
+                    || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN;
             if (faceUp) {
                 exileService.exileCard(gameData, deckOwnerId, chosenCard);
             } else {
                 exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
             }
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN) {
+                gameData.exilePlayPermissionsExpireEndOfTurn.add(chosenCard.getId());
+            }
             if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
                 // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed
                 // card is put into its owner's graveyard then.
@@ -2009,7 +2022,7 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
                         EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, HEIST,
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP, EXILE_PLAYABLE_UNTIL_END_OF_TURN, HEIST,
                         EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST,
                         EXILE_FOR_MAY_CAST_WITH_NORMAL_COST -> "into exile";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,

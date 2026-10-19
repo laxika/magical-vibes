@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -2286,8 +2287,13 @@ public class CombatBlockService {
                     .withSourcePermanentId(perm.getId());
             for (CardEffect effect : effects) {
                 if (effect instanceof TriggeringCardConditionalEffect conditional) {
-                    if (!predicateEvaluationService.matchesCardPredicate(blockedAttacker.getCard(), conditional.predicate(),
-                            null, gameData, activeId)) {
+                    // Subtypes are read from the blocked permanent itself so creature-type changes made
+                    // to that permanent (e.g. Amoeboid Changeling) are seen, not just the printed card.
+                    boolean matches = conditional.predicate() instanceof CardSubtypePredicate subtypePredicate
+                            ? gameQueryService.hasEffectiveSubtype(gameData, blockedAttacker, subtypePredicate.subtype())
+                            : predicateEvaluationService.matchesCardPredicate(blockedAttacker.getCard(),
+                            conditional.predicate(), null, gameData, activeId);
+                    if (!matches) {
                         continue;
                     }
                     matchingEffects.add(conditional.wrapped());

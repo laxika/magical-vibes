@@ -161,6 +161,8 @@ class TemperedInSolitudeTest extends BaseCardTest {
         Forest topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new PapercraftDecoy());
         harness.addToBattlefield(player1, new TemperedInSolitude());
 

@@ -21,6 +21,9 @@ public class ThrastaTempestsRoar extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new Scaled(new SpellsCastThisTurn(CountScope.ANY_PLAYER), 3)));
 
+        // Trample over planeswalkers (CR 702.19c); Scryfall lists no keyword for it.
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE_OVER_PLANESWALKERS, GrantScope.SELF));
+
         // Thrasta has hexproof as long as it entered the battlefield this turn.
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceEnteredBattlefieldThisTurn(),

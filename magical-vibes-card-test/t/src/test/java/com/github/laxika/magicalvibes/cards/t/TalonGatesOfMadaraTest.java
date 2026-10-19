@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TalonGatesOfMadara.class, SakuraTribeElder.class})
+@CardUsed({TalonGatesOfMadara.class, SakuraTribeElder.class, GrizzlyBears.class})
 class TalonGatesOfMadaraTest extends BaseCardTest {
 
     @Test
@@ -117,6 +119,8 @@ class TalonGatesOfMadaraTest extends BaseCardTest {
         TalonGatesOfMadara otherCopy = new TalonGatesOfMadara();
         TalonGatesOfMadara source = new TalonGatesOfMadara();
         harness.setHand(player1, List.of(otherCopy, source));
+        Card drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -132,7 +136,7 @@ class TalonGatesOfMadaraTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherCopy);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherCopy, drawnCard);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == source && !permanent.isTapped());
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);

@@ -63,6 +63,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @DisplayName("-1 animation persists across turns (not until end of turn)")
     void minusOneAnimationPersistsAcrossTurns() {
         addReadyTezzeret(player1);
+        harness.setHand(player2, List.of());
         Permanent solRing = addArtifact(player1);
 
         harness.activateAbility(player1, 0, 1, null, solRing.getId());
@@ -216,6 +217,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @Test
     void plusOneSelectsOnlyOneArtifactAndOrdersTheRestBelowUnseenCards() {
         Permanent tezz = addReadyTezzeret(player1);
+        harness.setHand(player1, List.of());
         Card first = new ShimmerMyr();
         Card second = new LeoninSkyhunter();
         Card third = new SwordOfFeastAndFamine();
@@ -243,6 +245,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @Test
     void plusOneMayDeclineAnArtifactInAShortLibrary() {
         addReadyTezzeret(player1);
+        harness.setHand(player1, List.of());
         Card artifact = new ShimmerMyr();
         Card creature = new LeoninSkyhunter();
         harness.setLibrary(player1, List.of(artifact, creature));
@@ -260,6 +263,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @Test
     void plusOneWithoutArtifactsStillAllowsBottomOrdering() {
         addReadyTezzeret(player1);
+        harness.setHand(player1, List.of());
         Card first = new LeoninSkyhunter();
         Card second = new LeoninSkyhunter();
         harness.setLibrary(player1, List.of(first, second));
@@ -275,6 +279,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @Test
     void plusOneWithEmptyLibraryStillAddsLoyalty() {
         Permanent tezz = addReadyTezzeret(player1);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -69,17 +69,18 @@ public class ExileUntilCardPredicateMayPlayWhileSourceControlledEffectHandler
         gameLogService.append(gameData, GameLog.text(
                 playerName + " exiles " + exiledCards.stream().map(Card::getName).toList()
                         + " from the top of their library."));
+        if (foundCard != null) {
+            exiledCards.remove(foundCard);
+        }
+        exiledCards.forEach(card -> gameData.removeFromExile(card.getId()));
+        Collections.shuffle(exiledCards);
+        deck.addAll(exiledCards);
         if (foundCard == null) {
             return;
         }
 
-        exiledCards.remove(foundCard);
-        exiledCards.forEach(card -> gameData.removeFromExile(card.getId()));
-        Collections.shuffle(exiledCards);
-        deck.addAll(exiledCards);
-
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source != null && controllerId.equals(gameData.findControllerOf(source))) {
+        if (source != null) {
             gameData.exilePlayPermissions.put(foundCard.getId(), controllerId);
             gameData.exilePlayPermissionSourcePermanents.put(foundCard.getId(), sourcePermanentId);
         }

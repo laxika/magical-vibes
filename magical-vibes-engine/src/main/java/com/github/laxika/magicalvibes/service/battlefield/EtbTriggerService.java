@@ -20,7 +20,9 @@ import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookToExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -104,6 +106,7 @@ public class EtbTriggerService {
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private LegendRuleService legendRuleService;
     private DraftProteanWarEngineSpellbookEffectHandler proteanWarEngineSpellbookDraft;
+    private DraftCardFromSpellbookToExileEffectHandler spellbookDraft;
 
     public EtbTriggerService(GameQueryService gameQueryService,
                              GameLogService gameLogService,
@@ -137,6 +140,11 @@ public class EtbTriggerService {
     @Autowired
     void setProteanWarEngineSpellbookDraft(@Lazy DraftProteanWarEngineSpellbookEffectHandler draft) {
         this.proteanWarEngineSpellbookDraft = draft;
+    }
+
+    @Autowired
+    void setSpellbookDraft(@Lazy DraftCardFromSpellbookToExileEffectHandler draft) {
+        this.spellbookDraft = draft;
     }
 
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
@@ -231,6 +239,19 @@ public class EtbTriggerService {
                 && basicLandTypeChoice != null) {
             playerInputService.beginBasicLandTypeChoice(gameData, controllerId, enteringPermanent.getId(),
                     false, basicLandTypeChoice.choicesRequired() > 1, basicLandTypeChoice.allowedTypes());
+            return;
+        }
+        // "As this land enters, draft a card from its spellbook" is a replacement-style choice made while the
+        // land enters, so it is offered before any other entry ability and never reaches the stack.
+        DraftCardFromSpellbookToExileEffect spellbookDraftEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream()
+                .filter(DraftCardFromSpellbookToExileEffect.class::isInstance)
+                .map(DraftCardFromSpellbookToExileEffect.class::cast)
+                .findFirst().orElse(null);
+        if (enteringPermanent != null && spellbookDraftEffect != null
+                && gameData.getCardsExiledByPermanent(enteringPermanent.getId()).isEmpty()) {
+            spellbookDraft.beginDraft(gameData, controllerId, enteringPermanent.getId(), card.getName(),
+                    spellbookDraftEffect);
             return;
         }
         processCreatureETBEffects(gameData, controllerId, card, null, false);
@@ -393,6 +414,7 @@ public class EtbTriggerService {
                 // "As enters, choose a number at random" is applied while the permanent enters (Haktos).
                 .filter(e -> !(e instanceof ChooseRandomNumberOnEnterEffect))
                 .filter(e -> !(e instanceof DraftProteanWarEngineSpellbookEffect))
+                .filter(e -> !(e instanceof DraftCardFromSpellbookToExileEffect && card.hasType(CardType.LAND)))
                 .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseIndependentModesOnEnterEffect))
                 .filter(e -> !isEntryReplacementEffect(e))
@@ -1202,10 +1224,15 @@ public class EtbTriggerService {
             ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
             int multikickerPaymentCount = exile.maxTargetsFromMultikicker()
                     ? countMultikickerPayments(card, repeatedAdditionalCosts) : 0;
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardExileETBTargeting(
-                        gameData, controllerId, card, mandatoryEffects, graveyardSourcePermanentId, exile,
-                        multikickerPaymentCount);
+            graveyardTargetingService.handleGraveyardExileETBTargeting(
+                    gameData, controllerId, card, mandatoryEffects, graveyardSourcePermanentId, exile,
+                    multikickerPaymentCount);
+            // Each additional copy chooses its own targets, one after another, once the previous
+            // trigger's targets have been chosen (processNextSpellGraveyardTargetTrigger).
+            for (int t = 0; t < extraTriggerCopies; t++) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        card, controllerId, new ArrayList<>(mandatoryEffects), null, 0,
+                        multikickerPaymentCount, 0, null, false, null, graveyardSourcePermanentId));
             }
         }
 

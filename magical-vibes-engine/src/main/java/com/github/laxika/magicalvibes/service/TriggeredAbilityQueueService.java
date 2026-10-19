@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -2356,6 +2357,10 @@ public class TriggeredAbilityQueueService {
 
         while (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             PermanentChoiceContext.SagaChapterTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
+            if (!pending.targetGroups().isEmpty()) {
+                processNextSagaChapterMultiTarget(gameData);
+                return;
+            }
 
             // Collect valid permanent targets, applying any saga target filter
             List<UUID> validPermanentTargets = collectSagaChapterTargets(gameData, pending);
@@ -2491,6 +2496,7 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.SagaChapterTarget pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
             if (pending.targetGroups().isEmpty()) {
+                processNextSagaChapterTarget(gameData);
                 return;
             }
 
@@ -2509,13 +2515,22 @@ public class TriggeredAbilityQueueService {
                 if (pending.targetGroups().size() == 1) {
                     chapterEntry.setTargetFilters(java.util.Collections.nCopies(
                             pending.chosenTargetsSoFar().size(), pending.targetGroups().getFirst().filter()));
-                } else if (pending.targetGroups().stream().allMatch(g -> g.minTargets() == 1 && g.maxTargets() == 1)
-                        && pending.chosenTargetsSoFar().size() == pending.targetGroups().size()) {
-                    chapterEntry.setTargetFilters(pending.targetGroups().stream()
-                            .<TargetFilter>map(SagaChapterTargetGroup::filter)
-                            .toList());
+                } else if (pending.completedGroupTargetCounts().size() == pending.targetGroups().size()) {
+                    List<TargetFilter> groupFilters = new ArrayList<>();
+                    for (int g = 0; g < pending.targetGroups().size(); g++) {
+                        TargetFilter filter = pending.targetGroups().get(g).filter();
+                        for (int k = 0; k < pending.completedGroupTargetCounts().get(g); k++) {
+                            groupFilters.add(filter);
+                        }
+                    }
+                    if (groupFilters.size() == pending.chosenTargetsSoFar().size()) {
+                        chapterEntry.setTargetFilters(groupFilters);
+                    }
                 }
                 gameData.stack.add(chapterEntry);
+                TriggerCollectionService triggerCollectionService = triggerCollectionServiceProvider.getObject();
+                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+                triggerCollectionService.checkCrimeTriggers(gameData, chapterEntry);
                 continue;
             }
 
@@ -2531,7 +2546,8 @@ public class TriggeredAbilityQueueService {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.SagaChapterTarget(
                         pending.sourceCard(), pending.controllerId(), pending.effects(),
                         pending.sourcePermanentId(), pending.chapterName(), pending.targetFilters(),
-                        pending.targetGroups(), pending.chosenTargetsSoFar(), groupIndex + 1));
+                        pending.targetGroups(), pending.chosenTargetsSoFar(), groupIndex + 1,
+                        pending.closeCurrentGroup(pending.chosenTargetsSoFar().size())));
                 continue;
             }
 
@@ -2639,6 +2655,7 @@ public class TriggeredAbilityQueueService {
             }
 
             List<Card> matchingCards = new ArrayList<>();
+            boolean graveyardCardsTargetable = gameQueryService.canGraveyardCardsBeTargeted(gameData);
             for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
                 if (scope == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
                         && !graveyardOwnerId.equals(pending.controllerId())) {
@@ -2649,7 +2666,7 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-                if (graveyard != null) {
+                if (graveyard != null && graveyardCardsTargetable) {
                     for (Card graveyardCard : graveyard) {
                         if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)
                                 && (!anyNumber || graveyardCard.getManaValue() <= maxTotalManaValue)) {
@@ -2724,6 +2741,25 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+
+            // An additional copy of an entry trigger that exiles target graveyard cards: it chooses its
+            // own targets now that the previous copy's targets have been chosen.
+            ExileCardsFromGraveyardEffect enterExile = pending.effects().stream()
+                    .filter(ExileCardsFromGraveyardEffect.class::isInstance)
+                    .map(ExileCardsFromGraveyardEffect.class::cast)
+                    .filter(exile -> pending.sourceCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).contains(exile))
+                    .findFirst()
+                    .orElse(null);
+            if (enterExile != null) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+                graveyardTargetingService.handleGraveyardExileETBTargeting(
+                        gameData, pending.controllerId(), pending.sourceCard(), pending.effects(),
+                        pending.sourcePermanentId(), enterExile, pending.xValue());
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                continue;
+            }
 
             // A single target may come from either the battlefield or a graveyard.
             // Keep both zones in one choice rather than restricting it to graveyard cards.
@@ -2926,6 +2962,11 @@ public class TriggeredAbilityQueueService {
                     }
                     if (returnEffect != null && returnEffect.targetNotPutIntoGraveyardThisCombat()
                             && gameData.cardsPutIntoGraveyardThisCombat
+                                    .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
+                        continue;
+                    }
+                    if (returnEffect != null && returnEffect.targetMilledThisTurn()
+                            && !gameData.cardsMilledThisTurn
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {
                         continue;
                     }

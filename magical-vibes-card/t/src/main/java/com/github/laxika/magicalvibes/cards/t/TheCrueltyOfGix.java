@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffe
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -26,6 +27,8 @@ import java.util.Set;
 public class TheCrueltyOfGix extends Card {
 
     public TheCrueltyOfGix() {
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+
         CardAnyOfPredicate creatureOrPlaneswalker = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
                 new CardTypePredicate(CardType.PLANESWALKER)));

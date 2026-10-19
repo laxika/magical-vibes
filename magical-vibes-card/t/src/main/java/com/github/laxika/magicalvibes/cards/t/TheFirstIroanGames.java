@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -33,7 +35,9 @@ public class TheFirstIroanGames extends Card {
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new ConditionalEffect(
-                new ControlsPermanent(new PermanentPowerAtLeastPredicate(4)),
+                new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentPowerAtLeastPredicate(4)))),
                 new DrawCardEffect(2)));
 
         addEffect(EffectSlot.SAGA_CHAPTER_IV, CreateTokenEffect.ofArtifactToken(

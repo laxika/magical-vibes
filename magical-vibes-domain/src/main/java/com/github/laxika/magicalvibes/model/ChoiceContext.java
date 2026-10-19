@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -2824,13 +2825,19 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Each player chooses one token option from a resolving effect. */
+    /**
+     * Each player chooses one token option from a resolving effect. The choices made so far are kept in
+     * APNAP order and their tokens are created only after the last player has chosen.
+     */
     record EachPlayerChoosesTokenChoice(
             com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesTokenEffect effect,
-            List<UUID> remainingPlayerIds, String sourceName) implements ChoiceContext {
+            List<UUID> remainingPlayerIds,
+            Map<UUID, com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesTokenEffect.TokenOption> chosenOptions,
+            String sourceName) implements ChoiceContext {
 
         public EachPlayerChoosesTokenChoice {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenOptions = Collections.unmodifiableMap(new LinkedHashMap<>(chosenOptions));
         }
     }
 
@@ -3156,7 +3163,8 @@ public sealed interface ChoiceContext {
 
     record TimeTravelActionChoice(UUID controllerId, String sourceCardName,
                                   List<TimeTravelTarget> targets, int targetIndex,
-                                  int remainingTravels) implements ChoiceContext {
+                                  int remainingTravels,
+                                  List<TimeTravelTargetChoice> choicesSoFar) implements ChoiceContext {
 
         public static final String ADD = "ADD";
         public static final String REMOVE = "REMOVE";
@@ -3165,6 +3173,7 @@ public sealed interface ChoiceContext {
 
         public TimeTravelActionChoice {
             targets = List.copyOf(targets);
+            choicesSoFar = List.copyOf(choicesSoFar);
         }
 
         public TimeTravelTarget target() {
@@ -3173,6 +3182,10 @@ public sealed interface ChoiceContext {
     }
 
     record TimeTravelTarget(UUID id, Zone zone) {
+    }
+
+    /** One object's add/remove decision within a single time-travel event, applied once every decision is made. */
+    record TimeTravelTargetChoice(TimeTravelTarget target, String choice) {
     }
 
     record AddAnotherCounterTypeOnEachNonSagaPermanentChoice(

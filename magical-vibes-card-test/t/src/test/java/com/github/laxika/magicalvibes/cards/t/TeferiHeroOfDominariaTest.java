@@ -363,8 +363,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.handlePermanentChosen(player1, creature.getId());
 
-        gd.playerBattlefields.get(player2.getId()).remove(creature);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        setOwnerAndController(creature, player2, player1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Primordial Wurm");

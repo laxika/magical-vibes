@@ -75,6 +75,7 @@ class TezzeretCruelMachinistTest extends BaseCardTest {
     @Test
     void animationExpiresBeforeYourNextUntapStep() {
         addReadyTezzeret(4);
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
@@ -92,6 +93,7 @@ class TezzeretCruelMachinistTest extends BaseCardTest {
     @Test
     void animationUsesAbilityControllersNextTurnAfterControlChanges() {
         addReadyTezzeret(4);
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());

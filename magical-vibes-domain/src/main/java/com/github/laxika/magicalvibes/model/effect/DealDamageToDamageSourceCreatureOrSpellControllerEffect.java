@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -24,7 +23,9 @@ public record DealDamageToDamageSourceCreatureOrSpellControllerEffect(
     public CardEffect bindDamageSource(Card sourceCard, UUID sourcePermanentId,
                                        UUID sourceControllerId, int damageDealt) {
         if (sourceCard == null || damageDealt <= 0) return this;
-        if (sourcePermanentId != null && sourceCard.hasType(CardType.CREATURE)) {
+        // Any permanent source binds as the creature: whether it is a creature (an animated land
+        // is one without being a creature card) is checked when the trigger resolves.
+        if (sourcePermanentId != null) {
             return new DealDamageToDamageSourceCreatureOrSpellControllerEffect(
                     damageDealt, sourcePermanentId, null);
         }

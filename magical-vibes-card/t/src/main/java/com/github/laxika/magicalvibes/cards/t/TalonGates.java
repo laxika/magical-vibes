@@ -31,7 +31,7 @@ public class TalonGates extends Card {
                 ),
                 "Exile a nonland card from your hand with X time counters on it, where X is its mana value. "
                         + "If the exiled card doesn't have suspend, it gains suspend.",
-                ActivationTimingRestriction.SORCERY_SPEED));
+                ActivationTimingRestriction.SORCERY_SPEED).withSpecialAction());
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new AdjustTimeCountersOnEachSuspendedCardEffect(false, true));
     }

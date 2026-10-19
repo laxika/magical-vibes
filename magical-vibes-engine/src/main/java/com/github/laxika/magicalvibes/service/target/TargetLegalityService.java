@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -127,6 +128,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedC
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsFromSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySingleCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
@@ -447,6 +449,12 @@ public class TargetLegalityService {
                             .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId))) {
                         throw new IllegalStateException(
                                 "Target must be a card put into a graveyard from a library this turn");
+                    }
+                    if (returnEffect.targetMilledThisTurn()
+                            && (graveyardOwnerId == null
+                            || !gameData.cardsMilledThisTurn
+                            .getOrDefault(graveyardOwnerId, Set.of()).contains(cardId))) {
+                        throw new IllegalStateException("Target must be a card milled this turn");
                     }
                     if (returnEffect.targetDiscardedOrPutIntoGraveyardFromLibraryThisTurn()
                             && (graveyardOwnerId == null
@@ -2375,7 +2383,8 @@ public class TargetLegalityService {
                 throw new IllegalStateException(target.getCard().getName() + " is not a creature");
             }
 
-            if (EffectResolution.needsTarget(card)) {
+            if (EffectResolution.needsTarget(selectedEffects, List.of(),
+                    card.isAuraThatRequiresAttachment(), card.isEnchantPlayer())) {
                 checkSpellPermanentTargetableReason(gameData, target, card, controllerId,
                         card.getEffects(EffectSlot.SPELL), positionFilter)
                         .ifPresent(reason -> { throw new IllegalStateException(reason); });
@@ -5246,6 +5255,36 @@ public class TargetLegalityService {
         return matchesStackEntryPredicate(gameData, stackEntry, predicate, controllerId, source, xValue, null);
     }
 
+    /**
+     * Power of a spell on the stack. A characteristic-defining power ("power is equal to the number of
+     * creatures you control", CR 604.3) is evaluated from the game state, since the card has no
+     * permanent to take it from; otherwise the printed power is used.
+     */
+    private Integer stackPower(GameData gameData, StackEntry stackEntry) {
+        SetPowerToughnessToAmountEffect cda = stackCharacteristicDefiningEffect(stackEntry);
+        if (cda == null) {
+            return stackEntry.getCard().getPower();
+        }
+        return amountEvaluationService.evaluate(gameData, cda.power(), AmountContext.forStackEntry(stackEntry, null));
+    }
+
+    /** Toughness of a spell on the stack, computed like {@link #stackPower}. */
+    private Integer stackToughness(GameData gameData, StackEntry stackEntry) {
+        SetPowerToughnessToAmountEffect cda = stackCharacteristicDefiningEffect(stackEntry);
+        if (cda == null) {
+            return stackEntry.getCard().getToughness();
+        }
+        return amountEvaluationService.evaluate(gameData, cda.toughness(), AmountContext.forStackEntry(stackEntry, null));
+    }
+
+    private SetPowerToughnessToAmountEffect stackCharacteristicDefiningEffect(StackEntry stackEntry) {
+        return stackEntry.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(SetPowerToughnessToAmountEffect.class::isInstance)
+                .map(SetPowerToughnessToAmountEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
                                               UUID controllerId, Permanent source, Integer xValue,
                                               Integer sourcePowerAtLastKnown) {
@@ -5463,15 +5502,15 @@ public class TargetLegalityService {
             int manaValue = stackEntry.getCard().getManaValue()
                     + (stackEntry.getCard().getParsedManaCost() == null ? 0
                     : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
-            Integer power = stackEntry.getCard().getPower();
-            Integer toughness = stackEntry.getCard().getToughness();
+            Integer power = stackPower(gameData, stackEntry);
+            Integer toughness = stackToughness(gameData, stackEntry);
             return manaValue == fixedNumber.number()
                     || power != null && power == fixedNumber.number()
                     || toughness != null && toughness == fixedNumber.number();
         }
         if (predicate instanceof StackEntryPowerOrToughnessAtMostPredicate atMost) {
-            Integer power = stackEntry.getCard().getPower();
-            Integer toughness = stackEntry.getCard().getToughness();
+            Integer power = stackPower(gameData, stackEntry);
+            Integer toughness = stackToughness(gameData, stackEntry);
             return power != null && power <= atMost.maxValue()
                     || toughness != null && toughness <= atMost.maxValue();
         }
@@ -5481,8 +5520,8 @@ public class TargetLegalityService {
             }
             int chosenNumber = source.getChosenNumber();
             int manaValue = stackEntry.getSpellManaValue();
-            Integer power = stackEntry.getCard().getPower();
-            Integer toughness = stackEntry.getCard().getToughness();
+            Integer power = gameQueryService.getEffectiveCardPower(gameData, stackEntry.getCard());
+            Integer toughness = gameQueryService.getEffectiveCardToughness(gameData, stackEntry.getCard());
             return chosenNumber > 0 && (manaValue == chosenNumber
                     || power != null && power == chosenNumber
                     || toughness != null && toughness == chosenNumber);
@@ -5588,6 +5627,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryTargetsSourcePredicate) {
             return source != null && targetsPermanent(stackEntry, source.getId());
+        }
+        if (predicate instanceof StackEntryIsFromSourcePermanentPredicate) {
+            return source != null && source.getId().equals(stackEntry.getSourcePermanentId());
         }
         if (predicate instanceof StackEntryTargetsPermanentPredicate targetsPermanent) {
             return targetsAnyMatchingPermanent(gameData, stackEntry, targetsPermanent.filter(), controllerId);

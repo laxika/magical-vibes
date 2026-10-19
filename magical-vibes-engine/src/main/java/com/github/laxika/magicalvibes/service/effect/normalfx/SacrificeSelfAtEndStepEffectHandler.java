@@ -51,7 +51,7 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
 
         gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
                 sourceId, entry.getControllerId(), entry.getCard(),
-                sacrifice.currentControllerSacrifices()));
+                sacrifice.currentControllerSacrifices(), sacrifice.currentControllersEndStepOnly()));
 
         String logEntry = source.getCard().getName() + " will be sacrificed at the beginning of the next end step.";
         gameLogService.append(gameData, GameLog.text(logEntry));

@@ -163,13 +163,15 @@ class TendToTheKilnTest extends BaseCardTest {
     @Test
     void hastePersistsAfterCleanupWhenConjuredDuringEndStep() {
         harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setHand(player2, List.of());
         Permanent kiln = harness.enterBattlefieldAndReturn(player1, new TendToTheKiln());
         resolveAllTriggers();
         kiln.setCounterCount(CounterType.FLAME, 2);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.RED, 1);
-        castAndResolveBolt();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         Permanent flamebraider = findPermanent(player1, "Flamebraider");
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         resolveAllTriggers();

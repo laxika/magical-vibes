@@ -61,10 +61,12 @@ class TheAntiquitiesWarTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve chapter I
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Chromatic Star");
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).hasSize(5);
+        assertThat(choice.validCardIds()).hasSize(1);
+        assertThat(choice.allCards().stream().filter(c -> c.getId().equals(choice.validCardIds().getFirst()))
+                .findFirst().orElseThrow().getName()).isEqualTo("Chromatic Star");
     }
 
     @Test

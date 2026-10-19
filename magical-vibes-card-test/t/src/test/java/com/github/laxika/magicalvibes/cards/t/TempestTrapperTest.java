@@ -121,7 +121,7 @@ class TempestTrapperTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 

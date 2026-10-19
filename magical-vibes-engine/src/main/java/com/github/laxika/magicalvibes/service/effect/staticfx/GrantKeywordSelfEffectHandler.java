@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 /**
  * Self pass for {@link GrantKeywordEffect}: grants the keyword(s) to the source permanent itself
  * when the scope covers it ({@link GrantScope#SELF}, {@link GrantScope#SELF_AND_PAIRED},
- * {@link GrantScope#ALL_OWN_CREATURES}, or {@link GrantScope#ALL_CREATURES_INCLUDING_SELF},
- * filter permitting). The non-self
+ * {@link GrantScope#ALL_OWN_CREATURES}, {@link GrantScope#ALL_CREATURES_INCLUDING_SELF}, or
+ * {@link GrantScope#ALL_LANDS_INCLUDING_SELF} while the source is a land, filter permitting). The non-self
  * {@link GrantKeywordEffectHandler} already covers other creatures — e.g. Sun Quan, Lord of Wu
  * grants horsemanship to himself as well as the rest of your board.
  */
@@ -37,6 +37,8 @@ public class GrantKeywordSelfEffectHandler implements StaticEffectHandlerBean {
         var grant = (GrantKeywordEffect) effect;
         if (grant.scope() == GrantScope.OWN_PERMANENTS) return;
         if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
+                || grant.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF
+                && support.matchesLandScope(context, grant.scope(), grant.filter())
                 || support.matchesCreatureScope(context, grant.scope(), grant.filter()))
                 && support.matchesStaticFilter(context, context.target(), grant.filter())) {
             accumulator.addKeywords(grant.keywords());

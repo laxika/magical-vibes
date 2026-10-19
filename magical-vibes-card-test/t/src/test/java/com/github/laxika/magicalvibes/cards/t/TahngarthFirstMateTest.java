@@ -76,7 +76,7 @@ class TahngarthFirstMateTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -115,7 +115,7 @@ class TahngarthFirstMateTest extends BaseCardTest {
                 () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

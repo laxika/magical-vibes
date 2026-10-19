@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +45,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
     private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
+    private final ExileService exileService;
 
     @Override
     public Class<PendingInteraction.SearchLibraryAndOrGraveyardChoice> handledType() {
@@ -59,7 +61,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
     public void handleAnswer(GameData gameData, Player player,
                              PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
                              InteractionAnswer answer) {
-        if (!player.getId().equals(interaction.playerId())) {
+        if (!player.getId().equals(interaction.decidingPlayerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
@@ -141,6 +143,10 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         if (!fromLibrary && !fromHand && !fromOutsideGame) {
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId, chosen);
         }
+        if (fromLibrary && !toBattlefield && interaction.oppositionAgentControllerId() != null) {
+            exileFoundUnderOppositionAgent(gameData, playerId, chosen, interaction.oppositionAgentControllerId());
+            return false;
+        }
         if (toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
             List<UUID> attachTargetIds = gameData.orderedPlayerIds.stream()
                     .flatMap(battlefieldPlayerId -> gameData.playerBattlefields
@@ -198,6 +204,19 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 gameData.playerIdToName.get(playerId) + " searches their " + zoneName + ", reveals ",
                 chosen, ", and puts it " + destination + "."));
         return false;
+    }
+
+    /**
+     * Opposition Agent: a library card found by the opponent's search is exiled instead of going to hand, and the
+     * Agent's controller may play it for as long as it remains exiled.
+     */
+    private void exileFoundUnderOppositionAgent(GameData gameData, UUID searcherId, Card chosen, UUID agentControllerId) {
+        exileService.exileCard(gameData, searcherId, chosen);
+        gameData.exilePlayPermissions.put(chosen.getId(), agentControllerId);
+        gameData.exilePlayAnyManaTypeWhileExiled.add(chosen.getId());
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(searcherId) + " exiles ", chosen,
+                " and may play it for as long as it remains exiled."));
     }
 
     private void putCardsIntoHand(GameData gameData, UUID playerId, List<Card> cards,
@@ -275,7 +294,9 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(
                     gameData, gameLogService, interaction.playerId());
         }
-        if (interaction.shuffleAfterSearch() && gameData.playerDecks.get(interaction.playerId()) != null) {
+        // "If you search your library this way, shuffle": a graveyard-only find neither searches nor shuffles the library.
+        if (interaction.shuffleAfterSearch() && searchedLibrary
+                && gameData.playerDecks.get(interaction.playerId()) != null) {
             LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
         }
     }

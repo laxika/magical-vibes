@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 public class TectonicFiend extends Card {
 
     public TectonicFiend() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
         addEffect(EffectSlot.STATIC, new MustAttackEffect());
     }
 }

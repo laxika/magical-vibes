@@ -1724,14 +1724,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * every chosen card enters untapped, all at once. {@code remainingPlayerIds} are the players
      * still to choose after this one (APNAP order); answering prompts the next remaining player who
      * has a land in hand. {@code cardName} is the source spell's name (for logging).
+     * {@code choicesSoFar} holds the lands already chosen by earlier players in this round, keyed by
+     * player; they stay in hand until every player has chosen, then enter together.
      */
     record PutLandsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                  java.util.List<UUID> remainingPlayerIds, String cardName)
+                                  java.util.List<UUID> remainingPlayerIds, String cardName,
+                                  java.util.Map<UUID, java.util.List<UUID>> choicesSoFar)
             implements PendingInteraction {
 
         public PutLandsFromHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            choicesSoFar = java.util.Map.copyOf(choicesSoFar);
         }
 
         @Override
@@ -2024,7 +2028,37 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              int enterWithCounterCount,
                                              int maxCount,
                                              boolean attachAuraOrEquipment,
-                                             boolean shuffleAfterSearch) implements PendingInteraction {
+                                             boolean shuffleAfterSearch,
+                                             UUID oppositionAgentControllerId) implements PendingInteraction {
+
+        /**
+         * Opposition Agent: the searching opponent's library search is controlled by the Agent's controller,
+         * who chooses the card; the found card is exiled and the controller may play it. Without an Agent the
+         * searching player chooses.
+         */
+        @Override
+        public UUID decidingPlayerId() {
+            return oppositionAgentControllerId != null ? oppositionAgentControllerId : playerId;
+        }
+
+        /** Constructor without an Opposition Agent controlling the search. */
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 java.util.Set<UUID> handCardIds,
+                                                 java.util.Set<UUID> outsideGameCardIds,
+                                                 boolean librarySearchAllowed,
+                                                 String cardLabel,
+                                                 LibrarySearchDestination destination,
+                                                 UUID attachToPermanentId,
+                                                 CounterType enterWithCounterType,
+                                                 int enterWithCounterCount,
+                                                 int maxCount,
+                                                 boolean attachAuraOrEquipment,
+                                                 boolean shuffleAfterSearch) {
+            this(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds, librarySearchAllowed, cardLabel,
+                    destination, attachToPermanentId, enterWithCounterType, enterWithCounterCount, maxCount,
+                    attachAuraOrEquipment, shuffleAfterSearch, null);
+        }
 
         /** Backward-compatible canonical constructor without the extended attachment mode. */
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2131,11 +2165,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public java.util.List<UUID> validCardIds() {
             return pool.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
         }
 
         @Override
@@ -4257,8 +4286,41 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
                           CounterType entryCounterType, int entryCounterCount,
                           CardPredicate entryCounterCondition,
-                          boolean markEntryAsPutByTriggeringPermanent)
+                          boolean markEntryAsPutByTriggeringPermanent,
+                          boolean mandatory)
             implements PendingInteraction, HandChoice {
+
+    /**
+     * A declinable choice ("you may put a card from your hand onto the battlefield"). The canonical form's
+     * {@code mandatory} flag marks a choice the player cannot decline, such as putting the activated card itself
+     * onto the battlefield.
+     */
+    public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                          boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                          boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                          boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                          String drawAndRepeatLabel, boolean putAnyNumber,
+                          boolean faceDown, int faceDownPower, int faceDownToughness,
+                          java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                          UUID returnSourcePermanentId, CounterType artifactCounterType,
+                          int artifactCounterCount, boolean returnToHandAtEndStep,
+                          boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
+                          CardPredicate enterTappedAndAttackingIf,
+                          UUID blockingAttackerId, UUID untapSourcePermanentId,
+                          java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                          CounterType entryCounterType, int entryCounterCount,
+                          CardPredicate entryCounterCondition,
+                          boolean markEntryAsPutByTriggeringPermanent) {
+        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
+                enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount,
+                returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf,
+                blockingAttackerId, untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype,
+                entryCounterType, entryCounterCount, entryCounterCondition,
+                markEntryAsPutByTriggeringPermanent, false);
+    }
+
     public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
                           boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
@@ -4426,7 +4488,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, !cloaked);
+            return new InteractionOptions.CardIndexPick(validIndices, !cloaked && !mandatory);
         }
     }
 

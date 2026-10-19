@@ -109,7 +109,7 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
-    void acceptingReplacedDrawStillRestrictsAttacking() {
+    void acceptingReplacedDrawDoesNotRestrictAttacking() {
         prepareDrawChoices();
         harness.addToBattlefield(player2, new WordsOfWorship());
         var attacker = addCreatureReady(player2, new GrizzlyBears());
@@ -129,7 +129,7 @@ class TheSecondDoctorTest extends BaseCardTest {
         harness.assertLife(player2, 25);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(als.canAttackDefender(gd, attacker, player1.getId())).isFalse();
+        assertThat(als.canAttackDefender(gd, attacker, player1.getId())).isTrue();
     }
 
     @Test

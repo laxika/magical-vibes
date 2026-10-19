@@ -30,7 +30,7 @@ public class TheSoulStone extends Card {
                 true,
                 "{6}{B}",
                 List.of(
-                        new ExilePermanentCost(new PermanentIsCreaturePredicate(), "a creature"),
+                        new ExilePermanentCost(new PermanentIsCreaturePredicate(), "a creature", false),
                         new HarnessEffect()
                 ),
                 "{6}{B}, {T}, Exile a creature you control: Harness The Soul Stone."

@@ -37,7 +37,7 @@ public class TarmogoyfNest extends Card {
                 Set.of(),
                 Set.of(),
                 Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
-                        cardTypes, new Sum(cardTypes, new Fixed(1)))));
+                        cardTypes, new Sum(cardTypes, new Fixed(1))))).withManaCost("{1}{G}");
 
         // Enchanted land has "{1}{G}, {T}: Create a Tarmogoyf token."
         target(TargetFilters.land()).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

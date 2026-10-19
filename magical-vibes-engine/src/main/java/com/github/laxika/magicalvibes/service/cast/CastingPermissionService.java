@@ -1835,7 +1835,8 @@ public class CastingPermissionService {
         for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn
                 .getOrDefault(playerId, List.of())) {
             if (effect instanceof CastSpellsFromGraveyardPermission permission
-                    && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                    && predicateEvaluationService.matchesCardPredicate(
+                    card, permission.filter(), null, gameData, playerId)) {
                 return Optional.of(new FilteredGraveyardPermission(null, permission));
             }
         }
@@ -3289,15 +3290,27 @@ public class CastingPermissionService {
         return false;
     }
 
+    /**
+     * Whether a permission that is lost for good once its source changes control (Taster of Wares: "for as long
+     * as you control this creature") still applies; permissions with any other scope always do.
+     */
+    private boolean keepsAccessAfterControlChange(AllowCastFromCardsExiledWithSourceEffect permission,
+                                                  Permanent source) {
+        return permission.accessScope() != ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE
+                || source.getControlChangeSequence() == 0;
+    }
+
     private OptionalInt additionalCounterCostFromSource(GameData gameData, UUID playerId,
                                                         Permanent source, ExiledCardEntry entry) {
         if (activeExileCastPermissions(gameData, source, playerId)
                 .noneMatch(permission -> !permission.waterbendManaValue()
+                        && keepsAccessAfterControlChange(permission, source)
                         && applies(permission, gameData, playerId, source, entry))) {
             return OptionalInt.empty();
         }
         return activeExileCastPermissions(gameData, source, playerId)
                 .filter(permission -> !permission.waterbendManaValue())
+                .filter(permission -> keepsAccessAfterControlChange(permission, source))
                 .filter(permission -> applies(permission, gameData, playerId, source, entry))
                 .mapToInt(AllowCastFromCardsExiledWithSourceEffect::additionalCounterCost)
                 .min();
@@ -3520,6 +3533,8 @@ public class CastingPermissionService {
             case EXILER -> playerId.equals(entry.exilerId());
             case ACTIVE_PLAYER -> gameData.activePlayerId != null
                     && gameData.activePlayerId.equals(playerId);
+            case CONTROLLER_WITHOUT_CONTROL_CHANGE -> sourceControllerId.equals(playerId)
+                    && source.getControlChangeSequence() == 0;
         };
     }
 

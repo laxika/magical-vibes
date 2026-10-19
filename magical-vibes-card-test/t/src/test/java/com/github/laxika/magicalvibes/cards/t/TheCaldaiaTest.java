@@ -80,7 +80,7 @@ class TheCaldaiaTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

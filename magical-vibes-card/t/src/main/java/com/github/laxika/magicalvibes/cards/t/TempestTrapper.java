@@ -7,10 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromLibraryMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -32,8 +31,7 @@ public class TempestTrapper extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new NthSpellCastTriggerEffect(
                 3,
                 List.of(
-                        new ShuffleLibraryEffect(false),
-                        new ExileTopCardMayPlayThisTurnEffect(true)
+                        new ExileRandomCardFromLibraryMayPlayThisTurnEffect(true)
                 )
         ));
     }

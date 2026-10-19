@@ -126,7 +126,6 @@ class ThassasEmissaryTest extends BaseCardTest {
 
         host.setAttacking(true);
         resolveCombat(player2);
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 5);
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(controllerHandBefore + 1);

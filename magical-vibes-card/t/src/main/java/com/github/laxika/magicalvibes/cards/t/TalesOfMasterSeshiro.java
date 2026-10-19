@@ -43,6 +43,7 @@ public class TalesOfMasterSeshiro extends Card {
         addEffect(chapter, PutCounterOnTargetPermanentEffect.withTargetRestriction(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, targetRestriction));
         addEffect(chapter, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET, targetRestriction));
+        setSagaChapterTargetRequired(chapter);
     }
 
     @Override

@@ -67,7 +67,8 @@ public class ExileTopUntilNonlandMayCastByDiscardEffectHandler implements MayEff
                 1,
                 DiscardFollowUp.thenEffect(
                         ability.sourceCard(),
-                        new CastExiledCardWithoutPayingManaCostEffect(ability.targetCardId())));
+                        new CastExiledCardWithoutPayingManaCostEffect(ability.targetCardId()))
+                        .withSameResolutionContinuation(true));
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " is choosing a card to discard to cast " + exiled.card().getName() + "."));
     }

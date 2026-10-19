@@ -142,7 +142,11 @@ public class CombatService {
      */
     public void clearCombatState(GameData gameData) {
         gameData.forEachBattlefield((playerId, battlefield) -> battlefield.forEach(permanent -> {
-            permanent.rollOverCombatAttackRecord();
+            // "Last combat" means the controller's own most recent combat (Territorial Hellkite), so an
+            // opponent's combat does not roll the record over.
+            if (playerId.equals(gameData.activePlayerId)) {
+                permanent.rollOverCombatAttackRecord();
+            }
             permanent.clearCombatState();
             permanent.clearUntilEndOfCombatAnimation();
         }));

@@ -54,6 +54,7 @@ public class TheEldestReborn extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardTypePredicate(CardType.PLANESWALKER)
                 )))
+                .targetGraveyard(true)
                 .build());
     }
 }

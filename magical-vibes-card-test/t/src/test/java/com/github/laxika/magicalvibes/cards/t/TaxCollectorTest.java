@@ -80,12 +80,9 @@ class TaxCollectorTest extends BaseCardTest {
     void arrestRejectsOwnCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new TaxCollector()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new TaxCollector());
+
         harness.handleListChoice(player1, "Arrest — Detain target creature an opponent controls");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))

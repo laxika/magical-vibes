@@ -83,6 +83,7 @@ class TakeHeartTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new TakeHeart()));
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 

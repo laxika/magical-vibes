@@ -120,7 +120,7 @@ class TaxTakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
@@ -134,7 +134,7 @@ class TaxTakerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         declareAttackers(player2, List.of(0));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(countPermanents(player1, "Treasure")).isOne();
@@ -164,6 +164,7 @@ class TaxTakerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveInstant(player2, 0, regent.getId());
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Icefall Regent");
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);

@@ -23,7 +23,9 @@ import org.springframework.stereotype.Component;
  * <p>Accepting drops the sibling offers, removes the chosen card from the held group and — if the
  * group still allows another cast — re-offers the remaining held instants/sorceries before the
  * chosen spell goes on the stack. Declining leaves the other offers standing; once the last one is
- * declined the still-held cards go into the revealing player's graveyard.
+ * declined the still-held cards go into the revealing player's graveyard. Accepting a card that can't
+ * be cast (no legal target, or its required sacrifice can't be paid) puts that card into the
+ * graveyard without spending one of the allowed casts.
  */
 @Component
 @RequiredArgsConstructor
@@ -66,6 +68,15 @@ public class MayCastRevealedSpellWithoutPayingHandler implements MayEffectHandle
 
         revealedFreeCastSupport.clearPendingOffers(gameData);
         held.removeIf(c -> c.getId().equals(card.getId()));
+        if (!mayCastHandlerService.hasLegalFreeCastTarget(gameData, player, card)) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " can't cast ", card, " without paying its mana cost."));
+            revealedFreeCastSupport.dumpToGraveyard(gameData, group.ownerId(), List.of(card));
+            revealedFreeCastSupport.offerOrDump(gameData, group.ownerId(), group.casterId(), held,
+                    group.castsRemaining());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         revealedFreeCastSupport.offerOrDump(gameData, group.ownerId(), group.casterId(), held,
                 group.castsRemaining() - 1);
         mayCastHandlerService.castRevealedCardWithoutPaying(gameData, player, card, group.ownerId());

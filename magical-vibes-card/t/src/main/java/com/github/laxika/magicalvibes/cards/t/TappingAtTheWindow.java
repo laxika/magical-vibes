@@ -14,7 +14,7 @@ public class TappingAtTheWindow extends Card {
 
     public TappingAtTheWindow() {
         addEffect(EffectSlot.SPELL,
-                LookAtTopCardsEffect.mayRevealOneToHandRestToGraveyard(3,
+                LookAtTopCardsEffect.mayChooseOneToHandRestToGraveyard(3,
                         new CardTypePredicate(CardType.CREATURE)));
         addCastingOption(new FlashbackCast("{2}{G}"));
     }

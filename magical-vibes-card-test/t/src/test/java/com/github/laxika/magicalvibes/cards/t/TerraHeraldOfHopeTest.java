@@ -114,8 +114,7 @@ class TerraHeraldOfHopeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

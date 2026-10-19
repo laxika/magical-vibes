@@ -20,13 +20,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Thermokarst extends Card {
 
     public Thermokarst() {
-        // Snow check runs while the land is still on the battlefield — before the destroy.
-        // Equivalent to the printed "was a snow land" wording (Icequake pattern).
+        // The destroy runs first; the "was a snow land" check then reads the destroyed land's last
+        // known information (CR 608.2h), so a life-gain prevention effect the land itself provided
+        // no longer applies when the life gain happens.
         target(TargetFilters.land())
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new TargetPermanentMatches(
                                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
-                        new GainLifeEffect(1)))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                        new GainLifeEffect(1)));
     }
 }

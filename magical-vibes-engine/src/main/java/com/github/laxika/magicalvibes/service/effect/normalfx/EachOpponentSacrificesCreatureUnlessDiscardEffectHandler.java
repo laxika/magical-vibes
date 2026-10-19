@@ -78,7 +78,9 @@ public class EachOpponentSacrificesCreatureUnlessDiscardEffectHandler implements
             if (!hasCreature && !hasCard) {
                 continue;
             }
-            if (hasCreature && hasCard) {
+            if (hasCard) {
+                // The discard is an "unless" payment the opponent may always decline (CR 118.12a), so a
+                // creatureless opponent is still offered the choice; declining the sacrifice then does nothing.
                 gameData.rerunCurrentEffectAfterInteraction = true;
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null,
@@ -93,9 +95,7 @@ public class EachOpponentSacrificesCreatureUnlessDiscardEffectHandler implements
             }
 
             applyMode(gameData, entry, sourceName,
-                    hasCreature
-                            ? ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE
-                            : ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
+                    ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE);
             return;
         }
 
@@ -110,12 +110,7 @@ public class EachOpponentSacrificesCreatureUnlessDiscardEffectHandler implements
         if (ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE.equals(mode)) {
             List<UUID> ids = creatureIds(gameData, playerId, entry.getControllerId());
             if (ids.isEmpty()) {
-                if (hasCardToDiscard(gameData, playerId)) {
-                    applyMode(gameData, entry, sourceName,
-                            ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
-                } else {
-                    advance(gameData, entry, sourceName);
-                }
+                advance(gameData, entry, sourceName);
                 return;
             }
             if (ids.size() == 1) {

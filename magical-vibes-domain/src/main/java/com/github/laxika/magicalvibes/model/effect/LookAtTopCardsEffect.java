@@ -187,6 +187,19 @@ public record LookAtTopCardsEffect(
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination, optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost, effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount, grantHaste, returnToHandAtEndStep, cloakChosenPermanents, payLifePerSelectedCard, battlefieldSelectionFollowUp, selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement, chooseTotalManaValueAtMost, selectedCardPredicate, effectIfSelectedCardMatches, gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard, false, false);
     }
 
+    /** Publicly reveals the looked-at cards ("reveal the top six cards of your library") rather than only looking. */
+    public LookAtTopCardsEffect withRevealedTopCards() {
+        return new LookAtTopCardsEffect(lookCount, chooseCount, choosePredicate, restDestination,
+                true, chosenDestination, optional, gainLifeEqualToChosenCardManaValue,
+                chooseManaValueAtMost, effectIfNoCardChosen, recordChosenCount,
+                loseLifePerSelectedCard, exactChooseCount, grantHaste, returnToHandAtEndStep,
+                cloakChosenPermanents, payLifePerSelectedCard, battlefieldSelectionFollowUp,
+                selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement,
+                chooseTotalManaValueAtMost, selectedCardPredicate, effectIfSelectedCardMatches,
+                gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard, exileBeforeChoosing,
+                returnToHandAtNextEndStep, recordGraveyardCount, orderedBottomViaRevealChoice);
+    }
+
     /** Requires the choice to take exactly {@code chooseCount} cards when that many are eligible. */
     public LookAtTopCardsEffect withExactChooseCount() {
         return new LookAtTopCardsEffect(lookCount, chooseCount, choosePredicate, restDestination,
@@ -527,6 +540,19 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false);
     }
 
+    /**
+     * Look at the top cards, then put up to {@code chooseCount} of them (possibly none) into your
+     * hand and the rest on the bottom of the library in a random order. Unlike
+     * {@link #chooseNToHandRestOnBottomRandom(DynamicAmount, int)} the choice is optional, so the
+     * player may take fewer cards, even when the library holds no more than {@code chooseCount}
+     * (Thassa's Intervention).
+     */
+    public static LookAtTopCardsEffect chooseUpToNToHandRestOnBottomRandom(
+            DynamicAmount lookCount, int chooseCount) {
+        return new LookAtTopCardsEffect(lookCount, new Fixed(chooseCount), null,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.HAND, true);
+    }
+
     /** One card to hand, the rest back on top of the library in any order (Diabolic Vision). */
     public static LookAtTopCardsEffect chooseOneToHandRestOnTop(int lookCount) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
@@ -688,6 +714,17 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect mayRevealOneToHandRestToGraveyard(
             int lookCount, CardPredicate choosePredicate) {
         return mayRevealUpToToHandRestToGraveyard(lookCount, choosePredicate, new Fixed(1));
+    }
+
+    /**
+     * Look at the top {@code lookCount} cards; you may reveal one matching card and put it into your
+     * hand; the rest go into your graveyard. The looked-at cards stay hidden until the chosen card is
+     * revealed (Tapping at the Window).
+     */
+    public static LookAtTopCardsEffect mayChooseOneToHandRestToGraveyard(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.GRAVEYARD, false, LibrarySearchDestination.HAND, true);
     }
 
     /**

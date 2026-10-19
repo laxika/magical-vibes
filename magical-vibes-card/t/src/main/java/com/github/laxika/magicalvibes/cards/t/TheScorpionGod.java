@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -26,10 +27,13 @@ import java.util.List;
 public class TheScorpionGod extends Card {
 
     public TheScorpionGod() {
-        // Whenever a creature with a -1/-1 counter on it dies, draw a card.
+        // Whenever a creature with a -1/-1 counter on it dies, draw a card. "A creature" includes
+        // The Scorpion God itself, which looks back at its own death (CR 603.10a); ON_ANY_CREATURE_DIES
+        // excludes the source, so its own death is handled by ON_DEATH.
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                 new DrawCardEffect()));
+        addEffect(EffectSlot.ON_DEATH, new DrawCardIfDyingSourceHadCounterEffect(CounterType.MINUS_ONE_MINUS_ONE));
 
         // {1}{B}{R}: Put a -1/-1 counter on another target creature.
         addActivatedAbility(new ActivatedAbility(

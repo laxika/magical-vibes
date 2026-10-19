@@ -83,6 +83,7 @@ class TheGitrogRavenousRideTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, saddler.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
         harness.handleMultipleCardsChosen(player1, List.of(first.getId()));

@@ -56,6 +56,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             case TRIGGERING_PERMANENT_CONTROLLER -> {
                 UUID playerId = gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
                 if (playerId == null) {
+                    playerId = entry.getRemovedPermanentControllers().get(entry.getTriggeringPermanentId());
+                }
+                if (playerId == null) {
                     playerId = entry.getTriggeringPermanentControllerId();
                 }
                 if (playerId != null) {

@@ -229,7 +229,7 @@ public class CardChoiceHandlerService {
                     new BattlefieldEntryCard(player.getId(), player.getId(), card, Zone.HAND, null)));
         } else if (sharesNameWithPermanent) {
             hand.remove(cardIndex);
-            Permanent permanent = new Permanent(card);
+            Permanent permanent = new Permanent(card, Zone.HAND);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " puts ", card, " onto the battlefield."));
@@ -555,6 +555,7 @@ public class CardChoiceHandlerService {
         UUID untapSourcePermanentId = null;
         Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype = Set.of();
         boolean markEntryAsPutByTriggeringPermanent = false;
+        boolean mandatory = false;
         UUID blockingAttackerId = null;
         CardPredicate drawAndRepeatPredicate = null;
         CardPredicate enterTappedAndAttackingIf = null;
@@ -590,6 +591,7 @@ public class CardChoiceHandlerService {
             untapSourcePermanentId = hc.untapSourcePermanentId();
             untapSourceIfEnteredCardHasAnySubtype = hc.untapSourceIfEnteredCardHasAnySubtype();
             markEntryAsPutByTriggeringPermanent = hc.markEntryAsPutByTriggeringPermanent();
+            mandatory = hc.mandatory();
             drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
             drawAndRepeatLabel = hc.drawAndRepeatLabel();
             enterTappedAndAttackingIf = hc.enterTappedAndAttackingIf();
@@ -632,7 +634,8 @@ public class CardChoiceHandlerService {
                 && !choice.declinable()) {
             return;
         }
-        if (cardIndex == -1 && (cloaked || (faceDown && !putAnyNumber && !drawAndRepeat && !isTargeted))) {
+        if (cardIndex == -1 && (cloaked || mandatory
+                || (faceDown && !putAnyNumber && !drawAndRepeat && !isTargeted))) {
             throw new IllegalStateException("This card choice cannot be declined");
         }
         if (cardIndex != -1 && !validIndices.contains(cardIndex)) {
@@ -1724,6 +1727,15 @@ public class CardChoiceHandlerService {
                 resumeRemainingEffectsAfterDiscard(gameData);
                 return;
             }
+            // A cast paid for by this discard (The Infamous Cruelclaw) happens as the original ability
+            // resolves, not as a separate reflexive trigger.
+            if (followUp.resolveThenDuringSameResolution()
+                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.CastExiledCardWithoutPayingManaCostEffect) {
+                StackEntry inlineEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                        sourceCard.getName() + "'s effect", List.of(thenEffect));
+                effectResolutionService.resolveEffectsFrom(gameData, inlineEntry, 0);
+                return;
+            }
             int thenEffectTargetGroup = thenEffect.targetGroup();
             if (followUp.thenEffectTargetId() == null
                     && thenEffectTargetGroup >= 0
@@ -2379,7 +2391,10 @@ public class CardChoiceHandlerService {
             // Talara's Bane: the chooser gains life equal to the chosen card's toughness before discard.
             if (revealedHandChoice.gainLifeToChooserEqualToChosenToughness()) {
                 int toughness = chosenCards.stream()
-                        .mapToInt(c -> c.getToughness() != null ? c.getToughness() : 0)
+                        .mapToInt(c -> {
+                            Integer effective = gameQueryService.getEffectiveCardToughness(gameData, c, targetPlayerId);
+                            return effective != null ? effective : 0;
+                        })
                         .sum();
                 lifeSupport.applyGainLife(gameData, player.getId(), toughness);
             }

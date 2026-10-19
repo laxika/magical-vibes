@@ -664,6 +664,7 @@ public class StateBasedActionService {
 
             boolean chapterOnStack = gameData.stack.stream()
                     .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                            && !e.isReflexiveTrigger()
                             && p.getId().equals(e.getSourcePermanentId()));
             StackEntry pendingResolution = gameData.pendingEffectResolutionEntry;
             if (!chapterOnStack && pendingResolution != null) {

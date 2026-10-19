@@ -82,6 +82,7 @@ class TheRiseOfSozinTest extends BaseCardTest {
         gd.playerManaPools.get(player1.getId()).addPersistentMana(ManaColor.COLORLESS, 4);
 
         declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
         harness.handleXValueChosen(player1, 4);
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -135,8 +136,10 @@ class TheRiseOfSozinTest extends BaseCardTest {
 
     @Test
     void chapterIIIReturnsAnOpponentsSagaUnderAbilityControllersControl() {
-        Permanent saga = addSaga(2);
-        saga.getCard().setOwnerId(player2.getId());
+        TheRiseOfSozin opponentsSaga = new TheRiseOfSozin();
+        opponentsSaga.setOwnerId(player2.getId());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, opponentsSaga);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         advanceToNextChapter();
         harness.passBothPriorities();
@@ -152,6 +155,7 @@ class TheRiseOfSozinTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(ornithopter));
 
         declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
         harness.handleXValueChosen(player1, 0);
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -170,6 +174,7 @@ class TheRiseOfSozinTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(bears));
 
         declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
         harness.handleXValueChosen(player1, 3);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();

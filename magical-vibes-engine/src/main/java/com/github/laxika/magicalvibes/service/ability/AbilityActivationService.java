@@ -181,6 +181,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.UnattachEquipmentFrom
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
@@ -3042,6 +3043,9 @@ public class AbilityActivationService {
                 .orElseThrow();
 
         gameData.interaction.clearAwaitingInput();
+        if (pending.remainingDiscards() > 1) {
+            gameData.deferOncePerBatchGraveyardTriggers = true;
+        }
         PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
                 pending.discardCostRequiredName(), source.getCard());
         String requiredName = discardCost.sameName()
@@ -3050,11 +3054,15 @@ public class AbilityActivationService {
         int xForActivation = discardCost.trackManaValue() ? paid.manaValue() : pending.xValue();
 
         int remaining = pending.remainingDiscards() - 1;
+        if (remaining <= 0) {
+            finishDiscardCostBatch(gameData);
+        }
         if (remaining > 0) {
             List<Integer> validDiscardIndices = collectDiscardIndices(
                     gameData, player.getId(), gameData.playerHands.get(player.getId()), discardCost,
                     pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
+                gameData.deferOncePerBatchGraveyardTriggers = false;
                 clearPendingAbilityActivation(gameData);
                 throw new IllegalStateException("No valid card to discard for the activation cost");
             }
@@ -3166,6 +3174,9 @@ public class AbilityActivationService {
         }
 
         gameData.interaction.clearAwaitingInput();
+        if (pending.remainingDiscards() > 1) {
+            gameData.deferOncePerBatchGraveyardTriggers = true;
+        }
         PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
                 pending.discardCostRequiredName(), card);
         String requiredName = discardCost.sameName()
@@ -3174,11 +3185,15 @@ public class AbilityActivationService {
         int xForActivation = discardCost.trackManaValue() ? paid.manaValue() : pending.xValue();
 
         int remaining = pending.remainingDiscards() - 1;
+        if (remaining <= 0) {
+            finishDiscardCostBatch(gameData);
+        }
         if (remaining > 0) {
             List<Integer> validDiscardIndices = collectDiscardIndices(
                     gameData, player.getId(), gameData.playerHands.get(player.getId()), discardCost,
                     pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
+                gameData.deferOncePerBatchGraveyardTriggers = false;
                 gameData.pendingGraveyardAbilityActivation = null;
                 throw new IllegalStateException("No valid card to discard for the activation cost");
             }
@@ -6627,6 +6642,16 @@ public class AbilityActivationService {
         return effectiveCost;
     }
 
+    /** Printed activated abilities a permanent's card has that are only activatable from hand, graveyard or stack. */
+    private int otherZoneActivatedAbilityCount(GameData gameData, Permanent permanent) {
+        if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+            return 0;
+        }
+        Card card = permanent.getCard();
+        return card.getHandActivatedAbilities().size() + card.getGraveyardActivatedAbilities().size()
+                + card.getStackActivatedAbilities().size();
+    }
+
     /**
      * Runs every state-based (target-independent) legality check for activating {@code ability},
      * throwing {@link IllegalStateException} on the first violated rule and mutating nothing.
@@ -6817,8 +6842,13 @@ public class AbilityActivationService {
             }
         }
 
+        // A printed {T}: add mana ability is stored as an ON_TAP effect, but it is still an activated ability.
+        // Abilities that only function from another zone (cycling, channel, ...) are still activated
+        // abilities the permanent has while it is on the battlefield.
         if (ability.isRequiresAnotherActivatedAbility()
-                && getEffectiveActivatedAbilities(gameData, permanent).size() < 2) {
+                && getEffectiveActivatedAbilities(gameData, permanent).size()
+                + (PotentialManaService.hasOnTapManaEffects(permanent.getCard()) ? 1 : 0)
+                + otherZoneActivatedAbilityCount(gameData, permanent) < 2) {
             throw new IllegalStateException("Activate only if this creature has another activated ability");
         }
 
@@ -7526,6 +7556,9 @@ public class AbilityActivationService {
         if (ability.isPowerUpAbility()) {
             gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
+        if (gameQueryService.isArtifact(gameData, permanent)) {
+            gameData.playersWhoActivatedArtifactAbilityThisTurn.add(player.getId());
+        }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting,
                 targetIds, damageAssignments, sacrificedCardIds);
@@ -7561,6 +7594,9 @@ public class AbilityActivationService {
         }
         if (ability.isPowerUpAbility()) {
             gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
+        }
+        if (gameQueryService.isArtifact(gameData, permanent)) {
+            gameData.playersWhoActivatedArtifactAbilityThisTurn.add(player.getId());
         }
         if (chosenCostPermanentIds == null || chosenCostPermanentIds.isEmpty()) {
             activatedAbilityExecutionService.completeActivationAfterCosts(
@@ -7616,6 +7652,9 @@ public class AbilityActivationService {
         if (ability.isPowerUpAbility()) {
             gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
         }
+        if (gameQueryService.isArtifact(gameData, permanent)) {
+            gameData.playersWhoActivatedArtifactAbilityThisTurn.add(player.getId());
+        }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
                 nonTargeting, targetIds, damageAssignments, List.of(), List.of(), discardedCardSnapshot,
@@ -7636,6 +7675,9 @@ public class AbilityActivationService {
         }
         if (ability.isPowerUpAbility()) {
             gameData.playersWhoActivatedPowerUpAbilityThisTurn.add(player.getId());
+        }
+        if (gameQueryService.isArtifact(gameData, permanent)) {
+            gameData.playersWhoActivatedArtifactAbilityThisTurn.add(player.getId());
         }
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
@@ -8536,7 +8578,8 @@ public class AbilityActivationService {
                 && !playerId.equals(gameData.activePlayerId)) {
             throw new IllegalStateException("This ability can only be activated during your turn");
         }
-        if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED) {
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                && !gameQueryService.canActivateAbilityAtInstantSpeed(gameData, playerId, ability)) {
             if (!playerId.equals(gameData.activePlayerId)) {
                 throw new IllegalStateException("This ability can only be activated at sorcery speed");
             }
@@ -10131,6 +10174,20 @@ public class AbilityActivationService {
     private void clearPendingAbilityActivation(GameData gameData) {
         gameData.pendingAbilityActivation = null;
         gameData.interaction.clearAwaitingInput();
+    }
+
+    /**
+     * The cards of a multi-card discard cost enter the graveyard together, so "one or more" graveyard
+     * triggers held back while the cost was being paid fire once now; like other cost-time triggers they
+     * wait until the ability is on the stack.
+     */
+    private void finishDiscardCostBatch(GameData gameData) {
+        if (!gameData.deferOncePerBatchGraveyardTriggers) {
+            return;
+        }
+        int stackBefore = gameData.stack.size();
+        graveyardService.endDeferredOncePerBatchGraveyardTriggers(gameData);
+        deferActivatedAbilityCostTriggers(gameData, stackBefore);
     }
 
     private void deferActivatedAbilityCostTriggers(GameData gameData, int stackSizeBeforeCosts) {

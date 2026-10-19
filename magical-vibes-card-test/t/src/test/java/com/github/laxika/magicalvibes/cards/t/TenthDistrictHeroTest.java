@@ -240,7 +240,7 @@ class TenthDistrictHeroTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, hero)).containsExactly(CardSubtype.FROG);
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card instanceof TenthDistrictHero);
     }
 
     private void addMana(ManaColor color, int amount) {

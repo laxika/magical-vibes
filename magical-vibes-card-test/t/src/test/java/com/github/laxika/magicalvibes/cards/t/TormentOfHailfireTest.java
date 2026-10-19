@@ -260,7 +260,7 @@ class TormentOfHailfireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castSorcery(player1, 0, 1);
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleListChoice(player2, LOSE_LIFE);
 
         harness.assertLife(player2, 20);

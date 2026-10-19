@@ -125,6 +125,7 @@ class TalonsOfWildwoodTest extends BaseCardTest {
         GreenwoodSentinel creature = new GreenwoodSentinel();
         harness.setGraveyard(player1, List.of(first, second, creature));
         harness.setGraveyard(player2, List.of(new TalonsOfWildwood()));
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.activateGraveyardAbility(player1, 1);

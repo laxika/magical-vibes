@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -86,19 +89,20 @@ public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements N
         }
         exileSupport.exilePermanentAndLog(gameData, chosen, context.sourceCard().getName());
 
-        List<Permanent> matchingPermanents = gameData.orderedPlayerIds.stream()
-                .flatMap(playerId -> gameData.playerBattlefields
-                        .getOrDefault(playerId, List.of()).stream())
-                .filter(permanent -> !permanent.getId().equals(chosenId)
-                        && matches(gameData, permanent, context.sourceCard(), context.controllerId(),
-                        context.sourcePermanentId(), context.matchingFilter()))
-                .toList();
-        for (Permanent permanent : matchingPermanents) {
-            Permanent current = gameQueryService.findPermanentById(gameData, permanent.getId());
-            if (current != null) {
-                exileSupport.exilePermanentAndLog(gameData, current, context.sourceCard().getName());
-            }
-        }
+        // "When you do" is a reflexive trigger (CR 603.12): the matching exile goes on the stack above
+        // the resolving ability and resolves separately, so the matching permanents stay on the
+        // battlefield until it resolves.
+        StackEntry reflexiveEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s reflexive ability",
+                new ArrayList<>(List.of(new ExileAllPermanentsEffect(context.matchingFilter()))),
+                0,
+                context.sourcePermanentId());
+        reflexiveEntry.setNonTargeting(true);
+        reflexiveEntry.setReflexiveTrigger(true);
+        gameData.stack.add(reflexiveEntry);
     }
 
     private boolean matches(GameData gameData, Permanent permanent, Card sourceCard,

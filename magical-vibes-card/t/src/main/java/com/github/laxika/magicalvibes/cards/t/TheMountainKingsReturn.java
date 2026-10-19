@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -30,9 +31,10 @@ public class TheMountainKingsReturn extends Card {
                         new DrawCardEffect(1),
                         new DiscardCardThenEffect(
                                 null,
-                                CreateTokenEffect.whiteSoldier(1),
+                                CreateTokenEffect.whiteHumanSoldier(1),
                                 "a card",
-                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
+                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                                false, null, null, DiscardRecipient.CONTROLLER, true)));
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

@@ -132,10 +132,13 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                                 ? "seeks and cloaks a card onto the battlefield."
                                 : "seeks and puts " + chosen.getName() + " onto the battlefield.").build());
             } else if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
-                triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                        gameData, controllerId, chosen);
+                if (seek.triggersSeekAbilities()) {
+                    triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                            gameData, controllerId, chosen);
+                }
                 if (seek.faceDown()) {
                     exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);
+                    gameData.exileLookPermissions.put(chosen.getId(), controllerId);
                 } else {
                     exileService.exileCard(gameData, controllerId, chosen, sourcePermanentId);
                 }
@@ -151,7 +154,7 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
         if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
             registerOneShotPermissionGroup(gameData, soughtCards, persistentPermissions);
         }
-        if (!soughtCards.isEmpty()) {
+        if (!soughtCards.isEmpty() && seek.triggersSeekAbilities()) {
             triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
         }
     }

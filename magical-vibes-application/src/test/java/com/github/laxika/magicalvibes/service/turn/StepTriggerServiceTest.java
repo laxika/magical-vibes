@@ -2559,6 +2559,13 @@ class StepTriggerServiceTest {
     @DisplayName("handlePrecombatMainTriggers")
     class HandlePrecombatMainTriggers {
 
+        @BeforeEach
+        void stubUnmodifiedLoreCounterPlacement() {
+            lenient().when(gameQueryService.replaceCounters(any(), any(Permanent.class), eq(CounterType.LORE),
+                    org.mockito.ArgumentMatchers.anyInt(), any(UUID.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(3));
+        }
+
         @Test
         @DisplayName("Does nothing when there are no opening hand mana triggers")
         void doesNothingWithNoOpeningHandTriggers() {

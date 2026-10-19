@@ -148,7 +148,10 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
         List<UUID> validIds = getValidChoiceIds(gameData, playerId);
         if (validIds.size() == 1) {
             Permanent only = findPermanent(gameData, validIds.getFirst());
-            if (only != null && totalCounters(only) >= remaining) {
+            // With more counters than required and several kinds to pick from, the controller chooses
+            // which counters are removed, so the bulk removal is not forced.
+            if (only != null && totalCounters(only) >= remaining
+                    && (totalCounters(only) == remaining || removableKinds(only).size() == 1)) {
                 pendingBulkRemoval = remaining;
                 return true;
             }

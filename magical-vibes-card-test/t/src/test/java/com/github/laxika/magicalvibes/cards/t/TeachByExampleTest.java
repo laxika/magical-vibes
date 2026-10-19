@@ -115,8 +115,8 @@ class TeachByExampleTest extends BaseCardTest {
     void secondInstantIsNotCopied() {
         harness.setHand(player1, List.of(new TeachByExample(), new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

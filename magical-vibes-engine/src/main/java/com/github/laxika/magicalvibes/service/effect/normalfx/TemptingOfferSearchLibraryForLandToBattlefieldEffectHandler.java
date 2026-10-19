@@ -49,7 +49,7 @@ public class TemptingOfferSearchLibraryForLandToBattlefieldEffectHandler
             List<UUID> opponents = new ArrayList<>(
                     AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(
                             gameData, controllerId));
-            boolean searchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId);
+            boolean searchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
             TemptingOfferSearchLibraryForLandToBattlefieldEffect afterInitialSearch =
                     new TemptingOfferSearchLibraryForLandToBattlefieldEffect(
                     opponents, List.of(), controllerId, 0,
@@ -71,7 +71,7 @@ public class TemptingOfferSearchLibraryForLandToBattlefieldEffectHandler
         }
 
         if (offer.controllerSearchesRemaining() > 0) {
-            boolean searchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId);
+            boolean searchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
             TemptingOfferSearchLibraryForLandToBattlefieldEffect afterSearch =
                     new TemptingOfferSearchLibraryForLandToBattlefieldEffect(
                     List.of(), List.of(), controllerId, offer.controllerSearchesRemaining() - 1,
@@ -132,7 +132,7 @@ public class TemptingOfferSearchLibraryForLandToBattlefieldEffectHandler
         List<UUID> remaining = new ArrayList<>(effect.acceptedOpponentIds());
         remaining.removeFirst();
 
-        if (librarySearchSupport.isSearchPrevented(gameData, opponentId)) {
+        if (librarySearchSupport.isSearchPrevented(gameData, opponentId, false)) {
             resolve(gameData, entry, new TemptingOfferSearchLibraryForLandToBattlefieldEffect(
                     List.of(), remaining, effect.abilityControllerId(), effect.controllerSearchesRemaining(),
                     effect.searchedPlayerIds()));

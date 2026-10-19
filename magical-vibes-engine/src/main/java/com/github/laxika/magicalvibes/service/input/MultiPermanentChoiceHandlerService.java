@@ -149,6 +149,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler distinctTokenCopyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerSacrificesDownToCountEffectHandler eachPlayerSacrificesDownToCountEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ExileAnyNumberOfPermanentsUntilSourceLeavesEffectHandler exileUntilSourceLeavesHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesEffectHandler
@@ -349,6 +351,10 @@ public class MultiPermanentChoiceHandlerService {
         if (permanentIds.isEmpty()
                 && multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.UntapChosenPermanent) {
             throw new IllegalStateException("Must choose a permanent to untap");
+        }
+        if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest
+                && permanentIds.size() != maxCount) {
+            throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to keep");
         }
         if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped
                 && permanentIds.size() != maxCount) {
@@ -1091,6 +1097,12 @@ public class MultiPermanentChoiceHandlerService {
                     gameData, permanentIds, ctx);
             permanentRemovalService.removeOrphanedAuras(gameData);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest ctx) {
+            eachPlayerSacrificesDownToCountEffectHandler.completeKeepChoice(gameData, permanentIds, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                permanentRemovalService.removeOrphanedAuras(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
             handleForcedSacrifice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx) {

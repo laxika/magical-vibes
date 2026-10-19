@@ -44,6 +44,7 @@ public class RevealUntilCreatureToBattlefieldRestToLibraryEffectHandler implemen
         if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 
@@ -79,10 +80,8 @@ public class RevealUntilCreatureToBattlefieldRestToLibraryEffectHandler implemen
                     foundCreature.getName() + " can't enter the battlefield from a library; it stays in the library."));
         }
 
-        if (!revealedCards.isEmpty()) {
-            deck.addAll(revealedCards);
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-        }
+        deck.addAll(revealedCards);
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
         log.info("Game {} - {} reveals {} cards, creature found={}",
                 gameData.id, playerName, revealedCards.size() + (foundCreature != null ? 1 : 0),

@@ -210,6 +210,7 @@ class TheCelestialToymakerTest extends BaseCardTest {
     void pileGroupingDoesNotCarryOverToTheNextTurn() {
         addReadyToymaker();
         Card card = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(card));
         harness.setLibrary(player2, List.of(new Island(), new Swamp()));
 
@@ -222,7 +223,6 @@ class TheCelestialToymakerTest extends BaseCardTest {
         harness.passBothPriorities();
         int lifeAfterFirstEndStep = gd.playerLifeTotals.get(player2.getId());
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
 

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -131,9 +133,11 @@ class TelethopterTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
     }
 }

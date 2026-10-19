@@ -145,10 +145,12 @@ class TezzeretBetrayerOfFleshTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         artifact.untap();
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);

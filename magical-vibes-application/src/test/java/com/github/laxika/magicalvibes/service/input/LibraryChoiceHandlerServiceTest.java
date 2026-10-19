@@ -582,7 +582,7 @@ class LibraryChoiceHandlerServiceTest {
 
         service.handleLibraryCardChosen(gd, player1, 1);
 
-        verify(exileService).exileCardFaceDown(gd, player2Id, chosen, sourcePermanentId);
+        verify(exileService).exileCardFaceDown(gd, player2Id, chosen, sourcePermanentId, player1Id);
         verify(graveyardService).addCardToGraveyard(gd, player2Id, first, Zone.LIBRARY);
         verify(graveyardService).addCardToGraveyard(gd, player2Id, third, Zone.LIBRARY);
         assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
@@ -618,8 +618,8 @@ class LibraryChoiceHandlerServiceTest {
 
         service.handleLibraryCardChosen(gd, player1, 0);
 
-        verify(exileService).exileCardFaceDown(gd, player2Id, first, sourcePermanentId);
-        verify(exileService).exileCardFaceDown(gd, player2Id, second, sourcePermanentId);
+        verify(exileService).exileCardFaceDown(gd, player2Id, first, sourcePermanentId, player1Id);
+        verify(exileService).exileCardFaceDown(gd, player2Id, second, sourcePermanentId, player1Id);
         assertThat(gd.playerDecks.get(player2Id)).containsExactly(third);
     }
 
@@ -675,7 +675,7 @@ class LibraryChoiceHandlerServiceTest {
 
         service.handleLibraryCardChosen(gd, player1, 1);
 
-        verify(exileService).exileCardFaceDown(gd, player1Id, chosen, sourcePermanentId);
+        verify(exileService).exileCardFaceDown(gd, player1Id, chosen, sourcePermanentId, player1Id);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
         assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(chosen.getId());
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);

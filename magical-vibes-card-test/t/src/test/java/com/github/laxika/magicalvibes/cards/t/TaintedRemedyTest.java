@@ -86,6 +86,7 @@ class TaintedRemedyTest extends BaseCardTest {
     @DisplayName("A resolved opponent's Cleric trigger loses life instead of gaining it")
     void replacesResolvedLifeGainTrigger() {
         harness.addToBattlefield(player1, new TaintedRemedy());
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new ClericOfTheForwardOrder(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();

@@ -420,6 +420,21 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 creatureSubtypes, false, false, new Fixed(1), false, Set.of(), false);
     }
 
+    /**
+     * Creates a copy that is named {@code nameOverride}, has its creature subtypes replaced by
+     * {@code creatureSubtypes} (not added to), and gains {@code additionalSupertypes}, keeping the
+     * copied power, toughness and color (The Eleventh Hour: "except it's a legendary Alien named
+     * Prisoner Zero").
+     */
+    public static CreateTokenCopyOfTargetPermanentEffect withNameAndCreatureSubtypeOverride(
+            String nameOverride, List<CardSubtype> creatureSubtypes, Set<CardSupertype> additionalSupertypes) {
+        return new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
+                false, false, null, Set.of(), false, Map.of(),
+                creatureSubtypes, false, false, new Fixed(1), false, additionalSupertypes, false,
+                List.of(), nameOverride);
+    }
+
     public static CreateTokenCopyOfTargetPermanentEffect trackedForTargetController() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,

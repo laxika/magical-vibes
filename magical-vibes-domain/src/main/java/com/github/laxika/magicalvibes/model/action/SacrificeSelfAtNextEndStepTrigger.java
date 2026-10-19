@@ -14,20 +14,28 @@ public record SacrificeSelfAtNextEndStepTrigger(
         UUID controllerId,
         Card sourceCard,
         Integer registeredTurnNumber,
-        boolean currentControllerSacrifices
+        boolean currentControllerSacrifices,
+        boolean currentControllersEndStepOnly
 ) implements DelayedAction {
 
     public SacrificeSelfAtNextEndStepTrigger(UUID permanentId, UUID controllerId, Card sourceCard) {
-        this(permanentId, controllerId, sourceCard, null, false);
+        this(permanentId, controllerId, sourceCard, null, false, false);
     }
 
     public SacrificeSelfAtNextEndStepTrigger(
             UUID permanentId, UUID controllerId, Card sourceCard, Integer registeredTurnNumber) {
-        this(permanentId, controllerId, sourceCard, registeredTurnNumber, false);
+        this(permanentId, controllerId, sourceCard, registeredTurnNumber, false, false);
     }
 
     public SacrificeSelfAtNextEndStepTrigger(
             UUID permanentId, UUID controllerId, Card sourceCard, boolean currentControllerSacrifices) {
-        this(permanentId, controllerId, sourceCard, null, currentControllerSacrifices);
+        this(permanentId, controllerId, sourceCard, null, currentControllerSacrifices, false);
+    }
+
+    public SacrificeSelfAtNextEndStepTrigger(UUID permanentId, UUID controllerId, Card sourceCard,
+                                             boolean currentControllerSacrifices,
+                                             boolean currentControllersEndStepOnly) {
+        this(permanentId, controllerId, sourceCard, null, currentControllerSacrifices,
+                currentControllersEndStepOnly);
     }
 }

@@ -57,6 +57,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryTargetsOnlySingleCreaturePredicate,
         StackEntryTargetsPermanentPredicate,
         StackEntryTargetsSourcePredicate,
+        StackEntryIsFromSourcePermanentPredicate,
         StackEntryTargetsYouOrCreatureYouControlPredicate,
         StackEntryTargetsYouPredicate,
         StackEntryTargetsYourPermanentPredicate,

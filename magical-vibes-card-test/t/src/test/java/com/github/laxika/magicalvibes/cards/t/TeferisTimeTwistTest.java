@@ -88,6 +88,7 @@ class TeferisTimeTwistTest extends BaseCardTest {
     void returningGideonDuringYourTurnEntersWithCreatureCounter() {
         harness.forceActivePlayer(player1);
         Permanent original = harness.addToBattlefieldAndReturn(player1, new GideonBlackblade());
+        original.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new TeferisTimeTwist()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -105,6 +106,7 @@ class TeferisTimeTwistTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         Permanent original = harness.addToBattlefieldAndReturn(player1, new GideonBlackblade());
+        original.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new TeferisTimeTwist()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -151,6 +153,8 @@ class TeferisTimeTwistTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, originalId);
         harness.assertNotOnBattlefield(player1, "Kaya's Ghostform");
         advanceToEndStep();
+        // The Aura's controller chooses what it enchants as it returns (CR 303.4f), even with one legal choice.
+        harness.handlePermanentChosen(player1, creature.getId());
 
         Permanent returned = findPermanent(player1, "Kaya's Ghostform");
         assertThat(returned.getId()).isNotEqualTo(originalId);
@@ -215,6 +219,6 @@ class TeferisTimeTwistTest extends BaseCardTest {
 
     private void advanceToEndStep() {
         harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 }

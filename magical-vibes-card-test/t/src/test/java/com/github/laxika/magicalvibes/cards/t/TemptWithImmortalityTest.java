@@ -92,13 +92,13 @@ class TemptWithImmortalityTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ownFirst, ownReward));
         harness.setGraveyard(player2, List.of(noncreature));
 
-        castTemptWithImmortality();
+        Card spell = castTemptWithImmortality();
         harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactly(ownFirst.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownReward);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(ownReward, spell);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(noncreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -115,7 +115,7 @@ class TemptWithImmortalityTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ownNoncreature, ownCreature));
         harness.setGraveyard(player2, List.of(opponentNoncreature, opponentCreature));
 
-        castTemptWithImmortality();
+        Card spell = castTemptWithImmortality();
         harness.handleGraveyardCardChosen(player1, 1);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleGraveyardCardChosen(player2, 1);
@@ -126,15 +126,19 @@ class TemptWithImmortalityTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactly(opponentCreature.getId());
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownNoncreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(ownNoncreature, spell);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentNoncreature);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
-    private void castTemptWithImmortality() {
-        harness.setHand(player1, List.of(new TemptWithImmortality()));
+
+    /** Casts and resolves the spell, returning its card (which ends up in its owner's graveyard). */
+    private Card castTemptWithImmortality() {
+        Card spell = new TemptWithImmortality();
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castAndResolveSorcery(player1, 0, 0);
+        return spell;
     }
 }

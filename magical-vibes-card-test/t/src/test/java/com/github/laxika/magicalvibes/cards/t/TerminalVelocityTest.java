@@ -55,7 +55,7 @@ class TerminalVelocityTest extends BaseCardTest {
         Permanent elemental = findPermanent(player1, "Air Elemental");
         assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -115,7 +115,7 @@ class TerminalVelocityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

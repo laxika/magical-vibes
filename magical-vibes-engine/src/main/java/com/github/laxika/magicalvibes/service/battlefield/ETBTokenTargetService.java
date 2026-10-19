@@ -994,6 +994,8 @@ public class ETBTokenTargetService {
                 etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 etbEntry.setAttackedTargetId(sourcePermanent.getAttackTarget());
                 etbEntry.setGiftPromised(sourcePermanent.isGiftPromised());
+                // "If it was kicked/bargained" conditions on the trigger read the permanent's cast payment.
+                etbEntry.setKicked(sourcePermanent.isKicked());
                 if (card.isAura() && sourcePermanent.isAttached() && sourcePermanent.getAttachedTo() != null) {
                     Permanent enchanted = gameQueryService.findPermanentById(gameData, sourcePermanent.getAttachedTo());
                     if (enchanted != null) {

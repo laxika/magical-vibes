@@ -46,11 +46,10 @@ public class EachPlayerChoosesCreatureToDestroyEffectHandler implements NormalEf
 
         while (!remaining.isEmpty()) {
             UUID choosingPlayerId = remaining.removeFirst();
-            List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, choosingPlayerId, p -> true);
+            List<UUID> creatureIds = creaturesOnBattlefield(gameData);
             if (creatureIds.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(
-                        gameData.playerIdToName.get(choosingPlayerId) + " has no creatures to choose ("
-                                + sourceCard.getName() + ")."));
+                        "No creatures are on the battlefield to choose (" + sourceCard.getName() + ")."));
                 continue;
             }
 
@@ -75,16 +74,23 @@ public class EachPlayerChoosesCreatureToDestroyEffectHandler implements NormalEf
     public void completeChoice(GameData gameData, UUID permanentId,
                                PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy context) {
         Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosen == null || !context.choosingPlayerId().equals(
-                gameQueryService.findPermanentController(gameData, permanentId))
-                || !gameQueryService.isCreature(gameData, chosen)) {
-            throw new IllegalStateException("Chosen permanent is no longer a creature controlled by the choosing player");
+        if (chosen == null || !gameQueryService.isCreature(gameData, chosen)) {
+            throw new IllegalStateException("Chosen permanent is no longer a creature on the battlefield");
         }
 
         List<UUID> chosenPermanentIds = new ArrayList<>(context.chosenPermanentIds());
         chosenPermanentIds.add(permanentId);
         beginNextChoice(gameData, context.controllerId(), context.sourceCard(),
                 context.remainingChooserIds(), chosenPermanentIds);
+    }
+
+    /** Each player chooses any creature on the battlefield, not only one they control (The Horus Heresy). */
+    private List<UUID> creaturesOnBattlefield(GameData gameData) {
+        List<UUID> creatureIds = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            creatureIds.addAll(destructionSupport.collectCreatureIds(gameData, playerId, p -> true));
+        }
+        return creatureIds;
     }
 
     private void destroyChosen(GameData gameData, List<UUID> chosenPermanentIds, String sourceName) {

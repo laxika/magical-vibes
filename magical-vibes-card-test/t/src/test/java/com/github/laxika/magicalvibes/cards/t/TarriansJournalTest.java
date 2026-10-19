@@ -119,10 +119,10 @@ class TarriansJournalTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(journal.isTapped()).isTrue();
         assertThat(journal.isTransformed()).isFalse();
         harness.passBothPriorities();
         assertThat(journal.isTransformed()).isTrue();
-        assertThat(journal.isTapped()).isTrue();
     }
 
     @Test

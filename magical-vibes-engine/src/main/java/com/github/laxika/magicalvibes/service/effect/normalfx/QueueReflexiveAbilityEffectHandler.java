@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -91,6 +92,16 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             return;
         }
         int targetGroupIndex = entry.getCard().getEffectTargetIndex(queueEffect.effect());
+        if (isAnyNumberOfTargetsGroup(entry, targetGroupIndex)) {
+            // "Any number of target ..." is chosen in one selection (The Thing), when the reflexive
+            // ability is put on the stack (CR 603.12, CR 603.3d).
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
+                    entry.getSourcePermanentId(), entry.getControllerId(), entry.getAttackedTargetId(),
+                    null, queueEffect.useEventValueAsX() ? entry.getEventValue() : entry.getXValue()));
+            triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
+            return;
+        }
         if (isMultiTargetGroup(entry, targetGroupIndex)) {
             int reflexiveXValue = queueEffect.useEventValueAsX()
                     ? entry.getEventValue() : entry.getXValue();
@@ -138,6 +149,17 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         }
         reflexiveEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         gameData.stack.add(reflexiveEntry);
+    }
+
+    private boolean isAnyNumberOfTargetsGroup(StackEntry entry, int targetGroupIndex) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getSpellTargets().size()
+                || entry.getCard().getSpellTargets().size() != 1) {
+            return false;
+        }
+        var group = entry.getCard().getSpellTargets().get(targetGroupIndex);
+        return group.getMaxTargets() == SpellTarget.ANY_NUMBER_OF_TARGETS
+                && group.getDynamicMinTargets() == null
+                && group.getDynamicMaxTargets() == null;
     }
 
     private boolean isMultiTargetGroup(StackEntry entry, int targetGroupIndex) {

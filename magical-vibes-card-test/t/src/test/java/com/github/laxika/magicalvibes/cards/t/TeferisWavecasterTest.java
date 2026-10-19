@@ -22,6 +22,7 @@ class TeferisWavecasterTest extends BaseCardTest {
 
         resolveEnterTheBattlefieldTrigger();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(teferi.getId()));
 
         harness.assertInHand(player1, "Teferi, Timeless Voyager");
         harness.assertNotInGraveyard(player1, "Teferi, Timeless Voyager");
@@ -36,8 +37,9 @@ class TeferisWavecasterTest extends BaseCardTest {
         resolveEnterTheBattlefieldTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(teferi.getId()));
 
         harness.assertInHand(player1, "Teferi, Timeless Voyager");
     }

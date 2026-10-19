@@ -129,6 +129,8 @@ class ThancredWatersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castAndResolveInstant(player1, 0, thancredId);
+        // Y'shtola's own cast trigger sits above Ray of Command and resolves first.
+        harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Thancred Waters");
         harness.passBothPriorities();
 

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,9 +43,14 @@ public class TariffSupport {
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
 
+    @Autowired
+    @Lazy
+    private PotentialManaService potentialManaService;
+
     /** Entry point from the effect handler: build the APNAP player queue and start processing. */
     public void begin(GameData gameData, Card sourceCard) {
         gameData.tariffRemainingPlayers.clear();
+        gameData.tariffPendingSacrificeIds.clear();
         int start = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
         for (int offset = 0; offset < gameData.orderedPlayerIds.size(); offset++) {
             UUID playerId = gameData.orderedPlayerIds.get((start + offset) % gameData.orderedPlayerIds.size());
@@ -94,9 +102,11 @@ public class TariffSupport {
         ManaCost cost = creature.getCard().getParsedManaCost();
         ManaPool pool = gameData.playerManaPools.get(playerId);
 
-        if (cost == null || !cost.canPayResolutionCost(pool)) {
-            destructionSupport.sacrificeAndLog(gameData, creature, playerId);
-            log.info("Game {} - {} can't pay for {} — sacrificed ({})", gameData.id, playerName,
+        boolean canPay = cost != null && (cost.canPayResolutionCost(pool)
+                || cost.canPay(potentialManaService.buildVirtualManaPool(gameData, playerId)));
+        if (!canPay) {
+            gameData.tariffPendingSacrificeIds.add(creature.getId());
+            log.info("Game {} - {} can't pay for {} — to be sacrificed ({})", gameData.id, playerName,
                     creature.getCard().getName(), sourceCard.getName());
             return false;
         }
@@ -147,8 +157,8 @@ public class TariffSupport {
             log.info("Game {} - {} pays {} to keep {} ({})", gameData.id, player.getUsername(),
                     ability.manaCost(), creature.getCard().getName(), sourceCard.getName());
         } else {
-            destructionSupport.sacrificeAndLog(gameData, creature, playerId);
-            log.info("Game {} - {} sacrifices {} ({})", gameData.id, player.getUsername(),
+            gameData.tariffPendingSacrificeIds.add(creature.getId());
+            log.info("Game {} - {} declines to pay for {} ({})", gameData.id, player.getUsername(),
                     creature.getCard().getName(), sourceCard.getName());
         }
 
@@ -156,6 +166,11 @@ public class TariffSupport {
     }
 
     private void finish(GameData gameData) {
+        if (!gameData.tariffPendingSacrificeIds.isEmpty()) {
+            List<UUID> toSacrifice = List.copyOf(gameData.tariffPendingSacrificeIds);
+            gameData.tariffPendingSacrificeIds.clear();
+            destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
+        }
         if (gameData.pendingEffectResolutionEntry != null) {
             // Reached asynchronously via a completed prompt — finalize the spell (SBA, graveyard).
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

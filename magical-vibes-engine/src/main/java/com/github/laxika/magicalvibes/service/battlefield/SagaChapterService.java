@@ -100,6 +100,14 @@ public class SagaChapterService {
         for (int i = 0; i < loreCounters; i++) {
             triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, sagaPermanent, controllerId);
         }
+        if (chapter == 1) {
+            // A Saga entering normally has each lore counter placed in turn, so every chapter reached
+            // by those counters triggers (Vorinclex doubling the entry counter reaches chapters I and II).
+            for (int loreCount = 1; loreCount <= loreCounters; loreCount++) {
+                triggerSagaChapter(gameData, sagaPermanent, card, controllerId, loreCount);
+            }
+            return;
+        }
         triggerSagaChapter(gameData, sagaPermanent, card, controllerId, loreCounters);
     }
 

@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Resolves an APNAP-ordered choice of one token option for each player. */
@@ -30,9 +32,13 @@ public class EachPlayerChoosesTokenEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerChoosesTokenEffect) effect;
-        beginNextChoice(gameData, e, apnapPlayers(gameData), entry.getCard().getName());
+        beginNextChoice(gameData, e, apnapPlayers(gameData), entry.getCard().getName(), Map.of());
     }
 
+    /**
+     * Records one player's token choice. Tokens are created only once every player has chosen, as the
+     * choices are made in APNAP order and the resulting actions then happen simultaneously (CR 101.4).
+     */
     public void completeChoice(GameData gameData, String label,
                                ChoiceContext.EachPlayerChoosesTokenChoice context,
                                UUID choosingPlayerId) {
@@ -45,12 +51,19 @@ public class EachPlayerChoosesTokenEffectHandler implements NormalEffectHandlerB
         if (entry == null) {
             throw new IllegalStateException("Each-player token choice is not resumable");
         }
-        createTokenEffectHandler.resolveForController(gameData, entry, option.token(), choosingPlayerId);
-        beginNextChoice(gameData, context.effect(), context.remainingPlayerIds(), context.sourceName());
+        Map<UUID, EachPlayerChoosesTokenEffect.TokenOption> chosenOptions = new LinkedHashMap<>(context.chosenOptions());
+        chosenOptions.put(choosingPlayerId, option);
+        if (context.remainingPlayerIds().isEmpty()) {
+            chosenOptions.forEach((playerId, chosen) ->
+                    createTokenEffectHandler.resolveForController(gameData, entry, chosen.token(), playerId));
+            return;
+        }
+        beginNextChoice(gameData, context.effect(), context.remainingPlayerIds(), context.sourceName(), chosenOptions);
     }
 
     private void beginNextChoice(GameData gameData, EachPlayerChoosesTokenEffect effect,
-                                 List<UUID> remainingPlayerIds, String sourceName) {
+                                 List<UUID> remainingPlayerIds, String sourceName,
+                                 Map<UUID, EachPlayerChoosesTokenEffect.TokenOption> chosenOptions) {
         if (remainingPlayerIds.isEmpty()) {
             return;
         }
@@ -59,7 +72,7 @@ public class EachPlayerChoosesTokenEffectHandler implements NormalEffectHandlerB
         List<UUID> remaining = List.copyOf(remainingPlayerIds.subList(1, remainingPlayerIds.size()));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 choosingPlayerId, null, null,
-                new ChoiceContext.EachPlayerChoosesTokenChoice(effect, remaining, sourceName),
+                new ChoiceContext.EachPlayerChoosesTokenChoice(effect, remaining, chosenOptions, sourceName),
                 effect.options().stream().map(EachPlayerChoosesTokenEffect.TokenOption::label).toList(),
                 sourceName + " — choose a token."));
     }

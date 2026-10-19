@@ -28,7 +28,7 @@ class TataruTaruTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int player2HandBefore = gd.playerHands.get(player2.getId()).size();
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0, player2.getId());
         int player1HandBeforeDraw = gd.playerHands.get(player1.getId()).size();
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -107,7 +107,7 @@ class TataruTaruTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
 
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();

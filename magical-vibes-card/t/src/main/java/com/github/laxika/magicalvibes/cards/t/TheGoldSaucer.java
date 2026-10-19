@@ -27,13 +27,13 @@ public class TheGoldSaucer extends Card {
         ));
 
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{3}",
                 List.of(
                         new SacrificeMultiplePermanentsCost(2, new PermanentIsArtifactPredicate()),
                         new DrawCardEffect(1)
                 ),
-                "{3}, Sacrifice two artifacts: Draw a card."
+                "{3}, {T}, Sacrifice two artifacts: Draw a card."
         ));
     }
 }

@@ -842,6 +842,8 @@ public class MayAbilityHandlerService {
                 }
                 if (!paidWithLife) {
                     cost.payResolutionCost(pool);
+                    triggerCollectionService.checkTaxPaymentTriggers(
+                            gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
                     if (ability.additionalLifeCost() > 0) {
                         lifeSupport.applyLifePayment(gameData, player.getId(), ability.additionalLifeCost(),
                                 ability.sourceCard().getName());

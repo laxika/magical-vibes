@@ -26,7 +26,7 @@ public class TangledSkyline extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new GainLifeEffect(5), incubatorToken(5)));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.REACH, GrantScope.OWN_CREATURES,
+                Keyword.REACH, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)));
     }
 

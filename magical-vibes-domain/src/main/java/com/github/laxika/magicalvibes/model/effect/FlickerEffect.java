@@ -457,7 +457,7 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetUnderYourControlTappedAndAttacking() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, true, null, null, 0, true, false,
-                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, false, true, false, Map.of());
+                false, false, 0, false, Set.of(), false, false, false, null, 0, Set.of(), false, true, false, false, Map.of());
     }
 
     /** Immediate flicker that returns the permanent with {@code counters} +1/+1 counters (Daydream). */

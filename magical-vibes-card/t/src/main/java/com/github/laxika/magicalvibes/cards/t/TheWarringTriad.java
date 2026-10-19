@@ -12,13 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "FIC", collectorNumber = "99")
 @CardRegistration(set = "FIC", collectorNumber = "193")
@@ -27,14 +26,14 @@ public class TheWarringTriad extends Card {
     public TheWarringTriad() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new NotCondition(new GraveyardCardThreshold(8, null)),
-                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(
                         new MillControllerCost(1),
-                        new AwardAnyColorManaEffect(new Fixed(1), true, false)
+                        new AwardAnyColorManaEffect(new Fixed(1), true, false).withColorChosenByRecipient()
                 ),
                 "{T}, Mill a card: Target player adds one mana of any color. (Activate only as an instant.)",
                 new PlayerPredicateTargetFilter(

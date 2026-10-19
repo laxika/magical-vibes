@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandMayCastByDiscardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +28,9 @@ import org.springframework.stereotype.Component;
 public class ExileTopUntilNonlandMayCastByDiscardEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final ExileCastTargetSupport exileCastTargetSupport;
     private final GameLogService gameLogService;
+    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,6 +72,24 @@ public class ExileTopUntilNonlandMayCastByDiscardEffectHandler implements Normal
                     .text(playerName + " exiles cards until ").card(hit)
                     .text(" but has no card to discard.")
                     .build());
+            return;
+        }
+
+        if (hit.getMaxTargets() > 0 && !exileCastTargetSupport.hasLegalTargetSet(gameData, hit, controllerId)) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " exiles cards until a nonland card is found, but " + hit.getName()
+                            + " has no legal targets to cast it with."));
+            return;
+        }
+
+        boolean needsSpellTarget = EffectResolution.needsSpellCastTarget(
+                EffectResolution.resolveEffects(hit.getEffects(EffectSlot.SPELL), false, null),
+                hit.isAuraThatRequiresAttachment(), hit.isEnchantPlayer())
+                || EffectResolution.needsSpellTarget(hit.getEffects(EffectSlot.SPELL));
+        if (needsSpellTarget && !validTargetService.hasValidTargetsForSpell(gameData, hit, controllerId, null)) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " exiles cards until a nonland card is found, but " + hit.getName()
+                            + " has no legal targets to cast it with."));
             return;
         }
 

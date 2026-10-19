@@ -20,7 +20,7 @@ public class TerryPinTurboturtle extends Card {
 
     /* The MB2 playtest printing is absent from the public oracle feeds. */
     static {
-        Card.registerOracle("TerryPinTurboturtle", new OracleData(
+        Card.registerEmbeddedOracle("TerryPinTurboturtle", new OracleData(
                 "Terry Pin, Turboturtle",
                 CardType.CREATURE,
                 Set.of(),

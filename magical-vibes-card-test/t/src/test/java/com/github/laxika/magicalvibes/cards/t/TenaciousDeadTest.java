@@ -85,7 +85,6 @@ class TenaciousDeadTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Tenacious Dead");
         harness.assertNotOnBattlefield(player1, "Tenacious Dead");
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
     @Test

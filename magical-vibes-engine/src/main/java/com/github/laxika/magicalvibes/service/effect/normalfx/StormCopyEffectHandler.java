@@ -50,6 +50,9 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // The copies take the spell's targets as they stand now (CR 707.10), so a change made while the
+        // trigger was on the stack, such as a redirect, is honored.
+        StackEntry copySource = liveSpellEntry(gameData, spellSnapshot);
         int copyCount = copySupport.adjustedSpellCopyCount(gameData, copies);
         for (int i = 0; i < copyCount; i++) {
             Card copyCard = copySupport.createCopyCard(spellCard);
@@ -63,7 +66,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
                 copyCard.setSupertypes(Set.copyOf(supertypes));
             }
             StackEntry copyEntry = copySupport.createCopyStackEntry(
-                    spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
+                    copySource, copyCard, castingPlayerId, copySource.getTargetId());
 
             copySupport.addCopyToStack(gameData, copyEntry, false);
 
@@ -84,5 +87,16 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
 
         log.info("Game {} - spell-copy effect creates {} copies of {} for {}",
                 gameData.id, copyCount, spellCard.getName(), castingPlayerId);
+    }
+
+    /** The copied spell's entry while it is still on the stack, otherwise its snapshot (last known information). */
+    private StackEntry liveSpellEntry(GameData gameData, StackEntry snapshot) {
+        UUID spellCardId = snapshot.getCard().getId();
+        for (StackEntry stackEntry : gameData.stack) {
+            if (spellCardId.equals(stackEntry.getTargetableId())) {
+                return stackEntry;
+            }
+        }
+        return snapshot;
     }
 }

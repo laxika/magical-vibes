@@ -39,8 +39,7 @@ public class TarriansJournal extends Card {
                 true,
                 "{2}",
                 List.of(new DiscardHandCost(), new TransformSelfEffect()),
-                "{2}, {T}, Discard your hand: Transform Tarrian's Journal. Activate only as a sorcery.",
-                ActivationTimingRestriction.SORCERY_SPEED));
+                "{2}, {T}, Discard your hand: Transform Tarrian's Journal."));
     }
 
     @Override

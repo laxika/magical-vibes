@@ -98,6 +98,7 @@ class TheDestinedThiefTest extends BaseCardTest {
         Forest first = new Forest();
         Forest second = new Forest();
         Forest third = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, second, third));
 
         Permanent thief = addCreatureReady(player1, new TheDestinedThief());

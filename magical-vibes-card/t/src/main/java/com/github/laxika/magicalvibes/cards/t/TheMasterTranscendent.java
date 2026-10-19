@@ -44,7 +44,7 @@ public class TheMasterTranscendent extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .targetGraveyard(true)
-                        .targetPutIntoGraveyardFromLibraryThisTurn(true)
+                        .targetMilledThisTurn(true)
                         .battlefieldEffectGrants(List.of(
                                 new GrantColorEffect(CardColor.GREEN, GrantScope.TARGET, true),
                                 new GrantSubtypeEffect(CardSubtype.MUTANT, GrantScope.TARGET, true),

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
@@ -30,7 +30,7 @@ public class TheRealityChip extends Card {
 
     public TheRealityChip() {
         addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addEffect(EffectSlot.STATIC, new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceIsAttached(),
                 new PlayLandsFromTopOfLibraryEffect()));

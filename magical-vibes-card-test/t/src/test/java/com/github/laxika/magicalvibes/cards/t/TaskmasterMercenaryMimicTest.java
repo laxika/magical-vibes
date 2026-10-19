@@ -146,6 +146,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         assertThat(taskmaster.getCard().getToughness()).isEqualTo(3);
         assertThat(taskmaster.getCard().getKeywords()).contains(Keyword.DEFENDER);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(taskmaster.getCard().getToughness()).isEqualTo(5);
         assertThat(taskmaster.getCard().getKeywords()).doesNotContain(Keyword.DEFENDER);

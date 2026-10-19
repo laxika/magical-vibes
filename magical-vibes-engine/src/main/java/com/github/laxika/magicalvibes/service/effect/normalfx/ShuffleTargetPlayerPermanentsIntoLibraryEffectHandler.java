@@ -9,8 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPlayerPermanents
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,12 +52,20 @@ public class ShuffleTargetPlayerPermanentsIntoLibraryEffectHandler implements No
             }
         }
 
+        // Each affected library is shuffled once after all its permanents are in it, so a shuffle
+        // trigger (Psychogenic Probe) fires once per library rather than once per permanent.
+        Set<UUID> shuffledLibraryOwnerIds = new LinkedHashSet<>();
         for (Permanent permanent : toShuffle) {
             String name = permanent.getCard().getName();
-            if (permanentRemovalService.removePermanentToLibraryShuffled(gameData, permanent)) {
+            UUID libraryOwnerId = gameData.defaultControllerOf(permanent.getId());
+            if (permanentRemovalService.removePermanentToLibraryUnshuffled(gameData, permanent)) {
+                shuffledLibraryOwnerIds.add(libraryOwnerId);
                 gameLogService.append(gameData, GameLog.text(name + " is shuffled into its owner's library."));
                 log.info("Game {} - {} shuffled into owner's library", gameData.id, name);
             }
+        }
+        for (UUID libraryOwnerId : shuffledLibraryOwnerIds) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, libraryOwnerId);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -17,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -50,14 +48,12 @@ public class TakenumaAbandonedMire extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(creatureOrPlaneswalker)
-                                .targetGraveyard(true)
+                                .targetGraveyard(false)
                                 .build()
                 ),
                 "Channel — {3}{B}, Discard this card: Mill three cards, then return a creature or planeswalker card "
                         + "from your graveyard to your hand. This ability costs {1} less to activate for each legendary "
-                        + "creature you control.",
-                new GraveyardCardPredicateTargetFilter(
-                        creatureOrPlaneswalker, GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
+                        + "creature you control."
         ));
     }
 }

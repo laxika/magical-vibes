@@ -326,6 +326,31 @@ public class GraveyardService {
     }
 
     /**
+     * Ends a simultaneous multi-card graveyard entry (a discard cost paid one card at a time): fires the
+     * "one or more" triggers that were held back, once for the whole batch.
+     */
+    public void endDeferredOncePerBatchGraveyardTriggers(GameData gameData) {
+        Card permanentCard = gameData.deferredBatchPermanentCard;
+        Card landCard = gameData.deferredBatchLandCard;
+        UUID ownerId = gameData.deferredBatchOwnerId;
+        gameData.deferOncePerBatchGraveyardTriggers = false;
+        gameData.deferredBatchPermanentCard = null;
+        gameData.deferredBatchLandCard = null;
+        gameData.deferredBatchOwnerId = null;
+        if (ownerId == null) {
+            return;
+        }
+        if (permanentCard != null) {
+            triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(
+                    gameData, ownerId, permanentCard, true);
+        }
+        if (landCard != null) {
+            triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(
+                    gameData, ownerId, landCard, true);
+        }
+    }
+
+    /**
      * Adds a card to its owner's graveyard, or applies a replacement effect (e.g. shuffle into library).
      * Returns true if the card was actually put into the graveyard, false if a replacement effect was applied.
      * Callers should skip "dies" / graveyard triggers when this returns false (CR 614.6).
@@ -791,6 +816,16 @@ public class GraveyardService {
                     gameData, battlefieldControllerId != null ? battlefieldControllerId : ownerId,
                     card, battlefieldPermanentId, battlefieldSnapshot);
         }
+        if (gameData.deferOncePerBatchGraveyardTriggers && !isToken(gameData, card)) {
+            suppressOncePerBatchLandTriggers = true;
+            gameData.deferredBatchOwnerId = ownerId;
+            if (isPermanentCard(card) && gameData.deferredBatchPermanentCard == null) {
+                gameData.deferredBatchPermanentCard = card;
+            }
+            if (card.hasType(CardType.LAND) && gameData.deferredBatchLandCard == null) {
+                gameData.deferredBatchLandCard = card;
+            }
+        }
         if (!isToken(gameData, card) && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card,
                     suppressOncePerBatchLandTriggers ? Boolean.FALSE : null);
@@ -967,7 +1002,7 @@ public class GraveyardService {
                 if (!(emblemEffect instanceof ReturnCardPutIntoGraveyardToHandEffect)) {
                     continue;
                 }
-                gameData.stack.add(new StackEntry(
+                StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         ownerId,
@@ -977,7 +1012,11 @@ public class GraveyardService {
                                 "Return " + card.getName() + " to your hand?"))),
                         null,
                         (UUID) null
-                ));
+                );
+                // A trigger from an earlier graveyard entry fizzles once the card has left and re-entered
+                // the graveyard, since that is a new object (CR 400.7).
+                trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(ownerId)
                         + "'s emblem triggers."));
                 log.info("Game {} - emblem graveyard-return trigger for {}", gameData.id, card.getName());

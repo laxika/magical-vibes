@@ -83,6 +83,7 @@ class TheOneRingTest extends BaseCardTest {
     @Test
     @DisplayName("The One Ring's protection ends at its controller's next turn")
     void protectionEndsAtNextTurn() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new TheOneRing()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castArtifact(player1, 0);
@@ -91,7 +92,7 @@ class TheOneRingTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).doesNotContain(player1.getId());
     }

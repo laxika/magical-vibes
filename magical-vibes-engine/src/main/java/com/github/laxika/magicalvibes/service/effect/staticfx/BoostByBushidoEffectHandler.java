@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
 
     private final StaticEffectSupport support;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,6 +44,10 @@ public class BoostByBushidoEffectHandler implements StaticEffectHandlerBean {
     }
 
     private int bushidoValue(StaticEffectContext context, Permanent permanent) {
+        // A creature that lost its printed abilities (Ovinize) no longer has bushido to count.
+        if (gameQueryService.hasLostPrintedAbilities(context.gameData(), permanent)) {
+            return 0;
+        }
         List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_BLOCK));
         effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
         effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));

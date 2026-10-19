@@ -7,17 +7,16 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
-import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnCreatedPermanent;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseNumberEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseNumberForCreatedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -51,6 +50,10 @@ public class EsperTerra extends Card {
 
     private void addCopyChapter(EffectSlot chapter) {
         addEffect(chapter, copyEnchantmentEffect());
+        addEffect(chapter, new ChooseNumberForCreatedPermanentEffect(
+                0, 3, new PermanentHasSubtypePredicate(CardSubtype.SAGA)));
+        addEffect(chapter, new PutCountersOnCreatedPermanentsEffect(
+                CounterType.LORE, new ChosenNumberOnCreatedPermanent()));
         setSagaChapterTargetGroups(chapter, List.of(new SagaChapterTargetGroup(
                 new PermanentPredicateTargetFilter(
                         NONLEGENDARY_ENCHANTMENT_YOU_CONTROL,
@@ -68,18 +71,14 @@ public class EsperTerra extends Card {
                 Map.of(),
                 true,
                 false,
-                true,
+                false,
                 false,
                 false,
                 false,
                 null,
                 Set.of(),
                 false,
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(new ConditionalEffect(
-                        new SourceHasSubtype(CardSubtype.SAGA),
-                        SequenceEffect.of(
-                                new ChooseNumberEffect(0, 3),
-                                new PutCountersOnSourceCardEffect(
-                                        CounterType.LORE, new ChosenNumberOnSource()))))));
+                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(
+                        SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep())));
     }
 }

@@ -31,7 +31,7 @@ class TheRuinousWreckingCrewTest extends BaseCardTest {
         Permanent crew = castForX(1);
         harness.handleListChoice(player1, SACRIFICE_CREATURE);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId()));
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

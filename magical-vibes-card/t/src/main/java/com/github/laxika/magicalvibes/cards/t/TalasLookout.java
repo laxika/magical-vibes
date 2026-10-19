@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class TalasLookout extends Card {
 
     public TalasLookout() {
-        addEffect(EffectSlot.ON_DEATH, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1));
+        addEffect(EffectSlot.ON_DEATH, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
     }
 }

@@ -19,7 +19,7 @@ public class ThassasIntervention extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top X cards of your library. Put up to two of them into your hand and the rest on the bottom of your library in a random order",
-                        LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new XValue(), 2)),
+                        LookAtTopCardsEffect.chooseUpToNToHandRestOnBottomRandom(new XValue(), 2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell unless its controller pays twice {X}",
                         new CounterUnlessPaysEffect(new Scaled(new XValue(), 2)))

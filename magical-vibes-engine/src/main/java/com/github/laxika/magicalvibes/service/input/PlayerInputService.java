@@ -298,6 +298,27 @@ public class PlayerInputService {
                                 UUID blockingAttackerId, UUID untapSourcePermanentId,
                                 Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
                                 boolean markEntryAsPutByTriggeringPermanent) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceCardId, returnToHandAtEndStep, cloaked, thenEffect, thenCondition,
+                enterTappedAndAttackingIf, blockingAttackerId, untapSourcePermanentId,
+                untapSourceIfEnteredCardHasAnySubtype, markEntryAsPutByTriggeringPermanent, false);
+    }
+
+    /** As above, where {@code mandatory} forbids declining the choice (an instruction to put this card onto the battlefield). */
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, boolean cloaked,
+                                CardEffect thenEffect, CardPredicate thenCondition,
+                                CardPredicate enterTappedAndAttackingIf,
+                                UUID blockingAttackerId, UUID untapSourcePermanentId,
+                                Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                                boolean markEntryAsPutByTriggeringPermanent, boolean mandatory) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
@@ -305,7 +326,7 @@ public class PlayerInputService {
                 returnExiledSourceCardId, null, null, 0, returnToHandAtEndStep,
                 cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId,
                 untapSourcePermanentId, untapSourceIfEnteredCardHasAnySubtype, null, 0, null,
-                markEntryAsPutByTriggeringPermanent));
+                markEntryAsPutByTriggeringPermanent, mandatory));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,

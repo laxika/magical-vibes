@@ -21,7 +21,9 @@ public class TheFirstTyrannicWar extends Card {
                         new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new DoubleCountersOnTargetPermanentEffect());
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
         addEffect(EffectSlot.SAGA_CHAPTER_III, new DoubleCountersOnTargetPermanentEffect());
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
     }
 }

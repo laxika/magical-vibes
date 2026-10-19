@@ -154,6 +154,7 @@ class TeapotSlingerTest extends BaseCardTest {
 
         harness.setLibrary(player1, List.of(new BarkformHarvester(), new BarkformHarvester()));
         harness.setLibrary(player2, List.of(new BarkformHarvester(), new BarkformHarvester()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new BarkformHarvester(), new BarkformHarvester()));

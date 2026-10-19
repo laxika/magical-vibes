@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.HoldDraftedSpellbookCardEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -73,7 +74,7 @@ public class SpellbookDraftChoiceInteractionHandler
             exileService.exileCard(gameData, interaction.playerId(), chosen);
             gameData.exilePlayPermissions.put(chosen.getId(), interaction.playerId());
             gameData.exilePlayPermissionsExpireEndOfTurn.add(chosen.getId());
-        } else {
+        } else if (interaction.chosenCardEffects().stream().noneMatch(HoldDraftedSpellbookCardEffect.class::isInstance)) {
             gameData.addCardToHand(interaction.playerId(), chosen);
         }
         if (interaction.revealChosenCard()) {

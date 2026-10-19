@@ -161,6 +161,7 @@ class ThaliaAndTheGitrogMonsterTest extends BaseCardTest {
         Permanent source = addCreatureReady(player1, new ThaliaAndTheGitrogMonster());
         harness.addToBattlefield(player1, new Forest());
         harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();

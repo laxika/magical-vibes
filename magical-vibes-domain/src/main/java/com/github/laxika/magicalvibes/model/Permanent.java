@@ -421,6 +421,10 @@ public class Permanent {
     /** Triggered effects granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting
      *  {@code UPKEEP_TRIGGERED} + {@code CumulativeUpkeepEffect}). Survives {@link #resetModifiers()}. */
     private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffects = new EnumMap<>(EffectSlot.class);
+    /** "When this creature dies" delayed triggers created by a resolving ability (CR 603.7). Unlike
+     *  {@link #persistentTriggeredEffects} they are not abilities of the permanent, so losing all
+     *  abilities does not stop them. */
+    private final List<CardEffect> delayedDeathEffects = new ArrayList<>();
     /** Triggered effects granted until the next upkeep of the player whose effect created them.
      *  The expiry player is stored separately from the permanent's current controller because the
      *  duration belongs to the resolving ability's controller. */
@@ -676,6 +680,8 @@ public class Permanent {
     @Setter private Set<CardColor> lastKnownColors;
     /** Effective subtypes immediately before this permanent left the battlefield. */
     @Setter private Set<CardSubtype> lastKnownSubtypes;
+    /** Effective supertypes immediately before this permanent left the battlefield (layer-granted ones included). */
+    @Setter private Set<CardSupertype> lastKnownSupertypes;
     /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
@@ -1077,6 +1083,7 @@ public class Permanent {
                 this.combatTriggeredEffects.put(slot, new ArrayList<>(effects)));
         source.persistentTriggeredEffects.forEach((slot, effects) ->
                 this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
+        this.delayedDeathEffects.addAll(source.delayedDeathEffects);
         source.untilNextUpkeepTriggeredEffects.forEach((slot, effectsByPlayer) -> {
             Map<UUID, List<CardEffect>> copiedEffectsByPlayer = new HashMap<>();
             effectsByPlayer.forEach((playerId, effects) ->
@@ -1185,6 +1192,7 @@ public class Permanent {
         this.lastKnownPower = source.lastKnownPower;
         this.lastKnownColors = source.lastKnownColors == null ? null : Set.copyOf(source.lastKnownColors);
         this.lastKnownSubtypes = source.lastKnownSubtypes == null ? null : Set.copyOf(source.lastKnownSubtypes);
+        this.lastKnownSupertypes = source.lastKnownSupertypes == null ? null : Set.copyOf(source.lastKnownSupertypes);
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.losesAllAbilitiesUntilNextTurnControllers.addAll(
                 source.losesAllAbilitiesUntilNextTurnControllers);
@@ -1983,6 +1991,14 @@ public class Permanent {
 
     public void addPersistentTriggeredEffect(EffectSlot slot, CardEffect effect) {
         persistentTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+    }
+
+    public void addDelayedDeathEffect(CardEffect effect) {
+        delayedDeathEffects.add(effect);
+    }
+
+    public List<CardEffect> getDelayedDeathEffects() {
+        return List.copyOf(delayedDeathEffects);
     }
 
     public List<CardEffect> getPersistentTriggeredEffects(EffectSlot slot) {

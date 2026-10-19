@@ -8,10 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 
@@ -25,10 +24,8 @@ public class TheCapitolineTriad extends Card {
     private static final String EMBLEM_TEXT = "Creatures you control have base power and toughness 9/9.";
 
     public TheCapitolineTriad() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
-                HISTORIC,
-                new CardsInGraveyard(HISTORIC, CountScope.CONTROLLER),
-                CostModificationScope.SELF));
+        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+                new CardsInGraveyard(HISTORIC, CountScope.CONTROLLER)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

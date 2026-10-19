@@ -23,7 +23,7 @@ public class TatyovaStewardOfTides extends Card {
     public TatyovaStewardOfTides() {
         // Land creatures you control have flying.
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsLandPredicate()));
 
         // Whenever a land you control enters, if you control seven or more lands, up to one target

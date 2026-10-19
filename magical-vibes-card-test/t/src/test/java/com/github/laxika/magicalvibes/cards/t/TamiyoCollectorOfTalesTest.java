@@ -164,6 +164,9 @@ class TamiyoCollectorOfTalesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -1708,6 +1709,12 @@ public class LayerSystemService {
                     slots, slotsById, board)) {
                 board.states().get(target.permanent().getId()).setName(setName.name());
             }
+        } else if (instance.effect() instanceof GrantStaticEffectToSourceEffect grant
+                && grant.staticEffect() instanceof SetNameEffect setName) {
+            for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.SELF, null,
+                    slots, slotsById, board)) {
+                board.states().get(target.permanent().getId()).setName(setName.name());
+            }
         } else if (instance.effect() instanceof SetChosenNameAndCreatureTypeEffect set) {
             if (instance.source() == null || instance.source().permanent().getChosenName() == null) return;
             for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null,
@@ -2726,7 +2733,7 @@ public class LayerSystemService {
                     state.removeKeyword(keyword);
                 }
             }
-            state.addKeywords(rewrittenKeywords);
+            state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(), rewrittenKeywords));
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                     ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
@@ -2751,17 +2758,26 @@ public class LayerSystemService {
             state.addKeywords(permanent.getGrantedKeywords());
             state.addKeywords(permanent.getPersistentGrantedKeywords());
             state.addKeywords(permanent.getUntilNextTurnKeywords());
-            state.addKeywords(gameData.perpetualCardKeywords.getOrDefault(
-                    permanent.getCard().getId(), Set.of()));
+            state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
+                    gameData.perpetualCardKeywords.getOrDefault(permanent.getCard().getId(), Set.of())));
             gameData.perpetualCardExtraKeywordInstances
                     .getOrDefault(permanent.getCard().getId(), Map.of())
                     .forEach(state::addPerpetualTriggerKeywordInstances);
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
-            gameData.perpetualCardRemovedKeywords
-                    .getOrDefault(permanent.getCard().getId(), Set.of())
-                    .forEach(state::removeKeyword);
         }
         state.snapshotSeededCharacteristics();
+    }
+
+    /**
+     * Drops the keywords the card has perpetually lost from its own printed or perpetually gained
+     * set. A perpetual removal is not a removal effect on the object: a later layer-6 grant of the
+     * same keyword (Tan Jolom's Double Team) still applies, so the removal is applied to the card's
+     * own keywords here rather than recorded as a removed keyword that every grant would lose to.
+     */
+    private static Set<Keyword> keepingPerpetualRemovals(GameData gameData, UUID cardId, Set<Keyword> keywords) {
+        Set<Keyword> kept = new HashSet<>(keywords);
+        kept.removeAll(gameData.perpetualCardRemovedKeywords.getOrDefault(cardId, Set.of()));
+        return kept;
     }
 
     /**
@@ -2887,9 +2903,43 @@ public class LayerSystemService {
      */
     private void applyLayer6(GameData gameData, List<PermanentSlot> slots,
                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
-        applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES),
+        List<EffectInstance> instances = collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES);
+        applyInstances(gameData, withoutStaticGrantsLostToLaterAbilityLoss(gameData, instances, slots, slotsById, board),
                 slots, slotsById, board, this::applyL6Instance);
         applyLoyaltyAbilitySharing(slots, board);
+    }
+
+    /**
+     * Drops each resolved "gains [static ability]" grant (Tenth District Hero's "Other creatures you
+     * control have indestructible") whose source is later made to lose all abilities by a floating
+     * layer-6 effect with a later timestamp: the ability was gained, then removed (CR 613.7), so it
+     * no longer affects anything. Name-setting grants are not abilities and are classified outside
+     * layer 6, so they never reach this pass.
+     */
+    private List<EffectInstance> withoutStaticGrantsLostToLaterAbilityLoss(
+            GameData gameData, List<EffectInstance> instances, List<PermanentSlot> slots,
+            Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        List<EffectInstance> result = null;
+        for (EffectInstance grant : instances) {
+            if (grant.floating() == null || !(grant.effect() instanceof GrantStaticEffectToSourceEffect)
+                    || grant.source() == null) {
+                continue;
+            }
+            UUID sourceId = grant.source().permanent().getId();
+            boolean lost = instances.stream().anyMatch(later -> later.floating() != null
+                    && later.timestamp() > grant.timestamp()
+                    && (later.effect() instanceof LosesAllAbilitiesEffect
+                    || later.effect() instanceof LosesAllNonManaAbilitiesEffect)
+                    && floatingTargets(gameData, later, slots, slotsById, board).stream()
+                    .anyMatch(target -> target.permanent().getId().equals(sourceId)));
+            if (lost) {
+                if (result == null) {
+                    result = new ArrayList<>(instances);
+                }
+                result.remove(grant);
+            }
+        }
+        return result == null ? instances : result;
     }
 
     /**
@@ -3524,6 +3574,31 @@ public class LayerSystemService {
                     }
                 }
                 default -> {
+                }
+            }
+        }
+
+        for (Emblem emblem : gameData.emblems) {
+            for (CardEffect emblemEffect : emblem.staticEffects()) {
+                if (!(emblemEffect instanceof SetBasePowerToughnessEffect setPt)
+                        || setPt.scope() != GrantScope.OWN_CREATURES
+                        && setPt.scope() != GrantScope.ALL_OWN_CREATURES) {
+                    continue;
+                }
+                for (PermanentSlot target : slots) {
+                    Permanent permanent = target.permanent();
+                    CharacteristicState targetState = board.states().get(permanent.getId());
+                    boolean creature = targetState != null
+                            ? targetState.hasCardType(CardType.CREATURE)
+                            : permanent.getCard().hasType(CardType.CREATURE);
+                    if (!emblem.controllerId().equals(target.controllerId()) || !creature
+                            || setPt.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            null, permanent, setPt.filter())) {
+                        continue;
+                    }
+                    entries.add(new BasePtEntry(permanent.getId(), setPt.power(), setPt.toughness(),
+                            emblem.timestamp(), target.position(),
+                            emblem.sourceCard() != null ? emblem.sourceCard().getName() : "Emblem"));
                 }
             }
         }

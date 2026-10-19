@@ -113,7 +113,7 @@ class ThePrincessTakesFlightTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
 
         assertThat(creature.getPowerModifier()).isZero();

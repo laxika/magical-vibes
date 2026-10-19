@@ -113,8 +113,8 @@ class ThalakosDeceiverTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, attacker));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 608.2d: the sacrifice is impossible once the source is gone, so no choice is offered.
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.controlEffectsFor(target.getId())).isEmpty();

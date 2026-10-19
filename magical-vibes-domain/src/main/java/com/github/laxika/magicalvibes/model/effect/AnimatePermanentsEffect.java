@@ -140,11 +140,12 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
 
     /**
      * Crew: the source Vehicle becomes an artifact creature with its printed power and toughness
-     * (the {@code null} amounts) until end of turn.
+     * (the {@code null} amounts) until end of turn. The artifact type is granted explicitly so a
+     * Vehicle that lost it earlier this turn is an artifact again once crewed.
      */
     public static AnimatePermanentsEffect crew() {
         return new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
+                Set.of(CardType.CREATURE, CardType.ARTIFACT), GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
     }
 
     /** Self-targeting animation with a fixed set of colors. */

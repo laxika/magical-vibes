@@ -19,11 +19,11 @@ public class TheAkroanWar extends Card {
 
     public TheAkroanWar() {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
-                new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I,
-                Set.of(TargetFilters.creatureAnOpponentControls()));
+                Set.of(TargetFilters.creature()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GoadCreaturesUntilNextTurnEffect(
+        addEffect(EffectSlot.SAGA_CHAPTER_II, GoadCreaturesUntilNextTurnEffect.mustAttackOnly(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new EachCreatureDealsPowerDamageToItselfEffect(

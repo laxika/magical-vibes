@@ -483,6 +483,11 @@ public final class LayerClassifier {
         map.put(GrantStaticEffectToSourceEffect.class, new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7B_SET_PT),
                 (effect, fromOwnStaticSlot) -> {
                     GrantStaticEffectToSourceEffect grant = (GrantStaticEffectToSourceEffect) effect;
+                    if (grant.staticEffect() instanceof SetNameEffect) {
+                        // A name set by a resolved ability is not one of the permanent's abilities, so
+                        // losing all abilities (layer 6) does not undo it (Tenth District Hero's Mileva).
+                        return new LayerClassification(Set.of(Layer.L3_TEXT), false, false);
+                    }
                     return grant.staticEffect() instanceof SetBasePowerToughnessToAmountEffect
                             ? new LayerClassification(Set.of(Layer.L6_ABILITIES, Layer.L7B_SET_PT), false, false)
                             : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false);
