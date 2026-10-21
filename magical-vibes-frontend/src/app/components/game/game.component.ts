@@ -16,6 +16,8 @@ import { Subscription } from 'rxjs';
 import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
 import { CuePlaybackService } from '../../services/cue-playback.service';
+import { CueOverlayComponent } from './cue-overlay/cue-overlay.component';
+import { CueAnchorDirective } from './cue-overlay/cue-anchor.directive';
 
 /** Template context for the single #permanentStack definition in game.component.html. */
 export interface PermanentStackContext {
@@ -27,7 +29,7 @@ export interface PermanentStackContext {
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [PlanarPanelComponent, CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
+  imports: [PlanarPanelComponent, CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent, CueOverlayComponent, CueAnchorDirective],
   providers: [CuePlaybackService],
   templateUrl: './game.component.html',
   styleUrls: ['./shared-game-styles.css', './game.component.css', './game-phone.css']

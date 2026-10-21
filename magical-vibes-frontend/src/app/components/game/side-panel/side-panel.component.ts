@@ -4,11 +4,12 @@ import { Card, GameLogEntry, Permanent, StackEntry } from '../../../services/web
 import { GameChoiceService } from '../../../services/game-choice.service';
 import { manaSymbolHtml } from '../../../utils/mana-symbols';
 import { CardDisplayComponent } from '../card-display/card-display.component';
+import { CueAnchorDirective } from '../cue-overlay/cue-anchor.directive';
 
 @Component({
   selector: 'app-side-panel',
   standalone: true,
-  imports: [CardDisplayComponent],
+  imports: [CardDisplayComponent, CueAnchorDirective],
   templateUrl: './side-panel.component.html',
   styleUrl: './side-panel.component.css'
 })

@@ -18,7 +18,7 @@ order; each one lists what it depends on.
 | 3 | Cues for damage | done |
 | 4 | Cues for the stack, life and counters | open |
 | 5 | Frontend cue model and playback queue | done |
-| 6 | Element registry and effects overlay | open |
+| 6 | Element registry and effects overlay | done |
 | 7 | Default effects by cue type and color | open |
 | 8 | Showpiece effects: Lightning Bolt and Doom Blade | open |
 | 9 | Effect settings and reduced motion | open |
@@ -370,6 +370,40 @@ Steps add notes here for later steps, under their number.
   `targeting-choice.service.spec.ts:415` changed only to add `revealableMissionIds: []` to a
   `CommanderView` mock — the pre-existing type error from step 1's Findings broke every
   `ng test --include` build, so no spec could run without it.
+
+### Step 6
+
+- **Pieces:** `CueElementRegistry` + `appCueAnchor` (where things are), `CueOverlayComponent` (the
+  canvas), `CueEffectPlayer` + `CUE_EFFECTS` (which effect plays a cue). `CUE_PLAYER`'s factory now
+  returns `CueEffectPlayer`; `NOOP_CUE_PLAYER` is kept for step 9's "off". Details and the effect
+  contract are in `agent-docs/VISUAL-CUES.md` → *Effects overlay*.
+- **The canvas covers the whole viewport,** not only the battlefield, so step 7's projectiles can
+  start at a stack entry or end at a player badge in the side panel. It draws in viewport
+  coordinates; rects need no conversion.
+- **Step 7 registers its effects by changing the `CUE_EFFECTS` factory** (per-card table first in
+  step 8, then the defaults). Today the list is empty unless `localStorage.cueDebugEffects = '1'`
+  turns on the debug flash, so real games are unchanged until step 7. Decide in step 7 whether the
+  debug flash stays behind the flag or goes.
+- **Effects that need no target** (`SPELL_RESOLVED`, `SPELL_COUNTERED`) must say so in `matches`;
+  the debug flash only matches cues whose target is on screen. `canPlay` runs when the message
+  arrives and again (through `play`) when it is its turn, so a target that vanished in between is
+  skipped.
+- **Simultaneous effects:** the overlay already runs any number of `animate` calls on one loop, so
+  step 7 can group a combat step's damage inside one effect's `play` by awaiting several
+  `animate` promises together.
+- **Sources:** `rects.source` finds `sourceCardId` on the battlefield (permanents register their
+  card id), else on the stack, else null — step 7 needs a fallback origin for null.
+- **Not anchored yet:** graveyards, exile, hand and command zone have no anchors; add
+  `appCueAnchor` (and a kind) if a later step needs them.
+- **Browser specs** need Playwright's Chromium; this machine didn't have it, so I ran
+  `npx playwright install chromium` (user cache, not the repo).
+- **Tests:** new `cue-overlay.browser.spec.ts` (real `GameComponent`: the flash lands on the target
+  and not its neighbours on desktop, on a zoomed-out crowded board, in the phone layout and at
+  `devicePixelRatio` 2; player targets; the canvas clears and the loop stops afterwards; no
+  effect or an off-screen target applies at once) and `cue-effect-player.service.spec.ts`
+  (registry lookups, effect selection, speed scaling, attach/detach, default effects). No existing
+  test had to change; `cue-playback.service.spec.ts`, `game-cue-playback.spec.ts` and
+  `subgame.browser.spec.ts` still pass.
 
 ## Prompt
 

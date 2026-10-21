@@ -1,5 +1,6 @@
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
 import { GameStateNotification, MessageType, VisualCue, WebSocketMessage } from './websocket.service';
+import { CueEffectPlayer } from './cue-effect-player.service';
 
 /** What a cue player gets besides the cue: when to stop, and how fast to go. */
 export interface CuePlaybackContext {
@@ -26,9 +27,10 @@ export const NOOP_CUE_PLAYER: CuePlayer = {
   play: () => Promise.resolve()
 };
 
+/** The player the queue uses: the effect registry, which draws on the effects overlay. */
 export const CUE_PLAYER = new InjectionToken<CuePlayer>('CUE_PLAYER', {
   providedIn: 'root',
-  factory: () => NOOP_CUE_PLAYER
+  factory: () => inject(CueEffectPlayer)
 });
 
 /** The longest a single state message's cues may hold the board back, at normal speed. */

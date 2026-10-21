@@ -502,6 +502,7 @@
           <app-card-display
             [card]="aura.perm.card"
             [permanent]="aura.perm"
+            appCueAnchor="permanent" [cueAnchorId]="aura.perm.id" [cueAnchorCardId]="aura.perm.card.id"
             class="attached-aura"
             [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"
             [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
@@ -531,6 +532,7 @@
         <app-card-display
           [card]="ip.perm.card"
           [permanent]="ip.perm"
+          appCueAnchor="permanent" [cueAnchorId]="ip.perm.id" [cueAnchorCardId]="ip.perm.card.id"
           [class.tapped]="ip.perm.tapped"
           [class.tappable]="mine && ((choice.targeting.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()) || choice.canTapForMana(ip.perm) || (declaringAttackers() && attackTaxPerCreature() > 0 && !canAttack(ip.originalIndex) && canTapPermanentForMana(ip.perm)))"
           [class.casting-pending]="mine && choice.targeting.payingForAbility && choice.targeting.pendingActivationPermanentId === ip.perm.id"
@@ -774,6 +776,8 @@
       </div>
     </div>
   }
+
+  <app-cue-overlay />
 
   <!-- While cues play the board is behind the server, so input acting on it could hit the
        wrong card. This catches every click and skips to the current state instead. -->

@@ -53,8 +53,9 @@ currently is, then applies the state.
 through `push`.
 
 - Cues are drawn by the `CUE_PLAYER` (`CuePlayer`: `canPlay(cue)`, `play(cue, {signal, speed})`),
-  one cue at a time, in order. The default player plays nothing, so cues are filtered out and
-  every message is applied synchronously, exactly as without the queue.
+  one cue at a time, in order. The default player is the effect registry (*Effects overlay*
+  below), which registers no effects by default, so cues are filtered out and every message is
+  applied synchronously, exactly as without the queue.
 - A `GAME_STATE` with at least one cue the player can play is held while those cues play; every
   later message (states, `GAME_OVER`, …) queues behind it and is applied in arrival order.
 - Decision messages (attackers, blockers, interaction prompts, damage assignment, mulligan,
@@ -67,6 +68,40 @@ through `push`.
   Skipping (`skip()`), the time limit and flushing all abort the `AbortSignal` the player got.
 - While `playing()`, the game template shows a full-screen transparent catcher: any click or key
   skips instead of acting on the stale board (hand indices would otherwise point at the old hand).
+
+### Effects overlay
+
+The queue's `CUE_PLAYER` is `CueEffectPlayer` (`services/cue-effect-player.service.ts`), the
+effect registry. Everything below is frontend-only and cosmetic.
+
+- **Element registry.** `CueElementRegistry` (`services/cue-elements.service.ts`, root) maps ids
+  to DOM elements. Elements register with the `appCueAnchor` directive
+  (`components/game/cue-overlay/cue-anchor.directive.ts`) and unregister when destroyed:
+  `appCueAnchor="permanent"` (permanent id, plus `cueAnchorCardId` = its card id) on every
+  battlefield card display including attached auras, `"player"` (player id) on the side panel's
+  player badges, and `"stack"` (the entry's `cardId`) on each stack entry. `targetRect(cue)` is the
+  target permanent, else the target player; `sourceRect(cue)` is the battlefield permanent
+  showing `sourceCardId`, else its stack entry, else null. Detached or zero-size elements count as
+  not on screen.
+- **Overlay.** `CueOverlayComponent` (`<app-cue-overlay>` in the game template) is one canvas,
+  `position: fixed; inset: 0`, `pointer-events: none`, `z-index: 899` (under the skip catcher at
+  900). It covers the whole viewport, not just the battlefield, so effects can reach the player
+  badges and the stack in the side panel. It draws in viewport coordinates, so an effect uses
+  `getBoundingClientRect()` rectangles as they are: CSS zoom (`battlefield-zoom.ts`), the phone
+  layout and scrolling are already in them. Every frame it resizes the backing store to its CSS
+  size × `devicePixelRatio` (sharp on high-DPI, follows window resizes) and clears. One
+  `requestAnimationFrame` loop runs only while an animation is active; several animations may run
+  at once on the same loop.
+- **Effects.** `CueEffect` = `matches(cue, rects)` + `play(cue, rects, context): Promise<void>`.
+  `rects.source` / `rects.target` are live getters (re-measured on each read). Draw with
+  `context.animate(durationMs, (draw, progress) => …)`: the duration is at normal speed (the
+  player divides it by the queue's speed) and the promise resolves early when playback is
+  skipped, flushed or times out. `CUE_EFFECTS` (root token) lists the effects, most specific
+  first; the player uses the first that matches. `canPlay` is true only when an overlay is
+  attached and an effect matches, so a cue whose target is not on screen does not hold the board.
+- **Default: no effects.** `CUE_EFFECTS` is empty unless `localStorage.cueDebugEffects === '1'`,
+  which registers `DEBUG_FLASH_EFFECT` (a 400 ms yellow flash over any cue's target). With it
+  empty every state applies at once, exactly as before the overlay.
 
 ## Catalogue
 
@@ -115,6 +150,12 @@ Engine changes that emit cues get tests that run an action through the harness a
 emitted cues (`VisualCueServiceTest` shows how to read them from a `TestGameEventSubscriber`
 batch or from the projected `GAME_STATE` JSON on a `FakeConnection`). Projection rules are pinned
 in `GameEventProjectionSubscriberTest`.
+
+The overlay is specified in `cue-overlay.browser.spec.ts` (the real `GameComponent` in Chromium,
+reading canvas pixels over the target and its neighbours: desktop, a zoomed-out crowded board, the
+phone layout, `devicePixelRatio` 2, player targets) and `cue-effect-player.service.spec.ts`
+(registry lookups and effect selection with stubbed rectangles). Browser specs need Playwright's
+Chromium (`npx playwright install chromium`).
 
 Client playback is specified in `cue-playback.service.spec.ts` (a fake `CuePlayer` whose cues
 finish when the test says so, with fake timers) and `game-cue-playback.spec.ts` (wiring in
