@@ -918,3 +918,27 @@
 .commander-panel { position: fixed; top: 4rem; right: .5rem; z-index: 20; padding: .65rem; max-width: 260px; background: #20252a; border: 1px solid #8d784b; border-radius: 6px; color: #eee; }
 .commander-panel div, .commander-panel small { display: block; margin-top: .35rem; }
 .commander-panel button { margin: .25rem 0; }
+
+/* Covers the whole screen while visual cues play: every click skips them (see the template). */
+.cue-skip-catcher {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  margin: 0;
+  padding: 0 0 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.cue-skip-hint {
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ddd;
+  font-size: 12px;
+  pointer-events: none;
+}

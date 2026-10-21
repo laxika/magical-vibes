@@ -46,6 +46,28 @@ state to play in front of.
 The client (`websocket.service.ts`, `VisualCue`) plays a state's cues in order on the board as it
 currently is, then applies the state.
 
+### Client playback queue
+
+`CuePlaybackService` (`magical-vibes-frontend/.../services/cue-playback.service.ts`, provided by
+`GameComponent`) sits in front of `GameComponent.processGameMessage`; every game message goes
+through `push`.
+
+- Cues are drawn by the `CUE_PLAYER` (`CuePlayer`: `canPlay(cue)`, `play(cue, {signal, speed})`),
+  one cue at a time, in order. The default player plays nothing, so cues are filtered out and
+  every message is applied synchronously, exactly as without the queue.
+- A `GAME_STATE` with at least one cue the player can play is held while those cues play; every
+  later message (states, `GAME_OVER`, …) queues behind it and is applied in arrival order.
+- Decision messages (attackers, blockers, interaction prompts, damage assignment, mulligan,
+  reveals, valid-targets responses, `OPPONENT_JOINED`) flush: playback stops and everything
+  queued is applied at once, then the decision.
+- `ACTIVE_GAME_CHANGED` (subgames, returns to a parent) drops the queue unapplied — it belongs to
+  the frame being left — and applies the switch. A disconnect flushes; destroying the component
+  drops.
+- A message's cues get at most `MAX_CUE_PLAYBACK_MS / speed`; `speed` is a signal on the service.
+  Skipping (`skip()`), the time limit and flushing all abort the `AbortSignal` the player got.
+- While `playing()`, the game template shows a full-screen transparent catcher: any click or key
+  skips instead of acting on the stale board (hand indices would otherwise point at the old hand).
+
 ## Catalogue
 
 `VisualCueType` (`magical-vibes-domain/.../model/event/`). "Emitted from" is filled in as each
@@ -93,3 +115,7 @@ Engine changes that emit cues get tests that run an action through the harness a
 emitted cues (`VisualCueServiceTest` shows how to read them from a `TestGameEventSubscriber`
 batch or from the projected `GAME_STATE` JSON on a `FakeConnection`). Projection rules are pinned
 in `GameEventProjectionSubscriberTest`.
+
+Client playback is specified in `cue-playback.service.spec.ts` (a fake `CuePlayer` whose cues
+finish when the test says so, with fake timers) and `game-cue-playback.spec.ts` (wiring in
+`GameComponent`).

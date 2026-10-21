@@ -15,6 +15,7 @@ import { BattlefieldFitModel, BattlefieldSide } from './battlefield-zoom';
 import { Subscription } from 'rxjs';
 import { manaSymbolHtml } from '../../utils/mana-symbols';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
+import { CuePlaybackService } from '../../services/cue-playback.service';
 
 /** Template context for the single #permanentStack definition in game.component.html. */
 export interface PermanentStackContext {
@@ -27,6 +28,7 @@ export interface PermanentStackContext {
   selector: 'app-game',
   standalone: true,
   imports: [PlanarPanelComponent, CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
+  providers: [CuePlaybackService],
   templateUrl: './game.component.html',
   styleUrls: ['./shared-game-styles.css', './game.component.css', './game-phone.css']
 })
@@ -67,6 +69,7 @@ export class GameComponent implements OnInit, OnDestroy {
   readonly choice = inject(GameChoiceService);
   private clickResolver = inject(PermanentClickResolverService);
   private sanitizer = inject(DomSanitizer);
+  readonly cuePlayback = inject(CuePlaybackService);
 
   // Bound function references for child component inputs
   readonly boundIsGraveyardLandPlayable = (index: number) => this.isGraveyardLandPlayable(index);
@@ -105,9 +108,10 @@ export class GameComponent implements OnInit, OnDestroy {
       this.autoStopSteps.set(new Set(initialStops));
     }
 
+    this.cuePlayback.init(message => this.processGameMessage(message));
     this.subscriptions.push(
       this.websocketService.getMessages().subscribe((message) => {
-        this.processGameMessage(message);
+        this.cuePlayback.push(message);
       })
     );
 
@@ -115,7 +119,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const pending = this.websocketService.pendingGameInputMessage;
     if (pending) {
       this.websocketService.pendingGameInputMessage = null;
-      this.processGameMessage(pending);
+      this.cuePlayback.push(pending);
     }
 
     this.subscriptions.push(
@@ -126,6 +130,7 @@ export class GameComponent implements OnInit, OnDestroy {
            survives. Reconnecting silently is not an option — the socket carries the
            session and the service drops the credentials on cleanup(), so getting back
            in genuinely means logging in again. */
+        this.cuePlayback.flush();
         this.connectionLost.set(true);
       })
     );
@@ -140,6 +145,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(s => s.unsubscribe());
+    this.cuePlayback.clear();
     if (this.modifierTooltipTimer != null) {
       clearTimeout(this.modifierTooltipTimer);
     }
@@ -1700,6 +1706,12 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.game()?.status !== GameStatus.RUNNING) return;
     const target = event.target as HTMLElement | null;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
+    if (this.cuePlayback.playing()) {
+      // The board on screen is behind the server while cues play; a key only skips them.
+      event.preventDefault();
+      this.cuePlayback.skip();
+      return;
+    }
 
     if (event.key === 'Escape') {
       if (this.handleEscape()) {

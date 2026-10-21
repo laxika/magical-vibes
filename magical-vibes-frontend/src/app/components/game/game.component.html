@@ -775,6 +775,15 @@
     </div>
   }
 
+  <!-- While cues play the board is behind the server, so input acting on it could hit the
+       wrong card. This catches every click and skips to the current state instead. -->
+  @if (cuePlayback.playing()) {
+    <button type="button" class="cue-skip-catcher" aria-label="Skip effects"
+            (click)="$event.stopPropagation(); cuePlayback.skip()">
+      <span class="cue-skip-hint">Click to skip</span>
+    </button>
+  }
+
   @if (showSurrenderConfirm()) {
     <div class="game-over-overlay">
       <div class="game-over-card surrender-confirm-card">

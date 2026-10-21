@@ -412,7 +412,7 @@ describe('Commander casting choices', () => {
     const handCard = { id: 'hand', name: 'Hand spell', type: 'CREATURE', manaCost: '{1}', keywords: [], activatedAbilities: [] } as unknown as Card;
     const game = { ...gameWithPriority(), hand: [handCard], commander: { format: 'COMMANDER',
       commandZones: { [ME]: [card] }, commanders: { [ME]: [card.id!] }, tax: { [card.id!]: 2 },
-      damageReceived: {}, playableCardIds: [card.id!] } } as Game;
+      damageReceived: {}, playableCardIds: [card.id!], revealableMissionIds: [] } } as Game;
     const sent: any[] = [];
     const ws = { currentUser: { userId: ME }, send: (message: any) => sent.push(message) } as unknown as WebsocketService;
     const service = new TargetingChoiceService(ws);

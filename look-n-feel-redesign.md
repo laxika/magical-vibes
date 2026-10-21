@@ -17,7 +17,7 @@ order; each one lists what it depends on.
 | 2 | Cues for leaving the battlefield | open |
 | 3 | Cues for damage | done |
 | 4 | Cues for the stack, life and counters | open |
-| 5 | Frontend cue model and playback queue | open |
+| 5 | Frontend cue model and playback queue | done |
 | 6 | Element registry and effects overlay | open |
 | 7 | Default effects by cue type and color | open |
 | 8 | Showpiece effects: Lightning Bolt and Doom Blade | open |
@@ -334,6 +334,42 @@ Steps add notes here for later steps, under their number.
   partly prevented noncombat damage, Fog, and Pariah redirecting noncombat and combat damage).
   `CombatDamageServiceTest` changed only to pass a mocked `VisualCueService` to the new
   `CombatDamageService` constructor parameter.
+
+### Step 5
+
+- **Queue:** `CuePlaybackService` (`services/cue-playback.service.ts`), provided per
+  `GameComponent`; every game message goes through `cuePlayback.push`, which calls the old
+  `processGameMessage`. Policy is in `agent-docs/VISUAL-CUES.md` → *Client playback queue*.
+- **Player contract for step 6:** replace the `CUE_PLAYER` token (`providedIn: 'root'`, default
+  `NOOP_CUE_PLAYER`) with the effect registry. `canPlay(cue)` must say whether an effect exists:
+  cues it rejects are dropped, and a state with none left is applied synchronously, so
+  "no effect registered" stays identical to before. `play(cue, { signal, speed })` is called one
+  cue at a time and must resolve when done; honor `signal` (skip, time limit, flush) and scale
+  durations by `speed`. A rejected promise is logged and the next cue plays.
+- **Grouping:** cues play strictly one after another. If step 7 wants simultaneous effects (a
+  combat step's damage), group inside the player (e.g. start several and resolve together) or
+  change the queue to hand a whole message's cues over at once.
+- **Limits:** `MAX_CUE_PLAYBACK_MS` = 3000 per message at speed 1, divided by `speed`. Step 9's
+  "fast" can set `cuePlayback.speed`; "off" can install a player whose `canPlay` is always false
+  (or add an `enabled` flag to the service).
+- **Skip control:** already visible — a full-screen transparent button (`.cue-skip-catcher`,
+  z-index 900, under the game-over overlays) with a "Click to skip" hint, shown while
+  `playing()`; any key outside text inputs also skips. It also stops clicks on the stale board,
+  where hand indices could point at the wrong card. Step 6's canvas should sit below it
+  (or it needs `pointer-events: none` anyway). Step 9 only needs to restyle it if wanted.
+- **Not flushed by priority:** a state that gives this player priority still waits for its cues
+  (otherwise your own spells would never animate); only the decision messages listed in the doc
+  flush. `GAME_OVER` waits so a lethal hit still plays.
+- **`websocketService.currentGame`** is updated when a state is *applied*, so it lags by at most
+  one playback; `ACTIVE_GAME_CHANGED` drops the queue first so an old-frame state can't overwrite
+  the new frame's `currentGame`.
+- **Tests:** new `cue-playback.service.spec.ts` (immediate apply without playable cues, default
+  no-op player, ordering, queued states, decision flush and each decision type, time limit,
+  speed, skip, active-game switch, failing cue) and `game-cue-playback.spec.ts` (component:
+  applied at once with no effects; held while a fake player plays, key press skips).
+  `targeting-choice.service.spec.ts:415` changed only to add `revealableMissionIds: []` to a
+  `CommanderView` mock — the pre-existing type error from step 1's Findings broke every
+  `ng test --include` build, so no spec could run without it.
 
 ## Prompt
 
