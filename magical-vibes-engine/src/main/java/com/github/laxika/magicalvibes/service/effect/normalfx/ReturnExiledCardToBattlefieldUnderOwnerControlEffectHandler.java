@@ -38,19 +38,27 @@ public class ReturnExiledCardToBattlefieldUnderOwnerControlEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID cardId = ((ReturnExiledCardToBattlefieldUnderOwnerControlEffect) effect).exiledCardId();
+        var e = (ReturnExiledCardToBattlefieldUnderOwnerControlEffect) effect;
+        UUID cardId = e.exiledCardId();
         if (cardId == null) {
             return;
         }
         ExiledCardEntry exiled = gameData.findExiledCard(cardId);
-        if (exiled == null || !gameData.removeFromExile(cardId)) {
+        if (exiled == null) {
+            return;
+        }
+        if (e.underAbilityController() && !java.util.Objects.equals(exiled.sourcePermanentId(),
+                entry.getSourcePermanentId())) {
+            return;
+        }
+        if (!gameData.removeFromExile(cardId)) {
             return;
         }
         Card card = exiled.card();
-        UUID ownerId = exiled.ownerId();
+        UUID ownerId = e.underAbilityController() ? entry.getControllerId() : exiled.ownerId();
         Permanent permanent = new Permanent(card);
         permanent.setEnteredFromExile(true);
-        if (((ReturnExiledCardToBattlefieldUnderOwnerControlEffect) effect).enterTapped()) {
+        if (e.enterTapped()) {
             permanent.tap();
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent);

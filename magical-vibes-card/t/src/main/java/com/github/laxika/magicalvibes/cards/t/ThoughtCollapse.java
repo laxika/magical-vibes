@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class ThoughtCollapse extends Card {
 
     public ThoughtCollapse() {
-        addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.TARGET_SPELL_CONTROLLER));
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.TARGET_SPELL_CONTROLLER));
     }
 }

@@ -36,22 +36,18 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RevealUntilTypeMillAndBoostAttackerEffect) effect;
-        UUID controllerId = entry.getControllerId();
-        UUID defenderId = gameQueryService.getOpponentId(gameData, controllerId);
+        UUID defenderId = entry.getDefendingPlayerId();
+        if (defenderId == null) {
+            return;
+        }
         String defenderName = gameData.playerIdToName.get(defenderId);
         String sourceName = entry.getCard().getName();
 
-        // Find the equipped creature via the source equipment's attachedTo
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null || equipment.getAttachedTo() == null) {
-            log.info("Game {} - {} trigger fizzles: equipment no longer attached", gameData.id, sourceName);
-            return;
-        }
-        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
-        if (equippedCreature == null) {
-            log.info("Game {} - {} trigger fizzles: equipped creature no longer on battlefield", gameData.id, sourceName);
-            return;
-        }
+        // The trigger belongs to the attack, not to the Equipment: the creature that attacked is the
+        // one boosted so unattaching or moving the Equipment or sacrificing
+        // the attacker doesn't stop the reveal, and the boost stays with the original attacker.
+        Permanent equippedCreature = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
 
         List<Card> deck = gameData.playerDecks.get(defenderId);
         if (deck.isEmpty()) {
@@ -79,7 +75,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
         int revealedCount = revealedCards.size();
         int powerBoost = revealedCount * e.powerBoostPerCard();
         int toughnessBoost = revealedCount * e.toughnessBoostPerCard();
-        if (powerBoost != 0 || toughnessBoost != 0) {
+        if (equippedCreature != null && (powerBoost != 0 || toughnessBoost != 0)) {
             equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + powerBoost);
             equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + toughnessBoost);
 
@@ -98,6 +94,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
 
         log.info("Game {} - {} reveals {} cards from {}'s library, {} gets +{}/+{}",
                 gameData.id, sourceName, revealedCount, defenderName,
-                equippedCreature.getCard().getName(), powerBoost, toughnessBoost);
+                equippedCreature == null ? "no creature" : equippedCreature.getCard().getName(),
+                powerBoost, toughnessBoost);
     }
 }

@@ -39,8 +39,12 @@ public class TurfWarCombatDamageEffectHandler implements NormalEffectHandlerBean
         TurfWarCombatDamageEffect turfWarEffect = (TurfWarCombatDamageEffect) effect;
         UUID damagedPlayerId = turfWarEffect.damagedPlayerIsController()
                 ? entry.getControllerId() : entry.getTargetId();
-        chooseOrApply(gameData, damagedPlayerId, entry.getTriggeringPermanentControllerId(),
-                entry.getCard().getName());
+        UUID creatureControllerId = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+        if (creatureControllerId == null) {
+            creatureControllerId = entry.getTriggeringPermanentControllerId();
+        }
+        chooseOrApply(gameData, damagedPlayerId, creatureControllerId, entry.getCard().getName());
     }
 
     public void completeChoice(GameData gameData, List<UUID> chosenIds,

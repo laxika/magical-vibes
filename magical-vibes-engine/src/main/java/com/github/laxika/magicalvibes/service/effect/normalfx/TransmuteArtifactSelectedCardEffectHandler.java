@@ -29,7 +29,13 @@ public class TransmuteArtifactSelectedCardEffectHandler implements NormalEffectH
         }
 
         int difference = selectedCard.getManaValue() - sacrificed.getCard().getManaValue();
-        if (difference <= 0 || gameData.pendingEffectResolutionEntry == null) {
+        if (gameData.pendingEffectResolutionEntry == null) {
+            return;
+        }
+        if (difference <= 0) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex + 1,
+                    java.util.List.of(new TransmuteArtifactCardDispositionEffect(selectedCard.getId(), true)));
             return;
         }
 

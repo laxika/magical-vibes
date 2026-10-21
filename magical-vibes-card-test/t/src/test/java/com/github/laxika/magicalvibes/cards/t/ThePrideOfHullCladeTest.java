@@ -192,6 +192,8 @@ class ThePrideOfHullCladeTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
         resolveAllTriggers();

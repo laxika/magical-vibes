@@ -69,7 +69,7 @@ class TriumphOfSaintKatherineTest extends BaseCardTest {
     @DisplayName("A stolen Triumph does not trigger when it enters its owner's graveyard")
     void stolenTriumphDoesNotTrigger() {
         Permanent triumph = harness.addToBattlefieldAndReturn(player2, new TriumphOfSaintKatherine());
-        gd.stolenCreatures.put(triumph.getId(), player1.getId());
+        setOwnerAndController(triumph, player1, player2);
         List<Card> library = List.of(new Plains(), new Plains(), new Plains(),
                 new Plains(), new Plains(), new Plains());
         harness.setLibrary(player2, library);

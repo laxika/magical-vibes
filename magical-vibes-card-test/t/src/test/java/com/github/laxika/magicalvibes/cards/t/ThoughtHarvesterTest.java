@@ -59,7 +59,7 @@ class ThoughtHarvesterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid permanent");
+                .hasMessageContaining("Target must be an opponent");
     }
 
     @Test

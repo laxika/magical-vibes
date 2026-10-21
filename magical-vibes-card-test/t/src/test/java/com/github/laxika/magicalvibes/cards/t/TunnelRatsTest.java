@@ -86,9 +86,12 @@ class TunnelRatsTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+        });
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(findPermanent(player1, "Tunnel Rats").isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }

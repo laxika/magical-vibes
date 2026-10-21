@@ -114,6 +114,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -229,6 +230,12 @@ public class MiscTriggerCollectorService {
             return true;
         }
         List<CardEffect> triggeredEffects = cardEffects.stream()
+                .map(triggeredEffect -> triggeredEffect instanceof ConditionalEffect gate && gate.interveningIf()
+                        ? (conditionEvaluationService.isMet(match.gameData(), gate.condition(),
+                                ConditionContext.forPermanent(match.permanent(), match.controllerId()))
+                                ? gate.wrapped() : null)
+                        : triggeredEffect)
+                .filter(Objects::nonNull)
                 .filter(triggeredEffect -> !(triggeredEffect instanceof
                         com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect)
                         || match.permanent().getChosenPermanentId() != null)

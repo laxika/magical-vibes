@@ -134,6 +134,7 @@ class TravelingPlagueTest extends BaseCardTest {
         castTravelingPlagueOn(player1, oldCreature);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, oldCreature));
+        harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Traveling Plague");
         harness.setGraveyard(player1, List.of());
         resolveAllTriggers();

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -39,12 +40,12 @@ public class TheFloodOfMars extends Card {
                 "Target must be another creature or land"))
                 .addEffect(EffectSlot.ON_ATTACK, new PutCounterOnTargetPermanentEffect(CounterType.FLOOD))
                 .addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
-                        new TargetPermanentMatches(new PermanentIsLandPredicate()),
-                        new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD),
-                        false))
-                .addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
                         new BecomeTargetPermanentCopyOfSourceEffect(),
+                        false))
+                .addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+                        new TargetPermanentMatches(new PermanentIsLandPredicate()),
+                        new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET),
                         false));
     }
 }

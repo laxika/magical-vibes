@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -30,6 +31,8 @@ public class TheTricksterGodsHeist extends Card {
     ));
 
     public TheTricksterGodsHeist() {
+        setMultiTargetConstraint(MultiTargetConstraint.SHARE_CARD_TYPE);
+
         addEffect(EffectSlot.SAGA_CHAPTER_I, new MayEffect(
                 new ExchangeControlOfTargetPermanentsEffect(CREATURE, false, false),
                 "Exchange control of the two target creatures?"));

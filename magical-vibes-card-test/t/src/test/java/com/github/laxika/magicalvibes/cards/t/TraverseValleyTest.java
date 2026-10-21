@@ -54,7 +54,7 @@ class TraverseValleyTest extends BaseCardTest {
     }
 
     @Test
-    void kickedLandEntersFromHandAfterBeingSought() {
+    void kickedLandEntersTappedFromLibraryAfterBeingSought() {
         EvolvingWilds land = new EvolvingWilds();
         harness.setHand(player1, List.of(new TraverseValley()));
         harness.setLibrary(player1, List.of(land));
@@ -66,7 +66,7 @@ class TraverseValleyTest extends BaseCardTest {
 
         Permanent foundLand = findPermanent(player1, "Evolving Wilds");
         assertThat(foundLand.getCard().getId()).isEqualTo(land.getId());
-        assertThat(foundLand.getEnteredFromZone()).isEqualTo(Zone.HAND);
+        assertThat(foundLand.getEnteredFromZone()).isEqualTo(Zone.LIBRARY);
         assertThat(foundLand.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

@@ -12,8 +12,14 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "125")
@@ -24,6 +30,12 @@ public class ThievesGuildEnforcer extends Card {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ROGUE),
+                        new MillEffect(2, MillRecipient.EACH_OPPONENT)));
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
+                                new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                         new MillEffect(2, MillRecipient.EACH_OPPONENT)));
         addEffect(EffectSlot.STATIC,
                 new ConditionalEffect(

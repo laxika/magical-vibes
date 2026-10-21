@@ -32,6 +32,7 @@ class TwoHeadedCerberusTest extends BaseCardTest {
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SatyrRambler());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(attacker.getId());
 
         resolveCombat();
 

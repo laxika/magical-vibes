@@ -8,15 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "145")
 public class TerritorialBoar extends Card {
 
     public TerritorialBoar() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureMinPowerConditionalEffect(4, new BoostSelfEffect(1, 1)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureMinPowerConditionalEffect(4,
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new EnteringCreatureMinPowerConditionalEffect(4, SequenceEffect.of(
+                        new BoostSelfEffect(1, 1),
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF))));
     }
 }

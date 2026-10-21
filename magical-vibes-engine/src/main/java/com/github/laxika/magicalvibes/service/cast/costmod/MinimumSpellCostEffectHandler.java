@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
@@ -33,6 +34,12 @@ public class MinimumSpellCostEffectHandler implements CostModificationHandlerBea
             return 0;
         }
         ManaCost manaCost = context.spell().getParsedManaCost();
+        if (context.flashbackCost() && context.spell().effectiveFlashbackCast().isPresent()) {
+            manaCost = context.spell().effectiveFlashbackCast()
+                    .flatMap(flashback -> flashback.getCost(ManaCastingCost.class))
+                    .map(cost -> new ManaCost(cost.manaCost()))
+                    .orElseGet(() -> new ManaCost(""));
+        }
         if (manaCost == null) {
             return 0;
         }
@@ -40,6 +47,9 @@ public class MinimumSpellCostEffectHandler implements CostModificationHandlerBea
         if (manaCost.hasX()) {
             manaComponent += context.xValue() * manaCost.getXSymbolCount();
         }
+        // CR 601.2f: the total cost includes additional costs such as buyback before total-cost effects apply,
+        // while life paid for Phyrexian mana is not mana (the offset is negative per symbol paid with life).
+        manaComponent += context.minimumManaOffset();
         int minimumMana = ((MinimumSpellCostEffect) effect).minimumMana();
         return Math.max(0, minimumMana - manaComponent - accumulatedModifier);
     }

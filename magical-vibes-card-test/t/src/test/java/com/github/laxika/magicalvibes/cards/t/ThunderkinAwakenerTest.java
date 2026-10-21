@@ -33,7 +33,11 @@ class ThunderkinAwakenerTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1, List.of(0)));
+    }
+
+    private void passPriorityInDeclareAttackers() {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
     }
 
     @Test
@@ -59,7 +63,7 @@ class ThunderkinAwakenerTest extends BaseCardTest {
 
         declareAttack();
         harness.handleMultipleCardsChosen(player1, List.of(valid.getId()));
-        harness.passBothPriorities();
+        passPriorityInDeclareAttackers();
 
         Permanent returned = findPermanent(player1, "Scorch Spitter");
         assertThat(returned).isNotNull();
@@ -150,7 +154,7 @@ class ThunderkinAwakenerTest extends BaseCardTest {
 
         declareAttack();
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
-        harness.passBothPriorities();
+        passPriorityInDeclareAttackers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()

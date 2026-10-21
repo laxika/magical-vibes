@@ -9,10 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPutSelectedCardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -32,9 +33,12 @@ public class TreasureChest extends Card {
                                 CreateTokenEffect.ofTreasureToken(5),
                                 SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect(3)),
                                 SequenceEffect.of(
-                                        new SearchLibraryEffect(null, LibrarySearchDestination.TOP_OF_LIBRARY),
-                                        new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
-                                                new CardTypePredicate(CardType.ARTIFACT), false))
+                                        new SearchLibraryAndConditionalEffect(null, LibrarySearchDestination.HAND,
+                                                new CardTypePredicate(CardType.ARTIFACT),
+                                                MayPutSelectedCardOntoBattlefieldEffect.forCard(
+                                                        new CardTypePredicate(CardType.ARTIFACT), false),
+                                                false),
+                                        new ShuffleLibraryEffect(false))
                         )
                 ),
                 "{4}, Sacrifice this artifact: Roll a d20."

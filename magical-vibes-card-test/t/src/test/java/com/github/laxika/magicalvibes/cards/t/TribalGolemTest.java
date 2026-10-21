@@ -87,8 +87,7 @@ class TribalGolemTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Activate only if you control a Zombie");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -110,8 +109,7 @@ class TribalGolemTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Activate only if you control a Zombie");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

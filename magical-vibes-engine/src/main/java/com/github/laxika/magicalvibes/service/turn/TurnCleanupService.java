@@ -511,6 +511,7 @@ public class TurnCleanupService {
         gameData.playersCantActivateAbilitiesThisTurn.clear();
         gameData.playersCantActivateNonManaAbilitiesThisTurn.clear();
         gameData.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.clear();
+        gameData.playerExtraLoyaltyActivationsThisTurn.clear();
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();

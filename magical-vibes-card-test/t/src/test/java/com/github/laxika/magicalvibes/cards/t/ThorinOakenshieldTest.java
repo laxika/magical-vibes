@@ -91,6 +91,7 @@ class ThorinOakenshieldTest extends BaseCardTest {
         addStoriedThorin();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new LiquimetalCoating());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -41,6 +41,17 @@ public class WaterbendPaymentService {
         return eligiblePermanents(gameData, playerId).size() >= amount - availableMana;
     }
 
+    /** Ids of the untapped artifacts and creatures the player could tap to waterbend. */
+    public List<UUID> untappedArtifactsAndCreatures(GameData gameData, UUID playerId) {
+        return eligiblePermanents(gameData, playerId).stream().map(Permanent::getId).toList();
+    }
+
+    /** The fewest permanents that must be tapped because the mana pool cannot cover {@code amount}. */
+    public int minimumTaps(GameData gameData, UUID playerId, int amount) {
+        ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        return Math.max(0, amount - (manaPool == null ? 0 : manaPool.getTotal()));
+    }
+
     public void pay(GameData gameData, UUID playerId, int amount, Card sourceCard) {
         pay(gameData, playerId, amount, sourceCard, List.of());
     }

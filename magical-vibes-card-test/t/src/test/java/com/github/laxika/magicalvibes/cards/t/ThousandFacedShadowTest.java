@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BearerOfMemory;
 import com.github.laxika.magicalvibes.cards.m.MarchOfSwirlingMist;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -92,6 +93,8 @@ class ThousandFacedShadowTest extends BaseCardTest {
         Permanent otherAttacker = addCreatureReady(player1, new BearerOfMemory());
         addCreatureReady(player2, new BearerOfMemory());
         Permanent planeswalker = addCreatureReady(player2, new TezzeretBetrayerOfFlesh());
+        // A planeswalker without loyalty counters would be put into the graveyard by state-based actions.
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         declareAttackers(List.of(0, 1));
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

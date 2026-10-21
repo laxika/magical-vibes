@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
@@ -35,10 +36,13 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
 
         // Rule 724.1d: Remove creatures from combat. An "exile at end of combat" delayed action has no
         // stated duration, so it survives the skipped combat and waits for the next end of combat (CR 603.7b).
+        // The same holds for an untriggered "sacrifice at end of combat" delayed action.
         var endOfCombatExiles = gameData.drainDelayedActions(DelayedPermanentAction.class,
                 action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
+        var endOfCombatSacrifices = gameData.drainDelayedActions(SacrificeAtEndOfCombat.class);
         turnSupport.clearCombatState(gameData);
         endOfCombatExiles.forEach(gameData::queueDelayedAction);
+        endOfCombatSacrifices.forEach(gameData::queueDelayedAction);
 
         // Rule 724.1d: Skip to cleanup step
         turnSupport.skipToCleanupStep(gameData);

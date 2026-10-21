@@ -79,6 +79,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
 
             entry.getLastKnownPermanentPowers().put(target.getId(),
                     gameQueryService.getEffectivePower(gameData, target));
+            List<Card> leavingCards = List.copyOf(target.cardsLeavingBattlefield());
             if (!permanentRemovalService.removePermanentToExile(gameData, target)) {
                 continue;
             }
@@ -92,16 +93,21 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
                     gameData.id, entry.getCard().getName(), card.getName());
 
             if (!card.isToken() && sourcePermanent != null) {
-                gameData.addExileReturnOnPermanentLeave(sourcePermanentId, new PendingExileReturn(card, ownerId));
+                // CR 712.21: a melded permanent leaving the battlefield puts both of its cards into the
+                // zone, so each card that left returns separately.
+                for (Card leavingCard : leavingCards) {
+                    gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                            new PendingExileReturn(leavingCard, ownerId));
 
-                var exiledEntry = gameData.findExiledCard(card.getId());
-                if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
-                    gameData.removeFromExile(card.getId());
-                    gameData.addToExile(ownerId, card, sourcePermanentId);
-                }
-                if (e.controllerMayCastWithAnyMana() && gameData.findExiledCard(card.getId()) != null) {
-                    gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
-                    gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                    var exiledEntry = gameData.findExiledCard(leavingCard.getId());
+                    if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
+                        gameData.removeFromExile(leavingCard.getId());
+                        gameData.addToExile(ownerId, leavingCard, sourcePermanentId);
+                    }
+                    if (e.controllerMayCastWithAnyMana() && gameData.findExiledCard(leavingCard.getId()) != null) {
+                        gameData.exilePlayPermissions.put(leavingCard.getId(), entry.getControllerId());
+                        gameData.exilePlayAnyManaTypeWhileExiled.add(leavingCard.getId());
+                    }
                 }
             }
         }

@@ -175,6 +175,7 @@ class ThunderheadGunnerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

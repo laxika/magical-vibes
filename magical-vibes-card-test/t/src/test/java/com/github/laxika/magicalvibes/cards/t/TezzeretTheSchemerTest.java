@@ -112,6 +112,7 @@ class TezzeretTheSchemerTest extends BaseCardTest {
     @Test
     void minusTwoDoesNotRecalculateAfterResolutionAndExpiresAtTurnEnd() {
         addReadyTezzeret(4);
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new MindStone());
         harness.addToBattlefield(player1, new MindStone());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantSpider());

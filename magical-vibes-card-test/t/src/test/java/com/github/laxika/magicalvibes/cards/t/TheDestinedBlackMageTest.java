@@ -26,7 +26,7 @@ class TheDestinedBlackMageTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability grants another creature you control deathtouch until end of turn")
     void activatedAbilityGrantsDeathtouchUntilEndOfTurn() {
-        harness.addToBattlefield(player1, new TheDestinedBlackMage());
+        addCreatureReady(player1, new TheDestinedBlackMage());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLACK, 1);
 

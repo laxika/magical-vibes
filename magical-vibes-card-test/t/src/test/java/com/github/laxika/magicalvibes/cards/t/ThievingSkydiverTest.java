@@ -39,8 +39,7 @@ class ThievingSkydiverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 2, equipment.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, true);
+        harness.castKickedCreatureForX(player1, 0, 2, equipment.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -60,8 +59,7 @@ class ThievingSkydiverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 1, artifact.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, true);
+        harness.castKickedCreatureForX(player1, 0, 1, artifact.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -135,8 +133,7 @@ class ThievingSkydiverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.ensurePriority(player1);
 
-        gs.playCard(gd, player1, 0, 1, equipment.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, true);
+        harness.castKickedCreatureForX(player1, 0, 1, equipment.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

@@ -57,6 +57,8 @@ public class SearchLibraryForCardsToExileWithSourceEffectHandler implements Norm
 
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
+        entry.setEventValue(0);
+
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {

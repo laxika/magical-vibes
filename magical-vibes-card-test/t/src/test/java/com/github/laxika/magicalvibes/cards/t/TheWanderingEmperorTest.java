@@ -233,7 +233,8 @@ class TheWanderingEmperorTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.passBothPriorities();
+        // Stay in the end step; otherwise the game advances into the next turn and resets activations.
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class)

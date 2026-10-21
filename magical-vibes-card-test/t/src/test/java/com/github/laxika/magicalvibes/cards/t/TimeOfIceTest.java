@@ -69,8 +69,9 @@ class TimeOfIceTest extends BaseCardTest {
         // Creature should be tapped
         assertThat(bears.isTapped()).isTrue();
 
-        // Creature should have untap prevention from saga
-        assertThat(bears.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+        // Creature doesn't untap during its controller's untap step while the saga is controlled
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isTrue();
     }
 
     @Test
@@ -200,7 +201,8 @@ class TimeOfIceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve chapter II
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
     }
 
     @Test

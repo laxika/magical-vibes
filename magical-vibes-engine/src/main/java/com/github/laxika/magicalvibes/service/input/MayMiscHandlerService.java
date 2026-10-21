@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterOpeningHandUpkeepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -52,6 +53,7 @@ import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseServic
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryEffectHandler;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -89,6 +91,7 @@ public class MayMiscHandlerService {
     private final CreatureControlService creatureControlService;
     private final UntapLockReleaseService untapLockReleaseService;
     private final SearchLibraryEffectHandler searchLibraryEffectHandler;
+    private final ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler exileSourceCardFromOpeningHandHandler;
     @Autowired @Lazy
     private PermanentCounterSupport permanentCounterSupport;
     // @Lazy to break circular dependency:
@@ -268,6 +271,18 @@ public class MayMiscHandlerService {
                     ability.controllerId(), ability.sourceCard(), effect.effect()));
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals ",
                     ability.sourceCard(), " from their opening hand."));
+        }
+        completeOpeningHandReveal(gameData);
+    }
+
+    public void handleOpeningHandExileChoice(GameData gameData, Player player, boolean accepted,
+                                             PendingMayAbility ability,
+                                             ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect effect) {
+        if (accepted) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName(),
+                    new ArrayList<>(List.of(effect)));
+            exileSourceCardFromOpeningHandHandler.resolve(gameData, entry, effect);
         }
         completeOpeningHandReveal(gameData);
     }

@@ -196,7 +196,7 @@ class TriadOfFatesTest extends BaseCardTest {
     void stolenCreaturesControllerRatherThanOwnerDraws() {
         addReadyTriad(player1);
         Permanent target = addReadyPhilosopher(player2);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         target.setCounterCount(CounterType.FATE, 1);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

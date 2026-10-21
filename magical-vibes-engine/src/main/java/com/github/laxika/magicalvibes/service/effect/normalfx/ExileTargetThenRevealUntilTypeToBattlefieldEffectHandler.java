@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -106,6 +107,14 @@ public class ExileTargetThenRevealUntilTypeToBattlefieldEffectHandler implements
                 LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
                 gameLogService.append(gameData, GameLog.text(
                         targetControllerName + " reveals their entire library — no matching card found. Library is shuffled."));
+                continue;
+            }
+
+            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, foundCard, Zone.LIBRARY)) {
+                deck.addAll(revealedCards);
+                LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
+                gameLogService.append(gameData, GameLog.text(
+                        foundCard.getName() + " can't enter the battlefield. Library is shuffled."));
                 continue;
             }
 

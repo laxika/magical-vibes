@@ -265,6 +265,8 @@ public class ManaPool {
             new EnumMap<>(ManaColor.class);
     /** Per-color mana spendable only for face-down spells or turning creatures face up. */
     private final EnumMap<ManaColor, Integer> faceDownSpellsOrTurnFaceUpMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana spendable only for face-down spells or turning any creature face up (Tin Street Gossip). */
+    private final EnumMap<ManaColor, Integer> faceDownSpellsOrTurnCreaturesFaceUpMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana spendable only for enchantment spells, unlocking Room doors, or turning permanents face up. */
     private final EnumMap<ManaColor, Integer> enchantmentOrRoomUnlockOrTurnFaceUpMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana spendable only for Room spells or unlocking Room doors. */
@@ -378,6 +380,7 @@ public class ManaPool {
             artifactSpellOnlyMana.put(color, 0);
             partySpellOrAbilityMana.put(color, 0);
             faceDownSpellsOrTurnFaceUpMana.put(color, 0);
+            faceDownSpellsOrTurnCreaturesFaceUpMana.put(color, 0);
             enchantmentOrRoomUnlockOrTurnFaceUpMana.put(color, 0);
             roomSpellsOrUnlocksMana.put(color, 0);
             turnPermanentsFaceUpMana.put(color, 0);
@@ -467,6 +470,7 @@ public class ManaPool {
         mergeMana(manaValueAtLeastFourOnlyMana, source.manaValueAtLeastFourOnlyMana);
         mergeMana(manaValueAtLeastFiveOrXOnlyMana, source.manaValueAtLeastFiveOrXOnlyMana);
         mergeMana(faceDownSpellsOrTurnFaceUpMana, source.faceDownSpellsOrTurnFaceUpMana);
+        mergeMana(faceDownSpellsOrTurnCreaturesFaceUpMana, source.faceDownSpellsOrTurnCreaturesFaceUpMana);
         mergeMana(enchantmentOrRoomUnlockOrTurnFaceUpMana, source.enchantmentOrRoomUnlockOrTurnFaceUpMana);
         mergeMana(roomSpellsOrUnlocksMana, source.roomSpellsOrUnlocksMana);
         mergeMana(turnPermanentsFaceUpMana, source.turnPermanentsFaceUpMana);
@@ -657,6 +661,7 @@ public class ManaPool {
         creatureSpellManaValueAtLeastFourOrXOnlyMana
                 .putAll(source.creatureSpellManaValueAtLeastFourOrXOnlyMana);
         faceDownSpellsOrTurnFaceUpMana.putAll(source.faceDownSpellsOrTurnFaceUpMana);
+        faceDownSpellsOrTurnCreaturesFaceUpMana.putAll(source.faceDownSpellsOrTurnCreaturesFaceUpMana);
         enchantmentOrRoomUnlockOrTurnFaceUpMana.putAll(source.enchantmentOrRoomUnlockOrTurnFaceUpMana);
         roomSpellsOrUnlocksMana.putAll(source.roomSpellsOrUnlocksMana);
         turnPermanentsFaceUpMana.putAll(source.turnPermanentsFaceUpMana);
@@ -1230,6 +1235,7 @@ public class ManaPool {
             manaValueAtLeastFiveOrXOnlyMana.put(color, 0);
             creatureSpellManaValueAtLeastFourOrXOnlyMana.put(color, 0);
             faceDownSpellsOrTurnFaceUpMana.put(color, 0);
+            faceDownSpellsOrTurnCreaturesFaceUpMana.put(color, 0);
             enchantmentOrRoomUnlockOrTurnFaceUpMana.put(color, 0);
             roomSpellsOrUnlocksMana.put(color, 0);
             turnPermanentsFaceUpMana.put(color, 0);
@@ -4787,8 +4793,10 @@ public class ManaPool {
         creatureSpellManaValueAtLeastFourOrXOnlyMana.put(color, Math.max(0, current - amount));
     }
 
+    /** Mana spendable only for face-down spells or turning creatures face up, of either restriction variant. */
     public int getFaceDownSpellsOrTurnFaceUpMana(ManaColor color) {
-        return faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0);
+        return faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0)
+                + faceDownSpellsOrTurnCreaturesFaceUpMana.getOrDefault(color, 0);
     }
 
     public int getFaceDownSpellsOrTurnFaceUpManaTotal() {
@@ -4796,11 +4804,19 @@ public class ManaPool {
         for (int value : faceDownSpellsOrTurnFaceUpMana.values()) {
             total += value;
         }
+        for (int value : faceDownSpellsOrTurnCreaturesFaceUpMana.values()) {
+            total += value;
+        }
         return total;
     }
 
     public void addFaceDownSpellsOrTurnFaceUpMana(ManaColor color, int amount) {
         faceDownSpellsOrTurnFaceUpMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Adds mana spendable only for face-down spells or for turning any creature face up. */
+    public void addFaceDownSpellsOrTurnCreaturesFaceUpMana(ManaColor color, int amount) {
+        faceDownSpellsOrTurnCreaturesFaceUpMana.merge(color, amount, Integer::sum);
     }
 
     /** Temporarily exposes this restricted mana to the ordinary spell-payment algorithm. */
@@ -4833,32 +4849,65 @@ public class ManaPool {
         }
     }
 
-    /** Temporarily exposes this restricted mana to the ordinary mana payment path. */
+    /**
+     * Temporarily exposes this restricted mana to the ordinary mana payment path for a face-down spell
+     * or a turn-face-up cost both restriction variants allow (a morph cost).
+     */
     public FaceDownSpellsOrTurnFaceUpManaState promoteFaceDownSpellsOrTurnFaceUpMana() {
+        return promoteFaceDownSpellsOrTurnFaceUpMana(true);
+    }
+
+    /**
+     * Temporarily exposes only the mana that may turn any creature face up (Tin Street Gossip), for a
+     * turn-face-up cost the narrower morph-only variant does not cover (disguise, cloak).
+     */
+    public FaceDownSpellsOrTurnFaceUpManaState promoteTurnCreaturesFaceUpMana() {
+        return promoteFaceDownSpellsOrTurnFaceUpMana(false);
+    }
+
+    private FaceDownSpellsOrTurnFaceUpManaState promoteFaceDownSpellsOrTurnFaceUpMana(boolean includeMorphOnly) {
         EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
         EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promotedCreatures = new EnumMap<>(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
             regularBefore.put(color, pool.getOrDefault(color, 0));
-            int amount = faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0);
+            int amount = includeMorphOnly ? faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0) : 0;
+            int creatureAmount = faceDownSpellsOrTurnCreaturesFaceUpMana.getOrDefault(color, 0);
             promoted.put(color, amount);
+            promotedCreatures.put(color, creatureAmount);
             if (amount > 0) {
                 pool.merge(color, amount, Integer::sum);
                 faceDownSpellsOrTurnFaceUpMana.put(color, 0);
             }
+            if (creatureAmount > 0) {
+                pool.merge(color, creatureAmount, Integer::sum);
+                faceDownSpellsOrTurnCreaturesFaceUpMana.put(color, 0);
+            }
         }
-        return new FaceDownSpellsOrTurnFaceUpManaState(regularBefore, promoted);
+        return new FaceDownSpellsOrTurnFaceUpManaState(regularBefore, promoted, promotedCreatures);
     }
 
-    /** Restores the unspent portion of temporarily exposed face-down/face-up mana. */
+    /**
+     * Restores the unspent portion of temporarily exposed face-down/face-up mana. Spending takes the
+     * narrower morph-only mana first, so any unspent mana stays in the more flexible bucket.
+     */
     public void restorePromotedFaceDownSpellsOrTurnFaceUpMana(FaceDownSpellsOrTurnFaceUpManaState state) {
         for (ManaColor color : ManaColor.values()) {
             int promotedAmount = state.promoted().getOrDefault(color, 0);
+            int promotedCreatureAmount = state.promotedCreatures().getOrDefault(color, 0);
+            int promotedTotal = promotedAmount + promotedCreatureAmount;
             int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
-                    + promotedAmount - pool.getOrDefault(color, 0));
-            int remaining = Math.max(0, promotedAmount - spent);
+                    + promotedTotal - pool.getOrDefault(color, 0));
+            int remaining = Math.max(0, promotedTotal - spent);
             if (remaining > 0) {
                 pool.merge(color, -remaining, Integer::sum);
-                faceDownSpellsOrTurnFaceUpMana.merge(color, remaining, Integer::sum);
+                int toCreatures = Math.min(remaining, promotedCreatureAmount);
+                if (toCreatures > 0) {
+                    faceDownSpellsOrTurnCreaturesFaceUpMana.merge(color, toCreatures, Integer::sum);
+                }
+                if (remaining > toCreatures) {
+                    faceDownSpellsOrTurnFaceUpMana.merge(color, remaining - toCreatures, Integer::sum);
+                }
             }
         }
     }
@@ -4868,7 +4917,8 @@ public class ManaPool {
     }
 
     public record FaceDownSpellsOrTurnFaceUpManaState(Map<ManaColor, Integer> regularBefore,
-                                                       Map<ManaColor, Integer> promoted) {
+                                                       Map<ManaColor, Integer> promoted,
+                                                       Map<ManaColor, Integer> promotedCreatures) {
     }
 
     public int getEnchantmentOrRoomUnlockOrTurnFaceUpMana(ManaColor color) {
@@ -5146,6 +5196,7 @@ public class ManaPool {
         xSpellOnlyColorless += moveColoredManaToColorless(xCostOnlyMana);
         moveColoredManaToColorless(creatureSpellManaValueAtLeastFourOrXOnlyMana);
         moveColoredManaToColorless(faceDownSpellsOrTurnFaceUpMana);
+        moveColoredManaToColorless(faceDownSpellsOrTurnCreaturesFaceUpMana);
         moveColoredManaToColorless(enchantmentOrRoomUnlockOrTurnFaceUpMana);
         moveColoredManaToColorless(roomSpellsOrUnlocksMana);
         moveColoredManaToColorless(turnPermanentsFaceUpMana);
@@ -5303,6 +5354,7 @@ public class ManaPool {
         xSpellOnlyColorless = 0;
         moveManaTo(replacementColor, creatureSpellManaValueAtLeastFourOrXOnlyMana);
         moveManaTo(replacementColor, faceDownSpellsOrTurnFaceUpMana);
+        moveManaTo(replacementColor, faceDownSpellsOrTurnCreaturesFaceUpMana);
         moveManaTo(replacementColor, enchantmentOrRoomUnlockOrTurnFaceUpMana);
         moveManaTo(replacementColor, roomSpellsOrUnlocksMana);
         moveManaTo(replacementColor, turnPermanentsFaceUpMana);
@@ -5530,6 +5582,7 @@ public class ManaPool {
         drainColorBucket(xCostOnlyMana, protectedColors);
         drainColorBucket(creatureSpellManaValueAtLeastFourOrXOnlyMana, protectedColors);
         drainColorBucket(faceDownSpellsOrTurnFaceUpMana, protectedColors);
+        drainColorBucket(faceDownSpellsOrTurnCreaturesFaceUpMana, protectedColors);
         drainColorBucket(enchantmentOrRoomUnlockOrTurnFaceUpMana, protectedColors);
         drainColorBucket(roomSpellsOrUnlocksMana, protectedColors);
         drainColorBucket(turnPermanentsFaceUpMana, protectedColors);
@@ -5719,6 +5772,7 @@ public class ManaPool {
             amount += xCostOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
             amount += faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0);
+            amount += faceDownSpellsOrTurnCreaturesFaceUpMana.getOrDefault(color, 0);
             amount += enchantmentOrRoomUnlockOrTurnFaceUpMana.getOrDefault(color, 0);
             amount += roomSpellsOrUnlocksMana.getOrDefault(color, 0);
             amount += turnPermanentsFaceUpMana.getOrDefault(color, 0);
@@ -5805,6 +5859,7 @@ public class ManaPool {
             amount += xCostOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
             amount += faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0);
+            amount += faceDownSpellsOrTurnCreaturesFaceUpMana.getOrDefault(color, 0);
             amount += enchantmentOrRoomUnlockOrTurnFaceUpMana.getOrDefault(color, 0);
             amount += roomSpellsOrUnlocksMana.getOrDefault(color, 0);
             amount += turnPermanentsFaceUpMana.getOrDefault(color, 0);

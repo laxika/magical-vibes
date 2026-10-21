@@ -111,7 +111,7 @@ class TuskeriFirewalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());

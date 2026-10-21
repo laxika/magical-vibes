@@ -163,13 +163,14 @@ class TouchTheSpiritRealmTest extends BaseCardTest {
     @DisplayName("Channel used during an end step waits until the next end step")
     void channelDuringEndStepWaitsForNextEndStep() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new NetworkTerminal());
+        harness.setHand(player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.setHand(player1, List.of(new TouchTheSpiritRealm()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.ensurePriority(player1);
         harness.activateHandAbility(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertNotOnBattlefield(player2, "Network Terminal");
         harness.passUntil(TurnStep.UPKEEP);
@@ -198,6 +199,7 @@ class TouchTheSpiritRealmTest extends BaseCardTest {
         harness.ensurePriority(player1);
         harness.castAndResolveInstant(player1, 0,
                 harness.getPermanentId(player1, "Touch the Spirit Realm"));
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Graf Rats");
         harness.assertOnBattlefield(player2, "Midnight Scavengers");

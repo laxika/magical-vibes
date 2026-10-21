@@ -224,6 +224,7 @@ class TwilightDivinerTest extends BaseCardTest {
     void graveyardTriggerCanFireAgainOnALaterTurn() {
         Card first = new GrizzlyBears();
         Card second = new GrizzlyBears();
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new TwilightDiviner());
         harness.setGraveyard(player1, List.of(first, second));
         harness.setHand(player1, List.of(new Zombify()));

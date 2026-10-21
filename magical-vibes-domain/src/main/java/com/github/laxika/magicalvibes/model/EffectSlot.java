@@ -860,7 +860,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */
     ON_OPPONENT_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever a creature or planeswalker an opponent controls is dealt excess damage (combat or non-combat). */
     ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE,
+    /** Triggers whenever a creature or planeswalker an opponent controls is dealt excess noncombat damage. */
+    ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_NONCOMBAT_DAMAGE,
     /** Triggers whenever an opponent's creature is dealt excess noncombat damage. */
     ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE,
     /** Triggers whenever any creature (yours or an opponent's) is dealt damage (combat or non-combat).

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -12,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "6")
 @CardRegistration(set = "FIC", collectorNumber = "188")
@@ -27,7 +31,7 @@ public class TifaMartialArtist extends Card {
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
                                         new PermanentIsCreaturePredicate()),
-                                new ConditionalEffect(new FirstCombatPhase(),
+                                new ConditionalEffect(new AllConditions(List.of(new ControllerTurn(), new FirstCombatPhase())),
                                         new AdditionalCombatPhaseEffect(1))),
                         false,
                         true));

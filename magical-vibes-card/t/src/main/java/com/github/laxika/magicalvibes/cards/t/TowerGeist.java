@@ -14,6 +14,6 @@ public class TowerGeist extends Card {
     public TowerGeist() {
         // Flying is loaded from Scryfall
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1));
+                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
     }
 }

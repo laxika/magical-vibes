@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class TogetherAsOne extends Card {
 
     public TogetherAsOne() {
+        // Each "target" is a separate instance, so one player may be chosen for both (CR 115.3).
+        setAllowSharedTargets(true);
+
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"

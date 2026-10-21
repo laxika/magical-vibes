@@ -565,6 +565,12 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice ctx
+                && (playerInputService.isNameExcludedByType(gameData, colorName, ctx.excludedTypes())
+                || !colorChoice.options().contains(colorName)
+                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes()))) {
+            throw new IllegalArgumentException("Invalid card name for the required card types: " + colorName);
+        }
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
                 && !ctx.excludedTypes().isEmpty()
                 && (playerInputService.isNameExcludedByType(gameData, colorName, ctx.excludedTypes())
@@ -1681,6 +1687,9 @@ public class ChoiceHandlerService {
             handleIndulgentTormentorChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (!colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid color choice: " + colorName);
+        }
         CardColor color = CardColor.valueOf(colorName);
         UUID permanentId = colorChoice.permanentId();
         UUID etbTargetId = colorChoice.etbTargetId();
@@ -1749,6 +1758,9 @@ public class ChoiceHandlerService {
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         } else if (context instanceof ChoiceContext.GaladrielElvenQueenChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.CouncilDilemmaChoice vote
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         } else if (context instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice vote
@@ -7977,7 +7989,20 @@ public class ChoiceHandlerService {
             return;
         }
 
-        // Exile every copy from the target's hand, graveyard, and library (mandatory, no choice).
+        // CR 701.23b: graveyard copies are found mandatorily, while the controller may choose any number
+        // of the hand and library copies to find. Without hidden-zone copies, nothing is left to choose.
+        boolean hiddenZoneCopies = (hand != null && hand.stream().anyMatch(c -> c.getName().equals(cardName)))
+                || (gameData.playerDecks.get(targetPlayerId) != null
+                && gameData.playerDecks.get(targetPlayerId).stream().anyMatch(c -> c.getName().equals(cardName)));
+        if (hiddenZoneCopies) {
+            playerInputService.beginMultiZoneExileChoice(
+                    gameData, controllerId, collectMatchingCards(gameData, targetPlayerId, cardName),
+                    targetPlayerId, cardName, false, (UUID) null, true);
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        // Exile the graveyard copies (mandatory) and any hand or library copies, then shuffle.
         int exiledCount = 0;
 
         if (hand != null) {

@@ -16,7 +16,8 @@ import java.util.List;
 public class TwilightsCall extends Card {
 
     public TwilightsCall() {
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{6}{B}{B}")), null, true));
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{6}{B}{B}")), null, true)
+                .withFlashAdditionalGenericCost(2));
         addEffect(EffectSlot.SPELL, new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
                 Integer.MAX_VALUE, new CardTypePredicate(CardType.CREATURE)));
     }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfSacrificed
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +23,6 @@ public class CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesE
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
     private final AuraAttachmentService auraAttachmentService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,6 +46,8 @@ public class CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesE
             return;
         }
 
+        // The copy takes the Aura's copiable values (CR 707.2), not temporary effects such as a granted
+        // artifact type, which the snapshot's card records as last-known information.
         List<Permanent> otherAttackingCreatures = List.copyOf(battlefield).stream()
                 .filter(Permanent::isAttacking)
                 .filter(permanent -> !permanent.getId().equals(sourceId))
@@ -57,28 +57,15 @@ public class CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesE
                 .toList();
 
         for (Permanent creature : otherAttackingCreatures) {
-            List<UUID> createdIds = tokenCopySupport.createTokenCopies(
+            // The copy enters attached to this creature, so its controller isn't asked what it enchants.
+            tokenCopySupport.createTokenCopiesAttachedTo(
                     gameData,
                     entry,
-                    List.of(sacrificedAura.getCard()),
+                    List.of(sacrificedAura.getOriginalCard()),
                     null,
                     entry.getControllerId(),
-                    new CreateTokenCopyOfTargetPermanentEffect());
-            for (UUID tokenId : createdIds) {
-                attachToken(gameData, entry, tokenId, creature);
-            }
+                    new CreateTokenCopyOfTargetPermanentEffect(),
+                    creature);
         }
-    }
-
-    private void attachToken(GameData gameData, StackEntry entry, UUID tokenId, Permanent creature) {
-        Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
-        if (token == null || !auraAttachmentService.canEnchant(
-                gameData, token.getCard(), entry.getControllerId(), creature)) {
-            return;
-        }
-        gameData.expireFloatingEffectsForUnattachedSource(token.getId());
-        token.setAttachedTo(creature.getId());
-        token.setTimestamp(gameData.nextTimestamp());
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, token, creature.getId());
     }
 }

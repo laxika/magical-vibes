@@ -96,6 +96,7 @@ class TributeToHorobiTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, creature.getId());
+            harness.passBothPriorities();
 
             harness.assertInGraveyard(player1, "Mukotai Ambusher");
             harness.assertInHand(player1, "Mukotai Ambusher");

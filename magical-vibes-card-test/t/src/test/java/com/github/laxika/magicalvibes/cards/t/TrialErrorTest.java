@@ -160,7 +160,7 @@ class TrialErrorTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new MistralCharger());
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new AzoriusFirstWing());
-        gd.stolenCreatures.put(blocker.getId(), player1.getId());
+        setOwnerAndController(blocker, player1, player2);
         connectBlockerToAttacker(blocker, attacker);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

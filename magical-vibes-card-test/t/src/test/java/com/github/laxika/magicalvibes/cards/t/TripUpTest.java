@@ -117,8 +117,7 @@ class TripUpTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.TargetLibraryDestinationChoice.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

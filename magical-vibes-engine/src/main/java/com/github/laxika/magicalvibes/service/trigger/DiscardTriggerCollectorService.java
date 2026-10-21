@@ -469,6 +469,40 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "Whenever you discard one or more cards, exile them from your graveyard" (Toluz, Clever Conductor):
+     * one trigger per discard event, carrying every card discarded by that event.
+     */
+    @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleExileDiscardedFromGraveyardOnDiscardEvent(TriggerMatchContext match,
+            ExileDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.DiscardEvent discardEvent)
+                || discardEvent.discardedCards().isEmpty()) {
+            return false;
+        }
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardIds(discardEvent.discardedCards().stream().map(Card::getId).toList());
+        for (Card discarded : discardEvent.discardedCards()) {
+            entry.recordTargetCardGraveyardVersion(discarded.getId(),
+                    gameData.graveyardEntryVersion(discarded.getId()));
+        }
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers to exile the cards discarded by one discard event",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = ExileTopCardMayPlayThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleExileTopCardMayPlayOnDiscard(TriggerMatchContext match,
             ExileTopCardMayPlayThisTurnEffect trigger, TriggerContext ctx) {

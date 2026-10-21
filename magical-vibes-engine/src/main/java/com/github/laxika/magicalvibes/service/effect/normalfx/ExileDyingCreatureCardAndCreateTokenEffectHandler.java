@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,11 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -63,9 +66,18 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCardId);
         exileService.exileCard(gameData, ownerId, card);
-        permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
+        List<UUID> tokenIds = permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
                 bindExiledCardReturn(e.token(), dyingCardId),
                 entry.getCard().getSetCode());
+        for (UUID tokenId : tokenIds) {
+            // The token's "the exiled card" is linked to this token only: copies of the token must not
+            // return it, so the exile entry remembers the token as its source.
+            gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(dyingCardId)
+                    ? new ExiledCardEntry(exiled.card(), exiled.ownerId(), tokenId, exiled.faceDown(),
+                    exiled.exilerId(), exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile(),
+                    exiled.abilityLink())
+                    : exiled);
+        }
 
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(),
                 "'s ability exiles ", card, " and creates a token."));
@@ -79,16 +91,28 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
             return token;
         }
         CardEffect combatDamageEffect = tokenEffects.get(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        if (!(combatDamageEffect instanceof SacrificeSelfThenEffect sacrifice)
-                || !(sacrifice.thenEffect() instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect returnEffect)
-                || returnEffect.exiledCardId() != null) {
+        CardEffect bound = bindReturn(combatDamageEffect, exiledCardId);
+        if (bound == combatDamageEffect) {
             return token;
         }
         Map<EffectSlot, CardEffect> boundTokenEffects = new EnumMap<>(tokenEffects);
-        boundTokenEffects.put(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new SacrificeSelfThenEffect(
-                        new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
-                                exiledCardId, returnEffect.enterTapped()), sacrifice.reflexive()));
+        boundTokenEffects.put(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, bound);
         return token.withTokenEffects(boundTokenEffects);
+    }
+
+    private static CardEffect bindReturn(CardEffect effect, UUID exiledCardId) {
+        if (effect instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect r && r.exiledCardId() == null) {
+            return new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
+                    exiledCardId, r.enterTapped(), r.underAbilityController());
+        }
+        if (effect instanceof SacrificeSelfThenEffect sacrifice) {
+            CardEffect inner = bindReturn(sacrifice.thenEffect(), exiledCardId);
+            return inner == sacrifice.thenEffect() ? effect : new SacrificeSelfThenEffect(inner, sacrifice.reflexive());
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            List<CardEffect> steps = sequence.steps().stream().map(step -> bindReturn(step, exiledCardId)).toList();
+            return steps.equals(sequence.steps()) ? effect : sequence.withSteps(steps);
+        }
+        return effect;
     }
 }

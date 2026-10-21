@@ -113,9 +113,9 @@ class TwiningTwinsTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RootriderFaun());
         harness.setLibrary(player2, List.of(new RootriderFaun(), new RootriderFaun()));
         harness.setHand(player1, List.of(new TwiningTwins()));
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.passUntil(player1, TurnStep.END_STEP);
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
             harness.castAdventure(player1, 0, target.getId());

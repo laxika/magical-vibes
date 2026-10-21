@@ -88,16 +88,28 @@ public class PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffectHandler
     }
 
     private boolean movePermanentToTopAndBeginChoice(GameData gameData, Permanent permanent) {
-        Card card = permanent.getCard();
+        // A melded or merged permanent puts every component card into the library together, so
+        // the owner's single top-or-bottom choice moves all of them.
+        List<Card> leavingCards = List.copyOf(permanent.cardsLeavingBattlefield());
         if (!permanentRemovalService.removePermanentToLibraryTop(gameData, permanent)) {
             return false;
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
-        UUID ownerId = findLibraryOwner(gameData, card);
-        if (ownerId == null) {
+        List<Card> inLibrary = leavingCards.stream()
+                .filter(card -> findLibraryOwner(gameData, card) != null)
+                .toList();
+        if (inLibrary.isEmpty()) {
             return false;
         }
-        return beginChoice(gameData, ownerId, card);
+        Card first = inLibrary.getFirst();
+        UUID ownerId = findLibraryOwner(gameData, first);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetLibraryDestinationChoice(
+                ownerId, first.getId(), permanent.getCard().getName(),
+                PendingInteraction.TargetLibraryDestinationChoice.OPTIONS.getFirst(),
+                inLibrary.stream().skip(1).map(Card::getId).toList()));
+        log.info("Game {} - awaiting {} to choose the library destination for {}", gameData.id,
+                gameData.playerIdToName.get(ownerId), permanent.getCard().getName());
+        return true;
     }
 
     private UUID findLibraryOwner(GameData gameData, Card card) {

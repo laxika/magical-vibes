@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -52,6 +55,15 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
             if (e.duration() == EffectDuration.PERMANENT) {
                 if (!target.getGrantedSubtypes().contains(e.subtype())) {
                     target.getGrantedSubtypes().add(e.subtype());
+                }
+                if (e.perpetual() && target.getOriginalCard() != null) {
+                    gameData.perpetualCardSubtypes.merge(target.getOriginalCard().getId(), Set.of(e.subtype()),
+                            (existing, added) -> {
+                                Set<CardSubtype> merged = EnumSet.noneOf(CardSubtype.class);
+                                merged.addAll(existing);
+                                merged.addAll(added);
+                                return Set.copyOf(merged);
+                            });
                 }
             } else {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(

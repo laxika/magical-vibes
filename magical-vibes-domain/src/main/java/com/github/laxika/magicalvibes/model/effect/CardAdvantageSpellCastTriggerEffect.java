@@ -7,18 +7,22 @@ import java.util.UUID;
 
 /**
  * Internal marker for a spell-cast trigger whose condition is evaluated after the spell resolves.
- * The prepared form retains the source and the card-resource counts captured when the spell was cast.
+ * The prepared form retains the source and the card-resource counts. The counts are first captured when the
+ * spell is cast and recaptured when the spell begins to resolve, since card advantage compares the board
+ * with the state before that spell resolved. {@code handSpellOwnerId} is the owner of a spell cast from
+ * hand, whose card still counts as part of the "before" total while it is on the stack.
  */
 public record CardAdvantageSpellCastTriggerEffect(
         Card sourceCard,
         UUID controllerId,
         UUID sourcePermanentId,
         UUID spellCardId,
-        Map<UUID, Integer> cardCountsBefore
+        Map<UUID, Integer> cardCountsBefore,
+        UUID handSpellOwnerId
 ) implements CardEffect {
 
     public CardAdvantageSpellCastTriggerEffect() {
-        this(null, null, null, null, Map.of());
+        this(null, null, null, null, Map.of(), null);
     }
 
     public CardAdvantageSpellCastTriggerEffect {
@@ -27,9 +31,15 @@ public record CardAdvantageSpellCastTriggerEffect(
 
     public CardAdvantageSpellCastTriggerEffect withSnapshot(Card sourceCard, UUID controllerId,
                                                               UUID sourcePermanentId, UUID spellCardId,
-                                                              Map<UUID, Integer> cardCountsBefore) {
+                                                              Map<UUID, Integer> cardCountsBefore,
+                                                              UUID handSpellOwnerId) {
         return new CardAdvantageSpellCastTriggerEffect(
-                sourceCard, controllerId, sourcePermanentId, spellCardId, cardCountsBefore);
+                sourceCard, controllerId, sourcePermanentId, spellCardId, cardCountsBefore, handSpellOwnerId);
+    }
+
+    public CardAdvantageSpellCastTriggerEffect withCardCountsBefore(Map<UUID, Integer> cardCountsBefore) {
+        return new CardAdvantageSpellCastTriggerEffect(
+                sourceCard, controllerId, sourcePermanentId, spellCardId, cardCountsBefore, handSpellOwnerId);
     }
 
     public boolean isPrepared() {

@@ -27,28 +27,23 @@ import java.util.List;
 public class TranquilFrillback extends Card {
 
     public TranquilFrillback() {
-        DestroyTargetPermanentEffect destroy = new DestroyTargetPermanentEffect();
+        PermanentAnyOfPredicate artifactOrEnchantment = new PermanentAnyOfPredicate(List.of(
+                new PermanentIsArtifactPredicate(),
+                new PermanentIsEnchantmentPredicate()
+        ));
+        DestroyTargetPermanentEffect destroy = new DestroyTargetPermanentEffect(artifactOrEnchantment);
         ExileGraveyardCardsEffect exileGraveyard =
                 new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE);
 
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate()
-                )),
-                "Target must be an artifact or enchantment"
-        ), 0, 1);
-        target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"
-        ), 0, 1);
-        registerEffectTargetIndex(destroy, 0);
-        registerEffectTargetIndex(exileGraveyard, 1);
-
-        ChooseOneEffect modes = ChooseOneEffect.oneOrMore(List.of(
-                new ChooseOneEffect.ChooseOneOption("Destroy target artifact or enchantment", destroy),
-                new ChooseOneEffect.ChooseOneOption("Exile target player's graveyard", exileGraveyard),
+        ChooseOneEffect modes = new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Destroy target artifact or enchantment", destroy,
+                        new PermanentPredicateTargetFilter(artifactOrEnchantment,
+                                "Target must be an artifact or enchantment")),
+                new ChooseOneEffect.ChooseOneOption("Exile target player's graveyard", exileGraveyard,
+                        new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY),
+                                "Target must be a player")),
                 new ChooseOneEffect.ChooseOneOption("You gain 4 life", new GainLifeEffect(4))
-        ));
+        ), false, 0, 3, false, null);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PayManaUpToNTimesEffect("{G}", 3, modes));
     }

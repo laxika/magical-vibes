@@ -29,7 +29,7 @@ public class ThoughtRattle extends Card {
                 "Target must be an opponent"))
                 .addEffect(EffectSlot.SPELL,
                         new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND),
-                                HandChoiceDestination.EXILE))
+                                HandChoiceDestination.EXILE).withRevealMatchingOnly())
                 .addEffect(EffectSlot.SPELL,
                         new ConditionalEffect(new GraveyardCardThreshold(7, null),
                                 new SeekLibraryAndPerpetuallyReduceSoughtCardEffect(

@@ -59,13 +59,15 @@ class ThornplateIntimidatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.castKickedCreature(player1, 0, player2.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        if (gd.interaction.isAwaitingInput()) {
-            harness.handlePermanentChosen(player1, player2.getId());
+        // The offspring trigger and the printed ETB are separate abilities; the token copy's own ETB
+        // trigger asks for its target whenever the offspring trigger resolves, so answer each prompt.
+        for (int i = 0; i < 10 && (!gd.stack.isEmpty() || gd.interaction.isAwaitingInput()); i++) {
+            if (gd.interaction.isAwaitingInput()) {
+                harness.handlePermanentChosen(player1, player2.getId());
+            } else {
+                harness.passBothPriorities();
+            }
         }
-        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())

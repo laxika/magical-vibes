@@ -112,7 +112,7 @@ class TrialOfStrengthTest extends BaseCardTest {
     void borrowedTrialReturnsToOwnersHand() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new Colossapede());
         Permanent trial = harness.addToBattlefieldAndReturn(player1, new TrialOfStrength());
-        gd.stolenCreatures.put(trial.getId(), player2.getId());
+        setOwnerAndController(trial, player2, player1);
         harness.setHand(player1, List.of(new CartoucheOfSolidarity()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

@@ -185,7 +185,7 @@ class TransmuteArtifactTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Myr Battlesphere");
         assertThat(gd.playerBattlefields.get(player1.getId()))

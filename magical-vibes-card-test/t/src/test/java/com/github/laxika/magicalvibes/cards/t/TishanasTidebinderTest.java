@@ -33,11 +33,11 @@ class TishanasTidebinderTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null,
                 harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player2);
-        var activatedAbilitySourceId = gd.stack.getFirst().getCard().getId();
+        var activatedAbilityId = gd.stack.getFirst().getTargetableId();
 
         harness.castFromHand(player1, new TishanasTidebinder(), "{2}{U}");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, activatedAbilitySourceId);
+        harness.handlePermanentChosen(player1, activatedAbilityId);
         harness.passBothPriorities();
 
         Permanent bearsPermanent = findPermanent(player1, "Grizzly Bears");
@@ -72,11 +72,11 @@ class TishanasTidebinderTest extends BaseCardTest {
         harness.castCreature(player2, 0, 0,
                 harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passBothPriorities();
-        var triggeredAbilitySourceId = gd.stack.getFirst().getCard().getId();
+        var triggeredAbilityId = gd.stack.getFirst().getTargetableId();
 
         harness.castFromHand(player1, new TishanasTidebinder(), "{2}{U}");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, triggeredAbilitySourceId);
+        harness.handlePermanentChosen(player1, triggeredAbilityId);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd,

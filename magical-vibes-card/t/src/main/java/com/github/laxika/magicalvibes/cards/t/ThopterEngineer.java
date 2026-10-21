@@ -30,11 +30,11 @@ public class ThopterEngineer extends Card {
                 "Thopter", 1, 1, null, List.of(CardSubtype.THOPTER),
                 Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));
 
-        // Haste for artifact creatures you control; Thopter Engineer itself is not an artifact,
-        // so it never grants haste to itself.
+        // Haste for artifact creatures you control, including Thopter Engineer itself when it is an
+        // artifact (e.g. from Liquimetal Coating).
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.HASTE,
-                GrantScope.OWN_PERMANENTS,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()))));

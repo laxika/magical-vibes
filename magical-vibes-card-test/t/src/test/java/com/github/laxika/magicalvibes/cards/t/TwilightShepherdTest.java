@@ -169,6 +169,7 @@ class TwilightShepherdTest extends BaseCardTest {
     @DisplayName("Entry ability does not return a permanent that died on a previous turn")
     void entryDoesNotReturnPreviousTurnDeaths() {
         Card axe = new ObsidianBattleAxe();
+        harness.setHand(player2, List.of());
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, axe);
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);

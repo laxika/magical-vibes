@@ -120,6 +120,8 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();

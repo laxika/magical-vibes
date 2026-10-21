@@ -415,7 +415,8 @@ public class AmountEvaluationService {
                             ? ctx.stackEntry().getManaSpentToCast()
                             : ctx.xValue();
             case SnowManaSpentToCast ignored ->
-                    ctx.sourceCard() == null ? 0 : gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId());
+                    ctx.sourceCard() == null || ctx.stackEntry() != null && ctx.stackEntry().isCopy() ? 0
+                            : gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId());
             case TreasureManaSpentToCast ignored ->
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastTreasureManaSpent(ctx.sourceCard().getId());
             case TreasureManaSpentToActivate ignored ->
@@ -3100,6 +3101,9 @@ public class AmountEvaluationService {
             total += (int) gameData.permanentsEnteredBattlefieldThisTurn
                     .getOrDefault(playerId, List.of())
                     .stream()
+                    .filter(card -> !count.stillOnBattlefield()
+                            || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                            .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId())))
                     .filter(card -> predicateEvaluationService.matchesCardPredicate(card, count.filter(), null))
                     .count();
         }

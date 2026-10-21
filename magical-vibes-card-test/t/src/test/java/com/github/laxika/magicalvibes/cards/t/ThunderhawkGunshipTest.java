@@ -41,6 +41,7 @@ class ThunderhawkGunshipTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        finishCrewing();
         harness.passBothPriorities();
 
         declareAttackers(player1, List.of(0, 2));
@@ -81,6 +82,7 @@ class ThunderhawkGunshipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
         assertThat(crew.isTapped()).isTrue();
+        finishCrewing();
         assertThat(gqs.isCreature(gd, vehicle)).isFalse();
         harness.passBothPriorities();
 
@@ -99,6 +101,7 @@ class ThunderhawkGunshipTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        finishCrewing();
         harness.passBothPriorities();
         declareAttackers(player1, List.of(0, 2));
         resolveAllTriggers();
@@ -111,5 +114,10 @@ class ThunderhawkGunshipTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isFalse();
+    }
+
+    /** Crew may tap more creatures than needed (CR 702.122a), so paying with spare creatures around asks to confirm. */
+    private void finishCrewing() {
+        harness.handlePermanentChosen(player1, player1.getId());
     }
 }

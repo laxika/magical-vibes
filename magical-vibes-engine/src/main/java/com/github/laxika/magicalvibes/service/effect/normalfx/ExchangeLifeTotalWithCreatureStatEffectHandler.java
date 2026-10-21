@@ -49,6 +49,12 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
             return;
         }
 
+        // CR 208.3: a noncreature permanent has no power or toughness, so there is no stat to exchange.
+        if (!gameQueryService.isCreature(gameData, source)) {
+            gameLogService.append(gameData, GameLog.text("Source is no longer a creature. Exchange doesn't occur."));
+            return;
+        }
+
         // CR 701.10e: player's new life = creature's current effective stat
         int currentStat = usePower
                 ? gameQueryService.getEffectivePower(gameData, source)

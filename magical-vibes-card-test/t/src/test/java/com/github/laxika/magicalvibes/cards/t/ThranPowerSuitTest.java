@@ -125,7 +125,6 @@ class ThranPowerSuitTest extends BaseCardTest {
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);

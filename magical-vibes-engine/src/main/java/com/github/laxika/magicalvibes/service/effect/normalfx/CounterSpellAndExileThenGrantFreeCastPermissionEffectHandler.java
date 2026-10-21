@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileThenGrantFreeCastPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -35,7 +38,7 @@ public class CounterSpellAndExileThenGrantFreeCastPermissionEffectHandler implem
 
         CounterSpellAndExileThenGrantFreeCastPermissionEffect counterEffect =
                 (CounterSpellAndExileThenGrantFreeCastPermissionEffect) effect;
-        if (counterEffect.permanentSpellsOnly() && !isPermanentSpell(targetEntry.getCard())) {
+        if (counterEffect.permanentSpellsOnly() && !isPermanentSpell(spellFace(targetEntry))) {
             counterSupport.counterSpell(gameData, entry, targetEntry);
             return;
         }
@@ -45,8 +48,25 @@ public class CounterSpellAndExileThenGrantFreeCastPermissionEffectHandler implem
         ExiledCardEntry exiled = gameData.findExiledCard(targetCardId);
         if (exiled == null) return;
 
+        if (counterEffect.mayCastNow()) {
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    exiled.card(),
+                    entry.getControllerId(),
+                    List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
+                    "Cast " + exiled.card().getName() + " without paying its mana cost?",
+                    targetCardId
+            ));
+            return;
+        }
+
         gameData.exilePlayPermissions.put(targetCardId, entry.getControllerId());
         gameData.exilePlayWithoutPayingManaCost.add(targetCardId);
+    }
+
+    /** The face on the stack: an Adventure spell is its adventure half (an instant or sorcery). */
+    private static Card spellFace(StackEntry spell) {
+        Card card = spell.getCard();
+        return spell.isCastWithAdventure() && card.getBackFaceCard() != null ? card.getBackFaceCard() : card;
     }
 
     private boolean isPermanentSpell(Card card) {

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -46,7 +45,7 @@ public class ManaTapTriggerCollectorService {
         Permanent tappedPermanent = gameQueryService.findPermanentById(
                 match.gameData(), permanentTap.tappedPermanentId());
         if (match.permanent() == null || tappedPermanent == null
-                || !tappedPermanent.getCard().hasType(CardType.ARTIFACT)
+                || !gameQueryService.isArtifact(match.gameData(), tappedPermanent)
                 || !permanentTap.tappingPlayerId().equals(
                         gameQueryService.getOpponentId(match.gameData(), match.controllerId()))) {
             return false;

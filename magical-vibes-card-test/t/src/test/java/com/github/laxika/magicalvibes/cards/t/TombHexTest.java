@@ -128,6 +128,7 @@ class TombHexTest extends BaseCardTest {
     void previousTurnsLandDoesNotEnableLandfall() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeatherbackBaloth());
         harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

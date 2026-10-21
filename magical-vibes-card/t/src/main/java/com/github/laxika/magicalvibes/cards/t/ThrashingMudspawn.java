@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class ThrashingMudspawn extends Card {
 
     public ThrashingMudspawn() {
+        addMorph("{1}{B}{B}");
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER));
     }

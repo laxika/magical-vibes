@@ -18,12 +18,19 @@ import java.util.UUID;
  * @param graveyardEntryVersion the graveyard entry the trigger event happened to, or {@code null} to take
  *                             the card's entry as the effect resolves; a card that left the graveyard and
  *                             entered it again is a new object (CR 400.7) and is not returned
+ * @param optional             whether the registered end-step trigger is a "you may return" ability, so the
+ *                             choice is made as that delayed trigger resolves rather than when this one does
  */
-public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId, Long graveyardEntryVersion)
+public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId, Long graveyardEntryVersion,
+                                                                 boolean optional)
         implements CardEffect, DyingCreatureCardAwareEffect {
 
+    public RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId, Long graveyardEntryVersion) {
+        this(cardId, graveyardEntryVersion, false);
+    }
+
     public RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId) {
-        this(cardId, null);
+        this(cardId, null, false);
     }
 
     @Override

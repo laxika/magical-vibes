@@ -326,7 +326,7 @@ public class DamageSupport {
                         target.getMarkedDamage(), sourceHasDeathtouch);
         if (excessDamage > 0) {
             triggerCollectionService.checkOpponentPermanentDealtExcessDamageTriggers(
-                    gameData, target, targetControllerId, excessDamage);
+                    gameData, target, targetControllerId, excessDamage, !event.combat());
             triggerCollectionService.checkOpponentCreatureDealtExcessNoncombatDamageTriggers(
                     gameData, entry, target, targetControllerId, excessDamage);
         }
@@ -1425,7 +1425,7 @@ public class DamageSupport {
                         gameData, sourceControllerId, playerId, List.of(opponentDamageDealer));
             }
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
-                    gameData, playerId, entry.getControllerId(), effectiveDamage);
+                    gameData, playerId, sourceControllerId, effectiveDamage);
             triggerCollectionService.checkOpponentDealtDamageTriggers(
                     gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
             // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
@@ -1873,7 +1873,7 @@ public class DamageSupport {
 
         boolean controllersTurn = playerId.equals(gameData.activePlayerId);
         boolean hasEffect = battlefield.stream().anyMatch(p ->
-                !gameQueryService.hasLostAllAbilities(gameData, p)
+                !gameQueryService.hasLostPrintedAbilities(gameData, p)
                         && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> isControllerAllDamagePreventionActive(
                                 gameData, playerId, p, e, controllersTurn)));

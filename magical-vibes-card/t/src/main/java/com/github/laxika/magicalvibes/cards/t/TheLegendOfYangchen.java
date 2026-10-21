@@ -33,7 +33,7 @@ public class TheLegendOfYangchen extends Card {
                         new DrawCardEffect(3)),
                 "Have target opponent draw three cards?"));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

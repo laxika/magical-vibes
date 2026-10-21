@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
+import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.effect.AsEntersGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AsEntersOpponentExileToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
@@ -574,7 +576,14 @@ public class AsEntersInteractionService {
             return;
         }
 
+        // "Escapes with your choice of ..." (CR 702.138a): the choice is offered only when the entering
+        // permanent was cast with escape, so the counter choice is unwrapped from its escape gate here.
+        boolean enteredWithEscape = !gameData.playerBattlefields.get(controllerId).isEmpty()
+                && gameData.playerBattlefields.get(controllerId).getLast().isEscaped();
         ChooseCounterTypeOnEnterEffect counterTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .map(effect -> effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof SourceWasCastWithEscape
+                        && enteredWithEscape ? conditional.wrapped() : effect)
                 .filter(ChooseCounterTypeOnEnterEffect.class::isInstance)
                 .map(ChooseCounterTypeOnEnterEffect.class::cast)
                 .findFirst()

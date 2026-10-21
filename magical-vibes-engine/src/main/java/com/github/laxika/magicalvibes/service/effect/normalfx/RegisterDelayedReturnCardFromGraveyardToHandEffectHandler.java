@@ -64,8 +64,15 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
                 .filter(new com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate(
                         java.util.Set.of(cardId), java.util.Map.of(cardId, gameData.graveyardEntryVersion(cardId))))
                 .returnAll(true).build();
+        CardEffect delayedEffect = returnEffect;
+        if (e.optional()) {
+            Card returning = gameData.playerGraveyards.get(ownerId).stream()
+                    .filter(c -> c.getId().equals(cardId)).findFirst().orElseThrow();
+            delayedEffect = new com.github.laxika.magicalvibes.model.effect.MayEffect(returnEffect,
+                    "Return " + returning.getName() + " to its owner's hand?");
+        }
         gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
-                entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null, returnEffect));
+                entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null, delayedEffect));
         log.info("Game {} - Delayed graveyard-to-hand return registered for card {} (owner {})",
                 gameData.id, cardId, ownerId);
     }

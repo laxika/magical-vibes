@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -26,7 +27,8 @@ public class ThunderscapeBattlemage extends Card {
 
     public ThunderscapeBattlemage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{G}")));
+        // "Kicker {1}{B} and/or {G}": paying the {G} kicker is a multikicker payment, so it kicks the spell.
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{G}"), true, 1));
 
         targetWhenKicked(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
@@ -38,6 +40,6 @@ public class ThunderscapeBattlemage extends Card {
                 new PermanentIsEnchantmentPredicate(), "Target must be an enchantment"), 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new RepeatedAdditionalCostPaid("{G}"),
-                                new DestroyTargetPermanentEffect()));
+                                new DestroyTargetPermanentEffect()), TriggerMode.INDEPENDENT);
     }
 }

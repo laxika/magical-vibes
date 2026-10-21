@@ -148,7 +148,9 @@ class ThreatenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(target)));
+        // Stop at declare attackers: with no possible blocker, auto-pass would otherwise finish combat and
+        // remove it from combat (CR 511.3) before the assertion.
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(target)));
 
         assertThat(target.isAttacking()).isTrue();
         assertThat(target.isTapped()).isTrue();

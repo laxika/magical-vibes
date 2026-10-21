@@ -37,6 +37,10 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
                 && enteringPermanentId.equals(entry.getAttachedPermanentSnapshot().getId())) {
             entering = entry.getAttachedPermanentSnapshot();
         }
+        if (entering == null && entry.lastKnownPermanentCard(enteringPermanentId) != null) {
+            entering = new com.github.laxika.magicalvibes.model.Permanent(
+                    entry.lastKnownPermanentCard(enteringPermanentId).createCardCopy());
+        }
         if (entering == null) return;
         UUID controllerId = entry.getControllerId();
         if (copyEffect.createForEnteringController()) {

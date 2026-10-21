@@ -142,8 +142,8 @@ class TormentorsTridentTest extends BaseCardTest {
                 List.of(gd.playerBattlefields.get(player1.getId()).indexOf(original))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
-        gs.declareAttackers(gd, player1,
-                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(replacement)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(replacement))));
 
         assertThat(original.isAttacking()).isFalse();
         assertThat(replacement.isAttacking()).isTrue();

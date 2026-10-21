@@ -50,7 +50,8 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEff
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                        && !gameQueryService.cantBeSacrificed(gameData, permanent)
+                        && gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, permanent)) {
                     creatureIds.add(permanent.getId());
                 }
             }

@@ -49,18 +49,21 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
         beginTargetChoice(gameData, context);
     }
 
-    private void beginTargetChoice(GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
+    /**
+     * Begins the per-token defender choice only when the defending player has a planeswalker or battle
+     * to attack besides the player. Returns {@code false} when there is no such choice to make.
+     */
+    public boolean beginTargetChoiceIfContested(GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
+        if (defendingPlayerPlaneswalkersAndBattles(gameData, context.controllerId()).isEmpty()) {
+            return false;
+        }
+        beginTargetChoice(gameData, context);
+        return true;
+    }
+
+    public void beginTargetChoice(GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
         UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());
-        // CR 508.4: a token put onto the battlefield attacking may attack a planeswalker the defending
-        // player controls or a battle the defending player protects.
-        List<UUID> planeswalkerIds = gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
-                        && opponentId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
-                        || (gameQueryService.isBattle(gameData, permanent)
-                        && opponentId.equals(permanent.getProtectorPlayerId())))
-                .map(Permanent::getId)
-                .toList();
+        List<UUID> planeswalkerIds = defendingPlayerPlaneswalkersAndBattles(gameData, context.controllerId());
 
         gameData.interaction.setPermanentChoiceContext(context);
         playerInputService.beginAnyTargetChoice(
@@ -70,5 +73,21 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
                 List.of(opponentId),
                 "Choose the player or planeswalker for the next " + context.tokenEffect().tokenName()
                         + " token to attack.");
+    }
+
+    /**
+     * CR 508.4: a token put onto the battlefield attacking may attack a planeswalker the defending
+     * player controls or a battle the defending player protects.
+     */
+    private List<UUID> defendingPlayerPlaneswalkersAndBattles(GameData gameData, UUID controllerId) {
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
+                        && opponentId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                        || (gameQueryService.isBattle(gameData, permanent)
+                        && opponentId.equals(permanent.getProtectorPlayerId())))
+                .map(Permanent::getId)
+                .toList();
     }
 }

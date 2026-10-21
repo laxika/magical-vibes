@@ -731,6 +731,23 @@ public sealed interface ManaRestriction {
             return "face-down spells or turning creatures face up only";
         }
     }
+
+    /**
+     * Mana spendable only to cast face-down spells or to turn creatures face up, whichever way they were
+     * turned face down (morph, disguise, manifest, cloak) — Tin Street Gossip. Unlike
+     * {@link FaceDownSpellsOrTurnFaceUp}, which is limited to morph costs and manifested creatures' costs.
+     */
+    record FaceDownSpellsOrTurnCreaturesFaceUp() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addFaceDownSpellsOrTurnCreaturesFaceUpMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "face-down spells or turning creatures face up only";
+        }
+    }
     /** Mana spendable only to cast colored spells whose mana cost does not contain {X}. */
     record ColoredSpellsWithoutX() implements ManaRestriction {
         @Override

@@ -93,13 +93,15 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
             log.info("Game {} - {} fizzles: source no longer attached", gameData.id, sourceName);
             return null;
         }
-        UUID attachedTo = source != null ? source.getAttachedTo() : null;
-        if (source == null && entry.getAttachedPermanentSnapshot() != null) {
-            attachedTo = entry.getAttachedPermanentSnapshot().getId();
-        }
-        if (source == null && attachedTo == null && entry.getSourcePermanentSnapshot() != null
-                && entry.getSourcePermanentSnapshot().isAttached()) {
+        UUID attachedTo = null;
+        if (source != null) {
+            attachedTo = source.getAttachedTo();
+        } else if (entry.getSourcePermanentSnapshot() != null) {
+            // The Aura left the battlefield: its last known information says what it was enchanting when
+            // it left (nothing if it was already unattached, CR 608.2h).
             attachedTo = entry.getSourcePermanentSnapshot().getAttachedTo();
+        } else if (entry.getAttachedPermanentSnapshot() != null) {
+            attachedTo = entry.getAttachedPermanentSnapshot().getId();
         }
         if (attachedTo == null) {
             log.info("Game {} - {} fizzles: source no longer attached", gameData.id, sourceName);

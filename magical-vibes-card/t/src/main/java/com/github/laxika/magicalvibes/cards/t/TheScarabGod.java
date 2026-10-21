@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "145")
 @CardRegistration(set = "AKR", collectorNumber = "259")
@@ -52,7 +53,12 @@ public class TheScarabGod extends Card {
                         false,
                         CardColor.BLACK,
                         4,
-                        4)),
+                        4,
+                        Set.of(),
+                        false,
+                        false,
+                        null,
+                        true)),
                 "{2}{U}{B}: Exile target creature card from a graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie."));
 
         // When The Scarab God dies, return it to its owner's hand at the beginning of the next end step.

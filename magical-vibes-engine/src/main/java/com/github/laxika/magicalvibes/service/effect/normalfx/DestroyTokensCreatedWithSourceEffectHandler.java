@@ -57,9 +57,11 @@ public class DestroyTokensCreatedWithSourceEffectHandler implements NormalEffect
             }
         }
         for (Permanent victim : victims) {
-            destructionSupport.tryDestroyAndLog(gameData, victim, entry.getCard().getName(),
-                    destroy.cannotBeRegenerated());
+            // A token that survives (indestructible, regenerated) stays linked to the source.
+            if (destructionSupport.tryDestroyAndLog(gameData, victim, entry.getCard().getName(),
+                    destroy.cannotBeRegenerated())) {
+                created.remove(victim.getId());
+            }
         }
-        created.removeAll(victims.stream().map(Permanent::getId).toList());
     }
 }

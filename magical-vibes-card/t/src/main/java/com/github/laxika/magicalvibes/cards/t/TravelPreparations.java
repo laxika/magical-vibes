@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TravelPreparations extends Card {
 
     public TravelPreparations() {
-        target(TargetFilters.creature(), 1, 2)
+        target(TargetFilters.creature(), 0, 2)
                 .addEffect(EffectSlot.SPELL, new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
         addCastingOption(new FlashbackCast("{1}{W}"));
     }

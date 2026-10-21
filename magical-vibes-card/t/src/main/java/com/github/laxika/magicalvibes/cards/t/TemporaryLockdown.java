@@ -22,6 +22,6 @@ public class TemporaryLockdown extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentMaxManaValuePredicate(2)
                 )),
-                false));
+                false, true));
     }
 }

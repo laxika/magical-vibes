@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
@@ -26,11 +27,11 @@ public class ThornscapeBattlemage extends Card {
         addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{W}")));
 
         targetWhenKicked(null, 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new Kicked(), new DealDamageToAnyTargetEffect(2)));
+                new ConditionalEffect(new Kicked(), new DealDamageToAnyTargetEffect(2)), TriggerMode.INDEPENDENT);
 
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{W}"), TargetFilters.artifact(), 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new RepeatedAdditionalCostPaid("{W}"),
-                                new DestroyTargetPermanentEffect()));
+                                new DestroyTargetPermanentEffect()), TriggerMode.INDEPENDENT);
     }
 }

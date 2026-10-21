@@ -25,7 +25,7 @@ public class TheManaRig extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}{X}{X}",
-                List.of(LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new XValue(), 2)),
+                List.of(LookAtTopCardsEffect.chooseUpToNToHandRestOnBottomRandom(new XValue(), 2)),
                 "{X}{X}{X}, {T}: Look at the top X cards of your library. Put up to two of them into your hand and the rest on the bottom of your library in a random order."
         ));
     }

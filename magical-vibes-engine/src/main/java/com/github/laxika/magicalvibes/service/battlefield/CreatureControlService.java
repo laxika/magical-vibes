@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -147,6 +149,25 @@ public class CreatureControlService {
     }
 
     /**
+     * Exchanges control of two permanents as one simultaneous event (CR 701.12a). The caller has
+     * already checked that both permanents may change controllers; both control effects are stamped
+     * before either is recomputed, so a "can't be controlled by other players" ability that the first
+     * permanent carries (Guardian Beast) can't block the second half once it has switched sides.
+     */
+    public void exchangeControl(GameData gameData, Permanent first, UUID firstNewControllerId,
+                                Permanent second, UUID secondNewControllerId,
+                                CardEffect wrappedEffect, EffectDuration duration, String sourceCardName) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), sourceCardName, null, firstNewControllerId,
+                wrappedEffect, first.getId(), null, null, duration, 0));
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), sourceCardName, null, secondNewControllerId,
+                wrappedEffect, second.getId(), null, null, duration, 0));
+        recomputeControl(gameData, first);
+        recomputeControl(gameData, second);
+    }
+
+    /**
      * Applies the control changes queued by a spent Debt of Loyalty regeneration shield
      * ({@link GameData#pendingRegenerationControlChanges}). Regeneration is resolved inside the
      * state-based-action sweep, which iterates the battlefield lists this moves permanents between,
@@ -235,6 +256,12 @@ public class CreatureControlService {
         removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
         gameData.playerBattlefields.get(derived).add(permanent);
+        // "For as long as you control" untap locks on this permanent end when its controller loses
+        // control; the lock is dropped rather than resuming if control returns (CR 611.2b).
+        gameData.floatingEffects.removeIf(fe -> fe.effect() instanceof DoesntUntapEffect lock
+                && lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
+                && permanent.getId().equals(fe.sourcePermanentId())
+                && !derived.equals(fe.controllerId()));
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
         if (creaturePositioningSupport != null) {

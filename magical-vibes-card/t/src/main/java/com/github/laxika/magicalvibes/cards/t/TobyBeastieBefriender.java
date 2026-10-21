@@ -33,6 +33,6 @@ public class TobyBeastieBefriender extends Card {
                 Map.of(EffectSlot.STATIC, new CantAttackOrBlockAloneEffect())));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanentCount(4, creatureToken),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES, creatureToken)));
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, creatureToken)));
     }
 }

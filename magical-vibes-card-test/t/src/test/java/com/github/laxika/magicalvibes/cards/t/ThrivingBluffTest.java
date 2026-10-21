@@ -66,7 +66,7 @@ class ThrivingBluffTest extends BaseCardTest {
     @EnumSource(value = CardColor.class, names = {"WHITE", "BLUE", "BLACK", "GREEN"})
     @DisplayName("Each allowed entrance choice produces exactly one mana immediately")
     void chosenColorProducesManaAfterEntering(CardColor color) {
-        Permanent bluff = harness.enterBattlefieldAndReturn(player1, new ThrivingBluff());
+        Permanent bluff = harness.enterLandBattlefieldAndReturn(player1, new ThrivingBluff());
         assertThat(bluff.isTapped()).isTrue();
         harness.handleListChoice(player1, color.name());
         assertThat(gd.stack).isEmpty();
@@ -85,7 +85,7 @@ class ThrivingBluffTest extends BaseCardTest {
     @Test
     @DisplayName("Red cannot be submitted as the entrance color choice")
     void rejectsRedChoice() {
-        Permanent bluff = harness.enterBattlefieldAndReturn(player1, new ThrivingBluff());
+        Permanent bluff = harness.enterLandBattlefieldAndReturn(player1, new ThrivingBluff());
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "RED"))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -99,9 +99,9 @@ class ThrivingBluffTest extends BaseCardTest {
     @Test
     @DisplayName("Each Bluff remembers its own chosen color")
     void multipleBluffsKeepIndependentChoices() {
-        Permanent first = harness.enterBattlefieldAndReturn(player1, new ThrivingBluff());
+        Permanent first = harness.enterLandBattlefieldAndReturn(player1, new ThrivingBluff());
         harness.handleListChoice(player1, "WHITE");
-        Permanent second = harness.enterBattlefieldAndReturn(player1, new ThrivingBluff());
+        Permanent second = harness.enterLandBattlefieldAndReturn(player1, new ThrivingBluff());
         harness.handleListChoice(player1, "BLACK");
         harness.performUntapStep(player1);
 

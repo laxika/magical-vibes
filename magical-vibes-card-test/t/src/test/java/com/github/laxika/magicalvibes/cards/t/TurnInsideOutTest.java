@@ -111,7 +111,7 @@ class TurnInsideOutTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(target.getEffectivePower()).isEqualTo(5);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         harness.addMana(player1, ManaColor.RED, 1);

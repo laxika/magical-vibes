@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Resolves post-spell card-advantage trigger markers at the point the spell finishes resolving. */
@@ -18,11 +20,40 @@ public final class CardAdvantagePostResolutionService {
     private CardAdvantagePostResolutionService() {
     }
 
+    /**
+     * Recaptures the card counts a card-advantage trigger compares against, as the spell begins to
+     * resolve: card advantage is measured against the state before that spell resolved, so changes
+     * made by spells that resolved after it was cast do not count toward it.
+     */
+    public static void snapshotBeforeResolution(GameData gameData, StackEntry spellEntry) {
+        List<CardEffect> pending = spellEntry.getPostResolutionEffects();
+        if (pending.isEmpty()) {
+            return;
+        }
+        List<CardEffect> updated = new java.util.ArrayList<>(pending.size());
+        for (CardEffect effect : pending) {
+            if (effect instanceof CardAdvantageSpellCastTriggerEffect trigger && trigger.isPrepared()) {
+                Map<UUID, Integer> counts = new HashMap<>();
+                for (UUID playerId : gameData.playerIds) {
+                    counts.put(playerId, cardResourceCount(gameData, playerId));
+                }
+                if (trigger.handSpellOwnerId() != null) {
+                    counts.merge(trigger.handSpellOwnerId(), 1, Integer::sum);
+                }
+                updated.add(trigger.withCardCountsBefore(counts));
+            } else {
+                updated.add(effect);
+            }
+        }
+        spellEntry.replacePostResolutionEffects(updated);
+    }
+
     public static void process(GameData gameData, StackEntry spellEntry) {
         for (CardEffect effect : spellEntry.takePostResolutionEffects()) {
             if (!(effect instanceof CardAdvantageSpellCastTriggerEffect trigger)
                     || !trigger.isPrepared()
-                    || !causedCardAdvantage(gameData, trigger)) {
+                    || !causedCardAdvantage(gameData, trigger)
+                    || !sourceOnBattlefield(gameData, trigger.sourcePermanentId())) {
                 continue;
             }
 
@@ -51,6 +82,13 @@ public final class CardAdvantagePostResolutionService {
                         - trigger.cardCountsBefore().getOrDefault(playerId, 0))
                 .sum();
         return controllerDelta > opponentsDelta;
+    }
+
+    private static boolean sourceOnBattlefield(GameData gameData, UUID sourcePermanentId) {
+        return gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .anyMatch(permanent -> permanent.getId().equals(sourcePermanentId));
     }
 
     private static int cardResourceCount(GameData gameData, UUID playerId) {

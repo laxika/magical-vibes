@@ -17,7 +17,7 @@ public class ToralfGodOfFury extends Card {
         setBackFaceCard(new ToralfHammer());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE,
+        addEffect(EffectSlot.ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_NONCOMBAT_DAMAGE,
                 new DealDamageToAnyTargetEffect(new XValue()));
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Toralf, God of Fury", List.of())

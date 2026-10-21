@@ -30,8 +30,8 @@ public class TheSibsigCeremony extends Card {
 
         // Whenever a creature you control enters, if you cast it, destroy that creature, then
         // create a 2/2 black Zombie Druid creature token.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new ConditionalEffect(
-                new WasCast(), SequenceEffect.of(
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, ConditionalEffect.atTriggerTime(
+                new WasCast(true), SequenceEffect.of(
                         new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING),
                         new CreateTokenEffect("Zombie Druid", 2, 2, CardColor.BLACK,
                                 List.of(CardSubtype.ZOMBIE, CardSubtype.DRUID), Set.of(), Set.of()))));

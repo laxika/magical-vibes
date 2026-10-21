@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.PreviousActivePlayerCastTwoOrMoreSpellsLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
@@ -29,7 +29,7 @@ public class TovolarsPackleader extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, wolfTokens());
         addEffect(EffectSlot.ON_ATTACK, wolfTokens());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
+                new ConditionalEffect(new PreviousActivePlayerCastTwoOrMoreSpellsLastTurn(), new TransformSelfEffect()));
 
         TargetFilter wolfOrWerewolfYouControl = new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

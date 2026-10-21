@@ -17,7 +17,7 @@ public class TwoHandedAxe extends Card {
         setBackFaceCard(new SweepingCleave());
         addCastingOption(new AdventureCast("{1}{R}"));
         addEffect(EffectSlot.ON_ATTACK,
-                new BoostEquippedCreatureUntilEndOfTurnEffect(new SourcePower(), new Fixed(0)));
+                new BoostEquippedCreatureUntilEndOfTurnEffect(new SourcePower(true), new Fixed(0)));
         addActivatedAbility(new EquipActivatedAbility("{1}{R}"));
     }
 

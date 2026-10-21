@@ -160,6 +160,7 @@ class TunnelTipsterTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(tipster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         beginEndStep(player1);
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -31,13 +32,11 @@ public class TribalGolem extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addActivatedAbility(new ActivatedAbility(
-                false,
-                "{B}",
-                List.of(new RegenerateEffect()),
-                "{B}: Regenerate this creature."
-        ).withActivationCondition(
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
-                "Activate only if you control a Zombie."));
+                new GrantActivatedAbilityEffect(
+                        new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
+                                "{B}: Regenerate this creature."),
+                        GrantScope.SELF)));
     }
 }

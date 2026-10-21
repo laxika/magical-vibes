@@ -341,6 +341,9 @@ public class PhasingService {
      * from combat).
      */
     private void movePhasedOut(GameData gameData, Set<Permanent> phasingOut) {
+        if (!phasingOut.isEmpty()) {
+            triggerCollectionService.checkOtherPermanentPhasesOutTriggers(gameData, List.copyOf(phasingOut));
+        }
         phasingOut.forEach(permanent -> {
             UUID controllerId = controllerOf(gameData, permanent);
             if (controllerId == null) {

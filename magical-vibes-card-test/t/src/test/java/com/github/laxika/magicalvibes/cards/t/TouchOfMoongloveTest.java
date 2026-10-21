@@ -132,7 +132,7 @@ class TouchOfMoongloveTest extends BaseCardTest {
         castOn(attacker);
 
         harness.resolveCombatDamage();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         harness.assertLife(player2, 16);

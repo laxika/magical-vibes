@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstMatchingSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
@@ -23,8 +22,7 @@ public class TuvasaTheSunlit extends Card {
         PermanentCount enchantmentsYouControl =
                 new PermanentCount(new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new BoostSelfEffect(enchantmentsYouControl, enchantmentsYouControl));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new OncePerTurnTriggerEffect(
-                new SpellCastTriggerEffect(new CardTypePredicate(CardType.ENCHANTMENT),
-                        List.of(new DrawCardEffect()))));
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new FirstMatchingSpellCastTriggerEffect(
+                new CardTypePredicate(CardType.ENCHANTMENT), List.of(new DrawCardEffect())));
     }
 }

@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToB
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutUnplayedExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
@@ -305,6 +306,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -857,28 +859,36 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(ExileToOwnerGraveyardAtNextUpkeep.class)) {
             List<ExileToOwnerGraveyardAtNextUpkeep> pending = gameData.drainDelayedActions(
                     ExileToOwnerGraveyardAtNextUpkeep.class, a -> a.controllerId().equals(gameData.activePlayerId));
+            // Cards exiled by one resolution share a single delayed trigger ("put any of those cards you
+            // didn't play into your graveyard").
+            Map<List<Object>, List<UUID>> unplayedBySource = new LinkedHashMap<>();
+            Map<List<Object>, ExileToOwnerGraveyardAtNextUpkeep> firstBySource = new LinkedHashMap<>();
             for (ExileToOwnerGraveyardAtNextUpkeep action : pending) {
                 gameData.exilePlayPermissions.remove(action.cardId());
                 gameData.exilePlayCostModifiers.remove(action.cardId());
-                var exiled = gameData.findExiledCard(action.cardId());
-                if (exiled == null) {
+                if (gameData.findExiledCard(action.cardId()) == null) {
                     // The card was played (or otherwise left exile) — nothing to clean up.
                     continue;
                 }
-                String sourceName = action.sourceCard() != null ? action.sourceCard().getName() : "an effect";
+                List<Object> key = Arrays.asList(
+                        action.sourceCard() != null ? action.sourceCard().getId() : null, action.controllerId());
+                unplayedBySource.computeIfAbsent(key, ignored -> new ArrayList<>()).add(action.cardId());
+                firstBySource.putIfAbsent(key, action);
+            }
+            for (Map.Entry<List<Object>, List<UUID>> batch : unplayedBySource.entrySet()) {
+                ExileToOwnerGraveyardAtNextUpkeep first = firstBySource.get(batch.getKey());
+                String sourceName = first.sourceCard() != null ? first.sourceCard().getName() : "an effect";
                 StackEntry cleanup = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
-                        action.sourceCard() != null ? action.sourceCard() : exiled.card(),
-                        action.controllerId(),
-                        sourceName + "'s delayed ability — put the unplayed card into its owner's graveyard",
-                        new ArrayList<>(List.of(new PutTargetCardFromExileIntoOwnersGraveyardEffect())),
-                        null,
-                        (Zone) null
-                );
-                cleanup.setTargetId(action.cardId());
-                cleanup.setTargetZone(Zone.EXILE);
+                        first.sourceCard() != null ? first.sourceCard()
+                                : gameData.findExiledCard(batch.getValue().getFirst()).card(),
+                        first.controllerId(),
+                        sourceName + "'s delayed ability — put the unplayed cards into their owners' graveyards",
+                        new ArrayList<>(List.of(new PutUnplayedExiledCardsIntoOwnersGraveyardEffect())),
+                        new ArrayList<>(batch.getValue()));
+                cleanup.setNonTargeting(true);
                 gameData.stack.add(cleanup);
-                log.info("Game {} - delayed cleanup for unplayed card exiled with {} pushed onto stack",
+                log.info("Game {} - delayed cleanup for unplayed cards exiled with {} pushed onto stack",
                         gameData.id, sourceName);
             }
         }

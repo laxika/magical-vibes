@@ -26,9 +26,11 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -141,7 +143,7 @@ public class EtbEffectResolver {
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), ctx.madness(), false, false,
-                    sourceZone, 0, ctx.targetId(), null, false, false, false, null, null, null,
+                    sourceZone, ctx.xValue(), ctx.targetId(), null, false, false, false, null, null, null,
                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
                     false, collectEvidenceCostPaid, false, 0, false);
@@ -241,6 +243,18 @@ public class EtbEffectResolver {
                 // the conditional effect when met (re-checked at stack resolution), drop it when not.
                 case Condition gate when gate.isEtbTriggerGate() && conditional.interveningIf() ->
                         conditionEvaluationService.isMet(ctx.gameData(), gate, conditionContext)
+                                ? effect : null;
+                // Ravenous (CR 702.156a): "if X is 5 or more" is an intervening-if on the cast X, so the
+                // draw trigger is never put on the stack when X is smaller. The conditional is kept so
+                // it is rechecked on resolution.
+                case SpellXAtLeast xAtLeast ->
+                        conditionEvaluationService.isMet(ctx.gameData(), xAtLeast, conditionContext)
+                                ? effect : null;
+                // "When this enters, if there is no monarch" (CR 603.4): the monarch is checked as the
+                // trigger event occurs, so the ability is never put on the stack when a monarch exists.
+                // The conditional is kept so the condition is rechecked on resolution.
+                case NoMonarch noMonarch ->
+                        conditionEvaluationService.isMet(ctx.gameData(), noMonarch, conditionContext)
                                 ? effect : null;
                 // "if you revealed a Dragon card or controlled a Dragon as you cast this spell" (CR 603.4):
                 // both halves are cast-time facts recorded on the entering permanent, so the trigger is

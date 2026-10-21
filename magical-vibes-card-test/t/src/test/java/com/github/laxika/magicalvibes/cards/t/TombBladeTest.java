@@ -64,7 +64,7 @@ class TombBladeTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Tomb Blade").getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(findPermanent(player1, "Tomb Blade").getPersistentGrantedKeywords()).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

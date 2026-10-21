@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -61,7 +62,7 @@ public class EarthbendTargetLandEffectHandler implements NormalEffectHandlerBean
         }
 
         AnimatePermanentsEffect animation = new AnimatePermanentsEffect(
-                0, 0, List.of(), Set.of(Keyword.HASTE), null, Set.of(),
+                0, 0, List.of(), Set.of(Keyword.HASTE), null, Set.of(CardType.LAND),
                 GrantScope.TARGET, EffectDuration.PERMANENT);
         boolean applied = false;
         for (UUID targetId : targetIds) {

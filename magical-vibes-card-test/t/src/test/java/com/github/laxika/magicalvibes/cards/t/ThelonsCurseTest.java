@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -123,7 +124,8 @@ class ThelonsCurseTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId())));
 
         assertThat(chosen.isTapped()).isFalse();
         assertThat(unchosen.isTapped()).isTrue();

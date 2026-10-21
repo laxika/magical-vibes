@@ -53,7 +53,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
         // The copies take the spell's targets as they stand now (CR 707.10), so a change made while the
         // trigger was on the stack, such as a redirect, is honored.
         StackEntry copySource = liveSpellEntry(gameData, spellSnapshot);
-        int copyCount = copySupport.adjustedSpellCopyCount(gameData, copies);
+        int copyCount = copySupport.adjustedSpellCopyCount(gameData, castingPlayerId, copies);
         for (int i = 0; i < copyCount; i++) {
             Card copyCard = copySupport.createCopyCard(spellCard);
             if (e.tokenCopy()) {

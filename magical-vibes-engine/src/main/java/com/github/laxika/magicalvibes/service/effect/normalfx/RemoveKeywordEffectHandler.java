@@ -52,6 +52,7 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
             }
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourcePermanentId(entry.getSourcePermanentId())
                     .withSourceControllerId(entry.getControllerId());
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
@@ -72,6 +73,7 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
                 || remove.scope() == GrantScope.ALL_PERMANENTS) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourcePermanentId(entry.getSourcePermanentId())
                     .withSourceControllerId(entry.getControllerId());
             for (UUID playerId : gameData.playerIds) {
                 if (remove.scope() == GrantScope.OPPONENT_CREATURES

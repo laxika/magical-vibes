@@ -21,10 +21,11 @@ class TitheDrinkerTest extends BaseCardTest {
     void payingExtortWithBlackDrainsOpponent() {
         harness.addToBattlefield(player1, new TitheDrinker());
         harness.setHand(player1, List.of(new KraulWarrior()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -45,6 +46,7 @@ class TitheDrinkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, 20);
@@ -75,6 +77,7 @@ class TitheDrinkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -121,6 +124,7 @@ class TitheDrinkerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KraulWarrior()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

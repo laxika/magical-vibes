@@ -267,6 +267,7 @@ class TwistsAndTurnsTest extends BaseCardTest {
     @Test
     void backFaceCanDeclineTheCreatureAndKeepsUnlookedCardsOnTop() {
         Permanent maze = addTransformedMaze(player1);
+        harness.setHand(player1, List.of());
         Card creature = new CenoteScout();
         Card firstLand = new Forest();
         Card secondLand = new Forest();
@@ -291,6 +292,7 @@ class TwistsAndTurnsTest extends BaseCardTest {
     @Test
     void backFaceWorksWithFewerThanFourCards() {
         addTransformedMaze(player1);
+        harness.setHand(player1, List.of());
         Card creature = new CenoteScout();
         Card land = new Forest();
         harness.setLibrary(player1, List.of(creature, land));
@@ -308,6 +310,7 @@ class TwistsAndTurnsTest extends BaseCardTest {
     @Test
     void backFaceWithNoCreatureLeavesAllLookedCardsInTheLibrary() {
         addTransformedMaze(player1);
+        harness.setHand(player1, List.of());
         Card firstLand = new Forest();
         Card secondLand = new Forest();
         harness.setLibrary(player1, List.of(firstLand, secondLand));

@@ -189,8 +189,15 @@ class TombstoneStairwellTest extends BaseCardTest {
         advanceToEndStep();
         assertThat(findPermanents(player1, "Tombspawn")).containsExactly(tombspawn);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        // Cleanup gives no priority, so the next turn's upkeep is the first stop after "until end of turn" ended.
+        harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, tombspawn, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Disenchant()));

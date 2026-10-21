@@ -154,6 +154,8 @@ class TrainingDroneTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BludgeonBrawl());
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new IchorWellspring());
         equipment.setAttachedTo(drone.getId());
+        // A potential blocker keeps combat open after attackers are declared, as in canAttackWithEquipment.
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

@@ -38,6 +38,7 @@ public class TombFortress extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
+                                .mandatory(true)
                                 .build()
                 ),
                 "{2}{B}{B}{B}, {T}, Exile this land: Mill four cards, then return a creature card from your graveyard to the battlefield. Activate only as a sorcery.",

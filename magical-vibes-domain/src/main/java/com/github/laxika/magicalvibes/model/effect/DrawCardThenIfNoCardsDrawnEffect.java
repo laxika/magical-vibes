@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
-/** Draws cards and resolves the follow-up only when this effect drew no cards. */
+/**
+ * Draws cards and resolves the follow-up only when this effect drew no cards. Neither effect may
+ * declare a real target; a source-referencing effect (self-targeting spec) is allowed.
+ */
 public record DrawCardThenIfNoCardsDrawnEffect(DrawCardEffect drawEffect, CardEffect thenEffect,
                                                 Integer drawnCountBefore)
         implements CardDrawingEffect {
@@ -11,7 +14,8 @@ public record DrawCardThenIfNoCardsDrawnEffect(DrawCardEffect drawEffect, CardEf
         if (drawEffect == null || thenEffect == null) {
             throw new IllegalArgumentException("DrawCardThenIfNoCardsDrawnEffect requires both effects");
         }
-        if (drawEffect.targetSpec() != TargetSpec.NONE || thenEffect.targetSpec() != TargetSpec.NONE) {
+        if (drawEffect.targetSpec().declaredTarget() != null
+                || thenEffect.targetSpec().declaredTarget() != null) {
             throw new IllegalArgumentException(
                     "DrawCardThenIfNoCardsDrawnEffect requires non-targeting effects");
         }

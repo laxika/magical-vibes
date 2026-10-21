@@ -26,7 +26,7 @@ public class TransmograntAltar extends Card {
         ));
 
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{2}",
                 List.of(
                         new SacrificeCreatureCost(),

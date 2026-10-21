@@ -126,7 +126,7 @@ class TrevaTheRenewerTest extends BaseCardTest {
 
         harness.assertLife(player1, before);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gameLogContains("cannot pay {2}{W}")).isTrue();
     }
 
     @Test

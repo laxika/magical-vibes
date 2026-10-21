@@ -30,7 +30,7 @@ public class TheSpearOfLeonidas extends Card {
         addEffect(EffectSlot.ON_ATTACK, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Bull Rush — It gains double strike until end of turn",
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE)),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TRIGGERING_PERMANENT)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Summon — Create Phobos, a legendary 3/2 red Horse creature token",
                         phobos),

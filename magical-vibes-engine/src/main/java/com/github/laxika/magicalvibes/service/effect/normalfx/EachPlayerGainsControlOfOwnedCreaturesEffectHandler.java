@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -41,7 +42,7 @@ public class EachPlayerGainsControlOfOwnedCreaturesEffectHandler implements Norm
                 return;
             }
             UUID ownerId = gameData.defaultControllerOf(permanent.getId());
-            if (ownerId != null && !ownerId.equals(controllerId)) {
+            if (ownerId != null && needsPermanentControlByOwner(gameData, permanent, ownerId, controllerId)) {
                 creaturesToReturn.add(new OwnedCreature(ownerId, permanent));
             }
         });
@@ -51,6 +52,22 @@ public class EachPlayerGainsControlOfOwnedCreaturesEffectHandler implements Norm
             creatureControlService.applyControlEffect(gameData, ownedCreature.ownerId(), ownedCreature.permanent(),
                     controlEffect, EffectDuration.PERMANENT, null, entry.getCard().getName());
         }
+    }
+
+    /**
+     * An owner already holding a creature through a temporary control effect (a stolen creature that
+     * was regained until end of turn) still gains control of it permanently, so the permanent effect
+     * outlives the temporary one. A creature whose newest control effect already gives it to its owner
+     * permanently needs no new effect.
+     */
+    private boolean needsPermanentControlByOwner(GameData gameData, Permanent permanent, UUID ownerId,
+                                                 UUID controllerId) {
+        if (!ownerId.equals(controllerId)) {
+            return true;
+        }
+        FloatingContinuousEffect newest = gameData.newestControlEffectFor(permanent.getId());
+        return newest != null && !(newest.duration() == EffectDuration.PERMANENT
+                && ownerId.equals(gameData.resolveControlEffectController(newest)));
     }
 
     private record OwnedCreature(UUID ownerId, Permanent permanent) {

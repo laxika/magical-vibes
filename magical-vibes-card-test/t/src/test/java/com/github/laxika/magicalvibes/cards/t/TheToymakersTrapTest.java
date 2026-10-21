@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,6 +12,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheToymakersTrap.class})
 class TheToymakersTrapTest extends BaseCardTest {
+
+    /** Cards the active player draws in their own draw step once the upkeep trigger finishes. */
+    private static final int DRAW_STEP_CARDS = 1;
+
+    private static List<Card> trapCards(int count) {
+        return java.util.stream.IntStream.range(0, count).<Card>mapToObj(i -> new TheToymakersTrap()).toList();
+    }
 
     @Test
     void wrongGuessMakesOpponentLoseGuessedLifeAndDraws() {
@@ -116,29 +124,30 @@ class TheToymakersTrapTest extends BaseCardTest {
     @Test
     void exhaustedNumbersDoNothingAndLeaveTheTrapOnTheBattlefield() {
         harness.addToBattlefield(player1, new TheToymakersTrap());
-        harness.setLibrary(player1, List.of(new TheToymakersTrap(), new TheToymakersTrap(),
-                new TheToymakersTrap(), new TheToymakersTrap(), new TheToymakersTrap(),
-                new TheToymakersTrap()));
+        harness.setLibrary(player1, trapCards(20));
         harness.setLife(player2, 20);
-        int handBefore = gd.playerHands.get(player1.getId()).size();
 
+        int trapDraws = 0;
         for (int chosen = 1; chosen <= 5; chosen++) {
+            harness.setHand(player1, List.of());
             gd.turnNumber = chosen + 1;
             advanceToUpkeep(player1);
             resolveAllTriggers();
             harness.handleListChoice(player1, Integer.toString(chosen));
             harness.handleListChoice(player2, chosen == 1 ? "2" : "1");
+            trapDraws += gd.playerHands.get(player1.getId()).size() - DRAW_STEP_CARDS;
         }
 
         harness.assertLife(player2, 14);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 5);
+        assertThat(trapDraws).isEqualTo(5);
+        harness.setHand(player1, List.of());
         gd.turnNumber++;
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player2, 14);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(DRAW_STEP_CARDS);
         harness.assertOnBattlefield(player1, "The Toymaker's Trap");
     }
 
@@ -160,25 +169,26 @@ class TheToymakersTrapTest extends BaseCardTest {
     @Test
     void correctGuessDoesNotLoseLifeOrDrawACard() {
         harness.addToBattlefield(player1, new TheToymakersTrap());
-        harness.setLibrary(player1, List.of(new TheToymakersTrap()));
+        harness.setLibrary(player1, trapCards(2));
         harness.setLife(player2, 20);
-        int handBefore = gd.playerHands.get(player1.getId()).size();
 
         gd.turnNumber = 2;
         advanceToUpkeep(player1);
         resolveAllTriggers();
+        int handAtUpkeep = gd.playerHands.get(player1.getId()).size();
         harness.handleListChoice(player1, "5");
         harness.handleListChoice(player2, "5");
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        // The trap draws nothing on a correct guess; the only card drawn is the turn's own draw step.
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handAtUpkeep + DRAW_STEP_CARDS);
         harness.assertInGraveyard(player1, "The Toymaker's Trap");
     }
 
     @Test
     void returningToTheBattlefieldResetsPreviouslyChosenNumbers() {
         var trap = harness.addToBattlefieldAndReturn(player1, new TheToymakersTrap());
-        harness.setLibrary(player1, List.of(new TheToymakersTrap()));
+        harness.setLibrary(player1, trapCards(10));
 
         gd.turnNumber = 2;
         advanceToUpkeep(player1);

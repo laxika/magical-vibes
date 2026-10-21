@@ -31,18 +31,34 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileDiscardedCardFromGraveyardEffect exileEffect = (ExileDiscardedCardFromGraveyardEffect) effect;
-        if (entry.getTriggeringCardId() == null
-                || (exileEffect.trackWithSource() && entry.getSourcePermanentId() == null)) {
+        if (exileEffect.trackWithSource() && entry.getSourcePermanentId() == null) {
             return;
         }
+        if (!entry.getTriggeringCardIds().isEmpty()) {
+            // One discard event: exile every card it discarded that is still the same graveyard object.
+            for (UUID cardId : entry.getTriggeringCardIds()) {
+                exileFromGraveyard(gameData, entry, exileEffect, cardId,
+                        entry.getTargetCardGraveyardVersions().getOrDefault(cardId, -1L));
+            }
+            return;
+        }
+        if (entry.getTriggeringCardId() == null) {
+            return;
+        }
+        exileFromGraveyard(gameData, entry, exileEffect, entry.getTriggeringCardId(),
+                entry.getTriggeringCardGraveyardEntryVersion());
+    }
 
+    private void exileFromGraveyard(GameData gameData, StackEntry entry,
+                                    ExileDiscardedCardFromGraveyardEffect exileEffect,
+                                    UUID discardedCardId, long expectedVersion) {
         UUID ownerId = null;
         Card discarded = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             discarded = graveyard.stream()
-                    .filter(card -> entry.getTriggeringCardId().equals(card.getId()))
+                    .filter(card -> discardedCardId.equals(card.getId()))
                     .findFirst()
                     .orElse(null);
             if (discarded != null) {
@@ -53,7 +69,6 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
         if (discarded == null) {
             return;
         }
-        long expectedVersion = entry.getTriggeringCardGraveyardEntryVersion();
         if (expectedVersion >= 0 && expectedVersion != gameData.graveyardEntryVersion(discarded.getId())) {
             return;
         }

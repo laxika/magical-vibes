@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
@@ -21,7 +22,8 @@ public class ThoughtGorger extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new CardsInHand(CountScope.CONTROLLER)),
-                new ConditionalEffect(new SourceIsOnBattlefield(), new DiscardHandEffect())));
+                new ConditionalEffect(new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE),
+                        new ConditionalEffect(new SourceIsOnBattlefield(), new DiscardHandEffect()))));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new DrawCardEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
     }

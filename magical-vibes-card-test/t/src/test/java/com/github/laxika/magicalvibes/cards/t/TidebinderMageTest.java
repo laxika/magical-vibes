@@ -38,7 +38,8 @@ class TidebinderMageTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(bears.isTapped()).isTrue();
-            assertThat(bears.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+            harness.performUntapStep(player2);
+            assertThat(bears.isTapped()).isTrue();
         }
 
         @Test
@@ -51,7 +52,8 @@ class TidebinderMageTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(giant.isTapped()).isTrue();
-            assertThat(giant.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+            harness.performUntapStep(player2);
+            assertThat(giant.isTapped()).isTrue();
         }
     }
 

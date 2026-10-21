@@ -29,7 +29,7 @@ public class TranscendentDragon extends Card {
                 )),
                 "Target must be a spell."
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new WasCast(),
-                        new CounterSpellAndExileThenGrantFreeCastPermissionEffect()));
+                new ConditionalEffect(new WasCast(true),
+                        new CounterSpellAndExileThenGrantFreeCastPermissionEffect(false, true)));
     }
 }

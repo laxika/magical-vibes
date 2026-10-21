@@ -69,6 +69,7 @@ class TimebenderTest extends BaseCardTest {
         AncestralVision target = suspendedAncestralVision(1);
 
         chooseModeAndTarget("Remove two time counters", target.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

@@ -42,12 +42,21 @@ public class TibaltTrickeryEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID targetControllerId;
+        String targetSpellName;
         StackEntry targetSpell = findTargetSpell(gameData, entry.getTargetId());
-        if (targetSpell == null) {
-            return;
+        if (targetSpell != null) {
+            targetControllerId = targetSpell.getControllerId();
+            targetSpellName = targetSpell.getCard().getName();
+        } else {
+            // The preceding counter effect already moved the spell off the stack; use its last known state.
+            Card lastKnown = entry.getTargetId() == null ? null : entry.lastKnownPermanentCard(entry.getTargetId());
+            targetControllerId = entry.getCounteredSpellControllerId();
+            if (lastKnown == null || targetControllerId == null) {
+                return;
+            }
+            targetSpellName = lastKnown.getName();
         }
-
-        UUID targetControllerId = targetSpell.getControllerId();
         UUID sourceId = entry.getCard().getId();
         int millCount = ThreadLocalRandom.current().nextInt(1, 4);
         graveyardService.resolveMillPlayer(gameData, targetControllerId, millCount);
@@ -57,7 +66,6 @@ public class TibaltTrickeryEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        String targetSpellName = targetSpell.getCard().getName();
         Card found = null;
         int exiledCount = 0;
         while (!library.isEmpty()) {

@@ -386,6 +386,15 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * The payer of a ward-waterbend cost (CR 701.67a) chooses which untapped artifacts and creatures to
+     * tap for generic mana of {@code amount}; the rest is paid with mana. At least {@code minimumTaps}
+     * permanents must be chosen because the mana pool cannot cover the remainder.
+     */
+    record WardWaterbendPayment(Card sourceCard, UUID targetedObjectId, int amount, int minimumTaps)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * The affected player chooses the required number of permanents to untap, or fewer when
      * {@code upTo} is true.
      */

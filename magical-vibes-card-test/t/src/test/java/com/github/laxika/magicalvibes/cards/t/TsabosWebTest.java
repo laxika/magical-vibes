@@ -46,7 +46,7 @@ class TsabosWebTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(keldonNecropolis.isTapped()).isTrue();
         assertThat(forest.isTapped()).isFalse();

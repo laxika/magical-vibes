@@ -156,10 +156,9 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
 
         // Exchange: give the controller's permanent to the opponent, and the opponent's to the controller.
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
-        creatureControlService.applyControlEffect(gameData, opponentController, ownTarget,
-                controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null, entry.getCard().getName());
-        creatureControlService.applyControlEffect(gameData, ownController, opponentTarget,
-                controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null, entry.getCard().getName());
+        creatureControlService.exchangeControl(gameData, ownTarget, opponentController,
+                opponentTarget, ownController, controlEffect,
+                ControlDuration.PERMANENT.toEffectDuration(), entry.getCard().getName());
 
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),

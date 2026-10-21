@@ -77,7 +77,8 @@ class ThroatWolfTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0)));
         assertThat(wolf.isAttacking()).isTrue();
     }
 
@@ -118,7 +119,7 @@ class ThroatWolfTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveCombat);
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(wall.getMarkedDamage()).isEqualTo(3);

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.FlipTwoCoinsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,12 +44,6 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
 
         String firstResult = (firstFlip ? "heads" : "tails") + coinFlipService.replacementDetails(firstResultValue);
         String secondResult = (secondFlip ? "heads" : "tails") + coinFlipService.replacementDetails(secondResultValue);
-        if (firstFlip && firstResultValue.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-        }
-        if (secondFlip && secondResultValue.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-        }
 
         gameLogService.append(gameData, GameLog.text(playerName + " flips two coins for " + sourceName + ": " + firstResult + " and " + secondResult + "."));
 

@@ -121,6 +121,7 @@ class ThoughtstealSpritesTest extends BaseCardTest {
     @Test
     void opponentCastingDoesNotTrigger() {
         harness.addToBattlefield(player1, new ThoughtstealSprites());
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new DarkRitual()));
         harness.addMana(player2, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
         enterOpponentTurn();
@@ -134,6 +135,7 @@ class ThoughtstealSpritesTest extends BaseCardTest {
 
     @Test
     void doubleTeamConjuresDuplicateAndBothLoseDoubleTeam() {
+        harness.setHand(player1, List.of());
         Permanent sprites = addCreatureReady(player1, new ThoughtstealSprites());
 
         declareAttackers(List.of(0));
@@ -159,6 +161,7 @@ class ThoughtstealSpritesTest extends BaseCardTest {
     void tokenDoesNotDoubleTeam() {
         ThoughtstealSprites token = new ThoughtstealSprites();
         token.setToken(true);
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, token);
 
         declareAttackers(List.of(0));

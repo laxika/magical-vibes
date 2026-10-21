@@ -279,6 +279,18 @@ public class MayPenaltyChoiceHandlerService {
 
         String costText = "{" + amount + "} using waterbend";
         if (accepted && waterbendPaymentService.canPay(gameData, player.getId(), amount)) {
+            List<UUID> choosable = waterbendPaymentService.untappedArtifactsAndCreatures(gameData, player.getId());
+            int minimumTaps = waterbendPaymentService.minimumTaps(gameData, player.getId(), amount);
+            if (choosable.size() > minimumTaps) {
+                // The payer decides which permanents to tap (CR 701.67a); the cost is paid once they choose.
+                playerInputService.beginMultiPermanentChoice(gameData, player.getId(), choosable,
+                        Math.min(amount, choosable.size()),
+                        new MultiPermanentChoiceContext.WardWaterbendPayment(
+                                ability.sourceCard(), targetCardId, amount, minimumTaps),
+                        ability.sourceCard().getName() + " — Choose artifacts and creatures to tap for waterbend {"
+                                + amount + "}; the rest is paid with mana.");
+                return;
+            }
             waterbendPaymentService.pay(gameData, player.getId(), amount, ability.sourceCard());
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
@@ -564,8 +576,10 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst().orElseThrow();
 
         UUID targetCardId = ability.targetCardId();
+        // Matches the stack object's targetable id so an activated or triggered ability is found,
+        // not only a spell (whose targetable id is its card id).
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(se -> se.getCard().getId().equals(targetCardId))
+                .filter(se -> se.getTargetableId().equals(targetCardId))
                 .findFirst()
                 .orElse(null);
 
@@ -1238,7 +1252,7 @@ public class MayPenaltyChoiceHandlerService {
         UUID targetPlayerId = ability.controllerId();
         UUID casterId = ability.targetCardId();
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)
                 && gameData.getLife(targetPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {

@@ -61,7 +61,7 @@ class TimelineCullerTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isTrue();
         harness.assertLife(player1, 18);
@@ -117,6 +117,7 @@ class TimelineCullerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(culler));
         harness.setLibrary(player1, List.of(new TimelineCuller(), new TimelineCuller()));
         harness.setLibrary(player2, List.of(new TimelineCuller(), new TimelineCuller()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castFromGraveyard(player1, 0);

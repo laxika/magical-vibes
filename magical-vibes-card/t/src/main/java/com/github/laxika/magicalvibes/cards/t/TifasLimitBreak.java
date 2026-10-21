@@ -23,12 +23,12 @@ public class TifasLimitBreak extends Card {
                         new BoostTargetCreatureEffect(2, 2), TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Meteor Strikes - {2} - Double target creature's power and toughness until end of turn",
-                        new BoostTargetCreatureEffect(new TargetPower(), new TargetToughness()),
+                        new BoostTargetCreatureEffect(new TargetPower(true), new TargetToughness()),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Final Heaven - {6}{G} - Triple target creature's power and toughness until end of turn",
                         new BoostTargetCreatureEffect(
-                                new Scaled(new TargetPower(), 2),
+                                new Scaled(new TargetPower(true), 2),
                                 new Scaled(new TargetToughness(), 2)),
                         TargetFilters.creature())
         )));

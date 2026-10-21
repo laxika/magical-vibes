@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneOfEachCardTypeFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTargetCreatureCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -220,6 +221,9 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect exile) {
             return new Target(exile.targetFilter(), exile.graveyardScope(), "to exile", 1, 1);
+        }
+        if (effect instanceof CastTargetCardFromGraveyardEffect castTarget) {
+            return new Target(castTarget.filter(), castTarget.scope(), "to cast", 1, 1);
         }
         if (effect instanceof GrantTargetGraveyardCardCastEffect grantCast) {
             return new Target(grantCast.filter(), grantCast.scope(), "to cast", 1, 1);

@@ -171,9 +171,7 @@ class TradeRoutesTest extends BaseCardTest {
     void bounceReturnsLandToItsOwner() {
         harness.addToBattlefield(player1, new TradeRoutes());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
-        gd.playerBattlefields.get(player2.getId()).remove(land);
-        gd.playerBattlefields.get(player1.getId()).add(land);
-        gd.stolenCreatures.put(land.getId(), player2.getId());
+        setOwnerAndController(land, player2, player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, land.getId());

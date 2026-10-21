@@ -31,6 +31,10 @@ public class TranscendentMaster extends Card {
         ));
 
         addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF));
+        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceCounterThreshold(6, CounterType.LEVEL),
+                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(6, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));

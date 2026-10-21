@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1005")
@@ -16,11 +16,15 @@ import java.util.List;
 public class TriumphantReckoning extends Card {
 
     public TriumphantReckoning() {
-        addEffect(EffectSlot.SPELL, new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
-                new CardAnyOfPredicate(List.of(
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .returnAll(true)
+                .chooseAuraAttachment(true)
+                .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.ENCHANTMENT),
                         new CardTypePredicate(CardType.PLANESWALKER)
-                )), Integer.MAX_VALUE));
+                )))
+                .build());
     }
 }

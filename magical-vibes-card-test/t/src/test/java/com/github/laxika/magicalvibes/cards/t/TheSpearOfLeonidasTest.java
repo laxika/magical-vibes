@@ -53,6 +53,7 @@ class TheSpearOfLeonidasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleListChoice(player1, BULL_RUSH));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
 
@@ -99,6 +100,7 @@ class TheSpearOfLeonidasTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleListChoice(player1, REVELATION);
+        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
@@ -124,6 +126,7 @@ class TheSpearOfLeonidasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleListChoice(player1, REVELATION));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -144,6 +147,7 @@ class TheSpearOfLeonidasTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleListChoice(player1, REVELATION);
+        harness.passBothPriorities();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleCardChosen(player1, 0));
 
@@ -163,6 +167,7 @@ class TheSpearOfLeonidasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleListChoice(player1, BULL_RUSH));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -180,6 +185,7 @@ class TheSpearOfLeonidasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleListChoice(player1, BULL_RUSH));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, other, Keyword.DOUBLE_STRIKE)).isFalse();

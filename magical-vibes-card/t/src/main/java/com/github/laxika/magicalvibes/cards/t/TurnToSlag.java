@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCre
 public class TurnToSlag extends Card {
 
     public TurnToSlag() {
-        addEffect(EffectSlot.SPELL, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
         addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+        addEffect(EffectSlot.SPELL, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
     }
 }

@@ -22,12 +22,13 @@ public class TriplicateTitan extends Card {
         // artifact creature token with trample.
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 1, "Golem", 3, 3, null,
-                List.of(CardSubtype.GOLEM), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
-                1, "Golem", 3, 3, null,
-                List.of(CardSubtype.GOLEM), Set.of(Keyword.VIGILANCE), Set.of(CardType.ARTIFACT)));
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
-                1, "Golem", 3, 3, null,
-                List.of(CardSubtype.GOLEM), Set.of(Keyword.TRAMPLE), Set.of(CardType.ARTIFACT)));
+                List.of(CardSubtype.GOLEM), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT))
+                .withSimultaneousTokens(List.of(
+                        new CreateTokenEffect(
+                                1, "Golem", 3, 3, null,
+                                List.of(CardSubtype.GOLEM), Set.of(Keyword.VIGILANCE), Set.of(CardType.ARTIFACT)),
+                        new CreateTokenEffect(
+                                1, "Golem", 3, 3, null,
+                                List.of(CardSubtype.GOLEM), Set.of(Keyword.TRAMPLE), Set.of(CardType.ARTIFACT)))));
     }
 }

@@ -16,6 +16,6 @@ public class TifaLockhart extends Card {
 
     public TifaLockhart() {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                new BoostSelfEffect(new SourcePower(), new Fixed(0)));
+                new BoostSelfEffect(new SourcePower(true), new Fixed(0)));
     }
 }

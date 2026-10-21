@@ -85,8 +85,7 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
                 .filter(id -> !id.equals(controllerId))
                 .toList();
         boolean controllerPicksSeparatingOpponent = !e.defendingPlayerChoosesPile() && !e.targetedSeparator()
-                && opponentIds.size() > 1
-                && (e.controllerSeparates() && e.faceDownPile() || !e.controllerSeparates() && !e.faceDownPile());
+                && opponentIds.size() > 1;
         UUID opponentId = e.defendingPlayerChoosesPile()
                 ? defendingPlayerId(gameData, entry)
                 : e.targetedSeparator()

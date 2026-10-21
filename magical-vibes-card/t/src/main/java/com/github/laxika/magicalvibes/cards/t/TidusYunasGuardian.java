@@ -35,6 +35,6 @@ public class TidusYunasGuardian extends Card {
                                 SequenceEffect.of(new DrawCardEffect(), new ProliferateEffect()),
                                 "Draw a card and proliferate?"),
                         false,
-                        true)));
+                        true), true));
     }
 }

@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TranscantationTest extends BaseCardTest {
 
     @Test
-    void decliningNewTargetMakesTransformedSpellFailToResolve() {
+    void decliningNewTargetLeavesTheOriginalTargetOnTheTransformedSpell() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Unsummon unsummon = new Unsummon();
 
@@ -41,7 +41,10 @@ class TranscantationTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(gameData.playerBattlefields.get(player1.getId())).contains(target);
+        // The target is still legal for Lightning Bolt (CR 608.2b), so the transformed spell resolves
+        // and deals 3 damage to it; the Unsummon card still goes to the graveyard.
+        assertThat(gameData.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Unsummon");
         harness.assertNotInHand(player1, "Unsummon");
     }

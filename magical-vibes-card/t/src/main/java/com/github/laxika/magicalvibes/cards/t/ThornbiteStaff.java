@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteri
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -33,9 +34,13 @@ public class ThornbiteStaff extends Card {
                 GrantScope.EQUIPPED_CREATURE
         ));
 
-        // Equipped creature has "Whenever a creature dies, untap this creature". Modeled as a
-        // death trigger on the Equipment that untaps the attached creature (fizzles if unattached).
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new UntapPermanentsEffect(TapUntapScope.ENCHANTED));
+        // Equipped creature has "Whenever a creature dies, untap this creature." The granted trigger
+        // belongs to the equipped creature, so its controller controls it and it untaps that creature.
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_ANY_CREATURE_DIES,
+                new UntapPermanentsEffect(TapUntapScope.SELF),
+                GrantScope.EQUIPPED_CREATURE
+        ));
 
         // Whenever a Shaman creature enters, you may attach this Equipment to it.
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,

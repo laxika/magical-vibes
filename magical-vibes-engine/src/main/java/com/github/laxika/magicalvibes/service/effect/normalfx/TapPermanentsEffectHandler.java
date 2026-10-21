@@ -251,14 +251,10 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveAllPermanents(GameData gameData, StackEntry entry, TapPermanentsEffect e) {
-        UUID attackedTargetId = entry.getAttackedTargetId();
-        UUID defendingPlayerId = attackedTargetId == null ? null
-                : gameData.playerIds.contains(attackedTargetId) ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
-                .withDefendingPlayerId(defendingPlayerId);
+                .withDefendingPlayerId(defendingPlayerId(gameData, entry));
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, p) -> {
@@ -277,7 +273,8 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
     private void resolveAllCreatures(GameData gameData, StackEntry entry, TapPermanentsEffect e) {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withDefendingPlayerId(defendingPlayerId(gameData, entry));
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, p) -> {
@@ -293,5 +290,22 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" taps " + count[0] + " creature(s).").build());
         log.info("Game {} - {} taps {} creature(s) matching filter", gameData.id, entry.getCard().getName(), count[0]);
+    }
+
+    /**
+     * The defending player fixed when the ability went on the stack, so a defending-player filter still
+     * holds after the attacking creature has left combat; falls back to the attacked target.
+     */
+    private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
+        if (entry.getDefendingPlayerId() != null) {
+            return entry.getDefendingPlayerId();
+        }
+        UUID attackedTargetId = entry.getAttackedTargetId();
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

@@ -38,7 +38,7 @@ public class DealDamageToEnchantedCreatureEffectHandler implements NormalEffectH
             return;
         }
 
-        UUID damagedCreatureId = entry.getTriggeringPermanentId() != null
+        UUID damagedCreatureId = !e.currentlyEnchanted() && entry.getTriggeringPermanentId() != null
                 ? entry.getTriggeringPermanentId() : aura.getAttachedTo();
         Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, damagedCreatureId);
         if (enchantedCreature == null || !gameQueryService.isCreature(gameData, enchantedCreature)) {

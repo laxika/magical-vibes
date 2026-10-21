@@ -31,7 +31,7 @@ public class MillControllerTwoRepeatIfSharedCardTypeThenDrawEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         while (true) {
-            List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, 2);
+            List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(gameData, controllerId, 2);
             if (!twoMilledCardsShareACardType(milled)) {
                 return;
             }

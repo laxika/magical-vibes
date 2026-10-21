@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /** Registers a turn-scoped trigger for creatures damaged by the registering source. */
 @Slf4j
 @Component
@@ -28,13 +30,18 @@ public class RegisterDelayedDamagedCreatureDeathTriggerEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RegisterDelayedDamagedCreatureDeathTriggerEffect delayed =
                 (RegisterDelayedDamagedCreatureDeathTriggerEffect) effect;
+        UUID damageSourceId = delayed.damagedByTarget() ? entry.getTargetId() : entry.getCard().getId();
+        if (damageSourceId == null) {
+            return;
+        }
         gameData.damagedCreatureDeathTriggerWatchers.add(new DamagedCreatureDeathTriggerWatcher(
-                entry.getCard().getId(), entry.getControllerId(), entry.getCard(), delayed.effect(),
+                damageSourceId, entry.getControllerId(), entry.getCard(), delayed.effect(),
                 delayed.allControllers()));
         String watchedScope = delayed.allControllers() ? "a creature" : "a creature you control";
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": whenever " + watchedScope
-                        + " dealt damage this way dies this turn, its delayed ability triggers."));
+                        + (delayed.damagedByTarget() ? " dealt damage by that creature" : " dealt damage this way")
+                        + " dies this turn, its delayed ability triggers."));
         log.info("Game {} - {} registers a damaged-creature death trigger for the turn",
                 gameData.id, entry.getCard().getName());
     }

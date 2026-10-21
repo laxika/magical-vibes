@@ -40,7 +40,7 @@ public class DiscardHandUnlessPaysLifeEffectHandler implements NormalEffectHandl
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)
                 && gameData.getLife(targetPlayerId) >= e.lifeCost();
 
         if (!canPay) {

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 
@@ -32,7 +32,7 @@ public class ThundercloudElemental extends Card {
                 List.of(new RemoveKeywordEffect(
                         Keyword.FLYING,
                         GrantScope.ALL_CREATURES,
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                 "{3}{U}: All other creatures lose flying until end of turn."
         ));
     }

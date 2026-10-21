@@ -842,11 +842,11 @@ public class TurnProgressionService {
     }
 
     void advanceTurn(GameData gameData) {
-        advanceTurn(gameData, true, true, null);
+        advanceTurn(gameData, true, true);
     }
 
     private void advanceTurn(GameData gameData, boolean snapshotEndingPlayer) {
-        advanceTurn(gameData, snapshotEndingPlayer, true, null);
+        advanceTurn(gameData, snapshotEndingPlayer, true);
     }
 
     /** Completes Time Vault's turn-start replacement choice and resumes turn progression. */
@@ -854,14 +854,15 @@ public class TurnProgressionService {
                                          UUID sourcePermanentId, boolean accepted) {
         if (accepted) {
             gameData.skipNextTurnCount.merge(controllerId, 1, Integer::sum);
-            advanceTurn(gameData, false, false, null);
+            advanceTurn(gameData, false, false);
         } else {
-            advanceTurn(gameData, false, true, sourcePermanentId);
+            gameData.timeVaultsDeclinedThisTurnStart.add(sourcePermanentId);
+            advanceTurn(gameData, false, true);
         }
     }
 
     private void advanceTurn(GameData gameData, boolean snapshotEndingPlayer,
-                             boolean offerTimeVaultChoice, UUID excludedTimeVaultId) {
+                             boolean offerTimeVaultChoice) {
         if (snapshotEndingPlayer) {
             gameData.snapshotPlayerActionsForLastTurn(gameData.activePlayerId);
             gameData.snapshotPlayerAttacksForLastTurn(gameData.activePlayerId);
@@ -887,12 +888,14 @@ public class TurnProgressionService {
                 ? gameData.extraTurns.peekFirst()
                 : nextPlayerInTurnOrder(gameData);
         if (offerTimeVaultChoice) {
-            Permanent timeVault = findTappedTimeVault(gameData, nextTurnPlayer, excludedTimeVaultId);
+            Permanent timeVault = findTappedTimeVault(gameData, nextTurnPlayer,
+                    gameData.timeVaultsDeclinedThisTurnStart);
             if (timeVault != null) {
                 queueTimeVaultChoice(gameData, nextTurnPlayer, timeVault);
                 return;
             }
         }
+        gameData.timeVaultsDeclinedThisTurnStart.clear();
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
@@ -1835,14 +1838,13 @@ public class TurnProgressionService {
         return ids.get((currentIndex + 1) % ids.size());
     }
 
-    private Permanent findTappedTimeVault(GameData gameData, UUID controllerId, UUID excludedPermanentId) {
+    private Permanent findTappedTimeVault(GameData gameData, UUID controllerId, Set<UUID> excludedPermanentIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return null;
         }
         return battlefield.stream()
-                .filter(permanent -> excludedPermanentId == null
-                        || !excludedPermanentId.equals(permanent.getId()))
+                .filter(permanent -> !excludedPermanentIds.contains(permanent.getId()))
                 .filter(Permanent::isTapped)
                 .filter(permanent -> !permanent.isFaceDown())
                 .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))

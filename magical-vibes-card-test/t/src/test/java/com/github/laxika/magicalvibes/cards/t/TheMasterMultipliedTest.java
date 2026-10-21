@@ -70,8 +70,7 @@ class TheMasterMultipliedTest extends BaseCardTest {
         assertThat(token.getAttackTarget()).isEqualTo(player3.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
@@ -117,11 +116,9 @@ class TheMasterMultipliedTest extends BaseCardTest {
         });
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
-        gd.playerBattlefields.get(player1.getId()).remove(token);
-        gd.playerBattlefields.get(player2.getId()).add(token);
+        setOwnerAndController(token, player1, player2);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);

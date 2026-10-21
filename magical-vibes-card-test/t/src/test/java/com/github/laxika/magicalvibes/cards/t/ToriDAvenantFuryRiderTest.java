@@ -81,9 +81,11 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
         Permanent opponentBaird = addCreatureReady(player2, new BairdArgivianRecruiter());
         opponentBaird.tap();
 
-        declareAttackers(List.of(0, 1));
-        assertThat(baird.isTapped()).isTrue();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            assertThat(baird.isTapped()).isTrue();
+            resolveAllTriggers();
+        });
 
         assertThat(tori.getPowerModifier()).isZero();
         assertThat(tori.getToughnessModifier()).isZero();

@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTur
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect;
@@ -663,8 +664,17 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(),
-                findEnteringPermanentId(match, pe.enteringCard()));
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(), enteringPermanentId);
+        if (effect instanceof CreateTokenCopyOfEnteringPermanentEffect && enteringPermanentId != null) {
+            // The copy is made from last known information when the entering creature has already left.
+            for (StackEntry queued : match.gameData().stack) {
+                if (enteringPermanentId.equals(queued.getTriggeringPermanentId())
+                        && queued.getEffectsToResolve().contains(effect)) {
+                    queued.rememberLastKnownPermanentCard(enteringPermanentId, pe.enteringCard());
+                }
+            }
+        }
         logTriggered(match);
         return true;
     }

@@ -946,7 +946,7 @@ public sealed interface TriggerContext {
     record CardsExiledDuringTurn(UUID activePlayerId) implements TriggerContext {}
 
     /** Context for a permanent phasing out, before it leaves the battlefield. */
-    record PermanentPhasedOut(Permanent phasedOutPermanent) implements TriggerContext {}
+    record PermanentPhasedOut(List<Permanent> phasedOutPermanents) implements TriggerContext {}
 
     /** Context for a card being put into exile from any zone. */
     record CardExiled() implements TriggerContext {}

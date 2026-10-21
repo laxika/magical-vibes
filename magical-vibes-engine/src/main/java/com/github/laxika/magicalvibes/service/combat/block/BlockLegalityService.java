@@ -586,7 +586,9 @@ public class BlockLegalityService {
                 restrictions.add(new AttackerRestriction(attacker, restriction));
             }
         }
-        for (Permanent source : context.attachedTo(attacker)) {
+        boolean attackerLosesAbilities = bonus.losesAllAbilities() || bonus.losesAllNonManaAbilities()
+                || attacker.isLosesAllAbilitiesUntilEndOfTurn();
+        for (Permanent source : attackerLosesAbilities ? List.<Permanent>of() : context.attachedTo(attacker)) {
             if (!source.isFaceDown()) {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof BlockabilityRestrictionEffect restriction

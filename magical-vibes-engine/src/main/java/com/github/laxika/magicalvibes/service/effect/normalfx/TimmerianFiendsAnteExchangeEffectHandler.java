@@ -93,9 +93,12 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // The artifact went to its owner's graveyard; the ownership swap makes "your graveyard" the
-        // ability controller's, so relocate the physical card. Ownership itself is never mutated.
+        // ability controller's, so relocate the physical card. The swap is permanent, but frozen
+        // cards keep their stamped owner, so the new owners are recorded as overrides.
         moveCardToGraveyard(gameData, artifactCard, controllerId);
         moveCardToGraveyard(gameData, fiendsCard, ownerId);
+        gameData.cardOwnerOverrides.put(artifactCard.getId(), controllerId);
+        gameData.cardOwnerOverrides.put(fiendsCard.getId(), ownerId);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(ownerId) + " doesn't ante — ")

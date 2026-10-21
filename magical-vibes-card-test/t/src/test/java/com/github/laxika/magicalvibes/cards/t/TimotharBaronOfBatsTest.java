@@ -131,7 +131,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     void returnsOpponentOwnedVampireUnderBatControllersControl() {
         harness.addToBattlefield(player1, new TimotharBaronOfBats());
         Permanent vampire = harness.addToBattlefieldAndReturn(player1, new VampireNoble());
-        gd.stolenCreatures.put(vampire.getId(), player2.getId());
+        setOwnerAndController(vampire, player2, player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         killCreatureWithShock(vampire.getId());
         harness.handleMayAbilityChosen(player1, true);

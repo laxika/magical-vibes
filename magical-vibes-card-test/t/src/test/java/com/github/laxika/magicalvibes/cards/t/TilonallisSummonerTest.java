@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AngrathTheFlameChained;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -133,6 +134,7 @@ class TilonallisSummonerTest extends BaseCardTest {
     void eachTokenCanAttackADifferentDefenderThanSummoner() {
         Permanent summoner = addCreatureReady(player1, new TilonallisSummoner());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new AngrathTheFlameChained());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.addMana(player1, ManaColor.RED, 3);
         declareAttackers(List.of(0));
         harness.passBothPriorities();

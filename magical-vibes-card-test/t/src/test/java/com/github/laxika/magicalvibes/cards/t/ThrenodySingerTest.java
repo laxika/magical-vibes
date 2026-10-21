@@ -102,7 +102,9 @@ class ThrenodySingerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 
-        castSinger(target);
+        // Stop at the end step so the auto-pass after the ETB resolves cannot carry the game into the
+        // next turn, where the until-end-of-turn debuff would already have expired.
+        harness.withAutoStop(TurnStep.END_STEP, () -> castSinger(target));
 
         harness.assertOnBattlefield(player1, "Threnody Singer");
         assertThat(target.getEffectivePower()).isZero();

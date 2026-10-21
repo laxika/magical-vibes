@@ -39,5 +39,8 @@ public class TitaniaNaturesForce extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
                         new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER),
                                 "Mill three cards?")));
+        // Titania is an Elemental herself, so her own death also offers the mill.
+        addEffect(EffectSlot.ON_DEATH,
+                new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"));
     }
 }

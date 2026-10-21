@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.p.PhyrexianDigester;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -137,6 +138,9 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         assertThat(gqs.hasCantBeBlocked(gd, elves)).isTrue();
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DeepFreeze()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -154,6 +158,9 @@ class TetsukoUmezawaFugitiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TetsukoUmezawaFugitive());
         Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DeepFreeze()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);

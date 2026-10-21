@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -21,9 +19,8 @@ import java.util.Set;
 public class TurtleLair extends Card {
 
     private static final Set<CardSubtype> NINJA_OR_TURTLE = Set.of(CardSubtype.NINJA, CardSubtype.TURTLE);
-    private static final PermanentPredicate NINJA_OR_TURTLE_CREATURE = new PermanentAllOfPredicate(List.of(
-            new PermanentIsCreaturePredicate(),
-            new PermanentHasAnySubtypePredicate(NINJA_OR_TURTLE)));
+    private static final PermanentPredicate NINJA_OR_TURTLE_PERMANENT =
+            new PermanentHasAnySubtypePredicate(NINJA_OR_TURTLE);
 
     public TurtleLair() {
         // {T}: Add {C}.
@@ -41,9 +38,9 @@ public class TurtleLair extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new MakeCreatureUnblockableEffect()),
+                List.of(MakeCreatureUnblockableEffect.forTargetPermanent(NINJA_OR_TURTLE_PERMANENT)),
                 "{3}, {T}: Target Ninja or Turtle can't be blocked this turn.",
-                new PermanentPredicateTargetFilter(NINJA_OR_TURTLE_CREATURE, "Target must be a Ninja or Turtle creature")
+                new PermanentPredicateTargetFilter(NINJA_OR_TURTLE_PERMANENT, "Target must be a Ninja or Turtle")
         ));
     }
 }

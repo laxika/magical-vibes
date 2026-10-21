@@ -92,6 +92,7 @@ class TheVisionTest extends BaseCardTest {
         var vision = addCreatureReady(player1, new TheVision());
         harness.setHand(player1, List.of(new Spellbook(), new Spellbook(), new Spellbook()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
 
         castArtifactAndChoose(SOLAR_BEAM);
         castArtifactAndChoose(DENSITY_CONTROL);

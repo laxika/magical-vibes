@@ -48,8 +48,7 @@ class TriarchPraetorianTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Triarch Praetorian").getGrantedKeywords())
-                .contains(Keyword.HASTE);
+        assertThat(findPermanent(player1, "Triarch Praetorian").hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 2);
     }

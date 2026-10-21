@@ -40,5 +40,9 @@ public class TriumphOfGerrard extends Card {
                 GrantScope.TARGET,
                 GREATEST_POWER
         ));
+
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
     }
 }

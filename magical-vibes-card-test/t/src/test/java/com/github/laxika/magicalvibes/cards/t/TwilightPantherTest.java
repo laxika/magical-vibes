@@ -50,7 +50,7 @@ class TwilightPantherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gqs.hasKeyword(gd, panther, Keyword.DEATHTOUCH)).isTrue();
     }

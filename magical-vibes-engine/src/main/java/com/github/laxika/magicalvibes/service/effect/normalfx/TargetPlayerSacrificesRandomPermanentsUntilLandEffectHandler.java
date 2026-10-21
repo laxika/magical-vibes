@@ -48,6 +48,12 @@ public class TargetPlayerSacrificesRandomPermanentsUntilLandEffectHandler implem
             return;
         }
 
+        if (!gameQueryService.canEffectCauseSacrifice(gameData, targetPlayerId, entry.getControllerId())) {
+            log.info("Game {} - {} can't be made to sacrifice by {}", gameData.id,
+                    gameData.playerIdToName.get(targetPlayerId), entry.getCard().getName());
+            return;
+        }
+
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         boolean repeat = true;
         while (repeat) {

@@ -89,6 +89,8 @@ class ThornscapeBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, artifact.getId());
+        // The two kicker abilities are separate triggers, so each needs its own resolution.
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
@@ -183,8 +185,10 @@ class ThornscapeBattlemageTest extends BaseCardTest {
     }
 
     private void castWithAdditionalCosts(List<String> payments, UUID targetId, boolean kicked) {
-        gs.playCard(gd, player1, 0, 0, targetId, null, List.of(), List.of(), false,
-                null, null, null, null, null, kicked, null, null, null, null,
-                payments, false);
+        if (kicked) {
+            harness.castKickedCreatureWithRepeatedCosts(player1, 0, targetId, payments);
+        } else {
+            harness.castCreatureWithRepeatedCosts(player1, 0, targetId, payments);
+        }
     }
 }

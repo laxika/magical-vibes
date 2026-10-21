@@ -97,6 +97,7 @@ public class MultiPermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
 
     private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
     private final MayCastHandlerService mayCastHandlerService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -1010,6 +1011,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapPermanentsForAmount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanents ctx) {
             handleUntapChosenPermanents(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.WardWaterbendPayment ctx) {
+            handleWardWaterbendPayment(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapPermanentsForAmount ctx) {
             handleUntapPermanentsForAmount(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand ctx) {
@@ -2047,6 +2050,20 @@ public class MultiPermanentChoiceHandlerService {
         log.info("Game {} - {} taps {} chosen permanent(s)", gameData.id, ctx.sourceName(), tapped);
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleWardWaterbendPayment(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                            MultiPermanentChoiceContext.WardWaterbendPayment ctx) {
+        if (permanentIds.size() < ctx.minimumTaps()) {
+            throw new IllegalStateException("Must tap at least " + ctx.minimumTaps()
+                    + " permanents (the rest of the cost is paid with mana)");
+        }
+        waterbendPaymentService.pay(gameData, playerId, ctx.amount(), ctx.sourceCard(), permanentIds);
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                + " pays {" + ctx.amount() + "} using waterbend. The spell or ability is not countered."));
+        log.info("Game {} - {} pays ward waterbend {}", gameData.id, playerId, ctx.amount());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleUntapChosenPermanents(GameData gameData, UUID playerId, List<UUID> permanentIds,

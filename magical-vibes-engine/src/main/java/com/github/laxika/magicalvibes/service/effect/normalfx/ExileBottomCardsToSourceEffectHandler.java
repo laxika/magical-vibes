@@ -55,11 +55,6 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
                 .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
                 .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)
                 .toList();
-        if (source == null && persistentPermissions.isEmpty()) {
-            log.info("Game {} - Source permanent no longer on battlefield, bottom-card exile fizzles", gameData.id);
-            return;
-        }
-
         int count = Math.max(0, amountEvaluationService.evaluate(gameData, exileEffect.count(),
                 AmountContext.forStackEntry(entry, source)));
         if (count == 0) {

@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class TombstoneCareerCriminal extends Card {
 
     public TombstoneCareerCriminal() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetCardsFromGraveyardToHandEffect(
-                new CardSubtypePredicate(CardSubtype.VILLAIN), 1));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(
+                new CardSubtypePredicate(CardSubtype.VILLAIN)));
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.VILLAIN), 1, CostModificationScope.SELF));
     }

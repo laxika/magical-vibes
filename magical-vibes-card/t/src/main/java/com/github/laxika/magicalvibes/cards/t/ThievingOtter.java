@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class ThievingOtter extends Card {
 
     public ThievingOtter() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new DrawCardEffect());
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new DrawCardEffect());
     }
 }

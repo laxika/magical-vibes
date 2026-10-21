@@ -19,7 +19,7 @@ public class Thirst extends Card {
     public Thirst() {
         target(TargetFilters.creature())
                 // When this Aura enters, tap enchanted creature.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 // Enchanted creature doesn't untap during its controller's untap step.
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
                 // At the beginning of your upkeep, sacrifice this Aura unless you pay {U}.

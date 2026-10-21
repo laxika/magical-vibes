@@ -146,6 +146,7 @@ class ThopterMechanicTest extends BaseCardTest {
     @DisplayName("The second-draw count resets at the start of the next turn")
     void triggersAgainOnNextTurn() {
         Permanent mechanic = harness.addToBattlefieldAndReturn(player1, new ThopterMechanic());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new ThopterMechanic(), new ThopterMechanic(),
                 new ThopterMechanic(), new ThopterMechanic()));
         harness.setLibrary(player2, List.of(new ThopterMechanic()));

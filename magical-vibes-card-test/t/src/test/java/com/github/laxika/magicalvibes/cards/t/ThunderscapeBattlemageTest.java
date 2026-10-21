@@ -80,7 +80,7 @@ class ThunderscapeBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
         addMana(3, ManaColor.RED, ManaColor.BLACK, ManaColor.GREEN);
 
-        castWithAdditionalCosts(List.of("{G}"), player2.getId(), true);
+        harness.castKickedCreatureWithRepeatedCosts(player1, 0, player2.getId(), List.of("{G}"));
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, enchantment.getId());
@@ -105,7 +105,7 @@ class ThunderscapeBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
         addMana(3, ManaColor.RED, ManaColor.BLACK, ManaColor.GREEN);
 
-        castWithAdditionalCosts(List.of("{G}"), player2.getId(), true);
+        harness.castKickedCreatureWithRepeatedCosts(player1, 0, player2.getId(), List.of("{G}"));
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, enchantment.getId());
 

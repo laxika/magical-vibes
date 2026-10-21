@@ -115,7 +115,7 @@ class TragedyFeasterTest extends BaseCardTest {
     @Test
     void triggersEvenWhenLifeWasAlreadyGained() {
         harness.addToBattlefield(player1, new TragedyFeaster());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
 
         advanceToEndStep(player1);
 
@@ -131,7 +131,7 @@ class TragedyFeasterTest extends BaseCardTest {
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
 
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -141,7 +141,7 @@ class TragedyFeasterTest extends BaseCardTest {
     @Test
     void opponentsLifeGainDoesNotPreventSacrifice() {
         Permanent feaster = harness.addToBattlefieldAndReturn(player1, new TragedyFeaster());
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
@@ -153,8 +153,8 @@ class TragedyFeasterTest extends BaseCardTest {
     @Test
     void lifeGainStillCountsAfterLosingMoreLife() {
         harness.addToBattlefield(player1, new TragedyFeaster());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 5, "life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 5, "life loss"));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();

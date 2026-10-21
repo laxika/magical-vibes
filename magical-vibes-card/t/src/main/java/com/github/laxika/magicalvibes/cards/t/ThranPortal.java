@@ -20,7 +20,7 @@ public class ThranPortal extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
                 new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new SourceBecomesChosenBasicLandTypeEffect());
+        addEffect(EffectSlot.STATIC, new SourceBecomesChosenBasicLandTypeEffect(true));
         addEffect(EffectSlot.STATIC, new AddActivatedAbilityCostEffect(
                 new PermanentIsSourceCardPredicate(), new PayLifeCost(1)));
     }

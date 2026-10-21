@@ -577,6 +577,12 @@ public class GameTestHarness {
                         false, null, null, null, null, null, true));
     }
 
+    public void castKickedCreatureForX(Player player, int cardIndex, int xValue, UUID targetId) {
+        castPermanentFromHand(player, cardIndex, targetId, null, xValue, true, (castTargetId, castTargetIds) ->
+                gameService.playCard(gameData, player, cardIndex, xValue, castTargetId, null, castTargetIds,
+                        List.of(), false, null, null, null, null, null, true));
+    }
+
     public void castKickedCreatureWithRepeatedCosts(Player player, int cardIndex, UUID targetId,
                                                      List<String> repeatedAdditionalCosts) {
         castPermanentFromHand(player, cardIndex, targetId, null, 0, true, (castTargetId, castTargetIds) ->
@@ -725,9 +731,13 @@ public class GameTestHarness {
 
     public void castFromGraveyardWithSacrifices(Player player, int graveyardCardIndex, UUID targetId,
                                                 List<UUID> sacrificePermanentIds) {
-        ensurePriority(player);
-        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId,
-                List.of(), null, null, List.of(), null, null, sacrificePermanentIds, Map.of());
+        List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
+        Card graveyardCard = graveyard != null && graveyardCardIndex >= 0 && graveyardCardIndex < graveyard.size()
+                ? graveyard.get(graveyardCardIndex) : null;
+        castWithDeclaredEtbTargets(player, graveyardCard, true, targetId, null, 0, false,
+                (castTargetId, castTargetIds) -> gameService.playFlashbackSpell(gameData, player,
+                        graveyardCardIndex, null, castTargetId, List.of(), null, null, List.of(), null, null,
+                        sacrificePermanentIds, Map.of()));
     }
 
     public void castFromGraveyard(Player player, int graveyardCardIndex, CardType chosenGraveyardType) {

@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
+import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 
@@ -14,8 +16,9 @@ import java.util.List;
 public class TizerusCharger extends Card {
 
     public TizerusCharger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCounterTypeOnEnterEffect(CounterType.PLUS_ONE_PLUS_ONE, CounterType.FLYING));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                new SourceWasCastWithEscape(),
+                new ChooseCounterTypeOnEnterEffect(CounterType.PLUS_ONE_PLUS_ONE, CounterType.FLYING)));
         addCastingOption(new GraveyardCast(null, "{4}{B}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 5)), null, false, false, true));
     }

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -31,6 +33,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
     private final PsychicBattleSupport psychicBattleSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,7 +68,13 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             }
         }
 
-        int copyCount = e.copies() <= 1 ? 1 : copySupport.adjustedSpellCopyCount(gameData, e.copies());
+        int requestedCopies = e.copies();
+        if (e.dynamicCopies() != null) {
+            requestedCopies = amountEvaluationService.evaluate(
+                    gameData, e.dynamicCopies(), AmountContext.forCasting(castingPlayerId));
+            if (requestedCopies <= 0) return;
+        }
+        int copyCount = requestedCopies <= 1 ? 1 : copySupport.adjustedSpellCopyCount(gameData, castingPlayerId, requestedCopies);
         for (int copyIndex = 0; copyIndex < copyCount; copyIndex++) {
             createCopy(gameData, entry, e, spellSnapshot, castingPlayerId, spellCard);
         }

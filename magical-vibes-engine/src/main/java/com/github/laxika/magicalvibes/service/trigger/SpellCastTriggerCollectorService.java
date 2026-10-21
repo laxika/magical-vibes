@@ -103,6 +103,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsWithCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayCastWithoutPayingManaEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstMatchingSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstMulticoloredSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOrDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstNoncreatureSpellCastTriggerEffect;
@@ -325,6 +326,27 @@ public class SpellCastTriggerCollectorService {
                 "Target must be another player");
         return handleGenericSpellCastTrigger(match,
                 new SpellCastTriggerEffect(null, trigger.resolvedEffects(), null, targetFilter),
+                sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = FirstMatchingSpellCastTriggerEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleFirstMatchingSpellCastTrigger(TriggerMatchContext match,
+            FirstMatchingSpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+        long matchingSpellsThisTurn = match.gameData().getSpellsCastThisTurn(sc.castingPlayerId()).stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, trigger.spellFilter(), null,
+                        match.gameData(), sc.castingPlayerId()))
+                .count();
+        if (matchingSpellsThisTurn != 1) {
+            return false;
+        }
+        return handleGenericSpellCastTrigger(match,
+                new SpellCastTriggerEffect(trigger.spellFilter(), trigger.resolvedEffects()),
                 sc.spellCard(), sc.castingPlayerId());
     }
 
@@ -1183,17 +1205,21 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
+        // Recaptured when the spell begins to resolve (CardAdvantagePostResolutionService).
         Map<UUID, Integer> cardCountsBefore = snapshotCardResources(match.gameData());
+        UUID handSpellOwnerId = null;
         if (spellCast.castZone() == Zone.HAND) {
             cardCountsBefore = new HashMap<>(cardCountsBefore);
             cardCountsBefore.merge(spellEntry.getOwnerId(), 1, Integer::sum);
+            handSpellOwnerId = spellEntry.getOwnerId();
         }
         spellEntry.addPostResolutionEffect(trigger.withSnapshot(
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getId(),
                 spellCast.spellCard().getId(),
-                cardCountsBefore));
+                cardCountsBefore,
+                handSpellOwnerId));
         return true;
     }
 
@@ -2755,9 +2781,10 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger))
+                new ArrayList<>(List.of(trigger)),
+                sc.castingPlayerId(),
+                match.permanent().getId()
         );
-        entry.setTargetId(sc.castingPlayerId());
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;

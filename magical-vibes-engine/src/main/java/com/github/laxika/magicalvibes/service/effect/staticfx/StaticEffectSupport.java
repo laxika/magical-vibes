@@ -305,6 +305,10 @@ public class StaticEffectSupport {
         if (scope == GrantScope.SELF || scope == GrantScope.SELF_AND_PAIRED) {
             return matchesStaticFilter(context, context.target(), filter);
         }
+        if (scope == GrantScope.OWN_LANDS || scope == GrantScope.ALL_LANDS_INCLUDING_SELF) {
+            // "Lands you control have ..." covers the conditional source itself when it is a land.
+            return matchesLandScope(context, scope, filter);
+        }
         boolean selfCoveringScope = scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF

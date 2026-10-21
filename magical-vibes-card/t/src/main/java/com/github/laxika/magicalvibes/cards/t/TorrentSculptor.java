@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardPutHalfManaValueCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,6 +17,9 @@ import java.util.List;
 public class TorrentSculptor extends Card {
 
     public TorrentSculptor() {
+        // Ward {2}.
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+
         FlamethrowerSonata backFace = new FlamethrowerSonata();
         setBackFaceCard(backFace);
         setModalDoubleFaced(true);
@@ -25,7 +29,7 @@ public class TorrentSculptor extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Torrent Sculptor", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Flamethrower Sonata",
-                        backFace.getEffects(EffectSlot.SPELL), FlamethrowerSonata.targetFilter())
+                        backFace.getEffects(EffectSlot.SPELL))
         )));
     }
 

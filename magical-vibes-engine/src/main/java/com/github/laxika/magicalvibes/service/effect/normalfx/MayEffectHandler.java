@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
@@ -157,6 +158,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             targetId = groupTargets.getFirst();
+        }
+
+        // An "up to N" graveyard return with no chosen cards has nothing to decide, so no choice is offered.
+        if (e.wrapped() instanceof ReturnTargetCardsFromGraveyardToHandEffect
+                && targetId == null && entry.getTargetCardIds().isEmpty()) {
+            return;
         }
 
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect

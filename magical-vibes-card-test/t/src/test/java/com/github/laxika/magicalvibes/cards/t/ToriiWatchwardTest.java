@@ -29,7 +29,7 @@ class ToriiWatchwardTest extends BaseCardTest {
     void attackingDoesNotTapWatchward() {
         var watchward = addCreatureReady(player1, new ToriiWatchward());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(watchward.isAttacking()).isTrue();
         assertThat(watchward.isTapped()).isFalse();

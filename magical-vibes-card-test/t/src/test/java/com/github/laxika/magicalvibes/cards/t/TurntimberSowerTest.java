@@ -146,9 +146,6 @@ class TurntimberSowerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(forest.getId()));
-        for (Permanent creature : List.of(source, first, second)) {
-            harness.handlePermanentChosen(player1, creature.getId());
-        }
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
 

@@ -173,9 +173,7 @@ class TezzeretsTouchTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new UniversalSolvent());
         artifact.setSummoningSick(false);
         castTezzeretsTouch(artifact);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         assertThat(artifact.isAttacking()).isTrue();
 
         harness.setHand(player1, List.of(new LeaveInTheDust()));

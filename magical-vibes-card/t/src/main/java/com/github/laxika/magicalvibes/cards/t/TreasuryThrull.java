@@ -38,6 +38,7 @@ public class TreasuryThrull extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardTypePredicate(CardType.ENCHANTMENT)
                         )))
+                        .targetGraveyard(true)
                         .build(),
                 "You may return target artifact, creature, or enchantment card from your graveyard to your hand."
         ));

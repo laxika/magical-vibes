@@ -21,9 +21,10 @@ public class TheReaperKingNoMore extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // Whenever a creature an opponent controls with a -1/-1 counter on it dies, you may put
-        // that card onto the battlefield under your control. The death collector supplies the
-        // may choice, dying-card binding, and once-per-turn restriction.
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new OncePerTurnTriggerEffect(
+        // that card onto the battlefield under your control. Do this only once each turn. The
+        // trigger always goes on the stack; the once-per-turn limit is used only when the return is
+        // accepted on resolution (CR 603.5).
+        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, OncePerTurnTriggerEffect.markOnAcceptance(
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                         new ReturnDyingOpponentCreatureUnderYourControlEffect())));

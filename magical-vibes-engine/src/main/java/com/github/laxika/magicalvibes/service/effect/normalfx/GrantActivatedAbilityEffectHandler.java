@@ -220,6 +220,9 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     }
 
     private static ActivatedAbility grantedAbility(ActivatedAbility ability, StackEntry entry) {
-        return ability.withGrantingPlayer(entry.getControllerId());
+        ActivatedAbility granted = ability.withGrantingPlayer(entry.getControllerId());
+        // CR 602.5c: a whole-game "activate only once" cap belongs to the ability as acquired from this
+        // object, not to other identically worded abilities (a later casting grants a fresh one).
+        return granted.getMaxActivationsPerGame() != null ? granted.withAcquisitionId(UUID.randomUUID()) : granted;
     }
 }

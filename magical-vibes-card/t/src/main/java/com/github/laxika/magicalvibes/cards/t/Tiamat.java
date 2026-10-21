@@ -21,7 +21,7 @@ import java.util.List;
 public class Tiamat extends Card {
 
     public Tiamat() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 new SearchLibraryEffect(
                         new Fixed(5),
                         new CardAllOfPredicate(List.of(

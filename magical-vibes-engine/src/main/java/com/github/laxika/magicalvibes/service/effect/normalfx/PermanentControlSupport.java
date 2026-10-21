@@ -204,11 +204,20 @@ public class PermanentControlSupport {
         for (int i = 0; i < additionalTreasureTokenCount; i++) {
             tokenBlueprints.add(additionalTreasureToken);
         }
-        CreateTokenEffect additionalFoodToken = additionalFoodTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalFoodToken(token)
-                : null;
-        for (int i = 0; i < additionalFoodTokenCount; i++) {
-            tokenBlueprints.add(additionalFoodToken);
+        // Tippy Toe's extra Food is its own token creation event, so Academy Manufactor replaces it too.
+        List<CreateTokenEffect> academyFoodBlueprints = additionalFoodTokenCount > 0
+                ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
+                        gameData, controllerId, CreateTokenEffect.ofFoodToken(1), additionalFoodTokenCount)
+                : List.of();
+        if (!academyFoodBlueprints.isEmpty()) {
+            tokenBlueprints.addAll(academyFoodBlueprints);
+        } else {
+            CreateTokenEffect additionalFoodToken = additionalFoodTokenCount > 0
+                    ? TokenCreationReplacementSupport.additionalFoodToken(token)
+                    : null;
+            for (int i = 0; i < additionalFoodTokenCount; i++) {
+                tokenBlueprints.add(additionalFoodToken);
+            }
         }
         for (int i = 0; i < additionalMapTokenCount; i++) {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));

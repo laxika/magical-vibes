@@ -22,6 +22,7 @@ public class ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffectHandler implements
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final ExileSupport exileSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +52,11 @@ public class ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffectHandler implements
             // Face-down: opponents do not see the card's identity; the controller may look
             // (and play via exilePlayPermissions) for as long as it remains exiled.
             exileService.exileCardFaceDown(gameData, controllerId, topCard, null);
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
+            exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
+            // "Until your next turn": the permission ends as that turn begins.
+            gameData.exilePlayPermissionsExpireAtTurnBeginning.put(topCard.getId(),
+                    gameData.exilePlayPermissionsExpireAtTurnEnd.remove(topCard.getId()));
+            gameData.exileLookPermissions.put(topCard.getId(), controllerId);
             gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextUpkeep(
                     controllerId, topCard.getId(), controllerId, entry.getCard()));
             exiled++;

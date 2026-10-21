@@ -28,10 +28,11 @@ public class TomeOfLegends extends Card {
                 new EnterWithCountersEffect(CounterType.PAGE, new Fixed(1)));
 
         PutCountersOnSelfEffect addPageCounter = new PutCountersOnSelfEffect(CounterType.PAGE);
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
-                new TriggeringPermanentConditionalEffect(new PermanentIsCommanderPredicate(), addPageCounter));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
-                new TriggeringPermanentConditionalEffect(new PermanentIsCommanderPredicate(), addPageCounter));
+        PermanentIsCommanderPredicate yourCommander = new PermanentIsCommanderPredicate(true);
+        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter, true));
+        addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
+                new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

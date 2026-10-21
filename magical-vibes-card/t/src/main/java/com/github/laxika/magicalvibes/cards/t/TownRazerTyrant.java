@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -40,13 +40,14 @@ public class TownRazerTyrant extends Card {
                 new GrantStaticEffectToTargetEffect(
                         new LosesAllNonManaAbilitiesEffect(GrantScope.SELF)))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new GrantEffectToTargetEffect(
+                        new GrantStaticEffectToTargetEffect(new GrantTriggeredAbilityEffect(
                                 EffectSlot.UPKEEP_TRIGGERED,
                                 new ForcedCostOrElseEffect(
                                         new SacrificePermanentCost(
                                                 new PermanentIsSourcePermanentPredicate(),
                                                 "Sacrifice it", false),
                                         List.of(new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)),
-                                        true)));
+                                        true),
+                                GrantScope.SELF)));
     }
 }

@@ -27,6 +27,7 @@ public class TravelThroughCaradhrasEffectHandler implements NormalEffectHandlerB
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final VotingFinishedSupport votingFinishedSupport;
+    private final VotingSupport votingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +36,8 @@ public class TravelThroughCaradhrasEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
+                        gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
                 entry.getControllerId(), 0, 0, entry.getCard().getName());
     }
 

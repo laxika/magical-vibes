@@ -12,7 +12,7 @@ public class ToluzCleverConductor extends Card {
 
     public ToluzCleverConductor() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawDiscardAndConniveEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new ExileDiscardedCardFromGraveyardEffect(true));
+        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new ExileDiscardedCardFromGraveyardEffect(true));
         addEffect(EffectSlot.ON_DEATH, new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }
 }

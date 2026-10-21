@@ -37,8 +37,9 @@ class TroublemakerOupheTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TroublemakerOuphe()));
         addMana();
 
-        harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        harness.castKickedInstantWithSacrifice(player1, 0, null, sacrifice.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Candy Trail");
@@ -54,8 +55,9 @@ class TroublemakerOupheTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TroublemakerOuphe()));
         addMana();
 
-        harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        harness.castKickedInstantWithSacrifice(player1, 0, null, sacrifice.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Hopeful Vigil");

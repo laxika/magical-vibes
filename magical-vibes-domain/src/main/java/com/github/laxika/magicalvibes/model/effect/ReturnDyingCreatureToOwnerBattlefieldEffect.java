@@ -12,6 +12,10 @@ import java.util.UUID;
  * Returns a dying creature card from its owner's graveyard to the battlefield, applying persistent
  * subtype, keyword, and counter riders as it enters. The default return is under the owner's
  * control; {@code returnUnderController} supports effects that say "under your control".
+ *
+ * @param dyingCardGraveyardEntryVersion the graveyard-entry version of the dying card when the trigger
+ *                                       was collected, or {@code null} if unbound; a card that left the
+ *                                       graveyard and came back is a new object (CR 400.7) and is not returned
  */
 public record ReturnDyingCreatureToOwnerBattlefieldEffect(
         UUID dyingCardId,
@@ -21,8 +25,21 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
         Set<Keyword> grantKeywords,
         boolean enterTapped,
         boolean returnUnderController,
-        List<CardSubtype> subtypeOverride
+        List<CardSubtype> subtypeOverride,
+        Long dyingCardGraveyardEntryVersion
 ) implements CardEffect, DyingCreatureCardAwareEffect {
+
+    public ReturnDyingCreatureToOwnerBattlefieldEffect(UUID dyingCardId,
+                                                       CounterType enterWithCounter,
+                                                       int enterWithCounterCount,
+                                                       CardSubtype grantSubtype,
+                                                       Set<Keyword> grantKeywords,
+                                                       boolean enterTapped,
+                                                       boolean returnUnderController,
+                                                       List<CardSubtype> subtypeOverride) {
+        this(dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
+                enterTapped, returnUnderController, subtypeOverride, null);
+    }
 
     public ReturnDyingCreatureToOwnerBattlefieldEffect() {
         this(null, null, 0, null, Set.of(), false, false, List.of());
@@ -73,6 +90,13 @@ public record ReturnDyingCreatureToOwnerBattlefieldEffect(
     public CardEffect boundToDyingCard(UUID dyingCardId) {
         return new ReturnDyingCreatureToOwnerBattlefieldEffect(
                 dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
-                enterTapped, returnUnderController, subtypeOverride);
+                enterTapped, returnUnderController, subtypeOverride, dyingCardGraveyardEntryVersion);
+    }
+
+    @Override
+    public CardEffect boundToDyingCardEntryVersion(long graveyardEntryVersion) {
+        return new ReturnDyingCreatureToOwnerBattlefieldEffect(
+                dyingCardId, enterWithCounter, enterWithCounterCount, grantSubtype, grantKeywords,
+                enterTapped, returnUnderController, subtypeOverride, graveyardEntryVersion);
     }
 }

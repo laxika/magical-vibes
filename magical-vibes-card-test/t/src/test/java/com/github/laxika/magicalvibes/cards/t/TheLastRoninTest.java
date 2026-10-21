@@ -114,6 +114,7 @@ class TheLastRoninTest extends BaseCardTest {
     @Test
     void chapterIIMillsEvenWhenThereIsNoCreatureToReturn() {
         harness.setLibrary(player1, List.of(new TheLastRonin(), new TheLastRonin()));
+        harness.setHand(player1, List.of());
         addSaga(1);
 
         advanceToNextChapter();

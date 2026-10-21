@@ -32,6 +32,14 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
         UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
+            // The counter can't be put on an object that has left the battlefield, but the threshold is
+            // checked against the object's last known information (CR 608.2h), so the on-transform
+            // effects still happen for a non-optional threshold.
+            Permanent snapshot = entry.getSourcePermanentSnapshot();
+            if (!e.optional() && snapshot != null && snapshot.getId().equals(selfId)
+                    && snapshot.getCounterCount(e.counterType()) >= e.threshold()) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, e.onTransformEffects());
+            }
             return;
         }
 

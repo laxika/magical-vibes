@@ -1292,6 +1292,11 @@ public class StackEntry {
         postResolutionEffects = updated;
     }
 
+    /** Replaces the one-shot effects waiting for this entry to finish resolving. */
+    public void replacePostResolutionEffects(List<CardEffect> effects) {
+        postResolutionEffects = List.copyOf(effects);
+    }
+
     /** Returns and clears the one-shot effects waiting for this entry to finish resolving. */
     public List<CardEffect> takePostResolutionEffects() {
         List<CardEffect> effects = postResolutionEffects;
@@ -1493,6 +1498,11 @@ public class StackEntry {
         if (sourcePermanentSnapshot != null && sourcePermanentId != null
                 && sourcePermanentId.equals(sourcePermanentSnapshot.getId())) {
             return sourcePermanentSnapshot.getCard();
+        }
+        // A spell cast as its Omen or Adventure face has only that face's characteristics (its colors
+        // decide protection from the damage it deals).
+        if (castWithOmen || castWithAdventure) {
+            return getTargetingCard();
         }
         return getCard();
     }

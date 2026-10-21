@@ -136,6 +136,9 @@ class TomikDistinguishedAdvokistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.setHand(player2, List.of(new Craterize()));
         harness.addMana(player2, ManaColor.RED, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castSorcery(player2, 0, harness.getPermanentId(player1, "Forest"));
 
         harness.addToBattlefield(player1, new TomikDistinguishedAdvokist());
@@ -183,6 +186,9 @@ class TomikDistinguishedAdvokistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.setHand(player2, List.of(new Craterize()));
         harness.addMana(player2, ManaColor.RED, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castAndResolveSorcery(player2, 0, harness.getPermanentId(player1, "Forest"));
 

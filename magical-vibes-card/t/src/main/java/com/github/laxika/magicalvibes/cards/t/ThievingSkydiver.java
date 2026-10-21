@@ -26,6 +26,7 @@ public class ThievingSkydiver extends Card {
 
     public ThievingSkydiver() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{X}"));
+        setMinimumXValue(1);
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
@@ -33,10 +34,11 @@ public class ThievingSkydiver extends Card {
                 )),
                 "Target must be an artifact with mana value X or less"
         ), 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT))
+                new ConditionalEffect(new Kicked(),
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT)))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new ConditionalEffect(new TargetPermanentMatches(
+                        new ConditionalEffect(new Kicked(), new ConditionalEffect(new TargetPermanentMatches(
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)),
-                                new AttachTargetToSourcePermanentEffect()));
+                                new AttachTargetToSourcePermanentEffect())));
     }
 }

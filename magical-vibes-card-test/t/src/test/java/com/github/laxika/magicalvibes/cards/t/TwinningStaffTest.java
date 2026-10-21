@@ -47,8 +47,8 @@ class TwinningStaffTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2);
         assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.SORCERY_SPELL).hasSize(3);
@@ -62,8 +62,8 @@ class TwinningStaffTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy)
@@ -95,6 +95,7 @@ class TwinningStaffTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).noneMatch(StackEntry::isCopy);

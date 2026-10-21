@@ -71,7 +71,7 @@ class TriSentinelActOfVengeanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Tri-Sentinel, Act of Vengeance");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
     @Test

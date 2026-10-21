@@ -42,8 +42,8 @@ class TheBalrogOfMoriaTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bear.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(balrog.getCard().getId()));
@@ -105,7 +105,7 @@ class TheBalrogOfMoriaTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(balrog.getCard().getId()));
@@ -121,7 +121,7 @@ class TheBalrogOfMoriaTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, firstBear.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstBear.getId()));
 
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(balrog.getCard().getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstBear, secondBear);

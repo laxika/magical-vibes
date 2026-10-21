@@ -62,6 +62,7 @@ class TheHunterMazeTest extends BaseCardTest {
         CopperLonglegs draw = new CopperLonglegs();
         harness.setLibrary(player1, List.of(draw));
         harness.addMana(player1, ManaColor.GREEN, 2);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -74,7 +75,7 @@ class TheHunterMazeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1).contains(draw);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

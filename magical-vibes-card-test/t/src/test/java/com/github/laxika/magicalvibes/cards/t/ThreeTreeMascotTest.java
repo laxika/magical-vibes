@@ -104,8 +104,11 @@ class ThreeTreeMascotTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "BLACK");
+        // Stop at upkeep so auto-pass cannot end the step (emptying the mana pool) before the assertion.
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.handleListChoice(player1, "BLACK");
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }

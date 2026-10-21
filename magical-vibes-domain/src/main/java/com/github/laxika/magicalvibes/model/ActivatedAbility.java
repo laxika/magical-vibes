@@ -184,6 +184,13 @@ public class ActivatedAbility {
      * {@link #withMaxActivationsPerGame(int)}.
      */
     private Integer maxActivationsPerGame;
+    /**
+     * Identifies one acquisition of this ability by one permanent. A whole-game activation cap on an
+     * acquired ability applies only to the ability as it was acquired from that object (CR 602.5c), so
+     * it is counted under this id rather than under the permanent's ability index. Null for printed
+     * abilities. Set via {@link #withAcquisitionId(UUID)}.
+     */
+    private UUID acquisitionId;
     /** Whether this is an exhaust ability, which may be activated only once per permanent object. */
     private boolean exhaustAbility;
     /** Whether this is a Power-up ability whose cost is discounted on its source's entry turn. */
@@ -369,6 +376,7 @@ public class ActivatedAbility {
         copy.maxActivationsPerTurnAmount = this.maxActivationsPerTurnAmount;
         copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
+        copy.acquisitionId = this.acquisitionId;
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
         copy.powerUpAbility = this.powerUpAbility;
@@ -726,6 +734,13 @@ public class ActivatedAbility {
         this.activatableByAnyPlayer = true;
         this.activatableOnlyByGrantingPlayer = true;
         return this;
+    }
+
+    /** Returns a copy marked as one distinct acquisition of this ability (see {@link #acquisitionId}). */
+    public ActivatedAbility withAcquisitionId(UUID id) {
+        ActivatedAbility copy = copyWith(grantSourcePermanentId, maxActivationsPerTurn);
+        copy.acquisitionId = id;
+        return copy;
     }
 
     public ActivatedAbility withGrantingPlayer(UUID playerId) {

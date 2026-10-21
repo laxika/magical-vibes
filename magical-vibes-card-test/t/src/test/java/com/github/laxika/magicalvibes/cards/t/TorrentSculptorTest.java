@@ -180,6 +180,7 @@ class TorrentSculptorTest extends BaseCardTest {
         Permanent sculptor = addCreatureReady(player1, new TorrentSculptor());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player2, 0, sculptor.getId());
         harness.passBothPriorities();

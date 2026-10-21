@@ -17,7 +17,6 @@ public class ThunderSalvo extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new Sum(
                         new Fixed(2),
-                        new SpellsCastThisTurn(CountScope.CONTROLLER),
-                        new Fixed(-1))));
+                        new SpellsCastThisTurn(null, CountScope.CONTROLLER, true))));
     }
 }

@@ -9,11 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 import java.util.List;
@@ -25,11 +26,11 @@ public class ThranduilTheElvenking extends Card {
         CardPredicate elf = new CardSubtypePredicate(CardSubtype.ELF);
         addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfCardsInControllerGraveyardEffect(elf));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                                new CardSubtypePredicate(CardSubtype.ELF))),
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                                new PermanentHasSubtypePredicate(CardSubtype.ELF))),
                         SequenceEffect.of(
                                 new DrawCardEffect(2),
                                 new DiscardEffect(1, DiscardRecipient.CONTROLLER))));

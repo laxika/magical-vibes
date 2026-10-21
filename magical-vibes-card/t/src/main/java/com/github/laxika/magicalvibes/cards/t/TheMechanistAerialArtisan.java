@@ -30,7 +30,7 @@ public class TheMechanistAerialArtisan extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(CreateTokenEffect.ofClueToken(1))));
+                        List.of(CreateTokenEffect.ofClueToken(1).withInvestigate(false))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

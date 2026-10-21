@@ -9,14 +9,12 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransmuteArtifactSearchEffect;
 import com.github.laxika.magicalvibes.model.effect.TransmuteArtifactSelectedCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -31,7 +29,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransmuteArtifactSearchEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
@@ -66,8 +63,6 @@ public class TransmuteArtifactSearchEffectHandler implements NormalEffectHandler
         List<Card> matchingCards = deck.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, artifactCard, null, gameData, controllerId))
-                .filter(card -> !gameQueryService.isCardBlockedFromEnteringFromZone(
-                        gameData, card, Zone.LIBRARY))
                 .toList();
         if (matchingCards.isEmpty()) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
@@ -78,14 +73,12 @@ public class TransmuteArtifactSearchEffectHandler implements NormalEffectHandler
             return;
         }
 
-        int sacrificedManaValue = sacrificed.getCard().getManaValue();
         String prompt = "Search your library for an artifact card.";
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                 .reveals(true)
                 .canFailToFind(true)
-                .destination(LibrarySearchDestination.HAND)
+                .destination(LibrarySearchDestination.REVEAL_ONLY)
                 .filterPredicate(artifactCard)
-                .battlefieldIfManaValueAtMost(sacrificedManaValue)
                 .shuffleAfterSelection(true)
                 .followUp(LibrarySearchFollowUp.forSelectedCard(
                         new CardTruePredicate(), new TransmuteArtifactSelectedCardEffect()))

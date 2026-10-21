@@ -34,12 +34,14 @@ public class TymaretTheMurderKing extends Card {
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
-                List.of(ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.HAND)
-                        .filter(new CardIsSelfPredicate())
-                        .returnAll(true)
-                        .build()),
-                "{1}{B}: Return Tymaret, the Murder King from your graveyard to your hand."
+                List.of(
+                        new SacrificeCreatureCost(),
+                        ReturnCardFromGraveyardEffect.builder()
+                            .destination(GraveyardChoiceDestination.HAND)
+                            .filter(new CardIsSelfPredicate())
+                            .returnAll(true)
+                            .build()),
+                "{1}{B}, Sacrifice a creature: Return Tymaret, the Murder King from your graveyard to your hand."
         ));
     }
 }

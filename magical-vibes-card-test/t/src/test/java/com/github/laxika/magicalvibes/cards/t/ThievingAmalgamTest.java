@@ -78,7 +78,7 @@ class ThievingAmalgamTest extends BaseCardTest {
         Card stolenCard = new ThievingAmalgam();
         stolenCard.setOwnerId(player2.getId());
         Permanent amalgam = harness.addToBattlefieldAndReturn(player1, stolenCard);
-        gd.stolenCreatures.put(amalgam.getId(), player2.getId());
+        setOwnerAndController(amalgam, player2, player1);
         harness.setLife(player1, 10);
         harness.setLife(player2, 10);
 
@@ -148,7 +148,7 @@ class ThievingAmalgamTest extends BaseCardTest {
         Card stolenCard = new ThievingAmalgam();
         stolenCard.setOwnerId(player2.getId());
         Permanent stolen = harness.addToBattlefieldAndReturn(player1, stolenCard);
-        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        setOwnerAndController(stolen, player2, player1);
         harness.setLife(player1, 10);
         harness.setLife(player2, 10);
 

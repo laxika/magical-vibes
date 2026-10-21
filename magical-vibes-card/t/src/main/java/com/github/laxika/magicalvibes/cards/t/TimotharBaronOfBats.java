@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -25,6 +27,7 @@ import java.util.Set;
 public class TimotharBaronOfBats extends Card {
 
     public TimotharBaronOfBats() {
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessDiscardsEffect());
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.VAMPIRE),
                 new MayPayManaEffect("{1}",
@@ -43,7 +46,8 @@ public class TimotharBaronOfBats extends Card {
                 Set.of(Keyword.FLYING),
                 Set.<CardType>of(),
                 Map.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new SacrificeSelfThenEffect(
-                                new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(null, true))));
+                        SequenceEffect.of(
+                                new SacrificeSelfEffect(),
+                                new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(null, true, true))));
     }
 }

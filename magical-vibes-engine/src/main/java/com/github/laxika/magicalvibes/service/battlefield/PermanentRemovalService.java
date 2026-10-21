@@ -2477,10 +2477,12 @@ public class PermanentRemovalService {
                 .map(AnimateNoncreatureArtifactsEffect.class::cast)
                 .filter(AnimateNoncreatureArtifactsEffect::losesAllAbilities)
                 .findFirst()
-                .ifPresent(effect -> gameData.addFloatingEffect(new FloatingContinuousEffect(
+                // The effect of the static ability continues with the timestamp it had on the battlefield
+                // (CR 613.7a), so abilities granted after it entered are not removed by it.
+                .ifPresent(effect -> gameData.floatingEffects.add(new FloatingContinuousEffect(
                         UUID.randomUUID(), target.getCard().getName(), null, controllerId,
                         effect, null, null, new PermanentIsArtifactPredicate(),
-                        EffectDuration.UNTIL_END_OF_TURN, 0)));
+                        EffectDuration.UNTIL_END_OF_TURN, target.getTimestamp())));
         UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
         gameData.stolenCreatures.remove(target.getId());
         // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
@@ -3128,8 +3130,15 @@ public class PermanentRemovalService {
                     triggerCollectionService.checkLandPutIntoGraveyardByOpponentTriggers(
                             gameData, target.getOriginalCard(), ownerId, gameData.currentlyResolvingControllerId);
                 }
+                // CR 603.10a: a creature that was a land when it died (e.g. enchanted by Imprisoned in the
+                // Moon) is judged by its land characteristics, so its card is read as a land here.
+                Card lastKnownLandCard = target.getCard();
+                if (!lastKnownLandCard.hasType(CardType.LAND)) {
+                    lastKnownLandCard = lastKnownLandCard.createCardCopy();
+                    lastKnownLandCard.setAdditionalTypes(Set.of(CardType.LAND));
+                }
                 triggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(
-                        gameData, target.getCard(), ownerId, controllerId);
+                        gameData, lastKnownLandCard, ownerId, controllerId);
             }
             if (destroyedBySpellOrAbility && !wasCreature) {
                 recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);

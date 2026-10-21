@@ -26,9 +26,9 @@ public class TimberwatchElf extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.ANY_PLAYER);
         addActivatedAbility(new ActivatedAbility(
                 true,
-                "{2}{G}",
+                null,
                 List.of(new BoostTargetCreatureEffect(elvesOnBattlefield, elvesOnBattlefield)),
-                "{2}{G}, {T}: Target creature gets +X/+X until end of turn, where X is the number of Elves on the battlefield."
+                "{T}: Target creature gets +X/+X until end of turn, where X is the number of Elves on the battlefield."
         ));
     }
 }

@@ -37,6 +37,6 @@ public class ThousandFacedShadow extends Card {
                                 new EnteredFromZone(Zone.HAND),
                                 new SourceIsAttacking()
                         )),
-                        new CreateTokenCopyOfTargetPermanentEffect(false, false, false, true)));
+                        CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingWithTargetChoice()));
     }
 }

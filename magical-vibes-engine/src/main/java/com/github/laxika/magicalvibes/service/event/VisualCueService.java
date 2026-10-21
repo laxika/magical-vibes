@@ -257,6 +257,9 @@ public class VisualCueService {
 
         /** A spell or ability on the stack; a face-down spell hides its name and colors. */
         public static Source of(StackEntry entry) {
+            if (entry.getCard() == null) {
+                return NONE;
+            }
             return entry.isCastFaceDown()
                     ? hidden(entry.getCard())
                     : of(entry.getCard());

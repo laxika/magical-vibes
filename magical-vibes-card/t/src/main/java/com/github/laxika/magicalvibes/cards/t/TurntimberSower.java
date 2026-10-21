@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
@@ -25,7 +26,8 @@ public class TurntimberSower extends Card {
         // Whenever one or more land cards are put into your graveyard from anywhere, create a Plant.
         addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
                 new CreateTokenEffect("Plant", 0, 1, CardColor.GREEN,
-                        List.of(CardSubtype.PLANT), Set.of(), Set.of()));
+                        List.of(CardSubtype.PLANT), Set.of(), Set.of()),
+                TriggerMode.ONCE_PER_BATCH);
 
         // {G}, Sacrifice three creatures: Return target land card from your graveyard to your hand.
         addActivatedAbility(new ActivatedAbility(

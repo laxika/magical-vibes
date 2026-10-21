@@ -145,6 +145,7 @@ class TheSackvilleBagginsesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MindStone());
         GrizzlyBears drawn = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 1, 1, null, null);

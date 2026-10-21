@@ -20,6 +20,5 @@ public class ThorOdinson extends Card {
                 List.of(new BoostSelfEffect(1, 1))
         );
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, prowess);
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, prowess);
     }
 }

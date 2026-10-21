@@ -135,8 +135,10 @@ class TheLegendOfYangchenTest extends BaseCardTest {
 
     @Test
     void chapterIIIReturnsUnderAbilityControllersControlRatherThanOwners() {
-        Permanent saga = addSaga(2);
-        saga.getOriginalCard().setOwnerId(player2.getId());
+        TheLegendOfYangchen sagaCard = new TheLegendOfYangchen();
+        sagaCard.setOwnerId(player2.getId());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, sagaCard);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         advanceToNextChapter();
         harness.passBothPriorities();
@@ -171,8 +173,9 @@ class TheLegendOfYangchenTest extends BaseCardTest {
     @Test
     void airbentCardCanBeCastByItsOwnerForTwoGenericMana() {
         addTransformedSaga();
-        Permanent target = addCreatureReady(player2, new RuneclawBear());
-        target.getOriginalCard().setOwnerId(player2.getId());
+        RuneclawBear bear = new RuneclawBear();
+        bear.setOwnerId(player2.getId());
+        Permanent target = addCreatureReady(player2, bear);
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 2);
         harness.forceActivePlayer(player1);
@@ -184,6 +187,8 @@ class TheLegendOfYangchenTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNotNull();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

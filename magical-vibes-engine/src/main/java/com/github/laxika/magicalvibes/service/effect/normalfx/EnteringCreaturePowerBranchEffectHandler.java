@@ -31,11 +31,16 @@ public class EnteringCreaturePowerBranchEffectHandler implements NormalEffectHan
         Permanent enteringPermanent = entry.getTargetId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Integer lastKnownPower = entry.getTargetId() == null
+                ? null
+                : entry.getLastKnownPermanentPowers().get(entry.getTargetId());
         int power = enteringPermanent != null
                 ? gameQueryService.getEffectivePower(gameData, enteringPermanent)
-                : entry.getSourcePermanentSnapshot() == null
-                        ? Integer.MIN_VALUE
-                        : entry.getSourcePermanentSnapshot().getEffectivePower();
+                : lastKnownPower != null
+                        ? lastKnownPower
+                        : entry.getSourcePermanentSnapshot() == null
+                                ? Integer.MIN_VALUE
+                                : entry.getSourcePermanentSnapshot().getEffectivePower();
         CardEffect branch = power >= branchEffect.minPower()
                 ? branchEffect.powerAtLeast()
                 : branchEffect.belowPower();

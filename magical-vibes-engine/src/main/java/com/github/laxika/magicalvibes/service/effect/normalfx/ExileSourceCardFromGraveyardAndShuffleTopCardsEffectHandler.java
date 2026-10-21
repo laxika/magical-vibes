@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardA
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,6 @@ public class ExileSourceCardFromGraveyardAndShuffleTopCardsEffectHandler
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final ExileService exileService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,27 +48,30 @@ public class ExileSourceCardFromGraveyardAndShuffleTopCardsEffectHandler
             return;
         }
 
-        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCardId);
-        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, sourceCardId);
-        if (ownerId != null) {
-            exileService.exileCard(gameData, ownerId, sourceCard);
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
         }
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is exiled."));
-
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCardId);
+        if (ownerId == null || !ownerId.equals(entry.getControllerId())) {
+            return;
+        }
         List<Card> library = gameData.playerDecks.get(entry.getControllerId());
-        if (library == null || library.isEmpty() || shuffleEffect.count() == 0) {
+        if (library == null || library.size() < shuffleEffect.count()) {
             return;
         }
 
-        int count = Math.min(shuffleEffect.count(), library.size());
-        List<Card> pile = new ArrayList<>(library.subList(0, count));
-        library.subList(0, count).clear();
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, sourceCardId);
+        List<Card> pile = new ArrayList<>(library.subList(0, shuffleEffect.count()));
+        library.subList(0, shuffleEffect.count()).clear();
+        pile.add(sourceCard);
         Collections.shuffle(pile);
         library.addAll(0, pile);
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                "'s ability shuffles the top " + count + " cards of its controller's library."));
-        log.info("Game {} - {} exiled and shuffled the top {} cards of the controller's library",
-                gameData.id, sourceCard.getName(), count);
+                "'s ability exiles it and the top " + shuffleEffect.count()
+                        + " cards of its controller's library, then shuffles them and puts them back on top."));
+        log.info("Game {} - {} shuffled its pile back onto the top of the controller's library",
+                gameData.id, sourceCard.getName());
     }
 }

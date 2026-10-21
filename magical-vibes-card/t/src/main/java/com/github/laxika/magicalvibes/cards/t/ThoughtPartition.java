@@ -22,7 +22,7 @@ public class ThoughtPartition extends Card {
         ChooseCardsFromTargetHandEffect choose = new ChooseCardsFromTargetHandEffect(
                 new Fixed(1), List.of(CardType.LAND), List.of(), HandChoiceDestination.KEEP_IN_HAND,
                 false, null, 0, true, false, false, true, false, false, 0
-        ).withChosenCardThen(null,
+        ).withRevealMatchingOnly().withChosenCardThen(null,
                 new PerpetuallySetChosenCardCharacteristicsEffect(CardColor.WHITE, "{5}"));
 
         target(new PlayerPredicateTargetFilter(

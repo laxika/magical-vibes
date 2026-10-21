@@ -309,12 +309,12 @@ class TransmutationFontTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         harness.activateAbility(player1, battlefieldIndex(font), 0, null, null);
+        assertThat(font.isTapped()).isTrue();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Create a Clue token");
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(findPermanents(player2, "Clue")).isEmpty();
-        assertThat(font.isTapped()).isTrue();
     }
 
     private Permanent prepareTutor() {

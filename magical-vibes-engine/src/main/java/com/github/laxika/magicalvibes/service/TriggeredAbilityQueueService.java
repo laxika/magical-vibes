@@ -2633,7 +2633,9 @@ public class TriggeredAbilityQueueService {
                     if (returnEffect.hasTotalManaValueCap()) {
                         anyNumber = true;
                         maxTotalManaValue = returnEffect.maxTotalManaValue();
-                        maxTargets = Integer.MAX_VALUE;
+                        maxTargets = returnEffect.dynamicMaxTargets() == null && returnEffect.maxTargets() > 0
+                                ? returnEffect.maxTargets()
+                                : Integer.MAX_VALUE;
                     } else {
                         maxTargets = returnEffect.maxTargets();
                     }
@@ -3642,6 +3644,13 @@ public class TriggeredAbilityQueueService {
                 .filter(java.util.Objects::nonNull)
                 .collect(java.util.stream.Collectors.toSet())
                 : Set.of();
+        List<Permanent> sharedTypeReference = pending.sourceCard().getMultiTargetConstraint()
+                == MultiTargetConstraint.SHARE_CARD_TYPE
+                ? pending.chosenTargetsSoFar().stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .toList()
+                : List.of();
 
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
@@ -3651,6 +3660,10 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 if (chosenControllers.contains(pid)) {
+                    continue;
+                }
+                if (!sharedTypeReference.isEmpty() && sharedTypeReference.stream()
+                        .noneMatch(sel -> gameQueryService.sharesCardType(gameData, sel, permanent))) {
                     continue;
                 }
                 if (group.filter() == null && !gameQueryService.isCreature(gameData, permanent)) {

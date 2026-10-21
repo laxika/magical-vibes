@@ -90,6 +90,7 @@ class TyrannicalPitlordTest extends BaseCardTest {
         harness.castFromHand(player1, new TyrannicalPitlord(), "{4}{B}{B}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosen.getId());
+        harness.passBothPriorities();
         Permanent pitlord = findPermanent(player1, "Tyrannical Pitlord");
 
         harness.forceActivePlayer(player2);
@@ -125,12 +126,14 @@ class TyrannicalPitlordTest extends BaseCardTest {
         harness.castFromHand(player1, new TyrannicalPitlord(), "{4}{B}{B}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosen.getId());
+        harness.passBothPriorities();
         Permanent firstPitlord = findPermanent(player1, "Tyrannical Pitlord");
 
         TyrannicalPitlord secondCard = new TyrannicalPitlord();
         harness.castFromHand(player1, secondCard, "{4}{B}{B}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, firstPitlord.getId());
+        harness.passBothPriorities();
         Permanent secondPitlord = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() == secondCard)
                 .findFirst().orElseThrow();

@@ -168,9 +168,7 @@ class TolarianSentinelTest extends BaseCardTest {
     void returnsBorrowedPermanentToOwnersHand() {
         addCreatureReady(player1, new TolarianSentinel());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         harness.setHand(player1, List.of(new Island()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

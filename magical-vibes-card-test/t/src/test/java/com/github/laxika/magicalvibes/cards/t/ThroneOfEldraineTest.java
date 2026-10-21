@@ -55,6 +55,7 @@ class ThroneOfEldraineTest extends BaseCardTest {
         addReadyThrone(CardColor.GREEN);
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,17 +88,33 @@ public class VoteForInnocentOrGuiltyEffectHandler implements NormalEffectHandler
         List<ExiledCardEntry> exiledCards = gameData.exiledCards.stream()
                 .filter(exiled -> sourceId.equals(exiled.sourcePermanentId()))
                 .toList();
+        Map<UUID, List<Card>> cardsByOwner = new LinkedHashMap<>();
         for (ExiledCardEntry exiled : exiledCards) {
             Card card = exiled.card();
-            List<Card> library = gameData.playerDecks.get(exiled.ownerId());
-            if (library == null || !gameData.removeFromExile(card.getId())) {
+            if (gameData.playerDecks.get(exiled.ownerId()) == null || !gameData.removeFromExile(card.getId())) {
                 continue;
             }
-            library.addLast(card);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(exiled.ownerId()) + " puts ", card,
-                    " on the bottom of their library (" + sourceName + ")."));
+            cardsByOwner.computeIfAbsent(exiled.ownerId(), ignored -> new ArrayList<>()).add(card);
         }
+        cardsByOwner.forEach((ownerId, cards) -> {
+            if (cards.size() == 1) {
+                gameData.playerDecks.get(ownerId).addLast(cards.getFirst());
+                gameLogService.append(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(ownerId) + " puts ", cards.getFirst(),
+                        " on the bottom of their library (" + sourceName + ")."));
+                return;
+            }
+            // CR 401.4: the owner of two or more cards put on the same library position arranges them.
+            PendingInteraction.LibraryReorder reorder = new PendingInteraction.LibraryReorder(
+                    ownerId, List.copyOf(cards), true, ownerId,
+                    sourceName + " — put these cards on the bottom of your library in any order.",
+                    0, false);
+            if (gameData.interaction.isAwaitingInput()) {
+                gameData.pendingInteractions.addLast(reorder);
+            } else {
+                interactionHandlerRegistry.begin(gameData, reorder);
+            }
+        });
         gameData.exileReturnOnPermanentLeave.remove(sourceId);
     }
 

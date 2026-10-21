@@ -73,7 +73,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         UUID copyControllerId = copyEffect.copyForTargetController()
                 ? targetEntry.getControllerId()
                 : entry.getControllerId();
-        int copyCount = copyEffect.copies() <= 1 ? 1 : copySupport.adjustedSpellCopyCount(gameData, copyEffect.copies());
+        int copyCount = copyEffect.copies() <= 1 ? 1 : copySupport.adjustedSpellCopyCount(gameData, copyControllerId, copyEffect.copies());
         for (int copyIndex = 0; copyIndex < copyCount; copyIndex++) {
             createCopy(gameData, entry, copyEffect, targetEntry, copyControllerId);
         }

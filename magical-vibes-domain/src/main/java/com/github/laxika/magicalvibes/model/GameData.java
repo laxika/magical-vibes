@@ -857,6 +857,9 @@ public class GameData {
     public final Map<UUID, Map<UUID, Integer>> foretoldCardTurnsTaken = new ConcurrentHashMap<>();
     /** Card IDs currently represented as cards in the ante zone. Ante is modelled through exile. */
     public final Set<UUID> antedCardIds = ConcurrentHashMap.newKeySet();
+    /** Tapped Time Vaults whose controller declined the turn-start skip choice since the last turn began.
+     *  A declined Vault is not offered again before the turn starts. */
+    public final Set<UUID> timeVaultsDeclinedThisTurnStart = ConcurrentHashMap.newKeySet();
     /** Players who accepted Rebirth's ante choice; their ante and life change wait until every player has decided (CR 608.2e). */
     public final Set<UUID> rebirthAnteAcceptedPlayerIds = ConcurrentHashMap.newKeySet();
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
@@ -1063,6 +1066,13 @@ public class GameData {
     public final Deque<UUID> pendingCardDraws = new ArrayDeque<>();
     /** Draws produced by a draw replacement (e.g. "draw two cards instead") still to be performed. */
     public final Deque<UUID> pendingReplacementCardDraws = new ArrayDeque<>();
+    /**
+     * Draws a player still has to perform that already came out of a draw-doubling replacement they chose
+     * to apply first, so draw doublers do not replace them again (CR 614.5). Consumed one per draw.
+     */
+    public final Map<UUID, Integer> drawsFromAppliedDoubling = new ConcurrentHashMap<>();
+    /** Players whose draw currently being resolved came out of an already applied draw-doubling replacement. */
+    public final Set<UUID> currentDrawDoublingApplied = ConcurrentHashMap.newKeySet();
     /** Optional replacement sources declined for the draw currently being resolved. */
     public final Map<UUID, Set<UUID>> declinedDrawReplacementSources = new ConcurrentHashMap<>();
     /** Preserves the turn-based draw exemption while an optional replacement is answered. */
@@ -1147,6 +1157,13 @@ public class GameData {
      * generic cost, since reductions apply to the spell's total cost.
      */
     public int unusedSpellCostReduction;
+
+    /**
+     * Mana of the spell's other cost components that count toward a minimum-total-cost effect (Trinisphere):
+     * a paid buyback or kicker cost adds to the total cost, while a Phyrexian symbol paid with life subtracts
+     * from it. Set only while a cast is being paid for; always 0 otherwise.
+     */
+    public transient int castCostMinimumManaOffset;
     /**
      * Resolution-time "choose a creature type" answer for a spell/ability that has no permanent
      * to hang the choice on (e.g. Coordinated Barrage). Set by the choice handler, read and
@@ -1496,7 +1513,8 @@ public class GameData {
     public boolean firstCombatDamageTimingClosed;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
-    public final Deque<PendingInteraction.PermanentAuctionPlacement> pendingAuctionEntries = new ArrayDeque<>();
+    /** The next permanent-auction pick, held while an as-enters choice or Aura host choice for the previous pick is answered. */
+    public PendingInteraction.PermanentAuctionChoice pendingAuctionNext;
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public final RetetherOperationState retetherOperation = new RetetherOperationState();
     public final AuspiciousStarrixOperationState auspiciousStarrixOperation =
@@ -2078,6 +2096,9 @@ public class GameData {
     public final Set<UUID> playersCantActivateNonManaAbilitiesThisTurn = ConcurrentHashMap.newKeySet();
     public final Set<UUID> playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn =
             ConcurrentHashMap.newKeySet();
+    /** Extra loyalty activations each planeswalker a player controls may use this turn, granted to the player
+     *  (The Chain Veil); applies to planeswalkers that come under the player's control later in the turn too. */
+    public final Map<UUID, Integer> playerExtraLoyaltyActivationsThisTurn = new ConcurrentHashMap<>();
 
     /** Sen Triplets: while set, {@link #senControllerPlayerId} may play lands and cast spells from
      *  {@link #senControlledPlayerId}'s hand this turn (that hand is also revealed to the controller,
@@ -3685,6 +3706,9 @@ public class GameData {
     /** True while damage assignments for the firstest-strike combat damage step are collected. */
     public boolean combatDamageFirstestStrikeAssignmentPhase = false;
     public boolean combatDamageFirstestStrikeStepComplete = false;
+    /** Creatures that had firstest strike as this combat's firstest-strike damage step began; they do not
+     *  deal damage again in the regular step, while a creature that gains it later does. */
+    public final Set<UUID> creaturesInFirstestStrikeDamageStepThisCombat = ConcurrentHashMap.newKeySet();
     public boolean combatDamageFirstStrikeStepComplete = false;
     public boolean combatDamagePhase1Complete = false;
     public CombatDamagePhase1State combatDamagePhase1State;
@@ -7976,6 +8000,7 @@ public class GameData {
                 copy.permanentsCantAttackUntilNextTurn.put(permanentId, new java.util.HashSet<>(controllers)));
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamageFirstestStrikeStepComplete = this.combatDamageFirstestStrikeStepComplete;
+        copy.creaturesInFirstestStrikeDamageStepThisCombat.addAll(this.creaturesInFirstestStrikeDamageStepThisCombat);
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.combatDamageFirstStrikeAssignmentPhase = this.combatDamageFirstStrikeAssignmentPhase;
         copy.combatDamageFirstestStrikeAssignmentPhase = this.combatDamageFirstestStrikeAssignmentPhase;
@@ -8820,6 +8845,8 @@ public class GameData {
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.pendingCardDraws.addAll(this.pendingCardDraws);
         copy.pendingReplacementCardDraws.addAll(this.pendingReplacementCardDraws);
+        copy.drawsFromAppliedDoubling.putAll(this.drawsFromAppliedDoubling);
+        copy.currentDrawDoublingApplied.addAll(this.currentDrawDoublingApplied);
         this.declinedDrawReplacementSources.forEach((playerId, sources) ->
                 copy.declinedDrawReplacementSources.put(playerId, new java.util.HashSet<>(sources)));
         copy.pendingDrawFirstDrawStepFlags.putAll(this.pendingDrawFirstDrawStepFlags);
@@ -9117,7 +9144,7 @@ public class GameData {
         copy.extraTurnPowerUpAbilitiesDisabled.addAll(this.extraTurnPowerUpAbilitiesDisabled);
         copy.extraTurnDamageCantBePrevented.addAll(this.extraTurnDamageCantBePrevented);
         copy.extraTurnSequences.addAll(this.extraTurnSequences);
-        copy.pendingAuctionEntries.addAll(this.pendingAuctionEntries);
+        copy.pendingAuctionNext = this.pendingAuctionNext;
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 
@@ -9240,6 +9267,7 @@ public class GameData {
         copy.playersCantActivateNonManaAbilitiesThisTurn.addAll(this.playersCantActivateNonManaAbilitiesThisTurn);
         copy.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.addAll(
                 this.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn);
+        copy.playerExtraLoyaltyActivationsThisTurn.putAll(this.playerExtraLoyaltyActivationsThisTurn);
         copy.senControllerPlayerId = this.senControllerPlayerId;
         copy.senControlledPlayerId = this.senControlledPlayerId;
 

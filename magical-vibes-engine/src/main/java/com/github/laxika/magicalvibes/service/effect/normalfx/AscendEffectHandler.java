@@ -41,6 +41,7 @@ public class AscendEffectHandler implements NormalEffectHandlerBean {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield != null && battlefield.size() >= 10) {
                 Card ascendSource = battlefield.stream()
+                        .filter(perm -> !perm.isFaceDown())
                         .filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
                         .map(Permanent::getCard)
                         .filter(card -> card.getEffects(EffectSlot.STATIC).stream()

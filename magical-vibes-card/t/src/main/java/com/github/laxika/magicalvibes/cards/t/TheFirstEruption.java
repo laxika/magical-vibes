@@ -38,7 +38,9 @@ public class TheFirstEruption extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_III, new SacrificePermanentThenEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                 new MassDamageEffect(3),
-                "a Mountain"
+                "a Mountain",
+                false,
+                false
         ));
     }
 }

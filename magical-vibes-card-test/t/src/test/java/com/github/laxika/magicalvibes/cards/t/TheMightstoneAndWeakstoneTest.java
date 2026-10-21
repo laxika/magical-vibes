@@ -37,9 +37,7 @@ class TheMightstoneAndWeakstoneTest extends BaseCardTest {
     @DisplayName("The Mightstone and Weakstone's debuff mode gives a creature -5/-5")
     void debuffModeGivesTargetCreatureMinusFiveMinusFive() {
         Permanent target = addCreatureReady(player1, new RustGoliath());
-        cast(1, target.getId());
-
-        resolveAllTriggers();
+        castDebuff(target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
@@ -108,8 +106,7 @@ class TheMightstoneAndWeakstoneTest extends BaseCardTest {
     @Test
     void debuffKillsOpponentsCreature() {
         harness.addToBattlefield(player2, new ArgothianSprite());
-        cast(1, findPermanent(player2, "Argothian Sprite").getId());
-        resolveAllTriggers();
+        castDebuff(findPermanent(player2, "Argothian Sprite").getId());
 
         harness.assertNotOnBattlefield(player2, "Argothian Sprite");
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -119,8 +116,7 @@ class TheMightstoneAndWeakstoneTest extends BaseCardTest {
     @Test
     void debuffExpiresAtEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RustGoliath());
-        cast(1, target.getId());
-        resolveAllTriggers();
+        castDebuff(target.getId());
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -139,6 +135,17 @@ class TheMightstoneAndWeakstoneTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(2);
+    }
+
+    /**
+     * The debuff mode's target belongs to the enters-the-battlefield trigger, so it is chosen when that
+     * trigger goes on the stack (CR 603.3d), not while the permanent spell is cast (CR 601.2c).
+     */
+    private void castDebuff(java.util.UUID targetId) {
+        cast(1, null);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, targetId);
+        resolveAllTriggers();
     }
 
     private void cast(int mode, java.util.UUID targetId) {

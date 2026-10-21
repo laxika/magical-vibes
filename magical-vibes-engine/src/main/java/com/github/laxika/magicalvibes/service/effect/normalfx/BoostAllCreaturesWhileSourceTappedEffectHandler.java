@@ -39,7 +39,11 @@ public class BoostAllCreaturesWhileSourceTappedEffectHandler implements NormalEf
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || !source.isTapped()) {
+        // CR 611.2b: if the source was untapped after this ability was put on the stack, the "for as
+        // long as it remains tapped" duration already ended, and re-tapping it later does not revive it.
+        if (source == null || !source.isTapped()
+                || (entry.getSourcePermanentSnapshot() != null
+                && source.getUntapSequence() != entry.getSourcePermanentSnapshot().getUntapSequence())) {
             return;
         }
 

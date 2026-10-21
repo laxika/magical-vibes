@@ -1140,6 +1140,7 @@ public class AbilityActivationService {
                 Map.of()
         );
         gameData.stack.add(stackEntry);
+        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         gameData.priorityPassedBy.clear();
 
@@ -6583,6 +6584,12 @@ public class AbilityActivationService {
         String abilityCost = effectiveAbilityManaCost(gameData, permanent, ability);
         if (abilityCost == null
                 || castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)) {
+            if (abilityCost == null && additionalGenericCost > 0) {
+                int taxReduction = castingCostService.getActivatedAbilityActivationCostReduction(
+                        gameData, permanent, ability, targetId, targetIds,
+                        Math.max(0, additionalGenericCost - 1));
+                additionalGenericCost -= Math.min(taxReduction, additionalGenericCost);
+            }
             return additionalGenericCost;
         }
 
@@ -7770,6 +7777,8 @@ public class AbilityActivationService {
         if (cost.requiredType() != null
                 && (cost.requiredType() == CardType.ARTIFACT
                 ? !gameQueryService.isArtifact(gameData, permanent)
+                : cost.requiredType() == CardType.CREATURE
+                ? !gameQueryService.isCreature(gameData, permanent)
                 : !permanent.getCard().hasType(cost.requiredType()))) {
             return false;
         }
@@ -7816,11 +7825,13 @@ public class AbilityActivationService {
         }
         return !cost.requireActivatedAbility()
                 || !card.getActivatedAbilities().isEmpty()
+                || !card.getHandActivatedAbilities().isEmpty()
                 || !card.getEffects(EffectSlot.ON_TAP).isEmpty();
     }
 
     private boolean hasActivatedAbility(GameData gameData, Permanent permanent) {
         return !getEffectiveActivatedAbilities(gameData, permanent).isEmpty()
+                || !permanent.getCard().getHandActivatedAbilities().isEmpty()
                 || !permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty();
     }
 
@@ -8643,7 +8654,8 @@ public class AbilityActivationService {
         // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi), plus any
         // one-shot extra activations granted to this planeswalker this turn (The Chain Veil).
         int maxActivations = (gameQueryService.hasExtraLoyaltyActivation(gameData, playerId) ? 2 : 1)
-                + permanent.getExtraLoyaltyActivationsThisTurn();
+                + permanent.getExtraLoyaltyActivationsThisTurn()
+                + gameData.playerExtraLoyaltyActivationsThisTurn.getOrDefault(playerId, 0);
         if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) {
             throw new IllegalStateException("Only one loyalty ability per planeswalker per turn");
         }
@@ -10280,13 +10292,24 @@ public class AbilityActivationService {
             return;
         }
 
-        Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisGame.get(permanent.getId());
-        int currentCount = perAbilityCounts != null ? perAbilityCounts.getOrDefault(abilityIndex, 0) : 0;
+        Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisGame
+                .get(wholeGameUsesKey(permanent, ability));
+        int currentCount = perAbilityCounts != null
+                ? perAbilityCounts.getOrDefault(wholeGameUsesIndex(ability, abilityIndex), 0) : 0;
         if (currentCount >= maxActivationsPerGame) {
             throw new IllegalStateException(maxActivationsPerGame == 1
                     ? "This ability can be activated only once"
                     : "This ability can be activated no more than " + maxActivationsPerGame + " times");
         }
+    }
+
+    /** An acquired ability is counted under its own acquisition id (CR 602.5c), others under the permanent. */
+    private static UUID wholeGameUsesKey(Permanent permanent, ActivatedAbility ability) {
+        return ability.getAcquisitionId() != null ? ability.getAcquisitionId() : permanent.getId();
+    }
+
+    private static int wholeGameUsesIndex(ActivatedAbility ability, int abilityIndex) {
+        return ability.getAcquisitionId() != null ? 0 : abilityIndex;
     }
 
     private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex,
@@ -10302,8 +10325,8 @@ public class AbilityActivationService {
         perAbilityCounts.merge(abilityIndex, 1, Integer::sum);
 
         gameData.activatedAbilityUsesThisGame
-                .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>())
-                .merge(abilityIndex, 1, Integer::sum);
+                .computeIfAbsent(wholeGameUsesKey(permanent, ability), ignored -> new ConcurrentHashMap<>())
+                .merge(wholeGameUsesIndex(ability, abilityIndex), 1, Integer::sum);
 
         if (ability.isModalModesMustBeUnused()) {
             ChooseOneEffect modal = ability.modalEffectAtActivation();

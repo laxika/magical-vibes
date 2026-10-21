@@ -1005,7 +1005,16 @@ public class SpellCastingService {
     }
 
     private void validateXValueCap(GameData gameData, Card card, UUID controllerId, int xValue) {
-        if (card.getMinimumXValue() > 0 && xValue < card.getMinimumXValue()) {
+        validateXValueCap(gameData, card, controllerId, xValue, true);
+    }
+
+    /**
+     * @param minimumApplies false when X only exists as part of an optional cost (Kicker {X}) that was not paid,
+     *                       so the card's "X can't be 0" minimum has no X to constrain
+     */
+    private void validateXValueCap(GameData gameData, Card card, UUID controllerId, int xValue,
+                                   boolean minimumApplies) {
+        if (minimumApplies && card.getMinimumXValue() > 0 && xValue < card.getMinimumXValue()) {
             throw new IllegalStateException("X must be at least " + card.getMinimumXValue());
         }
         if (card.getXValueCap() == null) {
@@ -3372,6 +3381,7 @@ public class SpellCastingService {
             if (announcedX) {
                 GameQueryService.endSpellCastX();
             }
+            gameData.castCostMinimumManaOffset = 0;
             gameData.currentCastSacrificedPermanentIds.clear();
             gameData.beholdCostWaivedCardId = null;
             gameData.beholdCostRevealedCard = null;
@@ -3488,13 +3498,25 @@ public class SpellCastingService {
             throw new IllegalArgumentException("Invalid card index");
         }
         Card physicalSourceCard = null;
+        Card printedHandCard = null;
         if (!fromGraveyard) {
             physicalSourceCard = handEarly.get(cardIndex);
             if (!commandCast && castSourceZone == Zone.HAND) {
                 Card effectiveCard = HandCastCardCharacteristicsService.effectiveCard(
                         gameData, playerId, physicalSourceCard, gameQueryService);
-                handEarly.set(cardIndex, effectiveCard);
-                physicalSourceCard = effectiveCard;
+                ManaPool handCastPool = gameData.playerManaPools.get(playerId);
+                // A static "cast as though" effect is optional: when only the printed characteristics are
+                // affordable, the card is cast as printed.
+                boolean printedOnlyCastable = effectiveCard != physicalSourceCard
+                        && !actionAvailabilityService.isCardPlayableAsPrinted(
+                                gameData, playerId, effectiveCard, handCastPool, 0)
+                        && actionAvailabilityService.isCardPlayableAsPrinted(
+                                gameData, playerId, physicalSourceCard, handCastPool, 0);
+                if (!printedOnlyCastable) {
+                    printedHandCard = physicalSourceCard;
+                    handEarly.set(cardIndex, effectiveCard);
+                    physicalSourceCard = effectiveCard;
+                }
             }
         }
 
@@ -3994,7 +4016,9 @@ public class SpellCastingService {
             throw new IllegalStateException("Gift was promised for a card without Gift");
         }
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
-        validateXValueCap(gameData, card, playerId, effectiveXValue);
+        boolean xOnlyInUnpaidKicker = !kicked && (card.getManaCost() == null
+                || !new ManaCost(card.getManaCost()).hasX()) && findKickerEffect(card) != null;
+        validateXValueCap(gameData, card, playerId, effectiveXValue, !xOnlyInUnpaidKicker);
         // A split card's chosen half decides the timing (e.g. an instant half of a sorcery // instant card).
         Card timingCharacteristics = selectedModeTimingCharacteristics(card, effectiveXValue);
         if (!castingFaceDown && !castingPermissionService.canCastWithTiming(
@@ -5461,6 +5485,8 @@ public class SpellCastingService {
                     additionalCosts, costSelection, sharedColorDiscardHandCardIndex, card);
         }
         BuybackEffect buybackEffect = findBuybackEffect(card);
+        gameData.castCostMinimumManaOffset = buyback && buybackEffect != null && buybackEffect.hasManaCost()
+                ? new ManaCost(buybackEffect.cost()).getManaValue() : 0;
         if (buyback && buybackEffect != null && buybackEffect.hasLifeCost()) {
             additionalSpellCostService.validatePayLifeCost(gameData, player, card, buybackEffect.lifeCost());
         }
@@ -5817,7 +5843,9 @@ public class SpellCastingService {
                         List.of(), stackX, stackTarget, null
                 );
             }
-            entry.setPhysicalCard(physicalSourceCard);
+            // The physical card is the printed card in hand: a card cast as a static-effect copy returns
+            // to its owner's hand as printed when it leaves the battlefield.
+            entry.setPhysicalCard(printedHandCard != null ? printedHandCard : physicalSourceCard);
             entry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
             entry.setAlternateCost(usingAlternateCost);
             if (usingGrantedBlitz && !printedBlitzCast) {
@@ -10258,14 +10286,23 @@ public class SpellCastingService {
         // A surcharge that belongs to the card's own graveyard permission (Risen Executioner) does not
         // apply when another source's permission lets the card be cast from the graveyard.
         Zone costSourceZone = graveyardCastOpt.isPresent() && !isGraveyardCast ? null : Zone.GRAVEYARD;
+        // CR 712.8c: a spell cast transformed (disturb) has only its back face's characteristics, so
+        // cost modifiers such as noncreature-spell taxes are evaluated against the back face.
+        Card costModifierCard = isDisturb && card.getBackFaceCard() != null ? card.getBackFaceCard() : card;
         int additionalCost = castingCostService.getCastCostModifier(
-                gameData, playerId, card, paysFlashbackCost, effectiveXValue, costSourceZone);
+                gameData, playerId, costModifierCard, paysFlashbackCost, effectiveXValue, costSourceZone);
         if (castingPermissionService.flashTimingRequiresAlternateCast(gameData, playerId, card)) {
             AlternateHandCast flashOption = card.getCastingOption(AlternateHandCast.class).orElse(null);
             if (flashOption == null || flashOption.flashAdditionalGenericCost() == null) {
                 throw new IllegalStateException("The flash permission requires an incompatible alternate casting cost");
             }
             additionalCost += flashOption.flashAdditionalGenericCost();
+        }
+        if (!additionalCostSacrificePermanentIds.isEmpty()
+                && card.getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance)) {
+            additionalCost -= paySacrificeCreaturesForCostReduction(
+                    gameData, player, card, card, additionalCostSacrificePermanentIds);
         }
         List<UUID> costReductionTargetIds = !targetIds.isEmpty()
                 ? targetIds : targetId != null ? List.of(targetId) : List.of();
@@ -11425,6 +11462,10 @@ public class SpellCastingService {
                 && !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
             throw new IllegalStateException("Card is not playable");
         }
+        if (!card.hasType(CardType.LAND)
+                && !castingPermissionService.canCastWithCastCondition(gameData, playerId, card)) {
+            throw new IllegalStateException("Card is not playable");
+        }
         if (card.hasType(CardType.LAND)
                 ? castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
                 : castingPermissionService.getForbiddenCardNames(gameData, playerId).contains(card.getName())) {
@@ -11539,6 +11580,12 @@ public class SpellCastingService {
                 && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
                 .allMatch(cost -> cost instanceof PutCounterOnControlledCreatureCost put && put.optional()
                         || cost instanceof ChooseXValueCost);
+        // "Any number of times" costs (squad, multikicker, replicate) are optional: casting with no
+        // repetitions pays nothing extra, which this exile path can do. Paying repetitions is still rejected.
+        boolean supportedDeclinedRepeatableManaCost = additionalCosts.repeatableManaCost() != null
+                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                .allMatch(cost -> cost instanceof RepeatableAdditionalManaCost
+                        || cost instanceof ChooseXValueCost);
         boolean supportedDeclinedSacrificeAnyNumberCost = additionalCosts.sacrificeAnyNumberCost() != null
                 && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
                 .allMatch(cost -> cost instanceof SacrificeAnyNumberOfPermanentsCost
@@ -11591,7 +11638,8 @@ public class SpellCastingService {
                 && !supportedDeclinedExileFromHandCost
                 && !supportedOptionalTeamworkCost && !supportedBeholdCost && !supportedOptionalEvidenceCost
                 && !supportedSacrificePermanentCost && !supportedSacrificeCreatureCost
-                && !supportedDeclinedOptionalPutCounterCost && !supportedDeclinedSacrificeAnyNumberCost)
+                && !supportedDeclinedOptionalPutCounterCost && !supportedDeclinedSacrificeAnyNumberCost
+                && !supportedDeclinedRepeatableManaCost)
                 || (additionalCosts.delveCost() != null && !playWithoutPaying && !delveWithoutExilingCards)) {
             throw new IllegalStateException("Cannot cast " + card.getName()
                     + " from exile — paying its additional cast cost is not supported from this zone");
@@ -12722,6 +12770,7 @@ public class SpellCastingService {
         validateExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
 
         gameData.spellAdditionalEnterCounters.remove(card.getId());
+        Set<Keyword> permissionGrantedKeywords = Set.of();
 
         int phyrexianManaPaidWithLife = 0;
         if (useManaValueLifeAlternative) {
@@ -12740,6 +12789,8 @@ public class SpellCastingService {
                     castFaceDown ? "{3}" : !additionalLibraryManaCost.isEmpty()
                             ? card.getManaCost() + additionalLibraryManaCost : null, castFaceDown);
             if (usesNormalTopLibraryPermission) {
+                permissionGrantedKeywords = castingPermissionService.findTopLibraryCastGrantedKeywords(
+                        gameData, playerId, card);
                 castingPermissionService.markTopLibraryCastPermissionUsed(gameData, playerId, card);
             }
         }
@@ -12774,6 +12825,7 @@ public class SpellCastingService {
                 effectsToResolve, effectiveXValue, targetId, null
         );
         stackEntry.setSourceZone(Zone.LIBRARY);
+        stackEntry.getGrantedKeywordsOnEntry().addAll(permissionGrantedKeywords);
         stackEntry.setCastFaceDown(castFaceDown);
         stackEntry.setCastWithDisguise(castFaceDown && physicalCard.hasKeyword(Keyword.DISGUISE));
         if (!playerId.equals(libraryOwnerId)) {
@@ -13695,10 +13747,12 @@ public class SpellCastingService {
         List<ManaColor> result = chosen == null ? contributions : chosen;
         if (card.getManaCost() != null && !new ManaCost(card.getManaCost()).hasX()) {
             ManaCost cost = new ManaCost(card.getManaCost());
+            // Each contribution replaces one mana of the total cost (CR 702.51a), so a creature is
+            // excess only when the other contributions alone pay the cost, regardless of floating mana.
             for (int i = 0; i < result.size(); i++) {
                 List<ManaColor> withoutCreature = new ArrayList<>(result);
                 withoutCreature.remove(i);
-                if (cost.canPayWithConvoke(pool, extraCost, withoutCreature)) {
+                if (cost.canPayWithConvoke(new ManaPool(), extraCost, withoutCreature)) {
                     throw new IllegalStateException("Cannot convoke more creatures than the spell's total cost for " + card.getName());
                 }
             }
@@ -14251,18 +14305,34 @@ public class SpellCastingService {
         // rest of the cost stays payable, falling back to life otherwise (playability assumes
         // life is always an option).
         int previewLifeCost = 2 * phyrexianSymbolsPaidWithLife;
-        if (cost.hasPhyrexianMana()) {
-            ManaPool previewPool = new ManaPool(pool);
-            int previewLent = lendRestrictedRedForPhyrexian(previewPool, cost, flags);
-            if (phyrexianLifeCount != null) {
-                previewLifeCost += cost.payPhyrexianMana(previewPool,
-                        phyrexianLifeCount - phyrexianSymbolsPaidWithLife);
-            } else {
-                int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
-                previewLifeCost = cost.payPhyrexianManaAuto(previewPool, restDemand);
+        int costModifierOffset = gameData.castCostMinimumManaOffset;
+        for (int pass = 0; pass < 3; pass++) {
+            previewLifeCost = 2 * phyrexianSymbolsPaidWithLife;
+            if (cost.hasPhyrexianMana()) {
+                ManaPool previewPool = new ManaPool(pool);
+                int previewLent = lendRestrictedRedForPhyrexian(previewPool, cost, flags);
+                if (phyrexianLifeCount != null) {
+                    previewLifeCost += cost.payPhyrexianMana(previewPool,
+                            phyrexianLifeCount - phyrexianSymbolsPaidWithLife);
+                } else {
+                    int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
+                    previewLifeCost = cost.payPhyrexianManaAuto(previewPool, restDemand);
+                }
+                returnUnspentRestrictedRed(previewPool, previewLent);
             }
-            returnUnspentRestrictedRed(previewPool, previewLent);
+            // Life paid for Phyrexian mana isn't mana, so a minimum-total-cost effect (Trinisphere) must be
+            // satisfied by other mana: re-derive the cost modifier with those symbols removed and settle
+            // any change in how many symbols the player pays with life.
+            int lifeOffset = costModifierOffset - previewLifeCost / 2;
+            if (lifeOffset == gameData.castCostMinimumManaOffset) {
+                break;
+            }
+            gameData.castCostMinimumManaOffset = lifeOffset;
+            additionalCost = castingCostService.getCastCostModifier(
+                    gameData, playerId, card, effectiveXValue, sourceZone, kicked, collectEvidenceCostPaid)
+                    - extraCostReduction + targetingTax + additionalGenericCost;
         }
+        gameData.castCostMinimumManaOffset = costModifierOffset;
         if (previewLifeCost > 0 && (gameData.getLife(playerId) < previewLifeCost
                 || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                 || !gameQueryService.canPayLifeForCosts(gameData))) {

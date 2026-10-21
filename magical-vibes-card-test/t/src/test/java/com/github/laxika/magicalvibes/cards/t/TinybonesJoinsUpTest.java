@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.ArmoredArmadillo;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -150,6 +151,9 @@ class TinybonesJoinsUpTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TinybonesJoinsUp());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castFromHand(player2, new TinybonesThePickpocket(), "{B}");
         harness.passBothPriorities();
 

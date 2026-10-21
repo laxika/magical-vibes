@@ -1133,6 +1133,13 @@ public class DeathTriggerCollectorService {
                     : sd.dyingPermanent().getOriginalCard().getId();
             triggerEffect = aware.boundToDyingCard(dyingCardId);
         }
+        // The delayed return is tied to the graveyard object that died; a card that leaves and
+        // re-enters the graveyard before this trigger resolves is a new object (CR 400.7).
+        if (triggerEffect instanceof com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect register
+                && register.cardId() != null && register.graveyardEntryVersion() == null) {
+            triggerEffect = new com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect(
+                    register.cardId(), match.gameData().graveyardEntryVersion(register.cardId()));
+        }
         if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware
                 && sd.dyingPermanent() != null) {
             triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(sd.dyingPermanent()));
@@ -1290,6 +1297,9 @@ public class DeathTriggerCollectorService {
             resolvedMay = new MayEffect(aware.boundToDyingCard(cd.dyingCard().getId()), may.prompt());
         }
         match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), resolvedMay, null, match.permanent().getId());
+        // Snapshot the source so a transform instruction can tell whether it has already transformed
+        // since this trigger was put on the stack (CR 701.27f, Thraben Sentry).
+        match.gameData().stack.getLast().setSourcePermanentSnapshot(new Permanent(match.permanent()));
         return true;
     }
 
@@ -3129,12 +3139,7 @@ public class DeathTriggerCollectorService {
     boolean handleAnyCreatureDeathUntap(TriggerMatchContext match,
             UntapPermanentsEffect effect, TriggerContext ctx) {
         // "Whenever another creature dies, untap this creature." SELF-scope untap needs its source
-        // permanent id to locate this creature at resolution (Galvanic Juggernaut); ENCHANTED reads
-        // the same id to find the Aura/Equipment whose host untaps (Thornbite Staff).
-        if (effect.scope() == TapUntapScope.ENCHANTED && !match.permanent().isAttached()) {
-            // The ability belongs to the equipped creature, so an unattached Equipment has none.
-            return false;
-        }
+        // permanent id to locate this creature at resolution (Galvanic Juggernaut).
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -4270,7 +4275,8 @@ public class DeathTriggerCollectorService {
         MayEffect may = new MayEffect(
                 new ReturnDyingOpponentCreatureUnderYourControlEffect(dyingCard.getId(), effect.grantSubtype()),
                 "return " + dyingCard.getName() + " to the battlefield under your control?");
-        gameData.queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        gameData.queueMayAbility(match.permanent().getCard(), match.controllerId(), may, null,
+                match.permanent().getId(), 0, match.markSourceOncePerTurnOnAcceptance());
         logOpponentCreatureDeath(match);
         return true;
     }
@@ -4981,12 +4987,22 @@ public class DeathTriggerCollectorService {
             RegisterDelayedReturnCardFromGraveyardToHandEffect effect, TriggerContext ctx) {
         TriggerContext.AllyAuraOrEquipmentGraveyard aaeg = (TriggerContext.AllyAuraOrEquipmentGraveyard) ctx;
         Card dyingCard = aaeg.dyingCard();
+        // The trigger itself is mandatory: it schedules a delayed trigger at the next end step, and the
+        // "you may return" choice is made when that delayed trigger resolves.
         RegisterDelayedReturnCardFromGraveyardToHandEffect delayedEffect =
                 new RegisterDelayedReturnCardFromGraveyardToHandEffect(dyingCard.getId(),
-                        match.gameData().graveyardEntryVersion(dyingCard.getId()));
-        MayEffect may = new MayEffect(delayedEffect,
-                "Return " + dyingCard.getName() + " to its owner's hand at the beginning of the next end step?");
-        match.gameData().queueMayAbility(match.permanent().getCard(), aaeg.controllerId(), may);
+                        match.gameData().graveyardEntryVersion(dyingCard.getId()), true);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                aaeg.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(delayedEffect)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(dyingCard.getId());
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
 
         gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
                 "'s ability triggers (", dyingCard, " was put into a graveyard from the battlefield)."));

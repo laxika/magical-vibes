@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -29,6 +31,7 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final AmountEvaluationService amountEvaluationService;
+    private final CreateTokensAttackingEffectHandler createTokensAttackingHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,6 +72,13 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
             gameLogService.append(gameData, GameLog.text(playerName + " pays "
                     + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
             log.info("Game {} - {} pays X={} for {}", gameData.id, playerName, chosenValue, cardName);
+            if (e.token().tappedAndAttacking() && createTokensAttackingHandler.beginTargetChoiceIfContested(gameData,
+                    new PermanentChoiceContext.CreateTokensAttacking(controllerId, entry.getCard(), e.token(),
+                            chosenValue, chosenValue, false, List.of()))) {
+                // The paid tokens enter attacking, and the defending player's planeswalkers or battles
+                // make each token's defender a choice (CR 508.4).
+                return;
+            }
             entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
                     gameData, controllerId, e.token(), chosenValue, entry.getCard().getSetCode()));
             return;

@@ -103,7 +103,9 @@ class ThranTurbineTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
             assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyManaTotal()).isEqualTo(2);
         });
-        harness.passUntil(player1, TurnStep.DRAW);
+        // The starting player skips the draw step of the first turn (CR 103.8a), so the next step that
+        // exists after upkeep is the precombat main phase.
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyManaTotal()).isZero();
     }

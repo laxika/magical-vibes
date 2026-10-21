@@ -41,7 +41,7 @@ class TocasiasOnuletTest extends BaseCardTest {
         Permanent onulet = harness.addToBattlefieldAndReturn(player1, new TocasiasOnulet());
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, onulet);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, onulet));
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
         harness.passBothPriorities();
 
@@ -97,7 +97,7 @@ class TocasiasOnuletTest extends BaseCardTest {
         harness.passBothPriorities();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -118,10 +118,10 @@ class TocasiasOnuletTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent onABattlefield = findPermanent(player1, "Tocasia's Onulet");
-        assertThat(onABattlefield.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(onABattlefield.getPersistentGrantedKeywords()).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player1, "Tocasia's Onulet");
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Tocasia's Onulet");

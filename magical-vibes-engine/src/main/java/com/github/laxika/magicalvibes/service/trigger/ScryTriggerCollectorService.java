@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -53,6 +55,10 @@ public class ScryTriggerCollectorService {
 
     private boolean enqueueOnScry(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
         TriggerContext.Scry scry = (TriggerContext.Scry) ctx;
+        if (trigger instanceof ExileBottomCardsToSourceEffect exile && exile.count() instanceof EventValue
+                && scry.bottomedCardCount() == 0) {
+            return false;
+        }
         Card sourceCard = match.permanent().getCard();
         TargetSpec targetSpec = trigger.targetSpec();
         if (!match.controllerId().equals(scry.scryingPlayerId())) {

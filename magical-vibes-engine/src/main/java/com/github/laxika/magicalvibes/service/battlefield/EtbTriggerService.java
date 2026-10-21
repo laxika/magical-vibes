@@ -482,7 +482,7 @@ public class EtbTriggerService {
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
             EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
                     kicked, evoked, prowl, madness, alternateCost, enteringPermanent, repeatedAdditionalCosts,
-                    targetId);
+                    targetId, xValue);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))
@@ -607,6 +607,13 @@ public class EtbTriggerService {
                                     && gameQueryService.isCreature(gameData, partner))) {
                         continue;
                     }
+                }
+                if (may.wrapped() instanceof ReturnTargetCardsFromGraveyardToHandEffect returnToHand) {
+                    for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        graveyardTargetingService.handleReturnToHandETBTargeting(
+                                gameData, controllerId, card, List.of(may), returnToHand);
+                    }
+                    continue;
                 }
                 if (may.wrapped() instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect shuffle) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {

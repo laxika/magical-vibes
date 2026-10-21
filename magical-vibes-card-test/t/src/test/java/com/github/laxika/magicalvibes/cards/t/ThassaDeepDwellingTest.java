@@ -6,11 +6,17 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -139,6 +145,10 @@ class ThassaDeepDwellingTest extends BaseCardTest {
         card.setOwnerId(player2.getId());
         Permanent courser = harness.addToBattlefieldAndReturn(player1, card);
         gd.stolenCreatures.put(courser.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, player1.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), courser.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         courser.tap();
         courser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 

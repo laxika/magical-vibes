@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 public class ThranWarMachine extends Card {
 
     public ThranWarMachine() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{4}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{4}"));
         addEffect(EffectSlot.STATIC, new MustAttackEffect());
     }
 }

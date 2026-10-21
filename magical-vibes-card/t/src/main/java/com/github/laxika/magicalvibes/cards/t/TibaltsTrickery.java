@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TibaltTrickeryEffect;
 public class TibaltsTrickery extends Card {
 
     public TibaltsTrickery() {
-        addEffect(EffectSlot.SPELL, new TibaltTrickeryEffect());
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addEffect(EffectSlot.SPELL, new TibaltTrickeryEffect());
     }
 }

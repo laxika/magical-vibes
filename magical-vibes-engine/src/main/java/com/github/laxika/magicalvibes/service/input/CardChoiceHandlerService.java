@@ -154,6 +154,9 @@ public class CardChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.SagaChapterService sagaChapterService;
 
     /** Gives the chosen card in hand a persistent offspring-as-kicker implementation. */
     public void handlePerpetualOffspringCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -1706,6 +1709,15 @@ public class CardChoiceHandlerService {
                         manaValueDamage.targetRestriction(), manaValueDamage.exileInsteadOfDie());
             }
             if (discardedCard != null
+                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.MillEffect mill
+                    && mill.count() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue) {
+                // "Mill cards equal to its mana value": the amount is the discarded card's mana value as it was
+                // discarded, so a card discarded later (in response) must not change it.
+                thenEffect = new com.github.laxika.magicalvibes.model.effect.MillEffect(
+                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
+                        mill.recipient());
+            }
+            if (discardedCard != null
                     && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect playerDamage
                     && playerDamage.amount() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue) {
                 thenEffect = new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(
@@ -2668,7 +2680,8 @@ public class CardChoiceHandlerService {
                 gameData, player.getId(), chosenCard, null, false);
         if (choice.sacrificeAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                    false, null, null, player.getId()));
         }
         if (choice.returnToHandAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
@@ -3212,6 +3225,10 @@ public class CardChoiceHandlerService {
             permanent.setPutOntoBattlefieldWithAbilitySourcePermanentId(triggeringSourcePermanentId);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+        // Saga ETB: place the first lore counter and trigger chapter I (CR 714.3a).
+        if (!permanent.isFaceDown() && card.isSaga()) {
+            sagaChapterService.initializeSaga(gameData, permanent, card, playerId);
+        }
         if (entryCounterType != null && entryCounterCount > 0) {
             permanentCounterSupport.placeCounterOnPermanent(gameData,
                     gameData.pendingEffectResolutionEntry, permanent, entryCounterType, entryCounterCount);

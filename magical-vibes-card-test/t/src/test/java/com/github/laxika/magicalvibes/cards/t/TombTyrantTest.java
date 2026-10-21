@@ -113,7 +113,6 @@ class TombTyrantTest extends BaseCardTest {
         addManaForAbility();
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handlePermanentChosen(player1, tyrant.getId());
         harness.assertNotOnBattlefield(player1, "Tomb Tyrant");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
 
@@ -131,13 +130,12 @@ class TombTyrantTest extends BaseCardTest {
     @Test
     @DisplayName("The ability resolves harmlessly if no Zombies remain in your graveyard")
     void doesNothingWhenGraveyardIsEmptyAtResolution() {
-        Permanent tyrant = addCreatureReady(player1, new TombTyrant());
+        addCreatureReady(player1, new TombTyrant());
         harness.setGraveyard(player1, List.of(new TombTyrant(), new TombTyrant(), new TombTyrant()));
         harness.setGraveyard(player2, List.of(new TombTyrant()));
         addManaForAbility();
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handlePermanentChosen(player1, tyrant.getId());
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
@@ -150,13 +148,12 @@ class TombTyrantTest extends BaseCardTest {
     @Test
     @DisplayName("The ability may be activated during your end step")
     void canActivateDuringYourEndStep() {
-        Permanent tyrant = addCreatureReady(player1, new TombTyrant());
+        addCreatureReady(player1, new TombTyrant());
         harness.setGraveyard(player1, List.of(new TombTyrant(), new TombTyrant(), new TombTyrant()));
         addManaForAbility();
         harness.forceStep(TurnStep.END_STEP);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handlePermanentChosen(player1, tyrant.getId());
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Tomb Tyrant")).isEqualTo(1);

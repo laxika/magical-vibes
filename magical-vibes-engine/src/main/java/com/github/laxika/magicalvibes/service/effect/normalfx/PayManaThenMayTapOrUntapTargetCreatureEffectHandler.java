@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,7 @@ public class PayManaThenMayTapOrUntapTargetCreatureEffectHandler implements Norm
 
     private final PlayerInputService playerInputService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -75,7 +77,9 @@ public class PayManaThenMayTapOrUntapTargetCreatureEffectHandler implements Norm
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)) {
+                if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)
+                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(
+                        gameData, permanent, entry.getControllerId())) {
                     validTargets.add(permanent.getId());
                 }
             }

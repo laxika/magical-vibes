@@ -18,9 +18,9 @@ public class TinStreetGossip extends Card {
                 null,
                 List.of(
                         new AwardRestrictedManaEffect(ManaColor.RED, 1,
-                                new ManaRestriction.FaceDownSpellsOrTurnFaceUp()),
+                                new ManaRestriction.FaceDownSpellsOrTurnCreaturesFaceUp()),
                         new AwardRestrictedManaEffect(ManaColor.GREEN, 1,
-                                new ManaRestriction.FaceDownSpellsOrTurnFaceUp())
+                                new ManaRestriction.FaceDownSpellsOrTurnCreaturesFaceUp())
                 ),
                 "{T}: Add {R}{G}. Spend this mana only to cast face-down spells or turn creatures face up."
         ));

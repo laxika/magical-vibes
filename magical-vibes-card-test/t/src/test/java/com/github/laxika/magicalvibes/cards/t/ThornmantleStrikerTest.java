@@ -70,6 +70,7 @@ class ThornmantleStrikerTest extends BaseCardTest {
     @Test
     void debuffModeRejectsOwnCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.addToBattlefield(player2, new HillGiant());
 
         harness.enterBattlefieldAndReturn(player1, new ThornmantleStriker());
         harness.handleListChoice(player1,

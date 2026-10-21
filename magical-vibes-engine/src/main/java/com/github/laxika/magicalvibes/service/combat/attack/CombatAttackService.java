@@ -708,6 +708,13 @@ public class CombatAttackService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Integer> attackable = getAttackableCreatureIndices(gameData, playerId);
 
+        // CR 508.1c: a lone creature with "can't attack alone" is removed from the attackable set, so its
+        // restriction is reported here rather than as an invalid index
+        if (attackerIndices.size() == 1 && attackerIndices.getFirst() >= 0
+                && attackerIndices.getFirst() < battlefield.size()) {
+            validateCantAttackAlone(gameData, battlefield, attackerIndices);
+        }
+
         // Validate indices
         Set<Integer> uniqueIndices = new HashSet<>(attackerIndices);
         if (uniqueIndices.size() != attackerIndices.size()) {
@@ -751,9 +758,7 @@ public class CombatAttackService {
         validateCounterBearersAttackTogether(gameData, playerId, attackable, uniqueIndices);
 
         // Validate "must attack with at least one creature" (e.g. Trove of Temptation)
-        if (attackerIndices.isEmpty() && !attackable.isEmpty() && isOpponentForcedToAttack(gameData, playerId)) {
-            throw new IllegalStateException("Must attack with at least one creature");
-        }
+        validateOpponentRequiredAttackTargets(gameData, playerId, attackable, attackerIndices, attackTargets);
 
         // Empty declaration is always valid — no tax or target validation needed
         recordCreaturesAbleToAttackThisTurn(gameData, playerId, attackable.stream()
@@ -1081,14 +1086,14 @@ public class CombatAttackService {
                 allEffects.addAll(grantedAttackEffects);
                 // Temporarily granted ON_ATTACK abilities (e.g. Tower Above's "target creature blocks
                 // it this turn if able"). MustBlockSourceEffect's source is snapshotted to the attacker.
-                for (CardEffect temp : temporaryAttackEffects) {
-                    if (temp instanceof MustBlockSourceEffect mustBlock) {
-                        allEffects.add(new MustBlockSourceEffect(attacker.getId(),
-                                mustBlock.targetRestriction(), mustBlock.untilEndOfCombat()));
-                    } else {
-                        allEffects.add(temp);
-                    }
-                }
+                // The snapshotted copies replace the granted effects in temporaryAttackEffects so each
+                // grant still matches its own entry when separate granted abilities are split out below
+                // (two Tower Aboves are two triggers, each with its own target).
+                temporaryAttackEffects.replaceAll(temp -> temp instanceof MustBlockSourceEffect mustBlock
+                        ? new MustBlockSourceEffect(attacker.getId(),
+                                mustBlock.targetRestriction(), mustBlock.untilEndOfCombat())
+                        : temp);
+                allEffects.addAll(temporaryAttackEffects);
 
                 allEffects.replaceAll(effect -> {
                     if (!(effect instanceof RandomChoiceEffect random)) return effect;
@@ -3904,17 +3909,45 @@ public class CombatAttackService {
 
     /**
      * Returns true if an opponent controls a permanent with
-     * {@link OpponentsMustAttackRequirementEffect}, forcing this player to attack
-     * with at least one creature each combat if able. Respects attack tax exemption
-     * (CR 508.1d — the player is not required to pay optional attack costs).
+     * {@link OpponentsMustAttackRequirementEffect} and at least one of this player's attackable
+     * creatures can attack a required target without paying any attack cost. CR 508.1d: the player
+     * is not required to pay optional attack costs to satisfy the requirement, so a requirement whose
+     * only satisfying attacks are taxed is not enforced.
      */
     public boolean isOpponentForcedToAttack(GameData gameData, UUID playerId) {
-        if (castingCostService.hasAttackPaymentForAnyCreature(gameData, playerId)) {
+        return isOpponentRequirementEnforced(gameData, playerId,
+                getAttackableCreatureIndices(gameData, playerId));
+    }
+
+    private boolean isOpponentRequirementEnforced(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
+        if (attackableIndices.isEmpty()
+                || !castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return false;
         }
-        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        Set<UUID> requiredTargetIds = getOpponentRequiredAttackTargetIds(gameData, playerId);
+        if (requiredTargetIds.isEmpty()) {
             return false;
         }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        for (int idx : attackableIndices) {
+            Permanent creature = battlefield.get(idx);
+            for (UUID targetId : requiredTargetIds) {
+                if (attackLegalityService.canAttackDefender(gameData, creature, targetId)
+                        && castingCostService.getAttackPaymentPerCreature(gameData, playerId, targetId, creature) == 0
+                        && castingCostService.getAttackLifePaymentPerCreature(gameData, playerId, targetId, creature) == 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the attack targets named by opponents' {@link OpponentsMustAttackRequirementEffect}
+     * permanents: the controller of each such permanent and the planeswalkers that controller controls.
+     */
+    private Set<UUID> getOpponentRequiredAttackTargetIds(GameData gameData, UUID playerId) {
+        Set<UUID> requiredTargetIds = new HashSet<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             if (pid.equals(playerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -3924,14 +3957,39 @@ public class CombatAttackService {
                         || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof OpponentsMustAttackRequirementEffect) {
-                        return true;
+                boolean requiresAttack = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(OpponentsMustAttackRequirementEffect.class::isInstance);
+                if (!requiresAttack) continue;
+                requiredTargetIds.add(pid);
+                for (Permanent target : bf) {
+                    if (gameQueryService.isPlaneswalker(gameData, target)) {
+                        requiredTargetIds.add(target.getId());
                     }
                 }
             }
         }
-        return false;
+        return requiredTargetIds;
+    }
+
+    private void validateOpponentRequiredAttackTargets(GameData gameData, UUID playerId,
+                                                       List<Integer> attackableIndices,
+                                                       List<Integer> attackerIndices,
+                                                       Map<Integer, UUID> attackTargets) {
+        if (!isOpponentRequirementEnforced(gameData, playerId, attackableIndices)) {
+            return;
+        }
+        Set<UUID> requiredTargetIds = getOpponentRequiredAttackTargetIds(gameData, playerId);
+        UUID defaultTargetId = gameQueryService.getOpponentId(gameData, playerId);
+        for (int idx : attackerIndices) {
+            UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
+            if (targetId == null) {
+                targetId = defaultTargetId;
+            }
+            if (requiredTargetIds.contains(targetId)) {
+                return;
+            }
+        }
+        throw new IllegalStateException("Must attack with at least one creature");
     }
 
     /**

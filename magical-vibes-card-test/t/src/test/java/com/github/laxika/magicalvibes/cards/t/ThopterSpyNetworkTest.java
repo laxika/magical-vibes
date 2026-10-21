@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -195,7 +196,8 @@ class ThopterSpyNetworkTest extends BaseCardTest {
         Permanent attacker = addAttacker(new Memnite());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat();
+        // Hold priority in the damage step so the draw trigger is still on the stack.
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(attacker);
         resolveAllTriggers();

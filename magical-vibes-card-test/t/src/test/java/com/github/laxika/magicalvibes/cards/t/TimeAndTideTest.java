@@ -220,6 +220,7 @@ class TimeAndTideTest extends BaseCardTest {
     }
 
     private void advanceToControllersUntap(Player controller) {
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(controller, TurnStep.UPKEEP);
     }

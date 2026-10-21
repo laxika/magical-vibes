@@ -163,6 +163,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         long matchingCount = battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, effect.filter(), filterContext))
                 .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
+                .filter(p -> !gameQueryService.isCreatureTokenProtectedFromResolvingTriggeredAbility(gameData, p))
                 .count();
         return matchingCount >= count;
     }
@@ -207,6 +208,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         List<Permanent> matching = battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
                 .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
+                .filter(p -> !gameQueryService.isCreatureTokenProtectedFromResolvingTriggeredAbility(gameData, p))
                 .toList();
 
         if (matching.isEmpty()) {
@@ -295,6 +297,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             List<Permanent> matching = battlefield.stream()
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
                     .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
+                    .filter(p -> !gameQueryService.isCreatureTokenProtectedFromResolvingTriggeredAbility(gameData, p))
                     .toList();
 
             if (matching.isEmpty()) {

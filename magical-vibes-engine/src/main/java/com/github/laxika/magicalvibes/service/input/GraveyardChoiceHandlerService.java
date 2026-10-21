@@ -1212,8 +1212,11 @@ public class GraveyardChoiceHandlerService {
             gameData.cloneOperation.exileTwoAndAddOtherPowerCounters = false;
             gameData.cloneOperation.graveyardCopyChoicePending = false;
             gameData.cloneOperation.exileCopiedGraveyardCardAfterEntry = false;
+            // The other card is already in exile, so a characteristic-defining power (CR 604.3) is
+            // evaluated there rather than read from the printed value.
+            Integer otherPower = gameQueryService.getEffectiveCardPower(gameData, otherCard);
             gameData.cloneOperation.additionalPlusOnePlusOneCounters = new Fixed(
-                    Math.max(0, otherCard.getPower() == null ? 0 : otherCard.getPower()));
+                    Math.max(0, otherPower == null ? 0 : otherPower));
             gameData.cloneOperation.selectedGraveyardCopyCardIds = List.of();
             cloneService.completeCloneEntryFromGraveyardChoice(gameData, copiedCard);
             finishCloneEntryAfterGraveyardChoice(gameData);

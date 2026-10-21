@@ -40,7 +40,7 @@ public class TromellSeymoursButler extends Card {
                 true,
                 "{1}",
                 List.of(new ProliferateEffect(new PermanentsEnteredBattlefieldThisTurn(
-                        nontokenCreatureCard, CountScope.CONTROLLER))),
+                        nontokenCreatureCard, CountScope.CONTROLLER, true))),
                 "{1}, {T}: Proliferate X times, where X is the number of nontoken creatures you control that entered this turn."
         ));
     }

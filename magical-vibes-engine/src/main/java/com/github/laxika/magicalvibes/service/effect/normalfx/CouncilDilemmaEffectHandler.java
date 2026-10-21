@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CouncilDilemmaEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +50,7 @@ public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
             briberyVotes++;
         }
 
-        if (context.offerAdditionalVote()) {
+        if (context.offerAdditionalVote() && sourceStillOnBattlefield(gameData)) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     context.effectControllerId(), null, null,
                     new ChoiceContext.CouncilDilemmaAdditionalVoteChoice(
@@ -83,7 +85,7 @@ public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         remaining.removeIf(id -> !gameData.playerIds.contains(id));
         if (remaining.isEmpty()) {
-            finishVote(gameData, evidenceVotes, briberyVotes);
+            finishVote(gameData, effectControllerId, evidenceVotes, briberyVotes);
             return;
         }
 
@@ -97,20 +99,35 @@ public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
                 sourceName + " - vote for evidence or bribery."));
     }
 
-    private void finishVote(GameData gameData, int evidenceVotes, int briberyVotes) {
+    /** "While voting, you may vote an additional time" is Tivit's static ability, so it is lost once Tivit leaves. */
+    private boolean sourceStillOnBattlefield(GameData gameData) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null || pendingEntry.getCard() == null) {
+            return false;
+        }
+        UUID sourceCardId = pendingEntry.getCard().getId();
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(sourceCardId));
+    }
+
+    private void finishVote(GameData gameData, UUID effectControllerId, int evidenceVotes, int briberyVotes) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry == null) {
             throw new IllegalStateException("Council's dilemma resolution is not resumable");
         }
 
-        List<CardEffect> results = new ArrayList<>(2);
-        if (evidenceVotes > 0) {
-            results.add(CreateTokenEffect.ofClueToken(evidenceVotes));
+        // "For each evidence vote, investigate" performs one investigate per vote, so each token enters
+        // as its own event rather than as one batch of simultaneously entering tokens.
+        List<CardEffect> results = new ArrayList<>(evidenceVotes + briberyVotes);
+        for (int vote = 0; vote < evidenceVotes; vote++) {
+            results.add(CreateTokenEffect.ofClueToken(1));
         }
-        if (briberyVotes > 0) {
-            results.add(CreateTokenEffect.ofTreasureToken(briberyVotes));
+        for (int vote = 0; vote < briberyVotes; vote++) {
+            results.add(CreateTokenEffect.ofTreasureToken(1));
         }
         pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, results);
+        votingFinishedSupport.finishVoting(gameData, effectControllerId);
     }
 
     private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {

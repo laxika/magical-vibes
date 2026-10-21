@@ -26,6 +26,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, GAIN_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
@@ -42,6 +43,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, LOSE_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -58,6 +60,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, LOSE_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         // Controller survives at 1 — life adjust never applied after the loss.
@@ -74,6 +77,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, GAIN_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
@@ -121,6 +125,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, GAIN_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
@@ -138,6 +143,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, GAIN_MODE);
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 13);
         harness.assertLife(player2, 15);
@@ -154,6 +160,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, LOSE_MODE);
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 13);
         harness.assertLife(player2, 11);
@@ -170,6 +177,7 @@ class TriskaidekaphobiaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, LOSE_MODE);
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 0);
         harness.assertLife(player2, 0);

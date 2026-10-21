@@ -155,6 +155,8 @@ class TollsOfWarTest extends BaseCardTest {
     void canTriggerAgainOnYourNextTurn() {
         harness.enterBattlefieldAndReturn(player1, new TollsOfWar());
         resolveAllTriggers();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addClueToken(player1);
         harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains()));
         harness.setLibrary(player2, List.of(new Plains(), new Plains()));

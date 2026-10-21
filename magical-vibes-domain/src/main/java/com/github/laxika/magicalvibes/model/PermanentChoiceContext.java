@@ -212,6 +212,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /**
+     * A permanent-auction chooser picked an exiled Aura that can enchant several permanents; the answer
+     * is the permanent it enters attached to (it does not target).
+     */
+    record PermanentAuctionAuraHost(UUID controllerId, UUID auraCardId) implements PermanentChoiceContext {}
+
     /** A resolving effect asks its controller to choose one permanent to transform. */
     record TransformChosenPermanent() implements PermanentChoiceContext {}
 

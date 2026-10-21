@@ -911,7 +911,7 @@ public class BattlefieldPlacementService {
         }
         boolean unleash = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof UnleashEffect)
-                || gameQueryService.getGrantedEffects(gameData, permanent).stream()
+                || gameQueryService.getGrantedEffects(gameData, permanent, controllerId).stream()
                 .anyMatch(e -> e instanceof UnleashEffect);
         if (!unleash || gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)
                 || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {

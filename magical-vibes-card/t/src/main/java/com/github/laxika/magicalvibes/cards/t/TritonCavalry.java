@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 import java.util.List;
 
@@ -15,9 +15,10 @@ import java.util.List;
 public class TritonCavalry extends Card {
 
     public TritonCavalry() {
-        target(TargetFilters.enchantment()).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new MayEffect(
-                        new SpellCastTriggerEffect(null, List.of(ReturnToHandEffect.target()),
+                        new SpellCastTriggerEffect(null,
+                                List.of(ReturnToHandEffect.target(new PermanentIsEnchantmentPredicate())),
                                 new StackEntryTargetsSourcePredicate()),
                         "Return target enchantment to its owner's hand?"));
     }

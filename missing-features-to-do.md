@@ -527,6 +527,130 @@ ask me. Don't commit until I say so.
 
 ---
 
+## 43. Static abilities of an instant or sorcery while it's on the stack (Torrent of Lava)
+
+**Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
+
+**Failing tests:**
+- `TorrentOfLavaTest` "A creature can prevent one damage from Torrent of Lava while it is on the stack"
+- `TorrentOfLavaTest` "The caster's creature can prevent damage, without protecting another creature"
+- `TorrentOfLavaTest` "The granted ability prevents only one damage"
+
+**What the rules require.** CR 113.6: abilities of an instant or sorcery spell function while that
+object is on the stack. Torrent of Lava says "As long as Torrent of Lava is on the stack, each
+creature has '{T}: Prevent the next 1 damage that Torrent of Lava would deal to this creature this
+turn.'" The card registers that grant as an `EffectSlot.STATIC` effect, but the layer system only
+collects static effects from permanents (plus the graveyard/scheme wrappers), so the granted
+activated ability never exists while the spell is on the stack.
+
+**Why it's large.** It needs a new "stack static" source in `LayerSystemService.collectInstances`
+(similar to `GraveyardStaticEffect`/`WrappedGraveyardStaticEffect`), layer classification for it,
+invalidation when the spell enters or leaves the stack, and a prevention shield keyed to the spell
+as the damage source.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 43: let an instant or sorcery's static abilities apply
+while it is on the stack (CR 113.6), so Torrent of Lava grants each creature "{T}: Prevent the next
+1 damage that Torrent of Lava would deal to this creature this turn" only while it is on the stack.
+Add a stack-static collection path to LayerSystemService alongside the graveyard static wrappers.
+Make the three failing TorrentOfLavaTest cases pass. Verify every CR number with the rules MCP.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 44. Ordering competing mill replacement effects (The Water Crystal + Bruvac)
+
+**Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
+
+**Failing tests:**
+- `TheWaterCrystalTest.affectedOpponentChoosesOrderOfMillReplacementEffects()`
+
+**What the rules require.** CR 616.1: when two or more replacement effects try to modify the same
+event, the affected player chooses one to apply, then repeats for the rest. The Water Crystal ("If
+an opponent would mill one or more cards, they mill that many cards plus four instead") and Bruvac
+the Grandiloquent (doubling) give different totals depending on order, so the milling opponent must
+choose. `GraveyardService.resolveMillPlayer` applies them in a fixed order with no prompt.
+
+**Why it's large.** Mill isn't routed through `ReplacementOrderService`. It needs a mill event
+object, candidate collection for every mill-modifying replacement, a resumable completion after the
+choice, and migration of every mill caller onto the new path.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 44: route mill events through replacement ordering
+(CR 616.1) so the affected player chooses the order of competing mill replacement effects such as
+The Water Crystal and Bruvac the Grandiloquent. Add a mill event plus a resumable completion in
+GraveyardService.resolveMillPlayer and reuse ReplacementOrderService. Make
+TheWaterCrystalTest.affectedOpponentChoosesOrderOfMillReplacementEffects pass. Verify every CR
+number with the rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 45. Optional additional votes from a static ability for every vote (Tivit)
+
+**Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
+
+**Failing tests:**
+- `TivitSellerOfSecretsTest.additionalVoteAppliesToAnotherCardsVote()`
+
+**What the rules require.** CR 701.38a: to vote, each player chooses one of the options, starting
+with a specified player and proceeding in turn order. Tivit, Seller of Secrets says "While voting,
+you may vote an additional time", which applies to every vote its controller takes part in (Plea
+for Power in the test), not only Tivit's own council's dilemma. The engine supports the extra vote
+only inside `CouncilDilemmaEffectHandler`; `VotingSupport.countAdditionalVotes` counts only The
+Valeyard's mandatory extra vote and never asks.
+
+**Why it's large.** About 17 vote handlers each run their own voting loop. A generic optional extra
+vote needs a static marker effect, a shared "vote again?" prompt in `VotingSupport`, and every vote
+handler moved onto that shared loop.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 45: make "While voting, you may vote an additional time"
+(Tivit, Seller of Secrets) work for every vote, not only council's dilemma. Add a static marker
+effect and an optional extra-vote prompt to VotingSupport, and move the vote handlers onto the
+shared voting loop. Make TivitSellerOfSecretsTest.additionalVoteAppliesToAnotherCardsVote pass and
+keep The Valeyard's mandatory extra vote working. Verify every CR number with the rules MCP. Don't
+run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 46. Choosing which coin flip to ignore (Krark's Thumb)
+
+**Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
+
+**Failing tests:**
+- `TwoHeadedGiantTest.krarksThumbLetsControllerChooseWhichResultsToIgnore()`
+
+**What the rules require.** Krark's Thumb: "If you would flip a coin, instead flip two coins and
+ignore one." The controller sees both results and chooses which one to ignore. CR 705.3 covers
+effects that dictate a flip's result. The engine's `CoinFlipService` treats the pair as "heads if
+either is heads", which is right only for flips the player wants to win and gives no choice for
+effects such as Two-Headed Giant's two separate flips, where the controller may prefer tails.
+
+**Why it's large.** Every coin-flip effect resolves its flips synchronously. A player choice per
+replaced flip needs a resumable prompt in the middle of each flipping effect, across all
+coin-flip handlers.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 46: make Krark's Thumb flip two coins and let its
+controller choose which result to ignore, instead of CoinFlipService auto-preferring heads. Add a
+resumable choice to the coin-flip path used by every coin-flip handler. Make
+TwoHeadedGiantTest.krarksThumbLetsControllerChooseWhichResultsToIgnore pass. Verify every CR number
+with the rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

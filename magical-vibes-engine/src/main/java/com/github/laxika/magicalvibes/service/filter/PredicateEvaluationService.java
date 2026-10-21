@@ -794,7 +794,8 @@ public class PredicateEvaluationService {
             case CardIsAuraEnchantCreaturePredicate ignored ->
                     isAuraEnchantingCreature(card);
             case CardHasFlashbackPredicate ignored ->
-                    card.getCastingOption(FlashbackCast.class).isPresent();
+                    card.getCastingOption(FlashbackCast.class).isPresent()
+                            || gameData != null && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             case CardHasUnearthPredicate ignored ->
                     gameData != null && gameQueryService.cardHasUnearthAbility(gameData, cardOwnerId, card);
             case CardHasXInManaCostPredicate ignored ->
@@ -1154,11 +1155,18 @@ public class PredicateEvaluationService {
                 if (gameData == null || sourceCardId == null || card.getToughness() == null) {
                     yield false;
                 }
-                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
-                if (source == null) {
-                    yield false;
+                Permanent source = sourcePermanentId == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (source != null) {
+                    yield card.getToughness() < gameQueryService.getEffectiveToughness(gameData, source);
                 }
-                yield card.getToughness() < gameQueryService.getEffectiveToughness(gameData, source);
+                // The source left the battlefield: use its last known toughness (CR 113.7a).
+                Integer lastKnownToughness = sourcePermanentSnapshot == null ? null
+                        : sourcePermanentSnapshot.getLastKnownToughness() != null
+                        ? sourcePermanentSnapshot.getLastKnownToughness()
+                        : sourcePermanentSnapshot.getEffectiveToughness();
+                yield lastKnownToughness != null && card.getToughness() < lastKnownToughness;
             }
             case CardHasAllCardNamesPredicate ignored -> card.hasAllCardNames();
             case CardNamedPredicate p ->
@@ -2187,9 +2195,9 @@ public class PredicateEvaluationService {
             case PermanentMaxManaValuePredicate maxManaValuePredicate ->
                     gameQueryService.getPermanentManaValue(permanent) <= maxManaValuePredicate.maxManaValue();
             case PermanentMinManaValuePredicate minManaValuePredicate ->
-                    (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) >= minManaValuePredicate.minManaValue();
+                    gameQueryService.getPermanentManaValue(permanent) >= minManaValuePredicate.minManaValue();
             case PermanentManaValueParityPredicate parityPredicate ->
-                    parityPredicate.parity().matches(permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
+                    parityPredicate.parity().matches(gameQueryService.getPermanentManaValue(permanent));
             case PermanentManaValueEqualsSourceCountersPredicate equalsSourceCounters -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -2493,7 +2501,9 @@ public class PredicateEvaluationService {
             }
             case PermanentIsSourceCardPredicate ignored -> filterContext.sourcePermanentId() != null
                     ? permanent.getId().equals(filterContext.sourcePermanentId())
-                    : sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
+                    : sourceCardId != null && (permanent.getOriginalCard().getId().equals(sourceCardId)
+                    // A permanent that is a copy of the source's card is identified by its current card.
+                    || permanent.getCard().getId().equals(sourceCardId));
             case PermanentIsTargetCardPredicate ignored -> filterContext.targetCardId() != null
                     && permanent.getOriginalCard().getId().equals(filterContext.targetCardId());
             case PermanentIsSpecificPermanentPredicate specific ->
@@ -3378,7 +3388,8 @@ public class PredicateEvaluationService {
                     && (context.sourcePermanentId() != null
                     ? permanent.getId().equals(context.sourcePermanentId())
                     : context.sourceCardId() != null
-                    && permanent.getOriginalCard().getId().equals(context.sourceCardId()));
+                    && (permanent.getOriginalCard().getId().equals(context.sourceCardId())
+                    || permanent.getCard().getId().equals(context.sourceCardId())));
             case PermanentOwnedBySourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();

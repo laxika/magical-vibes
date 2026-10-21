@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -16,6 +18,9 @@ import java.util.List;
 public class TsaboTavoc extends Card {
 
     public TsaboTavoc() {
+        addEffect(EffectSlot.STATIC, new ProtectionFromPermanentsMatchingEffect(new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)))));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}{B}",

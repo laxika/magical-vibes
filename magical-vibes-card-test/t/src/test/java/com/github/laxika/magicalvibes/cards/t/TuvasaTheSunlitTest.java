@@ -153,6 +153,7 @@ class TuvasaTheSunlitTest extends BaseCardTest {
     @DisplayName("Can draw again for the first enchantment on a later turn")
     void firstEnchantmentOnLaterTurnDrawsAgain() {
         harness.addToBattlefield(player1, new TuvasaTheSunlit());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Exploration()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));

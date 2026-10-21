@@ -76,6 +76,7 @@ public class PermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
 
     private final PlayerInputService playerInputService;
+    private final com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
 
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
 
@@ -246,6 +247,8 @@ public class PermanentChoiceHandlerService {
             }
         } else if (context instanceof PermanentChoiceContext.InventoryManagementAttachment attachmentChoice) {
             inventoryManagementEffectHandler.completeCreatureChoice(gameData, permanentId, attachmentChoice);
+        } else if (context instanceof PermanentChoiceContext.PermanentAuctionAuraHost auctionHost) {
+            permanentAuctionService.completeAuraHostChoice(gameData, permanentId, auctionHost);
         } else if (context instanceof PermanentChoiceContext.AttachReturnedAuraToCreature attachAura) {
             returnAurasFromGraveyardAttachedToCreaturesEffectHandler.completeCreatureChoice(
                     gameData, permanentId, attachAura);

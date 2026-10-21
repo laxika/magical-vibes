@@ -211,7 +211,10 @@ public class TargetLegalityService {
                 ? findAnyEntryOnStack(gameData, targetId)
                 : findSpellOnStack(gameData, targetId);
         if (targetSpell == null) {
-            if (!includeAbilities && targetFilter instanceof StackEntryPredicateTargetFilter predicateFilter) {
+            // A filtered stack target that is on the stack but isn't an eligible spell gets the
+            // filter's own message; a target that isn't on the stack at all gets the generic one.
+            if (!includeAbilities && targetFilter instanceof StackEntryPredicateTargetFilter predicateFilter
+                    && gameData.stack.stream().anyMatch(e -> e.getCard() != null && targetId.equals(e.getCard().getId()))) {
                 return Optional.of(predicateFilter.errorMessage());
             }
             return Optional.of(includeAbilities
@@ -3324,6 +3327,24 @@ public class TargetLegalityService {
         return controllerId != null ? controllerId : gameQueryService.findGraveyardOwnerById(gameData, targetId);
     }
 
+    /**
+     * The card-level multi-target constraint of a Saga is written for its single-group chapter; a
+     * chapter with several target groups (each group picks its own targets) is not bound by it.
+     */
+    private boolean sagaChapterIgnoresCardTargetConstraint(StackEntry entry) {
+        Card card = entry.getCard();
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        if (card == null || effects == null || effects.isEmpty()) {
+            return false;
+        }
+        for (EffectSlot slot : EffectSlot.values()) {
+            if (slot.name().startsWith("SAGA_CHAPTER") && card.getEffects(slot).equals(effects)) {
+                return card.getSagaChapterTargetGroups(slot).size() > 1;
+            }
+        }
+        return false;
+    }
+
     private MultiTargetConstraint multiTargetConstraintForResolution(StackEntry entry) {
         if (entry.getMultiTargetConstraint() != null) {
             return entry.getMultiTargetConstraint();
@@ -3368,7 +3389,8 @@ public class TargetLegalityService {
         // (CR 608.2b). Rivals' Duel: no shared creature type. Run Away Together: different controllers.
         // Only targets still on the battlefield are compared here.
         if (entry.getCard() != null) {
-            MultiTargetConstraint constraint = entry.getCard().getMultiTargetConstraint();
+            MultiTargetConstraint constraint = sagaChapterIgnoresCardTargetConstraint(entry)
+                    ? null : entry.getCard().getMultiTargetConstraint();
             if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER) {
                 // A target that already left the battlefield is compared by the controller it had as
                 // it left (last known information), so it can still make its partner illegal.
@@ -3822,7 +3844,7 @@ public class TargetLegalityService {
                                 && targetValidationService.checkEffectTargets(
                                 entry.getEffectsToResolve(),
                                 new TargetValidationContext(gameData, entry.getTargetId(), entry.getTargetZone(),
-                                        entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                                        castFaceCard(entry), entry.getXValue(), entry.getControllerId(),
                                         entry.getSourcePermanentSnapshot(), false, entry.getSourcePermanentId(),
                                         entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry),
                                         entry.getTriggeringPermanentId()), entry.isTeamworkCostPaid()).isPresent()) {
@@ -4325,11 +4347,27 @@ public class TargetLegalityService {
     }
 
     private boolean isProtectedFromSource(GameData gameData, Permanent target, StackEntry entry) {
-        Card sourceCard = entry.getCard();
+        Card sourceCard = castFaceCard(entry);
         if (sourceCard == null) {
             return false;
         }
         return gameQueryService.hasProtectionFromSource(gameData, target, sourceCard, entry.getControllerId());
+    }
+
+    /**
+     * The card whose characteristics the spell has on the stack. A spell cast as its Adventure or Omen
+     * face has only that face's characteristics (CR 720.3b for an Omen, CR 715.4 for an Adventure), so colors and subtypes for
+     * protection and hexproof checks come from the back face rather than the physical front card.
+     */
+    private Card castFaceCard(StackEntry entry) {
+        Card card = entry.getCard();
+        if (card != null && (entry.isCastWithOmen() || entry.isCastWithAdventure())) {
+            Card printedCard = entry.getPhysicalCard() != null ? entry.getPhysicalCard() : card;
+            if (printedCard.getBackFaceCard() != null) {
+                return printedCard.getBackFaceCard();
+            }
+        }
+        return card;
     }
 
     private UUID targetPredicateController(StackEntry entry) {
@@ -4475,7 +4513,7 @@ public class TargetLegalityService {
         if (entryType == StackEntryType.TRIGGERED_ABILITY || entryType == StackEntryType.ACTIVATED_ABILITY) {
             return false;
         }
-        if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, targetPerm, entry.getCard())) {
+        if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, targetPerm, castFaceCard(entry))) {
             return true;
         }
         Set<CardColor> spellColors = effectiveSpellColors(gameData, entry);
@@ -4515,7 +4553,7 @@ public class TargetLegalityService {
                 return Set.copyOf(gameQueryService.getEffectiveColors(gameData, sourcePermanent));
             }
         }
-        return gameQueryService.getEffectiveCardColors(gameData, entry.getCard());
+        return gameQueryService.getEffectiveCardColors(gameData, castFaceCard(entry));
     }
 
     private boolean isNonColorSourceRestricted(GameData gameData, Permanent targetPerm, StackEntry entry) {
@@ -5556,7 +5594,7 @@ public class TargetLegalityService {
                 return false;
             }
             Card imprintedCard = gameData.getImprintedCard(source.getCard());
-            if (imprintedCard == null) {
+            if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
                 return false;
             }
             boolean sharesColor = imprintedCard.getColors().stream()

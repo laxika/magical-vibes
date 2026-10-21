@@ -108,6 +108,7 @@ class TyrantGuardTest extends BaseCardTest {
     @Test
     void enteringWithoutBeingCastUsesZeroForRavenous() {
         harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
 
         Permanent guard = harness.enterBattlefieldAndReturn(player1, new TyrantGuard());
 

@@ -27,7 +27,7 @@ public class TractorBeam extends Card {
                 "Target must be a creature or Spacecraft"
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
+                        new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
     }

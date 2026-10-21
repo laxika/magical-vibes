@@ -24,7 +24,7 @@ public class TideforceElemental extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new TapOrUntapTargetPermanentEffect()),
+                List.of(new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target creature?")),
                 "{U}, {T}: You may tap or untap another target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

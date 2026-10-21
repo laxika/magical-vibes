@@ -194,6 +194,7 @@ public class StackResolutionService {
         gameData.currentlyResolvingControllerId = entry.getControllerId();
         gameData.currentlyResolvingTriggeredAbilityControllerId =
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getControllerId() : null;
+        CardAdvantagePostResolutionService.snapshotBeforeResolution(gameData, entry);
         try {
             if (beginDirectTriggeredModal(gameData, entry)) {
                 return;
@@ -1528,7 +1529,7 @@ public class StackResolutionService {
         // for player input (pendingEffectResolutionEntry set), the snapshots must survive until the
         // resumed resolution drains — EffectResolutionService clears them at that point. Clearing
         // now would break a ColorSpentToCast condition re-checked on a "you may" resume.
-        if (entry.getCard() != null && gameData.pendingEffectResolutionEntry == null) {
+        if (entry.getCard() != null && !entry.isCopy() && gameData.pendingEffectResolutionEntry == null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());

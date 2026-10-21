@@ -25,6 +25,8 @@ public class TimberPaladin extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 exactlyAuras(2), new SetBasePowerToughnessEffect(5, 5, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                exactlyAuras(2), new GrantKeywordEffect(Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new EnchantedByAtLeastAuras(3),
                 new SetBasePowerToughnessEffect(10, 10, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(

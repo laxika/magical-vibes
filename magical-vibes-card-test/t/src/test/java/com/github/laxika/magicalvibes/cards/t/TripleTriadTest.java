@@ -94,6 +94,10 @@ class TripleTriadTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TripleTriad());
         CardRef cards = setTopCards(new HillGiant(), new GrizzlyBears());
         resolveTripleTriadTrigger();
+        // Auto-pass skips the rest of upkeep once the trigger resolves (nothing is castable at that
+        // timing), so return to the step whose timing restriction this test exercises.
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castFromExile(player1, cards.ownCard().getId()))
                 .isInstanceOf(IllegalStateException.class)

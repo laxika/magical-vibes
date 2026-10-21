@@ -93,6 +93,7 @@ class TreacherousBlessingTest extends BaseCardTest {
         Permanent blessing = harness.addToBattlefieldAndReturn(player1, new TreacherousBlessing());
         harness.setHand(player1, List.of(new BurstOfEnergy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setAutoOrderTriggers(player1, false);
 
         harness.castInstant(player1, 0, blessing.getId());
 

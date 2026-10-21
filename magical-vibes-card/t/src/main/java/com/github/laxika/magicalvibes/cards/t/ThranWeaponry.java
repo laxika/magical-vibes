@@ -14,7 +14,7 @@ import java.util.List;
 public class ThranWeaponry extends Card {
 
     public ThranWeaponry() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{4}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{4}"));
         addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
 
         addActivatedAbility(new ActivatedAbility(

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 public class TimeOfHeroes extends Card {
 
     public TimeOfHeroes() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.LEVEL)));
     }
 }

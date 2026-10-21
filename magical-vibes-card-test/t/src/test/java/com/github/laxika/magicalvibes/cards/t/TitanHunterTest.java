@@ -90,6 +90,8 @@ class TitanHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 24);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.assertLife(player2, 20);
         assertThat(gd.stack).isEmpty();
     }

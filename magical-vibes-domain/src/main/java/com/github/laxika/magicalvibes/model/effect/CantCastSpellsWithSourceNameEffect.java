@@ -13,7 +13,8 @@ public record CantCastSpellsWithSourceNameEffect() implements SpellCastingRestri
 
     @Override
     public boolean preventsCasting(Permanent source, Card mostRecentSpell, Card candidateSpell) {
-        return source != null && candidateSpell != null
+        // CR 708.2: a face-down permanent has no name, so its name-based restriction doesn't exist.
+        return source != null && !source.isFaceDown() && candidateSpell != null
                 && source.getCard().getName().equals(candidateSpell.getName());
     }
 }

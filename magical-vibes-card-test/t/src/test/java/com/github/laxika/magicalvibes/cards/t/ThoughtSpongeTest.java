@@ -88,18 +88,18 @@ class ThoughtSpongeTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.setLibrary(player2, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
-        harness.getDrawService().resolveDrawCard(gd, player2.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
         harness.setHand(player1, List.of(new ThoughtSponge()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.getDrawService().resolveDrawCards(gd, player2.getId(), 3);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player2.getId(), 3));
         harness.passBothPriorities();
 
         Permanent sponge = findPermanent(player1, "Thought Sponge");
         assertThat(sponge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2));
         assertThat(sponge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }

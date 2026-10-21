@@ -29,14 +29,16 @@ public class ThreeBlindMice extends Card {
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsTokenPredicate(), "Target must be a token you control")));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenCopyOfTargetPermanentEffect());
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsTokenPredicate(), "Target must be a token you control")));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
 
         addEffect(EffectSlot.SAGA_CHAPTER_IV, new BoostAllOwnCreaturesEffect(1, 1));
         addEffect(EffectSlot.SAGA_CHAPTER_IV,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
     }
 }

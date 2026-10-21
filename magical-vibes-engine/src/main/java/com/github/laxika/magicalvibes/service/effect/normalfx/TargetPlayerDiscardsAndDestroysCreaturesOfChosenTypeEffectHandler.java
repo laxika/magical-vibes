@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -29,9 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -88,10 +85,8 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
         }
 
         cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-        Set<CardSubtype> grantedSubtypes = new HashSet<>(
-                gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, targetPlayerId));
         List<Card> matchingCards = hand.stream()
-                .filter(card -> isMatchingCreatureCard(card, chosenSubtype, grantedSubtypes))
+                .filter(card -> isMatchingCreatureCard(gameData, targetPlayerId, card, chosenSubtype))
                 .toList();
         if (matchingCards.isEmpty()) {
             return;
@@ -133,11 +128,9 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
         }
     }
 
-    private boolean isMatchingCreatureCard(Card card, CardSubtype chosenSubtype, Set<CardSubtype> grantedSubtypes) {
+    private boolean isMatchingCreatureCard(GameData gameData, UUID ownerId, Card card, CardSubtype chosenSubtype) {
         return card.hasType(CardType.CREATURE)
-                && (card.getSubtypes().contains(chosenSubtype)
-                || card.hasKeyword(Keyword.CHANGELING)
-                || grantedSubtypes.contains(chosenSubtype));
+                && gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, ownerId);
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

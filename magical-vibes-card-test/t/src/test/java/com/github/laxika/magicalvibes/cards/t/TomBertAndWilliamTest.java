@@ -80,7 +80,7 @@ class TomBertAndWilliamTest extends BaseCardTest {
     @DisplayName("A creature controlled by a player other than its owner still returns")
     void returnsFromOwnersGraveyardUnderLastControllersControl() {
         Permanent tom = addCreatureReady(player1, new TomBertAndWilliam());
-        gd.stolenCreatures.put(tom.getId(), player2.getId());
+        setOwnerAndController(tom, player2, player1);
 
         destroyCreature(tom);
 

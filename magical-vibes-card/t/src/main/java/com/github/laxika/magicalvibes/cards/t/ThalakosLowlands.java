@@ -23,14 +23,16 @@ public class ThalakosLowlands extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.WHITE), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new AwardManaEffect(ManaColor.WHITE),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
                 "{T}: Add {W}. This land doesn't untap during your next untap step."
         ));
         // {T}: Add {U}. This land doesn't untap during your next untap step.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLUE), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new AwardManaEffect(ManaColor.BLUE),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
                 "{T}: Add {U}. This land doesn't untap during your next untap step."
         ));
     }

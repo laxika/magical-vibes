@@ -161,15 +161,17 @@ class TortureChamberTest extends BaseCardTest {
         Permanent chamber = addCreatureReady(player1, new TortureChamber());
         chamber.setCounterCount(CounterType.PAIN, 2);
         harness.addToBattlefield(player2, new HornedTurtle());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, indexOf(player1, chamber), null,
-                harness.getPermanentId(player2, "Horned Turtle"));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, indexOf(player1, chamber), null,
+                    harness.getPermanentId(player2, "Horned Turtle"));
+            resolveAllTriggers();
+        });
 
         harness.assertLife(player1, 20);
         assertThat(findPermanent(player2, "Horned Turtle").getMarkedDamage()).isEqualTo(2);

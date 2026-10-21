@@ -13,7 +13,7 @@ public class TrackersInstincts extends Card {
 
     public TrackersInstincts() {
         addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(
-                4, 1, new CardTypePredicate(CardType.CREATURE), true));
+                4, 1, new CardTypePredicate(CardType.CREATURE), true).withExactChooseCount());
         addCastingOption(new FlashbackCast("{2}{U}"));
     }
 }

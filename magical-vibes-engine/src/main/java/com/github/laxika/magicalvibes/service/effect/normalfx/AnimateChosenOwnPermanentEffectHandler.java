@@ -59,7 +59,7 @@ public class AnimateChosenOwnPermanentEffectHandler implements NormalEffectHandl
         }
         if (candidates.size() == 1) {
             entry.setChosenPermanentId(candidates.getFirst());
-            animationSupport.animateChosen(gameData, entry, animate.animation());
+            animationSupport.animateChosenPerpetually(gameData, entry, animate.animation());
             return;
         }
 

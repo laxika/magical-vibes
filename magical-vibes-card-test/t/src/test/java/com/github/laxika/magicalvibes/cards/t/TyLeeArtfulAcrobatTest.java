@@ -75,6 +75,7 @@ class TyLeeArtfulAcrobatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isCantBlockThisTurn()).isTrue();
+        gs.declareBlockers(gd, player2, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -124,7 +125,7 @@ class TyLeeArtfulAcrobatTest extends BaseCardTest {
 
         declareAttack();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

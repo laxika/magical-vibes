@@ -39,11 +39,12 @@ public class TheSackvilleBagginses extends Card {
             "Target must be an opponent");
 
     public TheSackvilleBagginses() {
+        // "If you do" is part of the same ability, not a reflexive "when you do" trigger.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new SacrificePermanentThenEffect(
                         ANOTHER_CREATURE_OR_ARTIFACT,
                         SequenceEffect.of(new DrawCardEffect(), CreateTokenEffect.ofTreasureToken(1)),
-                        "another creature or artifact"),
+                        "another creature or artifact", false, false),
                 "Sacrifice another creature or artifact?"));
 
         target(OPPONENT_TARGET).addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,

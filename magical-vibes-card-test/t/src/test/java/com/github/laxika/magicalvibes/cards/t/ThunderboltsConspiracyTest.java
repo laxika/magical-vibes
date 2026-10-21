@@ -140,7 +140,7 @@ class ThunderboltsConspiracyTest extends BaseCardTest {
     void returnsBorrowedVillainUnderOwnersControl() {
         harness.addToBattlefield(player1, new ThunderboltsConspiracy());
         Permanent creature = addCreatureReady(player1, new CrossbonesMaliciousMercenary());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
 
         destroyWithMurder(player2, creature.getId());
         harness.assertInGraveyard(player2, "Crossbones, Malicious Mercenary");

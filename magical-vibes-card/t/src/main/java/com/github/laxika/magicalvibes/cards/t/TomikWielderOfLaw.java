@@ -22,7 +22,7 @@ public class TomikWielderOfLaw extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsPlaneswalkerPredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS, new ConditionalEffect(
-                new OpponentAttacksWithAtLeastCreatures(2),
+                new OpponentAttacksWithAtLeastCreatures(2, true, false),
                 SequenceEffect.of(
                         new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER),
                         new DrawCardEffect())));

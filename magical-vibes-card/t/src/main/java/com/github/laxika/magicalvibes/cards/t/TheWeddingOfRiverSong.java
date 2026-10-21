@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonlandCardFromHandWithManaValueTimeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
@@ -23,9 +25,11 @@ public class TheWeddingOfRiverSong extends Card {
         addEffect(EffectSlot.SPELL, new MayEffect(
                 new ExileNonlandCardFromHandWithManaValueTimeCountersEffect(),
                 "Exile a nonland card from your hand?"));
-        target(new PlayerPredicateTargetFilter(
+        SpellTarget opponentTarget = target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent")).addEffect(EffectSlot.SPELL, new MayEffect(
+                "Target must be an opponent"));
+        opponentTarget.addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2));
+        opponentTarget.addEffect(EffectSlot.SPELL, new MayEffect(
                 ExileNonlandCardFromHandWithManaValueTimeCountersEffect.forTargetPlayer(),
                 "Exile a nonland card from your hand?",
                 null,

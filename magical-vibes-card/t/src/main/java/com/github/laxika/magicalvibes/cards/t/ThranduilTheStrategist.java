@@ -11,7 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -27,8 +30,10 @@ public class ThranduilTheStrategist extends Card {
                         null,
                         List.of(new AwardManaOfColorsEffect(List.of(ManaColor.GREEN, ManaColor.BLUE))),
                         "{T}: Add {G} or {U}."),
-                GrantScope.OWN_CREATURES,
-                new PermanentHasSubtypePredicate(CardSubtype.ELF)));
+                GrantScope.OWN_PERMANENTS,
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));
 
         // Landfall — Whenever a land you control enters, create a 1/1 green Elf creature token.
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndPerpetuallyReduceSoughtCardEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,10 +22,13 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler(
-            PredicateEvaluationService predicateEvaluationService) {
+            PredicateEvaluationService predicateEvaluationService,
+            TriggerCollectionService triggerCollectionService) {
         this.predicateEvaluationService = predicateEvaluationService;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override
@@ -56,5 +60,8 @@ public class SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler implements N
         Card modified = sought.createRuntimeCopy();
         modified.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Fixed(1)));
         gameData.addCardToHand(controllerId, modified);
+        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                gameData, controllerId, modified);
+        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(modified));
     }
 }

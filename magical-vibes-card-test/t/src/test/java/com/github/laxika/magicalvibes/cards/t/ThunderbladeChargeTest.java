@@ -153,9 +153,11 @@ class ThunderbladeChargeTest extends BaseCardTest {
         harness.resolveCombatDamage();
 
         gd.playerGraveyards.get(player1.getId()).remove(charge);
+        gd.markGraveyardExit(charge.getId());
         harness.setHand(player1, List.of(charge));
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(charge));
+        gd.markGraveyardEntry(charge);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);

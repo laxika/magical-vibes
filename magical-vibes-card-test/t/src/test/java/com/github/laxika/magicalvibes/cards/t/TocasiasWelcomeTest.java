@@ -92,6 +92,7 @@ class TocasiasWelcomeTest extends BaseCardTest {
     void opponentCreatureDoesNotTrigger() {
         harness.addToBattlefield(player1, new TocasiasWelcome());
         seedLibrary(1);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new SurvivorOfKorlis(), "{W}");
@@ -137,6 +138,7 @@ class TocasiasWelcomeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

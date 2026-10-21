@@ -132,6 +132,7 @@ class TyphoidMaryFracturedTest extends BaseCardTest {
             harness.passBothPriorities();
         });
         harness.setLibrary(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player1, List.of());
 
         attackMary();
         resolveAllTriggers();

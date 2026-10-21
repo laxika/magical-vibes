@@ -71,6 +71,8 @@ class TolsimirFriendToWolvesTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         Permanent wolf = harness.enterBattlefieldAndReturn(player1, new ArlinnsWolf());
 
+        harness.passBothPriorities();
+
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -96,6 +98,7 @@ class TolsimirFriendToWolvesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TolsimirFriendToWolves());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         Permanent wolf = harness.enterBattlefieldAndReturn(player1, new ArlinnsWolf());
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
         putOnTopOfLibrary(wolf);
@@ -112,6 +115,7 @@ class TolsimirFriendToWolvesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TolsimirFriendToWolves());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         Permanent wolf = harness.enterBattlefieldAndReturn(player1, new ArlinnsWolf());
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
         putOnTopOfLibrary(opponentCreature);
@@ -141,6 +145,7 @@ class TolsimirFriendToWolvesTest extends BaseCardTest {
         Permanent tolsimir = harness.addToBattlefieldAndReturn(player1, new TolsimirFriendToWolves());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.enterBattlefieldAndReturn(player1, new ArlinnsWolf());
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
         putOnTopOfLibrary(tolsimir);

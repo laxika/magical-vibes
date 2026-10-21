@@ -209,7 +209,7 @@ class TrialOfATimeLordTest extends BaseCardTest {
     void guiltyVotePutsStolenCreatureInItsOwnersLibrary() {
         Permanent saga = addSagaWithLore(0);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ClockworkDroid());
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         resolveExileChapter(target);
         harness.setLibrary(player1, List.of());
         saga.setCounterCount(CounterType.LORE, 3);

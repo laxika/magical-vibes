@@ -134,7 +134,8 @@ class TheThirteenthDoctorTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passUntil(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        // Stay in the end step so the opponent's untap step cannot mask whether the ability untapped it.
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(doctor.isTapped()).isFalse();
         assertThat(opposingDoctor.isTapped()).isTrue();

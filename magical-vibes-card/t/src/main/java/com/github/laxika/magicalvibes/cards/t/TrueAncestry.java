@@ -13,6 +13,6 @@ public class TrueAncestry extends Card {
     public TrueAncestry() {
         addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(
                 new CardIsPermanentPredicate(), 1));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

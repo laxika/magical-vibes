@@ -272,6 +272,7 @@ import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCar
 import com.github.laxika.magicalvibes.model.condition.DuringCombat;
 import com.github.laxika.magicalvibes.model.condition.DuringDeclareAttackers;
 import com.github.laxika.magicalvibes.model.condition.DuringYourDeclareBlockers;
+import com.github.laxika.magicalvibes.model.condition.DuringYourUntapStep;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAttack;
@@ -472,6 +473,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesC
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanEachOtherCreature;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreCreaturesDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PreviousActivePlayerCastTwoOrMoreSpellsLastTurn;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceExploitedTriggeringPermanent;
@@ -1264,6 +1266,10 @@ public class ConditionEvaluationService {
                     gameData.currentStep != null && gameData.currentStep.isCombatPhase();
             case DuringDeclareAttackers ignored ->
                     gameData.currentStep == TurnStep.DECLARE_ATTACKERS;
+            case DuringYourUntapStep ignored ->
+                    gameData.currentStep == TurnStep.UNTAP
+                            && ctx.controllerId() != null
+                            && ctx.controllerId().equals(gameData.activePlayerId);
             case DuringYourDeclareBlockers ignored ->
                     gameData.currentStep == TurnStep.DECLARE_BLOCKERS
                             && ctx.controllerId() != null
@@ -1313,6 +1319,9 @@ public class ConditionEvaluationService {
                     gameData.creaturesAttackedCountThisTurn.values().stream().noneMatch(count -> count > 0);
             case TwoOrMoreSpellsCastLastTurn ignored ->
                     gameData.spellsCastLastTurn.values().stream().anyMatch(count -> count >= 2);
+            case PreviousActivePlayerCastTwoOrMoreSpellsLastTurn ignored ->
+                    gameData.previousTurnActivePlayerId != null
+                            && gameData.spellsCastLastTurn.getOrDefault(gameData.previousTurnActivePlayerId, 0) >= 2;
             case TwoOrMoreCreaturesDiedThisTurn ignored ->
                     gameData.creatureDeathCountThisTurn.values().stream()
                             .mapToInt(Integer::intValue)
@@ -1585,7 +1594,7 @@ public class ConditionEvaluationService {
                             && gameData.getSpellCastManaSpentByColor(ctx.sourceCard().getId(), c.color())
                             >= c.minimumAmount();
             case SnowManaSpentToCast ignored ->
-                    ctx.sourceCard() != null
+                    ctx.sourceCard() != null && !ctx.copiedSpell()
                             && gameData.getSpellCastSnowManaSpent(ctx.sourceCard().getId()) > 0;
             case TreasureManaSpentToCast ignored ->
                     ctx.sourceCard() != null
@@ -2938,17 +2947,8 @@ public class ConditionEvaluationService {
     private boolean isSourceEquipped(GameData gameData, ConditionContext ctx) {
         UUID sourcePermanentId = ctx.sourcePermanentId();
         if (sourcePermanentId == null) return false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && sourcePermanentId.equals(perm.getAttachedTo())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return source != null && gameQueryService.isEquipped(gameData, source);
     }
 
     private boolean equippedCreatureDidntDealCombatDamageToCreatureThisTurn(GameData gameData,

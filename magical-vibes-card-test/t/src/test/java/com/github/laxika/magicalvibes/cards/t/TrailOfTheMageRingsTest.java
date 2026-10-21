@@ -123,6 +123,7 @@ class TrailOfTheMageRingsTest extends BaseCardTest {
 
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);

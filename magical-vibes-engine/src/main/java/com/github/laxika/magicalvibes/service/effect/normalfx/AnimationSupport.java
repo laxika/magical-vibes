@@ -712,6 +712,34 @@ public class AnimationSupport {
     }
 
     /**
+     * Animates the chosen permanent like {@link #animateChosen} and also records the animation's card types
+     * on the chosen card's identity, so a "perpetually becomes" animation (Turbocharged Escape) follows the
+     * card through later zones, since perpetual effects apply to the card rather than the permanent object.
+     */
+    public void animateChosenPerpetually(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        animateChosen(gameData, entry, effect);
+        if (entry.getChosenPermanentId() == null) {
+            return;
+        }
+        Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+        if (chosen == null || chosen.getOriginalCard() == null) {
+            return;
+        }
+        Set<CardType> perpetualTypes = EnumSet.noneOf(CardType.class);
+        perpetualTypes.addAll(effect.grantedCardTypes());
+        if (effect.becomesCreature()) {
+            perpetualTypes.add(CardType.CREATURE);
+        }
+        gameData.perpetualCardTypes.merge(chosen.getOriginalCard().getId(), Set.copyOf(perpetualTypes),
+                (existing, added) -> {
+                    EnumSet<CardType> merged = EnumSet.noneOf(CardType.class);
+                    merged.addAll(existing);
+                    merged.addAll(added);
+                    return Set.copyOf(merged);
+                });
+    }
+
+    /**
      * TARGET-less PERMANENT-duration animation of an already-identified permanent, for effects that
      * animate permanents they just created rather than targeted — Nissa, Worldwaker's ultimate
      * animates the basic lands its library search put onto the battlefield. The power/toughness are

@@ -31,8 +31,8 @@ public class TheJollyBalloonMan extends Card {
                 "{1}",
                 List.of(CreateTokenCopyOfTargetPermanentEffect.withAdditionalColors(
                         List.of(CardSubtype.BALLOON), Set.of(), 1, 1, Map.of(),
-                        true, false, true, false, false, false, null,
-                        Set.of(Keyword.FLYING), List.of(CardColor.RED))),
+                        false, false, true, false, false, false, null,
+                        Set.of(Keyword.FLYING, Keyword.HASTE), List.of(CardColor.RED))),
                 "{1}, {T}: Create a token that's a copy of another target creature you control, except it's a 1/1 red Balloon creature in addition to its other colors and types and it has flying and haste. Sacrifice it at the beginning of the next end step. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

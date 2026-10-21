@@ -160,6 +160,12 @@ class TruthOrDareTest extends BaseCardTest {
         harness.clearMessages();
         harness.publishState();
         return harness.getConn1().getSentMessages().stream()
-                .anyMatch(message -> message.contains("\"opponentHand\"") && message.contains("Forest"));
+                .anyMatch(message -> {
+                    int key = message.indexOf("\"opponentHand\"");
+                    if (key < 0) return false;
+                    int open = message.indexOf('[', key);
+                    int close = open < 0 ? -1 : message.indexOf(']', open);
+                    return open >= 0 && close > open && message.substring(open, close).contains("Forest");
+                });
     }
 }

@@ -38,7 +38,7 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                         PermanentDamageCandidateSource::noLog),
                 bonusRule("SourceBonus", ctx -> ctx.combat()
                         ? gameQueryService.getCombatSourceDamageBonuses(ctx.gameData(), ctx.damageSource())
-                        : gameQueryService.getDealingSourceDamageBonuses(ctx.gameData(), ctx.entry())),
+                        : gameQueryService.getDealingSourceDamageBonuses(ctx.gameData(), ctx.entry(), ctx.damageSource())),
                 spellDamageReductionRule(),
                 bonusRule("NoncreatureSourceBonus", ctx -> ctx.combat() || isCreatureExplicitSource(ctx) ? List.of()
                         : gameQueryService.getNoncreatureSourceDamageBonuses(ctx.gameData(), ctx.entry(), null, ctx.target())),

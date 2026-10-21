@@ -27,14 +27,15 @@ class TurfWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(player1Land.getCounterCount(CounterType.CONTESTED)).isZero();
-        harness.handlePermanentChosen(player1, player1Land.getId());
-        harness.handlePermanentChosen(player1, player2OtherLand.getId());
+        harness.handleMultiplePermanentsChosen(player1, java.util.List.of(player1Land.getId()));
+        harness.handleMultiplePermanentsChosen(player1, java.util.List.of(player2OtherLand.getId()));
         harness.passBothPriorities();
 
         assertThat(player1Land.getCounterCount(CounterType.CONTESTED)).isEqualTo(1);

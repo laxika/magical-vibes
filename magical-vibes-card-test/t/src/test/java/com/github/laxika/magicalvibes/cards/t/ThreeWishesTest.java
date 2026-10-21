@@ -74,6 +74,7 @@ class ThreeWishesTest extends BaseCardTest {
         setLibraryTop(a, b, c);
 
         castThreeWishes();
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
@@ -116,6 +117,7 @@ class ThreeWishesTest extends BaseCardTest {
         setLibraryTop(land, spell, creature);
 
         castThreeWishes();
+        harness.setHand(player2, List.of());
 
         harness.castFromExile(player1, land.getId());
         harness.assertOnBattlefield(player1, "Island");
@@ -184,6 +186,7 @@ class ThreeWishesTest extends BaseCardTest {
         Card c = new GrizzlyBears();
         setLibraryTop(a, b, c, new Island());
         castThreeWishes();
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
@@ -207,6 +210,7 @@ class ThreeWishesTest extends BaseCardTest {
         setLibraryTop(spell, new Island(), new GrizzlyBears(), new Island(), new Island());
         harness.addToBattlefield(player1, new EonHub());
         castThreeWishes();
+        harness.setHand(player2, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

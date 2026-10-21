@@ -28,7 +28,9 @@ public class SourceBecomesChosenBasicLandTypeEffectHandler implements StaticEffe
             return;
         }
         accumulator.addGrantedSubtype(chosenSubtype);
-        accumulator.setSubtypeOverriding(true);
-        accumulator.setLandSubtypeOverriding(true);
+        if (!((SourceBecomesChosenBasicLandTypeEffect) effect).inAdditionToOtherTypes()) {
+            accumulator.setSubtypeOverriding(true);
+            accumulator.setLandSubtypeOverriding(true);
+        }
     }
 }

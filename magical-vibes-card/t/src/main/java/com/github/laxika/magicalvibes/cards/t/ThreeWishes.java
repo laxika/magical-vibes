@@ -12,7 +12,7 @@ public class ThreeWishes extends Card {
         // Exile the top three cards of your library face down. You may look at those cards for as
         // long as they remain exiled. Until your next turn, you may play those cards. At the
         // beginning of your next upkeep, put any of those cards you didn't play into your graveyard.
-        // Ruling: play window closes at the start of your next upkeep (same cleanup as Grinning Totem).
+        // Play window closes as your next turn begins; the cleanup is one trigger at your next upkeep.
         addEffect(EffectSlot.SPELL, new ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffect(3));
     }
 }

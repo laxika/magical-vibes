@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 
@@ -24,7 +26,8 @@ public class ThrillKillDisciple extends Card {
     public ThrillKillDisciple() {
         addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.withDiscard(List.of("{1}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}")));
+                new ConditionalEffect(new RepeatedAdditionalCostPaid("{1}"),
+                        new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}"))));
         addEffect(EffectSlot.ON_DEATH, junkToken());
     }
 

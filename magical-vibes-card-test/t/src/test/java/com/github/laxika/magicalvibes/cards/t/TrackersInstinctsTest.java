@@ -174,6 +174,7 @@ class TrackersInstinctsTest extends BaseCardTest {
     @DisplayName("An empty library still allows flashback to resolve and exile the spell")
     void emptyLibraryFlashbackResolves() {
         setupTopCards(List.of());
+        harness.setHand(player1, List.of());
         Card spell = new TrackersInstincts();
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 3);

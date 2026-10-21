@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
@@ -20,16 +21,19 @@ import java.util.Set;
 public class TheMistyMountainsCold extends Card {
 
     public TheMistyMountainsCold() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, SequenceEffect.of(
+        // I, II, III, IV — Create a Treasure token. Then if you control four or more Treasures, sacrifice
+        // this Saga. If you do, create a 6/6 red Dragon creature token with flying.
+        CardEffect treasureThenDragon = SequenceEffect.of(
                 CreateTokenEffect.ofTreasureToken(1),
                 new ConditionalEffect(
                         new ControlsPermanentCount(4,
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
                         new SacrificeSelfThenEffect(new CreateTokenEffect(
                                 "Dragon", 6, 6, CardColor.RED,
-                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())))));
+                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of()))));
+        addEffect(EffectSlot.SAGA_CHAPTER_I, treasureThenDragon);
+        addEffect(EffectSlot.SAGA_CHAPTER_II, treasureThenDragon);
+        addEffect(EffectSlot.SAGA_CHAPTER_III, treasureThenDragon);
+        addEffect(EffectSlot.SAGA_CHAPTER_IV, treasureThenDragon);
     }
 }

@@ -167,6 +167,10 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         int scryCount = 0;
         int doubleExploreCount = 0;
         for (Permanent permanent : battlefield) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
+                continue;
+            }
             for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (staticEffect instanceof ScryBeforeExploreReplacementEffect) {
                     scryCount++;

@@ -175,7 +175,6 @@ class TitaniaRuggedRumblerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
 
         assertThat(titania.getMarkedDamage()).isZero();
         harness.assertInHand(player2, "Forest");

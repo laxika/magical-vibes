@@ -38,8 +38,12 @@ public class IncrementTriggerEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (!gameQueryService.isCreature(gameData, self)) {
+            return;
+        }
+
         int manaSpent = entry.getXValue();
-        if (manaSpent <= gameQueryService.getEffectivePower(gameData, self)
+        if (manaSpent <=gameQueryService.getEffectivePower(gameData, self)
                 && manaSpent <= gameQueryService.getEffectiveToughness(gameData, self)) {
             return;
         }

@@ -6,10 +6,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapEnchantedPermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -42,8 +47,10 @@ public class TourachsGate extends Card {
                 "Sacrifice a Thrull: Put three time counters on this Aura."
         ));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new RemoveCounterOrSacrificeSelfEffect(CounterType.TIME));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                new RemoveCounterFromSourceEffect(CounterType.TIME, 1),
+                new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
+                        new SacrificeSelfEffect())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

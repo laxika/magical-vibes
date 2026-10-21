@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +28,7 @@ public class TurtlesForeverSearchChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.TurtlesForeverSearchChoice> handledType() {
@@ -46,8 +49,8 @@ public class TurtlesForeverSearchChoiceInteractionHandler
         }
 
         List<UUID> cardIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
-        if (cardIds == null || cardIds.size() != 4) {
-            throw new IllegalStateException("Must choose exactly 4 cards");
+        if (cardIds == null || cardIds.size() > 4) {
+            throw new IllegalStateException("Must choose at most 4 cards");
         }
 
         Map<UUID, Card> cardsById = new HashMap<>();
@@ -72,6 +75,13 @@ public class TurtlesForeverSearchChoiceInteractionHandler
 
         List<Card> chosen = cardIds.stream().map(cardsById::get).toList();
         gameData.interaction.clearAwaitingInput();
+        if (chosen.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(interaction.playerId()) + " finds no cards."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         List<Card> deck = gameData.playerDecks.get(interaction.playerId());
         List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, interaction.playerId());
         deck.removeIf(card -> chosenIds.contains(card.getId()));
@@ -87,6 +97,15 @@ public class TurtlesForeverSearchChoiceInteractionHandler
         }
         revealBuilder.text(".");
         gameLogService.append(gameData, revealBuilder.build());
+
+        if (chosen.size() <= 2) {
+            for (Card card : chosen) {
+                gameData.addCardToHand(interaction.playerId(), card);
+            }
+            LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.TurtlesForeverOpponentChoice(

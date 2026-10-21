@@ -176,6 +176,7 @@ class ThrillKillDiscipleTest extends BaseCardTest {
         Forest top = new Forest();
         harness.setLibrary(player1, List.of(top, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         activateJunk();
         resolveAllTriggers();
 

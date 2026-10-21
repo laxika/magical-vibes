@@ -36,7 +36,13 @@ public class TheSeventhDoctorEffectHandler implements NormalEffectHandlerBean {
         UUID attackedTargetId = entry.getAttackedTargetId();
         UUID defendingPlayerId = defendingPlayerId(gameData, attackedTargetId);
         List<Card> hand = gameData.playerHands.get(controllerId);
-        if (defendingPlayerId == null || hand == null || hand.isEmpty()) {
+        if (defendingPlayerId == null) {
+            return;
+        }
+        if (hand == null || hand.isEmpty()) {
+            // No card can be chosen, so no spell is cast this way and the investigate instruction applies.
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(CreateTokenEffect.ofClueToken(1)));
             return;
         }
 

@@ -16,7 +16,18 @@ public record CostModificationContext(GameData gameData, UUID castingPlayerId, C
                                       Zone sourceZone, boolean castFaceDown,
                                       boolean collectEvidenceCostPaid, boolean kicked,
                                       UUID turnFaceUpPermanentId, boolean blitzCost,
-                                      List<UUID> targetIds) {
+                                      List<UUID> targetIds, int minimumManaOffset) {
+
+    public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
+                                   boolean flashbackCost, int xValue, boolean plottingFromHand,
+                                   Zone sourceZone, boolean castFaceDown,
+                                   boolean collectEvidenceCostPaid, boolean kicked,
+                                   UUID turnFaceUpPermanentId, boolean blitzCost,
+                                   List<UUID> targetIds) {
+        this(gameData, castingPlayerId, spell, flashbackCost, xValue, plottingFromHand, sourceZone,
+                castFaceDown, collectEvidenceCostPaid, kicked, turnFaceUpPermanentId, blitzCost,
+                targetIds, 0);
+    }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                    boolean flashbackCost, int xValue, boolean plottingFromHand,

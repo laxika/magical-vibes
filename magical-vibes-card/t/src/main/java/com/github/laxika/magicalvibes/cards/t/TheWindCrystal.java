@@ -27,7 +27,7 @@ public class TheWindCrystal extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{W}{W}",
-                List.of(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES)),
                 "{4}{W}{W}, {T}: Creatures you control gain flying and lifelink until end of turn."
         ));
     }

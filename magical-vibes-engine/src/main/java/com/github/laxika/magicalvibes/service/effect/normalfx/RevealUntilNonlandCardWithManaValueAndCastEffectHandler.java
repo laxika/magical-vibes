@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,6 +56,9 @@ public class RevealUntilNonlandCardWithManaValueAndCastEffectHandler implements 
 
         String sourceName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
+        String revealedNames = revealed.stream().map(Card::getName).collect(Collectors.joining(", "));
+        gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames
+                + " from the top of their library (" + sourceName + ")."));
         if (hit == null) {
             Collections.shuffle(revealed);
             deck.addAll(revealed);

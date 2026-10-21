@@ -83,8 +83,8 @@ class TrostaniDiscordantTest extends BaseCardTest {
     @DisplayName("Trostani does not return creatures at the opponent's end step")
     void doesNotTriggerDuringOpponentEndStep() {
         harness.addToBattlefield(player1, new TrostaniDiscordant());
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DevkarinDissident());
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DevkarinDissident());
+        setOwnerAndController(creature, player1, player2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -183,8 +183,10 @@ class TrostaniDiscordantTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
 
         resolveControllerEndStep();
-        harness.passUntil(player2, TurnStep.UPKEEP);
 
+        // Resolving the end step trigger lets the engine auto-pass through the cleanup step (where
+        // Act of Treason's effect ends) and the whole of Bob's turn, so control has been tested past both.
+        assertThat(gd.turnNumber).isGreaterThan(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
     }

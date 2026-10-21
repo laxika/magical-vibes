@@ -110,6 +110,7 @@ class TrenchStalkerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         Permanent stalker = addCreatureReady(player1, new TrenchStalker());
         harness.setLibrary(player1, List.of(new TrenchStalker(), new TrenchStalker()));
+        harness.setHand(player1, List.of());
         harness.inMutationScope(() -> {
             harness.getDrawService().resolveDrawCard(gd, player1.getId());
             harness.getDrawService().resolveDrawCard(gd, player1.getId());

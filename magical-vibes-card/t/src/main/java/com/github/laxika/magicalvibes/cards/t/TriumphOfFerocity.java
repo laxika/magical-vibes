@@ -18,6 +18,6 @@ public class TriumphOfFerocity extends Card {
         // is checked on resolution.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ControlsCreatureWithGreatestPower(),
-                new DrawCardEffect(1)));
+                new DrawCardEffect(1), false));
     }
 }

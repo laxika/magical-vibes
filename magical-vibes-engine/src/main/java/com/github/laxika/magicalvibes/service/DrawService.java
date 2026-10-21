@@ -322,6 +322,17 @@ public class DrawService {
     private void resolveDrawCardInternal(GameData gameData, UUID playerId, Card cycledCard) {
         gameData.declinedDrawReplacementSources.remove(playerId);
         gameData.pendingDrawFirstDrawStepFlags.remove(playerId);
+        Integer fromAppliedDoubling = gameData.drawsFromAppliedDoubling.get(playerId);
+        if (fromAppliedDoubling != null && fromAppliedDoubling > 0) {
+            if (fromAppliedDoubling == 1) {
+                gameData.drawsFromAppliedDoubling.remove(playerId);
+            } else {
+                gameData.drawsFromAppliedDoubling.put(playerId, fromAppliedDoubling - 1);
+            }
+            gameData.currentDrawDoublingApplied.add(playerId);
+        } else {
+            gameData.currentDrawDoublingApplied.remove(playerId);
+        }
         resolveCurrentDrawCard(gameData, playerId, null, cycledCard);
     }
 
@@ -433,11 +444,19 @@ public class DrawService {
         Permanent revealCreaturesSource = findRevealCreaturesDrawReplacementSource(gameData, playerId);
         Permanent ubaMaskSource = findUbaMaskSource(gameData);
         boolean sagesAndUbaMaskCompete = revealCreaturesSource != null && ubaMaskSource != null;
+        Permanent lookAtTopSource = findLookAtTopChooseOneToHandDrawReplacementSource(gameData, playerId);
+        Permanent drawDoublerSource = gameData.currentDrawDoublingApplied.contains(playerId) ? null
+                : findDrawDoublerSource(gameData, playerId, firstDrawStepDraw);
+        boolean lookAtTopCompetesWithDoubler = lookAtTopSource != null && drawDoublerSource != null;
+        boolean lookAtTopCompetesWithExile = lookAtTopSource != null
+                && (ubaMaskSource != null || !exileReplacementSources.isEmpty());
         boolean ringPending = gameData.pendingNextDrawFromOutsideGame.containsKey(playerId);
         if (exileReplacementSources.size() > 1
                 || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)
                 || (!exileReplacementSources.isEmpty() && ringPending)
-                || sagesAndUbaMaskCompete) {
+                || sagesAndUbaMaskCompete
+                || lookAtTopCompetesWithDoubler
+                || lookAtTopCompetesWithExile) {
             Map<String, UUID> sourceIds = new LinkedHashMap<>();
             exileReplacementSources.forEach((name, source) -> sourceIds.put(name, source.getId()));
             if (maySkipDrawSource != null) {
@@ -446,6 +465,16 @@ public class DrawService {
             if (sagesAndUbaMaskCompete) {
                 sourceIds.putIfAbsent(revealCreaturesSource.getCard().getName(), revealCreaturesSource.getId());
                 sourceIds.putIfAbsent(ubaMaskSource.getCard().getName(), ubaMaskSource.getId());
+            }
+            if (lookAtTopCompetesWithDoubler) {
+                sourceIds.putIfAbsent(lookAtTopSource.getCard().getName(), lookAtTopSource.getId());
+                sourceIds.putIfAbsent(drawDoublerSource.getCard().getName(), drawDoublerSource.getId());
+            }
+            if (lookAtTopCompetesWithExile) {
+                sourceIds.putIfAbsent(lookAtTopSource.getCard().getName(), lookAtTopSource.getId());
+                if (ubaMaskSource != null) {
+                    sourceIds.putIfAbsent(ubaMaskSource.getCard().getName(), ubaMaskSource.getId());
+                }
             }
             if (ringPending) {
                 // The Ring's exiled source is gone, so its replacement is keyed by the drawing player's id.
@@ -790,24 +819,10 @@ public class DrawService {
 
         // Thought Reflection / Alhammarret's Archive: if you would draw a card, draw two cards
         // instead, except for the first card drawn during the controller's own draw step.
-        int unconditionalDoublers = countDrawDoublers(gameData, playerId, false);
-        int exceptFirstDoublers = countDrawDoublers(gameData, playerId, true);
-        if (unconditionalDoublers > 0 || (!firstDrawStepDraw && exceptFirstDoublers > 0)) {
-            // Each doubler multiplies by 2, and by Maro's Gone Nuts' factor on top, independently.
-            int perDoubler = 2 * MaroGoneNutsSupport.doublingFactor(gameData);
-            int unconditionalCount = repeatedProduct(perDoubler, unconditionalDoublers);
-            int exceptFirstMultiplier = repeatedProduct(perDoubler, exceptFirstDoublers);
-            int drawCount = firstDrawStepDraw
-                    ? 1 + (unconditionalCount - 1) * exceptFirstMultiplier
-                    : unconditionalCount * exceptFirstMultiplier;
-            String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + "'s draw is doubled — they draw "
-                    + drawCount + " cards instead."));
-            log.info("Game {} - {}'s draw doubled", gameData.id, playerName);
-            for (int i = 0; i < drawCount; i++) {
-                gameData.pendingReplacementCardDraws.addLast(playerId);
-            }
-            performPendingReplacementDraws(gameData);
+        int doubledDrawCount = gameData.currentDrawDoublingApplied.contains(playerId)
+                ? 0 : doubledDrawCount(gameData, playerId, firstDrawStepDraw);
+        if (doubledDrawCount > 0) {
+            applyDrawDoubling(gameData, playerId, doubledDrawCount);
             return;
         }
 
@@ -1552,6 +1567,56 @@ public class DrawService {
         return result;
     }
 
+    /**
+     * How many cards a player draws instead of one when draw-doubling replacements apply, or 0 when none
+     * does. Each doubler multiplies by 2, and by Maro's Gone Nuts' factor on top, independently; the
+     * "except the first card of your draw step" doublers skip that first draw.
+     */
+    private int doubledDrawCount(GameData gameData, UUID playerId, boolean firstDrawStepDraw) {
+        int unconditionalDoublers = countDrawDoublers(gameData, playerId, false);
+        int exceptFirstDoublers = countDrawDoublers(gameData, playerId, true);
+        if (unconditionalDoublers == 0 && (firstDrawStepDraw || exceptFirstDoublers == 0)) {
+            return 0;
+        }
+        int perDoubler = 2 * MaroGoneNutsSupport.doublingFactor(gameData);
+        int unconditionalCount = repeatedProduct(perDoubler, unconditionalDoublers);
+        int exceptFirstMultiplier = repeatedProduct(perDoubler, exceptFirstDoublers);
+        return firstDrawStepDraw
+                ? 1 + (unconditionalCount - 1) * exceptFirstMultiplier
+                : unconditionalCount * exceptFirstMultiplier;
+    }
+
+    /** Replaces one draw with {@code drawCount} draws, which the other replacement effects may still modify. */
+    private void applyDrawDoubling(GameData gameData, UUID playerId, int drawCount) {
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.text(playerName + "'s draw is doubled — they draw "
+                + drawCount + " cards instead."));
+        log.info("Game {} - {}'s draw doubled", gameData.id, playerName);
+        for (int i = 0; i < drawCount; i++) {
+            gameData.pendingReplacementCardDraws.addLast(playerId);
+        }
+        performPendingReplacementDraws(gameData);
+    }
+
+    /** A permanent whose draw-doubling replacement currently applies to this draw, if any. */
+    private Permanent findDrawDoublerSource(GameData gameData, UUID playerId, boolean firstDrawStepDraw) {
+        if (doubledDrawCount(gameData, playerId, firstDrawStepDraw) == 0) {
+            return null;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return null;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect)
+                        || (!firstDrawStepDraw && effect instanceof DoubleDrawExceptFirstDrawStepDrawEffect)) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
+    }
+
     private int countDrawDoublers(GameData gameData, UUID playerId, boolean exceptFirst) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
@@ -1791,6 +1856,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof LookAtTopCardsChooseOneToHandDrawReplacementEffect);
             if (hasEffect) {
@@ -1853,8 +1919,8 @@ public class DrawService {
         if (actual == 1) {
             // Only one card to look at — it goes to hand, nothing is left for the bottom.
             gameData.addCardToHand(playerId, looked.getFirst());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    playerName + " puts ", looked.getFirst(), " into their hand."));
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " puts a card into their hand."));
             return;
         }
 
@@ -1865,7 +1931,7 @@ public class DrawService {
                 restToGraveyard
                         ? "Put one of these cards into your hand and the rest into your graveyard."
                         : "Put one of these cards into your hand and the rest on the bottom of your library in any order.",
-                false, 1, false, null, false));
+                false, 1, false, null, false).withRevealSelected(false));
     }
 
     private Permanent findRevealTopCreatureToGraveyardElseDrawSource(GameData gameData, UUID playerId) {
@@ -2098,9 +2164,24 @@ public class DrawService {
             resolveRevealCreaturesDrawReplacement(gameData, playerId, revealCreaturesSource);
             return;
         }
+        Permanent lookAtTopSource = findLookAtTopChooseOneToHandDrawReplacementSource(gameData, playerId);
+        if (lookAtTopSource != null && lookAtTopSource.getId().equals(sourcePermanentId)) {
+            resolveLookAtTopChooseOneToHandDrawReplacement(gameData, playerId, lookAtTopSource);
+            return;
+        }
         Permanent ubaMaskSource = findUbaMaskSource(gameData);
         if (ubaMaskSource != null && ubaMaskSource.getId().equals(sourcePermanentId)) {
             resolveUbaMaskDrawReplacement(gameData, playerId, ubaMaskSource);
+            return;
+        }
+        boolean firstDrawStepDraw = Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(playerId));
+        Permanent doublerSource = findDrawDoublerSource(gameData, playerId, firstDrawStepDraw);
+        if (doublerSource != null && doublerSource.getId().equals(sourcePermanentId)) {
+            // The doubled draws are new draws: the other replacement effects (Tomorrow) apply to each of
+            // them, but the doubling that produced them does not apply again.
+            int drawCount = doubledDrawCount(gameData, playerId, firstDrawStepDraw);
+            gameData.drawsFromAppliedDoubling.merge(playerId, drawCount, Integer::sum);
+            resolveDrawCards(gameData, playerId, drawCount);
             return;
         }
         applyExileDrawReplacement(gameData, playerId, source);

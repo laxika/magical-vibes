@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
@@ -1388,6 +1389,16 @@ public class CombatDamageService {
                 state, phase, initialSnap, blockerMap, atkBf, defBf)
                 ? snapshotDamagePhase(gameData, blockerMap, atkBf, defBf)
                 : initialSnap;
+        if (phase == DamagePhase.FIRSTEST_STRIKE) {
+            // CR 510.4 (by analogy): which creatures belong to the firstest-strike step is fixed as the
+            // step begins; a creature that gains firstest strike later deals damage in the regular step.
+            snap.attackerStats().forEach((idx, stats) -> {
+                if (stats.firstestStrike()) gameData.creaturesInFirstestStrikeDamageStepThisCombat.add(atkBf.get(idx).getId());
+            });
+            snap.defenderStats().forEach((idx, stats) -> {
+                if (stats.firstestStrike()) gameData.creaturesInFirstestStrikeDamageStepThisCombat.add(defBf.get(idx).getId());
+            });
+        }
 
         Map<Integer, Integer> blockerDamage = precomputeBlockerDamage(
                 snap, blockerMap, state.deadDefenderIndices, phase);
@@ -1564,6 +1575,7 @@ public class CombatDamageService {
      */
     private record CombatantStats(int combatDamage, int lethalDamageThreshold,
                                   boolean firstestStrike,
+                                  boolean tookPartInFirstestStrikeStep,
                                   boolean firstStrike,
                                   boolean doubleStrike, boolean deathtouch, boolean trample,
                                   boolean infect, boolean preventedFromDealingCombatDamage,
@@ -1573,7 +1585,8 @@ public class CombatDamageService {
             return switch (phase) {
                 case FIRSTEST_STRIKE -> firstestStrike;
                 case FIRST_STRIKE -> firstStrike || doubleStrike;
-                case REGULAR -> (!firstStrike && !firstestStrike) || doubleStrike;
+                case REGULAR -> doubleStrike
+                        || (!firstStrike && (!firstestStrike || !tookPartInFirstestStrikeStep));
             };
         }
     }
@@ -1635,6 +1648,7 @@ public class CombatDamageService {
                 gameQueryService.getEffectiveCombatDamage(gameData, creature),
                 gameQueryService.getLethalDamageThreshold(gameData, creature),
                 gameQueryService.hasActiveStaticEffect(gameData, creature, FirstestStrikeEffect.class),
+                gameData.creaturesInFirstestStrikeDamageStepThisCombat.contains(creature.getId()),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.FIRST_STRIKE),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.DOUBLE_STRIKE),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.DEATHTOUCH),
@@ -2995,12 +3009,15 @@ public class CombatDamageService {
                     if (trigger.oneOrMoreDealers() && !firedBatchedAllyTriggerSources.add(card.getId())) {
                         continue;
                     }
+                    // Bind "source card in graveyard" to this graveyard incarnation (CR 400.7) so the
+                    // ability does nothing if the card has left and returned to the graveyard.
                     StackEntry se = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             attackerId,
                             card.getName() + "'s graveyard trigger",
-                            List.of(trigger.effect())
+                            List.of(triggerCollectionService.bindSourceCardInGraveyardVersion(
+                                    gameData, trigger.effect(), card.getId()))
                     );
                     se.setTriggeringCardId(card.getId());
                     se.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
@@ -3969,11 +3986,11 @@ public class CombatDamageService {
 
                 if (effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effectToAdd.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                    TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
-                            ? data.card().getTargetFilter() : null;
+                    TargetFilter targetFilter = dealtDamageTargetFilter(data.card(), effect);
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
-                            !effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                            !effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                    || targetFilter instanceof PlayerPredicateTargetFilter,
                             targetFilter, data.damageDealt(), data.permanentId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger awaits target",
@@ -4004,6 +4021,16 @@ public class CombatDamageService {
                 log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
             }
         }
+    }
+
+    /** The filter of the target slot this trigger effect was declared with, not merely the card's first one. */
+    private TargetFilter dealtDamageTargetFilter(Card card, CardEffect effect) {
+        int targetIndex = card.getEffectTargetIndex(effect);
+        if (targetIndex < 0) return null;
+        if (targetIndex < card.getSpellTargets().size()) {
+            return card.getSpellTargets().get(targetIndex).getFilter();
+        }
+        return card.getTargetFilter();
     }
 
     private void processCombatDamageReceivedTriggers(GameData gameData,
@@ -4090,7 +4117,7 @@ public class CombatDamageService {
                     : state.loyaltyBeforeStep.getOrDefault(permanentId, 0);
             triggerCollectionService.checkOpponentPermanentDealtExcessDamageTriggers(
                     gameData, permanent, gameQueryService.findPermanentController(gameData, permanentId),
-                    Math.max(0, damage - lethalDamage));
+                    Math.max(0, damage - lethalDamage), false);
             processed.add(permanentId);
         }
 
@@ -4111,7 +4138,7 @@ public class CombatDamageService {
             }
             triggerCollectionService.checkOpponentPermanentDealtExcessDamageTriggers(
                     gameData, permanent, gameQueryService.findPermanentController(gameData, permanentId),
-                    excessDamage);
+                    excessDamage, false);
         }
     }
 
@@ -4273,8 +4300,8 @@ public class CombatDamageService {
     }
 
     /**
-     * Removes dead permanent IDs from surviving blockers' blockingTargetIds.
-     * If a blocker has no remaining blocking targets, clears its blocking state entirely.
+     * Removes dead permanent IDs from surviving blockers' blockingTargetIds. A blocker whose blocked
+     * attackers all died stays a blocking creature until it is removed from combat (CR 506.4, CR 509.1h).
      */
     private void clearOrphanedBlockingState(List<Permanent> battlefield, Set<UUID> deadIds) {
         if (deadIds.isEmpty()) return;
@@ -4282,7 +4309,6 @@ public class CombatDamageService {
             if (!p.isBlocking()) continue;
             p.getBlockingTargetIds().removeAll(deadIds);
             if (p.getBlockingTargetIds().isEmpty()) {
-                p.setBlocking(false);
                 p.getBlockingTargets().clear();
             }
         }
@@ -5315,6 +5341,12 @@ public class CombatDamageService {
                 || gameQueryService.hasKeyword(gameData, creature, Keyword.DOUBLE_STRIKE);
     }
 
+    /** Whether the creature had firstest strike as this combat's firstest-strike damage step began. */
+    private boolean tookPartInFirstestStrikeStep(GameData gameData, Permanent creature) {
+        return hasFirstestStrike(gameData, creature)
+                && gameData.creaturesInFirstestStrikeDamageStepThisCombat.contains(creature.getId());
+    }
+
     private boolean hasFirstestStrike(GameData gameData, Permanent creature) {
         return gameQueryService.hasActiveStaticEffect(gameData, creature, FirstestStrikeEffect.class);
     }
@@ -5425,7 +5457,7 @@ public class CombatDamageService {
                 } else {
                     participates = phase == DamagePhase.FIRST_STRIKE
                             ? (atkFirstStrike || atkDoubleStrike)
-                            : (!atkFirstStrike && !hasFirstestStrike(gameData, bAtk) || atkDoubleStrike);
+                            : (!atkFirstStrike && !tookPartInFirstestStrikeStep(gameData, bAtk) || atkDoubleStrike);
                 }
                 if (!participates) continue;
                 if (gameQueryService.isPreventedFromDealingDamage(gameData, bAtk, true)) continue;
@@ -5458,7 +5490,7 @@ public class CombatDamageService {
                         ? hasFirstestStrike(gameData, blk)
                         : phase == DamagePhase.FIRST_STRIKE
                         ? (blkFirstStrike || blkDoubleStrike)
-                        : (!blkFirstStrike && !hasFirstestStrike(gameData, blk) || blkDoubleStrike);
+                        : (!blkFirstStrike && !tookPartInFirstestStrikeStep(gameData, blk) || blkDoubleStrike);
                 if (!participates) continue;
                 if (gameQueryService.isPreventedFromDealingDamage(gameData, blk, true)) continue;
                 if (gameQueryService.getEffectiveCombatDamage(gameData, blk) <= 0) continue;

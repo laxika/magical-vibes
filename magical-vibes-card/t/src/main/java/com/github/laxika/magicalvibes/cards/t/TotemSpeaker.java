@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class TotemSpeaker extends Card {
 
     public TotemSpeaker() {
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.BEAST),
                         new MayEffect(new GainLifeEffect(3), "Gain 3 life?")));
     }

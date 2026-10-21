@@ -106,7 +106,7 @@ class TrumpetingCarnosaurTest extends BaseCardTest {
 
     @Test
     void discoveredSpellIsCastForFreeFromExileAndTriggersQuintorius() {
-        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefieldAndReturn(player1, new QuintoriusKand()).setCounterCount(CounterType.LOYALTY, 4);
         harness.setLibrary(player1, List.of(new OrazcaPuzzleDoor()));
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

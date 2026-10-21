@@ -2502,7 +2502,7 @@ public class CombatBlockService {
         for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
             for (Permanent watcher : List.copyOf(battlefield.getValue())) {
                 List<CardEffect> effects = watcher.getCard().getEffects(EffectSlot.ON_ANY_CREATURES_BLOCK);
-                if (effects.isEmpty()) {
+                if (effects.isEmpty() || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
                     continue;
                 }
                 StackEntry trigger = new StackEntry(
@@ -3658,9 +3658,7 @@ public class CombatBlockService {
         creature.setAttackedOrBlockedSinceLastUpkeep(true);
         Set<CardSubtype> subtypes = gameData.combatBlockOpponentSubtypesThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet());
-        subtypes.addAll(opponent.getCard().getSubtypes());
-        subtypes.addAll(opponent.getGrantedSubtypes());
-        subtypes.addAll(opponent.getTransientSubtypes());
+        subtypes.addAll(gameQueryService.getEffectiveSubtypes(gameData, opponent));
         gameData.combatBlockOpponentColorsThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .addAll(gameQueryService.getEffectiveColors(gameData, opponent));

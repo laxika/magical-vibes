@@ -109,6 +109,7 @@ class TimeOfNeedTest extends BaseCardTest {
         Card opponentsCard = new KokushoTheEveningStar();
         harness.setLibrary(player1, List.of(first, land, chosen));
         harness.setLibrary(player2, List.of(opponentsCard));
+        harness.setHand(player2, List.of());
 
         harness.passBothPriorities();
 

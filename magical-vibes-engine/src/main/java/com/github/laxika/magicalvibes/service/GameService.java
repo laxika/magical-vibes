@@ -1480,6 +1480,9 @@ public class GameService {
                         morphAdditionalCostPermanentIds))) return;
         turnFaceUpInternal(gameData, player, permanentIndex, revealedHandCardIndex,
                 morphAdditionalCostPermanentIds, null, false);
+        // Turning a permanent face up is a special action; state-based actions are checked before
+        // the player next receives priority (CR 704.3), e.g. an aura it no longer may enchant falls off.
+        stateBasedActionService.performStateBasedActions(gameData);
     }
 
     /** Completes a face-up payment after the player has chosen X for a disguise cost. */
@@ -1498,6 +1501,7 @@ public class GameService {
             }
             turnFaceUpInternal(gameData, player, battlefield.indexOf(permanent), null,
                     List.of(), xValue, true);
+            stateBasedActionService.performStateBasedActions(gameData);
         }
     }
 
@@ -1651,7 +1655,7 @@ public class GameService {
                 ManaPool.SpecialActionManaState specialActionMana = pool.promoteSpecialActionMana();
                 ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana =
                         restrictedManaPaysTurnFaceUp(permanent, !manifestedOrCloaked)
-                                ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : null;
+                                ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : pool.promoteTurnCreaturesFaceUpMana();
                 ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState enchantmentOrRoomUnlockOrTurnFaceUpMana =
                         pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
                 ManaPool.TurnPermanentsFaceUpManaState turnPermanentsFaceUpMana =
@@ -1747,6 +1751,8 @@ public class GameService {
         pool.promoteSpecialActionMana();
         if (restrictedManaPaysTurnFaceUp(permanent, morphPayment)) {
             pool.promoteFaceDownSpellsOrTurnFaceUpMana();
+        } else {
+            pool.promoteTurnCreaturesFaceUpMana();
         }
         pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
         pool.promoteTurnPermanentsFaceUpMana();
@@ -1754,7 +1760,8 @@ public class GameService {
     }
 
     /**
-     * Whether mana restricted to face-down spells or turning face up may pay the cost being used to turn
+     * Whether mana restricted to face-down spells or turning face up by a morph cost (the narrow variant,
+     * not mana that may turn any creature face up) may pay the cost being used to turn
      * this permanent face up. A morph cost qualifies unless the permanent is disguised; a manifested creature's
      * mana cost qualifies; a cloaked creature's mana cost does not.
      */

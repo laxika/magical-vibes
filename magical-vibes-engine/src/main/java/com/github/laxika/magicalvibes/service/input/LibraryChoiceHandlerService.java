@@ -269,6 +269,15 @@ public class LibraryChoiceHandlerService {
         if (cardIndex == -1 && librarySearch.declineSkipsShuffle()) {
             shuffleAfterSelection = false;
         }
+        // An optional search that may be declined begins with the first pick (CR 701.23a), so it is
+        // the first pick that fires "whenever a player searches their library" triggers.
+        if (cardIndex >= 0 && librarySearch.declineSkipsShuffle()
+                && followUp.eachPlayerToHandCount() == 0
+                && followUp.basicLandSearchQueue() == null
+                && accumulatedCards.isEmpty()
+                && (targetPlayerId == null || targetPlayerId.equals(playerId))) {
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+        }
 
         if (cardIndex >= 0
                 && librarySearch.allowCastFromLibraryWhileSearching()
@@ -949,7 +958,9 @@ public class LibraryChoiceHandlerService {
             if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
                     || destination == LibrarySearchDestination.THREATS_UNDETECTED_POOL) {
                 gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + " stops searching. Library is shuffled."));
+                        player.getUsername() + " stops searching."
+                                + (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
+                                ? " Library is shuffled." : "")));
                 finishGiftsUngivenSearch(gameData, playerId, accumulatedCards);
                 return;
             }
@@ -1045,8 +1056,7 @@ public class LibraryChoiceHandlerService {
             if (followUp.basicLandToHand() != null || followUp.cardToGraveyard() != null) {
                 if (!shuffleAfterSelection) {
                     LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
-                    String shuffleLog = player.getUsername() + "'s library is shuffled.";
-                    gameLogService.append(gameData, GameLog.text(shuffleLog));
+                    gameLogService.append(gameData, GameLog.text("Library is shuffled."));
                 }
             }
             if (followUp.basicLandToHand() != null && !followUp.basicLandToHand().basicOnly()
@@ -1054,7 +1064,8 @@ public class LibraryChoiceHandlerService {
                 finishSearchAndResume(gameData);
                 return;
             }
-            if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
+            if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand(),
+                    librarySearch.declineSkipsShuffle())) return;
             if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
@@ -1279,7 +1290,9 @@ public class LibraryChoiceHandlerService {
             List<Card> remainingMatches = deck.stream()
                     .filter(c -> !excluded.contains(c.getName()))
                     .filter(c -> !requireDifferentPowers || accumulatedCards.stream()
-                            .noneMatch(selected -> java.util.Objects.equals(selected.getPower(), c.getPower())))
+                            .noneMatch(selected -> java.util.Objects.equals(
+                                    searchPower(gameData, selected, deckOwnerId),
+                                    searchPower(gameData, c, deckOwnerId))))
                     .filter(c -> filterPredicate == null || predicateEvaluationService.matchesCardPredicate(
                             c, filterPredicate, null, gameData, deckOwnerId))
                     .toList();
@@ -1577,6 +1590,10 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.EXILE_WITH_SOURCE) {
             UUID sourcePermanentId = librarySearch.sourcePermanentId();
             exileService.exileCard(gameData, deckOwnerId, chosenCard, sourcePermanentId);
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setEventValue(
+                        gameData.pendingEffectResolutionEntry.getEventValue() + 1);
+            }
             if (requireDifferentNames) {
                 excludedCardNames.add(chosenCard.getName());
             }
@@ -2104,7 +2121,7 @@ public class LibraryChoiceHandlerService {
 
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp, searchCards)) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
-        if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
+        if (startPendingEachPlayerBasicLandSearch(gameData, followUp, librarySearch.declineSkipsShuffle())) return;
         if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
@@ -2176,7 +2193,7 @@ public class LibraryChoiceHandlerService {
         UUID playerId = librarySearch.playerId();
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp, librarySearch.cards())) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
-        if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
+        if (startPendingEachPlayerBasicLandSearch(gameData, followUp, librarySearch.declineSkipsShuffle())) return;
         if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
@@ -2496,7 +2513,12 @@ public class LibraryChoiceHandlerService {
     }
 
     private void finishGiftsUngivenSearch(GameData gameData, UUID controllerId, List<Card> pool) {
-        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        // Threats Undetected's search has no shuffle of its own: the opponent's chosen cards are
+        // shuffled into the library once, when they are put back (GraveyardReturnSupport).
+        PendingPileSeparation pending = gameData.peekPendingInteraction(PendingPileSeparation.class);
+        if (pending == null || pending.disposition() != CardPileDisposition.THREATS_UNDETECTED) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        }
 
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
         if (state == null || pool.isEmpty()) {
@@ -2515,10 +2537,13 @@ public class LibraryChoiceHandlerService {
 
         int count = Math.min(2, pool.size());
         String controllerName = gameData.playerIdToName.get(controllerId);
+        String destination = state.disposition() == CardPileDisposition.THREATS_UNDETECTED
+                ? "shuffle into " + controllerName + "'s library"
+                : "put into " + controllerName + "'s graveyard";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
                 state.targetPlayerId(), List.copyOf(pool), count,
-                "Choose " + (count == 1 ? "a card" : count + " cards") + " to put into "
-                        + controllerName + "'s graveyard. The rest go to their hand.", count));
+                "Choose " + (count == 1 ? "a card" : count + " cards") + " to " + destination
+                        + ". The rest go to their hand.", count));
     }
 
     private void handleD20BasicLandSearchChoice(GameData gameData, Player player, int cardIndex,
@@ -3254,10 +3279,16 @@ public class LibraryChoiceHandlerService {
      * If a pending "each player searches for a basic land to battlefield" queue is non-empty,
      * starts the next player's library search and returns true. Otherwise returns false.
      * Respects {@code followUp.eachPlayerSearchTapped()} for the destination.
-     * Used by Field of Ruin, Old-Growth Dryads.
+     * Used by Field of Ruin, Old-Growth Dryads. When the search that just finished was an optional one
+     * ({@code maySearch}), the next player's search is offered the same way, so declining it neither
+     * searches nor shuffles.
      */
-    private boolean startPendingEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+    private boolean startPendingEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp,
+                                                          boolean maySearch) {
         if (followUp.remainingEachPlayerBasicLandSearches().isEmpty()) return false;
+        if (maySearch) {
+            return librarySearchSupport.startNextEachPlayerBasicLandSearch(gameData, followUp, true);
+        }
 
         LibrarySearchDestination destination = followUp.eachPlayerSearchTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
@@ -5566,6 +5597,24 @@ public class LibraryChoiceHandlerService {
     }
 
     /** Appends {@code cards} as comma-separated card segments (each hoverable) to {@code builder}. */
+    /**
+     * Power of a card that is outside the battlefield, for "different powers" comparisons. A
+     * characteristic-defining power (Lhurgoyf) applies in every zone (CR 604.3), so it is evaluated
+     * for the searching player rather than read as the card's unset printed value.
+     */
+    private Integer searchPower(GameData gameData, Card card, UUID controllerId) {
+        var cda = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cda == null) {
+            return card.getPower();
+        }
+        return amountEvaluationService.evaluate(gameData, cda.power(),
+                com.github.laxika.magicalvibes.service.effect.AmountContext.forEstimation(controllerId));
+    }
+
     private static GameLog.Builder appendCards(GameLog.Builder builder, List<Card> cards) {
         for (int i = 0; i < cards.size(); i++) {
             if (i > 0) {

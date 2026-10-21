@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TruthOrConsequencesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,7 @@ public class TruthOrConsequencesEffectHandler implements NormalEffectHandlerBean
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameLogService gameLogService;
     private final VotingSupport votingSupport;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -80,6 +82,12 @@ public class TruthOrConsequencesEffectHandler implements NormalEffectHandlerBean
                         StackEntry entry, String cardName) {
         int truthVotes = (int) state.voteChoices.stream().filter(value -> value == TRUTH).count();
         int consequencesVotes = state.voteChoices.size() - truthVotes;
+
+        for (int i = 0; i < state.order.size(); i++) {
+            votingFinishedSupport.recordVote(gameData, entry.getControllerId(), state.order.get(i),
+                    state.voteChoices.get(i) == TRUTH ? "truth" : "consequences");
+        }
+        votingFinishedSupport.finishVoting(gameData, entry.getControllerId());
 
         StringBuilder reveal = new StringBuilder("Players reveal their Truth or Consequences votes: ");
         for (int i = 0; i < state.order.size(); i++) {

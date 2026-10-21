@@ -97,10 +97,14 @@ class ThreeBlindMiceTest extends BaseCardTest {
 
     @Test
     void copyChaptersExcludeOpponentsTokensAndNontokenPermanents() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new ThreeBlindMice(), "{2}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.addToBattlefield(player1, new ToughCookie());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         castAndResolveSaga();
         Permanent mouse = findPermanent(player1, "Mouse");
 

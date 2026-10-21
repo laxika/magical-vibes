@@ -237,6 +237,7 @@ class ThraximundarTest extends BaseCardTest {
     void attackTriggerSurvivesAttackedPlaneswalkerLeaving() {
         Permanent thrax = addCreatureReady(player1, new Thraximundar());
         Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaTheLastHope());
+        liliana.setCounterCount(CounterType.LOYALTY, 3);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);

@@ -33,6 +33,9 @@ public class LosesAllAbilitiesSelfEffectHandler implements StaticEffectHandlerBe
             // under Opalescence).
             case ALL_CREATURES_INCLUDING_SELF, ALL_OWN_CREATURES ->
                     support.matchesCreatureScope(context, loses.scope(), loses.filter());
+            // "All lands lose all other abilities" reaches its own source when that is a land (Toxicrene
+            // under Ashaya, Soul of the Wild).
+            case OWN_LANDS, ALL_LANDS_INCLUDING_SELF -> support.matchesLandScope(context, loses.scope(), loses.filter());
             default -> false;
         };
         if (applies) {

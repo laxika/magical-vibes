@@ -15,7 +15,7 @@ import java.util.List;
 public class TickingGnomes extends Card {
 
     public TickingGnomes() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{3}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{3}"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -30,7 +30,7 @@ public class ChooseNameRevealUntilNamedPutOnTopRestToGraveyardEffectHandler impl
         var choiceContext = new ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(
                 entry.getControllerId(), entry.getTargetId());
 
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));
 

@@ -123,7 +123,6 @@ class ThoughtpickerWitchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.handlePermanentChosen(player1, witch.getId());
         harness.assertNotOnBattlefield(player1, "Thoughtpicker Witch");
         harness.assertInGraveyard(player1, "Thoughtpicker Witch");
         harness.passBothPriorities();
@@ -147,7 +146,6 @@ class ThoughtpickerWitchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.handlePermanentChosen(player1, witch.getId());
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
@@ -168,6 +166,7 @@ class ThoughtpickerWitchTest extends BaseCardTest {
     @DisplayName("Only a creature controlled by the activator can pay the sacrifice cost")
     void cannotSacrificeLandOrOpponentsCreature() {
         Permanent witch = harness.addToBattlefieldAndReturn(player1, new ThoughtpickerWitch());
+        harness.addToBattlefield(player1, new BorosRecruit());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
         harness.setLibrary(player2, List.of());

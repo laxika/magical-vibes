@@ -142,14 +142,15 @@ class TolarianKrakenTest extends BaseCardTest {
     void excludesOpposingHexproofCreature() {
         Permanent ownKraken = harness.addToBattlefieldAndReturn(player1, new TolarianKraken());
         Permanent opposingKraken = harness.addToBattlefieldAndReturn(player2, new TolarianKraken());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
         harness.setHand(player2, List.of(new RangersGuile()));
         harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+        // Hexproof from Ranger's Guile lasts until end of turn (CR 514.2), so it is cast in the turn of the draw.
         harness.castInstant(player2, 0, opposingKraken.getId());
         harness.passBothPriorities();
-
-        advanceToDraw(player1);
+        harness.passUntil(player1, TurnStep.DRAW);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -18,9 +19,9 @@ public class ToshiroUmezawa extends Card {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
         // Whenever a creature an opponent controls dies, you may cast target instant card from your
         // graveyard. If that spell would be put into a graveyard, exile it instead.
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new GrantTargetGraveyardCardCastEffect(
+        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new MayEffect(new GrantTargetGraveyardCardCastEffect(
                 new CardTypePredicate(CardType.INSTANT),
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                true));
+                true), "Cast the target instant card from your graveyard?"));
     }
 }

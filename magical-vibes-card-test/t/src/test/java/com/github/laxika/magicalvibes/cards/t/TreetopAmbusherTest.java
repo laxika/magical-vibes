@@ -70,6 +70,7 @@ class TreetopAmbusherTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Treetop Ambusher");
         harness.assertNotOnBattlefield(player1, "Treetop Ambusher");
@@ -131,6 +132,7 @@ class TreetopAmbusherTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         resolveAllTriggers();
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Treetop Ambusher");

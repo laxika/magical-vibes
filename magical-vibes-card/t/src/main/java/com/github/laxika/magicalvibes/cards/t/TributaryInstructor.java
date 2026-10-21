@@ -30,7 +30,12 @@ public class TributaryInstructor extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
+        // Whenever a creature you control with a +1/+1 counter on it dies, draw a card.
+        // ON_DEATH covers this creature's own death; ON_ALLY_CREATURE_DIES covers the others.
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+                new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
+                new DrawCardEffect()));
+        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect()));
     }

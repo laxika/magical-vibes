@@ -2129,11 +2129,7 @@ public class GameQueryService {
         if (!isCreatureToken(gameData, permanent)) {
             return true;
         }
-        UUID abilityControllerId = gameData.currentlyResolvingTriggeredAbilityControllerId;
-        if (abilityControllerId == null && gameData.pendingEffectResolutionEntry != null
-                && gameData.pendingEffectResolutionEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-            abilityControllerId = gameData.pendingEffectResolutionEntry.getControllerId();
-        }
+        UUID abilityControllerId = resolvingTriggeredAbilityControllerId(gameData);
         if (abilityControllerId == null) {
             return true;
         }
@@ -2144,12 +2140,38 @@ public class GameQueryService {
                         TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect.class);
     }
 
-    /** Returns whether a delayed triggered ability may move this creature token. */
+    /**
+     * Whether a static ability such as The Master, Multiplied's stops the currently resolving
+     * triggered ability from making its controller sacrifice this creature token; the inverse of
+     * {@link #triggeredAbilityCanMoveCreatureToken}.
+     */
+    public boolean isCreatureTokenProtectedFromResolvingTriggeredAbility(GameData gameData, Permanent permanent) {
+        return !triggeredAbilityCanMoveCreatureToken(gameData, permanent);
+    }
+
+    private static UUID resolvingTriggeredAbilityControllerId(GameData gameData) {
+        UUID abilityControllerId = gameData.currentlyResolvingTriggeredAbilityControllerId;
+        if (abilityControllerId == null && gameData.pendingEffectResolutionEntry != null
+                && gameData.pendingEffectResolutionEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            abilityControllerId = gameData.pendingEffectResolutionEntry.getControllerId();
+        }
+        return abilityControllerId;
+    }
+
+    /**
+     * Returns whether a delayed triggered ability may move this creature token. As for any triggered
+     * ability, the restriction only protects tokens controlled by the player who controls the
+     * resolving ability (e.g. a token stolen from a myriad controller is no longer protected from it).
+     */
     public boolean delayedTriggeredAbilityCanMoveCreatureToken(GameData gameData, Permanent permanent) {
         if (!isCreatureToken(gameData, permanent)) {
             return true;
         }
         UUID tokenControllerId = findPermanentController(gameData, permanent.getId());
+        UUID abilityControllerId = resolvingTriggeredAbilityControllerId(gameData);
+        if (abilityControllerId != null && !abilityControllerId.equals(tokenControllerId)) {
+            return true;
+        }
         return tokenControllerId == null || !playerBattlefieldHasStaticEffect(
                 gameData, tokenControllerId,
                 TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect.class);
@@ -2641,7 +2663,8 @@ public class GameQueryService {
                 continue;
             }
             for (Permanent permanent : entry.getValue()) {
-                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                if (permanent.isFaceDown()
+                        || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         || computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                     continue;
                 }
@@ -3782,7 +3805,23 @@ public class GameQueryService {
      * answer stands.
      */
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
-        return hasKeyword(permanent, computeStaticBonus(gameData, permanent), keyword);
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (bonus == StaticBonus.NONE && permanentPerpetuallyLostKeyword(gameData, permanent, keyword)) {
+            return false;
+        }
+        return hasKeyword(permanent, bonus, keyword);
+    }
+
+    /**
+     * Whether the card has perpetually lost {@code keyword} (Double team) and nothing currently grants it back.
+     * Used when no static bonus is computed, because the layered state, which drops perpetual removals, is absent.
+     */
+    private boolean permanentPerpetuallyLostKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
+        return gameData.perpetualCardRemovedKeywords
+                .getOrDefault(permanent.getCard().getId(), Set.of()).contains(keyword)
+                && !permanent.getGrantedKeywords().contains(keyword)
+                && !permanent.getPersistentGrantedKeywords().contains(keyword)
+                && !permanent.getUntilNextTurnKeywords().contains(keyword);
     }
 
     /** Counts the flanking abilities that survive the current ability layer. */
@@ -4315,6 +4354,15 @@ public class GameQueryService {
 
     public List<CardEffect> getGrantedEffects(GameData gameData, Permanent permanent) {
         return List.copyOf(computeStaticBonus(gameData, permanent).grantedEffects());
+    }
+
+    /**
+     * As {@link #getGrantedEffects(GameData, Permanent)} for a permanent that is not on the battlefield yet
+     * (it is entering): its controller is supplied because battlefield membership cannot provide it.
+     */
+    public List<CardEffect> getGrantedEffects(GameData gameData, Permanent permanent, UUID controllerId) {
+        return withEnteringPermanent(gameData, controllerId, permanent,
+                () -> List.copyOf(computeStaticBonus(gameData, permanent, controllerId).grantedEffects()));
     }
 
     /** Returns whether a static effect prevents the permanent from having or gaining a keyword. */
@@ -9870,17 +9918,19 @@ public class GameQueryService {
         return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent, false);
     }
 
-    /** Returns one additional spell copy for each active global spell-copy replacement effect. */
-    public int countAdditionalSpellCopies(GameData gameData) {
+    /**
+     * Returns one additional spell copy for each active spell-copy replacement effect controlled by
+     * {@code copyControllerId}; a copy-replacement effect only applies to its own controller's copies.
+     */
+    public int countAdditionalSpellCopies(GameData gameData, UUID copyControllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(copyControllerId);
+        if (battlefield == null) return 0;
         int count = 0;
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof AdditionalSpellCopyEffect) {
-                        count++;
-                    }
+        for (Permanent permanent : battlefield) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AdditionalSpellCopyEffect) {
+                    count++;
                 }
             }
         }
@@ -11369,6 +11419,8 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || computeStaticBonus(gameData, permanent).losesAllAbilities()) return;
             forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof SourceOpponentDamageBonusEffect additional
                         && additional.appliesTo(effectiveSourceColors, artifactSource)) {
@@ -11510,12 +11562,15 @@ public class GameQueryService {
         if (sourceColors == null || sourceColors.isEmpty()) return List.of();
 
         List<DamageBonus> bonuses = new ArrayList<>();
-        gameData.forEachPermanent((controllerId, p) -> forEachStaticEffect(p, (effect, instance) -> {
-            if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
-                    && !Collections.disjoint(e.colors(), sourceColors)) {
-                bonuses.add(new DamageBonus(instance, p.getCard().getName(), e.amount()));
-            }
-        }));
+        gameData.forEachPermanent((controllerId, p) -> {
+            if (hasLostPrintedAbilities(gameData, p)) return;
+            forEachStaticEffect(p, (effect, instance) -> {
+                if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
+                        && !Collections.disjoint(e.colors(), sourceColors)) {
+                    bonuses.add(new DamageBonus(instance, p.getCard().getName(), e.amount()));
+                }
+            });
+        });
         return bonuses;
     }
 
@@ -11860,19 +11915,37 @@ public class GameQueryService {
 
     /** {@link #getDealingSourceDamageBonus}, one entry per effect. */
     public List<DamageBonus> getDealingSourceDamageBonuses(GameData gameData, StackEntry entry) {
-        Permanent source = dealingSourcePermanent(gameData, entry);
+        return getDealingSourceDamageBonuses(gameData, entry, null);
+    }
+
+    /**
+     * {@link #getDealingSourceDamageBonuses}, for damage dealt by {@code damageSource} when it is
+     * not the entry's own source (e.g. the creature a fight's return damage comes from). A null
+     * {@code damageSource} falls back to the entry's source.
+     */
+    public List<DamageBonus> getDealingSourceDamageBonuses(GameData gameData, StackEntry entry,
+                                                           Permanent damageSource) {
+        Permanent source = damageSource != null ? damageSource : dealingSourcePermanent(gameData, entry);
         UUID controllerId = dealingSourceController(gameData, entry, source);
         List<DamageBonus> bonuses = new ArrayList<>();
-        bonuses.addAll(getColorSourceDamageBonusesThisTurn(gameData, entry.getControllerId(),
+        bonuses.addAll(getColorSourceDamageBonusesThisTurn(gameData, controllerId,
                 damageSourceColors(gameData, source, entry.getCard())));
-        bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, entry.getControllerId(),
+        bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, controllerId,
                 damageSourceColors(gameData, source, entry.getEffectiveDamageSourceCard()),
-                entry.getSourcePermanentId()));
+                source != null ? source.getId() : entry.getSourcePermanentId()));
         bonuses.addAll(getSubtypeSourceDamageBonuses(gameData, controllerId, entry.getEffectiveDamageSourceCard(), source));
         bonuses.addAll(grantBonuses("controller-this-turn",
                 controllerId == null ? null : gameData.controllerDamageBonusThisTurn.get(controllerId), null));
-        bonuses.addAll(getControllerDamageBonuses(gameData, entry));
-        bonuses.addAll(getSpellDamageBonuses(gameData, entry));
+        boolean dealtByEntry = damageSource == null
+                || entry.getSourcePermanentId() != null && damageSource.getId().equals(entry.getSourcePermanentId());
+        if (dealtByEntry) {
+            bonuses.addAll(getControllerDamageBonuses(gameData, entry, controllerId,
+                    source != null ? source.getId() : entry.getSourcePermanentId(), false));
+            bonuses.addAll(getSpellDamageBonuses(gameData, entry));
+        } else {
+            bonuses.addAll(getControllerDamageBonuses(gameData, entry, controllerId,
+                    source != null ? source.getId() : null, true));
+        }
         return bonuses;
     }
 
@@ -11950,22 +12023,29 @@ public class GameQueryService {
      * the entry is null or no matching effect applies.
      */
     int getControllerDamageBonus(GameData gameData, StackEntry entry) {
-        return totalBonus(getControllerDamageBonuses(gameData, entry));
+        return totalBonus(getControllerDamageBonuses(gameData, entry, entry == null ? null : entry.getControllerId(),
+                entry == null ? null : entry.getSourcePermanentId(), false));
     }
 
-    private List<DamageBonus> getControllerDamageBonuses(GameData gameData, StackEntry entry) {
-        if (entry == null) return List.of();
-        UUID controllerId = entry.getControllerId();
-        if (controllerId == null) return List.of();
+    /**
+     * @param unfilteredOnly when true, only effects with no stack-entry filter apply; used when the
+     *                       damage source is a permanent other than the stack entry's own source, so the
+     *                       entry's spell or ability characteristics don't describe that source
+     */
+    private List<DamageBonus> getControllerDamageBonuses(GameData gameData, StackEntry entry,
+                                                         UUID controllerId, UUID sourcePermanentId,
+                                                         boolean unfilteredOnly) {
+        if (entry == null || controllerId == null) return List.of();
 
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
             forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalControllerDamageEffect acde
-                        && !(acde.anotherSourceOnly() && p.getId().equals(entry.getSourcePermanentId()))
+                        && !(acde.anotherSourceOnly() && p.getId().equals(sourcePermanentId))
                         && (acde.stackFilter() == null
-                        || predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null))) {
+                        || !unfilteredOnly
+                        && predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null))) {
                     bonuses.add(new DamageBonus(instance, p.getCard().getName(), acde.amount()));
                 }
             });

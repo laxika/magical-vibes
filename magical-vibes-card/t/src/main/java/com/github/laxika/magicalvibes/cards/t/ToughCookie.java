@@ -41,6 +41,13 @@ public class ToughCookie extends Card {
                         "Target must be a noncreature artifact you control"
                 )
         ));
+
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                "{2}",
+                List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
+                "{2}, {T}, Sacrifice this creature: You gain 3 life."
+        ));
     }
 
     private static CreateTokenEffect foodToken() {

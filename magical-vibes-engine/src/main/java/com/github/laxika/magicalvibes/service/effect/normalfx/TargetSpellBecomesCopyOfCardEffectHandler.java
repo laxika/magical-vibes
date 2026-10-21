@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellBecomesCopyOfCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +50,9 @@ public class TargetSpellBecomesCopyOfCardEffectHandler implements NormalEffectHa
 
         Card originalCard = targetSpell.getCard();
         Card copiedCard = originalCard.createRuntimeCopyWithFace(copyEffect.copyOfCard());
+        // CR 702.34a: the exile-instead replacement is part of the flashback ability, which the
+        // spell no longer has once it has become Lightning Bolt.
+        targetSpell.setCastWithFlashback(false);
         targetSpell.setCastCard(copiedCard);
         targetSpell.setDescription(copiedCard.getName());
         targetSpell.replaceEffectsToResolve(copiedCard.getEffects(EffectSlot.SPELL));
@@ -75,10 +78,13 @@ public class TargetSpellBecomesCopyOfCardEffectHandler implements NormalEffectHa
                 GameLog.textCardText(originalCard.getName() + " becomes a copy of ", copiedCard, "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalCard.getName(), copiedCard.getName());
 
+        // CR 115.7d: "choose new targets" lets the player leave the target unchanged or choose any legal
+        // target, including the current one, so reuse the copy-retarget flow rather than the
+        // "change the target" flow that excludes the current target (CR 115.7a).
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 targetSpell.getControllerId(),
-                List.of(new ChooseNewTargetsForTargetSpellEffect()),
+                List.of(CopySpellEffect.times(1)),
                 "Choose new targets for " + copiedCard.getName() + "?",
                 targetSpell.getTargetableId()));
     }

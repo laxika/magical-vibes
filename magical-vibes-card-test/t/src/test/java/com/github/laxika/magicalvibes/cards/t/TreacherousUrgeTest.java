@@ -41,7 +41,8 @@ class TreacherousUrgeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Extirpate");
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(phantasm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .contains(new DelayedPermanentAction(phantasm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null, player1.getId()));
     }
 
     @Test
@@ -143,8 +144,7 @@ class TreacherousUrgeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent creature = findPermanent(player1, "Gossamer Phantasm");
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
+        setOwnerAndController(creature, player2, player2);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -165,8 +165,7 @@ class TreacherousUrgeTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
 
         Permanent creature = findPermanent(player1, "Gossamer Phantasm");
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
+        setOwnerAndController(creature, player2, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Gossamer Phantasm");

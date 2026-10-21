@@ -141,6 +141,9 @@ class ThundertrapTrainerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castKickedCreature(player1, 0);
+        // The spell, then the offspring trigger, the token's look trigger and the original's look trigger:
+        // offspring and the look ability are separate triggered abilities (CR 702.175a).
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();

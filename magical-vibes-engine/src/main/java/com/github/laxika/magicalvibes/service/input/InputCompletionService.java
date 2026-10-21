@@ -134,8 +134,8 @@ public class InputCompletionService {
             stateBasedActionService.performStateBasedActions(gameData);
             if (gameData.interaction.isAwaitingInput()) return;
         }
-        if (!gameData.pendingAuctionEntries.isEmpty()) {
-            permanentAuctionService.resumePendingEntries(gameData);
+        if (gameData.pendingAuctionNext != null) {
+            permanentAuctionService.resumeAuction(gameData);
             if (gameData.interaction.isAwaitingInput()) return;
         }
         if (!gameData.pendingCardDraws.isEmpty()) {

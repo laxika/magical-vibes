@@ -97,7 +97,7 @@ class TormentorExarchTest extends BaseCardTest {
     void choosesBoostModeAfterEnteringAndCanTargetItself() {
         harness.setHand(player1, List.of(new TormentorExarch()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0, -1);
         harness.passBothPriorities();
 
         Permanent exarch = findPermanent(player1, "Tormentor Exarch");
@@ -145,7 +145,7 @@ class TormentorExarchTest extends BaseCardTest {
     private void castWithBoostMode(UUID targetId) {
         harness.setHand(player1, List.of(new TormentorExarch()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0, -1);
         harness.passBothPriorities();
         chooseTriggeredMode("Target creature gets +2/+0 until end of turn");
         harness.handlePermanentChosen(player1, targetId);
@@ -154,7 +154,7 @@ class TormentorExarchTest extends BaseCardTest {
     private void castWithDebuffMode(UUID targetId) {
         harness.setHand(player1, List.of(new TormentorExarch()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0, -1);
         harness.passBothPriorities();
         chooseTriggeredMode("Target creature gets -0/-2 until end of turn");
         harness.handlePermanentChosen(player1, targetId);

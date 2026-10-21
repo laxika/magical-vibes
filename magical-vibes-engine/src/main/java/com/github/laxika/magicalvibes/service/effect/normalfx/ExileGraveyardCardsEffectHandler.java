@@ -376,7 +376,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         List<Card> toExile = new ArrayList<>();
         if (graveyard != null) {
             for (Card card : graveyard) {
-                if (e.filter() == null || predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
+                if (e.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                        card, e.filter(), null, gameData, targetPlayerId)) {
                     toExile.add(card);
                 }
             }
@@ -452,39 +453,40 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveAllGraveyards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect effect) {
-        int totalExiled = 0;
+        int[] totalExiled = {0};
         graveyardService.beginGraveyardLeaveBatch(gameData);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null || graveyard.isEmpty()) continue;
-            Set<UUID> battlefieldCards = effect.fromBattlefieldThisTurn()
-                    ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(playerId, Set.of())
-                    : null;
-            List<Card> toExile = new ArrayList<>();
-            for (Card card : graveyard) {
-                if ((battlefieldCards == null || battlefieldCards.contains(card.getId()))
-                        && (effect.filter() == null
-                        || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null))) {
-                    toExile.add(card);
+        gameData.runAsSingleCardExileBatch(() -> {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+                if (graveyard == null || graveyard.isEmpty()) continue;
+                Set<UUID> battlefieldCards = effect.fromBattlefieldThisTurn()
+                        ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(playerId, Set.of())
+                        : null;
+                List<Card> toExile = new ArrayList<>();
+                for (Card card : graveyard) {
+                    if ((battlefieldCards == null || battlefieldCards.contains(card.getId()))
+                            && (effect.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null))) {
+                        toExile.add(card);
+                    }
                 }
+                if (toExile.isEmpty()) continue;
+                for (Card card : toExile) {
+                    exileService.exileCard(gameData, playerId, card);
+                    totalExiled[0]++;
+                }
+                graveyard.removeAll(toExile);
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
             }
-            if (toExile.isEmpty()) continue;
-            for (Card card : toExile) {
-                exileService.exileCard(gameData, playerId, card);
-                totalExiled++;
-            }
-            graveyard.removeAll(toExile);
-            graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
-        }
+        });
         graveyardService.endGraveyardLeaveBatch(gameData);
-        entry.setEventValue(totalExiled);
-
-        if (totalExiled > 0) {
-            String logEntry = "All graveyards are exiled (" + totalExiled + " card"
-                    + (totalExiled != 1 ? "s" : "") + ").";
+        entry.setEventValue(totalExiled[0]);
+        if (totalExiled[0] > 0) {
+            String logEntry = "All graveyards are exiled (" + totalExiled[0] + " card"
+                    + (totalExiled[0] != 1 ? "s" : "") + ").";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - All graveyards exiled ({} cards) by {}",
-                    gameData.id, totalExiled, entry.getCard().getName());
+                    gameData.id, totalExiled[0], entry.getCard().getName());
         } else {
             String logEntry = "All graveyards are already empty.";
             gameLogService.append(gameData, GameLog.text(logEntry));

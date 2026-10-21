@@ -34,6 +34,9 @@ public class PlayerWithMostCreaturesGainsControlOfSourceCreatureEffectHandler im
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // The ability refers to the object it triggered for: a creature that left and came back
+        // (a new object, new permanent id) is not the source of the old ability (CR 400.7).
+        UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -41,7 +44,10 @@ public class PlayerWithMostCreaturesGainsControlOfSourceCreatureEffectHandler im
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getId().equals(entry.getCard().getId())) {
+                boolean isSource = sourcePermanentId != null
+                        ? permanent.getId().equals(sourcePermanentId)
+                        : permanent.getCard().getId().equals(entry.getCard().getId());
+                if (isSource) {
                     source = permanent;
                     break;
                 }

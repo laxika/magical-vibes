@@ -566,7 +566,7 @@ public class CastingCostService {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
                 flashbackCost, xValue, plottingFromHand,
                 playerId.equals(gameData.commandCastPlayerId) ? Zone.COMMAND : sourceZone, castFaceDown,
-                collectEvidenceCostPaid, kicked);
+                collectEvidenceCostPaid, kicked, null, false, List.of(), gameData.castCostMinimumManaOffset);
         UUID commanderId = playerId.equals(gameData.commandCastPlayerId) ? gameData.commandCastCardId : card.getId();
         int delta = (sourceZone == Zone.COMMAND || playerId.equals(gameData.commandCastPlayerId))
                 && card.getEffects(EffectSlot.STATIC).stream().noneMatch(PayLifeInsteadOfCommanderTaxEffect.class::isInstance)

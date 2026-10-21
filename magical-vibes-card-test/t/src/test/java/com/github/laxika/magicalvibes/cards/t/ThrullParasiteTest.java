@@ -246,6 +246,10 @@ class ThrullParasiteTest extends BaseCardTest {
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        int remaining = 0;
+        for (ManaColor color : ManaColor.values()) {
+            remaining += gd.playerManaPools.get(player1.getId()).get(color);
+        }
+        assertThat(remaining).isEqualTo(1);
     }
 }

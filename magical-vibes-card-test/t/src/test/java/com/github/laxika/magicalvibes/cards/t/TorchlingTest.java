@@ -183,8 +183,8 @@ class TorchlingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can redirect one target of a spell targeting only Torchling multiple times")
-    void redirectsOneOfRepeatedTargets() {
+    @DisplayName("Redirects every target of a spell that targets only Torchling multiple times")
+    void redirectsAllRepeatedTargets() {
         Permanent torchling = addCreatureReady(player1, new Torchling());
         Permanent replacement = addCreatureReady(player1, new AvenRiftwatcher());
         SeedsOfStrength spell = new SeedsOfStrength();
@@ -201,10 +201,10 @@ class TorchlingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, replacement.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, torchling)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, torchling)).isEqualTo(5);
-        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, torchling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, torchling)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(6);
     }
 
     @Test
@@ -220,6 +220,7 @@ class TorchlingTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, 2, null, spell.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

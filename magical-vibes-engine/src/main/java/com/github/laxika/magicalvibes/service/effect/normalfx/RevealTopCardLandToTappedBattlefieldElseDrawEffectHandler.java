@@ -39,8 +39,11 @@ public class RevealTopCardLandToTappedBattlefieldElseDrawEffectHandler implement
         String sourceName = entry.getCard().getName();
 
         if (library == null || library.isEmpty()) {
+            // Nothing is revealed, so the "otherwise" draw is still attempted; drawing from an
+            // empty library makes the player lose at the next state-based action check (CR 704.5b).
             gameLogService.append(gameData,
                     GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
+            playerInteractionSupport.applyDrawCards(gameData, controllerId, 1);
             return;
         }
 

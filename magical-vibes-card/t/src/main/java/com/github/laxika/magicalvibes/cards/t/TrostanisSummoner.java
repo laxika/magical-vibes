@@ -18,12 +18,14 @@ public class TrostanisSummoner extends Card {
     public TrostanisSummoner() {
         // When this creature enters, create a 2/2 white Knight creature token with vigilance,
         // a 3/3 green Centaur creature token, and a 4/4 green Rhino creature token with trample.
-        // One trigger, three effects in the same slot, resolved in printed order.
+        // The three tokens are one creation event, so a "first time you would create tokens" replacement
+        // (Esix, Fractal Bloom) applies to all of them together.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect("Knight", 2, 2, CardColor.WHITE,
-                List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect("Centaur", 3, 3, CardColor.GREEN,
-                List.of(CardSubtype.CENTAUR), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect("Rhino", 4, 4, CardColor.GREEN,
-                List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()));
+                List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of())
+                .withSimultaneousTokens(List.of(
+                        new CreateTokenEffect("Centaur", 3, 3, CardColor.GREEN,
+                                List.of(CardSubtype.CENTAUR), Set.of(), Set.of()),
+                        new CreateTokenEffect("Rhino", 4, 4, CardColor.GREEN,
+                                List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()))));
     }
 }

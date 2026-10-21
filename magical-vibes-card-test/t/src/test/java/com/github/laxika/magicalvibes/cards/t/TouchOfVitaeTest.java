@@ -112,7 +112,7 @@ class TouchOfVitaeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
@@ -187,6 +187,7 @@ class TouchOfVitaeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting during upkeep waits until next turn's upkeep")
     void castingDuringUpkeepWaitsForNextTurn() {
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -200,7 +201,7 @@ class TouchOfVitaeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();

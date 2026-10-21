@@ -56,8 +56,15 @@ public class BecomeCopyOfTargetLandEffectHandler implements NormalEffectHandlerB
         permanentCopierService.applyCloneCopy(source, target, null, null);
 
         Card copiedCard = source.getCard();
-        for (ActivatedAbility ability : retained) {
-            copiedCard.addActivatedAbility(ability);
+        // Copying a land that already has this ability (including another Thespian's Stage, or this
+        // permanent itself) must not leave the ability on it twice.
+        boolean alreadyHasAbility = copiedCard.getActivatedAbilities().stream()
+                .anyMatch(ability -> ability.getEffects().stream()
+                        .anyMatch(e -> e instanceof BecomeCopyOfTargetLandEffect));
+        if (!alreadyHasAbility) {
+            for (ActivatedAbility ability : retained) {
+                copiedCard.addActivatedAbility(ability);
+            }
         }
 
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, target.getCard().getName());

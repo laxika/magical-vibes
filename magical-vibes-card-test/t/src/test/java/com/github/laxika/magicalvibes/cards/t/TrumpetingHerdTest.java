@@ -100,7 +100,7 @@ class TrumpetingHerdTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Trumpeting Herd");
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 

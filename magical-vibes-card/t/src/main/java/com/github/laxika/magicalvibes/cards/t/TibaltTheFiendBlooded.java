@@ -47,7 +47,7 @@ public class TibaltTheFiendBlooded extends Card {
                 -6,
                 List.of(new GainControlOfAllPermanentsMatchingEffect(new PermanentIsCreaturePredicate(), ControlDuration.END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
                 "−6: Gain control of all creatures until end of turn. Untap them. They gain haste until end of turn."
         ));
     }

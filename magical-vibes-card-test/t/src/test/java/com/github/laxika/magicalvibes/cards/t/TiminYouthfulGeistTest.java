@@ -26,7 +26,6 @@ class TiminYouthfulGeistTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.enterBattlefieldAndReturn(player1, new TiminYouthfulGeist());
-        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -63,7 +62,7 @@ class TiminYouthfulGeistTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
 
         advanceToBeginningOfCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(bear.isTapped()).isFalse();

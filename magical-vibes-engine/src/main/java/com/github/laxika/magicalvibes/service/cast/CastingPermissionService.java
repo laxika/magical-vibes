@@ -1299,6 +1299,9 @@ public class CastingPermissionService {
         if (predicate == null || sorceryTimingAvailable(gameData, playerId)) {
             return true;
         }
+        if (cardHasFlash(gameData, card) || hasFlashGrantForCard(gameData, playerId, card)) {
+            return true;
+        }
         Stream<UUID> candidates = Stream.concat(
                 targetId == null ? Stream.empty() : Stream.of(targetId),
                 targetIds == null ? Stream.empty() : targetIds.stream());
@@ -1622,7 +1625,7 @@ public class CastingPermissionService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                     continue;
                 }
@@ -2558,6 +2561,16 @@ public class CastingPermissionService {
         return source == null ? Optional.empty() : Optional.of(source.permanentId());
     }
 
+    /**
+     * Returns the keywords the selected top-library permission gives the spell until end of turn
+     * ("If you cast a creature spell this way, it gains haste"). Empty when the spell is cast
+     * through a permission that grants none.
+     */
+    public Set<Keyword> findTopLibraryCastGrantedKeywords(GameData gameData, UUID playerId, Card card) {
+        TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card, null);
+        return source == null ? Set.of() : source.grantedKeywords();
+    }
+
     /** Marks the selected once-each-turn top-library permission as used by a successful cast. */
     public void markTopLibraryCastPermissionUsed(GameData gameData, UUID playerId, Card card) {
         TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card, null);
@@ -2596,9 +2609,12 @@ public class CastingPermissionService {
                 if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
                         && matchesTopLibraryPermission(gameData, playerId, perm, card, allow, xValue)
                         && canPayTopLibraryAdditionalCosts(gameData, playerId, allow)) {
-                    if (!allow.oncePerTurn()) {
+                    if (!allow.oncePerTurn()
+                            && (unlimitedFallback == null || !allow.grantedKeywords().isEmpty()
+                            || unlimitedFallback.grantedKeywords().isEmpty())) {
                         unlimitedFallback = new TopLibraryCastPermissionSource(
-                                perm.getId(), false, allow.enterWithCounterCount(), false);
+                                perm.getId(), false, allow.enterWithCounterCount(), false,
+                                allow.grantedKeywords());
                     }
                     if (!gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(perm.getId())
                             && oncePerTurnFallback == null) {
@@ -2614,7 +2630,12 @@ public class CastingPermissionService {
 
     private record TopLibraryCastPermissionSource(UUID permanentId, boolean oncePerTurn,
                                                   int enterWithCounterCount,
-                                                  boolean sharedLandAndCast) {
+                                                  boolean sharedLandAndCast,
+                                                  Set<Keyword> grantedKeywords) {
+        TopLibraryCastPermissionSource(UUID permanentId, boolean oncePerTurn, int enterWithCounterCount,
+                                       boolean sharedLandAndCast) {
+            this(permanentId, oncePerTurn, enterWithCounterCount, sharedLandAndCast, Set.of());
+        }
     }
 
     /**

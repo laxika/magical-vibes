@@ -171,6 +171,7 @@ class TowashiTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.setCounterCount(CounterType.CHARGE, 1);
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethSunsChampion());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         creature.setAttacking(true);
         creature.setAttackTarget(planeswalker.getId());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -215,7 +216,6 @@ class TowashiTest extends BaseCardTest {
                 .processNextETBTokenMultiTargetTrigger(gd));
         harness.handlePermanentChosen(player1, survivor.getId());
         harness.handlePermanentChosen(player1, removed.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.handleListChoice(player1, "1");
         harness.handleListChoice(player1, "2");
         gd.playerBattlefields.get(player1.getId()).remove(removed);

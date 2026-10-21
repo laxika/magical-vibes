@@ -85,7 +85,6 @@ class TrueAncestryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorcery(player1, 0, 0);
-        harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "True Ancestry");
@@ -157,7 +156,6 @@ class TrueAncestryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorcery(player1, 0, 0);
-        harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
@@ -177,7 +175,7 @@ class TrueAncestryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorcery(player1, 0, 0);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);

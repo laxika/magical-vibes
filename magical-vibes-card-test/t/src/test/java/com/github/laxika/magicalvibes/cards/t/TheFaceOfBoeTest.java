@@ -241,7 +241,7 @@ class TheFaceOfBoeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).contains(spell);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == spell);
     }

@@ -116,8 +116,10 @@ class ThreeTreeScribeTest extends BaseCardTest {
         Permanent leaving = addCreatureReady(player1, new SunshowerDruid());
         Permanent opponent = addCreatureReady(player2, new SunshowerDruid());
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .removePermanentToExile(gd, leaving));
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToExile(gd, leaving);
+            harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd);
+        });
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

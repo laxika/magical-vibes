@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.ToymakersTrapEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -29,6 +31,7 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInteractionSupport playerInteractionSupport;
     private final SacrificeSelfEffectHandler sacrificeSelfEffectHandler;
     private final InputCompletionService inputCompletionService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +41,9 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source == null) {
             return;
         }
@@ -55,12 +61,13 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
     public void completeNumberChoice(GameData gameData, ChoiceContext.ToymakersTrapChoice context,
                                      int chosenNumber) {
         Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-        if (source == null || !availableNumbers(source).contains(chosenNumber)) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
+        if (source != null) {
+            if (!availableNumbers(source).contains(chosenNumber)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            source.getToymakersTrapChosenNumbers().add(chosenNumber);
         }
-
-        source.getToymakersTrapChosenNumbers().add(chosenNumber);
         List<UUID> opponents = opponentsOf(gameData, context.controllerId());
         if (opponents.isEmpty()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -95,6 +102,8 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(context.controllerId())
+                + " reveals the number " + context.chosenNumber() + "."));
         if (guessedNumber == context.chosenNumber()) {
             sacrificeSelfEffectHandler.resolve(gameData, entry, new SacrificeSelfEffect());
         } else {

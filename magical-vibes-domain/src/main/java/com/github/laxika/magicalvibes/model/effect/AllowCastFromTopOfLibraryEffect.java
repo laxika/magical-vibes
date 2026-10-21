@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CastingCost;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -16,13 +17,28 @@ import java.util.Set;
  * cast spells of the specified types or matching the optional card predicate from the top of their
  * library (paying their mana cost normally). The optional colorless clause is separate from the
  * type clause because colorless is a characteristic, not a card type. The optional once-per-turn
- * flag limits that source to one normal-cost top-library cast each turn.
+ * flag limits that source to one normal-cost top-library cast each turn. The granted keywords are
+ * given until end of turn to a spell cast through this permission ("If you cast a creature spell this
+ * way, it gains haste until end of turn"); a spell cast through another permission does not get them.
  */
 public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
                                               CardPredicate filter, boolean oncePerTurn,
                                               List<CastingCost> additionalCosts, int enterWithCounterCount,
-                                              boolean grantsFlash)
+                                              boolean grantsFlash, Set<Keyword> grantedKeywords)
         implements CardEffect {
+
+    public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
+                                           CardPredicate filter, boolean oncePerTurn,
+                                           List<CastingCost> additionalCosts, int enterWithCounterCount,
+                                           boolean grantsFlash) {
+        this(castableTypes, castableColorless, filter, oncePerTurn, additionalCosts,
+                enterWithCounterCount, grantsFlash, Set.of());
+    }
+
+    /** A top-library permission whose spells gain the keywords until end of turn when cast this way. */
+    public static AllowCastFromTopOfLibraryEffect grantingKeywords(CardPredicate filter, Set<Keyword> keywords) {
+        return new AllowCastFromTopOfLibraryEffect(Set.of(), false, filter, false, List.of(), 0, false, keywords);
+    }
 
     public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
                                            CardPredicate filter, boolean oncePerTurn,
@@ -39,6 +55,7 @@ public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boole
 
     public AllowCastFromTopOfLibraryEffect {
         additionalCosts = additionalCosts == null ? List.of() : List.copyOf(additionalCosts);
+        grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
     }
 
     public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,

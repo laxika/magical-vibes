@@ -116,7 +116,7 @@ class TideshaperMysticTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
@@ -193,7 +193,8 @@ class TideshaperMysticTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "SWAMP");
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> harness.handleListChoice(player1, "SWAMP"));
 
         assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
     }

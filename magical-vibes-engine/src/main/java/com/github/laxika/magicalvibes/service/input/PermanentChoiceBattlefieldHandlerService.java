@@ -154,6 +154,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler sacrificedEquipmentSupport;
 
     private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VillainousChoiceSupport villainousChoiceSupport;
     private final ExquisiteArchangelLossReplacer exquisiteArchangelLossReplacer;
     private final GameQueryService gameQueryService;
     private final AuraAttachmentService auraAttachmentService;
@@ -878,8 +879,18 @@ public class PermanentChoiceBattlefieldHandlerService {
                         context.sourceCardName(), name);
             }
             permanentRemovalService.removeOrphanedAuras(gameData);
-            gameData.villainousChoice.reset();
-            gameData.rerunCurrentEffectAfterInteraction = false;
+            // The Valeyard: the villainous choice is faced an additional time, so reopen it instead of
+            // ending the sequence.
+            if (villainousChoiceSupport.repeatIfNeeded(gameData)) {
+                // The effect was parked past itself when this creature choice opened; step back so the
+                // reopened choice's answer resumes the same effect.
+                if (gameData.pendingEffectResolutionEntry != null && gameData.pendingEffectResolutionIndex > 0) {
+                    gameData.pendingEffectResolutionIndex--;
+                }
+            } else {
+                gameData.villainousChoice.reset();
+                gameData.rerunCurrentEffectAfterInteraction = false;
+            }
         } else if (context.exile()) {
             Card exiledCard = target.getCard();
             if (context.sourcePermanentId() != null && context.sourceCard() != null) {
@@ -1320,7 +1331,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                     "Look at the cards and select cards for the face-up pile (unselected cards form the face-down pile).");
             return;
         }
-        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, state.cards(), state.cards().size(),
+        UUID separatorId = state.controllerChoosesPile() ? opponentId : state.controllerId();
+        playerInputService.beginMultiGraveyardChoice(gameData, separatorId, state.cards(), state.cards().size(),
                 "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
     }
 
@@ -1369,7 +1381,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (entry != null && target != null
                 && gameData.playerBattlefields.getOrDefault(context.controllerId(), List.of()).contains(target)) {
             entry.setChosenPermanentId(permanentId);
-            animationSupport.animateChosen(gameData, entry, context.animation());
+            animationSupport.animateChosenPerpetually(gameData, entry, context.animation());
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

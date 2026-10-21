@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -42,7 +41,6 @@ public class TheLastRonin extends Card {
                 new TriggeringPermanentControllerConditionalEffect(
                         new ConditionalEffect(new AttacksAlone(), SequenceEffect.of(
                                 new PutCountersOnSourceEffect(1, 1, 3),
-                                new BoostSelfEffect(3, 3),
                                 new GrantKeywordEffect(Set.of(
                                         Keyword.TRAMPLE,
                                         Keyword.LIFELINK,

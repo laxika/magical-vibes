@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -32,8 +31,8 @@ public class TwistedFealty extends Card {
         setAllowSharedTargets(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.SPELL,
@@ -55,9 +54,7 @@ public class TwistedFealty extends Card {
                 false,
                 false,
                 Map.of(
-                        EffectSlot.STATIC, SequenceEffect.of(
-                                new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
-                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ENCHANTED_CREATURE)),
+                        EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                         EffectSlot.ON_DEATH, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
                 List.of(),
                 false,

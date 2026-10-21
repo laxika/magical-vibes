@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class TritonWaverider extends Card {
 
     public TritonWaverider() {
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
     }
 }

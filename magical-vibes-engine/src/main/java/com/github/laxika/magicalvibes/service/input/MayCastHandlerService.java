@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetNoncreatureCardFromGraveyardEffect;
@@ -854,6 +855,15 @@ public class MayCastHandlerService {
                 castEffect.scope(), castEffect.filter(), castEffect.withoutPayingManaCost(),
                 castEffect.exileInsteadOfGraveyard(), castEffect.anyManaType(), castEffect.copyCount(),
                 castEffect.afterSuccessfulCastEffect(), false, maxSpellManaValue);
+    }
+
+    /** Casts the targeted graveyard card (any nonland card the filter allows) for its normal cost. */
+    public void handleCastTargetCardFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                                        PendingMayAbility ability,
+                                                        CastTargetCardFromGraveyardEffect castEffect) {
+        handleCastFromGraveyardChoice(gameData, player, accepted, ability, castEffect.scope(),
+                castEffect.filter(), false, false, castEffect.anyManaType(), 0, null, true,
+                Integer.MAX_VALUE);
     }
 
     public void handleCastSourceCardFromGraveyardChoice(GameData gameData, Player player,
@@ -2377,6 +2387,29 @@ public class MayCastHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " is no longer available to cast with its suspend cost."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (!castingPermissionService.isSpellCastingAllowed(gameData, player.getId(), cardToCast)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast right now and remains in hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (!cardToCast.isAura() && cardToCast.getEffectiveMinTargets(0) > 0
+                && buildValidSpellTargets(gameData, cardToCast,
+                new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL)), player.getId(), 0, false).isEmpty()) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " has no legal targets and remains in hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (new ManaCost(suspendAbility.getManaCost()).hasX()) {
+            gameData.pendingMayAbilities.removeIf(pending -> pending.effects().stream()
+                    .anyMatch(effect -> effect.getClass() == MayCastSpellWithSuspendCostFromHandEffect.class));
+            beginAlternateCastXChoice(gameData, player, cardToCast, suspendAbility.getManaCost(), "suspend");
             return;
         }
 

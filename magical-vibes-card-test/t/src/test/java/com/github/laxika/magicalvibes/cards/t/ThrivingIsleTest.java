@@ -105,9 +105,9 @@ class ThrivingIsleTest extends BaseCardTest {
     @Test
     @DisplayName("Separate Isles retain separate color choices")
     void separateIslesRetainTheirChoices() {
-        Permanent first = harness.enterBattlefieldAndReturn(player1, new ThrivingIsle());
+        Permanent first = harness.enterLandBattlefieldAndReturn(player1, new ThrivingIsle());
         harness.handleListChoice(player1, "WHITE");
-        Permanent second = harness.enterBattlefieldAndReturn(player1, new ThrivingIsle());
+        Permanent second = harness.enterLandBattlefieldAndReturn(player1, new ThrivingIsle());
         harness.handleListChoice(player1, "BLACK");
         harness.performUntapStep(player1);
 

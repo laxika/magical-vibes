@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -293,11 +294,13 @@ public class EffectResolutionService {
                 boolean conditionMet = conditionEvaluationService.isMet(gameData, conditional.condition(),
                         conditionContext, entry.getEventValue());
                 if (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures attacks) {
+                    int departed = attacks.countsRemovedAttackers() ? (int) conditionEvaluationService
+                            .countDepartedDeclaredAttackersAtController(gameData, conditionContext,
+                                    attacks.includePlaneswalkers(), entry.getAttackingPermanentSnapshots()) : 0;
                     conditionMet = conditionEvaluationService.isMet(gameData, new OpponentAttacksWithAtLeastCreatures(
-                            Math.max(0, attacks.minimum() - (int) conditionEvaluationService
-                                    .countDepartedDeclaredAttackersAtController(gameData, conditionContext,
-                                            attacks.includePlaneswalkers(), entry.getAttackingPermanentSnapshots())),
-                            attacks.includePlaneswalkers()), conditionContext, entry.getEventValue());
+                            Math.max(0, attacks.minimum() - departed),
+                            attacks.includePlaneswalkers(), attacks.countsRemovedAttackers()),
+                            conditionContext, entry.getEventValue());
                 }
                 if (!conditionMet) {
                     continue;
@@ -510,7 +513,8 @@ public class EffectResolutionService {
         // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast
         // ConditionalEffect on resume, like Cankerous Thirst); StackResolutionService only clears
         // them when resolution is not paused, so clear here once the effect loop has fully drained.
-        if (entry.getCard() != null) {
+        // A spell copy shares its original's card id, so its snapshots stay until the original resolves.
+        if (entry.getCard() != null && !entry.isCopy() && !isAbilityOfSpellStillOnStack(gameData, entry)) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
@@ -603,15 +607,32 @@ public class EffectResolutionService {
         // Declared attackers that left the battlefield are judged by who they were attacking before they
         // left; attackers still on the battlefield (or phased out) are judged by their current status.
         if (condition instanceof OpponentAttacksWithAtLeastCreatures attacks) {
-            long departedAtController = conditionEvaluationService.countDepartedDeclaredAttackersAtController(
-                    gameData, context, attacks.includePlaneswalkers(), entry.getAttackingPermanentSnapshots());
+            long departedAtController = attacks.countsRemovedAttackers()
+                    ? conditionEvaluationService.countDepartedDeclaredAttackersAtController(
+                    gameData, context, attacks.includePlaneswalkers(), entry.getAttackingPermanentSnapshots())
+                    : 0;
             return conditionEvaluationService.isMet(gameData, new OpponentAttacksWithAtLeastCreatures(
-                    Math.max(0, attacks.minimum() - (int) departedAtController), attacks.includePlaneswalkers()),
-                    context, entry.getEventValue());
+                    Math.max(0, attacks.minimum() - (int) departedAtController), attacks.includePlaneswalkers(),
+                    attacks.countsRemovedAttackers()), context, entry.getEventValue());
         }
         if (condition instanceof AttackedTargetIsMonarch && entry.getAttackedTargetId() != null) {
             return conditionEvaluationService.isMet(gameData, condition,
                     context.withTargetId(entry.getAttackedTargetId()), entry.getEventValue());
+        }
+        // "...if its power is less than or equal to the revealed card's power": the revealed card is
+        // still in hand, so its (possibly characteristic-defined) power is read as the spell resolves.
+        if (condition instanceof TargetPermanentMatches matches
+                && matches.filter() instanceof com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate
+                && entry.getRevealedPowerCostCard() != null) {
+            Card revealed = entry.getRevealedPowerCostCard();
+            boolean remainsInHand = gameData.playerHands.values().stream()
+                    .anyMatch(hand -> hand.stream().anyMatch(card -> card.getId().equals(revealed.getId())));
+            if (remainsInHand) {
+                Integer power = gameQueryService.getEffectiveCardPower(gameData, revealed);
+                context = context.withXValue(power == null ? 0 : Math.max(0, power));
+            } else {
+                context = context.withXValue(entry.getRevealedPowerCostCardLastKnownPower());
+            }
         }
         // A target that an earlier step of this ability removed (e.g. exiled) is still judged by the
         // power it had when it left the battlefield (CR 608.2h).
@@ -644,5 +665,20 @@ public class EffectResolutionService {
             return entry.getRemovedPermanentControllers().get(context.targetId()).equals(context.controllerId());
         }
         return conditionEvaluationService.isMet(gameData, condition, context, entry.getEventValue());
+    }
+
+    /**
+     * A triggered or activated ability that shares its card with a spell still on the stack (such as
+     * a cast trigger) must not discard that spell's cast-time mana snapshots when it finishes.
+     */
+    private static boolean isAbilityOfSpellStillOnStack(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY) {
+            return false;
+        }
+        return gameData.stack.stream().anyMatch(other -> other != entry && !other.isCopy()
+                && other.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                && other.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && other.getCard() != null && other.getCard().getId().equals(entry.getCard().getId()));
     }
 }

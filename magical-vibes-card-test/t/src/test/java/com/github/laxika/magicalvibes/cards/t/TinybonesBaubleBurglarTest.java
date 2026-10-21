@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -152,7 +153,9 @@ class TinybonesBaubleBurglarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castEnchantment(player1, 0, tinybonesId);
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Legitimate Businessperson");
+        Permanent tinybones = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getId().equals(tinybonesId)).findFirst().orElseThrow();
+        assertThat(gqs.getEffectiveName(gd, tinybones)).isEqualTo("Legitimate Businessperson");
         prepareMainPhase();
         harness.addMana(player1, ManaColor.WHITE, 2);
 

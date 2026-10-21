@@ -187,8 +187,11 @@ public class ExileTargetValidators {
         }
         ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
         Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
-        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0
-                || ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId())) {
+        boolean suspendedSpell = ctx.gameData().suspendedSpellExiles.stream()
+                .anyMatch(pending -> pending.cardId().equals(ctx.targetId()) && pending.counters() > 0);
+        boolean suspendedByCounters = timeCounters != null && timeCounters > 0
+                && !ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId());
+        if (exiled == null || exiled.faceDown() || !(suspendedSpell || suspendedByCounters)) {
             throw new IllegalStateException("Target card must be suspended");
         }
     }

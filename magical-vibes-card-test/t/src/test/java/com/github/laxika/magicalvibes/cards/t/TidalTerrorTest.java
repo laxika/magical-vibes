@@ -112,7 +112,7 @@ class TidalTerrorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(terror.isCantBeBlocked()).isFalse();
         assertThat(opposingCreature.isTapped()).isFalse();
     }

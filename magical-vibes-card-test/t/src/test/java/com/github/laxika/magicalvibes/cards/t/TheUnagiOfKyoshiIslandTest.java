@@ -213,6 +213,29 @@ class TheUnagiOfKyoshiIslandTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The payer's chosen creatures are the ones tapped for the ward cost")
+    void wardTapsExactlyTheChosenCreatures() {
+        Permanent unagi = harness.addToBattlefieldAndReturn(player1, new TheUnagiOfKyoshiIsland());
+        List<Permanent> bears = new java.util.ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            bears.add(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
+        }
+        beginOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, unagi.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.handleMultiplePermanentsChosen(player2, bears.subList(1, 5).stream().map(Permanent::getId).toList());
+        resolveAllTriggers();
+
+        assertThat(bears.getFirst().isTapped()).isFalse();
+        assertThat(bears.subList(1, 5)).allMatch(Permanent::isTapped);
+        assertThat(unagi.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Ward counters an opponent's targeted activated ability")
     void wardCountersOpponentsActivatedAbility() {
         Permanent unagi = harness.addToBattlefieldAndReturn(player1, new TheUnagiOfKyoshiIsland());

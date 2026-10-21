@@ -72,7 +72,7 @@ public class ReturnSourceAuraToChosenCreatureOnLeaveEffectHandler implements Nor
             }
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
-                        && auraAttachmentService.canEnchant(gameData, auraCard, auraOwnerId, permanent)
+                        && auraAttachmentService.canEnchant(gameData, auraCard, chooserId, permanent)
                         && !gameQueryService.hasProtectionFromSource(gameData, permanent, auraCard)) {
                     validTargetIds.add(permanent.getId());
                 }
@@ -92,14 +92,14 @@ public class ReturnSourceAuraToChosenCreatureOnLeaveEffectHandler implements Nor
             Permanent target = gameQueryService.findPermanentById(gameData, validTargetIds.getFirst());
             Permanent auraPermanent = new Permanent(auraCard);
             auraPermanent.setAttachedTo(target.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraOwnerId, auraPermanent);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, chooserId, auraPermanent);
 
-            String ownerName = gameData.playerIdToName.get(auraOwnerId);
+            String controllerName = gameData.playerIdToName.get(chooserId);
             gameLogService.append(gameData, GameLog.builder()
                     .card(auraCard)
                     .text(" returns to the battlefield attached to ")
                     .card(target.getCard())
-                    .text(" under " + ownerName + "'s control.")
+                    .text(" under " + controllerName + "'s control.")
                     .build());
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());
@@ -107,7 +107,7 @@ public class ReturnSourceAuraToChosenCreatureOnLeaveEffectHandler implements Nor
         }
 
         gameData.interaction.setPendingAuraCard(auraCard);
-        gameData.interaction.setPendingAuraOwnerId(auraOwnerId);
+        gameData.interaction.setPendingAuraOwnerId(chooserId);
         playerInputService.beginPermanentChoice(gameData, chooserId, validTargetIds,
                 "Choose a creature to attach " + auraCard.getName() + " to.");
     }

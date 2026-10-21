@@ -107,8 +107,11 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
         // that player controls) is chosen when that ability is put on the stack, so the player id is
         // never carried over as the pre-bound target.
         UUID followUpTargetId = e.useEntryTarget() && !bindsDamagedPlayer ? preservedTargetId : null;
+        // Graveyard-card targets live on the entry itself; a same-resolution continuation keeps using it.
+        boolean keepsEntryCardTargets = e.useEntryTarget() && e.resolveThenDuringSameResolution()
+                && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty();
         DiscardFollowUp followUp = DiscardFollowUp.thenEffect(entry.getCard(),
-                        e.useEntryTarget() && preservedTargetId == null ? null : boundThenEffect,
+                        e.useEntryTarget() && preservedTargetId == null && !keepsEntryCardTargets ? null : boundThenEffect,
                         e.condition(), followUpTargetId,
                         e.alternateCardType(), e.alternateThenEffect())
                 .withSourceContext(entry.getSourcePermanentId(),

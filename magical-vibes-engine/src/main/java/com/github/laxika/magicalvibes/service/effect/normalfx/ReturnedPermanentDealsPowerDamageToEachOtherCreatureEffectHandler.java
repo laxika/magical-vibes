@@ -47,6 +47,10 @@ public class ReturnedPermanentDealsPowerDamageToEachOtherCreatureEffectHandler
             return;
         }
 
+        if (!gameQueryService.isCreature(gameData, source)) {
+            return;
+        }
+
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, source)) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage is prevented."));

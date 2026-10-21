@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "189")
 public class TerritorialWitchstalker extends Card {
@@ -18,7 +22,9 @@ public class TerritorialWitchstalker extends Card {
         // greater, this creature gets +1/+0 until end of turn and can attack this turn as though
         // it didn't have defender.
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
+                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentPowerAtLeastPredicate(4)))),
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 0),
                         new CanAttackAsThoughNoDefenderEffect())));

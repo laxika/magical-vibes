@@ -101,7 +101,8 @@ class ToothAndNailTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        // The first pick waits in hand until both are chosen (CR 603.6a: they enter as one event).
+        harness.handleCardChosen(player1, 1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Alpha Myr");
@@ -154,7 +155,7 @@ class ToothAndNailTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         harness.assertOnBattlefield(player1, "Alpha Myr");
         harness.assertOnBattlefield(player1, "Copper Myr");

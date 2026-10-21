@@ -604,9 +604,11 @@ public class CloneService {
     }
 
     public void completeMimeoplasmCloneEntry(GameData gameData, Card copiedCard, Card otherCard) {
-        int otherPower = otherCard.getPower() == null ? 0 : otherCard.getPower();
+        // The other card may be a characteristic-defining-power card in exile (CR 604.3), so its power
+        // is evaluated rather than read from the printed value.
+        Integer otherPower = gameQueryService.getEffectiveCardPower(gameData, otherCard);
         gameData.cloneOperation.additionalPlusOnePlusOneCounters =
-                new Fixed(Math.max(0, otherPower));
+                new Fixed(Math.max(0, otherPower == null ? 0 : otherPower));
         completeCloneEntry(gameData, null, copiedCard, false);
     }
 

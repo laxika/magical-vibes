@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,9 +85,11 @@ class ThopterShopTest extends BaseCardTest {
 
     private void destroyWithShock(com.github.laxika.magicalvibes.model.Player caster, UUID targetId) {
         harness.forceActivePlayer(caster);
-        harness.setHand(caster, List.of(new Shock()));
+        List<Card> hand = new ArrayList<>(gd.playerHands.get(caster.getId()));
+        hand.add(new Shock());
+        harness.setHand(caster, hand);
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetId);
+        harness.castInstant(caster, hand.size() - 1, targetId);
         harness.passBothPriorities();
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();

@@ -1128,7 +1128,13 @@ public class LayerSystemService {
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
             seedLegacyColorAndAbilityState(gameData, permanent, state, globalWordChange);
-            if (state.hasKeyword(Keyword.CHANGELING)) {
+            // A one-shot changeling grant (e.g. Wings of Velis Vel) is not seeded into the state
+            // until layer 6, so it is also read from the permanent's granted keywords here.
+            boolean grantedChangeling = !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    && !permanent.getRemovedKeywords().contains(Keyword.CHANGELING)
+                    && (permanent.getGrantedKeywords().contains(Keyword.CHANGELING)
+                    || permanent.getPersistentGrantedKeywords().contains(Keyword.CHANGELING));
+            if (state.hasKeyword(Keyword.CHANGELING) || grantedChangeling) {
                 for (CardSubtype subtype : CardSubtype.values()) {
                     if (StaticEffectSupport.isCreatureSubtype(subtype)) state.addSubtype(subtype);
                 }
@@ -1205,6 +1211,16 @@ public class LayerSystemService {
             }
         }
         return false;
+    }
+
+    /**
+     * An unconditional printed "this is [color]" in the object's own STATIC slot (Transguild Courier's
+     * "is all colors") is a characteristic-defining ability (CR 604.3a), applied ahead of other layer 5
+     * effects regardless of timestamp (CR 613.3). A {@link ConditionalEffect}-wrapped grant (Wayward
+     * Angel's threshold) is not one, because it sets the color only if a condition is met.
+     */
+    private static boolean isPrintedSelfColorDefinition(CardEffect effect) {
+        return effect instanceof GrantColorEffect color && color.scope() == GrantScope.SELF;
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
@@ -1292,7 +1308,7 @@ public class LayerSystemService {
                 CardEffect rewritten = TextChangeTransformer.transform(
                         effect, slot.permanent().getTextReplacements(), globalWordChange);
                 instances.add(new EffectInstance(slot, rewritten, effect, null,
-                        classification.characteristicDefining(),
+                        classification.characteristicDefining() || isPrintedSelfColorDefinition(effect),
                         slot.permanent().getTimestamp(), slot.position()));
             }
         }
@@ -2101,15 +2117,21 @@ public class LayerSystemService {
                     record(board, instance, target, new L4Contribution(chosen, true, true, null, null));
                 }
             }
-            case SourceBecomesChosenBasicLandTypeEffect ignored -> {
+            case SourceBecomesChosenBasicLandTypeEffect chosenType -> {
                 manage(board, instance);
                 PermanentSlot source = instance.source();
                 if (source == null) return;
                 CardSubtype chosen = source.permanent().getChosenSubtype();
                 CharacteristicState state = states.get(source.permanent().getId());
                 if (chosen == null || state == null || !state.hasCardType(CardType.LAND)) return;
-                setLandType(state, source.permanent().getId(), chosen, landTypeOverrides);
-                record(board, instance, source, new L4Contribution(chosen, true, true, null, null));
+                if (chosenType.inAdditionToOtherTypes()) {
+                    state.addSubtype(chosen);
+                    landTypeOverrides.put(source.permanent().getId(), List.of(chosen));
+                    record(board, instance, source, new L4Contribution(chosen, false, false, null, null));
+                } else {
+                    setLandType(state, source.permanent().getId(), chosen, landTypeOverrides);
+                    record(board, instance, source, new L4Contribution(chosen, true, true, null, null));
+                }
             }
             case EnchantedPermanentBecomesOnlyLandEffect ignored -> {
                 manage(board, instance);
@@ -2221,6 +2243,8 @@ public class LayerSystemService {
                             && !isOneShotAnimated(permanent)) {
                         state.addCardType(CardType.CREATURE);
                         board.marchAnimatedIds().add(permanent.getId());
+                        record(board, instance, target, new L4Contribution(
+                                null, false, false, CardType.CREATURE, null));
                     }
                 }
             }
@@ -2733,6 +2757,13 @@ public class LayerSystemService {
                     state.removeKeyword(keyword);
                 }
             }
+            Set<Keyword> perpetuallyRemoved = gameData.perpetualCardRemovedKeywords
+                    .getOrDefault(permanent.getCard().getId(), Set.of());
+            for (Keyword keyword : printedKeywords) {
+                if (perpetuallyRemoved.contains(keyword)) {
+                    state.removeKeyword(keyword);
+                }
+            }
             state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(), rewrittenKeywords));
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
@@ -3117,6 +3148,21 @@ public class LayerSystemService {
                         if (grant.scope() != GrantScope.TARGET && grant.scope() != GrantScope.SELF) {
                             continue;
                         }
+                        // A granted "loses all (non-mana) abilities" static ability (Town-Razer Tyrant's
+                        // "target land loses all abilities except mana abilities") takes effect in this
+                        // layer-6 pass at the grant's timestamp, rather than only being recorded.
+                        if (grant.effect() instanceof LosesAllAbilitiesEffect) {
+                            state.loseAllAbilities(instance.timestamp());
+                        } else if (grant.effect() instanceof LosesAllNonManaAbilitiesEffect) {
+                            state.loseAllNonManaAbilities(instance.timestamp());
+                        }
+                        if (grant.effect() instanceof LosesAllAbilitiesEffect
+                                || grant.effect() instanceof LosesAllNonManaAbilitiesEffect) {
+                            board.clearGrantedEffects(target.permanent().getId());
+                            board.recordProvenance(target.permanent().getId(),
+                                    ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
+                            continue;
+                        }
                         state.addStaticEffect(grant.effect());
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), grant.effect());
@@ -3165,6 +3211,14 @@ public class LayerSystemService {
                     .containsKey(target.permanent().getId())) {
                 // Only planeswalkers this effect turned into creatures in layer 4 lose their abilities;
                 // one an earlier effect already made a non-planeswalker is unaffected.
+                return;
+            }
+            if (instance.effect() instanceof AnimateNoncreatureArtifactsEffect
+                    && !board.l4Contributions().getOrDefault(instance.original(), Map.of())
+                    .containsKey(target.permanent().getId())) {
+                // "Each noncreature artifact loses all abilities": only an artifact this effect itself
+                // turned into a creature in layer 4 loses them; one an earlier effect (March of the
+                // Machines) already animated was a creature when this effect applied (CR 613.1d).
                 return;
             }
             CharacteristicState state = states.get(target.permanent().getId());

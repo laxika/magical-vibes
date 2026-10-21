@@ -177,7 +177,8 @@ class TzaangorShamanTest extends BaseCardTest {
     @Test
     void spellCastBeforeCombatDamageTriggerResolvesIsNotCopied() {
         addCreatureReady(player1, new TzaangorShaman()).setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        assertThat(gd.stack).hasSize(1);
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 

@@ -33,23 +33,29 @@ public class TimeOfIce extends Card {
         // Chapter I: Tap target creature an opponent controls.
         // It doesn't untap during its controller's untap step for as long as you control this Saga.
         addEffect(EffectSlot.SAGA_CHAPTER_I, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, DoesntUntapEffect.targetWhileSourceOnBattlefield());
+        addEffect(EffectSlot.SAGA_CHAPTER_I, DoesntUntapEffect.targetWhileSourceControlled());
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
                 new PermanentPredicateTargetFilter(
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                         "Must target a creature an opponent controls"
                 )
         ));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
 
         // Chapter II: Same as chapter I
         addEffect(EffectSlot.SAGA_CHAPTER_II, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, DoesntUntapEffect.targetWhileSourceOnBattlefield());
+        addEffect(EffectSlot.SAGA_CHAPTER_II, DoesntUntapEffect.targetWhileSourceControlled());
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
                 new PermanentPredicateTargetFilter(
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                         "Must target a creature an opponent controls"
                 )
         ));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
 
         // Chapter III: Return all tapped creatures to their owners' hands.
         addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnToHandEffect.allPermanentsMatching(

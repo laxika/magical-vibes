@@ -67,11 +67,6 @@ public class ExileOwnGraveyardCardThenEachOpponentLosesLifeEffectHandler impleme
             return;
         }
 
-        if (candidates.size() == 1) {
-            exileAndApplyLifeLoss(gameData, entry, candidates.getFirst(), exileEffect.lifeLoss());
-            return;
-        }
-
         state.resolutionTimeExileThenEachOpponentLosesLifeResume = true;
         gameData.rerunCurrentEffectAfterInteraction = true;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, new ArrayList<>(candidates), 1,

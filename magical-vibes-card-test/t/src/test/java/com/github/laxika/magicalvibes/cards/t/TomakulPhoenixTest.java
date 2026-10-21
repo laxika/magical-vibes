@@ -35,14 +35,15 @@ class TomakulPhoenixTest extends BaseCardTest {
     void paysDynamicPowerAndRedManaToReturn() {
         TomakulPhoenix phoenix = new TomakulPhoenix();
         harness.setGraveyard(player1, List.of(phoenix));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         advanceToCombat(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{2}{R}");
+        // Mana empties between steps (CR 500.5), so it is added once the trigger asks for payment.
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

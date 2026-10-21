@@ -37,11 +37,12 @@ class TimmerianFiendsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Anteing the top card of the library keeps the artifact and exiles that card")
+    @DisplayName("Anteing the top card of the library keeps the artifact and puts that card into the ante zone (CR 407.4)")
     void anteingKeepsArtifact() {
         fiendsReady();
         UUID artifactId = opponentArtifactId();
-        harness.setLibrary(player2, new ArrayList<>(List.of(new JovensTools())));
+        JovensTools top = new JovensTools();
+        harness.setLibrary(player2, new ArrayList<>(List.of(top)));
 
         harness.activateAbility(player1, 0, null, artifactId);
         harness.passBothPriorities();
@@ -50,8 +51,8 @@ class TimmerianFiendsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .extracting(c -> c.getName()).containsExactly("Joven's Tools");
+        assertThat(gd.antedCardIds).contains(top.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         harness.assertOnBattlefield(player2, "Joven's Tools");
         // Sacrifice is a cost, so the Fiends are in their controller's graveyard either way.
         harness.assertInGraveyard(player1, "Timmerian Fiends");
@@ -167,8 +168,8 @@ class TimmerianFiendsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Joven's Tools");
         harness.assertInGraveyard(player2, "Timmerian Fiends");
-        assertThat(tools.getOwnerId()).isEqualTo(player1.getId());
-        assertThat(fiends.getOwnerId()).isEqualTo(player2.getId());
+        assertThat(gd.ownerOf(tools)).isEqualTo(player1.getId());
+        assertThat(gd.ownerOf(fiends)).isEqualTo(player2.getId());
     }
 
     @Test

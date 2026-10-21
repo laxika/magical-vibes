@@ -31,8 +31,7 @@ public class TheOoze extends Card {
                         new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD),
                         mutagenToken()
                 ),
-                "{T}: Exile target card from a graveyard. Create a Mutagen token. Activate only as a sorcery.",
-                ActivationTimingRestriction.SORCERY_SPEED
+                "{T}: Exile target card from a graveyard. Create a Mutagen token."
         ));
     }
 

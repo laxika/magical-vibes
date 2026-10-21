@@ -2630,7 +2630,7 @@ public class GraveyardReturnSupport {
             permanent.enterAttacking(true);
         }
         if (exileIfLeavesBattlefield) {
-            // Unearth's second clause (CR 702.100): if it would leave the battlefield for any other
+            // Unearth's second clause (CR 702.84a): if it would leave the battlefield for any other
             // reason, exile it instead. Shallow Grave has only the delayed exile, not this.
             permanent.setExileIfLeavesBattlefield(true);
         }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -101,8 +102,9 @@ class TragicLessonTest extends BaseCardTest {
     void borrowedLandReturnsToOwnerWithoutDiscard() {
         Plains land = new Plains();
         land.setOwnerId(player2.getId());
-        UUID landId = harness.addToBattlefieldAndReturn(player1, land).getId();
-        gd.stolenCreatures.put(landId, player2.getId());
+        Permanent borrowed = harness.addToBattlefieldAndReturn(player1, land);
+        UUID landId = borrowed.getId();
+        setOwnerAndController(borrowed, player2, player1);
 
         castTragicLesson();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);

@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class TimeSpiral extends Card {
 
     public TimeSpiral() {
+        // Exile Time Spiral.
+        addEffect(EffectSlot.SPELL, ExileSpellEffect.immediately());
+
         // Each player shuffles their hand and graveyard into their library, then draws seven cards.
         addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
         addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(7));
@@ -21,8 +24,5 @@ public class TimeSpiral extends Card {
         // Untap up to six lands.
         addEffect(EffectSlot.SPELL,
                 new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsLandPredicate(), 6));
-
-        // Exile Time Spiral.
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
     }
 }

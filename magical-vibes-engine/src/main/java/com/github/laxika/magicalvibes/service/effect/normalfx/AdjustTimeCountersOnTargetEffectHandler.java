@@ -22,6 +22,7 @@ public class AdjustTimeCountersOnTargetEffectHandler implements NormalEffectHand
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
+    private final RemoveSuspendCounterFromExiledSpellEffectHandler removeSuspendCounterHandler;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -50,15 +51,27 @@ public class AdjustTimeCountersOnTargetEffectHandler implements NormalEffectHand
         }
 
         if (entry.getTargetZone() == Zone.EXILE) {
-            if (gameData.findExiledCard(targetId) == null
-                    || !gameData.exiledCardTimeCounters.containsKey(targetId)) {
+            if (gameData.findExiledCard(targetId) == null) {
+                return;
+            }
+            boolean suspendedSpell = !gameData.exiledCardTimeCounters.containsKey(targetId)
+                    && gameData.suspendedSpellExiles.stream().anyMatch(pending -> pending.cardId().equals(targetId));
+            if (!suspendedSpell && !gameData.exiledCardTimeCounters.containsKey(targetId)) {
                 return;
             }
             if (adjustment.add()) {
-                gameData.exiledCardTimeCounters.merge(targetId, amount, Integer::sum);
+                if (suspendedSpell) {
+                    addSuspendedSpellCounters(gameData, targetId, amount);
+                } else {
+                    gameData.exiledCardTimeCounters.merge(targetId, amount, Integer::sum);
+                }
             } else {
                 for (int i = 0; i < amount; i++) {
-                    removeTimeCounterHandler.removeTimeCounter(gameData, targetId);
+                    if (suspendedSpell) {
+                        removeSuspendCounterHandler.removeTimeCounter(gameData, targetId);
+                    } else {
+                        removeTimeCounterHandler.removeTimeCounter(gameData, targetId);
+                    }
                 }
             }
             return;
@@ -74,6 +87,17 @@ public class AdjustTimeCountersOnTargetEffectHandler implements NormalEffectHand
         } else {
             permanentCounterSupport.removeCountersFromPermanent(gameData, target,
                     com.github.laxika.magicalvibes.model.CounterType.TIME, amount);
+        }
+    }
+
+    private void addSuspendedSpellCounters(GameData gameData, UUID cardId, int amount) {
+        for (int i = 0; i < gameData.suspendedSpellExiles.size(); i++) {
+            GameData.SuspendedSpellExile pending = gameData.suspendedSpellExiles.get(i);
+            if (cardId.equals(pending.cardId())) {
+                gameData.suspendedSpellExiles.set(i, new GameData.SuspendedSpellExile(
+                        cardId, pending.ownerId(), pending.counters() + amount));
+                return;
+            }
         }
     }
 }

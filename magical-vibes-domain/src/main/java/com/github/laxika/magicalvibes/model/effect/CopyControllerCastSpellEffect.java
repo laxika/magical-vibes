@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 import java.util.List;
 import java.util.Set;
@@ -32,6 +33,8 @@ import java.util.UUID;
  * @param permanentSpellToken whether a copy of a permanent spell becomes a token
  * @param sacrificeAtEndStep whether a permanent-spell token copy is sacrificed at the next end step
  * @param copies how many copies this single copy event creates (Jaya, Fiery Negotiator's emblem copies twice)
+ * @param dynamicCopies when set, the number of copies is evaluated as this effect resolves rather than
+ *                      fixed when it was put on the stack, and no copy is made if it is zero or less
  */
 public record CopyControllerCastSpellEffect(
         StackEntry spellSnapshot,
@@ -49,8 +52,28 @@ public record CopyControllerCastSpellEffect(
         List<CardSubtype> additionalSubtypes,
         Integer powerOverride,
         Integer toughnessOverride,
-        int copies
+        int copies,
+        DynamicAmount dynamicCopies
 ) implements CardEffect {
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes,
+            Set<CardSupertype> removedSupertypes, boolean tokenCopy, boolean mayChooseNewTargets,
+            boolean grantHasteToPermanentSpell, boolean markSourceOncePerTurnOnAccept,
+            boolean startingLoyaltyFromX, boolean permanentSpellToken, boolean sacrificeAtEndStep,
+            List<CardSubtype> additionalSubtypes, Integer powerOverride, Integer toughnessOverride,
+            int copies) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, removedSupertypes,
+                tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept,
+                startingLoyaltyFromX, permanentSpellToken, sacrificeAtEndStep, additionalSubtypes,
+                powerOverride, toughnessOverride, copies, null);
+    }
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            DynamicAmount dynamicCopies) {
+        this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), Set.of(), false, true, false, false, false,
+                false, false, List.of(), null, null, 1, dynamicCopies);
+    }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
             Set<Keyword> grantedKeywords, Set<CardType> additionalTypes,

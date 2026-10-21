@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -182,6 +181,8 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
      */
     private List<UUID> nonlandPermanentIds(GameData gameData, UUID playerId, UUID excludedPermanentId) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                p -> !p.getCard().hasType(CardType.LAND) && !p.getId().equals(excludedPermanentId));
+                p -> !gameQueryService.isLand(gameData, p)
+                        && !gameQueryService.cantBeSacrificed(gameData, p)
+                        && !p.getId().equals(excludedPermanentId));
     }
 }

@@ -186,9 +186,9 @@ class ThopterAssemblyTest extends BaseCardTest {
     void destroyedSourceStillCreatesTokensThroughEngine() {
         Permanent assembly = harness.addToBattlefieldAndReturn(player1, new ThopterAssembly());
         harness.setHand(player1, List.of(new DivineOffering()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0, assembly.getId());
         harness.assertInGraveyard(player1, "Thopter Assembly");
@@ -206,7 +206,7 @@ class ThopterAssemblyTest extends BaseCardTest {
     @DisplayName("A controlled Assembly returns to its owner while its controller creates the tokens")
     void returnsToOwnerAndCreatesTokensForController() {
         Permanent assembly = harness.addToBattlefieldAndReturn(player1, new ThopterAssembly());
-        gd.stolenCreatures.put(assembly.getId(), player2.getId());
+        setOwnerAndController(assembly, player2, player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -223,9 +223,9 @@ class ThopterAssemblyTest extends BaseCardTest {
     void departedSourceStillChecksForOtherThopters() {
         Permanent assembly = harness.addToBattlefieldAndReturn(player1, new ThopterAssembly());
         harness.setHand(player1, List.of(new DivineOffering()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, assembly.getId());
         harness.addToBattlefield(player1, new ThopterAssembly());
         harness.passBothPriorities();

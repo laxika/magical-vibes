@@ -55,9 +55,20 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        // Break the bond before removal so the linked permanent's own leaves-battlefield trigger becomes
-        // a no-op (avoids the reciprocal exile ↔ sacrifice bouncing back).
-        linked.setChosenPermanentId(null);
+        // CR 701.21a: only a permanent its controller controls can be sacrificed, so a chosen creature
+        // that another player has since gained control of is left alone.
+        if (e.mode() == RemoveLinkedPermanentEffect.Mode.SACRIFICE
+                && !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, linked.getId()))) {
+            return;
+        }
+
+        // Break the mutual bond before removal so the linked permanent's own leaves-battlefield trigger
+        // becomes a no-op (avoids the reciprocal exile <-> sacrifice bouncing back). A one-way link
+        // (Tyrannical Pitlord) has no reciprocal trigger, and the linked permanent may itself be a Pitlord
+        // whose own chosen creature must still be sacrificed when it leaves.
+        if (e.mode() != RemoveLinkedPermanentEffect.Mode.SACRIFICE) {
+            linked.setChosenPermanentId(null);
+        }
 
         String name = linked.getCard().getName();
         switch (e.mode()) {

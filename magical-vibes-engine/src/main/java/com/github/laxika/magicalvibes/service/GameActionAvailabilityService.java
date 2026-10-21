@@ -309,7 +309,9 @@ public class GameActionAvailabilityService {
         for (int i = 0; i < hand.size(); i++) {
             Card effectiveCard = HandCastCardCharacteristicsService.effectiveCard(
                     gameData, playerId, hand.get(i), gameQueryService);
-            if (isCardPlayable(gameData, playerId, effectiveCard, pool, extraConvokeMana, 0, ctx)) {
+            if (isCardPlayable(gameData, playerId, effectiveCard, pool, extraConvokeMana, 0, ctx)
+                    || (effectiveCard != hand.get(i)
+                    && isCardPlayable(gameData, playerId, hand.get(i), pool, extraConvokeMana, 0, ctx))) {
                 playable.add(i);
             }
         }
@@ -363,6 +365,16 @@ public class GameActionAvailabilityService {
     public boolean isCardPlayable(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalGenericCost) {
         card = HandCastCardCharacteristicsService.effectiveCardIfInHand(
                 gameData, playerId, card, gameQueryService);
+        return isCardPlayable(gameData, playerId, card, pool, 0, additionalGenericCost,
+                buildSpellPlayabilityContext(gameData, playerId));
+    }
+
+    /**
+     * Playability of {@code card} exactly as given, without applying hand-cast substitutions from
+     * static effects. Used to decide whether an optional "cast as though" characteristic is usable.
+     */
+    public boolean isCardPlayableAsPrinted(GameData gameData, UUID playerId, Card card,
+                                           ManaPool pool, int additionalGenericCost) {
         return isCardPlayable(gameData, playerId, card, pool, 0, additionalGenericCost,
                 buildSpellPlayabilityContext(gameData, playerId));
     }

@@ -212,7 +212,7 @@ class ToralfGodOfFuryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(powerBefore);
         harness.setLife(player2, 20);
 
-        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
 
         assertThat(hammer.getAttachedTo()).isNull();
         assertThat(creature.isTapped()).isTrue();
@@ -227,6 +227,7 @@ class ToralfGodOfFuryTest extends BaseCardTest {
     @Test
     void illegalHammerTargetPreventsDamageAndReturnButDoesNotReattach() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArniBrokenbrow());
+        creature.setSummoningSick(false);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AxgardCavalry());
         harness.setHand(player1, List.of(new ToralfGodOfFury(), new DemonBolt()));
         harness.addMana(player1, ManaColor.RED, 7);
@@ -235,7 +236,7 @@ class ToralfGodOfFuryTest extends BaseCardTest {
         Permanent hammer = findPermanent(player1, "Toralf's Hammer");
         hammer.setAttachedTo(creature.getId());
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 

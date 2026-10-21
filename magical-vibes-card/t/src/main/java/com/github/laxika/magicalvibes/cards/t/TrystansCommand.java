@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "247")
 @CardRegistration(set = "ECL", collectorNumber = "344")
@@ -52,7 +53,7 @@ public class TrystansCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Return one or two target permanent cards from your graveyard to your hand",
                         new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardIsPermanentPredicate(), 2)),
+                                new CardIsPermanentPredicate(), 2, null, false, false, 1, false, Set.of(), false)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature or enchantment",
                         new DestroyTargetPermanentEffect(),

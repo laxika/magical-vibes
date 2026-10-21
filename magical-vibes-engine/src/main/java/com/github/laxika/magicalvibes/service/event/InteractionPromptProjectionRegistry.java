@@ -999,7 +999,7 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
                 4,
-                "Choose exactly four legendary creature cards with different names from your library "
+                "Choose up to four legendary creature cards with different names from your library "
                         + "and outside the game to reveal.");
     }
 

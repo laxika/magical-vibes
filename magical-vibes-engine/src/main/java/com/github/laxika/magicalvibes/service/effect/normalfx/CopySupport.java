@@ -74,7 +74,7 @@ public class CopySupport {
             return;
         }
 
-        int additionalCopies = gameQueryService.countAdditionalSpellCopies(gameData);
+        int additionalCopies = gameQueryService.countAdditionalSpellCopies(gameData, copyEntry.getControllerId());
         for (int i = 0; i < additionalCopies; i++) {
             Card extraCopyCard = createCopyCard(copyEntry.getCard());
             StackEntry extraCopy = createCopyStackEntry(
@@ -134,7 +134,7 @@ public class CopySupport {
         List<DeferredSpellCopy> deferred = new ArrayList<>(gameData.deferredGraveyardCastCopies);
         gameData.deferredGraveyardCastCopies.clear();
         for (DeferredSpellCopy pending : deferred) {
-            int copyCount = adjustedSpellCopyCount(gameData, pending.requestedCopies());
+            int copyCount = adjustedSpellCopyCount(gameData, pending.controllerId(), pending.requestedCopies());
             for (int i = 0; i < copyCount; i++) {
                 Card copyCard = createCopyCard(pending.cardToCast());
                 StackEntry copyEntry = createCopyStackEntry(
@@ -151,11 +151,11 @@ public class CopySupport {
     }
 
     /** Adjusts a counted spell-copy event for active global spell-copy replacements. */
-    public int adjustedSpellCopyCount(GameData gameData, int requestedCopies) {
+    public int adjustedSpellCopyCount(GameData gameData, UUID copyControllerId, int requestedCopies) {
         if (requestedCopies <= 0 || gameQueryService == null) {
             return requestedCopies;
         }
-        return requestedCopies + gameQueryService.countAdditionalSpellCopies(gameData);
+        return requestedCopies + gameQueryService.countAdditionalSpellCopies(gameData, copyControllerId);
     }
 
     private static boolean isSpellCopy(StackEntry entry) {

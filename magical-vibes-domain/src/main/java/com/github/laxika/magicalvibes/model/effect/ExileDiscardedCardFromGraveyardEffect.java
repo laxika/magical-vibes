@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Triggered-ability marker: "Whenever you discard a card, exile that card from your graveyard."
  * Placed in {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_CONTROLLER_DISCARDS}. The
- * just-discarded card (already in the controller's graveyard) is moved to exile.
+ * just-discarded card (already in the controller's graveyard) is moved to exile. In
+ * {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_CONTROLLER_DISCARD_EVENT} it is the
+ * "whenever you discard one or more cards, exile them" form: one trigger exiles every card the
+ * discard event discarded (Toluz, Clever Conductor).
  *
  * @param trackWithSource whether to resolve the exile as a triggered ability and track the exiled
  *                       card with the triggering permanent

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShiningArmor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -121,7 +122,7 @@ class TrappedInTheTowerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Trapped in the Tower");
         harness.assertInGraveyard(player1, "Trapped in the Tower");
-        declareAttackers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player2, List.of(0)));
         assertThat(creature.isAttacking()).isTrue();
     }
 
@@ -135,7 +136,7 @@ class TrappedInTheTowerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Trapped in the Tower");
         harness.assertInGraveyard(player1, "Trapped in the Tower");
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(0)));
         assertThat(creature.isAttacking()).isTrue();
     }
 }
