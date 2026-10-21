@@ -27,10 +27,14 @@ Commander uses the regular Commander rules for a two-player game, not Duel Comma
 - Run `./gradlew clean build`
 - `cd` to `magical-vibes-application/build/libs/`
 - Run `java -jar magical-vibes-application-1.0.0-SNAPSHOT.jar`
+- Open `http://localhost:8080/` and log in (there are 3 users for now, credentials are under the login screen). The jar bundles the frontend, so nothing else needs to run.
+
+**Frontend development:**
+- Start the server on port 8080: run the jar as above, run `./gradlew :magical-vibes-application:bootRun`, or start `MagicalVibesApplication` from your IDE. An IDE launch doesn't bundle the frontend, so in that case `http://localhost:8080/` returns 404; use the dev server below.
 - Open a new terminal, go to `magical-vibes-frontend`
 - Run `npm install` (you need npm for this).
-- Run `ng serve` (you need to have the angular cli tool installed.
-- Open `http://localhost:4200/` and log in (there are 3 users for now, credentials are under the login screen).
+- Run `npm start`. It runs the Angular CLI from the project's own dependencies, so no global install is needed.
+- Open `http://localhost:4200/`. The dev server reloads on source changes and forwards the `/ws` websocket to the server on port 8080 (see `proxy.conf.json`).
 
 **Card data source and cache:**
 - The server keeps its own copy of every set: one `set-{code}.json` file per set (e.g. `set-isd.json`) with the cards, rarities, print variants and format legality, in a format of its own rather than Scryfall's or MTGJSON's.
