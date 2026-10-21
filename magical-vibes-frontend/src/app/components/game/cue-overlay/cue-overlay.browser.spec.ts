@@ -9,6 +9,7 @@ import { DEBUG_FLASH_EFFECT } from './debug-flash.effect';
 import { DEFAULT_EFFECT_MAX_MS } from './default-effects';
 import { CUE_ANIMATIONS, cueAnimationsReady, drawCueAnimation, preloadCueAnimations } from './cue-animations';
 import { PALETTES } from './cue-palette';
+import { CUE_HOLD_ANIMATION_ID } from './cue-card-motion';
 import {
   Card, Game, GameStatus, MessageType, Permanent, TurnStep, VisualCue, WebSocketMessage, WebsocketService
 } from '../../../services/websocket.service';
@@ -360,6 +361,90 @@ describe('Default effects in the browser', () => {
     const elapsed = performance.now() - started;
     expect(elapsed).toBeGreaterThan(DEFAULT_EFFECT_MAX_MS);
     expect(elapsed).toBeLessThan(3 * DEFAULT_EFFECT_MAX_MS + 400);
+  });
+});
+
+function permanentDisplay(id: string): HTMLElement {
+  return [...document.querySelectorAll<HTMLElement>('app-card-display')].find(el => el.textContent?.includes('Bear ' + id))!;
+}
+
+function heldFrames(element: HTMLElement): Animation[] {
+  return element.getAnimations().filter(animation => animation.id === CUE_HOLD_ANIMATION_ID);
+}
+
+describe('Default effects on the card in the browser', () => {
+  it('burn a destroyed card away and keep it gone until its new state takes it off the board', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+    const bear = permanentDisplay('bear');
+
+    m.messages.next(stateWith(board([creature('elf')], []), cueOf('DESTROYED', {
+      sourceCardId: 'murder', sourceName: 'Murder', sourceColors: ['BLACK'], targetPermanentId: 'bear'
+    }), cueOf('LIFE_LOST', { targetPlayerId: 'two', amount: 2 })));
+
+    await vi.waitFor(() => expect(getComputedStyle(bear).filter).toMatch(/url\(.*cue-burn-\d+/), { timeout: 1000, interval: 16 });
+    // The life loss plays after the burn: the burnt card stays gone while the state waits for it.
+    await vi.waitFor(() => expect(heldFrames(bear)[0]?.playState).toBe('finished'), { timeout: 1500, interval: 16 });
+    expect(getComputedStyle(bear).opacity).toBe('0');
+    expect(m.fixture.componentInstance.game()?.turnNumber).toBe(1);
+    await vi.waitFor(() => expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2), { timeout: 2000, interval: 16 });
+    await vi.waitFor(() => expect(bear.isConnected).toBe(false), { timeout: 2000, interval: 16 });
+    expect(document.querySelector('filter[id^="cue-burn-"]')).toBeNull();
+  });
+
+  it('knock a damaged card about and let it settle back where it was', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+    const bear = permanentDisplay('bear');
+    const before = bear.getBoundingClientRect();
+
+    m.messages.next(stateWith(game, damage({ permanent: 'bear' })));
+
+    await vi.waitFor(() => expect(bear.getAnimations().some(a => a.id === '')).toBe(true), { timeout: 1000, interval: 16 });
+    await vi.waitFor(() => expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2), { timeout: 2000, interval: 16 });
+    expect(heldFrames(bear)).toEqual([]);
+    const after = permanentDisplay('bear').getBoundingClientRect();
+    expect(after.left).toBeCloseTo(before.left, 0);
+    expect(after.top).toBeCloseTo(before.top, 0);
+  });
+
+  it('shatter a countered spell into shards laid exactly over its stack entry', async () => {
+    const spell = card('spell-card', 'Giant Growth');
+    const game = { ...board([creature('elf')], [creature('bear')]), stack: [{
+      entryType: 'INSTANT_SPELL', card: spell, controllerId: 'two', description: 'Giant Growth', cardId: 'spell-card',
+      isSpell: true, targetId: null
+    }] };
+    const m = await mount(game, null);
+    [...document.querySelectorAll<HTMLElement>('.tab')].find(tab => tab.textContent?.includes('Stack'))!.click();
+    m.fixture.detectChanges();
+    await frames(2);
+    const entry = document.querySelector<HTMLElement>('.stack-entry-wrapper')!;
+    const rect = entry.getBoundingClientRect();
+    expect(rect.width).toBeGreaterThan(0);
+
+    m.messages.next(stateWith({ ...game, stack: [] }, cueOf('SPELL_COUNTERED', {
+      sourceCardId: 'cancel', sourceName: 'Cancel', sourceColors: ['BLUE'], targetCardId: 'spell-card'
+    })));
+
+    await vi.waitFor(() => expect(document.querySelectorAll('.stack-entry-wrapper[aria-hidden="true"]').length).toBeGreaterThan(5),
+      { timeout: 1000, interval: 8 });
+    const shards = [...document.querySelectorAll<HTMLElement>('.stack-entry-wrapper[aria-hidden="true"]')];
+    const rewound = shards.flatMap(shard => shard.getAnimations());
+    rewound.forEach(animation => {
+      animation.pause();
+      animation.currentTime = 0;
+    });
+    for (const shard of shards) {
+      const box = shard.getBoundingClientRect();
+      expect(Math.abs(box.left - rect.left)).toBeLessThan(1.5);
+      expect(Math.abs(box.top - rect.top)).toBeLessThan(1.5);
+      expect(Math.abs(box.width - rect.width)).toBeLessThan(1.5);
+    }
+    expect(getComputedStyle(entry).opacity).toBe('0');
+    rewound.forEach(animation => animation.play());
+
+    await vi.waitFor(() => expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2), { timeout: 2000, interval: 16 });
+    expect(document.querySelectorAll('.stack-entry-wrapper[aria-hidden="true"]')).toHaveLength(0);
   });
 });
 

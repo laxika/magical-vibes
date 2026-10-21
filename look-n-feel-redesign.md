@@ -628,6 +628,32 @@ canvas fallbacks (dark smoke, a plain skull) for when the animations haven't loa
   `cue-overlay.browser.spec.ts` (the targetless-cast case now checks a creature spell's cast and
   resolve apply at once).
 
+### After step 10: effects on the card itself
+
+- **Pieces:** `cue-card-motion.ts` (element animations with held frames, the SVG burn filter,
+  recoil keyframes, shatter copies), `CueRects.targetElement`, `CueEffectContext.animateElement`
+  (scaled by speed, stopped with playback), `CueElementRegistry.element/targetElement`, and the
+  anchor directive releasing held frames on an id change. Details in `agent-docs/VISUAL-CUES.md`
+  → *Card motion*.
+- **Looks:** damage recoils the target and flashes it red; destroy jolts and burns the card
+  away (rim in the source look's accent); `DIED` greys, sinks and crumbles; sacrifice sinks and
+  burns half-grey; exile bleaches white, rises and burns out in gold; bounce spins down into the
+  vortex; a countered spell's stack entry shatters. Bolt shakes its target; Doom Blade burns it
+  in violet after the skull lands.
+- **Held frames:** a leaving card's last (invisible) frame is held until the state removes it,
+  and stopping playback jumps to it rather than cancelling, so cards never pop back between
+  their effect and the new state (the permanent-leave animation then runs on an invisible card).
+- **Wash timing:** leave washes end at 33% (Doom Blade's at 40% of its hit), and bounce has none:
+  a wash over a burning or spinning card showed as a ghost rectangle.
+- **Checking the look:** in a throwaway browser spec, set `cuePlayback.speed` to 0.1 and capture
+  with `cdp().send('Page.captureScreenshot', { clip: { …, scale: 4 } })` written by
+  `commands.writeFile` — vitest's `page.screenshot` comes out at the runner's 32% iframe scale.
+- **Tests:** new `cue-card-motion.spec.ts`; new cases in `default-effects.spec.ts` (*on the card
+  itself*), `showpiece-effects.spec.ts` (Bolt's shake, Doom Blade's burn),
+  `cue-effect-player.service.spec.ts` (target element, element animations scaled by speed) and
+  `cue-overlay.browser.spec.ts` (*Default effects on the card in the browser*). Spec helpers
+  building `CueRects` / `CueEffectContext` gained `targetElement` / `animateElement`.
+
 ## Prompt
 
 Replace `<N>` with the step number:

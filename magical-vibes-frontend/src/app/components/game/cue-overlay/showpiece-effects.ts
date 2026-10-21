@@ -2,8 +2,10 @@ import type { CueEffect } from '../../../services/cue-effect-player.service';
 import { burst, drawParticles, hashSeed, seededRandom } from './cue-particles';
 import { PALETTES } from './cue-palette';
 import { drawCueAnimation } from './cue-animations';
+import { CHAR_ASH } from './cue-card-motion';
 import {
-  Anchor, LOSS_COLOR, anchorOf, coverParticles, drawFloatingText, impactParticles, isDamage, randomFor, ring, spawn, wash
+  Anchor, LOSS_COLOR, anchorOf, clamp01, coverParticles, drawFloatingText, impactParticles, isDamage, playCardExit,
+  randomFor, recoil, ring, spawn, wash
 } from './default-effects';
 
 /**
@@ -24,8 +26,6 @@ export const DOOM_BLADE_MS = 1300;
 const SKULL_FORMS = 0.2;
 const SKULL_FALLS = 0.5;
 const SKULL_LANDS = 0.64;
-
-const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 interface Point {
   x: number;
@@ -90,7 +90,7 @@ function strokeBolt(draw: CanvasRenderingContext2D, points: Point[], reach: numb
 
 /**
  * Lightning Bolt: a jagged bolt cracks down from the top of the window onto the target, the
- * window flashes and shakes, and the target takes a fiery hit with the damage dealt.
+ * window flashes and shakes, and the target recoils from a fiery hit with the damage dealt.
  */
 export const LIGHTNING_BOLT_EFFECT: CueEffect = {
   matches: (cue, rects) => isDamage(cue) && rects.target !== null,
@@ -102,6 +102,7 @@ export const LIGHTNING_BOLT_EFFECT: CueEffect = {
     const amount = cue.amount ?? 0;
     const particles = impactParticles(random, palette, Math.max(4, amount));
     let struck = false;
+    let recoiled = Promise.resolve();
     await context.animate(LIGHTNING_BOLT_MS, (draw, progress) => {
       const rect = rects.target;
       if (!rect) return;
@@ -117,6 +118,9 @@ export const LIGHTNING_BOLT_EFFECT: CueEffect = {
       if (!struck) {
         struck = true;
         context.shake(Math.min(8, Math.max(3, at.unit * 0.06)), 240);
+        // The bolt comes from the sky, not from whoever cast it, so the card shakes where it stands.
+        recoiled = recoil(context, { source: null, target: rect, targetElement: rects.targetElement }, amount,
+          LIGHTNING_BOLT_MS * (1 - progress));
       }
       const hit = (progress - BOLT_STRIKE) / (1 - BOLT_STRIKE);
       if (hit < 0.25) {
@@ -130,6 +134,7 @@ export const LIGHTNING_BOLT_EFFECT: CueEffect = {
       drawParticles(draw, particles, hit, at.x, at.y, at.unit);
       if (amount > 0) drawFloatingText(draw, `-${amount}`, LOSS_COLOR, at, hit);
     });
+    await recoiled;
   }
 };
 
@@ -162,7 +167,7 @@ function drawSkull(draw: CanvasRenderingContext2D, x: number, y: number, size: n
 
 /**
  * Doom Blade: a dark cloud gathers over the target, a skull forms in it and drops onto the
- * target, and the creature goes dark under a burst of violet smoke.
+ * target, and the creature goes dark under a burst of violet smoke and burns away in violet.
  */
 export const DOOM_BLADE_EFFECT: CueEffect = {
   matches: (cue, rects) => cue.type === 'DESTROYED' && rects.target !== null,
@@ -176,6 +181,7 @@ export const DOOM_BLADE_EFFECT: CueEffect = {
     const smoke = spawn(rects.target, at => coverParticles(random, shadow, at, 34, 'smoke')) ?? [];
     const sparks = impactParticles(random, shadow, 6);
     let landed = false;
+    let card = { frame: (_progress: number) => {}, done: Promise.resolve() };
     await context.animate(DOOM_BLADE_MS, (draw, progress) => {
       const rect = rects.target;
       if (!rect) return;
@@ -204,13 +210,19 @@ export const DOOM_BLADE_EFFECT: CueEffect = {
       if (!landed) {
         landed = true;
         context.shake(Math.min(6, Math.max(2, at.unit * 0.04)), 180);
+        card = playCardExit(context, rects.targetElement, {
+          motion: [{ translate: '0% 0%', opacity: 1 }, { offset: 0.97, opacity: 1 }, { translate: '0% 3%', opacity: 0 }],
+          burn: { look: { rim: shadow.accent, ash: CHAR_ASH }, from: 0.05, to: 0.95, saturation: 0.5 }
+        }, DOOM_BLADE_MS * (1 - progress), Math.floor(random() * 1000));
       }
       const hit = (progress - SKULL_LANDS) / (1 - SKULL_LANDS);
-      wash(draw, rect, shadow.wash, 0.6 * Math.sin(Math.PI * Math.min(1, hit * 1.2)));
+      card.frame(hit);
+      wash(draw, rect, shadow.wash, 0.6 * Math.sin(Math.PI * Math.min(1, hit * 2.5)));
       ring(draw, at, shadow.accent, Math.min(1, hit * 2.5), 0.2, 1.1);
       drawParticles(draw, sparks, hit, at.x, at.y, at.unit);
       drawParticles(draw, smoke, hit, at.x, at.y, at.unit);
     });
+    await card.done;
   }
 };
 

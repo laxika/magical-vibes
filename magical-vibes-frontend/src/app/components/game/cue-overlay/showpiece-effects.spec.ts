@@ -18,8 +18,8 @@ function cue(type: VisualCueType, sourceName: string | null, overrides: Partial<
 const bolt = (type: VisualCueType = 'DAMAGE_TO_PERMANENT') => cue(type, 'Lightning Bolt');
 const doomBlade = (type: VisualCueType = 'DESTROYED') => cue(type, 'Doom Blade', { sourceColors: ['BLACK'] });
 
-function rects(target: DOMRect | null): CueRects {
-  return { source: null, target };
+function rects(target: DOMRect | null, targetElement: HTMLElement | null = null): CueRects {
+  return { source: null, target, targetElement };
 }
 
 /** A 2D context that records path points, translations and text, and ignores everything else. */
@@ -47,14 +47,22 @@ function recordingCanvas() {
 
 const PROGRESS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
-/** Runs each animation at a range of progress values, recording the durations asked for and when it shook. */
+/**
+ * Runs each animation at a range of progress values, recording the durations asked for, when it
+ * shook, and the element animations started (with the progress they started at).
+ */
 function fakeContext(canvas = recordingCanvas()) {
   const durations: number[] = [];
   const shakes: number[] = [];
+  const elementAnimations: { keyframes: Keyframe[]; durationMs: number; hold: boolean; progress: number }[] = [];
   const context: CueEffectContext = {
     signal: new AbortController().signal,
     speed: 1,
     shake: () => shakes.push(canvas.recorder.progress),
+    animateElement: (_element, keyframes, options) => {
+      elementAnimations.push({ keyframes, durationMs: options.durationMs, hold: !!options.hold, progress: canvas.recorder.progress });
+      return Promise.resolve();
+    },
     animate: (durationMs, frame) => {
       durations.push(durationMs);
       for (const progress of PROGRESS) {
@@ -64,7 +72,7 @@ function fakeContext(canvas = recordingCanvas()) {
       return Promise.resolve();
     }
   };
-  return { context, durations, shakes, ...canvas };
+  return { context, durations, shakes, elementAnimations, ...canvas };
 }
 
 const EFFECTS = [...SHOWPIECE_EFFECTS, ...DEFAULT_CUE_EFFECTS];
@@ -133,6 +141,19 @@ describe('Lightning Bolt', () => {
     expect(shakes).toEqual([0.2]);
   });
 
+  it('shakes the target with a red flash from when it strikes to the end of the effect', async () => {
+    const { context, elementAnimations } = fakeContext();
+
+    await effectFor(bolt())!.play(bolt(), rects(TARGET, document.createElement('div')), context);
+
+    expect(elementAnimations).toHaveLength(1);
+    const [{ keyframes, durationMs, hold, progress }] = elementAnimations;
+    expect(progress).toBe(0.2);
+    expect(hold).toBe(false);
+    expect(durationMs).toBeCloseTo(LIGHTNING_BOLT_MS * 0.8);
+    expect(keyframes.some(keyframe => String(keyframe['filter']).includes('sepia'))).toBe(true);
+  });
+
   it('shows the damage dealt and never the card\'s name', async () => {
     const { context, texts } = fakeContext();
 
@@ -185,15 +206,30 @@ describe('Doom Blade', () => {
 
     expect(shakes).toEqual([0.7]);
   });
+
+  it('burns the target away in violet once the skull lands, and holds it gone', async () => {
+    const { context, elementAnimations } = fakeContext();
+
+    await effectFor(doomBlade())!.play(doomBlade(), rects(TARGET, document.createElement('div')), context);
+
+    expect(elementAnimations).toHaveLength(1);
+    const [{ keyframes, durationMs, hold, progress }] = elementAnimations;
+    expect(progress).toBe(0.7);
+    expect(hold).toBe(true);
+    expect(durationMs).toBeCloseTo(DOOM_BLADE_MS * 0.3);
+    expect(String(keyframes[0]['filter'])).toMatch(/^url\(#cue-burn-\d+\)$/);
+    expect(keyframes[keyframes.length - 1]['opacity']).toBe(0);
+    expect(document.querySelector('filter[id^="cue-burn-"]')).toBeNull();
+  });
 });
 
 describe('Showpieces without a target', () => {
   it('stop drawing when the target goes away mid-effect', async () => {
     for (const c of [bolt(), doomBlade()]) {
       const canvas = recordingCanvas();
-      const live = { source: null, target: TARGET as DOMRect | null };
+      const live = { source: null, target: TARGET as DOMRect | null, targetElement: null };
       const context: CueEffectContext = {
-        signal: new AbortController().signal, speed: 1, shake: () => {},
+        signal: new AbortController().signal, speed: 1, shake: () => {}, animateElement: () => Promise.resolve(),
         animate: (_ms, frame) => {
           live.target = null;
           frame(canvas.draw, 0.5);

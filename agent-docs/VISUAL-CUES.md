@@ -107,12 +107,15 @@ effect registry. Everything below is frontend-only and cosmetic.
   `requestAnimationFrame` loop runs only while an animation is active; several animations may run
   at once on the same loop.
 - **Effects.** `CueEffect` = `matches(cue, rects)` + `play(cue, rects, context): Promise<void>`.
-  `rects.source` / `rects.target` are live getters (re-measured on each read). Draw with
+  `rects.source` / `rects.target` are live getters (re-measured on each read), and
+  `rects.targetElement` is the element showing the target (see *Card motion*). Draw with
   `context.animate(durationMs, (draw, progress) => …)`: the duration is at normal speed (the
   player divides it by the queue's speed) and the promise resolves early when playback is
   skipped, flushed or times out. `context.shake(magnitudePx, durationMs)` shakes the game layout
   (the overlay's `shakeTarget`, which doesn't contain the overlay, so the canvas stays put while
-  the cards it measures move) with the Web Animations API; it is cancelled with playback. `CUE_EFFECTS` (root token) lists the effects, most specific
+  the cards it measures move) with the Web Animations API; it is cancelled with playback.
+  `context.animateElement(element, keyframes, { durationMs, easing, hold })` animates a page
+  element (*Card motion* below). `CUE_EFFECTS` (root token) lists the effects, most specific
   first; the player uses the first that matches. `canPlay` is true only when an overlay is
   attached and an effect matches, so a cue whose target is not on screen does not hold the board.
 - **Registered effects.** `CUE_EFFECTS` is `[...SHOWPIECE_EFFECTS, ...DEFAULT_CUE_EFFECTS]`
@@ -140,6 +143,38 @@ effect registry. Everything below is frontend-only and cosmetic.
   alpha. It returns false and draws nothing until the files have loaded, so **every use needs a
   canvas fallback or must be optional decoration** — effects never wait for a file.
 
+### Card motion
+
+`components/game/cue-overlay/cue-card-motion.ts`: the canvas can't change how a card looks, so
+effects also animate the target's own element (`rects.targetElement`) with the Web Animations API.
+
+- **Composing:** motion uses the individual `translate` / `rotate` / `scale` properties (plus
+  `opacity`, `filter`, `box-shadow`), which apply on top of the card's own `transform` (tap
+  rotation, lift, `--card-shift-x`). Never animate `transform` itself. Distances in px are the
+  element's own pixels: `screenScale(element, rect)` converts from screen pixels under zoom.
+- **Held frames:** `hold: true` is for an element that is leaving. Its last frame (invisible)
+  stays after the animation (`fill: forwards`, id `CUE_HOLD_ANIMATION_ID`), and stopping playback
+  early (skip, flush, time limit) jumps to it instead of cancelling, so the card never pops back
+  before the state removes it. Held frames are let go (`releaseCueHolds`) when the
+  `appCueAnchor` element starts showing a different id (stack entries are tracked by position),
+  and by a timer if the element is still on the page `MAX_CUE_PLAYBACK_MS / speed + 1 s` after
+  the animation. Animations without `hold` are cancelled when playback stops.
+- **Burn:** `createCardBurn(seed, { rim, ash })` adds an SVG filter to a hidden `<defs>` on
+  `document.body`: a noise field plus the card's blurred outline (so edges go first), cut at three
+  thresholds (`burnThresholds`) into gone / glowing rim / charred band / untouched card, with
+  saturation and bleach controls. Effects apply its `filter` through the held keyframes, drive
+  it per canvas frame with `set(burn, { bleach, saturation })`, and `remove()` it when the
+  element animation ends. `playCardExit` (`default-effects.ts`) wraps all of that for a leaving card.
+- **Recoil:** `recoilKeyframes(direction, px)`: knocked away from the source and springing back,
+  or shaken side to side without a direction, with a red flash (`recoil()` in `default-effects.ts`).
+- **Shatter:** `shatter(element, random)` lays clipped copies of the element next to it (so its
+  scoped and ancestor styles still apply), placed by measuring a probe copy rather than by
+  layout math, one per `shardShapes` wedge (they tile the element exactly). The caller hides the
+  element with a held animation, flies the shards and calls `remove()`. Copies carry
+  `aria-hidden` and `pointer-events: none` and lose their ids.
+- **jsdom:** no `element.animate`, so element animations do nothing there; the SVG filter is
+  still created and driven, which is what the jsdom specs check.
+
 ### Showpiece effects
 
 `components/game/cue-overlay/showpiece-effects.ts`: hand-made effects for single cards, in
@@ -150,8 +185,8 @@ the defaults. They reuse the default effects' building blocks (`anchorOf`, `wash
 
 | Card | Cue | Look |
 |---|---|---|
-| Lightning Bolt | `DAMAGE_TO_PERMANENT`, `DAMAGE_TO_PLAYER` | 650 ms: a flickering jagged bolt with two forks cracks down from the top of the window onto the target (reaches it at 18%), the window flashes and shakes, then a fiery `impact` with sparks and `-N`. |
-| Doom Blade | `DESTROYED` | 1300 ms: a `doom-cloud` gathers above the target (kept on screen for targets at the top), a `skull` forms in it from 20%, falls from 50% and lands at 64% with a small shake, then the card darkens under a violet ring and smoke. Canvas fallbacks: dark smoke for the cloud, a plain skull. |
+| Lightning Bolt | `DAMAGE_TO_PERMANENT`, `DAMAGE_TO_PLAYER` | 650 ms: a flickering jagged bolt with two forks cracks down from the top of the window onto the target (reaches it at 18%), the window flashes and shakes, then a fiery `impact` with sparks and `-N`; the target shakes in place with a red flash until the end. |
+| Doom Blade | `DESTROYED` | 1300 ms: a `doom-cloud` gathers above the target (kept on screen for targets at the top), a `skull` forms in it from 20%, falls from 50% and lands at 64% with a small shake, then the card darkens under a violet ring and smoke and burns away with a violet rim (held gone). Canvas fallbacks: dark smoke for the cloud, a plain skull. |
 
 Other cues of these cards use the defaults (the `DIED` after a lethal Bolt), and casting and
 resolving them draws nothing. Showpieces may run past the 700 ms default budget but must fit
@@ -177,11 +212,11 @@ on the light board.
 
 | Effect | Cue types | Needs | Look |
 |---|---|---|---|
-| `DAMAGE_EFFECT` | `DAMAGE_TO_PERMANENT`, `DAMAGE_TO_PLAYER` | target | A 220 ms projectile from the source when the source is on screen and isn't the target, then a 450 ms `impact` starburst (fallback: ring), burst, sparks and a floating `-N`. Source look. |
-| `LEAVE_EFFECT` | `DESTROYED`, `SACRIFICED`, `EXILED`, `RETURNED_TO_HAND`, `DIED` | target | 600 ms over the whole card: destroy `crack`s the card and bursts, sacrifice releases `wisp`s rising from the bottom, exile flares in a `pillar` of light, bounce whirls into a `vortex`, `DIED` releases `wisp`s in grey smoke. Source look, else shadow (destroy, sacrifice), light (exile) or water (bounce). |
+| `DAMAGE_EFFECT` | `DAMAGE_TO_PERMANENT`, `DAMAGE_TO_PLAYER` | target | A 220 ms projectile from the source when the source is on screen and isn't the target, then a 450 ms `impact` starburst (fallback: ring), burst, sparks and a floating `-N`, while the target (card or player badge) recoils away from the source (or shakes) with a red flash. Source look. |
+| `LEAVE_EFFECT` | `DESTROYED`, `SACRIFICED`, `EXILED`, `RETURNED_TO_HAND`, `DIED` | target | 600 ms over the whole card: destroy `crack`s the card, which jolts and burns away with a rim in the look's accent; sacrifice releases `wisp`s rising from the bottom while the card sinks and burns half-greyed; exile flares in a `pillar` of light while the card bleaches white, rises and burns out in gold; bounce spins the card down into a `vortex` (no wash); `DIED` releases `wisp`s in grey smoke while the card greys, sinks and crumbles. The card is held gone until the state removes it. Centrepiece and particles stay where the card started; the wash follows it and is over by 33%. Source look, else shadow (destroy, sacrifice), light (exile) or water (bounce). |
 | `LIFE_EFFECT` | `LIFE_GAINED`, `LIFE_LOST` | target | 550 ms on the player badge: a rising `life-gain` cross, `heal` light and a green `+N`, or a splashing `life-loss` drop, a falling `drain` and a red `-N`. |
 | `COUNTERS_EFFECT` | `COUNTERS_ADDED` | target | 550 ms: a `badge`, particles and a label by counter type. `PLUS_*` is green and reads `+2/+2`, `MINUS_*` is shadow and reads `-1/-1`, `LOYALTY` is gold; other types use the source look and read `+1 lore`. |
-| `SPELL_COUNTERED_EFFECT` | `SPELL_COUNTERED` | — | A projectile from the counter to the spell when both show, then a rune that cracks and `shatter`s (fallback: a cross) with sparks on the spell (or the middle of the window). Source look, else water. |
+| `SPELL_COUNTERED_EFFECT` | `SPELL_COUNTERED` | — | A projectile from the counter to the spell when both show, then a rune that cracks and `shatter`s (fallback: a cross) with sparks on the spell (or the middle of the window); a showing stack entry shatters into shards that fly apart and is held hidden. Source look, else water. |
 
 `SPELL_CAST` and `SPELL_RESOLVED` have **no default effect** on purpose: a spell going on the
 stack and a spell resolving (a creature being summoned included) draw nothing and apply at once.
@@ -316,13 +351,20 @@ default, warm red damage, dark black destroy, simultaneous combat damage, a targ
 whole Lightning Bolt inside the budget; the authored animations: served with known slots,
 lottie loads and draws in the look's colors, the defaults draw them on the overlay; the
 showpieces: Bolt strikes from the top and shakes the board, Doom Blade's cloud gathers above
-its target and darkens it) and `cue-effect-player.service.spec.ts` (registry lookups, effect
-selection with stubbed rectangles, shakes). `showpiece-effects.spec.ts` covers the showpieces in
+its target and darkens it; card motion: a destroyed card burns and stays gone while later cues
+play until its state removes it, a damaged card settles back where it was, a countered spell's
+shards line up exactly with its stack entry) and `cue-effect-player.service.spec.ts` (registry
+lookups, effect selection with stubbed rectangles, shakes, element animations scaled by speed).
+`cue-card-motion.spec.ts` covers holding and releasing frames (fake `Animation`s), the anchor
+directive letting go on an id change, the burn's thresholds and filter, and that shards tile
+the element. `showpiece-effects.spec.ts` covers the showpieces in
 jsdom (which cues they take, the bolt's path and flicker, the skull's path, when they shake) and
 `cue-animations.spec.ts` the loader and recoloring; browser specs that mount the app's own
 effects wait for the animations to load first, as in a game. `default-effects.spec.ts` covers the default
 effects in jsdom with a recording 2D context: every type has an effect, the time budget, the
-projectile rules, labels, looks, fallbacks, and that no source name is ever drawn. Browser specs need Playwright's
+projectile rules, labels, looks, fallbacks, and that no source name is ever drawn; and what
+each does to the card (recoil direction, held exits, burn filter and its progress, bleach,
+bounce spin, shatter copies). Browser specs need Playwright's
 Chromium (`npx playwright install chromium`).
 
 Client playback is specified in `cue-playback.service.spec.ts` (a fake `CuePlayer` whose cues

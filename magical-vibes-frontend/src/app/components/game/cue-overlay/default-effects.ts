@@ -1,8 +1,9 @@
-import type { CueEffect, CueEffectContext } from '../../../services/cue-effect-player.service';
+import type { CueEffect, CueEffectContext, CueRects } from '../../../services/cue-effect-player.service';
 import { VisualCue, VisualCueType } from '../../../services/websocket.service';
 import { Particle, Random, burst, drawParticles, hashSeed, seededRandom, softDot, swirl } from './cue-particles';
 import { CueElement, CuePalette, PALETTES, sourcePalette, sourcePaletteOr } from './cue-palette';
 import { CueAnimationName, drawCueAnimation } from './cue-animations';
+import { BurnLook, CHAR_ASH, GOLD_ASH, createCardBurn, recoilKeyframes, screenScale, shatter } from './cue-card-motion';
 
 /**
  * The fallback effects: one for every cue type except `SPELL_CAST` and `SPELL_RESOLVED`, chosen by
@@ -15,6 +16,9 @@ import { CueAnimationName, drawCueAnimation } from './cue-animations';
  * look, with the canvas particles and labels drawn over it. Until the animations have loaded (or
  * if they can't), the centrepiece falls back to a canvas drawing (rings, crosses, washes), so an
  * effect looks complete either way.
+ *
+ * The card itself takes part too (`cue-card-motion.ts`): a hit card recoils and flashes red, a
+ * leaving card burns, crumbles, bleaches or spins away, and a countered spell shatters.
  */
 
 /** The longest any default effect runs at normal speed, projectile included. */
@@ -64,6 +68,8 @@ export function randomFor(cue: VisualCue): Random {
   return seededRandom(hashSeed([cue.type, cue.sourceCardId, cue.targetPermanentId, cue.targetPlayerId,
     cue.targetCardId, cue.amount, cue.counterType].join('|')));
 }
+
+export const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 export function easeOut(t: number): number {
   return 1 - (1 - t) ** 3;
@@ -188,7 +194,25 @@ function isType(...types: VisualCueType[]) {
 
 export const isDamage = isType('DAMAGE_TO_PERMANENT', 'DAMAGE_TO_PLAYER');
 
-/** Damage: a bolt from the source (when it is on screen) to the target, a starburst impact in the source's look, and the amount. */
+/**
+ * Knocks the target back from the source (or shakes it when the source isn't on screen or is the
+ * target itself) with a red flash, harder for more damage; resolves when it has settled.
+ */
+export function recoil(context: CueEffectContext, rects: CueRects, amount: number, durationMs: number): Promise<void> {
+  const element = rects.targetElement;
+  const target = rects.target;
+  if (!element || !target) return Promise.resolve();
+  const at = anchorOf(target);
+  const source = rects.source;
+  const from = source ? anchorOf(source) : null;
+  const distance = from ? Math.hypot(at.x - from.x, at.y - from.y) : 0;
+  const direction = from && distance >= at.unit * 0.5 ? { x: (at.x - from.x) / distance, y: (at.y - from.y) / distance } : null;
+  const push = Math.min(14, Math.max(4, at.unit * (0.06 + 0.01 * Math.min(6, amount))));
+  return context.animateElement(element, recoilKeyframes(direction, push / screenScale(element, target)),
+    { durationMs, easing: 'ease-out' });
+}
+
+/** Damage: a bolt from the source (when it is on screen) to the target, which recoils under a starburst impact in the source's look, and the amount. */
 export const DAMAGE_EFFECT: CueEffect = {
   matches: (cue, rects) => isDamage(cue) && rects.target !== null,
   async play(cue, rects, context) {
@@ -197,24 +221,64 @@ export const DAMAGE_EFFECT: CueEffect = {
     await fly(context, () => rects.source, () => rects.target, palette, PROJECTILE_MS);
     const amount = cue.amount ?? 0;
     const particles = impactParticles(random, palette, amount);
-    await context.animate(IMPACT_MS, on(() => rects.target, (draw, progress, at) => {
-      if (!drawCueAnimation(draw, 'impact', palette, progress, at, 0.9)) {
-        ring(draw, at, palette.accent, Math.min(1, progress * 2), 0.15, 0.9);
-      }
-      drawParticles(draw, particles, progress, at.x, at.y, at.unit);
-      if (amount > 0) drawFloatingText(draw, `-${amount}`, LOSS_COLOR, at, progress);
-    }));
+    await Promise.all([
+      recoil(context, rects, amount, IMPACT_MS),
+      context.animate(IMPACT_MS, on(() => rects.target, (draw, progress, at) => {
+        if (!drawCueAnimation(draw, 'impact', palette, progress, at, 0.9)) {
+          ring(draw, at, palette.accent, Math.min(1, progress * 2), 0.15, 0.9);
+        }
+        drawParticles(draw, particles, progress, at.x, at.y, at.unit);
+        if (amount > 0) drawFloatingText(draw, `-${amount}`, LOSS_COLOR, at, progress);
+      }))
+    ]);
   }
 };
 
-/** How each way of leaving the battlefield moves its particles, and the look it uses without a colored source. */
+/** How a leaving card goes: its own motion, and a burn over part of the effect. */
+export interface CardExit {
+  /** Individual `translate` / `rotate` / `scale` and `opacity` keyframes; the last one is invisible. */
+  motion: Keyframe[];
+  easing?: string;
+  /** Burns the card away between `from` and `to` (shares of the effect), toning it to `bleach` and `saturation` by `from`. */
+  burn?: { look: BurnLook; from: number; to: number; bleach?: number; saturation?: number };
+}
+
+/**
+ * Plays `exit` on the leaving card for `durationMs` and holds its last frame until the card is
+ * gone from the page. Call `frame` with the effect's progress to drive the burn; `done` resolves
+ * when the card's animation is over, with its burn filter removed.
+ */
+export function playCardExit(context: CueEffectContext, element: HTMLElement | null, exit: CardExit, durationMs: number,
+                             seed: number): { frame: (progress: number) => void; done: Promise<void> } {
+  if (!element) return { frame: () => {}, done: Promise.resolve() };
+  const look = exit.burn;
+  const burn = look ? createCardBurn(seed, look.look) : null;
+  // A burn would char the drop shadow around the card, so the shadow goes while it burns.
+  const keyframes = burn ? exit.motion.map(keyframe => ({ ...keyframe, filter: burn.filter, boxShadow: 'none' })) : exit.motion;
+  const done = context.animateElement(element, keyframes, { durationMs, easing: exit.easing, hold: true })
+    .finally(() => burn?.remove());
+  return {
+    frame: progress => {
+      if (!burn || !look) return;
+      const toned = clamp01(progress / Math.max(0.05, look.from));
+      burn.set(clamp01((progress - look.from) / (look.to - look.from)), {
+        bleach: (look.bleach ?? 0) * toned,
+        saturation: 1 + ((look.saturation ?? 1) - 1) * toned
+      });
+    },
+    done
+  };
+}
+
+/** How each way of leaving the battlefield moves its particles and the card, and the look it uses without a colored source. */
 interface LeaveStyle {
   palette: (cue: VisualCue) => CuePalette;
-  /** Strength of the wash over the card at the start. */
+  /** Strength of the wash over the card at the start; it is gone before the card starts to burn away. */
   wash: number;
   particles: (random: Random, palette: CuePalette, at: Anchor) => Particle[];
   /** The authored centrepiece and its size in card units; without it loaded, only the wash and particles show. */
   animation: { name: CueAnimationName; scale: number };
+  card: (palette: CuePalette) => CardExit;
 }
 
 const LEAVE_STYLES: Partial<Record<VisualCueType, LeaveStyle>> = {
@@ -225,59 +289,98 @@ const LEAVE_STYLES: Partial<Record<VisualCueType, LeaveStyle>> = {
       ...coverParticles(random, palette, at, 30),
       ...impactParticles(random, palette, 4)
     ],
-    animation: { name: 'crack', scale: 0.7 }
+    animation: { name: 'crack', scale: 0.7 },
+    card: palette => ({
+      motion: [
+        { translate: '0px 0px', opacity: 1 }, { offset: 0.05, translate: '3px -2px' }, { offset: 0.1, translate: '-3px 1px' },
+        { offset: 0.15, translate: '1px 0px' }, { offset: 0.2, translate: '0px 0px' }, { offset: 0.97, opacity: 1 },
+        { translate: '0px 0px', opacity: 0 }
+      ],
+      burn: { look: { rim: palette.accent, ash: CHAR_ASH }, from: 0.1, to: 0.95 }
+    })
   },
   DIED: {
     palette: () => PALETTES.smoke,
     wash: 0.5,
     particles: (random, palette, at) => coverParticles(random, palette, at, 30, 'smoke'),
-    animation: { name: 'wisp', scale: 0.8 }
+    animation: { name: 'wisp', scale: 0.8 },
+    card: palette => ({
+      motion: [{ translate: '0% 0%', scale: 1, opacity: 1 }, { offset: 0.97, opacity: 1 }, { translate: '0% 4%', scale: 0.97, opacity: 0 }],
+      easing: 'ease-in',
+      burn: { look: { rim: palette.accent, ash: CHAR_ASH }, from: 0.15, to: 0.95, saturation: 0 }
+    })
   },
   SACRIFICED: {
     palette: cue => sourcePaletteOr(cue.sourceColors, 'shadow'),
     wash: 0.4,
     particles: (random, palette, at) => coverParticles(random, { ...palette, rise: -1.2 }, at, 26)
       .map(p => ({ ...p, y: p.y * 0.3 + at.halfHeight * 0.6 })),
-    animation: { name: 'wisp', scale: 0.8 }
+    animation: { name: 'wisp', scale: 0.8 },
+    card: palette => ({
+      motion: [{ translate: '0% 0%', scale: 1, opacity: 1 }, { offset: 0.97, opacity: 1 }, { translate: '0% 8%', scale: 0.94, opacity: 0 }],
+      easing: 'ease-in',
+      burn: { look: { rim: palette.accent, ash: CHAR_ASH }, from: 0.15, to: 1, saturation: 0.4 }
+    })
   },
   EXILED: {
     palette: cue => sourcePaletteOr(cue.sourceColors, 'light'),
     wash: 0.6,
     particles: (random, palette, at) => coverParticles(random, { ...palette, rise: -1.4 }, at, 30, 'glow'),
-    animation: { name: 'pillar', scale: 0.9 }
+    animation: { name: 'pillar', scale: 0.9 },
+    card: palette => ({
+      motion: [{ translate: '0% 0%', scale: 1, opacity: 1 }, { offset: 0.97, opacity: 1 }, { translate: '0% -14%', scale: 1.05, opacity: 0 }],
+      easing: 'ease-in-out',
+      burn: { look: { rim: palette.accent, ash: GOLD_ASH }, from: 0.3, to: 1, bleach: 0.9, saturation: 0 }
+    })
   },
   RETURNED_TO_HAND: {
     palette: cue => sourcePaletteOr(cue.sourceColors, 'water'),
-    wash: 0.35,
+    // The card spins, so a wash over its bounding box would show as a box; the vortex is enough.
+    wash: 0,
     particles: (random, palette, at) => swirl(random, {
       count: 28, mode: 'glow', colors: palette.colors, size: [0.06, 0.12], life: [0.6, 0.9], delay: [0, 0.15],
       radius: [Math.max(at.halfWidth, at.halfHeight) * 0.9, Math.max(at.halfWidth, at.halfHeight) * 1.3], turns: 1.2
     }),
-    animation: { name: 'vortex', scale: 0.9 }
+    animation: { name: 'vortex', scale: 0.9 },
+    card: () => ({
+      motion: [
+        { rotate: '0deg', scale: 1, opacity: 1 }, { offset: 0.7, opacity: 1 },
+        { rotate: '330deg', scale: 0.08, opacity: 0 }
+      ],
+      easing: 'cubic-bezier(0.5, 0, 0.75, 0.6)'
+    })
   }
 };
 
 /**
- * Leaving the battlefield, in the source's look: destroy cracks the card and bursts (black = smoke,
- * red = fire), exile flares up in a column of light, a bounce whirls into a vortex, a sacrifice
- * or a death without a source releases wisps and goes up in smoke.
+ * Leaving the battlefield, in the source's look: destroy cracks the card, which burns away with a
+ * rim in the source's color (black = smoke, red = fire); exile bleaches it white and it rises into
+ * a column of light, burning out in gold; a bounce spins it down into a vortex; a sacrifice or a
+ * death without a source releases wisps as the card greys, sinks and crumbles in smoke.
+ *
+ * The centrepiece and particles stay where the card was when the effect started, since the card
+ * moves; the wash follows the card, and nothing is drawn while the card isn't on screen.
  */
 export const LEAVE_EFFECT: CueEffect = {
   matches: (cue, rects) => LEAVE_STYLES[cue.type] !== undefined && rects.target !== null,
   async play(cue, rects, context) {
     const style = LEAVE_STYLES[cue.type]!;
     const palette = style.palette(cue);
-    const particles = spawn(rects.target, at => style.particles(randomFor(cue), palette, at)) ?? [];
+    const random = randomFor(cue);
+    const start = rects.target;
+    const particles = spawn(start, at => style.particles(random, palette, at)) ?? [];
+    const card = playCardExit(context, rects.targetElement, style.card(palette), LEAVE_MS, Math.floor(random() * 1000));
     // Light that fades out brightens the card; everything else darkens or tints it.
     const washColor = cue.type === 'EXILED' ? PALETTES.light.wash : palette.wash;
-    await context.animate(LEAVE_MS, (draw, progress) => {
+    await Promise.all([card.done, context.animate(LEAVE_MS, (draw, progress) => {
+      card.frame(progress);
       const rect = rects.target;
-      if (!rect) return;
-      const at = anchorOf(rect);
-      wash(draw, rect, washColor, style.wash * Math.sin(Math.PI * Math.min(1, progress * 1.4)));
+      if (!start || !rect) return;
+      const at = anchorOf(start);
+      wash(draw, rect, washColor, style.wash * Math.sin(Math.PI * Math.min(1, progress * 3)));
       drawCueAnimation(draw, style.animation.name, palette, progress, at, style.animation.scale);
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
-    });
+    })]);
   }
 };
 
@@ -334,25 +437,38 @@ export const COUNTERS_EFFECT: CueEffect = {
   }
 };
 
-/** A spell is countered: a bolt from the counter to the spell (when both show), then a rune over the spell cracks and shatters. */
+/**
+ * A spell is countered: a bolt from the counter to the spell (when both show), then a rune over
+ * the spell cracks and shatters, and so does the spell's stack entry, its shards flying apart.
+ */
 export const SPELL_COUNTERED_EFFECT: CueEffect = {
   matches: cue => cue.type === 'SPELL_COUNTERED',
   async play(cue, rects, context) {
     const palette = sourcePaletteOr(cue.sourceColors, 'water');
+    const random = randomFor(cue);
     await fly(context, () => rects.source, () => rects.target, palette, PROJECTILE_MS);
-    const particles = burst(randomFor(cue), {
+    const particles = burst(random, {
       count: 22, mode: 'spark', colors: [palette.accent, 'rgb(255, 255, 255)'], speed: [0.6, 1.2],
       size: [0.03, 0.06], gravity: { x: 0, y: 0.8 }, life: [0.5, 0.9]
     });
+    const durationMs = SPELL_COUNTERED_MS - PROJECTILE_MS;
+    const element = rects.targetElement;
+    const broken = element ? shatter(element, random) : null;
+    const pieces = broken && element ? [
+      context.animateElement(element, [{ opacity: 0 }, { opacity: 0 }], { durationMs, hold: true }),
+      ...broken.shards.map(shard => context.animateElement(shard.element, shard.keyframes,
+        { durationMs, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)' }))
+    ] : [];
     const shown = rects.target !== null;
-    await context.animate(SPELL_COUNTERED_MS - PROJECTILE_MS, (draw, progress) => {
+    await Promise.all([...pieces, context.animate(durationMs, (draw, progress) => {
       const rect = rects.target;
       if (shown && !rect) return;
       const at = rect ? anchorOf(rect) : fallbackAnchor();
-      wash(draw, rect, palette.wash, 0.4 * (1 - progress));
+      wash(draw, broken ? null : rect, palette.wash, 0.4 * (1 - progress));
       if (!drawCueAnimation(draw, 'shatter', palette, progress, at, 0.9)) cross(draw, at, palette.accent, progress);
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
-    });
+    })]);
+    broken?.remove();
   }
 };
 

@@ -1,15 +1,18 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
-import type { CuePlaybackContext, CuePlayer } from './cue-playback.service';
+import { CuePlaybackContext, CuePlayer, MAX_CUE_PLAYBACK_MS } from './cue-playback.service';
 import { CueElementRegistry } from './cue-elements.service';
 import { VisualCue } from './websocket.service';
 import { DEBUG_FLASH_EFFECT } from '../components/game/cue-overlay/debug-flash.effect';
 import { DEFAULT_CUE_EFFECTS } from '../components/game/cue-overlay/default-effects';
 import { SHOWPIECE_EFFECTS } from '../components/game/cue-overlay/showpiece-effects';
+import { CueElementAnimation, animateCueElement } from '../components/game/cue-overlay/cue-card-motion';
 
 /** Where a cue's source and target are on screen, in viewport coordinates; re-measured on every read. */
 export interface CueRects {
   readonly source: DOMRect | null;
   readonly target: DOMRect | null;
+  /** The element showing the target, for effects that move the card itself; null when it isn't on screen. */
+  readonly targetElement: HTMLElement | null;
 }
 
 /** Draws one frame of an effect. `progress` runs from 0 to 1 over the animation. */
@@ -22,6 +25,9 @@ export interface CueEffectContext {
   animate(durationMs: number, frame: CueFrame): Promise<void>;
   /** Shakes the game view by up to `magnitudePx` for `durationMs` at normal speed; stops when playback is stopped. */
   shake(magnitudePx: number, durationMs: number): void;
+  /** Animates an element on the page (the card an effect hits) for `options.durationMs` at normal
+      speed; resolves when it is done or playback is stopped. See `animateCueElement`. */
+  animateElement(element: HTMLElement, keyframes: Keyframe[], options: CueElementAnimation): Promise<void>;
   signal: AbortSignal;
   speed: number;
 }
@@ -94,7 +100,10 @@ export class CueEffectPlayer implements CuePlayer {
       signal,
       speed,
       animate: (durationMs, frame) => surface.animate(durationMs / speed, frame, signal),
-      shake: (magnitudePx, durationMs) => surface.shake?.(magnitudePx, durationMs / speed, signal)
+      shake: (magnitudePx, durationMs) => surface.shake?.(magnitudePx, durationMs / speed, signal),
+      // A held frame waits for the state, which comes at the latest when the message's cues run out of time.
+      animateElement: (element, keyframes, options) => animateCueElement(element, keyframes,
+        { ...options, durationMs: options.durationMs / speed }, signal, MAX_CUE_PLAYBACK_MS / speed + 1000)
     });
   }
 
@@ -103,7 +112,8 @@ export class CueEffectPlayer implements CuePlayer {
     const elements = this.elements;
     return {
       get source() { return elements.sourceRect(cue); },
-      get target() { return elements.targetRect(cue); }
+      get target() { return elements.targetRect(cue); },
+      get targetElement() { return elements.targetElement(cue); }
     };
   }
 

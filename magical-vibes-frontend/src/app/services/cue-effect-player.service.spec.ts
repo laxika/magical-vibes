@@ -103,11 +103,37 @@ describe('CueEffectPlayer', () => {
     expect(canvas.shake).toHaveBeenCalledWith(6, 150, signal);
   });
 
+  it('passes element animations on with their duration scaled by speed', async () => {
+    const card = element(0, 0);
+    const animate = vi.fn(() => ({ id: '', finished: Promise.resolve(), finish: vi.fn(), cancel: vi.fn() }));
+    card.animate = animate as unknown as HTMLElement['animate'];
+    const moving: CueEffect = {
+      matches: () => true,
+      play: (_cue, rects, { animateElement }) => animateElement(rects.targetElement!, [{ opacity: 0 }], { durationMs: 600 })
+    };
+    const { player, elements } = setUp([moving]);
+    player.attach(surface());
+    elements.register('permanent', 'bear', card);
+
+    await player.play(cue({ targetPermanentId: 'bear' }), { signal: new AbortController().signal, speed: 2 });
+
+    expect(animate).toHaveBeenCalledWith([{ opacity: 0 }], expect.objectContaining({ duration: 300 }));
+  });
+
   it('can not play a cue whose target is not on screen', () => {
     const { player } = setUp([ANY_TARGET]);
     player.attach(surface());
 
     expect(player.canPlay(cue({ targetPermanentId: 'gone' }))).toBe(false);
+  });
+
+  it('gives effects the element showing the target', () => {
+    const { player, elements } = setUp([]);
+    const bear = element(10, 20);
+    elements.register('permanent', 'bear', bear);
+
+    expect(player.rects(cue({ targetPermanentId: 'bear' })).targetElement).toBe(bear);
+    expect(player.rects(cue({ targetPermanentId: 'gone' })).targetElement).toBeNull();
   });
 
   it('gives effects rectangles that follow the element as it moves', () => {

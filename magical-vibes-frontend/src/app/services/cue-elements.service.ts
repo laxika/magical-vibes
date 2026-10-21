@@ -39,6 +39,11 @@ export class CueElementRegistry {
 
   /** The on-screen rectangle (viewport coordinates) of a registered element, or null if none shows. */
   rect(kind: CueAnchorKind, id: string): DOMRect | null {
+    return this.element(kind, id)?.getBoundingClientRect() ?? null;
+  }
+
+  /** The registered element that shows, or null if none does. */
+  element(kind: CueAnchorKind, id: string): HTMLElement | null {
     return CueElementRegistry.firstVisible(this.anchors.get(kind + ':' + id) ?? []);
   }
 
@@ -50,14 +55,19 @@ export class CueElementRegistry {
         permanents.push(...anchors.filter(a => a.cardId === cardId));
       }
     }
-    return CueElementRegistry.firstVisible(permanents) ?? this.rect('stack', cardId);
+    return (CueElementRegistry.firstVisible(permanents) ?? this.element('stack', cardId))?.getBoundingClientRect() ?? null;
   }
 
   /** The cue's target on screen: its permanent, else its player, else its spell on the stack. */
   targetRect(cue: VisualCue): DOMRect | null {
-    if (cue.targetPermanentId) return this.rect('permanent', cue.targetPermanentId);
-    if (cue.targetPlayerId) return this.rect('player', cue.targetPlayerId);
-    if (cue.targetCardId) return this.rect('stack', cue.targetCardId);
+    return this.targetElement(cue)?.getBoundingClientRect() ?? null;
+  }
+
+  /** The element showing the cue's target, found the same way as {@link targetRect}. */
+  targetElement(cue: VisualCue): HTMLElement | null {
+    if (cue.targetPermanentId) return this.element('permanent', cue.targetPermanentId);
+    if (cue.targetPlayerId) return this.element('player', cue.targetPlayerId);
+    if (cue.targetCardId) return this.element('stack', cue.targetCardId);
     return null;
   }
 
@@ -66,11 +76,11 @@ export class CueElementRegistry {
     return cue.sourceCardId ? this.cardRect(cue.sourceCardId) : null;
   }
 
-  private static firstVisible(anchors: CueAnchor[]): DOMRect | null {
+  private static firstVisible(anchors: CueAnchor[]): HTMLElement | null {
     for (const { element } of anchors) {
       if (!element.isConnected) continue;
       const rect = element.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) return rect;
+      if (rect.width > 0 && rect.height > 0) return element;
     }
     return null;
   }
