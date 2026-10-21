@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import com.github.laxika.magicalvibes.carddata.CardDataConfiguration;
 import com.github.laxika.magicalvibes.service.GameEngineConfig;
 import com.github.laxika.magicalvibes.service.GameSessionTransportAdapter;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
@@ -19,7 +20,7 @@ import java.time.Duration;
  * so it has no need for the message handler, login, draft, or deck services.
  */
 @Configuration
-@Import(GameEngineConfig.class)
+@Import({GameEngineConfig.class, CardDataConfiguration.class})
 public class GameTestDoublesConfig {
 
     @Bean

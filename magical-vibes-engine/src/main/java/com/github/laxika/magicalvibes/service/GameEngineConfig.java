@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.NetworkingConfig;
-import com.github.laxika.magicalvibes.carddata.CardDataConfiguration;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -41,15 +40,18 @@ import java.util.List;
  * and headless AI simulation — with different {@code SessionManager} / {@code GameRegistry}
  * bindings supplied by each outer context.
  *
- * <p>Owns only the engine's own {@code service} package and composes the lower-level module
- * wiring ({@link NetworkingConfig}, {@link CardDataConfiguration}) via {@code @Import}. This keeps each
- * module responsible for its own beans instead of having downstream modules reach in with their
- * own component scans.
+ * <p>Owns only the engine's own {@code service} package and composes the networking wiring
+ * ({@link NetworkingConfig}) via {@code @Import}. This keeps each module responsible for its own
+ * beans instead of having downstream modules reach in with their own component scans.
+ *
+ * <p>Card data ({@code CardDataConfiguration}) is deliberately left to each outer context. The
+ * application and the card-test context import it next to this config; headless AI simulation
+ * reuses the application's already-loaded card-data beans instead of loading every set again.
  */
 @Slf4j
 @Configuration
 @ComponentScan(basePackages = "com.github.laxika.magicalvibes.service")
-@Import({NetworkingConfig.class, CardDataConfiguration.class})
+@Import(NetworkingConfig.class)
 public class GameEngineConfig implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;

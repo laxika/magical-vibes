@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.application;
 
 import com.github.laxika.magicalvibes.ai.AiConfig;
+import com.github.laxika.magicalvibes.carddata.CardDataConfiguration;
 import com.github.laxika.magicalvibes.service.GameEngineConfig;
 import com.github.laxika.magicalvibes.webservice.WebServiceConfig;
 import com.github.laxika.magicalvibes.websocket.configuration.WebSocketConfiguration;
@@ -23,7 +24,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication
 @EntityScan("com.github.laxika.magicalvibes.entity")
 @EnableJpaRepositories("com.github.laxika.magicalvibes.repository")
-@Import({GameEngineConfig.class, WebSocketConfiguration.class, AiConfig.class, WebServiceConfig.class})
+@Import({GameEngineConfig.class, CardDataConfiguration.class, WebSocketConfiguration.class, AiConfig.class, WebServiceConfig.class})
 public class MagicalVibesApplication {
 
     public static void main(String[] args) {
