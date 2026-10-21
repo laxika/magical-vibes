@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CUE_PLAYER, CuePlaybackContext, CuePlaybackService, CuePlayer, MAX_CUE_PLAYBACK_MS } from './cue-playback.service';
+import { CUE_PLAYER, CuePlaybackContext, CuePlaybackService, CuePlayer, MAX_CUE_PLAYBACK_MS, cueGroups } from './cue-playback.service';
 import { MessageType, VisualCue, VisualCueType, WebSocketMessage } from './websocket.service';
 
 function cue(type: VisualCueType, targetPermanentId: string | null = null): VisualCue {
@@ -98,6 +98,48 @@ describe('CuePlaybackService', () => {
     expect(playback.playing()).toBe(false);
   });
 
+  it('plays cues of one kind in a row together, and waits for all of them before the next', async () => {
+    playback.push(state('combat', [
+      cue('DAMAGE_TO_PERMANENT', 'bear'), cue('DAMAGE_TO_PLAYER'), cue('DAMAGE_TO_PERMANENT', 'elf'),
+      cue('DIED', 'bear'), cue('DESTROYED', 'elf'), cue('SPELL_RESOLVED'), cue('SPELL_RESOLVED')
+    ]));
+    await settle();
+    expect(player.playedTypes).toEqual(['DAMAGE_TO_PERMANENT', 'DAMAGE_TO_PLAYER', 'DAMAGE_TO_PERMANENT']);
+
+    player.started[0].finish();
+    player.started[2].finish();
+    await settle();
+    expect(player.started).toHaveLength(3);
+
+    player.started[1].finish();
+    await settle();
+    expect(player.playedTypes.slice(3)).toEqual(['DIED', 'DESTROYED']);
+
+    player.started[3].finish();
+    player.started[4].finish();
+    await settle();
+    expect(player.playedTypes.slice(5)).toEqual(['SPELL_RESOLVED']);
+
+    player.started[5].finish();
+    await settle();
+    expect(player.playedTypes.slice(5)).toEqual(['SPELL_RESOLVED', 'SPELL_RESOLVED']);
+    player.started[6].finish();
+    await settle();
+    expect(applied).toEqual(['combat']);
+  });
+
+  it('groups only consecutive cues of the same kind', () => {
+    const groups = cueGroups([
+      cue('DAMAGE_TO_PERMANENT'), cue('LIFE_GAINED'), cue('LIFE_LOST'), cue('DAMAGE_TO_PLAYER'),
+      cue('COUNTERS_ADDED'), cue('COUNTERS_ADDED'), cue('SPELL_CAST'), cue('SPELL_CAST'), cue('EXILED'), cue('RETURNED_TO_HAND')
+    ]);
+
+    expect(groups.map(group => group.map(c => c.type))).toEqual([
+      ['DAMAGE_TO_PERMANENT'], ['LIFE_GAINED', 'LIFE_LOST'], ['DAMAGE_TO_PLAYER'], ['COUNTERS_ADDED', 'COUNTERS_ADDED'],
+      ['SPELL_CAST'], ['SPELL_CAST'], ['EXILED', 'RETURNED_TO_HAND']
+    ]);
+  });
+
   it('plays queued states\' cues one message after another', async () => {
     playback.push(state('first', [cue('DESTROYED', 'a')]));
     playback.push(state('second', [cue('EXILED', 'b')]));
@@ -149,7 +191,7 @@ describe('CuePlaybackService', () => {
   });
 
   it('applies a state once its cues reach the time limit', async () => {
-    playback.push(state('slow', [cue('DESTROYED', 'a'), cue('EXILED', 'b')]));
+    playback.push(state('slow', [cue('DESTROYED', 'a'), cue('DAMAGE_TO_PERMANENT', 'b')]));
     playback.push(state('after'));
     await settle();
 
@@ -202,7 +244,7 @@ describe('CuePlaybackService', () => {
   it('keeps going when a cue fails', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     player.play = vi.fn().mockRejectedValueOnce(new Error('broken')).mockResolvedValue(undefined);
-    playback.push(state('broken', [cue('DESTROYED', 'a'), cue('EXILED', 'b')]));
+    playback.push(state('broken', [cue('DESTROYED', 'a'), cue('DAMAGE_TO_PERMANENT', 'b')]));
     await settle();
 
     expect(player.play).toHaveBeenCalledTimes(2);

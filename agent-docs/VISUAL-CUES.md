@@ -64,9 +64,12 @@ currently is, then applies the state.
 through `push`.
 
 - Cues are drawn by the `CUE_PLAYER` (`CuePlayer`: `canPlay(cue)`, `play(cue, {signal, speed})`),
-  one cue at a time, in order. The default player is the effect registry (*Effects overlay*
-  below), which registers no effects by default, so cues are filtered out and every message is
-  applied synchronously, exactly as without the queue.
+  in order, a group at a time: `cueGroups` puts consecutive cues of the same kind (damage, leaving
+  the battlefield, life, counters) in one group, whose cues start together and must all finish
+  before the next group. A combat step's damage or a board wipe's deaths are one beat; spell cues
+  always play alone. The default player is the effect registry (*Effects overlay* below). Cues it
+  can't play are filtered out, and a message with none left is applied synchronously, exactly as
+  without the queue.
 - A `GAME_STATE` with at least one cue the player can play is held while those cues play; every
   later message (states, `GAME_OVER`, …) queues behind it and is applied in arrival order.
 - Decision messages (attackers, blockers, interaction prompts, damage assignment, mulligan,
@@ -110,9 +113,40 @@ effect registry. Everything below is frontend-only and cosmetic.
   skipped, flushed or times out. `CUE_EFFECTS` (root token) lists the effects, most specific
   first; the player uses the first that matches. `canPlay` is true only when an overlay is
   attached and an effect matches, so a cue whose target is not on screen does not hold the board.
-- **Default: no effects.** `CUE_EFFECTS` is empty unless `localStorage.cueDebugEffects === '1'`,
-  which registers `DEBUG_FLASH_EFFECT` (a 400 ms yellow flash over any cue's target). With it
-  empty every state applies at once, exactly as before the overlay.
+- **Registered effects.** `CUE_EFFECTS` is `DEFAULT_CUE_EFFECTS` (*Default effects* below).
+  `localStorage.cueDebugEffects === '1'` puts `DEBUG_FLASH_EFFECT` (a 400 ms yellow flash over
+  any cue's target) in front of them, to check positioning. Providing an empty list restores
+  "every state applies at once".
+
+### Default effects
+
+`components/game/cue-overlay/default-effects.ts`, drawn with the stateless particle system in
+`cue-particles.ts` (every particle's flight is fixed when spawned, and positions come from the
+animation's progress, seeded from the cue, so an effect looks the same at any frame rate and
+speed; sizes are in units of the target card's smaller side, so phone and zoomed layouts scale).
+Every effect lasts at most `DEFAULT_EFFECT_MAX_MS` (700 ms) at normal speed, projectile included.
+They draw shapes and numbers only, never a card name.
+
+**Looks** (`cue-palette.ts`): a source with exactly one color picks its element — red `fire`,
+blue `water`, black `shadow` (smoke, drawn dark), white `light`, green `nature`. Colorless,
+multicolor and face-down sources get the neutral `arcane`. Some cue types use a fixed look
+instead: `smoke` for `DIED`, `heal` / `drain` for life, and the counter type for counters.
+Everything is drawn with normal (`source-over`) blending; additive blending washes out to white
+on the light board.
+
+| Effect | Cue types | Needs | Look |
+|---|---|---|---|
+| `DAMAGE_EFFECT` | `DAMAGE_TO_PERMANENT`, `DAMAGE_TO_PLAYER` | target | A 220 ms projectile from the source when the source is on screen and isn't the target, then a 450 ms impact (ring, burst, sparks) and a floating `-N`. Source look. |
+| `LEAVE_EFFECT` | `DESTROYED`, `SACRIFICED`, `EXILED`, `RETURNED_TO_HAND`, `DIED` | target | 600 ms over the whole card: destroy bursts, sacrifice wisps rise from the bottom, exile fades in a bright wash and rising light, bounce spirals inward, `DIED` goes up in grey smoke. Source look, else shadow (destroy, sacrifice), light (exile) or water (bounce). |
+| `LIFE_EFFECT` | `LIFE_GAINED`, `LIFE_LOST` | target | 550 ms on the player badge: rising `heal` light and a green `+N`, or a falling `drain` and a red `-N`. |
+| `COUNTERS_EFFECT` | `COUNTERS_ADDED` | target | 550 ms: particles and a label by counter type. `PLUS_*` is green and reads `+2/+2`, `MINUS_*` is shadow and reads `-1/-1`, `LOYALTY` is gold; other types use the source look and read `+1 lore`. |
+| `SPELL_CAST_EFFECT` | `SPELL_CAST` | — | 400 ms: a reticle closes in on the first target; with no target on screen, a ring flares in the middle of the window. |
+| `SPELL_RESOLVED_EFFECT` | `SPELL_RESOLVED` | — | 350 ms flare on the spell's stack entry, else in the middle of the window. |
+| `SPELL_COUNTERED_EFFECT` | `SPELL_COUNTERED` | — | A projectile from the counter to the spell when both show, then a cross and shatter sparks on the spell (or the middle of the window). Source look, else water. |
+
+Effects that need a target don't match without one, so a cue whose target isn't on screen is
+dropped. Spell effects always match: the stack panel is often not showing (phone tabs, a spell
+cast from hand onto the stale board), and they fall back to the middle of the window.
 
 ## Catalogue
 
@@ -234,8 +268,12 @@ in `GameEventProjectionSubscriberTest`.
 
 The overlay is specified in `cue-overlay.browser.spec.ts` (the real `GameComponent` in Chromium,
 reading canvas pixels over the target and its neighbours: desktop, a zoomed-out crowded board, the
-phone layout, `devicePixelRatio` 2, player targets) and `cue-effect-player.service.spec.ts`
-(registry lookups and effect selection with stubbed rectangles). Browser specs need Playwright's
+phone layout, `devicePixelRatio` 2, player targets; and the default effects: registered by
+default, warm red damage, dark black destroy, simultaneous combat damage, a targetless cast, a
+whole Lightning Bolt inside the budget) and `cue-effect-player.service.spec.ts` (registry lookups
+and effect selection with stubbed rectangles). `default-effects.spec.ts` covers the default
+effects in jsdom with a recording 2D context: every type has an effect, the time budget, the
+projectile rules, labels, looks, fallbacks, and that no source name is ever drawn. Browser specs need Playwright's
 Chromium (`npx playwright install chromium`).
 
 Client playback is specified in `cue-playback.service.spec.ts` (a fake `CuePlayer` whose cues

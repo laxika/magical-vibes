@@ -3,6 +3,7 @@ import type { CuePlaybackContext, CuePlayer } from './cue-playback.service';
 import { CueElementRegistry } from './cue-elements.service';
 import { VisualCue } from './websocket.service';
 import { DEBUG_FLASH_EFFECT } from '../components/game/cue-overlay/debug-flash.effect';
+import { DEFAULT_CUE_EFFECTS } from '../components/game/cue-overlay/default-effects';
 
 /** Where a cue's source and target are on screen, in viewport coordinates; re-measured on every read. */
 export interface CueRects {
@@ -36,7 +37,7 @@ export interface CueSurface {
   animate(durationMs: number, frame: CueFrame, signal: AbortSignal): Promise<void>;
 }
 
-/** localStorage flag that turns on the debug flash effect (`localStorage.cueDebugEffects = '1'`). */
+/** localStorage flag that puts the debug flash in front of every other effect (`localStorage.cueDebugEffects = '1'`). */
 export const CUE_DEBUG_STORAGE_KEY = 'cueDebugEffects';
 
 function debugEffectsEnabled(): boolean {
@@ -47,10 +48,10 @@ function debugEffectsEnabled(): boolean {
   }
 }
 
-/** The registered effects, most specific first. Empty by default, so no cue holds the board back. */
+/** The registered effects, most specific first: the default effect for every cue type, behind the debug flash when it is on. */
 export const CUE_EFFECTS = new InjectionToken<readonly CueEffect[]>('CUE_EFFECTS', {
   providedIn: 'root',
-  factory: () => debugEffectsEnabled() ? [DEBUG_FLASH_EFFECT] : []
+  factory: () => debugEffectsEnabled() ? [DEBUG_FLASH_EFFECT, ...DEFAULT_CUE_EFFECTS] : DEFAULT_CUE_EFFECTS
 });
 
 /**

@@ -1,5 +1,5 @@
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
-import { GameStateNotification, MessageType, VisualCue, WebSocketMessage } from './websocket.service';
+import { GameStateNotification, MessageType, VisualCue, VisualCueType, WebSocketMessage } from './websocket.service';
 import { CueEffectPlayer } from './cue-effect-player.service';
 
 /** What a cue player gets besides the cue: when to stop, and how fast to go. */
@@ -11,8 +11,9 @@ export interface CuePlaybackContext {
 }
 
 /**
- * Draws visual cues on the board. The queue plays the cues of a state message one at a time, in
- * order, on the board as it currently is, and applies the state when they are done.
+ * Draws visual cues on the board. The queue plays the cues of a state message in order, on the
+ * board as it currently is, and applies the state when they are done; cues of one kind in a row
+ * play at the same time (see {@link cueGroups}).
  */
 export interface CuePlayer {
   /** Whether this player has an effect for the cue. Cues it can't play are left out. */
@@ -35,6 +36,39 @@ export const CUE_PLAYER = new InjectionToken<CuePlayer>('CUE_PLAYER', {
 
 /** The longest a single state message's cues may hold the board back, at normal speed. */
 export const MAX_CUE_PLAYBACK_MS = 3000;
+
+/** Cue types that play together when they come in a row; any other type plays on its own. */
+const CUE_KINDS: Readonly<Partial<Record<VisualCueType, string>>> = {
+  DAMAGE_TO_PERMANENT: 'damage',
+  DAMAGE_TO_PLAYER: 'damage',
+  DESTROYED: 'leave',
+  SACRIFICED: 'leave',
+  EXILED: 'leave',
+  RETURNED_TO_HAND: 'leave',
+  DIED: 'leave',
+  LIFE_GAINED: 'life',
+  LIFE_LOST: 'life',
+  COUNTERS_ADDED: 'counters'
+};
+
+/**
+ * Splits a message's cues into groups that play at the same time: consecutive cues of the same
+ * kind (damage, leaving the battlefield, life, counters). A combat step's damage and a board
+ * wipe's deaths then play as one beat instead of one after another; spell cues play alone.
+ */
+export function cueGroups(cues: readonly VisualCue[]): VisualCue[][] {
+  const groups: VisualCue[][] = [];
+  for (const cue of cues) {
+    const kind = CUE_KINDS[cue.type];
+    const last = groups[groups.length - 1];
+    if (kind && last && CUE_KINDS[last[0].type] === kind) {
+      last.push(cue);
+    } else {
+      groups.push([cue]);
+    }
+  }
+  return groups;
+}
 
 /**
  * Messages that ask this player to decide something, answer their own request, or replace the
@@ -157,7 +191,7 @@ export class CuePlaybackService {
     this.playing.set(false);
   }
 
-  /** Plays the cues in order; resolves when they finish, time runs out, or playback is stopped. */
+  /** Plays the cues in order, a group at a time; resolves when they finish, time runs out, or playback is stopped. */
   private async play(cues: VisualCue[]): Promise<void> {
     const abort = new AbortController();
     this.abortPlayback = abort;
@@ -168,13 +202,9 @@ export class CuePlaybackService {
     });
     const stopped = new Promise<void>(resolve => abort.signal.addEventListener('abort', () => resolve()));
     const sequence = (async () => {
-      for (const cue of cues) {
+      for (const group of cueGroups(cues)) {
         if (abort.signal.aborted) return;
-        try {
-          await this.player.play(cue, { signal: abort.signal, speed });
-        } catch (error) {
-          console.error('Visual cue failed', cue, error);
-        }
+        await Promise.all(group.map(cue => this.playCue(cue, { signal: abort.signal, speed })));
       }
     })();
     await Promise.race([sequence, timeLimit, stopped]);
@@ -182,6 +212,15 @@ export class CuePlaybackService {
     abort.abort();
     if (this.abortPlayback === abort) {
       this.abortPlayback = null;
+    }
+  }
+
+  /** Plays one cue; a failing effect is logged and never stops the others. */
+  private async playCue(cue: VisualCue, context: CuePlaybackContext): Promise<void> {
+    try {
+      await this.player.play(cue, context);
+    } catch (error) {
+      console.error('Visual cue failed', cue, error);
     }
   }
 }

@@ -4,8 +4,9 @@ import { Subject } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { GameComponent } from '../game.component';
-import { CUE_EFFECTS } from '../../../services/cue-effect-player.service';
+import { CUE_EFFECTS, CueEffect } from '../../../services/cue-effect-player.service';
 import { DEBUG_FLASH_EFFECT } from './debug-flash.effect';
+import { DEFAULT_EFFECT_MAX_MS } from './default-effects';
 import {
   Card, Game, GameStatus, MessageType, Permanent, TurnStep, VisualCue, WebSocketMessage, WebsocketService
 } from '../../../services/websocket.service';
@@ -60,8 +61,8 @@ function damage(target: { permanent?: string; player?: string }): VisualCue {
   };
 }
 
-function stateWith(game: Game, cue: VisualCue): WebSocketMessage {
-  return { ...game, type: MessageType.GAME_STATE, turnNumber: 2, visualCues: [cue], newLogEntries: [],
+function stateWith(game: Game, ...cues: VisualCue[]): WebSocketMessage {
+  return { ...game, type: MessageType.GAME_STATE, turnNumber: 2, visualCues: cues, newLogEntries: [],
     playableCardIndices: [] } as unknown as WebSocketMessage;
 }
 
@@ -81,7 +82,8 @@ afterEach(async () => {
   await page.viewport(DESKTOP.width, DESKTOP.height);
 });
 
-async function mount(game: Game, effects = [DEBUG_FLASH_EFFECT]): Promise<Mounted> {
+/** Mounts the game with `effects` registered, or with the app's own effects when `effects` is null. */
+async function mount(game: Game, effects: readonly CueEffect[] | null = [DEBUG_FLASH_EFFECT]): Promise<Mounted> {
   const messages = new Subject<WebSocketMessage>();
   const transport = {
     currentGame: game, currentUser: { userId: 'one', username: 'one' }, subgameDepth: 0,
@@ -91,7 +93,7 @@ async function mount(game: Game, effects = [DEBUG_FLASH_EFFECT]): Promise<Mounte
   TestBed.configureTestingModule({ providers: [
     { provide: WebsocketService, useValue: transport },
     { provide: Router, useValue: { navigate: vi.fn() } },
-    { provide: CUE_EFFECTS, useValue: effects }
+    ...(effects ? [{ provide: CUE_EFFECTS, useValue: effects }] : [])
   ] });
   const fixture = TestBed.createComponent(GameComponent);
   document.body.appendChild(fixture.nativeElement);
@@ -243,5 +245,112 @@ describe('Effects overlay in the browser', () => {
 
     expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2);
     expect(m.fixture.componentInstance.cuePlayback.playing()).toBe(false);
+  });
+});
+
+/** What the overlay has drawn inside a rectangle: how many pixels, and their average color. */
+function inkIn(rect: DOMRect): { pixels: number; r: number; g: number; b: number } {
+  const c = canvas();
+  const box = c.getBoundingClientRect();
+  const ratio = c.width / box.width;
+  const x = Math.max(0, Math.floor((rect.left - box.left) * ratio));
+  const y = Math.max(0, Math.floor((rect.top - box.top) * ratio));
+  const width = Math.max(1, Math.min(c.width - x, Math.floor(rect.width * ratio)));
+  const height = Math.max(1, Math.min(c.height - y, Math.floor(rect.height * ratio)));
+  const data = c.getContext('2d')!.getImageData(x, y, width, height).data;
+  let pixels = 0, r = 0, g = 0, b = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 40) continue;
+    pixels++;
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+  }
+  return pixels === 0 ? { pixels, r: 0, g: 0, b: 0 } : { pixels, r: r / pixels, g: g / pixels, b: b / pixels };
+}
+
+function cueOf(type: VisualCue['type'], fields: Partial<VisualCue>): VisualCue {
+  return {
+    type, sourceCardId: null, sourceName: null, sourceColors: [], targetPermanentId: null, targetPlayerId: null,
+    targetCardId: null, amount: null, counterType: null, ...fields
+  };
+}
+
+describe('Default effects in the browser', () => {
+  it('are registered by default and hold the state while they play', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+
+    m.messages.next(stateWith(game, damage({ permanent: 'bear' })));
+    await frames(3);
+
+    expect(m.fixture.componentInstance.cuePlayback.playing()).toBe(true);
+    expect(m.fixture.componentInstance.game()?.turnNumber).toBe(1);
+  });
+
+  it('burn a red damage target in warm colors and leave other cards alone', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+
+    m.messages.next(stateWith(game, damage({ permanent: 'bear' })));
+
+    await vi.waitFor(() => expect(inkIn(permanentRect('bear')).pixels).toBeGreaterThan(200), { timeout: 1000, interval: 16 });
+    const ink = inkIn(permanentRect('bear'));
+    expect(ink.r).toBeGreaterThan(ink.b);
+    expect(inkIn(permanentRect('elf')).pixels).toBe(0);
+  });
+
+  it('cover a creature destroyed by a black spell in dark smoke', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+
+    m.messages.next(stateWith(game, cueOf('DESTROYED', {
+      sourceCardId: 'blade', sourceName: 'Doom Blade', sourceColors: ['BLACK'], targetPermanentId: 'bear'
+    })));
+
+    await vi.waitFor(() => expect(inkIn(permanentRect('bear')).pixels).toBeGreaterThan(500), { timeout: 1000, interval: 16 });
+    const ink = inkIn(permanentRect('bear'));
+    expect((ink.r + ink.g + ink.b) / 3).toBeLessThan(100);
+    expect(ink.b).toBeGreaterThan(ink.g);
+  });
+
+  it('play a combat step\'s damage on both creatures at once', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+    const hit = (source: string, target: string) => cueOf('DAMAGE_TO_PERMANENT', {
+      sourceCardId: 'card-' + source, sourceName: 'Bear ' + source, sourceColors: ['GREEN'], targetPermanentId: target, amount: 2
+    });
+
+    m.messages.next(stateWith(game, hit('elf', 'bear'), hit('bear', 'elf')));
+
+    await vi.waitFor(() => {
+      expect(inkIn(permanentRect('bear')).pixels).toBeGreaterThan(200);
+      expect(inkIn(permanentRect('elf')).pixels).toBeGreaterThan(200);
+    }, { timeout: 1000, interval: 16 });
+  });
+
+  it('show a spell cast with nothing to point at in the middle of the window', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+
+    m.messages.next(stateWith(game, cueOf('SPELL_CAST', { sourceCardId: 'wrath', sourceColors: ['WHITE'] })));
+
+    const middle = new DOMRect(window.innerWidth / 2 - 150, window.innerHeight / 2 - 150, 300, 300);
+    await vi.waitFor(() => expect(inkIn(middle).pixels).toBeGreaterThan(100), { timeout: 1000, interval: 16 });
+  });
+
+  it('get through a whole Lightning Bolt quickly, then apply the state', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+    const bolt = { sourceCardId: 'bolt', sourceName: 'Lightning Bolt', sourceColors: ['RED'] };
+    const started = performance.now();
+
+    m.messages.next(stateWith(game, cueOf('SPELL_RESOLVED', bolt), damage({ permanent: 'bear' }),
+      cueOf('DIED', { targetPermanentId: 'bear' })));
+
+    await vi.waitFor(() => expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2), { timeout: 3000, interval: 16 });
+    const elapsed = performance.now() - started;
+    expect(elapsed).toBeGreaterThan(DEFAULT_EFFECT_MAX_MS);
+    expect(elapsed).toBeLessThan(3 * DEFAULT_EFFECT_MAX_MS + 400);
   });
 });

@@ -19,7 +19,7 @@ order; each one lists what it depends on.
 | 4 | Cues for the stack, life and counters | done |
 | 5 | Frontend cue model and playback queue | done |
 | 6 | Element registry and effects overlay | done |
-| 7 | Default effects by cue type and color | open |
+| 7 | Default effects by cue type and color | done |
 | 8 | Showpiece effects: Lightning Bolt and Doom Blade | open |
 | 9 | Effect settings and reduced motion | open |
 | 10 | Lottie support for authored animations | open |
@@ -499,6 +499,49 @@ Steps add notes here for later steps, under their number.
   (registry lookups, effect selection, speed scaling, attach/detach, default effects). No existing
   test had to change; `cue-playback.service.spec.ts`, `game-cue-playback.spec.ts` and
   `subgame.browser.spec.ts` still pass.
+
+### Step 7
+
+- **Pieces:** `default-effects.ts` (one `CueEffect` per cue family, `DEFAULT_CUE_EFFECTS`),
+  `cue-palette.ts` (looks by source color), `cue-particles.ts` (stateless seeded particles), all in
+  `components/game/cue-overlay/`. `CUE_EFFECTS` now returns the defaults, behind the debug flash
+  when `localStorage.cueDebugEffects = '1'`. I kept the flash: it's a cheap way to check
+  positioning. The full table is in `agent-docs/VISUAL-CUES.md` → *Default effects*.
+- **Step 8 adds its table in front:** `CUE_EFFECTS`' factory should become
+  `[...SHOWPIECE_EFFECTS, ...DEFAULT_CUE_EFFECTS]`, with each showpiece matching on
+  `cue.sourceName`. Remember that face-down sources have no name. The building blocks
+  (`fly`, `ring`, `wash`, `drawFloatingText`, `burst` / `swirl` / `drawParticles`,
+  `sourcePalette`) are plain functions. Export the private ones from `default-effects.ts` when
+  step 8 needs them.
+- **Grouping is in the queue:** `cueGroups` (`cue-playback.service.ts`) plays consecutive cues of
+  one kind (damage, leave, life, counters) together and waits for the whole group. A showpiece
+  that wants the whole screen (Lightning Bolt's shake) will overlap the other cues in its group.
+  A Bolt is one damage cue, so this only matters for multi-target spells.
+- **Light board:** the board is light beige, so additive (`lighter`) blending washed glows out to
+  white. Everything uses normal blending, and bright looks rely on saturated colors and washes.
+  Keep that in mind for step 8's flash and step 10's Lottie files.
+- **Budget:** each default effect is ≤ 700 ms. A Bolt that kills takes about 1.4 s
+  (resolve 350 + damage 450 + died 600, no projectile because a resolved spell's source isn't on
+  screen). Step 9's "fast" can just raise `cuePlayback.speed`.
+- **Fallback origin:** cues carry no caster/controller id, so a targetless cast and a resolve or
+  counter whose stack entry isn't showing play in the middle of the window, not at the caster's
+  badge. Add a controller id to the cue if a later step wants that.
+- **Tests:** new `default-effects.spec.ts` (jsdom, recording 2D context: an effect for every type,
+  spell cues without anything on screen, effect choice, ≤ 700 ms each, projectile only from a
+  visible, distinct source, impact drawn around the target with `-3`, life and counter labels, no
+  source name drawn, middle-of-window fallback, stops drawing when the target goes, looks by color
+  and counter type, counter labels). Six new cases in `cue-overlay.browser.spec.ts` under *Default
+  effects in the browser* (registered by default and hold the state, warm red damage that leaves
+  other cards alone, dark violet black destroy, both creatures of a combat trade at once, a
+  targetless cast in the middle, a whole Bolt applied within the budget). Two new cases in
+  `cue-playback.service.spec.ts` (group playback, `cueGroups`).
+  Changed: `cue-effect-player.service.spec.ts` (the default list is now the defaults, not empty,
+  and the debug flag puts the flash in front of them); `cue-playback.service.spec.ts` "time limit"
+  and "keeps going when a cue fails" (their second cue changed from `EXILED` to
+  `DAMAGE_TO_PERMANENT`, because `DESTROYED, EXILED` now play together and the tests are about
+  sequential cues); `cue-overlay.browser.spec.ts` helpers (`mount` can use the app's own effects,
+  and `stateWith` takes several cues). `game-cue-playback.spec.ts` and `subgame.browser.spec.ts`
+  pass unchanged.
 
 ## Prompt
 
