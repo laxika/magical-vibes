@@ -7,6 +7,8 @@ import { GameComponent } from '../game.component';
 import { CUE_EFFECTS, CueEffect } from '../../../services/cue-effect-player.service';
 import { DEBUG_FLASH_EFFECT } from './debug-flash.effect';
 import { DEFAULT_EFFECT_MAX_MS } from './default-effects';
+import { CUE_ANIMATIONS, cueAnimationsReady, drawCueAnimation, preloadCueAnimations } from './cue-animations';
+import { PALETTES } from './cue-palette';
 import {
   Card, Game, GameStatus, MessageType, Permanent, TurnStep, VisualCue, WebSocketMessage, WebsocketService
 } from '../../../services/websocket.service';
@@ -55,8 +57,8 @@ function board(mine: Permanent[], theirs: Permanent[]): Game {
 
 function damage(target: { permanent?: string; player?: string }): VisualCue {
   return {
-    type: target.permanent ? 'DAMAGE_TO_PERMANENT' : 'DAMAGE_TO_PLAYER', sourceCardId: 'bolt',
-    sourceName: 'Lightning Bolt', sourceColors: ['RED'], targetPermanentId: target.permanent ?? null,
+    type: target.permanent ? 'DAMAGE_TO_PERMANENT' : 'DAMAGE_TO_PLAYER', sourceCardId: 'shock',
+    sourceName: 'Shock', sourceColors: ['RED'], targetPermanentId: target.permanent ?? null,
     targetPlayerId: target.player ?? null, targetCardId: null, amount: 3, counterType: null
   };
 }
@@ -82,7 +84,10 @@ afterEach(async () => {
   await page.viewport(DESKTOP.width, DESKTOP.height);
 });
 
-/** Mounts the game with `effects` registered, or with the app's own effects when `effects` is null. */
+/**
+ * Mounts the game with `effects` registered, or with the app's own effects when `effects` is null;
+ * the app's effects get their authored animations loaded first, as they are a moment into a game.
+ */
 async function mount(game: Game, effects: readonly CueEffect[] | null = [DEBUG_FLASH_EFFECT]): Promise<Mounted> {
   const messages = new Subject<WebSocketMessage>();
   const transport = {
@@ -102,6 +107,7 @@ async function mount(game: Game, effects: readonly CueEffect[] | null = [DEBUG_F
   await vi.waitFor(() => expect(fixture.componentInstance.battlefieldAreaSize().width).toBeGreaterThan(0));
   fixture.detectChanges();
   await fixture.whenStable();
+  if (!effects) expect(await preloadCueAnimations()).toBe(true);
   await frames(1);
   mounted = { fixture, messages };
   return mounted;
@@ -305,7 +311,7 @@ describe('Default effects in the browser', () => {
     const m = await mount(game, null);
 
     m.messages.next(stateWith(game, cueOf('DESTROYED', {
-      sourceCardId: 'blade', sourceName: 'Doom Blade', sourceColors: ['BLACK'], targetPermanentId: 'bear'
+      sourceCardId: 'murder', sourceName: 'Murder', sourceColors: ['BLACK'], targetPermanentId: 'bear'
     })));
 
     await vi.waitFor(() => expect(inkIn(permanentRect('bear')).pixels).toBeGreaterThan(500), { timeout: 1000, interval: 16 });
@@ -339,18 +345,124 @@ describe('Default effects in the browser', () => {
     await vi.waitFor(() => expect(inkIn(middle).pixels).toBeGreaterThan(100), { timeout: 1000, interval: 16 });
   });
 
-  it('get through a whole Lightning Bolt quickly, then apply the state', async () => {
+  it('get through a whole Lightning Bolt, showpiece included, quickly, then apply the state', async () => {
     const game = board([creature('elf')], [creature('bear')]);
     const m = await mount(game, null);
     const bolt = { sourceCardId: 'bolt', sourceName: 'Lightning Bolt', sourceColors: ['RED'] };
     const started = performance.now();
 
-    m.messages.next(stateWith(game, cueOf('SPELL_RESOLVED', bolt), damage({ permanent: 'bear' }),
+    m.messages.next(stateWith(game, cueOf('SPELL_RESOLVED', bolt),
+      cueOf('DAMAGE_TO_PERMANENT', { ...bolt, targetPermanentId: 'bear', amount: 3 }),
       cueOf('DIED', { targetPermanentId: 'bear' })));
 
     await vi.waitFor(() => expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2), { timeout: 3000, interval: 16 });
     const elapsed = performance.now() - started;
     expect(elapsed).toBeGreaterThan(DEFAULT_EFFECT_MAX_MS);
     expect(elapsed).toBeLessThan(3 * DEFAULT_EFFECT_MAX_MS + 400);
+  });
+});
+
+/** Every fill and stroke color slot a Lottie file uses. */
+function slotsOf(node: unknown, slots = new Set<string>()): Set<string> {
+  if (Array.isArray(node)) {
+    node.forEach(item => slotsOf(item, slots));
+  } else if (node && typeof node === 'object') {
+    const item = node as Record<string, unknown>;
+    if ((item['ty'] === 'fl' || item['ty'] === 'st') && typeof item['nm'] === 'string' && item['nm'].startsWith('@')) {
+      slots.add(item['nm']);
+    }
+    Object.values(item).forEach(value => slotsOf(value, slots));
+  }
+  return slots;
+}
+
+describe('Authored animations in the browser', () => {
+  it('are served for every name, and use only the known palette slots', async () => {
+    for (const name of CUE_ANIMATIONS) {
+      const response = await fetch(`cue-animations/${name}.json`);
+      expect(response.ok, name).toBe(true);
+      const data = await response.json();
+      expect(data.w * data.h * (data.op - data.ip), name).toBeGreaterThan(0);
+      expect(data.layers.length, name).toBeGreaterThan(0);
+      expect([...slotsOf(data)].every(slot => ['@accent', '@c0', '@c1', '@c2'].includes(slot)), name).toBe(true);
+    }
+  });
+
+  it('load lottie on demand and draw an animation in the look\'s colors', async () => {
+    expect(await preloadCueAnimations()).toBe(true);
+    expect(cueAnimationsReady()).toBe(true);
+    const target = document.createElement('canvas');
+    target.width = 400;
+    target.height = 400;
+    const draw = target.getContext('2d')!;
+
+    expect(drawCueAnimation(draw, 'impact', PALETTES.fire, 0.3, { x: 200, y: 200, unit: 100 })).toBe(true);
+
+    const data = draw.getImageData(0, 0, 400, 400).data;
+    let pixels = 0, red = 0, blue = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 40) continue;
+      pixels++;
+      red += data[i];
+      blue += data[i + 2];
+    }
+    expect(pixels).toBeGreaterThan(2000);
+    expect(red).toBeGreaterThan(blue);
+    expect(draw.getImageData(0, 0, 400, 400).data[3]).toBe(0);
+  });
+
+  it('are drawn on the overlay by the default effects', async () => {
+    const drawImage = vi.spyOn(CanvasRenderingContext2D.prototype, 'drawImage');
+    try {
+      const game = board([creature('elf')], [creature('bear')]);
+      const m = await mount(game, null);
+
+      m.messages.next(stateWith(game, damage({ permanent: 'bear' })));
+
+      await vi.waitFor(() => expect(drawImage.mock.calls.some(([image]) => image instanceof HTMLCanvasElement)).toBe(true),
+        { timeout: 1000, interval: 16 });
+    } finally {
+      drawImage.mockRestore();
+    }
+  });
+});
+
+describe('Showpiece effects in the browser', () => {
+  it('strike Lightning Bolt down from the top of the window onto its target, and shake the board', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+    const bear = permanentRect('bear');
+
+    m.messages.next(stateWith(game, cueOf('DAMAGE_TO_PERMANENT', {
+      sourceCardId: 'bolt', sourceName: 'Lightning Bolt', sourceColors: ['RED'], targetPermanentId: 'bear', amount: 3
+    })));
+
+    const above = new DOMRect(bear.left - bear.width, 0, bear.width * 3, bear.top);
+    await vi.waitFor(() => expect(inkIn(above).pixels).toBeGreaterThan(100), { timeout: 1000, interval: 16 });
+    const layout = document.querySelector<HTMLElement>('.game-layout')!;
+    await vi.waitFor(() => expect(layout.getAnimations().length).toBeGreaterThan(0), { timeout: 1000, interval: 16 });
+    await vi.waitFor(() => expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2), { timeout: 2000 });
+    expect(layout.getAnimations()).toEqual([]);
+  });
+
+  it('gather Doom Blade\'s dark cloud above its target, then cover the target in dark smoke', async () => {
+    const game = board([creature('elf')], [creature('bear')]);
+    const m = await mount(game, null);
+    const elf = permanentRect('elf');
+
+    m.messages.next(stateWith(game, cueOf('DESTROYED', {
+      sourceCardId: 'blade', sourceName: 'Doom Blade', sourceColors: ['BLACK'], targetPermanentId: 'elf'
+    })));
+
+    const above = new DOMRect(elf.left - elf.width / 2, elf.top - elf.width, elf.width * 2, elf.width * 0.8);
+    await vi.waitFor(() => expect(inkIn(above).pixels).toBeGreaterThan(500), { timeout: 1000, interval: 16 });
+    const cloud = inkIn(above);
+    expect((cloud.r + cloud.g + cloud.b) / 3).toBeLessThan(110);
+    await vi.waitFor(() => {
+      const ink = inkIn(elf);
+      expect(ink.pixels).toBeGreaterThan(500);
+      expect((ink.r + ink.g + ink.b) / 3).toBeLessThan(110);
+    }, { timeout: 2000, interval: 16 });
+    expect(m.fixture.componentInstance.game()?.turnNumber).toBe(1);
   });
 });

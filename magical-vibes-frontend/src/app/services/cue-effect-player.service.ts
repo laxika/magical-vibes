@@ -4,6 +4,7 @@ import { CueElementRegistry } from './cue-elements.service';
 import { VisualCue } from './websocket.service';
 import { DEBUG_FLASH_EFFECT } from '../components/game/cue-overlay/debug-flash.effect';
 import { DEFAULT_CUE_EFFECTS } from '../components/game/cue-overlay/default-effects';
+import { SHOWPIECE_EFFECTS } from '../components/game/cue-overlay/showpiece-effects';
 
 /** Where a cue's source and target are on screen, in viewport coordinates; re-measured on every read. */
 export interface CueRects {
@@ -19,6 +20,8 @@ export interface CueEffectContext {
   /** Draws `frame` on the overlay every animation frame for `durationMs` at normal speed;
       resolves when the animation is over or playback is stopped. */
   animate(durationMs: number, frame: CueFrame): Promise<void>;
+  /** Shakes the game view by up to `magnitudePx` for `durationMs` at normal speed; stops when playback is stopped. */
+  shake(magnitudePx: number, durationMs: number): void;
   signal: AbortSignal;
   speed: number;
 }
@@ -35,6 +38,8 @@ export interface CueEffect {
 export interface CueSurface {
   /** Draws `frame` every animation frame for `durationMs`; resolves when done or when `signal` aborts. */
   animate(durationMs: number, frame: CueFrame, signal: AbortSignal): Promise<void>;
+  /** Shakes the game view for `durationMs`; cancelled when `signal` aborts. A surface may not shake. */
+  shake?(magnitudePx: number, durationMs: number, signal: AbortSignal): void;
 }
 
 /** localStorage flag that puts the debug flash in front of every other effect (`localStorage.cueDebugEffects = '1'`). */
@@ -48,10 +53,13 @@ function debugEffectsEnabled(): boolean {
   }
 }
 
-/** The registered effects, most specific first: the default effect for every cue type, behind the debug flash when it is on. */
+/**
+ * The registered effects, most specific first: the per-card showpieces, then the default effect for
+ * every cue type, all behind the debug flash when it is on.
+ */
 export const CUE_EFFECTS = new InjectionToken<readonly CueEffect[]>('CUE_EFFECTS', {
   providedIn: 'root',
-  factory: () => debugEffectsEnabled() ? [DEBUG_FLASH_EFFECT, ...DEFAULT_CUE_EFFECTS] : DEFAULT_CUE_EFFECTS
+  factory: () => [...(debugEffectsEnabled() ? [DEBUG_FLASH_EFFECT] : []), ...SHOWPIECE_EFFECTS, ...DEFAULT_CUE_EFFECTS]
 });
 
 /**
@@ -85,7 +93,8 @@ export class CueEffectPlayer implements CuePlayer {
     await effect.play(cue, rects, {
       signal,
       speed,
-      animate: (durationMs, frame) => surface.animate(durationMs / speed, frame, signal)
+      animate: (durationMs, frame) => surface.animate(durationMs / speed, frame, signal),
+      shake: (magnitudePx, durationMs) => surface.shake?.(magnitudePx, durationMs / speed, signal)
     });
   }
 

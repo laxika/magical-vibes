@@ -1,5 +1,6 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CueEffectPlayer, CueFrame, CueSurface } from '../../../services/cue-effect-player.service';
+import { preloadCueAnimations } from './cue-animations';
 
 interface ActiveAnimation {
   frame: CueFrame;
@@ -14,6 +15,10 @@ interface ActiveAnimation {
  * coordinates so effects can use `getBoundingClientRect()` rectangles directly — cards keep their
  * own DOM and CSS zoom, and the canvas follows window resizes and the device pixel ratio on every
  * frame. One `requestAnimationFrame` loop runs while at least one animation is playing.
+ *
+ * Effects can also shake `shakeTarget` (the game layout, which is not an ancestor of the overlay,
+ * so the overlay stays put while the cards it measures move). Creating the overlay starts loading
+ * the authored Lottie animations in the background.
  */
 @Component({
   selector: 'app-cue-overlay',
@@ -35,6 +40,8 @@ interface ActiveAnimation {
 })
 export class CueOverlayComponent implements CueSurface, OnInit, OnDestroy {
   @ViewChild('canvas', { static: true }) private canvasRef!: ElementRef<HTMLCanvasElement>;
+  /** The element effects shake. It must not contain the overlay. */
+  @Input() shakeTarget: HTMLElement | null = null;
   private readonly player = inject(CueEffectPlayer);
   private readonly animations = new Set<ActiveAnimation>();
   private frameRequest: number | null = null;
@@ -42,6 +49,7 @@ export class CueOverlayComponent implements CueSurface, OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.detach = this.player.attach(this);
+    void preloadCueAnimations();
   }
 
   ngOnDestroy(): void {
@@ -66,6 +74,16 @@ export class CueOverlayComponent implements CueSurface, OnInit, OnDestroy {
       signal.addEventListener('abort', () => this.finish(animation), { once: true });
       this.frameRequest ??= requestAnimationFrame(this.tick);
     });
+  }
+
+  shake(magnitudePx: number, durationMs: number, signal: AbortSignal): void {
+    const target = this.shakeTarget;
+    if (!target || typeof target.animate !== 'function' || signal.aborted || durationMs <= 0) return;
+    const offsets = [[0, 0], [1, -0.6], [-0.8, 0.5], [0.6, 0.6], [-0.4, -0.3], [0.2, 0.1], [0, 0]];
+    const animation = target.animate(offsets.map(([x, y]) => ({
+      transform: `translate(${x * magnitudePx}px, ${y * magnitudePx}px)`
+    })), { duration: durationMs, easing: 'linear' });
+    signal.addEventListener('abort', () => animation.cancel(), { once: true });
   }
 
   private readonly tick = (now: number): void => {

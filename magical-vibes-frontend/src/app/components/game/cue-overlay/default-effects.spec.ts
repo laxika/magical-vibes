@@ -54,6 +54,7 @@ function fakeContext(draw: CanvasRenderingContext2D) {
   const context: CueEffectContext = {
     signal: new AbortController().signal,
     speed: 1,
+    shake: () => {},
     animate: (durationMs, frame) => {
       durations.push(durationMs);
       [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1].forEach(progress => frame(draw, progress));
@@ -169,7 +170,7 @@ describe('Default cue effects', () => {
     const { draw, arcs } = recordingCanvas();
     const live = { source: null, target: TARGET as DOMRect | null };
     const context: CueEffectContext = {
-      signal: new AbortController().signal, speed: 1,
+      signal: new AbortController().signal, speed: 1, shake: () => {},
       animate: (_ms, frame) => {
         live.target = null;
         frame(draw, 0.5);

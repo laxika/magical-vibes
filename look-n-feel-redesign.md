@@ -20,9 +20,9 @@ order; each one lists what it depends on.
 | 5 | Frontend cue model and playback queue | done |
 | 6 | Element registry and effects overlay | done |
 | 7 | Default effects by cue type and color | done |
-| 8 | Showpiece effects: Lightning Bolt and Doom Blade | open |
+| 8 | Showpiece effects: Lightning Bolt and Doom Blade | done |
 | 9 | Effect settings and reduced motion | open |
-| 10 | Lottie support for authored animations | open |
+| 10 | Lottie support for authored animations | done |
 | 11 | Add a showpiece effect for a card (repeatable) | open |
 
 ## Why
@@ -542,6 +542,77 @@ Steps add notes here for later steps, under their number.
   sequential cues); `cue-overlay.browser.spec.ts` helpers (`mount` can use the app's own effects,
   and `stateWith` takes several cues). `game-cue-playback.spec.ts` and `subgame.browser.spec.ts`
   pass unchanged.
+
+### Step 8
+
+Done together with step 10, so Doom Blade's cloud and skull are Lottie from the start, with
+canvas fallbacks (dark smoke, a plain skull) for when the animations haven't loaded.
+
+- **Pieces:** `showpiece-effects.ts` (`SHOWPIECES` by card name, `SHOWPIECE_EFFECTS` wraps each to
+  match only its card's `sourceName`), registered in front of the defaults in `CUE_EFFECTS`. Full
+  description in `agent-docs/VISUAL-CUES.md` → *Showpiece effects*.
+- **Shake:** new `CueEffectContext.shake(magnitudePx, durationMs)`, implemented by the overlay on
+  its `shakeTarget` input (`.game-layout`, via `#gameLayout`). The overlay itself is not inside
+  the shaken element, so it stays put while the cards it measures move. `CueSurface.shake` is
+  optional; the player scales it by speed and cancels it with playback. Step 9's reduced motion
+  should turn shaking off (and probably the Bolt's full-window flash).
+- **Timings:** Bolt 650 ms (within the 700 ms default budget), Doom Blade 1300 ms; with the
+  spell's 350 ms resolve cue both fit `MAX_CUE_PLAYBACK_MS`. A lethal Bolt plays
+  resolve → bolt → the default `DIED` (about 1.6 s).
+- **Exported building blocks:** `default-effects.ts` now exports `Anchor`, `anchorOf`,
+  `fallbackAnchor`, `randomFor`, `easeOut`, `on`, `wash`, `ring`, `impactParticles`,
+  `coverParticles`, `spawn`, `isDamage` and `LOSS_COLOR` for step 11's showpieces.
+- **Real game check:** played games against the AI on a separate backend and dev server (scratch
+  database, ports 8091/4310), driven by Playwright through the real `GameComponent` (cast, pay with
+  lands, click the target card). Lightning Bolt on the AI's Hill Giant: the bolt cracks down from
+  the top of the window, a fiery starburst with `-3`, then the `DIED` wisps. Doom Blade on the
+  AI's Goblin Raider: the cloud gathers above it (it was in the top row, so the cloud overlaps
+  the AI's lands), the skull forms with glowing eyes and drops, the card goes dark under the
+  violet ring. Other cards kept the defaults.
+- **Showpiece cards:** Lightning Bolt, Doom Blade.
+- **Tests:** new `showpiece-effects.spec.ts` (jsdom: Bolt and Doom Blade cues get their
+  showpieces; other cards, their other cues and face-down sources get the defaults; target
+  needed; budget; the bolt starts above the window and ends on the target; one shake at the
+  strike / landing; damage label without the name; deterministic flicker; the skull's path from
+  the cloud to the target; the cloud stays on screen for top-row targets; nothing drawn when
+  the target goes). Two new cases in `cue-overlay.browser.spec.ts` (*Showpiece effects in the
+  browser*: Bolt's ink above the target and the board shake, Doom Blade's dark cloud above the
+  target then dark smoke on it). A new case in `cue-effect-player.service.spec.ts` (shakes are
+  passed on, scaled by speed; an overlay without `shake` is fine).
+  Changed: `cue-effect-player.service.spec.ts` (the registered list is now showpieces + defaults,
+  with the debug flash in front of both); `default-effects.spec.ts` (its two fake contexts need
+  the new `shake`); `cue-overlay.browser.spec.ts` — the `damage()` helper's source is now Shock and
+  the black-destroy test uses Murder, because Lightning Bolt and Doom Blade now get showpieces
+  and those tests are about the defaults (Bolt's window flash would also ink the neighbour card),
+  and *a whole Lightning Bolt* now sends a Lightning Bolt damage cue so it times the showpiece.
+
+### Step 10
+
+- **Library:** `lottie-web` pinned to `5.13.0` (exact), imported as its ES module light canvas
+  build (`lottie-web/build/player/esm/lottie_light_canvas.min.js`, typed by
+  `lottie-light-canvas.d.ts`) with a dynamic `import()`. The CommonJS build triggered Angular's
+  "not ESM" warning. `package-lock.json` changes only by the lottie entries.
+- **Bundle:** before, initial 913.49 kB (main 905.43 kB); after, initial 919.72 kB (main
+  911.22 kB + a 449 B chunk of esbuild's object-spread helpers, now shared with the lazy chunk).
+  lottie-web is a lazy chunk (204 kB raw, 47.8 kB transfer). The ~6 kB of initial growth is the new
+  effect code itself (showpieces, loader, Lottie layering), not the library.
+- **Animations:** generated, not downloaded: `tools/cue-animations/generate.mjs` + `lottie.mjs` (a
+  small bodymovin builder) write `public/cue-animations/*.json` (12 files, ~100 kB, fetched once
+  when a game opens). `public/cue-animations/README.md` has the origin and license note. Details,
+  palette slots and the "always have a fallback" rule are in `agent-docs/VISUAL-CUES.md` →
+  *Authored animations*. To check a new animation's look, render frames with lottie in
+  Chromium (Playwright) on the board's beige and on a dark card. Hand-drawn vector work stays
+  clean, not illustrated; an artist's After Effects export would drop into the same folder as
+  long as it uses the slot names (or fixed colors) and no expressions.
+- **Defaults upgraded:** every default effect now has an authored centrepiece (table in
+  `agent-docs/VISUAL-CUES.md` → *Default effects*), with the step 7 canvas drawing as fallback.
+- **Tests:** new `cue-animations.spec.ts` (jsdom: recoloring, nothing drawn before loading, a
+  failed load stays on the fallback and retries, a single load at a time). Three new cases in
+  `cue-overlay.browser.spec.ts` (*Authored animations in the browser*: every file is served and
+  uses only known slots; lottie loads and draws an animation in the look's colors; the defaults
+  draw on the overlay with it). `mount` in that spec now waits for the animations when it uses
+  the app's own effects, so pixel tests don't depend on load timing. The existing pixel tests
+  pass unchanged with the Lottie layers.
 
 ## Prompt
 

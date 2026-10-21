@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CUE_DEBUG_STORAGE_KEY, CUE_EFFECTS, CueEffect, CueEffectPlayer, CueSurface } from './cue-effect-player.service';
 import { DEBUG_FLASH_EFFECT } from '../components/game/cue-overlay/debug-flash.effect';
 import { DEFAULT_CUE_EFFECTS } from '../components/game/cue-overlay/default-effects';
+import { SHOWPIECE_EFFECTS } from '../components/game/cue-overlay/showpiece-effects';
 import { CueElementRegistry } from './cue-elements.service';
 import { VisualCue } from './websocket.service';
 
@@ -42,20 +43,20 @@ describe('CueEffectPlayer', () => {
     document.body.innerHTML = '';
   });
 
-  it('registers the default effects, so a cue whose target is on screen plays by default', () => {
+  it('registers the showpieces and then the default effects, so a cue whose target is on screen plays by default', () => {
     const player = TestBed.inject(CueEffectPlayer);
     player.attach(surface());
     TestBed.inject(CueElementRegistry).register('permanent', 'bear', element(0, 0));
 
-    expect(TestBed.inject(CUE_EFFECTS)).toEqual(DEFAULT_CUE_EFFECTS);
+    expect(TestBed.inject(CUE_EFFECTS)).toEqual([...SHOWPIECE_EFFECTS, ...DEFAULT_CUE_EFFECTS]);
     expect(player.canPlay(cue({ targetPermanentId: 'bear' }))).toBe(true);
     expect(player.canPlay(cue({ targetPermanentId: 'gone' }))).toBe(false);
   });
 
-  it('puts the debug flash in front of the defaults when the debug flag is set', () => {
+  it('puts the debug flash in front of every other effect when the debug flag is set', () => {
     localStorage.setItem(CUE_DEBUG_STORAGE_KEY, '1');
     try {
-      expect(TestBed.inject(CUE_EFFECTS)).toEqual([DEBUG_FLASH_EFFECT, ...DEFAULT_CUE_EFFECTS]);
+      expect(TestBed.inject(CUE_EFFECTS)).toEqual([DEBUG_FLASH_EFFECT, ...SHOWPIECE_EFFECTS, ...DEFAULT_CUE_EFFECTS]);
     } finally {
       localStorage.removeItem(CUE_DEBUG_STORAGE_KEY);
     }
@@ -85,6 +86,21 @@ describe('CueEffectPlayer', () => {
 
     expect(skipped.play).not.toHaveBeenCalled();
     expect(canvas.animate).toHaveBeenCalledWith(200, expect.any(Function), signal);
+  });
+
+  it('passes shakes to the overlay, scaled by speed, and ignores them on an overlay that can\'t shake', async () => {
+    const shaking: CueEffect = { matches: () => true, play: async (_cue, _rects, { shake }) => shake(6, 300) };
+    const { player } = setUp([shaking]);
+    const canvas = { ...surface(), shake: vi.fn() };
+    player.attach(canvas);
+    const signal = new AbortController().signal;
+
+    await player.play(cue({}), { signal, speed: 2 });
+    player.attach(surface());
+    await player.play(cue({}), { signal, speed: 1 });
+
+    expect(canvas.shake).toHaveBeenCalledOnce();
+    expect(canvas.shake).toHaveBeenCalledWith(6, 150, signal);
   });
 
   it('can not play a cue whose target is not on screen', () => {

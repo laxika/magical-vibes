@@ -96,7 +96,7 @@
       <feGaussianBlur stdDeviation="1.1" />
     </filter>
   </svg>
-  <div class="game-layout">
+  <div class="game-layout" #gameLayout>
     <div class="game-area">
   @if (game()?.status !== GameStatus.WAITING) {
     <div class="game-context" role="status">{{ subgameDepth() ? "Subgame depth " + subgameDepth() : "Main game" }}</div>
@@ -777,7 +777,7 @@
     </div>
   }
 
-  <app-cue-overlay />
+  <app-cue-overlay [shakeTarget]="gameLayout" />
 
   <!-- While cues play the board is behind the server, so input acting on it could hit the
        wrong card. This catches every click and skips to the current state instead. -->

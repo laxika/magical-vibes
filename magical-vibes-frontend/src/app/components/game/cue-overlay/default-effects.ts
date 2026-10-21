@@ -2,12 +2,18 @@ import type { CueEffect, CueEffectContext } from '../../../services/cue-effect-p
 import { VisualCue, VisualCueType } from '../../../services/websocket.service';
 import { Particle, Random, burst, drawParticles, hashSeed, seededRandom, softDot, swirl } from './cue-particles';
 import { CueElement, CuePalette, PALETTES, sourcePalette, sourcePaletteOr } from './cue-palette';
+import { CueAnimationName, drawCueAnimation } from './cue-animations';
 
 /**
  * The fallback effects: one for every cue type, chosen by type and source color (see
  * `cue-palette.ts`). Each lasts at most {@link DEFAULT_EFFECT_MAX_MS} at normal speed so long
  * chains of cues stay quick. They draw only shapes and numbers, never card names, so a hidden
  * source shows nothing but the neutral look.
+ *
+ * Each effect's centrepiece is an authored Lottie animation (`cue-animations.ts`) in the effect's
+ * look, with the canvas particles and labels drawn over it. Until the animations have loaded (or
+ * if they can't), the centrepiece falls back to a canvas drawing (rings, crosses, washes), so an
+ * effect looks complete either way.
  */
 
 /** The longest any default effect runs at normal speed, projectile included. */
@@ -23,7 +29,7 @@ export const SPELL_RESOLVED_MS = 350;
 export const SPELL_COUNTERED_MS = 450;
 
 /** Damage numbers and life loss. */
-const LOSS_COLOR = 'rgb(255, 82, 70)';
+export const LOSS_COLOR = 'rgb(255, 82, 70)';
 /** Life gain and +1/+1 counters. */
 const GAIN_COLOR = 'rgb(126, 240, 136)';
 
@@ -33,14 +39,14 @@ interface Point {
 }
 
 /** Where an effect is drawn: a point and the size its particles scale with. */
-interface Anchor extends Point {
+export interface Anchor extends Point {
   unit: number;
   /** Half the anchor's width and height, in units, for effects that cover the whole card. */
   halfWidth: number;
   halfHeight: number;
 }
 
-function anchorOf(rect: DOMRect): Anchor {
+export function anchorOf(rect: DOMRect): Anchor {
   const unit = Math.max(24, Math.min(rect.width, rect.height));
   return {
     x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, unit,
@@ -49,23 +55,23 @@ function anchorOf(rect: DOMRect): Anchor {
 }
 
 /** Where a cue with nothing on screen to land on plays: the middle of the window. */
-function fallbackAnchor(): Anchor {
+export function fallbackAnchor(): Anchor {
   const unit = Math.min(140, Math.max(60, Math.min(window.innerWidth, window.innerHeight) / 6));
   return { x: window.innerWidth / 2, y: window.innerHeight / 2, unit, halfWidth: 0.5, halfHeight: 0.5 };
 }
 
 /** The same cue always draws the same particles. */
-function randomFor(cue: VisualCue): Random {
+export function randomFor(cue: VisualCue): Random {
   return seededRandom(hashSeed([cue.type, cue.sourceCardId, cue.targetPermanentId, cue.targetPlayerId,
     cue.targetCardId, cue.amount, cue.counterType].join('|')));
 }
 
-function easeOut(t: number): number {
+export function easeOut(t: number): number {
   return 1 - (1 - t) ** 3;
 }
 
 /** Draws on the live rectangle every frame (it follows scrolling and zoom); skips frames where it is gone. */
-function on(rect: () => DOMRect | null, frame: (draw: CanvasRenderingContext2D, progress: number, at: Anchor) => void) {
+export function on(rect: () => DOMRect | null, frame: (draw: CanvasRenderingContext2D, progress: number, at: Anchor) => void) {
   return (draw: CanvasRenderingContext2D, progress: number) => {
     const current = rect();
     if (current) frame(draw, progress, anchorOf(current));
@@ -73,7 +79,7 @@ function on(rect: () => DOMRect | null, frame: (draw: CanvasRenderingContext2D, 
 }
 
 /** A tinted wash over the whole card that fades out. */
-function wash(draw: CanvasRenderingContext2D, rect: DOMRect | null, color: string, strength: number): void {
+export function wash(draw: CanvasRenderingContext2D, rect: DOMRect | null, color: string, strength: number): void {
   if (!rect || strength <= 0) return;
   draw.globalAlpha = Math.min(1, strength);
   draw.fillStyle = color;
@@ -82,7 +88,7 @@ function wash(draw: CanvasRenderingContext2D, rect: DOMRect | null, color: strin
 }
 
 /** An expanding (or, with `from > to`, contracting) ring that fades out. */
-function ring(draw: CanvasRenderingContext2D, at: Anchor, color: string, progress: number, from: number, to: number): void {
+export function ring(draw: CanvasRenderingContext2D, at: Anchor, color: string, progress: number, from: number, to: number): void {
   const radius = (from + (to - from) * easeOut(progress)) * at.unit;
   draw.globalAlpha = 1 - progress;
   draw.strokeStyle = color;
@@ -149,7 +155,7 @@ function fly(context: CueEffectContext, from: () => DOMRect | null, to: () => DO
 }
 
 /** The main particles of a palette, bursting outwards from the anchor. */
-function impactParticles(random: Random, palette: CuePalette, strength: number): Particle[] {
+export function impactParticles(random: Random, palette: CuePalette, strength: number): Particle[] {
   return [
     ...burst(random, {
       count: 10 + Math.min(10, strength) * 2, mode: palette.mode, colors: palette.colors,
@@ -164,7 +170,7 @@ function impactParticles(random: Random, palette: CuePalette, strength: number):
 }
 
 /** Particles that fill a whole card and drift the palette's way. */
-function coverParticles(random: Random, palette: CuePalette, at: Anchor, count: number, mode = palette.mode): Particle[] {
+export function coverParticles(random: Random, palette: CuePalette, at: Anchor, count: number, mode = palette.mode): Particle[] {
   return burst(random, {
     count, mode, colors: palette.colors, speed: [0.05, 0.25], direction: -Math.PI / 2, spread: Math.PI * 1.2,
     gravity: { x: 0, y: palette.rise }, size: [0.1, 0.2], grow: mode === 'smoke' ? 2 : 0.5,
@@ -173,7 +179,7 @@ function coverParticles(random: Random, palette: CuePalette, at: Anchor, count: 
 }
 
 /** Particles are spawned against the anchor as it is when the effect starts. */
-function spawn<T>(rect: DOMRect | null, make: (at: Anchor) => T): T | null {
+export function spawn<T>(rect: DOMRect | null, make: (at: Anchor) => T): T | null {
   return rect ? make(anchorOf(rect)) : null;
 }
 
@@ -181,9 +187,9 @@ function isType(...types: VisualCueType[]) {
   return (cue: VisualCue) => types.includes(cue.type);
 }
 
-const isDamage = isType('DAMAGE_TO_PERMANENT', 'DAMAGE_TO_PLAYER');
+export const isDamage = isType('DAMAGE_TO_PERMANENT', 'DAMAGE_TO_PLAYER');
 
-/** Damage: a bolt from the source (when it is on screen) to the target, an impact in the source's look, and the amount. */
+/** Damage: a bolt from the source (when it is on screen) to the target, a starburst impact in the source's look, and the amount. */
 export const DAMAGE_EFFECT: CueEffect = {
   matches: (cue, rects) => isDamage(cue) && rects.target !== null,
   async play(cue, rects, context) {
@@ -193,7 +199,9 @@ export const DAMAGE_EFFECT: CueEffect = {
     const amount = cue.amount ?? 0;
     const particles = impactParticles(random, palette, amount);
     await context.animate(IMPACT_MS, on(() => rects.target, (draw, progress, at) => {
-      ring(draw, at, palette.accent, Math.min(1, progress * 2), 0.15, 0.9);
+      if (!drawCueAnimation(draw, 'impact', palette, progress, at, 0.9)) {
+        ring(draw, at, palette.accent, Math.min(1, progress * 2), 0.15, 0.9);
+      }
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
       if (amount > 0) drawFloatingText(draw, `-${amount}`, LOSS_COLOR, at, progress);
     }));
@@ -206,6 +214,8 @@ interface LeaveStyle {
   /** Strength of the wash over the card at the start. */
   wash: number;
   particles: (random: Random, palette: CuePalette, at: Anchor) => Particle[];
+  /** The authored centrepiece and its size in card units; without it loaded, only the wash and particles show. */
+  animation: { name: CueAnimationName; scale: number };
 }
 
 const LEAVE_STYLES: Partial<Record<VisualCueType, LeaveStyle>> = {
@@ -215,23 +225,27 @@ const LEAVE_STYLES: Partial<Record<VisualCueType, LeaveStyle>> = {
     particles: (random, palette, at) => [
       ...coverParticles(random, palette, at, 30),
       ...impactParticles(random, palette, 4)
-    ]
+    ],
+    animation: { name: 'crack', scale: 0.7 }
   },
   DIED: {
     palette: () => PALETTES.smoke,
     wash: 0.5,
-    particles: (random, palette, at) => coverParticles(random, palette, at, 30, 'smoke')
+    particles: (random, palette, at) => coverParticles(random, palette, at, 30, 'smoke'),
+    animation: { name: 'wisp', scale: 0.8 }
   },
   SACRIFICED: {
     palette: cue => sourcePaletteOr(cue.sourceColors, 'shadow'),
     wash: 0.4,
     particles: (random, palette, at) => coverParticles(random, { ...palette, rise: -1.2 }, at, 26)
-      .map(p => ({ ...p, y: p.y * 0.3 + at.halfHeight * 0.6 }))
+      .map(p => ({ ...p, y: p.y * 0.3 + at.halfHeight * 0.6 })),
+    animation: { name: 'wisp', scale: 0.8 }
   },
   EXILED: {
     palette: cue => sourcePaletteOr(cue.sourceColors, 'light'),
     wash: 0.6,
-    particles: (random, palette, at) => coverParticles(random, { ...palette, rise: -1.4 }, at, 30, 'glow')
+    particles: (random, palette, at) => coverParticles(random, { ...palette, rise: -1.4 }, at, 30, 'glow'),
+    animation: { name: 'pillar', scale: 0.9 }
   },
   RETURNED_TO_HAND: {
     palette: cue => sourcePaletteOr(cue.sourceColors, 'water'),
@@ -239,13 +253,15 @@ const LEAVE_STYLES: Partial<Record<VisualCueType, LeaveStyle>> = {
     particles: (random, palette, at) => swirl(random, {
       count: 28, mode: 'glow', colors: palette.colors, size: [0.06, 0.12], life: [0.6, 0.9], delay: [0, 0.15],
       radius: [Math.max(at.halfWidth, at.halfHeight) * 0.9, Math.max(at.halfWidth, at.halfHeight) * 1.3], turns: 1.2
-    })
+    }),
+    animation: { name: 'vortex', scale: 0.9 }
   }
 };
 
 /**
- * Leaving the battlefield, in the source's look: destroy bursts (black = smoke, red = fire),
- * exile fades in light, a bounce swirls, a death without a source goes up in grey smoke.
+ * Leaving the battlefield, in the source's look: destroy cracks the card and bursts (black = smoke,
+ * red = fire), exile flares up in a column of light, a bounce whirls into a vortex, a sacrifice
+ * or a death without a source releases wisps and goes up in smoke.
  */
 export const LEAVE_EFFECT: CueEffect = {
   matches: (cue, rects) => LEAVE_STYLES[cue.type] !== undefined && rects.target !== null,
@@ -260,12 +276,13 @@ export const LEAVE_EFFECT: CueEffect = {
       if (!rect) return;
       const at = anchorOf(rect);
       wash(draw, rect, washColor, style.wash * Math.sin(Math.PI * Math.min(1, progress * 1.4)));
+      drawCueAnimation(draw, style.animation.name, palette, progress, at, style.animation.scale);
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
     });
   }
 };
 
-/** Life gained or lost on a player's panel: rising light and `+N`, or a falling drain and `-N`. */
+/** Life gained or lost on a player's panel: a rising cross, light and `+N`, or a splashing drop, a falling drain and `-N`. */
 export const LIFE_EFFECT: CueEffect = {
   matches: (cue, rects) => isType('LIFE_GAINED', 'LIFE_LOST')(cue) && rects.target !== null,
   async play(cue, rects, context) {
@@ -274,6 +291,7 @@ export const LIFE_EFFECT: CueEffect = {
     const amount = cue.amount ?? 0;
     const particles = spawn(rects.target, at => coverParticles(randomFor(cue), palette, at, 18 + Math.min(10, amount))) ?? [];
     await context.animate(LIFE_MS, on(() => rects.target, (draw, progress, at) => {
+      drawCueAnimation(draw, gained ? 'life-gain' : 'life-loss', palette, progress, at, 1.2);
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
       if (amount > 0) drawFloatingText(draw, `${gained ? '+' : '-'}${amount}`, gained ? GAIN_COLOR : LOSS_COLOR, at, progress);
     }));
@@ -300,7 +318,7 @@ export function counterElement(counterType: string | null, sourceColors: readonl
   return sourcePalette(sourceColors).element;
 }
 
-/** Counters put on a permanent: particles in the counter type's look and the counters as a label. */
+/** Counters put on a permanent: a badge, particles in the counter type's look and the counters as a label. */
 export const COUNTERS_EFFECT: CueEffect = {
   matches: (cue, rects) => cue.type === 'COUNTERS_ADDED' && rects.target !== null,
   async play(cue, rects, context) {
@@ -310,13 +328,14 @@ export const COUNTERS_EFFECT: CueEffect = {
     const textColor = palette.element === 'nature' ? GAIN_COLOR : palette.element === 'shadow' ? 'rgb(196, 128, 240)' : palette.accent;
     const particles = spawn(rects.target, at => coverParticles(randomFor(cue), palette, at, 16 + Math.min(12, amount * 2))) ?? [];
     await context.animate(COUNTERS_MS, on(() => rects.target, (draw, progress, at) => {
+      drawCueAnimation(draw, 'badge', palette, progress, at, 0.8);
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
       drawFloatingText(draw, label, textColor, at, progress);
     }));
   }
 };
 
-/** A spell is cast: a reticle closes in on its target, or, without one, a ring flares in the middle of the window. */
+/** A spell is cast: a magic circle and a reticle close in on its target, or, without one, the circle flares in the middle of the window. */
 export const SPELL_CAST_EFFECT: CueEffect = {
   matches: cue => cue.type === 'SPELL_CAST',
   async play(cue, rects, context) {
@@ -331,9 +350,9 @@ export const SPELL_CAST_EFFECT: CueEffect = {
       if (targeted && !rect) return;
       const at = rect ? anchorOf(rect) : fallbackAnchor();
       if (rect) {
-        ring(draw, at, palette.accent, progress, 1.1, 0.5);
+        if (!drawCueAnimation(draw, 'sigil', palette, progress, at, 1)) ring(draw, at, palette.accent, progress, 1.1, 0.5);
         ticks(draw, at, palette.accent, progress);
-      } else {
+      } else if (!drawCueAnimation(draw, 'sigil', palette, progress, at, 1.2)) {
         ring(draw, at, palette.accent, progress, 0.2, 1);
       }
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
@@ -369,13 +388,13 @@ export const SPELL_RESOLVED_EFFECT: CueEffect = {
       if (shown && !rect) return;
       const at = rect ? anchorOf(rect) : fallbackAnchor();
       wash(draw, rect, palette.wash, 0.35 * (1 - progress));
-      ring(draw, at, palette.accent, progress, 0.3, 1.1);
+      if (!drawCueAnimation(draw, 'impact', palette, progress, at, 0.7)) ring(draw, at, palette.accent, progress, 0.3, 1.1);
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
     });
   }
 };
 
-/** A spell is countered: a bolt from the counter to the spell (when both show), then the spell shatters under a cross. */
+/** A spell is countered: a bolt from the counter to the spell (when both show), then a rune over the spell cracks and shatters. */
 export const SPELL_COUNTERED_EFFECT: CueEffect = {
   matches: cue => cue.type === 'SPELL_COUNTERED',
   async play(cue, rects, context) {
@@ -391,7 +410,7 @@ export const SPELL_COUNTERED_EFFECT: CueEffect = {
       if (shown && !rect) return;
       const at = rect ? anchorOf(rect) : fallbackAnchor();
       wash(draw, rect, palette.wash, 0.4 * (1 - progress));
-      cross(draw, at, palette.accent, progress);
+      if (!drawCueAnimation(draw, 'shatter', palette, progress, at, 0.9)) cross(draw, at, palette.accent, progress);
       drawParticles(draw, particles, progress, at.x, at.y, at.unit);
     });
   }
