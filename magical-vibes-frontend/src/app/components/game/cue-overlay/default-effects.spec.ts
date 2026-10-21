@@ -3,13 +3,14 @@ import type { CueEffect, CueEffectContext, CueRects } from '../../../services/cu
 import { VisualCue, VisualCueType } from '../../../services/websocket.service';
 import {
   COUNTERS_EFFECT, DAMAGE_EFFECT, DEFAULT_CUE_EFFECTS, DEFAULT_EFFECT_MAX_MS, IMPACT_MS, LEAVE_EFFECT, LIFE_EFFECT,
-  PROJECTILE_MS, SPELL_CAST_EFFECT, SPELL_COUNTERED_EFFECT, SPELL_RESOLVED_EFFECT, counterElement, counterLabel
+  PROJECTILE_MS, SPELL_COUNTERED_EFFECT, counterElement, counterLabel
 } from './default-effects';
 import { sourcePalette } from './cue-palette';
 
+/** Every cue type with a default effect; casting and resolving a spell have none. */
 const ALL_TYPES: VisualCueType[] = [
   'DESTROYED', 'SACRIFICED', 'EXILED', 'RETURNED_TO_HAND', 'DIED', 'DAMAGE_TO_PERMANENT', 'DAMAGE_TO_PLAYER',
-  'SPELL_CAST', 'SPELL_RESOLVED', 'SPELL_COUNTERED', 'LIFE_GAINED', 'LIFE_LOST', 'COUNTERS_ADDED'
+  'SPELL_COUNTERED', 'LIFE_GAINED', 'LIFE_LOST', 'COUNTERS_ADDED'
 ];
 
 function cue(type: VisualCueType, overrides: Partial<VisualCue> = {}): VisualCue {
@@ -30,12 +31,14 @@ function rects(source: DOMRect | null, target: DOMRect | null): CueRects {
 /** A 2D context that records where things are drawn and ignores everything else. */
 function recordingCanvas() {
   const arcs: { x: number; y: number }[] = [];
+  const moves: { x: number; y: number }[] = [];
   const texts: string[] = [];
   const state: Record<string | symbol, unknown> = {};
   const draw = new Proxy(state, {
     get(target, prop) {
       if (prop in target) return target[prop];
       if (prop === 'arc') return (x: number, y: number) => arcs.push({ x, y });
+      if (prop === 'moveTo') return (x: number, y: number) => moves.push({ x, y });
       if (prop === 'fillText' || prop === 'strokeText') return (text: string) => texts.push(text);
       if (prop === 'createRadialGradient') return () => ({ addColorStop: () => {} });
       return () => {};
@@ -45,7 +48,7 @@ function recordingCanvas() {
       return true;
     }
   }) as unknown as CanvasRenderingContext2D;
-  return { draw, arcs, texts };
+  return { draw, arcs, moves, texts };
 }
 
 /** Runs each animation's frames at a few points of its progress and records the durations asked for. */
@@ -92,9 +95,14 @@ describe('Default cue effects', () => {
     expect(effectFor(cue('DIED'), r)).toBe(LEAVE_EFFECT);
     expect(effectFor(cue('LIFE_LOST'), r)).toBe(LIFE_EFFECT);
     expect(effectFor(cue('COUNTERS_ADDED'), r)).toBe(COUNTERS_EFFECT);
-    expect(effectFor(cue('SPELL_CAST'), r)).toBe(SPELL_CAST_EFFECT);
-    expect(effectFor(cue('SPELL_RESOLVED'), r)).toBe(SPELL_RESOLVED_EFFECT);
     expect(effectFor(cue('SPELL_COUNTERED'), r)).toBe(SPELL_COUNTERED_EFFECT);
+  });
+
+  it('play nothing for a spell being cast or resolving', () => {
+    for (const r of [rects(SOURCE, TARGET), rects(null, null)]) {
+      expect(effectFor(cue('SPELL_CAST'), r)).toBeUndefined();
+      expect(effectFor(cue('SPELL_RESOLVED'), r)).toBeUndefined();
+    }
   });
 
   it('stay within the time budget, projectile included', async () => {
@@ -158,12 +166,12 @@ describe('Default cue effects', () => {
     }
   });
 
-  it('draw a spell cue with nothing on screen in the middle of the window', async () => {
-    const { draw, arcs } = recordingCanvas();
-    const c = cue('SPELL_RESOLVED', { targetPermanentId: null });
-    await SPELL_RESOLVED_EFFECT.play(c, rects(null, null), fakeContext(draw).context);
+  it('draw a countered spell with nothing on screen in the middle of the window', async () => {
+    const { draw, moves } = recordingCanvas();
+    const c = cue('SPELL_COUNTERED', { targetPermanentId: null });
+    await SPELL_COUNTERED_EFFECT.play(c, rects(null, null), fakeContext(draw).context);
 
-    expect(arcs).toContainEqual({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    expect(moves).toContainEqual({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   });
 
   it('stop drawing when the target goes away mid-effect', async () => {
@@ -177,7 +185,7 @@ describe('Default cue effects', () => {
         return Promise.resolve();
       }
     };
-    for (const c of [cue('DESTROYED'), cue('SPELL_CAST'), cue('DAMAGE_TO_PERMANENT')]) {
+    for (const c of [cue('DESTROYED'), cue('SPELL_COUNTERED'), cue('DAMAGE_TO_PERMANENT')]) {
       live.target = TARGET;
       await effectFor(c, live)!.play(c, live, context);
     }

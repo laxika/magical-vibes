@@ -5,8 +5,9 @@ import { CueElement, CuePalette, PALETTES, sourcePalette, sourcePaletteOr } from
 import { CueAnimationName, drawCueAnimation } from './cue-animations';
 
 /**
- * The fallback effects: one for every cue type, chosen by type and source color (see
- * `cue-palette.ts`). Each lasts at most {@link DEFAULT_EFFECT_MAX_MS} at normal speed so long
+ * The fallback effects: one for every cue type except `SPELL_CAST` and `SPELL_RESOLVED`, chosen by
+ * type and source color (see `cue-palette.ts`). Casting and resolving draw nothing by default (a
+ * creature spell resolving is just the creature appearing); a showpiece may still match them. Each lasts at most {@link DEFAULT_EFFECT_MAX_MS} at normal speed so long
  * chains of cues stay quick. They draw only shapes and numbers, never card names, so a hidden
  * source shows nothing but the neutral look.
  *
@@ -24,8 +25,6 @@ export const IMPACT_MS = 450;
 export const LEAVE_MS = 600;
 export const LIFE_MS = 550;
 export const COUNTERS_MS = 550;
-export const SPELL_CAST_MS = 400;
-export const SPELL_RESOLVED_MS = 350;
 export const SPELL_COUNTERED_MS = 450;
 
 /** Damage numbers and life loss. */
@@ -335,65 +334,6 @@ export const COUNTERS_EFFECT: CueEffect = {
   }
 };
 
-/** A spell is cast: a magic circle and a reticle close in on its target, or, without one, the circle flares in the middle of the window. */
-export const SPELL_CAST_EFFECT: CueEffect = {
-  matches: cue => cue.type === 'SPELL_CAST',
-  async play(cue, rects, context) {
-    const palette = sourcePalette(cue.sourceColors);
-    const particles = burst(randomFor(cue), {
-      count: 14, mode: 'glow', colors: palette.mode === 'smoke' ? [palette.accent] : palette.colors,
-      speed: [0.4, 0.7], size: [0.05, 0.09], grow: 0.3, life: [0.5, 0.8], delay: [0.2, 0.35]
-    });
-    const targeted = rects.target !== null;
-    await context.animate(SPELL_CAST_MS, (draw, progress) => {
-      const rect = rects.target;
-      if (targeted && !rect) return;
-      const at = rect ? anchorOf(rect) : fallbackAnchor();
-      if (rect) {
-        if (!drawCueAnimation(draw, 'sigil', palette, progress, at, 1)) ring(draw, at, palette.accent, progress, 1.1, 0.5);
-        ticks(draw, at, palette.accent, progress);
-      } else if (!drawCueAnimation(draw, 'sigil', palette, progress, at, 1.2)) {
-        ring(draw, at, palette.accent, progress, 0.2, 1);
-      }
-      drawParticles(draw, particles, progress, at.x, at.y, at.unit);
-    });
-  }
-};
-
-/** Four short marks that close in with the targeting ring. */
-function ticks(draw: CanvasRenderingContext2D, at: Anchor, color: string, progress: number): void {
-  const outer = (1.25 - 0.6 * easeOut(progress)) * at.unit;
-  draw.globalAlpha = 1 - progress;
-  draw.strokeStyle = color;
-  draw.lineWidth = Math.max(2, at.unit * 0.05);
-  draw.beginPath();
-  for (let i = 0; i < 4; i++) {
-    const angle = (Math.PI / 2) * i;
-    draw.moveTo(at.x + Math.cos(angle) * outer, at.y + Math.sin(angle) * outer);
-    draw.lineTo(at.x + Math.cos(angle) * (outer + at.unit * 0.18), at.y + Math.sin(angle) * (outer + at.unit * 0.18));
-  }
-  draw.stroke();
-  draw.globalAlpha = 1;
-}
-
-/** A spell resolves: its stack entry flares in its look (the middle of the window when the stack is not showing). */
-export const SPELL_RESOLVED_EFFECT: CueEffect = {
-  matches: cue => cue.type === 'SPELL_RESOLVED',
-  async play(cue, rects, context) {
-    const palette = sourcePalette(cue.sourceColors);
-    const particles = impactParticles(randomFor(cue), { ...palette, mode: 'glow', colors: palette.mode === 'smoke' ? [palette.accent] : palette.colors }, 2);
-    const shown = rects.source !== null;
-    await context.animate(SPELL_RESOLVED_MS, (draw, progress) => {
-      const rect = rects.source;
-      if (shown && !rect) return;
-      const at = rect ? anchorOf(rect) : fallbackAnchor();
-      wash(draw, rect, palette.wash, 0.35 * (1 - progress));
-      if (!drawCueAnimation(draw, 'impact', palette, progress, at, 0.7)) ring(draw, at, palette.accent, progress, 0.3, 1.1);
-      drawParticles(draw, particles, progress, at.x, at.y, at.unit);
-    });
-  }
-};
-
 /** A spell is countered: a bolt from the counter to the spell (when both show), then a rune over the spell cracks and shatters. */
 export const SPELL_COUNTERED_EFFECT: CueEffect = {
   matches: cue => cue.type === 'SPELL_COUNTERED',
@@ -434,13 +374,11 @@ function cross(draw: CanvasRenderingContext2D, at: Anchor, color: string, progre
   draw.globalAlpha = 1;
 }
 
-/** The default effects, for `CUE_EFFECTS`; together they cover every cue type. */
+/** The default effects, for `CUE_EFFECTS`; together they cover every cue type but casting and resolving. */
 export const DEFAULT_CUE_EFFECTS: readonly CueEffect[] = [
   DAMAGE_EFFECT,
   LEAVE_EFFECT,
   LIFE_EFFECT,
   COUNTERS_EFFECT,
-  SPELL_CAST_EFFECT,
-  SPELL_RESOLVED_EFFECT,
   SPELL_COUNTERED_EFFECT
 ];

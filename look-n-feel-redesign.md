@@ -614,6 +614,20 @@ canvas fallbacks (dark smoke, a plain skull) for when the animations haven't loa
   the app's own effects, so pixel tests don't depend on load timing. The existing pixel tests
   pass unchanged with the Lottie layers.
 
+### After step 10: no cast or resolve effects
+
+- **Removed:** `SPELL_CAST_EFFECT` and `SPELL_RESOLVED_EFFECT` (and the `sigil` animation only the
+  cast used). Every cast and every resolution flashed, so casting a creature played two effects
+  without anything happening to the board. Those cues now have no default effect and apply at
+  once; the engine still emits them, so a showpiece can still match one. `SPELL_COUNTERED` keeps
+  its effect.
+- **Budget:** a lethal Bolt is now bolt → `DIED` (about 1.25 s).
+- **Tests changed:** `default-effects.spec.ts` (no effect for cast/resolve; the
+  middle-of-window case uses a countered spell, recorded by its cross), `showpiece-effects.spec.ts`
+  (Bolt's and Doom Blade's cast/resolve play nothing; the budget is the showpiece alone),
+  `cue-overlay.browser.spec.ts` (the targetless-cast case now checks a creature spell's cast and
+  resolve apply at once).
+
 ## Prompt
 
 Replace `<N>` with the step number:

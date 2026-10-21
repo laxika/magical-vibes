@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CueEffect, CueEffectContext, CueRects } from '../../../services/cue-effect-player.service';
 import { MAX_CUE_PLAYBACK_MS } from '../../../services/cue-playback.service';
 import { VisualCue, VisualCueType } from '../../../services/websocket.service';
-import { DEFAULT_CUE_EFFECTS, SPELL_RESOLVED_MS } from './default-effects';
+import { DEFAULT_CUE_EFFECTS } from './default-effects';
 import { DOOM_BLADE_MS, LIGHTNING_BOLT_MS, SHOWPIECE_EFFECTS } from './showpiece-effects';
 
 const TARGET = new DOMRect(400, 300, 100, 140);
@@ -89,11 +89,16 @@ describe('Showpiece effects', () => {
 
   it('leave other cards, the cards\' other cues and face-down sources to the defaults', () => {
     const defaults = [
-      cue('DAMAGE_TO_PERMANENT', 'Shock'), cue('DESTROYED', 'Murder'), bolt('SPELL_RESOLVED'), bolt('SPELL_CAST'),
-      doomBlade('SPELL_CAST'), doomBlade('SPELL_RESOLVED'), cue('DAMAGE_TO_PERMANENT', null), cue('DESTROYED', null)
+      cue('DAMAGE_TO_PERMANENT', 'Shock'), cue('DESTROYED', 'Murder'), cue('DAMAGE_TO_PERMANENT', null), cue('DESTROYED', null)
     ];
     for (const c of defaults) {
       expect(DEFAULT_CUE_EFFECTS, `${c.sourceName} ${c.type}`).toContain(effectFor(c));
+    }
+  });
+
+  it('play nothing while Lightning Bolt or Doom Blade is cast or resolves', () => {
+    for (const c of [bolt('SPELL_CAST'), bolt('SPELL_RESOLVED'), doomBlade('SPELL_CAST'), doomBlade('SPELL_RESOLVED')]) {
+      expect(effectFor(c), `${c.sourceName} ${c.type}`).toBeUndefined();
     }
   });
 
@@ -102,9 +107,9 @@ describe('Showpiece effects', () => {
     expect(effectFor(doomBlade(), null)).toBeUndefined();
   });
 
-  it('keep a resolving Bolt or Doom Blade inside the playback budget', async () => {
-    expect(SPELL_RESOLVED_MS + LIGHTNING_BOLT_MS).toBeLessThan(MAX_CUE_PLAYBACK_MS);
-    expect(SPELL_RESOLVED_MS + DOOM_BLADE_MS).toBeLessThan(MAX_CUE_PLAYBACK_MS);
+  it('stay inside the playback budget', async () => {
+    expect(LIGHTNING_BOLT_MS).toBeLessThan(MAX_CUE_PLAYBACK_MS);
+    expect(DOOM_BLADE_MS).toBeLessThan(MAX_CUE_PLAYBACK_MS);
   });
 });
 

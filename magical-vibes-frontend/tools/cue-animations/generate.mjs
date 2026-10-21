@@ -77,29 +77,6 @@ function impact() {
   ]);
 }
 
-/** A magic circle that draws itself: two rings, an eight-pointed figure and runes, turning as it fades. */
-function sigil() {
-  const drawn = (from, to) => trim(0, keys([from, 0, 'out'], [to, 100]));
-  return composition('sigil', { frames: 30 }, [
-    layer('sigil', [
-      group('runes', [
-        group('rune', [star(4, 8, 2.6), fill('@accent'), stroke(INK, 1.2, { opacity: 40 })], {
-          p: [0, -76], s: keys([8, [0, 0], 'back'], [14, [100, 100]])
-        }),
-        repeater(8, { r: 45 })
-      ]),
-      group('octagram', [star(4, 50, null), star(4, 50, null, { r: 45 }), drawn(4, 16), ...outlined('@accent', 3)]),
-      group('inner ring', [ellipse(94), trim(keys([2, 100, 'out'], [14, 0]), 100), ...outlined('@c1', 2.5, 25)]),
-      group('outer ring', [ellipse(128), drawn(0, 12), ...outlined('@accent', 4)]),
-      group('glow', [ellipse(136), fill('@c0', 12)])
-    ], {
-      o: keys([0, 0, 'out'], [4, 100, 'hold'], [19, 100], [30, 0]),
-      s: keys([0, [82, 82], 'out'], [30, [108, 108]]),
-      r: keys([0, -30, 'out'], [30, 30])
-    })
-  ]);
-}
-
 /** A countered spell: a rune disc cracks, then breaks into six shards that fly apart. */
 function shatter() {
   const shards = Array.from({ length: 6 }, (_, i) => {
@@ -319,7 +296,7 @@ function skull() {
 }
 
 const ANIMATIONS = {
-  impact, sigil, shatter, crack, pillar, vortex, wisp, 'life-gain': lifeGain, 'life-loss': lifeLoss, badge,
+  impact, shatter, crack, pillar, vortex, wisp, 'life-gain': lifeGain, 'life-loss': lifeLoss, badge,
   'doom-cloud': doomCloud, skull
 };
 

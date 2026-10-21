@@ -19,7 +19,7 @@ import { CuePalette } from './cue-palette';
 
 /** Every file in `public/cue-animations/`, without `.json`. */
 export const CUE_ANIMATIONS = [
-  'impact', 'sigil', 'shatter', 'crack', 'pillar', 'vortex', 'wisp', 'life-gain', 'life-loss', 'badge',
+  'impact', 'shatter', 'crack', 'pillar', 'vortex', 'wisp', 'life-gain', 'life-loss', 'badge',
   'doom-cloud', 'skull'
 ] as const;
 

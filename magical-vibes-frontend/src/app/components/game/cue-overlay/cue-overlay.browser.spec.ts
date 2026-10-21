@@ -335,14 +335,15 @@ describe('Default effects in the browser', () => {
     }, { timeout: 1000, interval: 16 });
   });
 
-  it('show a spell cast with nothing to point at in the middle of the window', async () => {
+  it('apply the state at once for a spell being cast or resolving, a creature spell included', async () => {
     const game = board([creature('elf')], [creature('bear')]);
     const m = await mount(game, null);
+    const bears = { sourceCardId: 'bears', sourceName: 'Grizzly Bears', sourceColors: ['GREEN'] };
 
-    m.messages.next(stateWith(game, cueOf('SPELL_CAST', { sourceCardId: 'wrath', sourceColors: ['WHITE'] })));
+    m.messages.next(stateWith(game, cueOf('SPELL_CAST', bears), cueOf('SPELL_RESOLVED', bears)));
 
-    const middle = new DOMRect(window.innerWidth / 2 - 150, window.innerHeight / 2 - 150, 300, 300);
-    await vi.waitFor(() => expect(inkIn(middle).pixels).toBeGreaterThan(100), { timeout: 1000, interval: 16 });
+    expect(m.fixture.componentInstance.game()?.turnNumber).toBe(2);
+    expect(m.fixture.componentInstance.cuePlayback.playing()).toBe(false);
   });
 
   it('get through a whole Lightning Bolt, showpiece included, quickly, then apply the state', async () => {
