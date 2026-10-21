@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.event;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -17,7 +19,8 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
         GameEventFact.GameLogAppended,
         GameEventFact.DecisionRequested,
         GameEventFact.PrivateReveal, GameEventFact.MulliganResolved, GameEventFact.GameEnded,
-        GameEventFact.SubgameStarted, GameEventFact.SubgameEnded, GameEventFact.ActiveGameChanged {
+        GameEventFact.SubgameStarted, GameEventFact.SubgameEnded, GameEventFact.ActiveGameChanged,
+        GameEventFact.VisualCue {
 
     GameEventKind kind();
 
@@ -185,6 +188,35 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
         @Override
         public GameEventKind kind() {
             return GameEventKind.GAME_ENDED;
+        }
+    }
+
+    /**
+     * A cosmetic report of something that happened, for the client to animate before it applies
+     * the state that follows. No rules code reads cues, so they can never change game behaviour.
+     *
+     * <p>Every field except {@code cueType} may be null; a missing source has no colors. The
+     * emitter has already redacted the source name and colors when the source is hidden, such as
+     * a face-down permanent or spell.
+     */
+    record VisualCue(
+            VisualCueType cueType,
+            UUID sourceCardId,
+            String sourceName,
+            List<CardColor> sourceColors,
+            UUID targetPermanentId,
+            UUID targetPlayerId,
+            Integer amount
+    ) implements GameEventFact {
+
+        public VisualCue {
+            Objects.requireNonNull(cueType, "cueType");
+            sourceColors = sourceColors == null ? List.of() : List.copyOf(sourceColors);
+        }
+
+        @Override
+        public GameEventKind kind() {
+            return GameEventKind.VISUAL_CUE;
         }
     }
 

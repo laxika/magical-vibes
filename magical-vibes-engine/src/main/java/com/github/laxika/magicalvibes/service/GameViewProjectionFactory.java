@@ -197,7 +197,8 @@ public class GameViewProjectionFactory {
                                     || gameData.additionalExileLookPermissions
                                     .getOrDefault(entry.card().getId(), java.util.Set.of()).contains(playerId))
                             .map(entry -> cardViewFactory.create(entry.card()))
-                            .toList()
+                            .toList(),
+                    List.of()
             ));
         }
         return Collections.unmodifiableMap(messages);

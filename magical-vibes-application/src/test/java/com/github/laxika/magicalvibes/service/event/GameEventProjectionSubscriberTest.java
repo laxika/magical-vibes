@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.event;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
@@ -22,6 +24,7 @@ import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
+import com.github.laxika.magicalvibes.networking.model.VisualCueView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
@@ -472,6 +475,61 @@ class GameEventProjectionSubscriberTest {
                 gameData, List.of(logEntry), Set.of(player1Id, player2Id));
         verify(gameViewProjectionFactory).createGameStateMessages(
                 gameData, List.of(), Set.of(player1Id, player2Id));
+    }
+
+    @Test
+    void visualCuesRideOnEachRecipientsFirstStateMessageFilteredByAudience() {
+        GameStateMessage publicState = stateMessage(player1Id, List.of(0));
+        GameStateMessage privateState = stateMessage(player1Id, List.of(1));
+        when(gameViewProjectionFactory.createGameStateMessages(
+                gameData, List.of(), Set.of(player1Id, player2Id)))
+                .thenReturn(Map.of(player1Id, publicState, player2Id, publicState));
+        when(gameViewProjectionFactory.createGameStateMessages(
+                gameData, List.of(), Set.of(player1Id)))
+                .thenReturn(Map.of(player1Id, privateState));
+        UUID sourceCardId = UUID.randomUUID();
+        UUID targetPermanentId = UUID.randomUUID();
+
+        GameMutationCoordinator coordinator = coordinator();
+        coordinator.mutate(gameData, () -> {
+            coordinator.emit(gameData, new GameEventFact.VisualCue(VisualCueType.DESTROYED,
+                            sourceCardId, "Doom Blade", List.of(CardColor.BLACK),
+                            targetPermanentId, null, null),
+                    GameEventAudience.allPlayers());
+            coordinator.emit(gameData, new GameEventFact.VisualCue(VisualCueType.COUNTERS_ADDED,
+                            null, null, null, targetPermanentId, null, 2),
+                    GameEventAudience.player(player2Id));
+            coordinator.emit(gameData,
+                    new GameEventFact.StateInvalidated(GameEventFact.StateSection.BATTLEFIELD),
+                    GameEventAudience.allPlayers());
+            coordinator.emit(gameData,
+                    new GameEventFact.StateInvalidated(GameEventFact.StateSection.PRIVATE_PLAYER_VIEW),
+                    GameEventAudience.player(player1Id));
+        });
+
+        VisualCueView destroyed = new VisualCueView(VisualCueType.DESTROYED, sourceCardId,
+                "Doom Blade", List.of(CardColor.BLACK), targetPermanentId, null, null);
+        VisualCueView counters = new VisualCueView(VisualCueType.COUNTERS_ADDED, null, null,
+                List.of(), targetPermanentId, null, 2);
+        List<Object> player1Messages = messagesFor(player1Id);
+        assertThat(player1Messages).hasSize(2);
+        assertThat(((GameStateMessage) player1Messages.get(0)).visualCues()).containsExactly(destroyed);
+        assertThat(player1Messages.get(1)).isEqualTo(privateState);
+        assertThat(((GameStateMessage) player1Messages.get(1)).visualCues()).isEmpty();
+        assertThat(messagesFor(player2Id)).singleElement().satisfies(message ->
+                assertThat(((GameStateMessage) message).visualCues())
+                        .containsExactly(destroyed, counters));
+    }
+
+    @Test
+    void visualCuesWithoutAStateInvalidationAreNotSent() {
+        GameMutationCoordinator coordinator = coordinator();
+        coordinator.mutate(gameData, () -> coordinator.emit(gameData,
+                new GameEventFact.VisualCue(VisualCueType.LIFE_GAINED, null, null, null,
+                        null, player1Id, 3),
+                GameEventAudience.allPlayers()));
+
+        assertThat(sessions.deliveries).isEmpty();
     }
 
     @Test

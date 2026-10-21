@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
+import com.github.laxika.magicalvibes.networking.model.VisualCueView;
 import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.service.GameMessageTransport;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -20,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.core.annotation.Order;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,11 @@ import java.util.UUID;
  *
  * <p>It resolves authoritative state by game ID only after mutation dispatch, enforces every
  * envelope audience, builds recipient-specific views, and delegates delivery. It never serializes.
+ *
+ * <p>A batch's new log entries and the visual cues each recipient may see ride on that
+ * recipient's first state message of the batch, so the client receives what happened together
+ * with the state it led to. A recipient who gets no state message in the batch (or whose board is
+ * replaced by an active-game switch) gets no cues: they are cosmetic and never sent on their own.
  */
 @Slf4j
 @Component
@@ -60,6 +68,7 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
         }
 
         List<GameLogEntryView> newLogEntries = appendedLogEntries(gameData, batch);
+        Map<UUID, List<VisualCueView>> visualCues = visualCuesByRecipient(gameData, batch);
         Set<UUID> logRecipients = new LinkedHashSet<>();
         boolean switched = batch.events().stream().anyMatch(event -> event.fact() instanceof GameEventFact.ActiveGameChanged);
         if (switched) {
@@ -90,8 +99,8 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
                         recipientsWithoutLogs.add(recipient);
                     }
                 }
-                projectState(gameData, newLogEntries, recipientsWithLogs, logRecipients);
-                projectState(gameData, List.of(), recipientsWithoutLogs, logRecipients);
+                projectState(gameData, newLogEntries, visualCues, recipientsWithLogs, logRecipients);
+                projectState(gameData, List.of(), visualCues, recipientsWithoutLogs, logRecipients);
             } else if (envelope.fact() instanceof GameEventFact.DecisionRequested decision) {
                 projectDecision(gameData, decision, recipients);
             } else if (envelope.fact() instanceof GameEventFact.PrivateReveal reveal) {
@@ -112,6 +121,7 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
     private void projectState(
             GameData gameData,
             List<GameLogEntryView> logEntries,
+            Map<UUID, List<VisualCueView>> visualCues,
             Set<UUID> recipients,
             Set<UUID> logRecipients) {
         if (recipients.isEmpty()) {
@@ -123,6 +133,12 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
         for (UUID recipient : recipients) {
             GameStateMessage message = messages.get(recipient);
             if (message != null) {
+                List<VisualCueView> cues = logRecipients.contains(recipient)
+                        ? List.of()
+                        : visualCues.getOrDefault(recipient, List.of());
+                if (!cues.isEmpty()) {
+                    message = message.toBuilder().visualCues(cues).build();
+                }
                 transport.sendToPlayer(recipient, message);
                 logRecipients.add(recipient);
             }
@@ -218,6 +234,23 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
                     return gameData.gameLog.get(index);
                 })
                 .toList());
+    }
+
+    private Map<UUID, List<VisualCueView>> visualCuesByRecipient(
+            GameData gameData, GameEventBatch batch) {
+        Map<UUID, List<VisualCueView>> cues = new HashMap<>();
+        for (GameEventEnvelope envelope : batch.events()) {
+            if (!(envelope.fact() instanceof GameEventFact.VisualCue cue)) {
+                continue;
+            }
+            VisualCueView view = new VisualCueView(cue.cueType(), cue.sourceCardId(),
+                    cue.sourceName(), cue.sourceColors(), cue.targetPermanentId(),
+                    cue.targetPlayerId(), cue.amount());
+            for (UUID recipient : recipients(gameData, envelope.audience())) {
+                cues.computeIfAbsent(recipient, ignored -> new ArrayList<>()).add(view);
+            }
+        }
+        return cues;
     }
 
     private Set<UUID> recipients(GameData gameData, GameEventAudience audience) {

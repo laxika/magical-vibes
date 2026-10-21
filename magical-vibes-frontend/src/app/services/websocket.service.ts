@@ -457,6 +457,36 @@ export interface LobbyGamesNotification {
   games: LobbyGame[];
 }
 
+export type VisualCueType =
+  | 'DESTROYED'
+  | 'SACRIFICED'
+  | 'EXILED'
+  | 'RETURNED_TO_HAND'
+  | 'DIED'
+  | 'DAMAGE_TO_PERMANENT'
+  | 'DAMAGE_TO_PLAYER'
+  | 'SPELL_CAST'
+  | 'SPELL_RESOLVED'
+  | 'SPELL_COUNTERED'
+  | 'LIFE_GAINED'
+  | 'LIFE_LOST'
+  | 'COUNTERS_ADDED';
+
+/**
+ * A cosmetic report of something that happened in the action a game state follows. The client
+ * plays a state's cues, in order, on the board as it currently is, then applies the state.
+ * A hidden (face-down) source has no name or colors.
+ */
+export interface VisualCue {
+  type: VisualCueType;
+  sourceCardId: string | null;
+  sourceName: string | null;
+  sourceColors: string[];
+  targetPermanentId: string | null;
+  targetPlayerId: string | null;
+  amount: number | null;
+}
+
 export interface GameStateNotification {
   commander?: CommanderView;
   planechase?: PlanechaseView | null;
@@ -493,6 +523,7 @@ export interface GameStateNotification {
   playableExileCards: Card[];
   playableLibraryTopCards: Card[];
   newLogEntries: GameLogEntry[];
+  visualCues: VisualCue[];
   searchTaxCost: number;
   mindControlledPlayerId?: string | null;
   revealedLibraryTopCards: Card[][];

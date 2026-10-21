@@ -40,5 +40,10 @@ public enum GameEventKind {
     GAME_ENDED,
     SUBGAME_STARTED,
     SUBGAME_ENDED,
-    ACTIVE_GAME_CHANGED
+    ACTIVE_GAME_CHANGED,
+
+    /**
+     * A cosmetic report of something that happened, delivered with the state it leads to.
+     */
+    VISUAL_CUE
 }

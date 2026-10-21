@@ -13,7 +13,7 @@ order; each one lists what it depends on.
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | `VisualCue` fact and wire plumbing | open |
+| 1 | `VisualCue` fact and wire plumbing | done |
 | 2 | Cues for leaving the battlefield | open |
 | 3 | Cues for damage | open |
 | 4 | Cues for the stack, life and counters | open |
@@ -249,6 +249,45 @@ which cards have showpiece effects. This step stays `open`.
 ## Findings
 
 Steps add notes here for later steps, under their number.
+
+### Step 1
+
+- **Emitting:** call `VisualCueService.emit(gameData, type, source, targetPermanentId,
+  targetPlayerId, amount[, audience])` (`magical-vibes-engine/.../service/event/`). Build the
+  source with `VisualCueService.Source.of(Permanent | StackEntry | Card)` or `Source.none()`;
+  the `Permanent`/`StackEntry` factories drop name and colors when face down. The default
+  audience is every player.
+- **No-op contexts:** the helper does nothing when `GameData.simulation` is set or when called
+  outside a mutation scope (`GameMutationCoordinator.isInAction` is false). Production never
+  reaches the chokepoints outside a scope, because every outer boundary opens one and log
+  appends already throw outside one; test code that calls a service bare (`harness.addToBattlefield`,
+  direct `PermanentRemovalService` calls without `harness.inMutationScope`) does, and now
+  silently gets no cue instead of throwing. Tests that assert cues must run the action through
+  `gs`/`harness` or wrap it in `harness.inMutationScope`.
+- **Delivery:** a recipient's cues ride on their *first* `GameStateMessage` of the batch, like
+  `newLogEntries`; later state messages in the same batch carry none. A batch with no state
+  message for a recipient (no `StateInvalidated`, or an active-game switch) drops that
+  recipient's cues. Real chokepoints always change state or log, so this should not bite.
+- **Colors** are the card's printed `Card.getColors()`, not layer-effective colors. If a step
+  wants painted/changed colors, compute them with `GameQueryService` at the chokepoint and
+  build the `Source` by hand.
+- **Locating a source on screen:** cues carry `sourceCardId`, not a permanent or stack-entry id.
+  The client finds it as `PermanentView.card.id` on the battlefield or `StackEntryView.cardId`
+  on the stack (an ability on the stack carries its source card's id). A face-down permanent's
+  card id is already public in `PermanentView`, so cues keep it.
+- **Wire:** `GameStateMessage` is now `@Builder(toBuilder = true)`; derive variants with
+  `toBuilder()` (the subscriber attaches cues that way, so `GameViewProjectionFactory` and its
+  mocks are unchanged). JSON enums serialize by name: `type` is e.g. `"DESTROYED"`, colors are
+  e.g. `"RED"`; null fields are sent as `null`, `visualCues` is always a list.
+- **Frontend:** `VisualCue`/`VisualCueType` and the required `GameStateNotification.visualCues`
+  are in `websocket.service.ts`; nothing reads them yet. No tutorial mock or spec builds a
+  `GameStateNotification` (they build `Game`), so no mock data had to change.
+  `tsc -p tsconfig.spec.json` has one error that predates this step
+  (`targeting-choice.service.spec.ts:413`, `CommanderView.revealableMissionIds`).
+- **Tests:** new `VisualCueServiceTest` (harness: projected cues per recipient and in order,
+  private audience, face-down redaction, simulation, outside-scope no-op, empty list by
+  default); two new cases in `GameEventProjectionSubscriberTest` (first-state-message and
+  audience filtering; no state message → nothing sent). No existing test had to change.
 
 ## Prompt
 
