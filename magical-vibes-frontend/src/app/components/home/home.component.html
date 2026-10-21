@@ -126,12 +126,33 @@
           </div>
           <div class="form-group">
             <label for="allRandomSet">Set</label>
-            <select id="allRandomSet" [ngModel]="randomSetCode()" (ngModelChange)="randomSetCode.set($event)">
-              <option value="">All sets</option>
-              @for (set of randomSets; track set.code) {
-                <option [value]="set.code">{{ set.name }}</option>
+            <div class="set-picker" #setPicker (keydown.escape)="closeSetPicker()">
+              <button type="button" id="allRandomSet" class="set-picker-toggle" [class.open]="setPickerOpen()"
+                (click)="toggleSetPicker()">
+                {{ selectedRandomSetName }}
+              </button>
+              @if (setPickerOpen()) {
+                <div class="set-picker-panel">
+                  <input #setSearchInput type="text" class="set-picker-search" placeholder="Search sets..."
+                    [ngModel]="setSearch()" (ngModelChange)="setSearch.set($event)"
+                    (keydown.enter)="pickFirstMatchingSet()" />
+                  <ul class="set-picker-list">
+                    @if (!setSearch().trim()) {
+                      <li [class.selected]="randomSetCode() === ''" (click)="pickRandomSet('')">All sets</li>
+                    }
+                    @for (set of filteredRandomSets; track set.code) {
+                      <li [class.selected]="randomSetCode() === set.code" (click)="pickRandomSet(set.code)">
+                        {{ set.name }} <span class="set-code">{{ set.code }}</span>
+                      </li>
+                    } @empty {
+                      @if (setSearch().trim()) {
+                        <li class="no-match">No matching sets</li>
+                      }
+                    }
+                  </ul>
+                </div>
               }
-            </select>
+            </div>
           </div>
           <div class="form-group">
             <label class="toggle-label">

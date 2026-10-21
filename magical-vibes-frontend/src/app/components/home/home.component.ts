@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -26,10 +26,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   creating = signal(false);
   activeTab = signal<'1v1' | 'allrandom' | 'draft'>('1v1');
   randomSetCode = signal<string>('');
+  setPickerOpen = signal(false);
+  setSearch = signal('');
   draftAiCount = signal(7);
   draftSetCode = signal('');
   draftGameName = signal('');
   private subscriptions: Subscription[] = [];
+
+  @ViewChild('setPicker') private setPicker?: ElementRef<HTMLElement>;
+  @ViewChild('setSearchInput') private set setSearchInput(input: ElementRef<HTMLInputElement> | undefined) {
+    input?.nativeElement.focus();
+  }
 
   constructor(
     private router: Router,
@@ -132,6 +139,47 @@ export class HomeComponent implements OnInit, OnDestroy {
   // Sets complete enough to seed set-restricted random decks (the All Random "Set" picker).
   get randomSets(): SetInfo[] {
     return this.websocketService.availableSets.filter(s => s.randomEligible);
+  }
+
+  get filteredRandomSets(): SetInfo[] {
+    const query = this.setSearch().trim().toLowerCase();
+    if (!query) return this.randomSets;
+    return this.randomSets.filter(s => s.name.toLowerCase().includes(query) || s.code.toLowerCase().includes(query));
+  }
+
+  get selectedRandomSetName(): string {
+    const code = this.randomSetCode();
+    return this.randomSets.find(s => s.code === code)?.name ?? 'All sets';
+  }
+
+  toggleSetPicker() {
+    if (this.setPickerOpen()) {
+      this.closeSetPicker();
+    } else {
+      this.setSearch.set('');
+      this.setPickerOpen.set(true);
+    }
+  }
+
+  closeSetPicker() {
+    this.setPickerOpen.set(false);
+  }
+
+  pickRandomSet(code: string) {
+    this.randomSetCode.set(code);
+    this.closeSetPicker();
+  }
+
+  pickFirstMatchingSet() {
+    const first = this.filteredRandomSets[0];
+    if (first) this.pickRandomSet(first.code);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.setPickerOpen() && !this.setPicker?.nativeElement.contains(event.target as Node)) {
+      this.closeSetPicker();
+    }
   }
 
   changeFormat(format: DeckFormat) {

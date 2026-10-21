@@ -248,6 +248,103 @@ h1 {
   box-shadow: 0 0 4px rgba(139, 26, 26, 0.3);
 }
 
+.set-picker-toggle {
+  width: 100%;
+  padding: 6px 24px 6px 8px;
+  border: 1px solid var(--color-border-tan);
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  background: #faf3e5;
+  color: var(--color-dark-wood);
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.set-picker-toggle::after {
+  content: '\25BE';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+}
+
+.set-picker-toggle:focus,
+.set-picker-toggle.open {
+  outline: none;
+  border-color: var(--color-red-primary);
+  box-shadow: 0 0 4px rgba(139, 26, 26, 0.3);
+}
+
+.set-picker-panel {
+  margin-top: 3px;
+  border: 1px solid var(--color-border-tan);
+  border-radius: 3px;
+  background: #faf3e5;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.form-group input.set-picker-search {
+  border: none;
+  border-bottom: 1px solid var(--color-border-tan);
+  border-radius: 3px 3px 0 0;
+}
+
+.form-group input.set-picker-search:focus {
+  box-shadow: none;
+  border-bottom-color: var(--color-red-primary);
+}
+
+.set-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.set-picker-list li {
+  padding: 5px 8px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--color-dark-wood);
+  cursor: pointer;
+}
+
+.set-picker-list li:hover {
+  background: var(--color-parchment-dark);
+}
+
+.set-picker-list li.selected {
+  background: var(--color-red-primary);
+  color: var(--color-parchment);
+}
+
+.set-picker-list li.selected .set-code {
+  color: var(--color-border-gold);
+}
+
+.set-picker-list li.no-match {
+  color: var(--color-text-muted);
+  font-style: italic;
+  cursor: default;
+}
+
+.set-picker-list li.no-match:hover {
+  background: none;
+}
+
+.set-code {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
 .toggle-label {
   display: flex;
   align-items: center;
