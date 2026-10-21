@@ -1,6 +1,5 @@
 import { mkdir, open, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { compactMtgjsonCards } from './mtgjson.mjs';
 import { DEFAULT_MCP_CACHE_DIR } from '../cache-directory.mjs';
 
@@ -11,9 +10,6 @@ const LOCK_STALE_MS = 120_000;
 const LOCK_POLL_MS = 100;
 const REQUEST_INTERVAL_MS = 125;
 const DEFAULT_COOLDOWN_MS = 60_000;
-
-const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_RAW_CACHE_DIR = path.resolve(MODULE_DIR, '../../card-data-cache');
 
 const CARD_FIELDS = [
   'name',
@@ -101,7 +97,6 @@ export class ScryfallSetCache {
     cacheDir = process.env.CARD_INFO_CACHE_DIR || DEFAULT_MCP_CACHE_DIR,
     fetchImpl = globalThis.fetch,
     now = () => Date.now(),
-    rawCacheDir = DEFAULT_RAW_CACHE_DIR,
   } = {}) {
     if (typeof fetchImpl !== 'function') {
       throw new Error('This server requires Node.js with the global fetch API (Node 20+)');
@@ -109,7 +104,6 @@ export class ScryfallSetCache {
     this.cacheDir = cacheDir;
     this.fetchImpl = fetchImpl;
     this.now = now;
-    this.rawCacheDir = rawCacheDir;
   }
 
   cachePath(setCode) {
@@ -227,16 +221,7 @@ export class ScryfallSetCache {
 
   async downloadMtgjsonSet(setCode) {
     const sourceSet = setCode === 'mb1' ? 'cmb1' : setCode;
-    let payload;
-    try {
-      payload = JSON.parse(await readFile(path.join(this.rawCacheDir, `mtgjson-${sourceSet}.json`), 'utf8'));
-    } catch (error) {
-      if (error?.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error;
-    }
-    if (!payload?.data || !Array.isArray(payload.data.cards)
-        || payload.data.code?.toLowerCase() !== sourceSet) {
-      payload = await this.fetchJson(`https://mtgjson.com/api/v5/${sourceSet.toUpperCase()}.json`, 'MTGJSON');
-    }
+    const payload = await this.fetchJson(`https://mtgjson.com/api/v5/${sourceSet.toUpperCase()}.json`, 'MTGJSON');
     if (payload?.data?.code?.toLowerCase() !== sourceSet || !Array.isArray(payload.data.cards)) {
       throw new CardInfoError('MTGJSON returned a malformed or mismatched set');
     }

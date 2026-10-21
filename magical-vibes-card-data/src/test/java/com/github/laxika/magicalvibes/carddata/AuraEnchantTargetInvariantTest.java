@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.carddata;
 
-import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonOracleLoader;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
@@ -42,13 +41,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("scryfall")
 class AuraEnchantTargetInvariantTest {
 
-    private static final String CACHE_DIR = System.getProperty("card-data.cache-dir", "./card-data-cache");
     private static final Pattern ENCHANT_LINE = Pattern.compile("^Enchant (.+)$", Pattern.MULTILINE);
 
     @Test
     void everyEnchantRestrictedAuraDeclaresItsTargetRestriction() {
         Card.clearOracleRegistry();
-        CardRegistry registry = new CardRegistry(new MtgjsonOracleLoader(CACHE_DIR));
+        CardRegistry registry = new CardRegistry(SharedCacheLoaders.storedSets());
         registry.load();
 
         List<String> violations = new ArrayList<>();

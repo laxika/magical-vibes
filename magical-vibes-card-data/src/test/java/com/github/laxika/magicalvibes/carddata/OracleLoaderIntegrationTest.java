@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.carddata;
 
-import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonOracleLoader;
-import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallSetSource;
+import com.github.laxika.magicalvibes.carddata.store.SetDataStore;
+import com.github.laxika.magicalvibes.carddata.store.StoredSetOracleLoader;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
@@ -12,45 +13,46 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Runs each oracle loader end to end against the real cached set data (first run fetches from
- * the network and populates the shared test cache selected by {@code card-data.cache-dir})
- * and verifies the registration invariants that parsing-level unit tests cannot: every printing
- * resolves to oracle data, back-face-only classes get registered, and back-face registrations
- * do not clobber a standalone card's own printing (the Seething Song collision).
+ * Loads every set end to end and verifies the registration invariants that conversion-level unit
+ * tests cannot: every printing resolves to oracle data, back-face-only classes get registered, and
+ * back-face registrations do not clobber a standalone card's own printing (the Seething Song
+ * collision).
+ *
+ * <p>The default run reads the shared test cache selected by {@code card-data.cache-dir}, preferring
+ * MTGJSON for missing sets as the test tasks do. The Scryfall run stores into a subdirectory of its
+ * own with no fallback: in the shared directory every set would already be stored, whichever
+ * provider it came from, and the run would test nothing about Scryfall. The first run of each
+ * downloads; later runs read the stored sets.
  */
 @Tag("scryfall")
 class OracleLoaderIntegrationTest {
 
-    private static final String CACHE_DIR = System.getProperty("card-data.cache-dir", "./card-data-cache");
-
-    /** Excluded on CI ("scryfall-api" tag): CI loads oracle data exclusively from MTGJSON. */
+    /** Excluded on CI ("scryfall-api" tag): CI must not depend on the Scryfall API. */
     @Test
     @Tag("scryfall-api")
     void scryfallLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
         Card.clearOracleRegistry();
 
-        assertLoadedRegistryInvariants(loadWith(new ScryfallOracleLoader(CACHE_DIR)));
+        String cacheDir = Path.of(SharedCacheLoaders.CACHE_DIR).resolve("only-scryfall").toString();
+        assertLoadedRegistryInvariants(loadWith(new StoredSetOracleLoader(new SetDataStore(
+                cacheDir, OracleDataProvider.SCRYFALL.name(), List.of(new ScryfallSetSource())))));
     }
 
     @Test
-    void mtgjsonLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
+    void sharedCacheLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
         Card.clearOracleRegistry();
 
-        assertLoadedRegistryInvariants(loadWith(new MtgjsonOracleLoader(CACHE_DIR)));
+        assertLoadedRegistryInvariants(loadWith(SharedCacheLoaders.storedSets()));
     }
 
-    /**
-     * Drives one loader through a registry of its own, the same way the {@code @PostConstruct} does
-     * in production. The conditional that picks a loader gates only <em>Spring</em> creation, so
-     * both can still be exercised in one JVM — which this test needs, since its whole point is that
-     * they produce identical registries.
-     */
+    /** Drives the loader through a registry of its own, as the {@code @PostConstruct} does. */
     private static CardRegistry loadWith(OracleLoader loader) {
         CardRegistry registry = new CardRegistry(loader);
         registry.load();

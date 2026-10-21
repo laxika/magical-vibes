@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.carddata.scryfall;
 
+import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
+import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
+import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
+import com.github.laxika.magicalvibes.carddata.store.StoredSet;
+import com.github.laxika.magicalvibes.carddata.store.StoredSetOracleLoader;
+import com.github.laxika.magicalvibes.carddata.store.StoredToken;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -13,36 +19,86 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ScryfallOracleLoaderTest {
+class ScryfallSetSourceTest {
 
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
     @TempDir
-    Path cacheDir;
+    Path tempDir;
 
     @Test
-    void prefixesSetAndTokenCacheFiles() throws Exception {
+    void downloadsTheSetAndItsTokenSet() throws Exception {
         List<String> fetchedSets = new ArrayList<>();
-        ScryfallOracleLoader loader = new ScryfallOracleLoader(cacheDir.toString(), setCode -> {
+        ScryfallSetSource source = new ScryfallSetSource((setCode, dir) -> {
             fetchedSets.add(setCode);
-            return "[]";
+            assertThat(dir).isEqualTo(tempDir);
+            return setCode.startsWith("t")
+                    ? List.of(MAPPER.readTree("""
+                    { "name": "Soldier", "collector_number": "2", "type_line": "Token Creature \u2014 Soldier",
+                      "power": "1", "toughness": "1", "colors": ["W"] }
+                    """))
+                    : List.of(MAPPER.readTree("""
+                    { "name": "Grizzly Bears", "collector_number": "1", "set_name": "Conflux" }
+                    """));
         });
 
-        loader.loadSet("CON", Set.of());
+        StoredSet set = source.download("CON", tempDir);
 
         assertThat(fetchedSets).containsExactly("CON", "tcon");
-        assertThat(cacheDir.resolve("scryfall-con.json")).exists();
-        assertThat(cacheDir.resolve("scryfall-tcon.json")).exists();
-        try (var files = java.nio.file.Files.list(cacheDir)) {
-            assertThat(files.map(path -> path.getFileName().toString()))
-                    .containsExactlyInAnyOrder("scryfall-con.json", "scryfall-tcon.json");
-        }
+        assertThat(set.source()).isEqualTo(OracleDataProvider.SCRYFALL);
+        assertThat(set.formatVersion()).isEqualTo(StoredSet.FORMAT_VERSION);
+        assertThat(set.setCode()).isEqualTo("CON");
+        assertThat(set.setName()).isEqualTo("Conflux");
+        assertThat(set.tokenSetCode()).isEqualTo("tcon");
+        assertThat(set.printings()).extracting(StoredPrinting::collectorNumber).containsExactly("1");
+        assertThat(set.tokens()).extracting(StoredToken::collectorNumber).containsExactly("2");
+        assertThat(set.tokens().getFirst().face().name()).isEqualTo("Soldier");
+    }
+
+    /** MB1's cards are served from CMB1, but the set is still stored as the MB1 the game asked for. */
+    @Test
+    void downloadsMb1FromCmb1() throws Exception {
+        List<String> fetchedSets = new ArrayList<>();
+        ScryfallSetSource source = new ScryfallSetSource((setCode, dir) -> {
+            fetchedSets.add(setCode);
+            return List.of();
+        });
+
+        StoredSet set = source.download("MB1", tempDir);
+
+        assertThat(fetchedSets).containsExactly("CMB1", "tcmb1");
+        assertThat(set.setCode()).isEqualTo("MB1");
+        assertThat(set.tokenSetCode()).isEqualTo("tcmb1");
+    }
+
+    /** The card browser keeps every printing, so none may be dropped on the way to the store. */
+    @Test
+    void keepsEveryPrintingWithItsRarityVariantAndLegalities() {
+        StoredSet set = ScryfallSetSource.convert("TST", "TST", List.of(
+                MAPPER.readTree("""
+                        { "name": "Grizzly Bears", "collector_number": "1", "rarity": "common",
+                          "border_color": "black", "legalities": { "Modern": "Legal", "vintage": "legal" } }
+                        """),
+                MAPPER.readTree("""
+                        { "name": "Grizzly Bears", "collector_number": "300", "rarity": "rare",
+                          "border_color": "borderless", "full_art": true,
+                          "promo_types": ["boosterfun"], "frame_effects": ["showcase"] }
+                        """)), List.of(), Instant.EPOCH);
+
+        assertThat(set.printings()).extracting(StoredPrinting::collectorNumber).containsExactly("1", "300");
+        StoredPrinting base = set.printings().get(0);
+        assertThat(base.rarity()).isEqualTo("common");
+        assertThat(base.variant()).isEqualTo(new PrintVariant(List.of(), List.of(), "black", false));
+        assertThat(base.legalities()).containsOnly(Map.entry("modern", "legal"), Map.entry("vintage", "legal"));
+        assertThat(set.printings().get(1).variant()).isEqualTo(
+                new PrintVariant(List.of("boosterfun"), List.of("showcase"), "borderless", true));
     }
 
     @Test
@@ -50,6 +106,7 @@ class ScryfallOracleLoaderTest {
         JsonNode card = MAPPER.readTree("""
                 {
                   "name": "Smelt // Herd // Saw",
+                  "collector_number": "1",
                   "card_faces": [
                     { "name": "Smelt" },
                     { "name": "Herd" },
@@ -58,7 +115,7 @@ class ScryfallOracleLoaderTest {
                 }
                 """);
 
-        assertThat(ScryfallOracleLoader.parseFaceNames(card))
+        assertThat(ScryfallSetSource.toPrinting(card).faceNames())
                 .containsExactly("Smelt", "Herd", "Saw");
     }
 
@@ -70,7 +127,7 @@ class ScryfallOracleLoaderTest {
      */
     @Test
     void parsesFrontFaceOfPrepareLayoutCard() {
-        OracleData data = ScryfallOracleLoader.parseOracleData(preparedCardNode());
+        OracleData data = parseOracleData(preparedCardNode());
 
         assertThat(data.cardText()).isEqualTo(
                 "Flying\nWhenever you cast a creature spell, Abigale becomes prepared.");
@@ -86,7 +143,7 @@ class ScryfallOracleLoaderTest {
 
     @Test
     void parsesFrontFaceOfReversibleCard() {
-        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+        OracleData data = parseOracleData(MAPPER.readTree("""
                 {
                   "name": "Okaun, Eye of Chaos // Okaun, Eye of Chaos",
                   "layout": "reversible_card",
@@ -126,7 +183,7 @@ class ScryfallOracleLoaderTest {
     /** The prepare spell itself is the back face, and keeps its own cost and text. */
     @Test
     void parsesBackFaceOfPrepareLayoutCard() {
-        OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(preparedCardNode());
+        OracleData data = parseBackFaceOracleData(preparedCardNode());
 
         assertThat(data.name()).isEqualTo("Heroic Stanza");
         assertThat(data.manaCost()).isEqualTo("{1}{W/B}");
@@ -170,7 +227,7 @@ class ScryfallOracleLoaderTest {
      */
     @Test
     void capitalizesEveryKeywordInAKeywordList() {
-        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+        OracleData data = parseOracleData(MAPPER.readTree("""
                 {
                   "name": "Rancorous Archaic",
                   "layout": "normal",
@@ -191,7 +248,7 @@ class ScryfallOracleLoaderTest {
 
     @Test
     void readsEachSplitHalfFromItsCardFace() {
-        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+        OracleData data = parseOracleData(MAPPER.readTree("""
                 {
                   "name": "Flotsam // Jetsam",
                   "layout": "split",
@@ -219,7 +276,7 @@ class ScryfallOracleLoaderTest {
     /** A keyword mentioned inside rules text is not part of a keyword list and stays lowercase. */
     @Test
     void leavesKeywordsMentionedInRulesTextAlone() {
-        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+        OracleData data = parseOracleData(MAPPER.readTree("""
                 {
                   "name": "Trample Granter",
                   "layout": "normal",
@@ -241,7 +298,7 @@ class ScryfallOracleLoaderTest {
     /** Keywords that carry a parameter are matched on their leading word. */
     @Test
     void capitalizesParameterizedKeywords() {
-        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+        OracleData data = parseOracleData(MAPPER.readTree("""
                 {
                   "name": "Warded Sentry",
                   "layout": "normal",
@@ -265,7 +322,7 @@ class ScryfallOracleLoaderTest {
      */
     @Test
     void backFaceKeepsOnlyTheKeywordsItsOwnTextStates() {
-        OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(MAPPER.readTree("""
+        OracleData data = parseBackFaceOracleData(MAPPER.readTree("""
                 {
                   "name": "Archangel Avacyn // Avacyn, the Purifier",
                   "layout": "transform",
@@ -302,7 +359,7 @@ class ScryfallOracleLoaderTest {
     /** A prepare spell is a Sorcery — none of the creature front face's keywords belong to it. */
     @Test
     void backFaceOfPrepareCardInheritsNoKeywords() {
-        OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(preparedCardNode());
+        OracleData data = parseBackFaceOracleData(preparedCardNode());
 
         assertThat(data.keywords()).isEmpty();
     }
@@ -314,7 +371,7 @@ class ScryfallOracleLoaderTest {
      */
     @Test
     void backFaceLandTakesItsColorIdentityFromTheWholeCard() {
-        OracleData data = ScryfallOracleLoader.parseBackFaceOracleData(MAPPER.readTree("""
+        OracleData data = parseBackFaceOracleData(MAPPER.readTree("""
                 {
                   "name": "Search for Azcanta // Azcanta, the Sunken Ruin",
                   "layout": "transform",
@@ -344,5 +401,13 @@ class ScryfallOracleLoaderTest {
         assertThat(data.color()).isNull();
         assertThat(data.colors()).isEmpty();
         assertThat(data.colorIdentity()).containsExactly(CardColor.BLUE);
+    }
+
+    private static OracleData parseOracleData(JsonNode card) {
+        return StoredSetOracleLoader.frontFace(ScryfallSetSource.toPrinting(card));
+    }
+
+    private static OracleData parseBackFaceOracleData(JsonNode card) {
+        return StoredSetOracleLoader.backFace(ScryfallSetSource.toPrinting(card));
     }
 }

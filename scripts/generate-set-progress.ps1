@@ -363,11 +363,11 @@ function Read-MtgJsonSetCardsFromFile {
 function Get-MtgJsonSetCards {
     <#
         .SYNOPSIS
-            MTGJSON cards for one set: local card-data cache, scripts/.cache/sets, or a fetch.
+            MTGJSON cards for one set: scripts/.cache/sets, or a fetch.
 
-        Prefers magical-vibes-card-data's mtgjson-*.json when present (already downloaded by the
-        engine). Otherwise reuses scripts/.cache/sets/{code}.json, and when -AllowFetch is set
-        downloads from MTGJSON once so supported sets still refine correctly on a cold machine.
+        Reuses scripts/.cache/sets/{code}.json, and when -AllowFetch is set downloads from MTGJSON
+        once so supported sets still refine correctly on a cold machine. The engine's own
+        card-data-cache holds converted set files without MTGJSON's fields, so it is not read.
     #>
     param(
         [string] $SetCode,
@@ -381,13 +381,6 @@ function Get-MtgJsonSetCards {
     $lower = $SetCode.ToLowerInvariant()
     if ($script:SetCardsCache.ContainsKey($lower)) {
         return ,$script:SetCardsCache[$lower]
-    }
-
-    $localPath = Join-Path $RepoRoot "magical-vibes-card-data/card-data-cache/mtgjson-$lower.json"
-    $cards = Read-MtgJsonSetCardsFromFile -Path $localPath
-    if ($null -ne $cards) {
-        $script:SetCardsCache[$lower] = $cards
-        return ,$cards
     }
 
     $cachePath = Join-Path $SetCacheDir "$lower.json"

@@ -3,20 +3,15 @@ package com.github.laxika.magicalvibes.carddata;
 import java.util.Set;
 
 /**
- * Reads oracle data for one set from an upstream source.
+ * Reads oracle data for one set.
  *
- * <p>Exactly one implementation is a bean at a time, selected by the {@code oracle.data-provider}
- * property via {@code @ConditionalOnProperty} — see {@link OracleDataProvider} for the accepted
- * values. Loaders do not run themselves and write nothing: {@link CardRegistry} calls this once per
- * set and performs every registration from the result, so a property naming no provider leaves the
- * registry unconstructible and the context fails to start.
- *
- * <p>An implementation is a pure function of its set code plus its cache directory. Everything
- * provider-specific — field naming, face resolution, HTTP, caching — stops here;
- * {@code OracleLoaderIntegrationTest} is what holds the two implementations to producing identical
- * registries.
+ * <p>Loaders do not run themselves and write nothing: {@link CardRegistry} calls this once per set
+ * and performs every registration from the result. The one implementation,
+ * {@link com.github.laxika.magicalvibes.carddata.store.StoredSetOracleLoader}, reads the server's
+ * stored set files; the interface exists so registry tests can supply sets without any files.
  */
 public interface OracleLoader {
+    /** Every printing's format legality, as stored with the set. */
     default LegalitySnapshot loadLegalities(String setCode) { return LegalitySnapshot.empty(); }
 
     /**
@@ -28,9 +23,7 @@ public interface OracleLoader {
      *                                    ({@link SetOracleData#cardTotal},
      *                                    {@link SetOracleData#rarityByCollectorNumber}) still cover
      *                                    the whole set.
-     * @throws RuntimeException if the source is unreachable or its data cannot be parsed. Startup
-     *                          fails rather than falling back to the other source: a silent swap
-     *                          would let one build serve different oracle text than the next.
+     * @throws RuntimeException if the set is not stored and no provider could supply it
      */
     SetOracleData loadSet(String setCode, Set<String> implementedCollectorNumbers);
 }

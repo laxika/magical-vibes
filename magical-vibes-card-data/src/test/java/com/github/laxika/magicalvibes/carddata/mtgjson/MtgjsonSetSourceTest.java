@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.carddata.mtgjson;
 
-import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
+import com.github.laxika.magicalvibes.carddata.FaceOracleMapper;
+import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
+import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
+import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
+import com.github.laxika.magicalvibes.carddata.store.StoredSet;
+import com.github.laxika.magicalvibes.carddata.store.StoredToken;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -14,29 +19,30 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
-import java.util.HashMap;
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class MtgjsonOracleLoaderTest {
+class MtgjsonSetSourceTest {
 
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
     @Test
     void boundsConnectionAndRequestDuration() {
-        try (HttpClient client = MtgjsonOracleLoader.createHttpClient()) {
+        try (HttpClient client = MtgjsonSetSource.createHttpClient()) {
             assertThat(client.connectTimeout()).contains(Duration.ofSeconds(20));
         }
 
-        assertThat(MtgjsonOracleLoader.createRequest("grn").timeout())
+        assertThat(MtgjsonSetSource.createRequest("grn").timeout())
                 .contains(Duration.ofMinutes(2));
     }
 
     @Test
     void sendsGenericBrowserUserAgent() {
-        assertThat(MtgjsonOracleLoader.createRequest("grn").headers().firstValue("User-Agent"))
+        assertThat(MtgjsonSetSource.createRequest("grn").headers().firstValue("User-Agent"))
                 .hasValueSatisfying(userAgent -> assertThat(userAgent).startsWith("Mozilla/5.0").contains("Chrome/"));
     }
 
@@ -61,7 +67,7 @@ class MtgjsonOracleLoaderTest {
                 }
                 """);
 
-        OracleData data = MtgjsonOracleLoader.parseOracleData(face, false);
+        OracleData data = parseOracleData(face, false);
 
         assertThat(data.name()).isEqualTo("Huntmaster of the Fells");
         assertThat(data.manaCost()).isEqualTo("{2}{R}{G}");
@@ -96,7 +102,7 @@ class MtgjsonOracleLoaderTest {
                 }
                 """);
 
-        OracleData data = MtgjsonOracleLoader.parseOracleData(face, true);
+        OracleData data = parseOracleData(face, true);
 
         assertThat(data.name()).isEqualTo("Ravager of the Fells");
         assertThat(data.manaCost()).isNull();
@@ -121,7 +127,7 @@ class MtgjsonOracleLoaderTest {
                 }
                 """);
 
-        OracleData data = MtgjsonOracleLoader.parseOracleData(face, false);
+        OracleData data = parseOracleData(face, false);
 
         assertThat(data.type()).isEqualTo(CardType.LAND);
         assertThat(data.supertypes()).containsExactly(CardSupertype.BASIC);
@@ -142,7 +148,7 @@ class MtgjsonOracleLoaderTest {
                 }
                 """);
 
-        OracleData data = MtgjsonOracleLoader.parseOracleData(face, false);
+        OracleData data = parseOracleData(face, false);
 
         assertThat(data.type()).isEqualTo(CardType.ARTIFACT);
         assertThat(data.color()).isNull();
@@ -163,7 +169,7 @@ class MtgjsonOracleLoaderTest {
                 }
                 """);
 
-        OracleData data = MtgjsonOracleLoader.parseOracleData(face, false);
+        OracleData data = parseOracleData(face, false);
 
         assertThat(data.type()).isEqualTo(CardType.PLANESWALKER);
         assertThat(data.loyalty()).isEqualTo(3);
@@ -184,7 +190,7 @@ class MtgjsonOracleLoaderTest {
                 ]
                 """);
 
-        MtgjsonOracleLoader.FaceIndex faces = MtgjsonOracleLoader.indexFacesByCollectorNumber(cards);
+        MtgjsonSetSource.FaceIndex faces = MtgjsonSetSource.indexFacesByCollectorNumber(cards);
 
         // Meld result: side "b" with its own collector number → a standalone printing
         assertThat(faces.frontFaces().get("14b").get("faceName").asText())
@@ -207,7 +213,7 @@ class MtgjsonOracleLoaderTest {
                 ]
                 """);
 
-        MtgjsonOracleLoader.FaceIndex faces = MtgjsonOracleLoader.indexFacesByCollectorNumber(cards);
+        MtgjsonSetSource.FaceIndex faces = MtgjsonSetSource.indexFacesByCollectorNumber(cards);
 
         assertThat(faces.frontFaces().get("100").get("faceName").asText()).isEqualTo("Smelt");
         assertThat(faces.backFaces().get("100").get("faceName").asText()).isEqualTo("Herd");
@@ -227,7 +233,7 @@ class MtgjsonOracleLoaderTest {
                 ]
                 """);
 
-        MtgjsonOracleLoader.FaceIndex faces = MtgjsonOracleLoader.indexFacesByCollectorNumber(cards);
+        MtgjsonSetSource.FaceIndex faces = MtgjsonSetSource.indexFacesByCollectorNumber(cards);
 
         assertThat(faces.splitHalves().get("100")).extracting(half -> half.get("faceName").asText())
                 .containsExactly("Smelt", "Herd", "Saw");
@@ -235,120 +241,94 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
-    void parsesCreatureAndNonCreatureTokensUnderScryfallTokenSetCode() {
-        JsonNode setData = MAPPER.readTree("""
+    void storesEveryPrintingWithItsSourceDateRarityVariantAndLegalities() throws Exception {
+        StoredSet set = MtgjsonSetSource.convert("ZZZ", "ZZZ", MAPPER.readTree("""
                 {
-                  "name": "Fake Set",
-                  "code": "ZZZ",
-                  "tokens": [
-                    { "name": "Wolf", "number": "5", "type": "Token Creature \\u2014 Wolf",
-                      "power": "2", "toughness": "2", "colors": ["G"] },
-                    { "name": "Treasure", "number": "7", "type": "Token Artifact \\u2014 Treasure",
-                      "colors": [] },
-                    { "name": "Sorin Emblem", "number": "6", "type": "Emblem \\u2014 Sorin", "colors": [] }
-                  ]
+                  "meta": { "date": "2026-10-01" },
+                  "data": {
+                    "name": "Fake Set",
+                    "cards": [
+                      { "name": "Grizzly Bears", "number": "1", "rarity": "common", "borderColor": "black",
+                        "legalities": { "modern": "Legal" } },
+                      { "name": "Grizzly Bears", "number": "300", "rarity": "rare", "borderColor": "borderless",
+                        "isFullArt": true, "promoTypes": ["boosterfun"], "frameEffects": ["showcase"] }
+                    ]
+                  }
                 }
-                """);
+                """), Instant.EPOCH);
 
-        Map<String, CardPrintingRegistry.TokenImageData> tokens =
-                MtgjsonOracleLoader.parseTokens("ZZZ", setData);
-
-        CardPrintingRegistry.TokenImageData wolf =
-                tokens.get(CardPrintingRegistry.buildTokenKey("Wolf", 2, 2, CardColor.GREEN));
-        assertThat(wolf).isNotNull();
-        assertThat(wolf.setCode()).isEqualTo("tzzz");
-        assertThat(wolf.collectorNumber()).isEqualTo("5");
-
-        CardPrintingRegistry.TokenImageData treasure =
-                tokens.get(CardPrintingRegistry.buildTokenKey("Treasure", null, null, null));
-        assertThat(treasure).isNotNull();
-        assertThat(treasure.collectorNumber()).isEqualTo("7");
-
-        // Emblems are not tokens created by CreateTokenEffect
-        assertThat(tokens).hasSize(2);
+        assertThat(set.source()).isEqualTo(OracleDataProvider.MTGJSON);
+        assertThat(set.sourceDate()).isEqualTo("2026-10-01");
+        assertThat(set.setName()).isEqualTo("Fake Set");
+        assertThat(set.printings()).extracting(StoredPrinting::collectorNumber).containsExactly("1", "300");
+        StoredPrinting base = set.printings().get(0);
+        assertThat(base.rarity()).isEqualTo("common");
+        assertThat(base.variant()).isEqualTo(new PrintVariant(List.of(), List.of(), "black", false));
+        assertThat(base.legalities()).containsOnly(Map.entry("modern", "legal"));
+        assertThat(set.printings().get(1).variant()).isEqualTo(
+                new PrintVariant(List.of("boosterfun"), List.of("showcase"), "borderless", true));
     }
 
     @Test
-    void mergesRegisteredTokenFacesIntoOracleData() {
-        JsonNode token = MAPPER.readTree("""
-                {
-                  "name": "Treasure",
-                  "number": "153",
-                  "type": "Token Artifact \\u2014 Treasure",
-                  "colors": [],
-                  "text": "{T}, Sacrifice this token: Add one mana of any color."
-                }
-                """);
-        Map<String, JsonNode> frontFaces = new HashMap<>();
+    void storesBothFacesOfATransformCardButNoBackFaceForAMeldResult() throws Exception {
+        StoredSet set = MtgjsonSetSource.convert("ZZZ", "ZZZ", MAPPER.readTree("""
+                { "data": { "cards": [
+                  { "faceName": "Bruna, the Fading Light", "number": "14", "side": "a", "layout": "meld" },
+                  { "faceName": "Brisela, Voice of Nightmares", "number": "14b", "side": "b", "layout": "meld" },
+                  { "faceName": "Huntmaster of the Fells", "number": "140", "side": "a", "layout": "transform" },
+                  { "faceName": "Ravager of the Fells", "number": "140", "side": "b", "layout": "transform" }
+                ] } }
+                """), Instant.EPOCH);
 
-        MtgjsonOracleLoader.mergeImplementedTokenFaces(frontFaces, MAPPER.createArrayNode().add(token),
-                Set.of("153"));
-
-        assertThat(frontFaces).containsKey("153");
-        OracleData data = MtgjsonOracleLoader.parseOracleData(frontFaces.get("153"), false);
-        assertThat(data.name()).isEqualTo("Treasure");
-        assertThat(data.type()).isEqualTo(CardType.ARTIFACT);
-        assertThat(data.subtypes()).containsExactly(CardSubtype.TREASURE);
-        assertThat(data.cardText()).isEqualTo("{T}, Sacrifice this token: Add one mana of any color.");
+        Map<String, StoredPrinting> printings = set.printings().stream()
+                .collect(Collectors.toMap(StoredPrinting::collectorNumber, printing -> printing));
+        assertThat(printings.get("140").back().name()).isEqualTo("Ravager of the Fells");
+        assertThat(printings.get("140").faceNames())
+                .containsExactly("Huntmaster of the Fells", "Ravager of the Fells");
+        assertThat(printings.get("14b").front().name()).isEqualTo("Brisela, Voice of Nightmares");
+        assertThat(printings.get("14b").back()).isNull();
     }
 
     @Test
-    void usesMscAlternatePrintingOnlyWhileBeginnerBoxNumberIsMissing() {
-        JsonNode alternate = MAPPER.readTree("""
-                { "name": "Ant-Man, Scott Lang", "number": "834", "rarity": "common" }
-                """);
-        JsonNode original = MAPPER.readTree("""
-                { "name": "Ant-Man, Scott Lang", "number": "513", "rarity": "rare" }
-                """);
-        Map<String, JsonNode> faces = new HashMap<>(Map.of("834", alternate));
-        Map<String, String> rarities = new HashMap<>(Map.of("834", "common"));
+    void storesEveryTokenEntryWithItsSide() throws Exception {
+        StoredSet set = MtgjsonSetSource.convert("ZZZ", "ZZZ", MAPPER.readTree("""
+                { "data": { "cards": [], "tokens": [
+                  { "name": "Wolf", "number": "5", "type": "Token Creature \u2014 Wolf",
+                    "power": "2", "toughness": "2", "colors": ["G"] },
+                  { "name": "Sorin Emblem", "number": "6", "type": "Emblem \u2014 Sorin" },
+                  { "name": "Incubator // Phyrexian", "faceName": "Phyrexian", "number": "7", "side": "b",
+                    "type": "Token Artifact Creature \u2014 Phyrexian" }
+                ] } }
+                """), Instant.EPOCH);
 
-        MtgjsonOracleLoader.applyMissingPrintingAliases("MSC", faces, rarities);
-        assertThat(faces.get("513")).isSameAs(alternate);
-        assertThat(rarities.get("513")).isEqualTo("common");
-
-        faces.put("513", original);
-        rarities.put("513", "rare");
-        MtgjsonOracleLoader.applyMissingPrintingAliases("MSC", faces, rarities);
-        assertThat(faces.get("513")).isSameAs(original);
-        assertThat(rarities.get("513")).isEqualTo("rare");
+        assertThat(set.tokenSetCode()).isEqualTo("tzzz");
+        assertThat(set.tokens()).extracting(StoredToken::collectorNumber).containsExactly("5", "6", "7");
+        assertThat(set.tokens()).extracting(StoredToken::side).containsExactly(null, null, "b");
+        assertThat(set.tokens()).extracting(token -> token.face().name())
+                .containsExactly("Wolf", "Sorin Emblem", "Phyrexian");
     }
 
+    /**
+     * MTGJSON never tags a planeswalker-deck printing; it lists it as found only in decks. Without
+     * the tag the card browser would drop those printings as unknown promos.
+     */
     @Test
-    void usesMb2AlternatePrintingsOnlyWhenBaseNumbersAreMissing() {
-        JsonNode magus = MAPPER.readTree("""
-                { "name": "Magus of the Chains", "number": "549", "rarity": "rare" }
-                """);
-        JsonNode oddric = MAPPER.readTree("""
-                { "name": "Oddric, Lunar Marquis", "number": "551", "rarity": "rare" }
-                """);
-        JsonNode spuzzem = MAPPER.readTree("""
-                { "name": "Spuzzem Strategist", "number": "584", "rarity": "common" }
-                """);
-        JsonNode npc = MAPPER.readTree("""
-                { "name": "Starting Town NPC", "number": "585", "rarity": "common" }
-                """);
-        JsonNode dontWorry = MAPPER.readTree("""
-                { "name": "Don't Worry About It", "number": "592", "rarity": "common" }
-                """);
-        Map<String, JsonNode> faces = new HashMap<>(Map.of(
-                "549", magus, "551", oddric, "584", spuzzem, "585", npc, "592", dontWorry));
-        Map<String, String> rarities = new HashMap<>(Map.of(
-                "549", "rare", "551", "rare", "584", "common", "585", "common", "592", "common"));
+    void tagsADeckOnlyPrintingWithoutPromoTypesAsAPlaneswalkerDeckPrinting() {
+        assertThat(MtgjsonSetSource.promoTypes(MAPPER.readTree("""
+                { "number": "281", "boosterTypes": ["deck"] }
+                """))).containsExactly("planeswalkerdeck");
+        assertThat(MtgjsonSetSource.promoTypes(MAPPER.readTree("""
+                { "number": "310", "boosterTypes": ["deck"], "promoTypes": ["starterdeck"] }
+                """))).containsExactly("starterdeck");
+        assertThat(MtgjsonSetSource.promoTypes(MAPPER.readTree("""
+                { "number": "100", "boosterTypes": ["default"] }
+                """))).isEmpty();
+        assertThat(MtgjsonSetSource.promoTypes(MAPPER.readTree("""
+                { "number": "1" }
+                """))).isEmpty();
+    }
 
-        MtgjsonOracleLoader.applyMissingPrintingAliases("MB2", faces, rarities);
-
-        assertThat(faces.get("313")).isSameAs(magus);
-        assertThat(faces.get("315")).isSameAs(oddric);
-        assertThat(faces.get("346")).isSameAs(spuzzem);
-        assertThat(faces.get("347")).isSameAs(npc);
-        assertThat(faces.get("353")).isSameAs(dontWorry);
-        assertThat(rarities).containsEntry("313", "rare").containsEntry("315", "rare");
-        assertThat(rarities).containsEntry("346", "common")
-                .containsEntry("347", "common").containsEntry("353", "common");
-
-        faces.put("313", oddric);
-        MtgjsonOracleLoader.applyMissingPrintingAliases("MB2", faces, rarities);
-        assertThat(faces.get("313")).isSameAs(oddric);
+    private static OracleData parseOracleData(JsonNode face, boolean isBackFace) {
+        return FaceOracleMapper.toOracleData(MtgjsonSetSource.toRawFace(face), isBackFace);
     }
 }

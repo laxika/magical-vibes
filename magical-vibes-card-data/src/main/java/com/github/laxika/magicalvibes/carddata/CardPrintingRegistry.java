@@ -9,11 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Per-printing data that is not part of a card's oracle text: rarity and token art.
  *
- * <p>Provider-neutral on purpose. Whichever loader the {@code oracle.data-provider} property
- * selects — see {@link OracleDataProvider} — populates this registry on startup, and everything
- * downstream reads from here. Modules outside {@code carddata} must never name a concrete loader
- * to get at this: an engine that asks {@code ScryfallOracleLoader} for token art reads as though
- * it breaks under MTGJSON, when in truth both loaders fill the same maps.
+ * <p>Provider-neutral on purpose. {@link CardRegistry} populates this registry on startup from the
+ * stored set data, whichever provider a set was downloaded from, and everything downstream reads
+ * from here. Modules outside {@code carddata} must never reach for a provider-specific class to get
+ * at this.
  */
 public final class CardPrintingRegistry {
 

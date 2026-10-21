@@ -239,6 +239,19 @@ class FaceOracleMapperTest {
         assertThat(data.combinedManaValue()).isEqualTo(8);
     }
 
+    /**
+     * An aftermath half cast from the graveyard is the split card's back face. Scryfall reports no
+     * colours on a half, which left Authority (HOU) a colourless spell; CR 202.2 makes it white.
+     */
+    @Test
+    void aSplitCardsBackFaceIsTheColourOfItsOwnManaCost() {
+        OracleData data = map(face().name("Authority").manaCost("{1}{W}").typeLine("Sorcery")
+                .colors(List.of()).layout("split"), BACK);
+
+        assertThat(data.color()).isEqualTo(CardColor.WHITE);
+        assertThat(data.colors()).containsExactly(CardColor.WHITE);
+    }
+
     @Test
     void aNonSplitCardHasNoHalves() {
         assertThat(map(face(), FRONT).splitHalves()).isEmpty();

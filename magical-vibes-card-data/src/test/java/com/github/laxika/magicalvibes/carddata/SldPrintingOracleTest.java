@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.carddata;
 
-import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonOracleLoader;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.e.EsperSentinel;
@@ -30,14 +29,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("scryfall")
 class SldPrintingOracleTest {
 
-    private MtgjsonOracleLoader loader;
+    private OracleLoader loader;
     private CardRegistry registry;
 
     @BeforeEach
     void setUp() {
         Card.clearOracleRegistry();
-        loader = new MtgjsonOracleLoader(
-                System.getProperty("card-data.cache-dir", "./card-data-cache"));
+        loader = SharedCacheLoaders.storedSets();
         registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
         registry.load();
     }

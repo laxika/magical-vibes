@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -30,7 +30,7 @@ function mtgSet(set = 'TST', cards = [mtgCard]) {
 async function temporaryCache(t) {
   const cacheDir = await mkdtemp(path.join(os.tmpdir(), 'card-fallback-test-'));
   t.after(() => rm(cacheDir, { recursive: true, force: true }));
-  return { cacheDir, rawCacheDir: cacheDir };
+  return { cacheDir };
 }
 
 test('429 falls back through the real MCP handler and persists a compact MTGJSON set', async (t) => {
@@ -80,19 +80,6 @@ test('cooldown shares Retry-After across instances and different sets, then perm
   now += 121_000;
   assert.equal((await new ScryfallSetCache({ ...options, fetchImpl, now: () => now }).getCard('END', '1')).source, 'scryfall');
   assert.equal(scryfallCalls, 2);
-});
-
-test('fallback reuses Java MTGJSON disk cache without a second network request', async (t) => {
-  const options = await temporaryCache(t);
-  await writeFile(path.join(options.rawCacheDir, 'mtgjson-tst.json'), JSON.stringify(mtgSet()));
-  let calls = 0;
-  const cache = new ScryfallSetCache({ ...options, fetchImpl: async () => {
-    calls++;
-    if (calls > 1) assert.fail('MTGJSON should be read from disk');
-    return response({}, 429);
-  } });
-  assert.equal((await cache.getCard('tst', '2a')).mana_cost, '{1}{G}');
-  assert.equal(calls, 1);
 });
 
 test('network errors, server errors, access blocks, and invalid successful JSON fall back', async (t) => {
@@ -214,10 +201,11 @@ test('MB1 maps to CMB1 while returning the requested set identity', async (t) =>
 
 test('mismatched MTGJSON sets and missing printings fail explicitly', async (t) => {
   const options = await temporaryCache(t);
+  let mtgjsonSet = mtgSet('BAD');
   const cache = new ScryfallSetCache({ ...options, fetchImpl: async (url) =>
-    url.startsWith('https://api.scryfall.com') ? response({}, 429) : response(mtgSet('BAD')) });
+    url.startsWith('https://api.scryfall.com') ? response({}, 429) : response(mtgjsonSet) });
   await assert.rejects(cache.getCard('tst', '2a'), /malformed or mismatched set/);
-  await writeFile(path.join(options.rawCacheDir, 'mtgjson-tst.json'), JSON.stringify(mtgSet()));
+  mtgjsonSet = mtgSet();
   await assert.rejects(cache.getCard('tst', '999'), (error) =>
     error instanceof CardInfoError && /No mtgjson card found for TST #999/.test(error.message));
 });

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.carddata;
 
-import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonOracleLoader;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.cards.CardSet;
@@ -20,8 +19,7 @@ class ArenaPrintingOracleTest {
 
     @Test
     void everyArenaPrintingHasItsOwnMatchingOracleData() {
-        MtgjsonOracleLoader loader = new MtgjsonOracleLoader(
-                System.getProperty("card-data.cache-dir", "./card-data-cache"));
+        OracleLoader loader = SharedCacheLoaders.storedSets();
         Map<CardSet, List<CardPrinting>> printings = CardScanner.scan();
 
         for (CardSet set : List.of(CardSet.SET_ANA, CardSet.SET_OANA, CardSet.SET_XANA)) {

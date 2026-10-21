@@ -1,56 +1,35 @@
 package com.github.laxika.magicalvibes.carddata;
 
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DeckFormat;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Locale;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Format legality per printing, read once per set from the stored set data. Like the rest of a
+ * stored set it is never refreshed on its own; deleting the set's file and restarting picks up a
+ * newer ban list.
+ */
 @Service
 public class DeckLegalityRegistry {
     private final OracleLoader loader;
-    private final boolean eager;
     private final Map<String, LegalitySnapshot> snapshots = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService refresh = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread thread = new Thread(r, "deck-legality-refresh");
-        thread.setDaemon(true);
-        return thread;
-    });
 
-    public DeckLegalityRegistry(OracleLoader loader,
-            @Value("${oracle.data-load-mode:EAGER}") String loadMode) {
+    public DeckLegalityRegistry(OracleLoader loader) {
         this.loader = loader;
-        eager = "EAGER".equalsIgnoreCase(loadMode);
     }
 
-    @PostConstruct void start() {
-        if (eager) refresh.scheduleWithFixedDelay(() -> {
-            for (CardSet set : CardSet.values()) {
-                if (Thread.currentThread().isInterrupted()) return;
-                refreshSet(set.getCode());
-            }
-        }, 0, 24, TimeUnit.HOURS);
-    }
-
-    @PreDestroy void stop() { refresh.shutdownNow(); }
-
-    private synchronized LegalitySnapshot refreshSet(String set) {
-        LegalitySnapshot snapshot = loader.loadLegalities(set);
-        if (snapshot.updatedAt() != null || !snapshots.containsKey(set)) snapshots.put(set, snapshot);
-        return snapshots.getOrDefault(set, LegalitySnapshot.empty());
-    }
-
+    /** A set whose legality could not be loaded is not remembered, so the next lookup retries. */
     public LegalitySnapshot snapshot(Card card) {
         if (card.getSetCode() == null) return LegalitySnapshot.empty();
         String set = card.getSetCode().toUpperCase(Locale.ROOT);
         LegalitySnapshot snapshot = snapshots.get(set);
-        return snapshot == null ? refreshSet(set) : snapshot;
+        if (snapshot != null) return snapshot;
+        snapshot = loader.loadLegalities(set);
+        if (snapshot.updatedAt() != null) snapshots.put(set, snapshot);
+        return snapshot;
     }
 
     public String status(Card card, DeckFormat format) {

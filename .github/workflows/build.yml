@@ -22,8 +22,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # Oracle set data downloaded by the tests (MTGJSON, plus Scryfall for the loader
-      # integration test). Every test JVM uses this repo-root directory. It is restored before
+      # The server's own set-{code}.json files, converted from the MTGJSON downloads the tests
+      # make on a cache miss. Every test JVM uses this repo-root directory. It is restored before
       # and saved after the run; restore-keys reuses the previous cache so only missing sets are
       # downloaded.
       - name: Cache oracle set data

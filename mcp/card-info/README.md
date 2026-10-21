@@ -75,8 +75,9 @@ lookup falls back to MTGJSON immediately instead of asking the model to wait and
 other lookups use MTGJSON during that cooldown. Ordinary errors such as HTTP 400/404 remain
 errors rather than being hidden by fallback. If both providers fail, the error names both.
 
-MTGJSON fallback first reuses `card-data-cache/mtgjson-<set>.json` from the repository's Java
-loader, then downloads the set if necessary. It uses English `text` (Oracle text), not
+MTGJSON fallback downloads the set's MTGJSON file. The Java server keeps only its own converted
+`card-data-cache/set-<set>.json`, never the provider's file, so there is nothing local to reuse.
+It uses English `text` (Oracle text), not
 `originalText`, maps fields to the compact schema, and combines multi-face entries. The compact
 fallback set is persisted in the same MCP cache, so later lookups do not retry Scryfall.
 Existing cache entries without a source are treated as Scryfall. As with existing Scryfall

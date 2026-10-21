@@ -479,6 +479,54 @@ pass. Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
+## 42. Aftermath cards are only their front half off the stack under MTGJSON
+
+**Status:** open · **Found:** 2026-10-21, while adding the provider parity test for the stored set data
+
+**Failing tests:**
+- None under MTGJSON, which the test tasks prefer. Making the cards rules-correct breaks the
+  `assertInGraveyard`/`assertInExile`/name-match assertions (about 80) in the 27 aftermath test
+  classes, e.g. `CommitMemoryTest`, `StartFinishTest`, `SpringMindTest`, `ReasonBelieveTest`. Those
+  same assertions should fail today for any set stored from Scryfall.
+- `ProviderParityTest` (`scryfall-api`) tolerates this difference explicitly in
+  `withoutAftermathNaming`; that exception should go once this is fixed.
+
+**What the rules require.** Aftermath "is an ability found on some split cards" (CR 702.127a), so an
+aftermath card is a split card. "In every zone except the stack, the characteristics of a split card
+are those of its two halves combined" (CR 709.4): it has two names (CR 709.4a), and its mana value is
+determined from its combined mana cost (CR 709.4b) — Commit // Memory has mana value 10 in the
+graveyard. Scryfall lays these cards out as `split`, so `FaceOracleMapper` maps them to the whole card
+("Commit // Memory", combined mana value). MTGJSON lays them out as `aftermath`, which the mapper's
+name and combined-mana-value rules don't treat as split, so the card is just "Commit" with the front
+half's mana value. With provider fallback, which provider a set was first stored from now decides how
+these cards behave.
+
+**Why it's large.** The fix itself is two lines (treat `isSplitLayout` rather than `"split"` in
+`FaceOracleMapper.toOracleData`'s name and combined-mana-value rules, and in
+`MtgjsonSetSource.toRawFace`'s naming). But the aftermath card classes are modelled as a front-face
+class with a back-face class cast via `FlashbackCast`, and their tests look the card up by the
+front-half name. Every such test needs updating, and the engine's name matching for these cards
+(e.g. Failure // Comply's name choice, and anything checking "a card named X" per CR 709.4a) needs
+checking against the combined name. `StoredSet.FORMAT_VERSION` must be bumped, since MTGJSON-stored
+files carry the front-half name.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 42: make aftermath cards split cards off the stack under
+both providers (CR 702.127a, 709.4, 709.4a, 709.4b). In FaceOracleMapper.toOracleData use
+isSplitLayout(face.layout()) instead of "split".equals(...) for keeping the whole name and for
+combinedManaValue, and in MtgjsonSetSource.toRawFace name an aftermath front by the whole card name.
+Bump StoredSet.FORMAT_VERSION. Then fix the aftermath card tests (the 27 classes using Aftermath /
+FlashbackCast back faces, e.g. CommitMemoryTest) that assert the front-half name, and verify that
+name matching for these cards (choose-a-card-name effects, "card named X") treats either half's
+name as the card's name. Remove the withoutAftermathNaming exception from ProviderParityTest and
+check it passes for AKH. Verify every CR number with the rules MCP. Don't run the full test suite;
+ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

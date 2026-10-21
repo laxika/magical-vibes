@@ -16,8 +16,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Vocabulary and plumbing shared by every oracle-data loader: the upstream symbol/keyword
- * spellings, JSON field parsing, and cache-file writing.
+ * Vocabulary and plumbing shared by every oracle-data source: the upstream symbol/keyword
+ * spellings, JSON field parsing, printing aliases, and cache-file writing.
  *
  * <p>Provider-neutral. These lived on the Scryfall loader, which forced the MTGJSON loader to
  * depend on it for basics that were never Scryfall's.
@@ -27,19 +27,29 @@ public final class CardDataSupport {
     // Both providers expose these Mystery Booster 2 cards only at their alternate numbers.
     private static final Map<String, String> MB2_PRINTING_ALIASES = Map.of(
             "313", "549", "315", "551", "346", "584", "347", "585", "353", "592");
+    // MTGJSON omits these MSC Beginner Box numbers but includes the same cards as alternate
+    // printings. Prefer the real number if the upstream set file gains it later.
+    private static final Map<String, String> MSC_BEGINNER_BOX_ALIASES = Map.of(
+            "513", "834", "514", "835", "515", "836", "516", "837", "519", "839",
+            "521", "841", "524", "843", "526", "844", "527", "845", "542", "847");
 
     private CardDataSupport() {
     }
 
-    public static void applyMissingMb2Printings(String setCode, Map<String, JsonNode> cards,
-                                                Map<String, String> rarities) {
-        if (!"MB2".equalsIgnoreCase(setCode)) {
-            return;
-        }
-        MB2_PRINTING_ALIASES.forEach((missingNumber, alternateNumber) -> {
-            JsonNode alternate = cards.get(alternateNumber);
-            if (alternate != null && !cards.containsKey(missingNumber)) {
-                cards.put(missingNumber, alternate);
+    /**
+     * Serves printings an upstream source lists only under an alternate collector number at the
+     * number the game registers them under, along with their rarity. A real printing at the number
+     * always wins, so an upstream fix makes the alias inert rather than wrong.
+     */
+    public static <T> void applyMissingPrintingAliases(String setCode, Map<String, T> printings,
+                                                       Map<String, String> rarities) {
+        Map<String, String> aliases = "MB2".equalsIgnoreCase(setCode) ? MB2_PRINTING_ALIASES
+                : "MSC".equalsIgnoreCase(setCode) ? MSC_BEGINNER_BOX_ALIASES
+                : Map.of();
+        aliases.forEach((missingNumber, alternateNumber) -> {
+            T alternate = printings.get(alternateNumber);
+            if (alternate != null && !printings.containsKey(missingNumber)) {
+                printings.put(missingNumber, alternate);
                 String rarity = rarities.get(alternateNumber);
                 if (rarity != null) {
                     rarities.put(missingNumber, rarity);
@@ -226,11 +236,6 @@ public final class CardDataSupport {
      */
     public static Keyword keyword(String upstreamName) {
         return upstreamName == null ? null : KEYWORD_MAP_LOWERCASE.get(upstreamName.toLowerCase(Locale.ROOT));
-    }
-
-    public static Integer parseIntField(JsonNode node, String field) {
-        if (!node.has(field)) return null;
-        return parseInt(node.get(field).asText());
     }
 
     /**

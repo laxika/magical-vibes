@@ -169,6 +169,13 @@ public final class FaceOracleMapper {
             return mapColors(face.colorIndicator());
         }
 
+        // The second half of a split card (an aftermath half cast from the graveyard) is a back
+        // face too. Like any half it is the colour of its own mana cost (CR 202.2), which Scryfall
+        // does not report on a half — reading the provider's colours left it colourless.
+        if (isBackFace && isSplitLayout(face.layout())) {
+            return mapColors(manaCostColorSymbols(face.manaCost()));
+        }
+
         // CR 202.2: an object is the colour of the mana symbols in its mana cost, and nothing else.
         // A land has no mana cost, so it is colourless however its identity reads — Anarchy
         // ("destroy all white permanents") must not touch a Plains. The identity travels separately
