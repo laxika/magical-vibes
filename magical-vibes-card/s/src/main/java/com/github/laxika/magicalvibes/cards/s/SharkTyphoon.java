@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "67")
-@CardRegistration(set = "SLC", collectorNumber = "81")
+@CardRegistration(set = "SLC", collectorNumber = "2020")
 @CardRegistration(set = "DSC", collectorNumber = "127")
 @CardRegistration(set = "OTC", collectorNumber = "113")
 public class SharkTyphoon extends Card {

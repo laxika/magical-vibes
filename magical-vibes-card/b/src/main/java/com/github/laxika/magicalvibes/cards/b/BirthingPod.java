@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "104")
-@CardRegistration(set = "SLC", collectorNumber = "73")
+@CardRegistration(set = "SLC", collectorNumber = "2011")
 @CardRegistration(set = "SLD", collectorNumber = "2349")
 public class BirthingPod extends Card {
 

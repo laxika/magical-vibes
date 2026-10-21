@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "91")
-@CardRegistration(set = "SLC", collectorNumber = "79")
+@CardRegistration(set = "SLC", collectorNumber = "2018")
 @CardRegistration(set = "RVR", collectorNumber = "100")
 public class ArclightPhoenix extends Card {
 
