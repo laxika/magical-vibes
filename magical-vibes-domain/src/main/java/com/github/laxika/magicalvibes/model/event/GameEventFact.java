@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.event;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -197,7 +198,9 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
      *
      * <p>Every field except {@code cueType} may be null; a missing source has no colors. The
      * emitter has already redacted the source name and colors when the source is hidden, such as
-     * a face-down permanent or spell.
+     * a face-down permanent or spell. {@code targetCardId} names a spell on the stack (the one a
+     * spell targets, or the one that was countered); {@code counterType} is set only on
+     * {@link VisualCueType#COUNTERS_ADDED}.
      */
     record VisualCue(
             VisualCueType cueType,
@@ -206,7 +209,9 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
             List<CardColor> sourceColors,
             UUID targetPermanentId,
             UUID targetPlayerId,
-            Integer amount
+            UUID targetCardId,
+            Integer amount,
+            CounterType counterType
     ) implements GameEventFact {
 
         public VisualCue {

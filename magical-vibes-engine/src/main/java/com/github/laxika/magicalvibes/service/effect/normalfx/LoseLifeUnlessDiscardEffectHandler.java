@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -22,6 +24,7 @@ public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBe
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final VisualCueService visualCueService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,6 +50,8 @@ public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBe
                         * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
                 int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
+                visualCueService.emit(gameData, VisualCueType.LIFE_LOST,
+                        visualCueService.sourceOf(gameData, entry.getCard()), null, targetPlayerId, lifeLoss);
                 String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + lifeLoss + " life.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses {} life (no cards to discard, {})",

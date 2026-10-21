@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +37,13 @@ import java.util.WeakHashMap;
  * handed the resolving entry, such as permanent removal, can still name it as the cue's source.
  * That memory is cosmetic, lives outside {@link GameData} (weakly keyed, like the coordinator's
  * action state) and is never read by rules code.
+ *
+ * <p>Counters are written from hundreds of engine paths, so {@link VisualCueType#COUNTERS_ADDED}
+ * is not emitted by them. Instead the service snapshots every permanent's counters when an outer
+ * action starts ({@link #actionStarted}) and emits the increases since the last snapshot, one cue
+ * per permanent and counter type, before every other cue, at every resolution boundary and when
+ * the action completes ({@link #actionCompleting}). That keeps counter cues in engine order,
+ * merges several placements in one window into one cue, and names the resolving source.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,12 +52,33 @@ public class VisualCueService {
     private final GameMutationCoordinator mutationCoordinator;
     private final Map<GameData, Deque<StackEntry>> resolvingEntries =
             Collections.synchronizedMap(new WeakHashMap<>());
+    private final Map<GameData, Map<UUID, Map<CounterType, Integer>>> counterSnapshots =
+            Collections.synchronizedMap(new WeakHashMap<>());
+
+    /**
+     * Called by the mutation coordinator when an outer action starts: takes the counter snapshot
+     * later increases are measured against, so changes made outside an action (test setup) are
+     * never reported.
+     */
+    public void actionStarted(GameData gameData) {
+        if (gameData.simulation) {
+            return;
+        }
+        counterSnapshots.put(gameData, snapshotCounters(gameData));
+    }
+
+    /** Called by the mutation coordinator just before an outer action's batch is completed. */
+    public void actionCompleting(GameData gameData) {
+        flushCounterCues(gameData);
+        counterSnapshots.remove(gameData);
+    }
 
     /** Marks {@code entry} as resolving until the matching {@link #endResolution}; calls nest. */
     public void beginResolution(GameData gameData, StackEntry entry) {
         if (gameData.simulation) {
             return;
         }
+        flushCounterCues(gameData);
         resolvingEntries.computeIfAbsent(gameData, ignored -> new ArrayDeque<>()).push(entry);
     }
 
@@ -60,6 +91,7 @@ public class VisualCueService {
         if (entries == null) {
             return;
         }
+        flushCounterCues(gameData);
         entries.poll();
         if (entries.isEmpty()) {
             resolvingEntries.remove(gameData);
@@ -81,6 +113,24 @@ public class VisualCueService {
     }
 
     /**
+     * A cue source given as a card: the battlefield permanent showing it (so a face-down one stays
+     * anonymous), else the {@link #resolvingSource resolving} spell or ability. A {@code null} card
+     * also falls back to the resolving source.
+     */
+    public Source sourceOf(GameData gameData, Card card) {
+        if (card != null) {
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getCard().getId().equals(card.getId())) {
+                        return Source.of(permanent);
+                    }
+                }
+            }
+        }
+        return resolvingSource(gameData);
+    }
+
+    /**
      * Emits a cue to every player. Use this for anything that happened in a public zone.
      */
     public void emit(GameData gameData, VisualCueType type, Source source,
@@ -96,6 +146,16 @@ public class VisualCueService {
     public void emit(GameData gameData, VisualCueType type, Source source,
                      UUID targetPermanentId, UUID targetPlayerId, Integer amount,
                      GameEventAudience audience) {
+        emit(gameData, type, source, targetPermanentId, targetPlayerId, null, amount, audience);
+    }
+
+    /**
+     * Emits a cue whose target may also be a spell on the stack ({@code targetCardId}, the
+     * spell's card id), to an explicit audience.
+     */
+    public void emit(GameData gameData, VisualCueType type, Source source,
+                     UUID targetPermanentId, UUID targetPlayerId, UUID targetCardId, Integer amount,
+                     GameEventAudience audience) {
         Objects.requireNonNull(gameData, "gameData");
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(source, "source");
@@ -103,10 +163,67 @@ public class VisualCueService {
         if (gameData.simulation || !mutationCoordinator.isInAction(gameData)) {
             return;
         }
+        flushCounterCues(gameData);
         mutationCoordinator.emit(gameData,
                 new GameEventFact.VisualCue(type, source.cardId(), source.name(), source.colors(),
-                        targetPermanentId, targetPlayerId, amount),
+                        targetPermanentId, targetPlayerId, targetCardId, amount, null),
                 audience);
+    }
+
+    /**
+     * Emits a {@link VisualCueType#COUNTERS_ADDED} cue for every permanent and counter type whose
+     * count rose since the last snapshot, then takes a new one. Battlefields are public, so the cues
+     * go to every player.
+     */
+    private void flushCounterCues(GameData gameData) {
+        Map<UUID, Map<CounterType, Integer>> before = counterSnapshots.get(gameData);
+        if (before == null || gameData.simulation || !mutationCoordinator.isInAction(gameData)) {
+            return;
+        }
+        Map<UUID, Map<CounterType, Integer>> after = snapshotCounters(gameData);
+        counterSnapshots.put(gameData, after);
+        Source source = null;
+        for (Map.Entry<UUID, Map<CounterType, Integer>> permanent : after.entrySet()) {
+            Map<CounterType, Integer> previous = before.getOrDefault(permanent.getKey(), Map.of());
+            for (Map.Entry<CounterType, Integer> counters : permanent.getValue().entrySet()) {
+                int added = counters.getValue() - previous.getOrDefault(counters.getKey(), 0);
+                if (added <= 0) {
+                    continue;
+                }
+                if (source == null) {
+                    source = resolvingSource(gameData);
+                }
+                mutationCoordinator.emit(gameData,
+                        new GameEventFact.VisualCue(VisualCueType.COUNTERS_ADDED, source.cardId(),
+                                source.name(), source.colors(), permanent.getKey(), null, null, added,
+                                counters.getKey()),
+                        GameEventAudience.allPlayers());
+            }
+        }
+    }
+
+    /** Every battlefield permanent's counters, in turn order and battlefield order. */
+    private static Map<UUID, Map<CounterType, Integer>> snapshotCounters(GameData gameData) {
+        Map<UUID, Map<CounterType, Integer>> snapshot = new LinkedHashMap<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+                for (CounterType type : CounterType.values()) {
+                    if (permanent.getTotalCounterCount() == 0) {
+                        break;
+                    }
+                    if (type == CounterType.ANY || type == CounterType.SILVER) {
+                        continue;
+                    }
+                    int count = permanent.getCounterCount(type);
+                    if (count > 0) {
+                        counters.put(type, count);
+                    }
+                }
+                snapshot.put(permanent.getId(), counters);
+            }
+        }
+        return snapshot;
     }
 
     /**

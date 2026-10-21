@@ -287,6 +287,9 @@ public class SpellCastingService {
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.event.VisualCueService visualCueService;
+
     // --- Helper records ---
 
     private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext, boolean creatureSpellOnly, boolean legendarySpellOnly, boolean manaValueAtLeastFour, Set<ManaRestriction.SubtypeOrPlaneswalkerSpells> subtypeOrPlaneswalkerSpellContext, Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext, Set<CardSubtype> subtypeSpellOnlyContext, boolean colorlessSpellOrPermanentAbilityContext) {
@@ -15854,6 +15857,12 @@ public class SpellCastingService {
             if (cost instanceof LifeCastingCost lifeCost) {
                 gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - lifeCost.amount());
                 gameData.lifeLostThisTurn.merge(playerId, lifeCost.amount(), Integer::sum);
+                if (visualCueService != null && lifeCost.amount() > 0) {
+                    // The spell is still being cast, so the cue names no source.
+                    visualCueService.emit(gameData, com.github.laxika.magicalvibes.model.event.VisualCueType.LIFE_LOST,
+                            com.github.laxika.magicalvibes.service.event.VisualCueService.Source.none(),
+                            null, playerId, lifeCost.amount());
+                }
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + lifeCost.amount() + " life for ", card, "."));
             } else if (cost instanceof DiscardCardCastingCost) {

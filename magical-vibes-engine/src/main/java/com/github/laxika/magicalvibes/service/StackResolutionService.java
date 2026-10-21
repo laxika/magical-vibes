@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.CardAdvantagePostResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
@@ -80,6 +81,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
 
 @Slf4j
 @Service
@@ -113,6 +115,8 @@ public class StackResolutionService {
     private final CardRevealService cardRevealService;
     private final AuraCopyService auraCopyService;
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    private VisualCueService visualCueService;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
                                   SagaChapterService sagaChapterService,
@@ -712,6 +716,7 @@ public class StackResolutionService {
     }
 
     private void resolveCreatureSpell(GameData gameData, StackEntry entry) {
+        emitSpellResolved(gameData, entry);
         if (exileWithRebound(gameData, entry)) {
             return;
         }
@@ -887,6 +892,7 @@ public class StackResolutionService {
             log.info("Game {} - {} fizzles, reanimation target {} not in graveyard", gameData.id, card.getName(), entry.getTargetId());
             return;
         }
+        emitSpellResolved(gameData, entry);
 
         Permanent auraPerm = createEnteringPermanent(entry, card, card);
         auraPerm.setAttachedTo(graveyardCard.getId());
@@ -916,6 +922,7 @@ public class StackResolutionService {
             disposeFizzledPermanentSpell(gameData, entry, card);
             return;
         }
+        emitSpellResolved(gameData, entry);
 
         Permanent aura = createEnteringPermanent(entry, card, characteristics);
         aura.setAttachedTo(graveyardCard.getId());
@@ -935,6 +942,7 @@ public class StackResolutionService {
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
         if (exileWithRebound(gameData, entry)) {
+            emitSpellResolved(gameData, entry);
             return;
         }
 
@@ -955,6 +963,7 @@ public class StackResolutionService {
                         .build());
                 disposeFizzledPermanentSpell(gameData, entry, card);
             } else {
+                emitSpellResolved(gameData, entry);
                 Permanent aura = createEnteringPermanent(entry, card, characteristics);
                 aura.setAttachedTo(handCard.getId());
                 putResolvedPermanentOntoBattlefield(gameData, controllerId, aura, entry);
@@ -966,6 +975,7 @@ public class StackResolutionService {
 
         if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, characteristics, entry.getTargetId(),
                 entry.getXValue())) {
+            emitSpellResolved(gameData, entry);
             return;
         }
 
@@ -983,6 +993,7 @@ public class StackResolutionService {
         if (entry.getBestowOriginalCard() != null
                 && (entry.getTargetId() == null
                 || targetLegalityService.isTargetIllegalOnResolution(gameData, entry))) {
+            emitSpellResolved(gameData, entry);
             resolveBestowAsCreature(gameData, entry, controllerId);
             return;
         }
@@ -998,8 +1009,10 @@ public class StackResolutionService {
                 disposeFizzledPermanentSpell(gameData, entry, card);
                 log.info("Game {} - {} fizzles, target player {} no longer in game", gameData.id, characteristics.getName(), targetPlayerId);
             } else if (beginChooseCardNameOnEnter(gameData, controllerId, card, targetPlayerId)) {
+                emitSpellResolved(gameData, entry);
                 return;
             } else {
+                emitSpellResolved(gameData, entry);
                 Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
                 putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
@@ -1026,8 +1039,10 @@ public class StackResolutionService {
 
                 log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, characteristics.getName(), entry.getTargetId());
             } else if (beginChooseCardNameOnEnter(gameData, controllerId, card, entry.getTargetId())) {
+                emitSpellResolved(gameData, entry);
                 return;
             } else {
+                emitSpellResolved(gameData, entry);
                 Permanent perm = createEnteringPermanent(
                         entry, card, characteristics, entry.getBestowOriginalCard() != null);
                 perm.setAttachedTo(entry.getTargetId());
@@ -1084,6 +1099,7 @@ public class StackResolutionService {
                 }
             }
         } else {
+            emitSpellResolved(gameData, entry);
             // "As enters" card name choice (e.g. Nevermore) — name must be chosen
             // BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
             if (beginChooseCardNameOnEnter(gameData, controllerId, card)
@@ -1207,6 +1223,7 @@ public class StackResolutionService {
             resolveCreatureSpell(gameData, entry);
             return;
         }
+        emitSpellResolved(gameData, entry);
         if (exileWithRebound(gameData, entry)) {
             return;
         }
@@ -1329,6 +1346,7 @@ public class StackResolutionService {
     }
 
     private void resolvePlaneswalkerSpell(GameData gameData, StackEntry entry) {
+        emitSpellResolved(gameData, entry);
         if (exileWithRebound(gameData, entry)) {
             return;
         }
@@ -1381,6 +1399,7 @@ public class StackResolutionService {
     }
 
     private void resolveBattleSpell(GameData gameData, StackEntry entry) {
+        emitSpellResolved(gameData, entry);
         if (exileWithRebound(gameData, entry)) {
             return;
         }
@@ -1464,6 +1483,7 @@ public class StackResolutionService {
                 }
             }
         } else {
+            emitSpellResolved(gameData, entry);
             gameLogService.append(gameData, GameLog.resolves(entry.getCard(), entry.getDescription()));
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
@@ -1535,6 +1555,22 @@ public class StackResolutionService {
         checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
         CardAdvantagePostResolutionService.process(gameData, entry);
+    }
+
+    /**
+     * Emits the cosmetic {@link VisualCueType#SPELL_RESOLVED} cue for a spell (never an ability)
+     * that is resolving, before its effects, so the client shows the spell resolve before what it
+     * does. Callers emit it only on paths where the spell resolves, never where it is removed for
+     * illegal targets.
+     */
+    private void emitSpellResolved(GameData gameData, StackEntry entry) {
+        if (visualCueService == null || entry.getCard() == null
+                || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            return;
+        }
+        visualCueService.emit(gameData, VisualCueType.SPELL_RESOLVED, VisualCueService.Source.of(entry),
+                null, null, null);
     }
 
     private static boolean isInstantOrSorcerySpell(StackEntry entry) {

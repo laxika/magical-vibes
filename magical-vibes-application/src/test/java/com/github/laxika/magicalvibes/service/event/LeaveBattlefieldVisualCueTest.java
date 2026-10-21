@@ -111,7 +111,7 @@ class LeaveBattlefieldVisualCueTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Lethal damage emits DIED with no source, after the damage cue")
+    @DisplayName("Lethal damage emits DIED with no source, after the spell and damage cues")
     void lethalDamageDies() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new LightningBolt()));
@@ -121,7 +121,8 @@ class LeaveBattlefieldVisualCueTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(allCues()).extracting(GameEventFact.VisualCue::cueType)
-                .containsExactly(VisualCueType.DAMAGE_TO_PERMANENT, VisualCueType.DIED);
+                .containsExactly(VisualCueType.SPELL_CAST, VisualCueType.SPELL_RESOLVED,
+                        VisualCueType.DAMAGE_TO_PERMANENT, VisualCueType.DIED);
         assertThat(leaveCues()).singleElement().satisfies(cue -> {
             assertThat(cue.targetPermanentId()).isEqualTo(bears.getId());
             assertThat(cue.sourceCardId()).isNull();

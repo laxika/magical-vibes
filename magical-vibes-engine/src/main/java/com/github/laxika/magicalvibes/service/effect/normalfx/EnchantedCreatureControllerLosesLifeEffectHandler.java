@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -20,6 +22,7 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final VisualCueService visualCueService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +53,8 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
         int lifeLoss = e.amount() * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+        visualCueService.emit(gameData, VisualCueType.LIFE_LOST,
+                visualCueService.sourceOf(gameData, entry.getCard()), null, playerId, lifeLoss);
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + lifeLoss + " life (" , entry.getCard(), ")."));

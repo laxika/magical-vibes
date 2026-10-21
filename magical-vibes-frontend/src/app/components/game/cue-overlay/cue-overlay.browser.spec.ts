@@ -56,7 +56,7 @@ function damage(target: { permanent?: string; player?: string }): VisualCue {
   return {
     type: target.permanent ? 'DAMAGE_TO_PERMANENT' : 'DAMAGE_TO_PLAYER', sourceCardId: 'bolt',
     sourceName: 'Lightning Bolt', sourceColors: ['RED'], targetPermanentId: target.permanent ?? null,
-    targetPlayerId: target.player ?? null, amount: 3
+    targetPlayerId: target.player ?? null, targetCardId: null, amount: 3, counterType: null
   };
 }
 

@@ -16,7 +16,7 @@ order; each one lists what it depends on.
 | 1 | `VisualCue` fact and wire plumbing | done |
 | 2 | Cues for leaving the battlefield | done |
 | 3 | Cues for damage | done |
-| 4 | Cues for the stack, life and counters | open |
+| 4 | Cues for the stack, life and counters | done |
 | 5 | Frontend cue model and playback queue | done |
 | 6 | Element registry and effects overlay | done |
 | 7 | Default effects by cue type and color | open |
@@ -377,6 +377,58 @@ Steps add notes here for later steps, under their number.
   partly prevented noncombat damage, Fog, and Pariah redirecting noncombat and combat damage).
   `CombatDamageServiceTest` changed only to pass a mocked `VisualCueService` to the new
   `CombatDamageService` constructor parameter.
+
+### Step 4
+
+- **Two new cue fields** (fact, `VisualCueView`, TS `VisualCue`): `targetCardId` (a spell on the
+  stack by card id — the spell a `SPELL_CAST` targets, the spell a `SPELL_COUNTERED` countered) and
+  `counterType` (`COUNTERS_ADDED` only, e.g. `"PLUS_ONE_PLUS_ONE"`, `"MINUS_ONE_MINUS_ONE"`,
+  `"LOYALTY"`). `CueElementRegistry.targetRect` now falls back to the stack entry of
+  `targetCardId`, so a counterspell effect can land on the spell it hits. Step 7 should pick the
+  counters look by `counterType` (green growth vs black wither), not only by source color.
+- **Where each type comes from** is in the catalogue in `agent-docs/VISUAL-CUES.md`. In short:
+  `SPELL_CAST` from `TriggerCollectionService.checkSpellCastTriggers` (all cast paths), with the
+  first player / permanent / spell target; `SPELL_RESOLVED` from `StackResolutionService`;
+  `SPELL_COUNTERED` from `CounterSupport` (+ the two "counter unless" answers in
+  `MayPenaltyChoiceHandlerService`); life cues from `LifeSupport` and four direct life writers.
+- **Order inside a resolution:** `SPELL_RESOLVED` comes *first*, before the spell's effects
+  (`SPELL_RESOLVED → DAMAGE_TO_PERMANENT → DIED`), so step 7 can show the spell resolving and
+  then what it does. `SPELL_CAST` arrives in the batch that cast the spell, whose state already
+  shows the spell on the stack — on the stale board the client plays it on, the spell is still
+  in hand (or nowhere, for the opponent's hidden hand), so `rects.source` is null and the effect
+  needs a fallback origin (the caster's player badge).
+- **Fizzles emit nothing.** A spell removed for illegal targets doesn't resolve and isn't
+  countered, so it gets neither cue; its card just leaves the stack. Add a `SPELL_FIZZLED` type to
+  the catalogue if step 7 wants to show it (the fizzle sites are the `" fizzles ("` logs in
+  `StackResolutionService`).
+- **Counter cues come from snapshots, not chokepoints.** Counters are written from ~400 engine
+  sites with no single path (and `PermanentCounterSupport.notifyCountersPlaced` misses many, such
+  as combat wither/infect, loyalty abilities and entering with counters). So `VisualCueService`
+  snapshots battlefield counters when an outer action starts (the coordinator calls
+  `actionStarted` / `actionCompleting`) and emits the increases before every other cue, at every
+  resolution boundary and at the end of the action. Effects: one cue per permanent and counter
+  type per window (merged amounts), engine order kept, source = whatever is resolving at the flush
+  (else none — combat, costs). Entering with counters emits a cue (planeswalkers entering with
+  loyalty, sagas getting lore). Decreases and players' counters (poison) have no cue.
+- **Life:** amounts are what actually changed (capped gains, multiplied losses); 0 emits nothing.
+  Damage emits only the damage cue, never `LIFE_LOST`. Life casting costs emit `LIFE_LOST` with no
+  source (the spell is mid-cast). Lifelink life gain is sourced by the lifelink permanent when it
+  is on the battlefield, through `VisualCueService.sourceOf(gameData, card)`.
+- **Pre-existing failures (same on a clean `main`):** `SpellCastingServiceTest` (10),
+  `EnterTriggerCollectorServiceTest` (3) and `ManaLeakTest.mayPayForUncounterableSpell`.
+- **Tests:** new `SpellLifeCounterVisualCueTest` (harness, 14 cases: cast cue with a permanent, a
+  player and a spell target — on the wire too; a face-down cast is anonymous; resolve cue before
+  the damage cue; a creature spell resolves; a fizzle and an activated ability emit no resolve cue;
+  Counterspell's countered cue; Mana Leak's countered cue after declining to pay; Healing Salve's
+  life gain; Sign in Blood's life loss and none from Bolt's damage; Dragonscale Boon's two counters
+  as one cue with the type, on the wire too; counters set in test setup aren't reported). Frontend:
+  a new `cue-effect-player.service.spec.ts` case for the stack fallback in `targetRect`.
+  Changed: `LeaveBattlefieldVisualCueTest.lethalDamageDies` (its exact cue list for a cast-and-resolved
+  Lightning Bolt now starts with `SPELL_CAST, SPELL_RESOLVED`); `GameEventProjectionSubscriberTest`
+  (the two new constructor arguments); `PlayerInteractionHandlerTestSupport` (supplies a mocked
+  `VisualCueService`, the new constructor dependency of `LoseLifeUnlessDiscardEffectHandler`); the
+  cue fixtures in `cue-playback.service.spec.ts`, `cue-effect-player.service.spec.ts`,
+  `game-cue-playback.spec.ts` and `cue-overlay.browser.spec.ts` (the two new required fields).
 
 ### Step 5
 

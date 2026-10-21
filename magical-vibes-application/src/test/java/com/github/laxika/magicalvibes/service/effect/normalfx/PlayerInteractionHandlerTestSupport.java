@@ -69,6 +69,8 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(CoinFlipService.class, coinFlipService);
             deps.put(PermanentCounterSupport.class, permanentCounterSupport);
             deps.put(LifeSupport.class, lifeSupport);
+            deps.put(com.github.laxika.magicalvibes.service.event.VisualCueService.class,
+                    org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.event.VisualCueService.class));
             // Real amount evaluator on top of the mocked collaborators — Fixed amounts
             // evaluate without touching any mock.
             deps.put(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class,

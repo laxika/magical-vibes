@@ -12,14 +12,18 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControlledCounterWithExileAndPlayEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +50,8 @@ public class CounterSupport {
     // @Lazy breaks the cycle: EffectResolutionService → EffectHandlerRegistry →
     // CounterUnlessPaysEffectHandler → CounterSupport → EffectResolutionService.
     private final EffectResolutionService effectResolutionService;
+    @Autowired
+    private VisualCueService visualCueService;
 
     public CounterSupport(GraveyardService graveyardService,
                           ExileService exileService,
@@ -515,6 +521,7 @@ public class CounterSupport {
         if (target == null) return;
         triggerCollectionService.completeDungeonRoomIfReady(gameData, target);
         if (isAbility(target)) return;
+        emitCounteredCue(gameData, target);
         triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, target);
         if (!target.isCopy()
                 && target.getCard() != null
@@ -527,6 +534,20 @@ public class CounterSupport {
         if (!target.isCopy()) {
             triggerCollectionService.checkControllerSpellCounteredTriggers(gameData, target.getCasterId());
         }
+    }
+
+    /**
+     * Emits the cosmetic {@link VisualCueType#SPELL_COUNTERED} cue for a countered spell (never an
+     * ability): the source is the countering spell or ability that is resolving, or the one parked
+     * while its "unless" payment is answered; the target is the countered spell's card.
+     */
+    public void emitCounteredCue(GameData gameData, StackEntry target) {
+        if (visualCueService == null || target.getCard() == null || isAbility(target)) {
+            return;
+        }
+        visualCueService.emit(gameData, VisualCueType.SPELL_COUNTERED,
+                visualCueService.resolvingSource(gameData), null, null, target.getCard().getId(), null,
+                GameEventAudience.allPlayers());
     }
 
     private boolean isAbility(StackEntry entry) {

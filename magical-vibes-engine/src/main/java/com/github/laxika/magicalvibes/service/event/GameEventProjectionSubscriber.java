@@ -245,7 +245,7 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
             }
             VisualCueView view = new VisualCueView(cue.cueType(), cue.sourceCardId(),
                     cue.sourceName(), cue.sourceColors(), cue.targetPermanentId(),
-                    cue.targetPlayerId(), cue.amount());
+                    cue.targetPlayerId(), cue.targetCardId(), cue.amount(), cue.counterType());
             for (UUID recipient : recipients(gameData, envelope.audience())) {
                 cues.computeIfAbsent(recipient, ignored -> new ArrayList<>()).add(view);
             }

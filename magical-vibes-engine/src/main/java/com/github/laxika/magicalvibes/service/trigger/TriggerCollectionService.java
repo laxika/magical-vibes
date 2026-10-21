@@ -58,6 +58,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDa
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
+import com.github.laxika.magicalvibes.model.event.GameEventAudience;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -233,6 +235,7 @@ import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
@@ -335,6 +338,8 @@ public class TriggerCollectionService {
     private TargetRedirectionSupport targetRedirectionSupport;
     @Autowired
     private ObjectProvider<StateTriggerService> stateTriggerService;
+    @Autowired
+    private ObjectProvider<VisualCueService> visualCueService;
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
@@ -805,6 +810,59 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Emits the cosmetic {@link VisualCueType#SPELL_CAST} cue for a spell that was just put on the
+     * stack. Targets are public once chosen, so the cue names the first player, the first permanent
+     * and the first spell the spell targets; a face-down spell keeps its name and colors hidden.
+     */
+    private void emitSpellCastCue(GameData gameData, Card spellCard) {
+        VisualCueService cues = visualCueService == null ? null : visualCueService.getIfAvailable();
+        if (cues == null) {
+            return;
+        }
+        StackEntry spell = null;
+        for (StackEntry entry : gameData.stack) {
+            if (entry.getCard() != null && entry.getCard().getId().equals(spellCard.getId()) && !entry.isCopy()) {
+                spell = entry;
+            }
+        }
+        if (spell == null) {
+            return;
+        }
+        List<UUID> targetIds = new ArrayList<>();
+        if (spell.getTargetId() != null) {
+            targetIds.add(spell.getTargetId());
+        }
+        if (spell.getTargetIds() != null) {
+            targetIds.addAll(spell.getTargetIds());
+        }
+        UUID targetPlayerId = null;
+        UUID targetPermanentId = null;
+        UUID targetCardId = null;
+        for (UUID targetId : targetIds) {
+            if (gameData.playerIds.contains(targetId)) {
+                targetPlayerId = targetPlayerId != null ? targetPlayerId : targetId;
+            } else if (gameQueryService.findPermanentById(gameData, targetId) != null) {
+                targetPermanentId = targetPermanentId != null ? targetPermanentId : targetId;
+            } else if (targetCardId == null) {
+                targetCardId = targetedSpellCardId(gameData, spell, targetId);
+            }
+        }
+        cues.emit(gameData, VisualCueType.SPELL_CAST, VisualCueService.Source.of(spell),
+                targetPermanentId, targetPlayerId, targetCardId, null, GameEventAudience.allPlayers());
+    }
+
+    private static UUID targetedSpellCardId(GameData gameData, StackEntry spell, UUID targetId) {
+        for (StackEntry entry : gameData.stack) {
+            if (entry != spell && entry.getCard() != null && entry.getTargetableId().equals(targetId)
+                    && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                    && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+                return entry.getCard().getId();
+            }
+        }
+        return null;
+    }
+
+    /**
      * Intervening-if (CR 603.4) for a zone-resident spell-cast trigger gated on the mana spent to cast the
      * spell: the trigger only goes on the stack when the spell's mana spent meets the threshold.
      */
@@ -818,6 +876,7 @@ public class TriggerCollectionService {
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId,
                                        Zone castZone, UUID exiledSourcePermanentId,
                                        boolean castFaceDown) {
+        emitSpellCastCue(gameData, spellCard);
         gameData.initializeCardIntensity(spellCard);
         for (StackEntry spell : gameData.stack) {
             if (spell.getCard() != null && spell.getCard().getId().equals(spellCard.getId()) && !spell.isCopy()) {

@@ -475,7 +475,9 @@ export type VisualCueType =
 /**
  * A cosmetic report of something that happened in the action a game state follows. The client
  * plays a state's cues, in order, on the board as it currently is, then applies the state.
- * A hidden (face-down) source has no name or colors.
+ * A hidden (face-down) source has no name or colors. `targetCardId` is a spell on the stack (the
+ * one a spell targets, or the one that was countered); `counterType` is set only on
+ * `COUNTERS_ADDED` (e.g. `'PLUS_ONE_PLUS_ONE'`).
  */
 export interface VisualCue {
   type: VisualCueType;
@@ -484,7 +486,9 @@ export interface VisualCue {
   sourceColors: string[];
   targetPermanentId: string | null;
   targetPlayerId: string | null;
+  targetCardId: string | null;
   amount: number | null;
+  counterType: string | null;
 }
 
 export interface GameStateNotification {

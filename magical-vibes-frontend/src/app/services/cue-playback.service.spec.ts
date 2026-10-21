@@ -4,7 +4,8 @@ import { CUE_PLAYER, CuePlaybackContext, CuePlaybackService, CuePlayer, MAX_CUE_
 import { MessageType, VisualCue, VisualCueType, WebSocketMessage } from './websocket.service';
 
 function cue(type: VisualCueType, targetPermanentId: string | null = null): VisualCue {
-  return { type, sourceCardId: null, sourceName: null, sourceColors: [], targetPermanentId, targetPlayerId: null, amount: null };
+  return { type, sourceCardId: null, sourceName: null, sourceColors: [], targetPermanentId, targetPlayerId: null, targetCardId: null, amount: null,
+    counterType: null };
 }
 
 function state(id: string, visualCues: VisualCue[] = []): WebSocketMessage {

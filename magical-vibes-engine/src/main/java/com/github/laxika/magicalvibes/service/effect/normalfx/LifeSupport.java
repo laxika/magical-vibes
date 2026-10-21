@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -51,6 +53,8 @@ public class LifeSupport {
     @Autowired
     @Lazy
     private ReplacementOrderService replacementOrderService;
+    @Autowired
+    private VisualCueService visualCueService;
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
@@ -148,6 +152,7 @@ public class LifeSupport {
         if (amount > 0) {
             gameData.lifeGainedThisTurn.merge(controllerId, amount, Integer::sum);
         }
+        emitLifeCue(gameData, VisualCueType.LIFE_GAINED, controllerId, amount, sourceCard);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = source != null
@@ -205,6 +210,7 @@ public class LifeSupport {
             }
             gameData.playerLifeTotals.put(playerId, currentLife + gained);
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
+            emitLifeCue(gameData, VisualCueType.LIFE_GAINED, playerId, gained, null);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
         } else {
             if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
@@ -221,6 +227,7 @@ public class LifeSupport {
                 return true;
             }
             gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+            emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, lifeLoss, null);
             triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         }
         return true;
@@ -242,6 +249,7 @@ public class LifeSupport {
         }
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
+        emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, amount, null);
 
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " loses " + amount + " life (" + sourceName + ").";
@@ -283,6 +291,7 @@ public class LifeSupport {
             return;
         }
         gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+        emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, lifeLoss, null);
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.text(
@@ -291,6 +300,17 @@ public class LifeSupport {
 
         triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
+    }
+
+    /**
+     * Emits the cosmetic life cue for a change that was just applied. Damage is not life loss here:
+     * damage to a player has its own cue, emitted by the damage result stage.
+     */
+    private void emitLifeCue(GameData gameData, VisualCueType type, UUID playerId, int amount, Card sourceCard) {
+        if (visualCueService != null && amount > 0) {
+            visualCueService.emit(gameData, type, visualCueService.sourceOf(gameData, sourceCard),
+                    null, playerId, amount);
+        }
     }
 
     /**

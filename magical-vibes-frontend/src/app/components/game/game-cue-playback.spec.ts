@@ -8,7 +8,7 @@ import { Game, GameStatus, MessageType, VisualCue, WebSocketMessage, WebsocketSe
 
 const BOLT: VisualCue = {
   type: 'DAMAGE_TO_PERMANENT', sourceCardId: 'bolt', sourceName: 'Lightning Bolt', sourceColors: ['RED'],
-  targetPermanentId: 'bear', targetPlayerId: null, amount: 3
+  targetPermanentId: 'bear', targetPlayerId: null, targetCardId: null, amount: 3, counterType: null
 };
 
 function stateMessage(turnNumber: number, visualCues: VisualCue[]): WebSocketMessage {

@@ -8,7 +8,8 @@ import { VisualCue } from './websocket.service';
 function cue(overrides: Partial<VisualCue>): VisualCue {
   return {
     type: 'DAMAGE_TO_PERMANENT', sourceCardId: null, sourceName: null, sourceColors: [],
-    targetPermanentId: null, targetPlayerId: null, amount: 3, ...overrides
+    targetPermanentId: null, targetPlayerId: null, targetCardId: null, amount: 3, counterType: null,
+    ...overrides
   };
 }
 
@@ -117,6 +118,14 @@ describe('CueElementRegistry', () => {
     expect(elements.targetRect(cue({ targetPermanentId: 'bear', targetPlayerId: 'two' }))?.x).toBe(1);
     expect(elements.targetRect(cue({ targetPlayerId: 'two' }))?.x).toBe(2);
     expect(elements.targetRect(cue({}))).toBeNull();
+  });
+
+  it('finds a countered or targeted spell on the stack by its card id', () => {
+    const elements = TestBed.inject(CueElementRegistry);
+    elements.register('stack', 'spell', element(3, 0));
+
+    expect(elements.targetRect(cue({ type: 'SPELL_COUNTERED', targetCardId: 'spell' }))?.x).toBe(3);
+    expect(elements.targetRect(cue({ type: 'SPELL_COUNTERED', targetCardId: 'gone' }))).toBeNull();
   });
 
   it('finds a source card on the battlefield before the stack', () => {

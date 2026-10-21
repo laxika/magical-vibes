@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.event;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
@@ -494,10 +495,10 @@ class GameEventProjectionSubscriberTest {
         coordinator.mutate(gameData, () -> {
             coordinator.emit(gameData, new GameEventFact.VisualCue(VisualCueType.DESTROYED,
                             sourceCardId, "Doom Blade", List.of(CardColor.BLACK),
-                            targetPermanentId, null, null),
+                            targetPermanentId, null, null, null, null),
                     GameEventAudience.allPlayers());
             coordinator.emit(gameData, new GameEventFact.VisualCue(VisualCueType.COUNTERS_ADDED,
-                            null, null, null, targetPermanentId, null, 2),
+                            null, null, null, targetPermanentId, null, null, 2, CounterType.PLUS_ONE_PLUS_ONE),
                     GameEventAudience.player(player2Id));
             coordinator.emit(gameData,
                     new GameEventFact.StateInvalidated(GameEventFact.StateSection.BATTLEFIELD),
@@ -508,9 +509,9 @@ class GameEventProjectionSubscriberTest {
         });
 
         VisualCueView destroyed = new VisualCueView(VisualCueType.DESTROYED, sourceCardId,
-                "Doom Blade", List.of(CardColor.BLACK), targetPermanentId, null, null);
+                "Doom Blade", List.of(CardColor.BLACK), targetPermanentId, null, null, null, null);
         VisualCueView counters = new VisualCueView(VisualCueType.COUNTERS_ADDED, null, null,
-                List.of(), targetPermanentId, null, 2);
+                List.of(), targetPermanentId, null, null, 2, CounterType.PLUS_ONE_PLUS_ONE);
         List<Object> player1Messages = messagesFor(player1Id);
         assertThat(player1Messages).hasSize(2);
         assertThat(((GameStateMessage) player1Messages.get(0)).visualCues()).containsExactly(destroyed);
@@ -526,7 +527,7 @@ class GameEventProjectionSubscriberTest {
         GameMutationCoordinator coordinator = coordinator();
         coordinator.mutate(gameData, () -> coordinator.emit(gameData,
                 new GameEventFact.VisualCue(VisualCueType.LIFE_GAINED, null, null, null,
-                        null, player1Id, 3),
+                        null, player1Id, null, 3, null),
                 GameEventAudience.allPlayers()));
 
         assertThat(sessions.deliveries).isEmpty();

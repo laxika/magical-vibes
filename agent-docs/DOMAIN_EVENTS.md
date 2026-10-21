@@ -20,7 +20,7 @@ scalars, enums, and defensively copied immutable snapshots. It must not contain 
 | `PRIVATE_REVEAL` | `PrivateReveal` | Carries immutable card snapshots for explicitly named recipients. | No. |
 | `MULLIGAN_RESOLVED` | `MulliganResolved` | Describes one public mulligan result. | No. |
 | `GAME_ENDED` | `GameEnded` | Describes a win, draw, or transport-silent abandonment. | No. |
-| `VISUAL_CUE` | `VisualCue` | A cosmetic report of what happened, delivered on each recipient's first state message of the batch (see `VISUAL-CUES.md`). Emitted only through `VisualCueService`; no rules code reads it. | No. |
+| `VISUAL_CUE` | `VisualCue` | A cosmetic report of what happened, delivered on each recipient's first state message of the batch (see `VISUAL-CUES.md`). Emitted only through `VisualCueService`; no rules code reads it. The coordinator calls `VisualCueService.actionStarted`/`actionCompleting` around each outer action (counter snapshots, cosmetic only). | No. |
 
 `GameEventEnvelope` adds the game ID, positive game-local event sequence, positive game-local
 causal action ID, state version, kind, and explicit `GameEventAudience`. Event sequence and causal

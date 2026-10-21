@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -126,6 +128,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCreatureUnlessControllerPaysEffectHandler returnTargetCreatureUnlessControllerPaysEffectHandler;
     private final CounterSupport counterSupport;
+    private final VisualCueService visualCueService;
     private final WaterbendPaymentService waterbendPaymentService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
@@ -315,6 +318,7 @@ public class MayPenaltyChoiceHandlerService {
         if (!targetEntry.isCopy() && !isAbility) {
             // Guile replaces the countering itself: the spell is exiled by its owner instead.
             if (!counterSupport.applyControlledCounterExileReplacement(gameData, sourceControllerId, targetEntry)) {
+                counterSupport.emitCounteredCue(gameData, targetEntry);
                 if (exileIfCountered) {
                     exileService.exileCard(gameData, targetEntry.getOwnerId(), targetEntry.getPhysicalCard());
                 } else {
@@ -322,6 +326,8 @@ public class MayPenaltyChoiceHandlerService {
                             targetEntry.getPhysicalCard(), targetEntry.getControllerId());
                 }
             }
+        } else {
+            counterSupport.emitCounteredCue(gameData, targetEntry);
         }
 
         String suffix = exileIfCountered ? " is countered and exiled." : " is countered.";
@@ -753,6 +759,7 @@ public class MayPenaltyChoiceHandlerService {
             graveyardService.addCardToGraveyardFromSpell(gameData, targetEntry.getOwnerId(),
                     targetEntry.getPhysicalCard(), targetEntry.getControllerId());
         }
+        counterSupport.emitCounteredCue(gameData, targetEntry);
 
         GameLog.Builder counterLog = GameLog.builder().card(targetEntry.getCard())
                 .text(isAbility ? "'s ability is countered. (" : " is countered. (")
@@ -936,6 +943,8 @@ public class MayPenaltyChoiceHandlerService {
                     * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
             int currentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
+            visualCueService.emit(gameData, VisualCueType.LIFE_LOST,
+                    visualCueService.sourceOf(gameData, ability.sourceCard()), null, targetPlayerId, lifeLoss);
 
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));

@@ -53,10 +53,11 @@ export class CueElementRegistry {
     return CueElementRegistry.firstVisible(permanents) ?? this.rect('stack', cardId);
   }
 
-  /** The cue's target on screen: its permanent, else its player. */
+  /** The cue's target on screen: its permanent, else its player, else its spell on the stack. */
   targetRect(cue: VisualCue): DOMRect | null {
     if (cue.targetPermanentId) return this.rect('permanent', cue.targetPermanentId);
     if (cue.targetPlayerId) return this.rect('player', cue.targetPlayerId);
+    if (cue.targetCardId) return this.rect('stack', cue.targetCardId);
     return null;
   }
 

@@ -35,6 +35,8 @@ public class GameMutationCoordinator {
     private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.battlefield.GameQueryService> gameQueryServices;
     @org.springframework.beans.factory.annotation.Autowired
     private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.SubgameService> subgames;
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.beans.factory.ObjectProvider<VisualCueService> visualCues;
     private final Map<GameData, ActionState> actionStates =
             Collections.synchronizedMap(new WeakHashMap<>());
     private final Set<ActionState> activeActions = ConcurrentHashMap.newKeySet();
@@ -114,8 +116,15 @@ public class GameMutationCoordinator {
             try {
                 synchronized (gameData) {
                     captureRevealedHandCardPowers(gameData);
+                    VisualCueService cues = visualCues == null ? null : visualCues.getIfAvailable();
+                    if (cues != null) {
+                        cues.actionStarted(gameData);
+                    }
                     result = mutation.get();
                     gameData.recordWayBehindState();
+                    if (cues != null) {
+                        cues.actionCompleting(gameData);
+                    }
                     batch = completeBatch(context);
                 }
             } finally {

@@ -23,13 +23,18 @@ catalogue. The roll-out plan is `look-n-feel-redesign.md` at the repository root
   may see it. When unsure, leave the identifying fields out.
 - **Fact contract.** `GameEventFact.VisualCue` holds only ids, scalars and an immutable color
   list (`GameEventPayloadArchitectureTest`). Every field except the type may be null; a missing
-  source has an empty color list.
+  source has an empty color list. Fields: type, source card id / name / colors, target permanent
+  id, target player id, target card id (a spell on the stack, by card id — the spell a spell
+  targets, or the countered spell), amount, and counter type (`COUNTERS_ADDED` only).
+  `VisualCueView` and the client's `VisualCue` mirror them.
 - **Resolving source.** A chokepoint that is not handed the resolving stack entry asks
   `VisualCueService.resolvingSource(gameData)`: the entry `EffectResolutionService` is resolving
   (it calls `beginResolution`/`endResolution` around every effect loop, nesting), else the entry
   parked in `GameData.pendingEffectResolutionEntry`, else `Source.none()`. An ability is sourced by
   its permanent (live, else the entry's source snapshot), so a face-down source stays anonymous.
   This memory is cosmetic and lives in the service, weakly keyed by `GameData`, never in game state.
+  `VisualCueService.sourceOf(gameData, card)` resolves a card a chokepoint was handed (a lifelink
+  creature) to the battlefield permanent showing it, else falls back to the resolving source.
 - **No-op contexts.** `VisualCueService` emits nothing in a simulation copy
   (`GameData.simulation`), so MCTS pays nothing for cues, and nothing outside a mutation scope
   (test setup that moves cards directly), so a chokepoint never has to know where it runs.
@@ -86,7 +91,7 @@ effect registry. Everything below is frontend-only and cosmetic.
   `appCueAnchor="permanent"` (permanent id, plus `cueAnchorCardId` = its card id) on every
   battlefield card display including attached auras, `"player"` (player id) on the side panel's
   player badges, and `"stack"` (the entry's `cardId`) on each stack entry. `targetRect(cue)` is the
-  target permanent, else the target player; `sourceRect(cue)` is the battlefield permanent
+  target permanent, else the target player, else the stack entry of `targetCardId`; `sourceRect(cue)` is the battlefield permanent
   showing `sourceCardId`, else its stack entry, else null. Detached or zero-size elements count as
   not on screen.
 - **Overlay.** `CueOverlayComponent` (`<app-cue-overlay>` in the game template) is one canvas,
@@ -123,12 +128,12 @@ type is wired up; a type with no source listed is declared but not yet emitted.
 | `DIED` | A permanent was put into a graveyard from the battlefield other than by destroy or sacrifice (state-based actions: lethal damage, 0 toughness/loyalty, legend rule, orphaned Auras). | none | Permanent | — | `PermanentRemovalService.destroyPermanentByStateBasedAction`, `removePermanentToGraveyard`, `removeOrphanedAuras`, `enforceAttachmentLegality` |
 | `DAMAGE_TO_PERMANENT` | Damage was dealt to a permanent. | The damage source | Permanent | Damage dealt, after prevention and replacement | `DamageSupport.finishPermanentDamage`; combat: `CombatDamageService.recordCombatDamageEvent` |
 | `DAMAGE_TO_PLAYER` | Damage was dealt to a player. | The damage source | Player | Damage dealt, after prevention and replacement | `DamageSupport.finishPlayerDamage`; combat: `CombatDamageService.recordCombatDamageEvent` |
-| `SPELL_CAST` | A spell was put onto the stack. | The spell | Its target, if public | — | — |
-| `SPELL_RESOLVED` | A spell resolved. | The spell | — | — | — |
-| `SPELL_COUNTERED` | A spell was countered. | The countering spell/ability | — | — | — |
-| `LIFE_GAINED` | A player gained life. | The source, if any | Player | Life gained | — |
-| `LIFE_LOST` | A player lost life other than from damage. | The source, if any | Player | Life lost | — |
-| `COUNTERS_ADDED` | Counters were put on a permanent. | The source, if any | Permanent | Number of counters | — |
+| `SPELL_CAST` | A spell was cast (put onto the stack). | The spell | Its first player, first permanent and first spell (`targetCardId`) target | — | `TriggerCollectionService.checkSpellCastTriggers` (every cast path calls it) |
+| `SPELL_RESOLVED` | A spell (not an ability) resolved. | The spell | — | — | `StackResolutionService`, at the start of each path where the spell resolves |
+| `SPELL_COUNTERED` | A spell (not an ability) was countered. | The countering spell/ability | The countered spell (`targetCardId`) | — | `CounterSupport.notifyCounteredSpell`; `MayPenaltyChoiceHandlerService` ("counter unless" answers) via `CounterSupport.emitCounteredCue` |
+| `LIFE_GAINED` | A player gained life. | The source, if any | Player | Life gained | `LifeSupport.completeGainLife`, `applySetLifeTotal` |
+| `LIFE_LOST` | A player lost life other than from damage. | The source, if any | Player | Life lost | `LifeSupport.applyLifeLoss`, `applyLifePayment`, `applySetLifeTotal`; direct writers: life casting costs (`SpellCastingService`), `LoseLifeUnlessDiscardEffectHandler`, `MayPenaltyChoiceHandlerService`, `EnchantedCreatureControllerLosesLifeEffectHandler` |
+| `COUNTERS_ADDED` | Counters were put on a permanent (entering with counters included). | The resolving spell/ability, if any | Permanent | Number of counters added | `VisualCueService` counter snapshots (see *Counter cues*) |
 
 ### Damage cues
 
@@ -149,6 +154,49 @@ cue per event with the amount dealt:
   attacking or blocking creature.
 
 Nothing is emitted for 0 damage, so fully prevented damage has no cue.
+
+### Stack cues
+
+- **`SPELL_CAST`** is emitted once per cast, when cast triggers are collected — the spell is on the
+  stack with its targets chosen. Copies are not cast and get none. Targets are public once chosen,
+  so the cue names the first player, the first battlefield permanent and the first spell among
+  them; graveyard cards and abilities on the stack are not named. A face-down spell keeps only
+  its card id (`Source.of(StackEntry)`).
+- **`SPELL_RESOLVED`** is emitted as a spell starts to resolve, *before* its effects, so a
+  resolution's cues read `SPELL_RESOLVED → DAMAGE_TO_… → DIED`. It is emitted only on paths where
+  the spell resolves: a spell removed for illegal targets ("fizzles", including Aura spells whose
+  target is gone) emits nothing, and nothing says it fizzled. Abilities never emit it. A resumed
+  resolution (after a prompt) does not emit it again.
+- **`SPELL_COUNTERED`** is sourced by the resolving countering spell or ability, or by the one
+  parked while its "unless" payment is answered (Mana Leak). A Guile-style "exile instead of
+  countering" is not a counter and emits nothing; countering an ability emits nothing.
+
+### Life cues
+
+Emitted where the life total actually changes, with the amount actually gained or lost, and
+nothing for 0 (a gain capped at the maximum, a prevented loss). Life loss from **damage** emits
+only the damage cue. A life gain replaced by something else emits the cue of what happened
+instead (a loss, or nothing for draws). The source is `sourceOf` the event's source card when
+the chokepoint has one, else the resolving spell/ability; a life casting cost has no source.
+
+### Counter cues
+
+`Permanent.setCounterCount` is called from hundreds of engine paths, so no path emits
+`COUNTERS_ADDED`. Instead `GameMutationCoordinator` calls `VisualCueService.actionStarted` when an
+outer action starts (a snapshot of every battlefield permanent's counters) and `actionCompleting`
+just before it completes its batch. In between, every other cue, `beginResolution` and
+`endResolution` first *flush*: compare counters with the snapshot, emit one cue per permanent and
+counter type whose count rose (amount = the increase), and take a new snapshot. So:
+
+- counter cues sit in engine order between the other cues (`SPELL_RESOLVED → COUNTERS_ADDED`);
+- several placements in one window merge into one cue (Dragonscale Boon: one cue, amount 2);
+- the source is the spell or ability resolving at flush time (`resolvingSource`), else none;
+- a permanent that entered in the window counts from zero, so entering with counters emits a
+  cue; a permanent that left before the flush emits none; decreases emit nothing;
+- counters set outside an action (test setup) are never reported, and simulations snapshot
+  nothing.
+
+Players' counters (poison, energy, …) have no cue type.
 
 ### Leave-the-battlefield cues
 
@@ -178,7 +226,8 @@ and only when it is really gone from the battlefield afterwards:
 ## Testing
 
 Engine changes that emit cues get tests that run an action through the harness and assert the
-emitted cues (`VisualCueServiceTest`, `DamageVisualCueTest` and `LeaveBattlefieldVisualCueTest`
+emitted cues (`VisualCueServiceTest`, `DamageVisualCueTest`, `LeaveBattlefieldVisualCueTest` and
+`SpellLifeCounterVisualCueTest`
 show how to read them from a `TestGameEventSubscriber` batch or from the projected `GAME_STATE`
 JSON on a `FakeConnection`). Projection rules are pinned
 in `GameEventProjectionSubscriberTest`.
