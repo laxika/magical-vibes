@@ -59,6 +59,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -102,6 +104,7 @@ public class DamageSupport {
     private final DamageJournalService damageJournalService;
     private final ObjectProvider<com.github.laxika.magicalvibes.service.combat.CombatDamageService> combatDamageService;
     private final ObjectProvider<com.github.laxika.magicalvibes.service.input.PlayerInputService> playerInputService;
+    private final VisualCueService visualCueService;
 
     /**
      * Whether a creature source's damage is dealt by another object, such as the Equipment whose granted
@@ -202,6 +205,11 @@ public class DamageSupport {
                     damageSource != null ? damageSource.getCard() : entry.getCard());
             processPendingRedirectDamage(gameData);
             return 0;
+        }
+
+        if (damage > 0) {
+            visualCueService.emit(gameData, VisualCueType.DAMAGE_TO_PERMANENT,
+                    damageCueSource(gameData, entry, damageSource), target.getId(), null, damage);
         }
 
         if (damageSource != null) {
@@ -1302,6 +1310,10 @@ public class DamageSupport {
                 ? entry.getSourcePermanentId() : source.getId();
         boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
         boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
+        if (effectiveDamage > 0) {
+            visualCueService.emit(gameData, VisualCueType.DAMAGE_TO_PLAYER,
+                    damageCueSource(gameData, entry, null), null, playerId, effectiveDamage);
+        }
 
         if (treatAsInfect) {
             if (effectiveDamage > 0) {
@@ -2136,6 +2148,27 @@ public class DamageSupport {
      * Object id used for per-source marked-damage tracking: the dealing permanent when known,
      * otherwise the spell/ability card instance (each cast is a distinct source).
      */
+    /**
+     * The source of a noncombat damage cue as the players see it: the permanent dealing the damage
+     * when it is one (a face-down one stays anonymous), otherwise the resolving spell, or the card
+     * an ability deals damage as.
+     */
+    private VisualCueService.Source damageCueSource(GameData gameData, StackEntry entry, Permanent damageSource) {
+        if (damageSource != null) {
+            return VisualCueService.Source.of(damageSource);
+        }
+        Card card = entry.getEffectiveDamageSourceCard();
+        if (card == entry.getCard() && entry.getSourcePermanentId() == null) {
+            return VisualCueService.Source.of(entry);
+        }
+        Permanent permanent = gameQueryService.findPermanentByCardId(gameData, card.getId());
+        if (permanent == null && entry.getSourcePermanentSnapshot() != null
+                && card.getId().equals(entry.getSourcePermanentSnapshot().getCard().getId())) {
+            permanent = entry.getSourcePermanentSnapshot();
+        }
+        return permanent != null ? VisualCueService.Source.of(permanent) : VisualCueService.Source.of(card);
+    }
+
     private static UUID damageSourceKey(StackEntry entry, Permanent damageSource) {
         if (damageSource != null) {
             return damageSource.getId();

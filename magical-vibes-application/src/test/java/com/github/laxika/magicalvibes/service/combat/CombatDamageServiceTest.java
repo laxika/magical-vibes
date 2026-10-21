@@ -148,7 +148,8 @@ class CombatDamageServiceTest {
                 damageSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport.class),
                 stateBasedActionService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.event.VisualCueService.class));
         // No replacement or prevention effects apply: each combat damage event is dealt as collected.
         org.mockito.Mockito.lenient().doAnswer(inv -> {
             combatDamageService.recordCombatDamageEvent(inv.getArgument(0), inv.getArgument(1));

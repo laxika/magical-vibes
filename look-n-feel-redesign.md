@@ -15,7 +15,7 @@ order; each one lists what it depends on.
 |---|---|---|
 | 1 | `VisualCue` fact and wire plumbing | done |
 | 2 | Cues for leaving the battlefield | open |
-| 3 | Cues for damage | open |
+| 3 | Cues for damage | done |
 | 4 | Cues for the stack, life and counters | open |
 | 5 | Frontend cue model and playback queue | open |
 | 6 | Element registry and effects overlay | open |
@@ -288,6 +288,52 @@ Steps add notes here for later steps, under their number.
   private audience, face-down redaction, simulation, outside-scope no-op, empty list by
   default); two new cases in `GameEventProjectionSubscriberTest` (first-state-message and
   audience filtering; no state message → nothing sent). No existing test had to change.
+
+### Step 3
+
+- **Survey — where damage is actually dealt.** Every damage event, noncombat or combat, runs
+  through `DamageSupport.processDamageEvent` / `continueDamage` (replacement ordering) and ends in
+  `DamageSupport.finishDamage`, which hands it to one of three result stages:
+  - `DamageSupport.finishPermanentDamage` — all noncombat damage to creatures, planeswalkers and
+    battles (the only noncombat `Permanent.addMarkedDamage` caller), including Bite/fight damage
+    with an explicit source permanent, divided damage, simultaneous (combined) damage, redirect
+    shields (`processPendingRedirectDamage`, `dealRedirectedDamage`) and journal resumes.
+  - `DamageSupport.finishPlayerDamage` — all noncombat damage to players (life loss, poison,
+    "can't lose life", Worship floors), including Eye for an Eye reflections and redirects.
+  - `CombatDamageService.recordCombatDamageEvent` — all combat damage: `recordCombatEventToPlayer`,
+    `recordCombatEventToAttackedPermanent` (planeswalkers, battles), `recordCombatEventToCreature`
+    (marked damage and infect/wither counters) and `dealRedirectedCombatDamage` (Pariah-style
+    redirects inside the step). The marked damage itself is applied later in the same step by
+    `applyStepDamageToPermanents` / `applyPlaneswalkerDamage` / `applyDamageToEachPlayer`, from the
+    maps these record into.
+  - `CreatureDamageStep` deals nothing — it is one prevention/replacement step of the permanent
+    pool. Other `playerLifeTotals` writers (`LifeSupport`, life costs, "lose life unless") are life
+    loss, not damage, and belong to step 4.
+- **Emission:** the cue is emitted at those result stages, only for damage > 0, so replays of a
+  journaled resolution don't repeat it and fully prevented damage has none. Replacing damage with
+  something else (`noncombatDamageToOpponentCreatureAsCounters`, the mill replacement, Dralnu) is
+  not damage and emits no damage cue. Infect/wither damage is damage and emits one.
+- **Ordering inside a combat step:** combat cues are emitted as each recipient's event finishes,
+  slightly before the step applies the marked damage. All of that happens in one action, so it
+  doesn't show on the client — except when a combat damage event stops for a replacement-order or
+  "you may" choice: the cues of the events already finished then go out with the prompt's state,
+  and the damage appears on the board only after the answer. Step 5's queue should not assume a
+  damage cue's state already shows the damage.
+- **Sources:** combat cues use `Source.of(creature)` (the live permanent, or the portion's snapshot
+  if it already left). Noncombat cues resolve the source in `DamageSupport.damageCueSource`; a
+  face-down source keeps its card id but no name or colors. `sourceCardId` may name a card that is
+  no longer anywhere visible (a sacrificed Mogg Fanatic, a resolved spell), so step 7's projectile
+  needs a fallback origin.
+- **Planeswalker damage** from combat and noncombat sources is `DAMAGE_TO_PERMANENT`, the same as
+  creature damage; distinguish by what the client's target permanent is if needed.
+- **Pre-existing failures (not caused by this step):** `CombatDamageServiceTest` has 40 failing
+  tests on a clean `main` (NPE: `StateBasedActionService.storiedEffectHandler` is null in its
+  hand-built wiring), and `PariahTest.multiplePariahsOfferRedirectionChoice` fails on a clean `main`.
+- **Tests:** new `DamageVisualCueTest` (harness: Lightning Bolt on a creature and on a player, the
+  projected cue on the wire, a combat trade, unblocked damage, a face-down attacker, fully and
+  partly prevented noncombat damage, Fog, and Pariah redirecting noncombat and combat damage).
+  `CombatDamageServiceTest` changed only to pass a mocked `VisualCueService` to the new
+  `CombatDamageService` constructor parameter.
 
 ## Prompt
 

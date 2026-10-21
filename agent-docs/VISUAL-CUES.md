@@ -58,14 +58,34 @@ type is wired up; a type with no source listed is declared but not yet emitted.
 | `EXILED` | A permanent was exiled from the battlefield. | The exiling spell/ability | Permanent | — | — |
 | `RETURNED_TO_HAND` | A permanent was returned to its owner's hand. | The bouncing spell/ability | Permanent | — | — |
 | `DIED` | A creature died by a state-based action. | none | Permanent | — | — |
-| `DAMAGE_TO_PERMANENT` | Damage was dealt to a permanent. | The damage source | Permanent | Damage dealt, after prevention and replacement | — |
-| `DAMAGE_TO_PLAYER` | Damage was dealt to a player. | The damage source | Player | Damage dealt, after prevention and replacement | — |
+| `DAMAGE_TO_PERMANENT` | Damage was dealt to a permanent. | The damage source | Permanent | Damage dealt, after prevention and replacement | `DamageSupport.finishPermanentDamage`; combat: `CombatDamageService.recordCombatDamageEvent` |
+| `DAMAGE_TO_PLAYER` | Damage was dealt to a player. | The damage source | Player | Damage dealt, after prevention and replacement | `DamageSupport.finishPlayerDamage`; combat: `CombatDamageService.recordCombatDamageEvent` |
 | `SPELL_CAST` | A spell was put onto the stack. | The spell | Its target, if public | — | — |
 | `SPELL_RESOLVED` | A spell resolved. | The spell | — | — | — |
 | `SPELL_COUNTERED` | A spell was countered. | The countering spell/ability | — | — | — |
 | `LIFE_GAINED` | A player gained life. | The source, if any | Player | Life gained | — |
 | `LIFE_LOST` | A player lost life other than from damage. | The source, if any | Player | Life lost | — |
 | `COUNTERS_ADDED` | Counters were put on a permanent. | The source, if any | Permanent | Number of counters | — |
+
+### Damage cues
+
+Every damage event ends in one of two places once its replacement and prevention effects have
+applied (`agent-docs/ARCHITECTURE.md`, "Replacement ordering"), and that is where the cue is
+emitted, so redirected, combined (simultaneous) and replayed (journaled) damage all get exactly one
+cue per event with the amount dealt:
+
+- **Noncombat:** `DamageSupport.finishPermanentDamage` / `finishPlayerDamage`. Damage that a
+  replacement turns into something else (the "-1/-1 counters instead" replacement) is not dealt and
+  emits no damage cue; infect and wither damage is still damage and does. The source is the explicit
+  damage-source permanent if there is one, else the resolving spell, else the card the ability deals
+  damage as (`StackEntry.getEffectiveDamageSourceCard`), resolved to its permanent when it is on the
+  battlefield or is the entry's source snapshot, so a face-down source stays anonymous.
+- **Combat:** `CombatDamageService.recordCombatDamageEvent`, one cue per `DamagePortion` (one per
+  source and recipient of the step, whose damage is all dealt at once, CR 510.2), redirected combat
+  damage included. The source is the
+  attacking or blocking creature.
+
+Nothing is emitted for 0 damage, so fully prevented damage has no cue.
 
 ## Testing
 

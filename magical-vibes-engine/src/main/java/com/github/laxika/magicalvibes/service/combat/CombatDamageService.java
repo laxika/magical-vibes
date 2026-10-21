@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -164,6 +166,7 @@ public class CombatDamageService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
+    private final VisualCueService visualCueService;
 
     /**
      * Resolves combat damage for the current combat phase.
@@ -4565,11 +4568,15 @@ public class CombatDamageService {
             Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceId);
             UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourceId);
             if (!event.toPermanent()) {
+                emitCombatDamageCue(gameData, combatSource(gameData, portion), null, event.recipientPlayerId(),
+                        portion.amount());
                 dealRedirectedCombatDamageToPlayer(gameData, state, event.recipientPlayerId(), portion,
                         damageSource, sourceControllerId);
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, event.recipientPermanentId());
                 if (targetPerm != null) {
+                    emitCombatDamageCue(gameData, combatSource(gameData, portion), targetPerm.getId(), null,
+                            portion.amount());
                     dealRedirectedCombatDamageToPermanent(gameData, state, targetPerm, portion, damageSource,
                             sourceControllerId);
                 }
@@ -5122,6 +5129,14 @@ public class CombatDamageService {
         return live != null ? live : portion.sourceSnapshot();
     }
 
+    /** One cue per damage assignment, once replacement and prevention effects have applied to it. */
+    private void emitCombatDamageCue(GameData gameData, Permanent source, UUID targetPermanentId,
+                                     UUID targetPlayerId, int amount) {
+        visualCueService.emit(gameData,
+                targetPlayerId != null ? VisualCueType.DAMAGE_TO_PLAYER : VisualCueType.DAMAGE_TO_PERMANENT,
+                VisualCueService.Source.of(source), targetPermanentId, targetPlayerId, amount);
+    }
+
     private void recordCombatEventToPlayer(GameData gameData, CombatDamageState state, DamageEvent event) {
         UUID playerId = event.recipientPlayerId();
         for (DamagePortion portion : event.portions()) {
@@ -5131,6 +5146,7 @@ public class CombatDamageService {
             state.combatDamageDealtToPlayer.merge(source, amount, Integer::sum);
             state.combatDamagePlayerRecipients.put(source, playerId);
             if (amount <= 0) continue;
+            emitCombatDamageCue(gameData, source, null, playerId, amount);
             if (portion.counterDamage()) {
                 state.poisonDamageToDefendingPlayer += amount;
                 state.infectDamageToPlayers.merge(playerId, amount, Integer::sum);
@@ -5155,6 +5171,7 @@ public class CombatDamageService {
             state.combatDamageDealtToPlaneswalker.merge(source, amount, Integer::sum);
             state.combatDamageDealt.merge(source, amount, Integer::sum);
             if (amount <= 0) continue;
+            emitCombatDamageCue(gameData, source, target.getId(), null, amount);
             if (target.getCard().hasType(CardType.BATTLE)) {
                 state.combatDamageAmountsToBattles
                         .computeIfAbsent(source, ignored -> new HashMap<>())
@@ -5194,6 +5211,9 @@ public class CombatDamageService {
             UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
             if (sourceControllerId == null) {
                 sourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
+            }
+            if (portion.counterDamage() || index >= 0) {
+                emitCombatDamageCue(gameData, source, target.getId(), null, amount);
             }
             if (portion.counterDamage()) {
                 recordCounterCombatDamage(gameData, source, sourceControllerId, portion, target);
