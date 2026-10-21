@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import org.springframework.beans.factory.ObjectProvider;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
@@ -108,6 +110,7 @@ public class PermanentRemovalService {
     private final PlayerInputService playerInputService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final PhasingService phasingService;
+    private final VisualCueService visualCueService;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
@@ -129,7 +132,8 @@ public class PermanentRemovalService {
                                    @Lazy LifeSupport lifeSupport,
                                    @Lazy PlayerInputService playerInputService,
                                    EffectHandlerRegistry effectHandlerRegistry,
-                                   PhasingService phasingService) {
+                                   PhasingService phasingService,
+                                   VisualCueService visualCueService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
@@ -147,6 +151,7 @@ public class PermanentRemovalService {
         this.playerInputService = playerInputService;
         this.effectHandlerRegistry = effectHandlerRegistry;
         this.phasingService = phasingService;
+        this.visualCueService = visualCueService;
     }
 
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -218,7 +223,8 @@ public class PermanentRemovalService {
      *         {@code false} if it was not on any battlefield
      */
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
-        return removePermanentToGraveyard(gameData, target, false);
+        return emitLeaveCue(gameData, target, removePermanentToGraveyard(gameData, target, false),
+                VisualCueType.DIED, VisualCueService.Source.none());
     }
 
     /** Preserves battlefield information while a simultaneous group of removals is performed. */
@@ -287,7 +293,9 @@ public class PermanentRemovalService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         boolean wasArtifact = gameQueryService.isArtifact(gameData, target);
         boolean wasNoncreatureArtifact = wasArtifact && !gameQueryService.isCreature(gameData, target);
-        boolean removed = removePermanentToGraveyard(gameData, target, false, false, null, true);
+        boolean removed = emitLeaveCue(gameData, target,
+                removePermanentToGraveyard(gameData, target, false, false, null, true),
+                VisualCueType.SACRIFICED, visualCueService.resolvingSource(gameData));
         if (removed && wasArtifact && controllerId != null) {
             gameData.playersWhoSacrificedArtifactsThisTurn.add(controllerId);
         }
@@ -307,12 +315,14 @@ public class PermanentRemovalService {
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
         }
-        return destroyPermanentToGraveyard(gameData, target, true);
+        return emitLeaveCue(gameData, target, destroyPermanentToGraveyard(gameData, target, true),
+                VisualCueType.DESTROYED, visualCueService.resolvingSource(gameData));
     }
 
     /** Moves a permanent destroyed by a state-based action to its graveyard. */
     public boolean destroyPermanentByStateBasedAction(GameData gameData, Permanent target) {
-        return destroyPermanentToGraveyard(gameData, target, false);
+        return emitLeaveCue(gameData, target, destroyPermanentToGraveyard(gameData, target, false),
+                VisualCueType.DIED, VisualCueService.Source.none());
     }
 
     private boolean destroyPermanentToGraveyard(GameData gameData, Permanent target,
@@ -330,7 +340,8 @@ public class PermanentRemovalService {
 
     public boolean removePermanentToGraveyardAfterDecliningLibraryReplacement(GameData gameData,
                                                                                 Permanent target) {
-        return removePermanentToGraveyard(gameData, target, false, true);
+        return emitLeaveCue(gameData, target, removePermanentToGraveyard(gameData, target, false, true),
+                VisualCueType.DIED, VisualCueService.Source.none());
     }
 
     private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
@@ -347,7 +358,9 @@ public class PermanentRemovalService {
 
     /** Moves a permanent into an explicitly named player's graveyard, retaining normal removal processing. */
     public boolean removePermanentToPlayerGraveyard(GameData gameData, Permanent target, UUID destinationPlayerId) {
-        return removePermanentToGraveyard(gameData, target, false, false, destinationPlayerId);
+        return emitLeaveCue(gameData, target,
+                removePermanentToGraveyard(gameData, target, false, false, destinationPlayerId),
+                VisualCueType.DIED, VisualCueService.Source.none());
     }
 
     private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
@@ -757,8 +770,13 @@ public class PermanentRemovalService {
             gameData.chosenStateBasedDeathReplacements.put(target.getId(), chosen);
             return;
         }
-        removePermanentToGraveyard(gameData, target, choice.destroyedBySpellOrAbility(), true,
+        boolean removed = removePermanentToGraveyard(gameData, target, choice.destroyedBySpellOrAbility(), true,
                 choice.destinationPlayerId(), choice.wasSacrificed(), chosen);
+        emitLeaveCue(gameData, target, removed,
+                choice.destroyedBySpellOrAbility() ? VisualCueType.DESTROYED
+                        : choice.wasSacrificed() ? VisualCueType.SACRIFICED : VisualCueType.DIED,
+                choice.destroyedBySpellOrAbility() || choice.wasSacrificed()
+                        ? visualCueService.resolvingSource(gameData) : VisualCueService.Source.none());
         removeOrphanedAuras(gameData);
     }
 
@@ -892,7 +910,7 @@ public class PermanentRemovalService {
         UUID dyingCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), dyingCreatureControllerId);
-        boolean removed = removePermanentToHand(gameData, target);
+        boolean removed = returnPermanentToHand(gameData, target, false);
         if (removed && found.replacement().revealsReturnedCardUntilOwnerNextTurn()) {
             markCardsRevealedInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
         }
@@ -1045,6 +1063,11 @@ public class PermanentRemovalService {
 
     /** Reports whether a bounce occurred when a caller needs a conditional return rider. */
     public boolean removePermanentToHand(GameData gameData, Permanent target, boolean requireReturnToHand) {
+        return emitLeaveCue(gameData, target, returnPermanentToHand(gameData, target, requireReturnToHand),
+                VisualCueType.RETURNED_TO_HAND, visualCueService.resolvingSource(gameData));
+    }
+
+    private boolean returnPermanentToHand(GameData gameData, Permanent target, boolean requireReturnToHand) {
         boolean dynamicToken = markDynamicToken(gameData, target);
         // Replacement effect: exile instead of going to hand (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, false, "returning to hand")) {
@@ -1193,7 +1216,7 @@ public class PermanentRemovalService {
 
     /** Removes a permanent to a face-down exile zone. */
     public boolean removePermanentToExileFaceDown(GameData gameData, Permanent target) {
-        return removePermanentToExile(gameData, target, null, true);
+        return emitExileCue(gameData, target, removePermanentToExile(gameData, target, null, true));
     }
 
     /**
@@ -1201,7 +1224,7 @@ public class PermanentRemovalService {
      * when one is supplied.
      */
     public boolean removePermanentToExile(GameData gameData, Permanent target, UUID sourcePermanentId) {
-        return removePermanentToExile(gameData, target, sourcePermanentId, false);
+        return emitExileCue(gameData, target, removePermanentToExile(gameData, target, sourcePermanentId, false));
     }
 
     /**
@@ -1210,7 +1233,8 @@ public class PermanentRemovalService {
      */
     public boolean removePermanentToExileAsCraftMaterial(GameData gameData, Permanent target,
                                                          UUID sourcePermanentId) {
-        return removePermanentToExile(gameData, target, sourcePermanentId, false, true);
+        return emitExileCue(gameData, target,
+                removePermanentToExile(gameData, target, sourcePermanentId, false, true));
     }
 
     private boolean removePermanentToExile(GameData gameData, Permanent target, UUID sourcePermanentId,
@@ -1692,6 +1716,7 @@ public class PermanentRemovalService {
         }
         var result = auraAttachmentService.removeOrphanedAuras(gameData);
         for (var removal : result.removals()) {
+            emitLeaveCue(gameData, removal.permanent(), true, VisualCueType.DIED, VisualCueService.Source.none());
             handleExileReturnOnLeave(gameData, removal.permanent(), removal.controllerId(), true);
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
@@ -1711,6 +1736,7 @@ public class PermanentRemovalService {
     public boolean enforceAttachmentLegality(GameData gameData) {
         var result = auraAttachmentService.enforceAttachmentLegality(gameData);
         for (var removal : result.removals()) {
+            emitLeaveCue(gameData, removal.permanent(), true, VisualCueType.DIED, VisualCueService.Source.none());
             handleExileReturnOnLeave(gameData, removal.permanent(), removal.controllerId(), true);
             triggerCollectionService.checkSelfLeavesTriggered(gameData, removal.permanent(), removal.controllerId());
             triggerCollectionService.collectDeathTrigger(gameData, removal.card(), removal.controllerId(), false);
@@ -2062,7 +2088,7 @@ public class PermanentRemovalService {
         }
         UUID sourcePermanentId = checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn()
                 ? target.getExileInsteadOfDieSourcePermanentId() : null;
-        boolean exiled = removePermanentToExile(gameData, target, sourcePermanentId);
+        boolean exiled = removePermanentToExile(gameData, target, sourcePermanentId, false);
         if (exiled) {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is exiled instead of " + destinationDescription + "."));
@@ -2197,6 +2223,27 @@ public class PermanentRemovalService {
                             equipmentEffect.schedule(), equipmentIds) : effect);
             entry.replaceEffectsToResolve(updated);
         }
+    }
+
+    /**
+     * Emits a leave-the-battlefield visual cue for {@code target} when {@code removed} and it is
+     * really gone, never while a replacement choice still holds it on the battlefield. Cosmetic: it
+     * returns {@code removed} unchanged. Replacements that send it elsewhere keep the cue of the
+     * original event (a destroyed creature exiled instead is still {@code DESTROYED}), because each
+     * public entry point emits once and the replacement reroutes call non-emitting variants.
+     */
+    private boolean emitLeaveCue(GameData gameData, Permanent target, boolean removed,
+                                 VisualCueType type, VisualCueService.Source source) {
+        if (removed && !gameData.simulation
+                && gameQueryService.findPermanentById(gameData, target.getId()) == null) {
+            visualCueService.emit(gameData, type, source, target.getId(), null, null);
+        }
+        return removed;
+    }
+
+    private boolean emitExileCue(GameData gameData, Permanent target, boolean removed) {
+        return emitLeaveCue(gameData, target, removed, VisualCueType.EXILED,
+                visualCueService.resolvingSource(gameData));
     }
 
     private Optional<RemovedPermanentInfo> removeFromBattlefield(GameData gameData, Permanent target) {

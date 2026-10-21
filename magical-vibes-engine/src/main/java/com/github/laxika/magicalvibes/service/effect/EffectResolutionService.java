@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,7 @@ public class EffectResolutionService {
     private final ObjectProvider<StateBasedActionService> stateBasedActionService;
     // Resolution resumes from input handlers after StackResolutionService has returned.
     private final ObjectProvider<StackResolutionService> stackResolutionService;
+    private final VisualCueService visualCueService;
 
     /**
      * Resolves all effects on the given stack entry from the beginning.
@@ -119,9 +121,11 @@ public class EffectResolutionService {
         // does not re-enable the loss check for the enclosing spell/ability mid-resolution.
         gameData.effectResolutionDepth++;
         gameData.deferPlayerLossCheck = true;
+        visualCueService.beginResolution(gameData, entry);
         try {
             resolveEffectsLoop(gameData, entry, startIndex);
         } finally {
+            visualCueService.endResolution(gameData);
             gameData.effectResolutionDepth--;
             // Finalize only when unwinding the outermost frame AND the resolution is not paused for
             // player input (pendingEffectResolutionEntry set). On a pause the flag stays set so the

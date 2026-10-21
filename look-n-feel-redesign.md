@@ -14,7 +14,7 @@ order; each one lists what it depends on.
 | Step | Title | Status |
 |---|---|---|
 | 1 | `VisualCue` fact and wire plumbing | done |
-| 2 | Cues for leaving the battlefield | open |
+| 2 | Cues for leaving the battlefield | done |
 | 3 | Cues for damage | done |
 | 4 | Cues for the stack, life and counters | open |
 | 5 | Frontend cue model and playback queue | done |
@@ -288,6 +288,49 @@ Steps add notes here for later steps, under their number.
   private audience, face-down redaction, simulation, outside-scope no-op, empty list by
   default); two new cases in `GameEventProjectionSubscriberTest` (first-state-message and
   audience filtering; no state message → nothing sent). No existing test had to change.
+
+### Step 2
+
+- **Where:** `PermanentRemovalService`'s public entry points emit through a private
+  `emitLeaveCue`, which checks that the permanent is really off the battlefield afterwards.
+  Replacement reroutes inside the service (exile instead, return to hand instead, library) call
+  non-emitting private variants, so the cue names the *event* (a Doom Bladed creature exiled by
+  Rest in Peace is `DESTROYED`) and is emitted once. Full rules in `agent-docs/VISUAL-CUES.md` →
+  *Leave-the-battlefield cues*.
+- **`DIED` is wider than "creature died by SBA":** it now means any put-into-graveyard that is
+  not a destroy or a sacrifice (lethal damage, 0 toughness/loyalty, legend and world rules,
+  orphaned or illegally attached Auras), always with no source. "Dies" is CR 700.4, which covers
+  any permanent. Step 7 should not assume the target was a creature.
+- **Resolving source for chokepoints without an entry:** `VisualCueService.resolvingSource(gameData)`
+  (fed by `beginResolution`/`endResolution` in `EffectResolutionService.resolveEffectsFrom`, falling
+  back to `pendingEffectResolutionEntry`). Step 4 can use it for life and counter cues.
+  Removals outside any resolution (costs, combat, delayed end-step actions) have no source.
+- **Pending choices:** nothing is emitted while a `DeathExileReplacementChoice` or a "may put it on
+  top of its library" prompt holds the permanent. The resumed removal emits the cue in the batch
+  that answers the prompt; its source is the resolving or parked entry if there still is one,
+  otherwise none. A declined "may" library replacement has lost its cause and emits `DIED`.
+- **No cue type yet** for moves to the library, command zone, stack (spellmorph) or outside the
+  game; add one to the catalogue if step 7 wants them.
+- **Mislabelled sacrifices:** a few engine sacrifices go through the plain
+  `removePermanentToGraveyard` rather than `sacrificePermanentToGraveyard` (Saga, "sacrifice unless
+  you pay" with no mana cost, same-name sacrifice on entry, an Aura sacrificed to make its creature
+  indestructible) and show as `DIED`. Changing them would touch rules code, so I left them.
+- **Order in one action:** cues follow the engine's order, so lethal damage gives
+  `DAMAGE_TO_PERMANENT` then `DIED` in the same state message.
+- **Pre-existing failures (not caused by this step, same counts on a clean `main`):**
+  `EffectResolutionServiceTest` (43 of 45), `PermanentRemovalServiceTest` +
+  `StateBasedActionServiceTest` (110 of 122, mostly hand-built wiring with null collaborators),
+  and the architecture tests `SimulationCopyCompletenessTest`, `CostEffectClassificationTest` and
+  `CardImmutabilityArchTest`.
+- **Tests:** new `LeaveBattlefieldVisualCueTest` (Doom Blade → `DESTROYED` sourced by Doom Blade and
+  projected to the client; Royal Assassin's ability → `DESTROYED` sourced by the Assassin; Lightning
+  Bolt lethal damage → damage cue then sourceless `DIED`; Unsummon → `RETURNED_TO_HAND`; Swords to
+  Plowshares → `EXILED`; Diabolic Edict → `SACRIFICED`; indestructible and regenerated creatures emit
+  nothing; a face-down creature's cue doesn't carry its name, on the fact or the wire; Kalitas
+  against Gravebane Zombie emits nothing while the choice is open and `SACRIFICED` after it).
+  Changed only to supply the new collaborator: `EffectResolutionServiceTest` (constructor argument,
+  a mocked `VisualCueService`) and `PermanentRemovalServiceTest` (a `@Mock VisualCueService` for
+  `@InjectMocks`).
 
 ### Step 3
 

@@ -24,6 +24,12 @@ catalogue. The roll-out plan is `look-n-feel-redesign.md` at the repository root
 - **Fact contract.** `GameEventFact.VisualCue` holds only ids, scalars and an immutable color
   list (`GameEventPayloadArchitectureTest`). Every field except the type may be null; a missing
   source has an empty color list.
+- **Resolving source.** A chokepoint that is not handed the resolving stack entry asks
+  `VisualCueService.resolvingSource(gameData)`: the entry `EffectResolutionService` is resolving
+  (it calls `beginResolution`/`endResolution` around every effect loop, nesting), else the entry
+  parked in `GameData.pendingEffectResolutionEntry`, else `Source.none()`. An ability is sourced by
+  its permanent (live, else the entry's source snapshot), so a face-down source stays anonymous.
+  This memory is cosmetic and lives in the service, weakly keyed by `GameData`, never in game state.
 - **No-op contexts.** `VisualCueService` emits nothing in a simulation copy
   (`GameData.simulation`), so MCTS pays nothing for cues, and nothing outside a mutation scope
   (test setup that moves cards directly), so a chokepoint never has to know where it runs.
@@ -110,11 +116,11 @@ type is wired up; a type with no source listed is declared but not yet emitted.
 
 | Type | Meaning | Source | Target | Amount | Emitted from |
 |---|---|---|---|---|---|
-| `DESTROYED` | A permanent was destroyed by a spell or ability. | The destroying spell/ability | Permanent | — | — |
-| `SACRIFICED` | A permanent was sacrificed. | The spell/ability that made it be sacrificed, if any | Permanent | — | — |
-| `EXILED` | A permanent was exiled from the battlefield. | The exiling spell/ability | Permanent | — | — |
-| `RETURNED_TO_HAND` | A permanent was returned to its owner's hand. | The bouncing spell/ability | Permanent | — | — |
-| `DIED` | A creature died by a state-based action. | none | Permanent | — | — |
+| `DESTROYED` | A permanent was destroyed by a spell or ability. | The destroying spell/ability | Permanent | — | `PermanentRemovalService.destroyPermanentToGraveyard` (also reached by `tryDestroyPermanent`) |
+| `SACRIFICED` | A permanent was sacrificed. | The spell/ability that made it be sacrificed, if any | Permanent | — | `PermanentRemovalService.sacrificePermanentToGraveyard` |
+| `EXILED` | A permanent was exiled from the battlefield. | The exiling spell/ability, if any | Permanent | — | `PermanentRemovalService.removePermanentToExile` (every public variant) |
+| `RETURNED_TO_HAND` | A permanent was returned to its owner's hand. | The bouncing spell/ability, if any | Permanent | — | `PermanentRemovalService.removePermanentToHand` |
+| `DIED` | A permanent was put into a graveyard from the battlefield other than by destroy or sacrifice (state-based actions: lethal damage, 0 toughness/loyalty, legend rule, orphaned Auras). | none | Permanent | — | `PermanentRemovalService.destroyPermanentByStateBasedAction`, `removePermanentToGraveyard`, `removeOrphanedAuras`, `enforceAttachmentLegality` |
 | `DAMAGE_TO_PERMANENT` | Damage was dealt to a permanent. | The damage source | Permanent | Damage dealt, after prevention and replacement | `DamageSupport.finishPermanentDamage`; combat: `CombatDamageService.recordCombatDamageEvent` |
 | `DAMAGE_TO_PLAYER` | Damage was dealt to a player. | The damage source | Player | Damage dealt, after prevention and replacement | `DamageSupport.finishPlayerDamage`; combat: `CombatDamageService.recordCombatDamageEvent` |
 | `SPELL_CAST` | A spell was put onto the stack. | The spell | Its target, if public | — | — |
@@ -144,11 +150,37 @@ cue per event with the amount dealt:
 
 Nothing is emitted for 0 damage, so fully prevented damage has no cue.
 
+### Leave-the-battlefield cues
+
+Emitted by `PermanentRemovalService`'s public entry points (`emitLeaveCue`), once per permanent
+and only when it is really gone from the battlefield afterwards:
+
+- **The cue names the event, not the final zone.** A destroyed creature that a replacement exiles
+  (Rest in Peace, Kalitas) or sends to its hand or library is still `DESTROYED`; a bounce that is
+  replaced by exile is still `RETURNED_TO_HAND`. The replacement reroutes inside the service call
+  non-emitting private variants, so nothing is emitted twice.
+- **Pending replacement choices emit nothing.** When competing death replacements open a
+  `DeathExileReplacementChoice` (or a "may put it on top of its library" prompt), the permanent
+  stays put and no cue goes out. `resolveDeathExileReplacementChoice` emits the cue once the
+  removal resumes, with the type from the choice's destroy/sacrifice flags. A declined "may"
+  library replacement (`removePermanentToGraveyardAfterDecliningLibraryReplacement`) has lost its
+  cause and emits `DIED`; an accepted one goes to the library and emits nothing.
+- **Survivors emit nothing**: indestructible, regeneration, shield counters and other destruction
+  replacements return before anything moves.
+- **Not covered:** moves to the library, command zone, stack (spellmorph) and outside the game
+  have no cue type. Some engine sacrifices bypass `sacrificePermanentToGraveyard` (Saga
+  sacrifice, "sacrifice unless you pay" with no mana cost, an Aura sacrificed to make its
+  creature indestructible, same-name sacrifice on entry) and call the plain `removePermanentToGraveyard`, so they show as
+  `DIED`.
+- **Target only by id.** The cue never names the permanent that left, so a face-down permanent's
+  cue reveals nothing; the client already knows the id from `PermanentView`.
+
 ## Testing
 
 Engine changes that emit cues get tests that run an action through the harness and assert the
-emitted cues (`VisualCueServiceTest` shows how to read them from a `TestGameEventSubscriber`
-batch or from the projected `GAME_STATE` JSON on a `FakeConnection`). Projection rules are pinned
+emitted cues (`VisualCueServiceTest`, `DamageVisualCueTest` and `LeaveBattlefieldVisualCueTest`
+show how to read them from a `TestGameEventSubscriber` batch or from the projected `GAME_STATE`
+JSON on a `FakeConnection`). Projection rules are pinned
 in `GameEventProjectionSubscriberTest`.
 
 The overlay is specified in `cue-overlay.browser.spec.ts` (the real `GameComponent` in Chromium,

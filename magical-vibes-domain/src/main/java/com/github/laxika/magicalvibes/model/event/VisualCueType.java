@@ -13,7 +13,11 @@ public enum VisualCueType {
     EXILED,
     /** A permanent was returned to its owner's hand. */
     RETURNED_TO_HAND,
-    /** A creature died by a state-based action, such as lethal damage or zero toughness. */
+    /**
+     * A permanent was put into a graveyard from the battlefield other than by being destroyed by a
+     * spell or ability or sacrificed: a state-based action such as lethal damage, zero toughness or
+     * the legend rule.
+     */
     DIED,
     /** Damage was dealt to a permanent; the amount is what was actually dealt. */
     DAMAGE_TO_PERMANENT,

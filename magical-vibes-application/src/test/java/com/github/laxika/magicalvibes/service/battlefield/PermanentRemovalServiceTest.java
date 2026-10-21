@@ -31,6 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -157,6 +158,9 @@ class PermanentRemovalServiceTest {
 
     @Mock
     private PhasingService phasingService;
+
+    @Mock
+    private VisualCueService visualCueService;
 
     @InjectMocks
     private PermanentRemovalService prs;

@@ -110,7 +110,8 @@ class EffectResolutionServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler.class),
                 gameOutcomeService,
                 new com.github.laxika.magicalvibes.service.replacement.DamageJournalService(),
-                stateBasedActionServiceProvider, stackResolutionServiceProvider);
+                stateBasedActionServiceProvider, stackResolutionServiceProvider,
+                mock(com.github.laxika.magicalvibes.service.event.VisualCueService.class));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

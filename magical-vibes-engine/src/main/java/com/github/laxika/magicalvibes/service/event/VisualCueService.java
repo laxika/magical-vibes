@@ -11,9 +11,14 @@ import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * The one way engine code emits a {@link GameEventFact.VisualCue}. It owns the audience default
@@ -23,12 +28,57 @@ import java.util.UUID;
  * Emitting is a no-op in a simulation copy (whose batches are never dispatched anyway) and
  * outside a mutation scope, such as test setup that moves cards directly, so a chokepoint never
  * has to know which context it runs in.
+ *
+ * <p>It also remembers which spell or ability is resolving ({@link #beginResolution} /
+ * {@link #endResolution}, called by the effect resolution loop), so a chokepoint that is not
+ * handed the resolving entry, such as permanent removal, can still name it as the cue's source.
+ * That memory is cosmetic, lives outside {@link GameData} (weakly keyed, like the coordinator's
+ * action state) and is never read by rules code.
  */
 @Service
 @RequiredArgsConstructor
 public class VisualCueService {
 
     private final GameMutationCoordinator mutationCoordinator;
+    private final Map<GameData, Deque<StackEntry>> resolvingEntries =
+            Collections.synchronizedMap(new WeakHashMap<>());
+
+    /** Marks {@code entry} as resolving until the matching {@link #endResolution}; calls nest. */
+    public void beginResolution(GameData gameData, StackEntry entry) {
+        if (gameData.simulation) {
+            return;
+        }
+        resolvingEntries.computeIfAbsent(gameData, ignored -> new ArrayDeque<>()).push(entry);
+    }
+
+    /** Ends the innermost {@link #beginResolution}. */
+    public void endResolution(GameData gameData) {
+        if (gameData.simulation) {
+            return;
+        }
+        Deque<StackEntry> entries = resolvingEntries.get(gameData);
+        if (entries == null) {
+            return;
+        }
+        entries.poll();
+        if (entries.isEmpty()) {
+            resolvingEntries.remove(gameData);
+        }
+    }
+
+    /**
+     * The spell or ability that is resolving, else the one parked while a player answers a
+     * question it asked, as a cue source; {@link Source#none()} when there is neither (combat,
+     * costs, state-based actions between resolutions).
+     */
+    public Source resolvingSource(GameData gameData) {
+        Deque<StackEntry> entries = resolvingEntries.get(gameData);
+        StackEntry entry = entries != null ? entries.peek() : null;
+        if (entry == null) {
+            entry = gameData.pendingEffectResolutionEntry;
+        }
+        return entry == null ? Source.none() : Source.of(gameData, entry);
+    }
 
     /**
      * Emits a cue to every player. Use this for anything that happened in a public zone.
@@ -93,6 +143,26 @@ public class VisualCueService {
             return entry.isCastFaceDown()
                     ? hidden(entry.getCard())
                     : of(entry.getCard());
+        }
+
+        /**
+         * A spell or ability on the stack; an ability of a permanent is sourced by that permanent
+         * (or its last-known snapshot once it left), so a face-down source stays anonymous.
+         */
+        public static Source of(GameData gameData, StackEntry entry) {
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (sourcePermanentId == null) {
+                return of(entry);
+            }
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (permanent.getId().equals(sourcePermanentId)) {
+                        return of(permanent);
+                    }
+                }
+            }
+            Permanent snapshot = entry.getSourcePermanentSnapshot();
+            return snapshot != null ? of(snapshot) : of(entry);
         }
 
         private static Source hidden(Card card) {
