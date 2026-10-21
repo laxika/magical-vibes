@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.b.BloodthroneVampire;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -303,6 +304,26 @@ class GameSimulatorTest {
         assertThat(simulator.getLegalActions(gd, player1.getId()))
                 .noneMatch(action -> action instanceof SimulationAction.ActivateAbility activation
                         && activation.permanentId().equals(inferno.getId()));
+    }
+
+    @Test
+    @DisplayName("Self-pump sacrifice outlet is enumerated only when other fodder exists")
+    void selfPumpSacrificeOutletNeedsOtherFodder() {
+        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new BloodthroneVampire());
+        vampire.setSummoningSick(false);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        assertThat(simulator.getLegalActions(gd, player1.getId()))
+                .noneMatch(action -> action instanceof SimulationAction.ActivateAbility activation
+                        && activation.permanentId().equals(vampire.getId()));
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThat(simulator.getLegalActions(gd, player1.getId()))
+                .anyMatch(action -> action instanceof SimulationAction.ActivateAbility activation
+                        && activation.permanentId().equals(vampire.getId()));
     }
 
     @Test

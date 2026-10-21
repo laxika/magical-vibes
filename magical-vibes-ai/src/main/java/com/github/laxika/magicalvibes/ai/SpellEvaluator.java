@@ -100,6 +100,9 @@ public class SpellEvaluator {
      */
     public double evaluateActivatedAbility(GameData gameData, ActivatedAbility ability,
                                            Permanent permanent, UUID aiPlayerId) {
+        if (sacrificeCostConsumesOnlyBeneficiary(gameData, ability, permanent, aiPlayerId)) {
+            return 0;
+        }
         double value = evaluateAbilityEffects(gameData, ability.getEffects(), aiPlayerId)
                 - evaluateAbilityCosts(gameData, ability, permanent, aiPlayerId);
 
@@ -130,6 +133,40 @@ public class SpellEvaluator {
             }
         }
         return value;
+    }
+
+    /**
+     * Whether the ability's "sacrifice a creature" cost could only be paid by sacrificing its own
+     * source while every effect just pumps that source (Bloodthrone Vampire with no other
+     * creature): the boost would resolve for a creature that is already gone, so the activation
+     * only throws the creature away.
+     */
+    public boolean sacrificeCostConsumesOnlyBeneficiary(GameData gameData, ActivatedAbility ability,
+                                                        Permanent source, UUID controllerId) {
+        boolean sacrificesChosenCreature = false;
+        boolean hasEffect = false;
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof CostEffect cost) {
+                sacrificesChosenCreature |= cost.sacrificesChosenCreature();
+                continue;
+            }
+            if (!(effect instanceof BoostSelfEffect)) {
+                return false;
+            }
+            hasEffect = true;
+        }
+        if (!sacrificesChosenCreature || !hasEffect) {
+            return false;
+        }
+        return otherSacrificeableCreatures(gameData, source, controllerId).isEmpty();
+    }
+
+    private List<Permanent> otherSacrificeableCreatures(GameData gameData, Permanent source, UUID controllerId) {
+        return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(p -> !p.getId().equals(source.getId()))
+                .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p))
+                .toList();
     }
 
     /**
@@ -166,11 +203,12 @@ public class SpellEvaluator {
                     cost += permanent.getCard().getManaValue() * 3.0;
                 }
             } else if (costEffect.sacrificesChosenCreature()) {
-                // Deduct the value of the best sacrifice candidate (cheapest to lose)
-                List<Permanent> creatures = gameData.playerBattlefields
-                        .getOrDefault(aiPlayerId, List.of()).stream()
-                        .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .toList();
+                // Deduct the value of the best sacrifice candidate (cheapest to lose). The AI
+                // keeps the outlet itself while other fodder exists (PermanentChoiceAiStrategy).
+                List<Permanent> creatures = otherSacrificeableCreatures(gameData, permanent, aiPlayerId);
+                if (creatures.isEmpty() && gameQueryService.isCreature(gameData, permanent)) {
+                    creatures = List.of(permanent);
+                }
                 cost += boardEvaluator.bestSacrificeCost(gameData, creatures, aiPlayerId, opponentId);
             } else if (effect instanceof ExileNCardsFromGraveyardCost graveyardCost) {
                 cost += matchingGraveyardCards(gameData, aiPlayerId, graveyardCost).stream()

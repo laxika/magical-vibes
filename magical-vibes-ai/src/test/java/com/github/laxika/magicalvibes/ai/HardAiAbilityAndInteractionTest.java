@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blight;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
+import com.github.laxika.magicalvibes.cards.b.BloodthroneVampire;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
@@ -1028,6 +1029,107 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Doom Blade");
+    }
+
+    @Test
+    @DisplayName("Hard AI sacrifices another creature to Bloodthrone Vampire for lethal damage")
+    void sacrificesOtherCreatureToBloodthroneVampireForLethal() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        giveCombatPriority(player1);
+        gd.playerLifeTotals.put(player2.getId(), 3);
+
+        Permanent vampire = addBloodthroneVampire(player1);
+        vampire.setAttacking(true);
+        vampire.setAttackTarget(player2.getId());
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        activateAndAnswerSacrificeChoice(ai);
+
+        assertBloodthroneVampireSacrificed(vampire, bears);
+    }
+
+    @Test
+    @DisplayName("Hard AI sacrifices a second Bloodthrone Vampire to the attacking one for lethal damage")
+    void sacrificesOtherBloodthroneVampireForLethal() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        giveCombatPriority(player1);
+        gd.playerLifeTotals.put(player2.getId(), 3);
+
+        Permanent attacker = addBloodthroneVampire(player1);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Permanent fodder = addBloodthroneVampire(player1);
+
+        activateAndAnswerSacrificeChoice(ai);
+
+        assertBloodthroneVampireSacrificed(attacker, fodder);
+    }
+
+    @Test
+    @DisplayName("Hard AI sacrifices another creature so a blocking Bloodthrone Vampire kills the attacker and survives")
+    void sacrificesOtherCreatureSoBlockingBloodthroneVampireWinsCombat() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        giveCombatPriority(player2);
+        gd.priorityPassedBy.add(player2.getId());
+
+        Permanent attacker = new Permanent(new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+
+        Permanent vampire = addBloodthroneVampire(player1);
+        vampire.setBlocking(true);
+        vampire.addBlockingTargetId(attacker.getId());
+        Permanent fodder = addBloodthroneVampire(player1);
+
+        activateAndAnswerSacrificeChoice(ai);
+
+        assertBloodthroneVampireSacrificed(vampire, fodder);
+    }
+
+    @Test
+    @DisplayName("Hard AI does not sacrifice a lone attacking Bloodthrone Vampire to itself even when the pump would be lethal")
+    void doesNotSacrificeLoneBloodthroneVampireToItself() {
+        pinLibrariesAndHands();
+        HardAiDecisionEngine ai = createHardAi(player1, 100);
+        giveCombatPriority(player1);
+        gd.playerLifeTotals.put(player2.getId(), 3);
+
+        Permanent vampire = addBloodthroneVampire(player1);
+        vampire.setAttacking(true);
+        vampire.setAttackTarget(player2.getId());
+
+        activateAndAnswerSacrificeChoice(ai);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vampire);
+    }
+
+    private Permanent addBloodthroneVampire(Player player) {
+        Permanent vampire = new Permanent(new BloodthroneVampire());
+        vampire.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(vampire);
+        return vampire;
+    }
+
+    private void activateAndAnswerSacrificeChoice(HardAiDecisionEngine ai) {
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+        if (gd.interaction.isAwaitingInput()) {
+            ai.handleEvent(AiDecisionKind.INTERACTION);
+        }
+    }
+
+    private void assertBloodthroneVampireSacrificed(Permanent vampire, Permanent fodder) {
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(vampire.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vampire).doesNotContain(fodder);
     }
 
     private Permanent addKillerBees(Player player) {

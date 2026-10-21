@@ -1535,6 +1535,38 @@ class SpellEvaluatorTest {
     }
 
     @Test
+    @DisplayName("Bloodthrone Vampire is not worth activating when it is the only creature to sacrifice")
+    void selfPumpNotWorthItWhenOnlyFodderIsTheSource() {
+        Permanent vampire = new Permanent(new BloodthroneVampire());
+        vampire.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(vampire);
+        ActivatedAbility ability = vampire.getCard().getActivatedAbilities().getFirst();
+
+        assertThat(spellEvaluator.sacrificeCostConsumesOnlyBeneficiary(gd, ability, vampire, player1.getId()))
+                .isTrue();
+        assertThat(spellEvaluator.evaluateActivatedAbility(gd, ability, vampire, player1.getId()))
+                .isLessThanOrEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Bloodthrone Vampire's sacrifice cost is valued by other fodder, not by the Vampire itself")
+    void selfPumpSacrificeCostIgnoresTheSourceWhenOtherFodderExists() {
+        Permanent vampire = new Permanent(new BloodthroneVampire());
+        vampire.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(vampire);
+        ActivatedAbility ability = vampire.getCard().getActivatedAbilities().getFirst();
+
+        // Worth more than the Vampire, but the AI sacrifices it rather than the outlet itself
+        Permanent angel = new Permanent(new SerraAngel());
+        gd.playerBattlefields.get(player1.getId()).add(angel);
+
+        assertThat(spellEvaluator.sacrificeCostConsumesOnlyBeneficiary(gd, ability, vampire, player1.getId()))
+                .isFalse();
+        assertThat(spellEvaluator.evaluateAbilityCosts(gd, ability, vampire, player1.getId()))
+                .isEqualTo(boardEvaluator.sacrificeCost(gd, angel, player1.getId(), player2.getId()));
+    }
+
+    @Test
     @DisplayName("Kethis values both the exiled cards and the remaining graveyard play permissions")
     void kethisGraveyardAbilityValuationAccountsForCostAndPermission() {
         CardSupertypePredicate legendary = new CardSupertypePredicate(CardSupertype.LEGENDARY);

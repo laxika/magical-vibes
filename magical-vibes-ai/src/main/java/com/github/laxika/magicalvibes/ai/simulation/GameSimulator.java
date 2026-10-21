@@ -615,7 +615,8 @@ public class GameSimulator {
                         .filter(CostEffect.class::isInstance)
                         .map(CostEffect.class::cast)
                         .anyMatch(cost -> cost.lifePaid(life) >= life);
-                if (suicidalLifeCost) {
+                if (suicidalLifeCost
+                        || spellEvaluator.sacrificeCostConsumesOnlyBeneficiary(gd, ability, source, playerId)) {
                     continue;
                 }
 
