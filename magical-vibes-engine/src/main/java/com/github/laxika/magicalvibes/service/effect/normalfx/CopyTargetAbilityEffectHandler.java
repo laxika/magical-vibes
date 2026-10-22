@@ -57,6 +57,11 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (CopySupport.isAbilityThatCantBeCopied(targetEntry)) {
+            log.info("Game {} - Target ability cannot be copied", gameData.id);
+            return;
+        }
+
         UUID copyControllerId = entry.getControllerId();
         for (int i = 0; i < entry.getXValue(); i++) {
             Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());

@@ -55,6 +55,10 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             log.info("Game {} - Copy target spell or ability is no longer on the stack", gameData.id);
             return;
         }
+        if (CopySupport.isAbilityThatCantBeCopied(targetEntry)) {
+            gameLogService.append(gameData, GameLog.text(targetEntry.getDescription() + " can't be copied."));
+            return;
+        }
         if (targetEntry.getCard() != null && targetEntry.getCard().isCantBeCopied()) {
             gameLogService.append(gameData, GameLog.cardThen(targetEntry.getCard(), " can't be copied."));
             return;

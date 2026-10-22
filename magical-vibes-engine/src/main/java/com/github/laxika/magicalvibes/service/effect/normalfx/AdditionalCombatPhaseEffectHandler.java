@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginn
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -30,7 +31,16 @@ public class AdditionalCombatPhaseEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        gameData.additionalCombatPhasesOnly += e.count();
+        if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN) {
+            // The combat phase this effect adds follows the postcombat main phase it resolved in, so
+            // it can't wait for an END_OF_COMBAT that already passed; the turn then moves on to its end step.
+            gameData.additionalCombatPhasesAfterMain += e.count();
+            if (gameData.additionalCombatPhasesAfterMainReturnStep == null) {
+                gameData.additionalCombatPhasesAfterMainReturnStep = TurnStep.END_STEP;
+            }
+        } else {
+            gameData.additionalCombatPhasesOnly += e.count();
+        }
         gameData.additionalCombatCreatedAfterUpkeepSteps = gameData.additionalUpkeepStepsAfterCombat > 0;
         if (e.additionalCombatBeginningEffect() != null) {
             for (int i = 0; i < e.count(); i++) {

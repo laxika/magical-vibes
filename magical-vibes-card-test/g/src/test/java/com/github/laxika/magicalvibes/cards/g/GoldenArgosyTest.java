@@ -108,8 +108,10 @@ class GoldenArgosyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Molten Monstrosity");
         harness.assertNotOnBattlefield(player2, "Molten Monstrosity");
-        harness.passUntil(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
         assertThat(findPermanents(player2, "Molten Monstrosity")).singleElement().matches(Permanent::isTapped);
         harness.assertNotOnBattlefield(player1, "Molten Monstrosity");
     }

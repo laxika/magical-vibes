@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 public class GruesomeEncore extends Card {
 
     public GruesomeEncore() {
-        addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect());
+        addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
     }
 }

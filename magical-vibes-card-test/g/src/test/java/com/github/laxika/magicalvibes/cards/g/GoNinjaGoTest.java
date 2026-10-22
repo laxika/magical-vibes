@@ -4,6 +4,10 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -124,6 +128,10 @@ class GoNinjaGoTest extends BaseCardTest {
         borrowedCard.setOwnerId(player2.getId());
         Permanent borrowedCreature = harness.addToBattlefieldAndReturn(player1, borrowedCard);
         gd.stolenCreatures.put(borrowedCreature.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, player1.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), borrowedCreature.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         castGoNinjaGo(new int[]{0, 1}, List.of(borrowedCreature.getId(), target.getId()));
 

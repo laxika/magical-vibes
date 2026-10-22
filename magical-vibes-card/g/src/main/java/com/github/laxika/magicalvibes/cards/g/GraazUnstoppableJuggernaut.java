@@ -30,7 +30,9 @@ public class GraazUnstoppableJuggernaut extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.WALL)),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.JUGGERNAUT)));
-        addEffect(EffectSlot.STATIC, new SetBasePowerToughnessEffect(5, 3, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.JUGGERNAUT, GrantScope.OWN_CREATURES));
+        GrantSubtypeEffect becomeJuggernauts = new GrantSubtypeEffect(CardSubtype.JUGGERNAUT, GrantScope.OWN_CREATURES);
+        addEffect(EffectSlot.STATIC, new SetBasePowerToughnessEffect(5, 3, GrantScope.OWN_CREATURES)
+                .partOfSameAbilityAs(becomeJuggernauts));
+        addEffect(EffectSlot.STATIC, becomeJuggernauts);
     }
 }

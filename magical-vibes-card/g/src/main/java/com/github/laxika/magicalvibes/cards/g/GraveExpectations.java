@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.HeistTargetOpponentLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.HeistTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,7 +23,7 @@ public class GraveExpectations extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Heist target opponent's library",
-                        new HeistTargetOpponentLibraryEffect(),
+                        new HeistTargetLibraryEffect(),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                 "Target must be an opponent")),

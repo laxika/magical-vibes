@@ -4,14 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyDrawnInstantOrSorceryAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,6 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler implements Nor
 
     private final CopySupport copySupport;
     private final ExileService exileService;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,13 +32,6 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopyDrawnInstantOrSorceryAndMayCastCopyEffect copyEffect =
                 (CopyDrawnInstantOrSorceryAndMayCastCopyEffect) effect;
-        gameLogService.append(gameData, GameLog.builder()
-                .text(gameData.playerIdToName.get(entry.getControllerId()) + " reveals ")
-                .card(copyEffect.drawnCard())
-                .text(" with ")
-                .card(entry.getCard())
-                .text(".")
-                .build());
         Card drawnCard = copyEffect.drawnCard();
         if (!drawnCard.hasType(CardType.INSTANT) && !drawnCard.hasType(CardType.SORCERY)) {
             return;

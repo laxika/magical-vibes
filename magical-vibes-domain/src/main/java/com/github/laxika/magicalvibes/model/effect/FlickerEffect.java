@@ -405,6 +405,26 @@ public record FlickerEffect(
                 true, returnAtControllerNextStep);
     }
 
+    /** Exile target permanent and nothing more; pair with the two returns below (Gilraen, Dúnedain Protector). */
+    public static FlickerEffect exileTargetOnly() {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.NONE,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
+    /** Return the permanent this resolution already exiled, immediately, under its owner's control. */
+    public static FlickerEffect returnEarlierExileNow() {
+        return new FlickerEffect(FlickerScope.TARGET_EXILED_EARLIER, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
+    /** Return the permanent this resolution already exiled at the next end step with the given counters. */
+    public static FlickerEffect returnEarlierExileAtEndStepWithCounters(Map<CounterType, Integer> counters) {
+        return new FlickerEffect(FlickerScope.TARGET_EXILED_EARLIER, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), false, false, false,
+                null, 0, Set.of(), false, false, false, counters);
+    }
+
     /** Exile target permanent, immediately return it under its owner's control (Ghostly Flicker). */
     public static FlickerEffect flickerTarget() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,

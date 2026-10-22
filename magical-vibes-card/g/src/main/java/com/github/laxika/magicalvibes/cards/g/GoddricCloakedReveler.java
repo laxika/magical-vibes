@@ -30,10 +30,12 @@ public class GoddricCloakedReveler extends Card {
         PermanentEnteredThisTurn celebration = new PermanentEnteredThisTurn(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), 2);
 
+        ConditionalEffect becomesDragon = new ConditionalEffect(
+                celebration, new GrantSubtypeEffect(CardSubtype.DRAGON, GrantScope.SELF, true));
+        addEffect(EffectSlot.STATIC, becomesDragon);
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
-                celebration, new GrantSubtypeEffect(CardSubtype.DRAGON, GrantScope.SELF, true)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
-                celebration, new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                celebration, new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)
+                        .partOfSameAbilityAs(becomesDragon)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 celebration, new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(

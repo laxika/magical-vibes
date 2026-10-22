@@ -122,12 +122,14 @@ class GuyInTheChairTest extends BaseCardTest {
         Permanent guy = addCreatureReady(player1, new GuyInTheChair());
         harness.forceStep(TurnStep.UPKEEP);
 
-        harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "GREEN");
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.handleListChoice(player1, "GREEN");
 
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(guy.isTapped()).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(guy.isTapped()).isTrue();
+        });
     }
 
     @Test

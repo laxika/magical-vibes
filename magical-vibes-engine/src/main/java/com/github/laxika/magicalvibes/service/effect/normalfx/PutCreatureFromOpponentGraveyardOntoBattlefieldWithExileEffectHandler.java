@@ -40,10 +40,15 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         result.permanent().getGrantedKeywords().add(Keyword.HASTE);
+        if (((PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) effect).exileIfItWouldLeave()) {
+            result.permanent().setExileIfLeavesBattlefield(true);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
         graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());
-        gameData.queueDelayedAction(new DelayedPermanentAction(result.permanent().getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP, controllerId));
+        gameData.queueDelayedAction(new DelayedPermanentAction(result.permanent().getId(),
+                DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP, false, null, controllerId, null, false,
+                entry.getCard(), controllerId, null));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", result.card(), " onto the battlefield under their control with haste."));

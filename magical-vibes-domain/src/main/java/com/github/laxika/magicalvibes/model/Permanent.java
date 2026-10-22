@@ -810,6 +810,10 @@ public class Permanent {
      *  constructor) and must stay immutable after construction.
      *  NOT cleared by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> persistentGrantedActivatedAbilities = new ArrayList<>();
+    /** Indices into {@code getCard().getActivatedAbilities()} of printed activated abilities this
+     *  permanent has lost ("then this creature loses this ability", Great Fang Chroniclers). Permanent
+     *  state tied to this object; never cleared by {@link #resetModifiers()}. */
+    private final java.util.Set<Integer> lostPrintedActivatedAbilityIndices = new java.util.HashSet<>();
     /** When true, this permanent is a temporary copy (until end of turn) of another creature.
      *  At the cleanup step, the copy's floating layer-1 effect expires and the card reverts to
      *  {@link #preCopyCard} via {@link #revertEndOfTurnCopy()}.
@@ -1241,6 +1245,7 @@ public class Permanent {
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.adaptOverridesUntilEndOfTurn = source.adaptOverridesUntilEndOfTurn;
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
+        this.lostPrintedActivatedAbilityIndices.addAll(source.lostPrintedActivatedAbilityIndices);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
         this.nonCopiableKeywords.addAll(source.nonCopiableKeywords);

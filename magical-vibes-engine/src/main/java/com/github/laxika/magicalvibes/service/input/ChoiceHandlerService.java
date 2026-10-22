@@ -290,12 +290,42 @@ public class ChoiceHandlerService {
     @Autowired @Lazy
     private LandManaReplacementService landManaReplacementService;
 
+    private static boolean isCardNameChoice(ChoiceContext context) {
+        return context instanceof ChoiceContext.CardNameChoice
+                || context instanceof ChoiceContext.DualCardNameChoice
+                || context instanceof ChoiceContext.ExileByNameChoice
+                || context instanceof ChoiceContext.ChooseCardNameAtResolutionChoice
+                || context instanceof ChoiceContext.CreateTokenWithChosenNameChoice
+                || context instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice
+                || context instanceof ChoiceContext.RevealLibraryNameGuessChoice
+                || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
+                || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
+                || context instanceof ChoiceContext.NameCardMillGainLifeChoice
+                || context instanceof ChoiceContext.NameCardMillDrawChoice
+                || context instanceof ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice
+                || context instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice
+                || context instanceof ChoiceContext.ChooseCreatureNameRevealTopCardsChoice
+                || context instanceof ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice
+                || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
+                || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
+                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
+                || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
+                || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
+                || context instanceof ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice
+                || context instanceof ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice
+                || context instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
+                || context instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice;
+    }
+
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
             throw new IllegalStateException("Not awaiting color choice");
         }
         PendingInteraction.ColorChoice colorChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (isCardNameChoice(colorChoice.context()) && gameQueryService.isCardNameUnchoosable(gameData, colorName)) {
+            throw new IllegalArgumentException("The name " + colorName + " can't be chosen");
+        }
         if (colorChoice.context() instanceof ChoiceContext.LandManaDrainAbilityChoice choice) {
             if (!player.getId().equals(colorChoice.playerId())) throw new IllegalStateException("Not your turn to choose");
             int optionIndex = colorChoice.options().indexOf(colorName);
@@ -359,6 +389,25 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             stackResolutionService.resolveReboundOrPlotChoice(gameData, choice, "REBOUND".equals(colorName));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.HeldCardsZoneChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            libraryChoiceHandlerService.completeHeldCardsZoneChoice(gameData, player, choice, colorName);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SpellReboundOrDreamCounterChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid rebound or dream counter choice");
+            }
+            gameData.interaction.clearAwaitingInput();
+            stackResolutionService.resolveReboundOrDreamCounterChoice(gameData, choice, "REBOUND".equals(colorName));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -8471,6 +8520,11 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
+
+        if (handExiledCount > 0) {
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
+                    gameData, targetPlayerId, handExiledCount);
+        }
 
         if (ctx.drawForHandExiled()) {
             for (int i = 0; i < handExiledCount; i++) {

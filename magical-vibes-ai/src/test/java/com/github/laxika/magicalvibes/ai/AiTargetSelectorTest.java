@@ -709,7 +709,7 @@ class AiTargetSelectorTest {
         return Stream.of(
                 Arguments.of(
                         "PutCreatureFromOpponentGraveyard filters to creatures only",
-                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(),
+                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true),
                         Set.of("GY Creature")
                 ),
                 Arguments.of(
@@ -812,7 +812,7 @@ class AiTargetSelectorTest {
         Card spellCard = new Card();
         spellCard.setName("Test Spell");
         spellCard.setType(CardType.SORCERY);
-        spellCard.addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect());
+        spellCard.addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
 
         List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
 

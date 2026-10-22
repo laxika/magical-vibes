@@ -233,7 +233,7 @@ class GwenStacyTest extends BaseCardTest {
 
     private Forest enterGwenWithForest() {
         Forest topCard = new Forest();
-        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest()));
         harness.setHand(player1, List.of(new GwenStacy()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

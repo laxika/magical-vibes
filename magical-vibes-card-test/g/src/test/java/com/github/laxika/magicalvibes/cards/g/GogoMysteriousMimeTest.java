@@ -149,7 +149,7 @@ class GogoMysteriousMimeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gqs.getEffectivePower(gd, gogo)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, gogo, Keyword.HASTE)).isFalse();
@@ -166,10 +166,12 @@ class GogoMysteriousMimeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, gogo));
 
-        harness.passBothPriorities();
-        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.passBothPriorities();
+            if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+                harness.handleMayAbilityChosen(player1, true);
+            }
+        });
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
@@ -237,9 +239,11 @@ class GogoMysteriousMimeTest extends BaseCardTest {
 
     private void resolveChoice(Permanent target) {
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        });
     }
 
     private void advanceToCombat(Player activePlayer) {

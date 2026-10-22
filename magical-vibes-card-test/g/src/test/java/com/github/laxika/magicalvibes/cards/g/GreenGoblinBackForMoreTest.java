@@ -124,7 +124,7 @@ class GreenGoblinBackForMoreTest extends BaseCardTest {
     @Test
     @DisplayName("An empty controller hand cannot cause the opponent to discard")
     void emptyControllerHandDoesNotCauseOpponentDiscard() {
-        addCreatureReady(player1, new GreenGoblinBackForMore());
+        addCreatureReady(player1, new GreenGoblinBackForMore()).tap();
         Card opponentCard = new GreenGoblinBackForMore();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(opponentCard));

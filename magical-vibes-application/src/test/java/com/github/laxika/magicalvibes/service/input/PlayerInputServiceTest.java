@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceIntera
 import com.github.laxika.magicalvibes.service.interaction.MultiGraveyardChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.MultiPermanentChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.MultiZoneExileChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +85,7 @@ class PlayerInputServiceTest {
     }
 
     @Mock private CardViewFactory cardViewFactory;
+    @Mock private GameQueryService gameQueryService;
 
     private PlayerInputService svc;
     private InteractionPromptProjectionRegistry promptProjections;
@@ -120,6 +123,7 @@ class PlayerInputServiceTest {
         registry.register(new com.github.laxika.magicalvibes.service.interaction.PermanentChoiceInteractionHandler(
                 mock(PermanentChoiceHandlerService.class)));
         svc = new PlayerInputService(registry);
+        ReflectionTestUtils.setField(svc, "gameQueryService", gameQueryService);
         promptProjections = new InteractionPromptProjectionRegistry(cardViewFactory);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");

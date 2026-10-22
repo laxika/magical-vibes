@@ -85,11 +85,13 @@ class GreatOakGuardianTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 
-        castGreatOakGuardian(player1.getId());
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            castGreatOakGuardian(player1.getId());
 
-        Permanent guardian = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(gqs.getEffectivePower(gd, guardian)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(7);
+            Permanent guardian = gd.playerBattlefields.get(player1.getId()).getFirst();
+            assertThat(gqs.getEffectivePower(gd, guardian)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(7);
+        });
     }
 
     private void castGreatOakGuardian(java.util.UUID targetPlayerId) {

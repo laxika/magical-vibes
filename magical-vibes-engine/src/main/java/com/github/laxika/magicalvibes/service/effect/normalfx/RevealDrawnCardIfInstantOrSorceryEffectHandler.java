@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardCreateTokenIfInstantOrSorceryEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardIfInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,27 +15,27 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Logs the reveal of a drawn card and queues the "whenever you reveal ... this way" token trigger. */
+/** Logs the reveal of a drawn card and queues the "whenever you reveal ... this way" trigger. */
 @Component
 @RequiredArgsConstructor
-public class RevealDrawnCardCreateTokenIfInstantOrSorceryEffectHandler implements NormalEffectHandlerBean {
+public class RevealDrawnCardIfInstantOrSorceryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return RevealDrawnCardCreateTokenIfInstantOrSorceryEffect.class;
+        return RevealDrawnCardIfInstantOrSorceryEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         reveal(gameData, entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(),
-                (RevealDrawnCardCreateTokenIfInstantOrSorceryEffect) effect);
+                (RevealDrawnCardIfInstantOrSorceryEffect) effect);
     }
 
     /** Reveals the drawn card; an instant or sorcery puts the token-creating trigger on the stack. */
     public void reveal(GameData gameData, Card sourceCard, UUID controllerId, UUID sourcePermanentId,
-                       RevealDrawnCardCreateTokenIfInstantOrSorceryEffect reveal) {
+                       RevealDrawnCardIfInstantOrSorceryEffect reveal) {
         Card drawn = reveal.drawnCard();
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(controllerId) + " reveals ")
@@ -52,7 +52,7 @@ public class RevealDrawnCardCreateTokenIfInstantOrSorceryEffectHandler implement
                 sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(reveal.tokenEffect())),
+                new ArrayList<>(List.of(reveal.triggeredEffect())),
                 null,
                 sourcePermanentId));
     }

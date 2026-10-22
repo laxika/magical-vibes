@@ -152,7 +152,7 @@ class GoldveinPickTest extends BaseCardTest {
         pick.setAttachedTo(attacker.getId());
         attacker.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         assertThat(treasuresFor(player1)).isEmpty();
         gd.playerBattlefields.get(player1.getId()).remove(pick);
         gd.playerGraveyards.get(player1.getId()).add(pick.getCard());

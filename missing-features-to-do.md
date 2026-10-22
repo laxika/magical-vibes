@@ -36,48 +36,30 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 21. Undiagnosed G-card failures
+## 21. "Can't be chosen" on auto-resolved and suggested choices (Glimpse, the Unthinkable)
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests
 
-These G-card test classes still fail after two Haiku rounds and a Sonnet pass. No one found a single
-shared root cause. Most are one-card engine gaps (wrong timing of a choice, a missing replacement or
-trigger condition, a lost-ability or LKI case) rather than test setup. Each needs its own investigation.
+**Failing tests:** none yet. `GlimpseTheUnthinkablePlaytestTest` passes, but its support is partial.
 
-**Remaining:** `GilraenDNedainProtectorTest`, `GlimpseTheUnthinkablePlaytestTest`, `GlintWeaverTest`, `GoddricCloakedRevelerTest`, `GodEternalKefnetTest`, `GodEternalOketraTest`, `GodosIrregularsTest`, `GogoMasterOfMimicryTest`, `GogoMysteriousMimeTest`, `GoldenArgosyTest`, `GoldlustTriadTest`, `GoldmeadowTest`, `GoldveinPickTest`, `GoliathDaydreamerTest`, `GoNinjaGoTest`, `GontiLordOfLuxuryTest`, `GontisAetherHeartTest`, `GorillaWarCryTest`, `GoShintaiOfLostWisdomTest`, `GossipsTalentTest`, `GraazUnstoppableJuggernautTest`, `GracefulAdeptTest`, `GrafRatsTest`, `GraftedGrowthTest`, `GrahaTiaScionRebornTest`, `GrapplingHookTest`, `GraspingShadowsTest`, `GraspOfTheHieromancerTest`, `GraveExpectationsTest`, `GravenArchfiendTest`, `GravePactTest`, `GraveResearcherReanimateTest`, `GravitationalShiftTest`, `GreasefangOkibaBossTest`, `GreatbowDoyenTest`, `GreatFangChroniclersTest`, `GreatGildedBoatTest`, `GreatOakGuardianTest`, `GreatTrainHeistTest`, `GreenGoblinBackForMoreTest`, `GreenSunsTwilightTest`, `GreenSunsZenithTest`, `GreenwardenOfMurasaTest`, `GremlinInfestationTest`, `GriefTest`, `GrimeGorgerTest`, `GrimHaruspexTest`, `GrimoireOfTheDeadTest`, `GrimoireThiefTest`, `GrimReaperLethalLegionnaireTest`, `GrimReapersSprintTest`, `GristleGluttonTest`, `GrixisSojournersTest`, `GrizzledHuntmasterTest`, `GrotagNightRunnerTest`, `GroveOfTheDreampodsTest`, `GrubStoriedMatriarchTest`, `GruesomeDiscoveryTest`, `GruesomeEncoreTest`, `GruesomeSlaughterTest`, `GuiltyConscienceTest`, `GunnerConscriptTest`, `GusthasScepterTest`, `GutFanaticalPriestessTest`, `GutterSkulkerTest`, `GuyInTheChairTest`, `GwafaHazidProfiteerTest`, `GwenomRemorselessTest`, `GwenStacyTest`.
+**What the rules require.** Glimpse, the Unthinkable has "Glimpse, the Unthinkable can't be chosen" and
+"The name Glimpse, the Unthinkable can't be chosen." `CantBeChosenEffect` and `SourceNameCantBeChosenEffect`
+filter `PlayerInputService.beginPermanentChoice`/`beginMultiPermanentChoice`, Divine Reckoning's choice and
+the card-name list choices in `ChoiceHandlerService.handleListChoice`. Two paths still ignore them:
+- choices the engine auto-resolves because only one candidate exists (for example a forced sacrifice), which
+  never reach the prompt filter, so Glimpse can still be "chosen" there;
+- name-suggestion lists, which still offer the name.
 
-**Diagnosed, need engine work:**
-- `GilraenDNedainProtectorTest` — the card wraps its whole flicker in a `MayEffect`, so "return it?" is
-  asked before the exile. Oracle exiles first, then "you may return that card…; if you don't, … at the
-  next end step". `FlickerEffect` has no exile-then-may-return-else-delayed mode.
-- `GutFanaticalPriestessTest.whiteCopiesHaveOneSharedDelayedSacrificeTrigger` — "create two tokens …
-  Sacrifice them at the beginning of your next end step" is one delayed trigger; the token-copy
-  effect registers one per token.
-- `GreenSunsTwilightTest` — at X ≥ 5 the hand/battlefield choice is made after the reveal and the
-  card choice; the card uses a cast-time `ChooseOneEffect`. The reveal effect needs a
-  "choose the destination after choosing cards" option.
-- `GlimpseTheUnthinkablePlaytestTest` — "Glimpse, the Unthinkable can't be chosen" and "The name
-  Glimpse, the Unthinkable can't be chosen" have no engine support. The first has to filter every
-  non-targeted choice of an object (Divine Reckoning's "choose a creature", sacrifice and other
-  "choose a permanent" prompts); the second has to filter every name choice (Nevermore), only while
-  the card is on the battlefield.
-- `GlintWeaverTest.choosesTargetsWhenTriggerGoesOnStack` — the same gap as entry 22: an ETB
-  "distribute counters among targets" trigger that wasn't cast goes on the stack with no targets or
-  division instead of asking for them.
-
-**What the rules require.** It differs per card. Verify the Oracle text and rulings for each one before
-changing anything. Several of these tests already had wrong agent "fixes" reverted, so read the whole
-test class first.
-
-**Why it's large.** About 70 classes, each with its own cause.
+**Why it's large.** Every auto-resolving "choose a permanent" path builds its own candidate list, so each one
+has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when Glimpse was the only candidate).
 
 **Prompt to start it:**
 
 ```
-Work through the classes in missing-features-to-do.md entry 21 a few at a time: run them, find each root
-cause, and fix the engine or card (never weaken an assertion without an official ruling or verified CR
-text). Don't run the full test suite; ask me.
-Don't commit until I say so.
+Finish "can't be chosen" support for Glimpse, the Unthinkable (missing-features-to-do.md entry 21): make
+every auto-resolved single-candidate permanent choice and every name-suggestion list honour
+CantBeChosenEffect / SourceNameCantBeChosenEffect. Add tests to GlimpseTheUnthinkablePlaytestTest first.
+Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -30,7 +31,8 @@ public class GreatGildedBoat extends Card {
                         new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),
                         "a card",
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                        false, null, null, DiscardRecipient.CONTROLLER, true)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

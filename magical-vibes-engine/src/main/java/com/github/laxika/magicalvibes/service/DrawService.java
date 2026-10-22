@@ -69,7 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardCreateTokenIfInstantOrSorceryEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardIfInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
@@ -2882,7 +2882,7 @@ public class DrawService {
                     continue;
                 }
 
-                if (effect instanceof RevealDrawnCardCreateTokenIfInstantOrSorceryEffect reveal) {
+                if (effect instanceof RevealDrawnCardIfInstantOrSorceryEffect reveal) {
                     // "You may reveal the first card you draw each turn as you draw it" is not a
                     // triggered ability: the choice is made during the draw, before any later draw.
                     gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

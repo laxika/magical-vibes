@@ -136,7 +136,7 @@ class GwafaHazidProfiteerTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player2, List.of(0)));
         assertThat(target.isAttacking()).isTrue();
     }
 
@@ -195,11 +195,13 @@ class GwafaHazidProfiteerTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player2, List.of(0));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.activateAbility(player1, 0, null, target.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(target.getCounterCount(CounterType.BRIBERY)).isEqualTo(1);
         assertThat(target.isAttacking()).isTrue();

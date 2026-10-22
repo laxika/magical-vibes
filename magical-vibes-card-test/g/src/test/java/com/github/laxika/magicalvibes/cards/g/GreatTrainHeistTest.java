@@ -118,7 +118,8 @@ class GreatTrainHeistTest extends BaseCardTest {
 
     @Test
     void extraCombatImmediatelyFollowsCombatWithoutAnExtraMainPhase() {
-        cast(new int[]{0}, List.of(), 4, TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT,
+                () -> cast(new int[]{0}, List.of(), 4, TurnStep.END_OF_COMBAT));
 
         gs.advanceStep(gd);
 

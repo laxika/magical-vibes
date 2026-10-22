@@ -4514,6 +4514,14 @@ public class PredicateEvaluationService {
                         || hasPrintedManaAbility(permanent.getCard());
             }
         }
+        if (!permanent.getLostPrintedActivatedAbilityIndices().isEmpty() && !printedAbilitiesSuppressed(permanent)
+                && gameData != null) {
+            Set<Keyword> perpetuallyRemoved = gameData.perpetualCardRemovedKeywords
+                    .getOrDefault(permanent.getCard().getId(), Set.of());
+            if (permanent.getCard().getKeywords().stream().anyMatch(k -> !perpetuallyRemoved.contains(k))) {
+                return true;
+            }
+        }
         return hasOutOfBandGrantedAbility(permanent)
                 || hasAnyPrintedAbility(permanent);
     }
@@ -4651,7 +4659,37 @@ public class PredicateEvaluationService {
     }
 
     private static boolean hasAnyPrintedAbility(Permanent permanent) {
-        return !printedAbilitiesSuppressed(permanent) && hasAnyPrintedAbility(permanent.getCard());
+        if (printedAbilitiesSuppressed(permanent)) {
+            return false;
+        }
+        if (permanent.getLostPrintedActivatedAbilityIndices().isEmpty()) {
+            return hasAnyPrintedAbility(permanent.getCard());
+        }
+        return hasAnyRemainingPrintedAbilityIgnoringKeywords(permanent);
+    }
+
+    /**
+     * Once a permanent has lost a printed activated ability, the card's printed text can no longer
+     * answer "does it have abilities", so the remaining abilities are counted structurally. Printed
+     * keywords are left to the caller, which already evaluates them against the layered state
+     * (perpetual removals included).
+     */
+    private static boolean hasAnyRemainingPrintedAbilityIgnoringKeywords(Permanent permanent) {
+        Card card = permanent.getCard();
+        List<ActivatedAbility> printed = card.getActivatedAbilities();
+        for (int i = 0; i < printed.size(); i++) {
+            if (!permanent.getLostPrintedActivatedAbilityIndices().contains(i)) {
+                return true;
+            }
+        }
+        if (!card.getGraveyardActivatedAbilities().isEmpty()
+                || !card.getHandActivatedAbilities().isEmpty()
+                || !card.getStackActivatedAbilities().isEmpty()) {
+            return true;
+        }
+        return java.util.Arrays.stream(EffectSlot.values())
+                .filter(slot -> slot != EffectSlot.SPELL)
+                .anyMatch(slot -> !card.getEffects(slot).isEmpty());
     }
 
     private static boolean hasAnyPrintedNonKeywordAbility(Permanent permanent) {

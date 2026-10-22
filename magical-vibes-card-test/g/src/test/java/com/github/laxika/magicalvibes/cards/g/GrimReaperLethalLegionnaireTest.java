@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +36,7 @@ class GrimReaperLethalLegionnaireTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).isNotEmpty();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isTapped()).isTrue();

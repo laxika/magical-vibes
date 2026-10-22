@@ -25,11 +25,12 @@ public class GilraenDNedainProtector extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new MayEffect(
-                        FlickerEffect.flickerTarget(),
-                        "Return that card to the battlefield?",
-                        FlickerEffect.exileTargetReturnAtEndStepWithCounters(
-                                Map.of(CounterType.VIGILANCE, 1, CounterType.LIFELINK, 1)))),
+                List.of(FlickerEffect.exileTargetOnly(),
+                        new MayEffect(
+                                FlickerEffect.returnEarlierExileNow(),
+                                "Return that card to the battlefield?",
+                                FlickerEffect.returnEarlierExileAtEndStepWithCounters(
+                                        Map.of(CounterType.VIGILANCE, 1, CounterType.LIFELINK, 1)))),
                 "{2}, {T}: Exile another target creature you control. You may return that card to the battlefield under its owner's control. If you don't, at the beginning of the next end step, return that card to the battlefield under its owner's control with a vigilance counter and a lifelink counter on it.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

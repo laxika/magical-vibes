@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -180,6 +181,14 @@ public class StackedDividedDamageTriggerService {
                     && divided.targetRestriction() == null) {
                 return new Division(divided.totalDamage(), divided.maxTargets(),
                         DealDividedDamageEffect.chosenAmongAnyTargets(divided.totalDamage()), false);
+            }
+            if (effect instanceof DistributeCountersAmongTargetsEffect counters
+                    && counters.mode() == DivisionMode.CHOSEN
+                    && counters.etbAssignments()
+                    && counters.targetRestriction() == null) {
+                return new Division(counters.total(), 0,
+                        DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
+                                counters.counterType(), counters.total()), false);
             }
             if (effect instanceof PreventDividedDamageEffect prevention && prevention.etbAssignments()) {
                 return new Division(prevention.amount(), 0,

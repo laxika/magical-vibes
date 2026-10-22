@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 
 import java.util.Set;
 
-/** Exiles up to one card of each card type from an opponent's graveyard. */
-public record ExileUpToOneOfEachCardTypeFromGraveyardEffect()
-        implements CardTypeAssignedGraveyardCardChoosingEffect {
+/**
+ * Exiles up to one card of each card type from the defending player's graveyard, chosen on
+ * resolution (the ability does not target), and puts a +1/+1 counter on the source for each card
+ * exiled. The chosen cards must be assignable to distinct card-type slots.
+ */
+public record ExileUpToOneOfEachCardTypeFromGraveyardEffect() implements CardEffect {
 
     private static final Set<CardType> CARD_TYPE_SLOTS = Set.of(
             CardType.ARTIFACT,
@@ -20,18 +22,8 @@ public record ExileUpToOneOfEachCardTypeFromGraveyardEffect()
             CardType.PLANESWALKER,
             CardType.SORCERY);
 
-    @Override
-    public int graveyardChoiceMaxTargets() {
-        return CARD_TYPE_SLOTS.size();
-    }
-
-    @Override
-    public Set<CardType> graveyardChoiceCardTypeSlots() {
+    /** The card types of which at most one card may be chosen. */
+    public Set<CardType> cardTypeSlots() {
         return CARD_TYPE_SLOTS;
-    }
-
-    @Override
-    public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
     }
 }

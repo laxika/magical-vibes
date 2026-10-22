@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTargetAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -37,6 +38,15 @@ public class CopySupport {
 
     private final TriggerCollectionService triggerCollectionService;
     private final GameQueryService gameQueryService;
+
+    /**
+     * Whether the ability on the stack carries its own "this ability can't be copied" restriction, as
+     * opposed to its source card being uncopyable. Gogo, Master of Mimicry's activated ability is the
+     * only such ability: it is identified by the {@link CopyTargetAbilityEffect} it resolves.
+     */
+    public static boolean isAbilityThatCantBeCopied(StackEntry abilityEntry) {
+        return abilityEntry.getEffectsToResolve().stream().anyMatch(CopyTargetAbilityEffect.class::isInstance);
+    }
 
     public CopySupport() {
         this.triggerCollectionService = null;

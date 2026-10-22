@@ -31,6 +31,11 @@ public class HeistTargetLibraryEffectHandler implements NormalEffectHandlerBean 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID libraryOwnerId = entry.getTargetId();
         if (libraryOwnerId == null) {
+            // A chosen mode's target is carried in the flat target list rather than the lone-target field.
+            List<UUID> targets = entry.targetsForEffect(effect);
+            libraryOwnerId = targets.isEmpty() ? null : targets.getFirst();
+        }
+        if (libraryOwnerId == null) {
             return;
         }
 

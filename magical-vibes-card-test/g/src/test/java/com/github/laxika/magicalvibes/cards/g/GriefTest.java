@@ -85,6 +85,7 @@ class GriefTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(blackCard);
         harness.assertInGraveyard(player1, "Grief");

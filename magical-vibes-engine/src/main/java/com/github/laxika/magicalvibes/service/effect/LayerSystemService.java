@@ -1455,11 +1455,12 @@ public class LayerSystemService {
      *     ({@link ConditionBoardStability}). Most conditions read volatile state — life totals,
      *     active player, poison, per-turn trackers, combat — and baking their verdict into the
      *     memoized board would go stale.</li>
-     * <li>the layer is layer 4. A type change is what the rest of the pass has to see mid-pass:
+     * <li>the layer is layer 4, or layer 6 for a conditional keyword grant. A type change is what the rest of the pass has to see mid-pass:
      *     later-layer filters and the recursion-safe static-filter leaves ask whether the
      *     permanent is a creature, and CR 613.8 dependency ordering can only relate instances it
-     *     collected. A conditional grant landing in layers 5-7 changes nothing another layer
-     *     reads, so it stays legacy-additive through the static-bonus assembly, which evaluates
+     *     collected. A keyword grant is read by later-layer filters in the same way (Gravitational
+     *     Shift's "creatures with flying" in sublayer 7c). Any other conditional grant landing in
+     *     layers 5-7 changes nothing another layer reads, so it stays legacy-additive through the static-bonus assembly, which evaluates
      *     its condition fresh on every query.</li>
      * </ol>
      *
@@ -1483,6 +1484,11 @@ public class LayerSystemService {
             return false;
         }
         if (layer == Layer.L7B_SET_PT) {
+            // The 7b part of an ability whose layer 4 part is admitted too (Goddric) must be ordered
+            // with it so CR 613.6 can carry it past a layer 6 ability removal.
+            if (sameAbilityLayer4Part(conditional) != null) {
+                return ConditionBoardStability.readsOnlyFingerprintedState(conditional.condition());
+            }
             // A Room door's ability starts applying with the Room's re-stamped timestamp when the
             // door is unlocked, so its base-P/T setter must be ordered against other setters by
             // timestamp (CR 613.7) rather than stay legacy-additive underneath them. The door flags
@@ -1490,8 +1496,23 @@ public class LayerSystemService {
             return conditional.condition()
                     instanceof com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
         }
+        if (layer == Layer.L6_ABILITIES && conditional.wrapped() instanceof GrantKeywordEffect) {
+            // A conditionally granted keyword (a level-up creature's flying) is read by later-layer
+            // filters (Gravitational Shift's "creatures with flying get +2/+0" in sublayer 7c), so
+            // it must be in the in-flight states rather than unioned in after the pass.
+            return ConditionBoardStability.readsOnlyFingerprintedState(conditional.condition());
+        }
         return layer == Layer.L4_TYPE
                 && ConditionBoardStability.readsOnlyFingerprintedState(conditional.condition());
+    }
+
+    /**
+     * The layer 4 effect that the given static effect (or the effect a {@link ConditionalEffect}
+     * wraps) is the layer 7b companion of, or {@code null} when the effect is not grouped with one.
+     */
+    private static CardEffect sameAbilityLayer4Part(CardEffect effect) {
+        CardEffect inner = effect instanceof ConditionalEffect conditional ? conditional.wrapped() : effect;
+        return inner instanceof SetBasePowerToughnessEffect setPt ? setPt.sameAbilityLayer4Part() : null;
     }
 
     /** Equal-timestamp tie-break within one source: lose-all, then keyword removals, then grants. */
@@ -3426,7 +3447,11 @@ public class LayerSystemService {
             // CR 613.8a(1): a static setter whose source's abilities are gone (lose-all in
             // layer 6, or a layer-4 land-type set removing printed abilities) contributes no
             // 7b entry.
-            if (staticSourceAbilitiesGone(instance, board, true)) {
+            // CR 613.6: the 7b part of an ability whose layer 4 part already applied to an object
+            // keeps applying to that object after the source's abilities are removed.
+            boolean abilitiesGone = staticSourceAbilitiesGone(instance, board, true);
+            CardEffect sameAbilityLayer4Part = sameAbilityLayer4Part(instance.original());
+            if (abilitiesGone && sameAbilityLayer4Part == null) {
                 continue;
             }
             switch (instance.effect()) {
@@ -3439,6 +3464,10 @@ public class LayerSystemService {
                         }
                     } else {
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false, (target, harvested) -> {
+                            if (abilitiesGone && !board.hasL4Contribution(
+                                    sameAbilityLayer4Part, target.permanent().getId())) {
+                                return;
+                            }
                             if (harvested.isBasePTOverridden()) {
                                 entries.add(new BasePtEntry(target.permanent().getId(),
                                         harvested.getBasePowerOverride(), harvested.getBaseToughnessOverride(),
@@ -3491,6 +3520,10 @@ public class LayerSystemService {
                 case ConditionalEffect ignored ->
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
+                                    if (abilitiesGone && !board.hasL4Contribution(
+                                            sameAbilityLayer4Part, target.permanent().getId())) {
+                                        return;
+                                    }
                                     if (harvested.isBasePTOverridden()) {
                                         entries.add(new BasePtEntry(target.permanent().getId(),
                                                 harvested.getBasePowerOverride(),

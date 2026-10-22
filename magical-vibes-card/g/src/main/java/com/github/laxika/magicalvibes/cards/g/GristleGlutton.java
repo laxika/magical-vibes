@@ -18,7 +18,7 @@ public class GristleGlutton extends Card {
                 true,
                 null,
                 List.of(BlightXCost.fixed(1),
-                        new DiscardCardThenEffect(null, new DrawCardEffect(1), "a card")),
+                        DiscardCardThenEffect.continuing(null, new DrawCardEffect(1), "a card")),
                 "{T}, Blight 1: Discard a card. If you do, draw a card."
         ));
     }

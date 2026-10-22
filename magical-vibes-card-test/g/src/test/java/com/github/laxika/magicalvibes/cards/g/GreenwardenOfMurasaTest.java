@@ -213,9 +213,12 @@ class GreenwardenOfMurasaTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
-        int cardIndex = gd.playerGraveyards.get(player1.getId()).indexOf(card);
-        assertThat(cardIndex).isNotNegative();
-        harness.handleGraveyardCardChosen(player1, cardIndex);
+        if (gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null) {
+            int cardIndex = gd.playerGraveyards.get(player1.getId()).indexOf(card);
+            assertThat(cardIndex).isNotNegative();
+            harness.handleGraveyardCardChosen(player1, cardIndex);
+        }
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
     }
 
     private void castGreenwarden() {

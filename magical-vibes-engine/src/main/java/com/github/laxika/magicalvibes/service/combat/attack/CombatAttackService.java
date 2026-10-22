@@ -2451,6 +2451,7 @@ public class CombatAttackService {
                                         null,
                                         perm.getId()
                                 );
+                                attackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                                 attackTrigger.setAttackedTargetId(attackedTargetId);
                                 attackTrigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
                                         ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));

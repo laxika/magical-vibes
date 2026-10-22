@@ -29,6 +29,11 @@ public class MayPayLifeEqualToAmountEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MayPayLifeEqualToAmountEffect dynamicEffect = (MayPayLifeEqualToAmountEffect) effect;
+        if (entry.isMarkSourceOncePerTurnOnAcceptance() && entry.getSourcePermanentId() != null
+                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId())) {
+            // "Do this only once each turn": an earlier trigger this turn already paid and created the token.
+            return;
+        }
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {

@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
@@ -38,7 +40,7 @@ public class GogoMysteriousMime extends Card {
                 anotherCreature,
                 "Target must be another creature you control"
         )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
-                SequenceEffect.of(
+                new ConditionalEffect(new SourceIsOnBattlefield(), SequenceEffect.of(
                         new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                                 "Gogo, Mysterious Mime", Set.of()),
                         new BoostSelfEffect(2, 0),
@@ -47,7 +49,7 @@ public class GogoMysteriousMime extends Card {
                         new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK)
-                ),
+                )),
                 "Have Gogo become a copy of another creature you control?"
         ));
     }

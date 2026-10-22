@@ -633,7 +633,7 @@ public class StackResolutionService {
         }
         for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
             StackEntry triggeredEntry = gameData.stack.get(i);
-            if (card.getId().equals(triggeredEntry.getTargetableId())) {
+            if (triggeredEntry.getCard() != null && card.getId().equals(triggeredEntry.getCard().getId())) {
                 triggeredEntry.setSacrificedCardId(sourceEntry.getSacrificedCardId());
                 triggeredEntry.setSacrificedCardSnapshot(sacrificedCard);
                 triggeredEntry.setSacrificedCard(sacrificedCard);
@@ -1810,6 +1810,11 @@ public class StackResolutionService {
         } else if (plotOnResolution && hasReboundOnResolution(gameData, entry)) {
             playerInputService.beginSpellReboundOrPlotChoice(gameData, new ChoiceContext.SpellReboundOrPlotChoice(
                     entry.getControllerId(), ownerId, entry.getCard(), physicalCard));
+        } else if (hasReboundOnResolution(gameData, entry)
+                && gameData.spellsWithDreamCounterOnResolution.contains(physicalCard.getId())) {
+            playerInputService.beginSpellReboundOrDreamCounterChoice(gameData,
+                    new ChoiceContext.SpellReboundOrDreamCounterChoice(
+                            entry.getControllerId(), ownerId, entry.getCard(), physicalCard));
         } else if (hasReboundOnResolution(gameData, entry)) {
             exileSpellWithRebound(gameData, entry.getControllerId(), ownerId, entry.getCard());
         } else if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
@@ -1890,6 +1895,21 @@ public class StackResolutionService {
             exileSpellWithRebound(gameData, choice.controllerId(), choice.ownerId(), choice.card());
         } else {
             plotResolvedSpell(gameData, choice.ownerId(), choice.physicalCard());
+        }
+    }
+
+    /** Applies the exile replacement the spell's controller picked: rebound or a dream counter (CR 616.1). */
+    public void resolveReboundOrDreamCounterChoice(GameData gameData,
+                                                   ChoiceContext.SpellReboundOrDreamCounterChoice choice,
+                                                   boolean rebound) {
+        if (rebound) {
+            exileSpellWithRebound(gameData, choice.controllerId(), choice.ownerId(), choice.card());
+        } else {
+            gameData.spellsWithDreamCounterOnResolution.remove(choice.physicalCard().getId());
+            gameData.addToExile(choice.ownerId(), choice.physicalCard());
+            gameData.exiledCardDreamCounters.put(choice.physicalCard().getId(), 1);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(choice.card(), " is exiled with a dream counter."));
         }
     }
 

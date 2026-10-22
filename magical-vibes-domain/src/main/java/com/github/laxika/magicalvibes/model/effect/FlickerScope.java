@@ -17,6 +17,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *       Auras attached to it (Flickerform).</li>
  *   <li>{@code SELF_OR_TARGET} â€” the chosen target permanent, or the source permanent when no
  *       target was announced (Kaya, Ghost Assassin-style).</li>
+ *   <li>{@code TARGET_EXILED_EARLIER} - the permanent targeted by this resolution's earlier
+ *       {@link ReturnTiming#NONE} exile, found in exile by its last known information. Has no
+ *       target of its own.</li>
  * </ul>
  */
 public enum FlickerScope {
@@ -27,5 +30,6 @@ public enum FlickerScope {
     CONTROLLERS_PERMANENTS,
     ALL_PLAYERS_PERMANENTS,
     RETURNED_PERMANENTS,
-    ENCHANTED_CREATURE_AND_AURAS
+    ENCHANTED_CREATURE_AND_AURAS,
+    TARGET_EXILED_EARLIER
 }

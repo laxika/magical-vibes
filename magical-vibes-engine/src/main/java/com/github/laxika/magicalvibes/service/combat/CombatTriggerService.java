@@ -29,6 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.CombatOpponentFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
@@ -178,6 +180,17 @@ public class CombatTriggerService {
                         } else {
                             effectsForStack.add(effect);
                         }
+                    }
+                    // An Equipment's or Aura's own "have target creature block it" (Grappling Hook) refers to
+                    // the attacking creature, not to the attached permanent that is the trigger's source.
+                    if (slot == EffectSlot.ON_ATTACK) {
+                        effectsForStack.replaceAll(e -> e instanceof MayEffect may
+                                && may.wrapped() instanceof MustBlockSourceEffect mustBlock
+                                && mustBlock.sourcePermanentId() == null
+                                ? new MayEffect(new MustBlockSourceEffect(creature.getId(),
+                                        mustBlock.targetRestriction(), mustBlock.untilEndOfCombat()),
+                                        may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId())
+                                : e);
                     }
                     // "Whenever equipped creature attacks alone" (Sigil of Valor): the granted
                     // ability doesn't trigger at all unless it's the only attacking creature its

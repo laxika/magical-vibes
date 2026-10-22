@@ -4581,7 +4581,25 @@ public class TargetLegalityService {
     private boolean isNonColorSourceRestricted(GameData gameData, Permanent targetPerm, StackEntry entry) {
         if (entry.getCard() == null) return false;
         return gameQueryService.cantBeTargetedByNonColorSources(
-                gameData, targetPerm, entry.getCard(), entry.getControllerId());
+                gameData, targetPerm, grantedAbilitySourceCard(gameData, entry), entry.getControllerId());
+    }
+
+    /**
+     * The card whose characteristics the entry's source has. An ability an Aura or Equipment grants to
+     * its creature has that creature as its source (CR 113.7), not the attached permanent that
+     * carries the ability's definition.
+     */
+    private Card grantedAbilitySourceCard(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY && entry.getSourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source != null && !source.getCard().getId().equals(entry.getCard().getId())) {
+                Permanent carrier = gameQueryService.findPermanentByCardId(gameData, entry.getCard().getId());
+                if (carrier != null && carrier.isAttached() && carrier.getAttachedTo().equals(source.getId())) {
+                    return source.getCard();
+                }
+            }
+        }
+        return entry.getCard();
     }
 
     private String nonColorSourceRestrictionMessage(Permanent target) {

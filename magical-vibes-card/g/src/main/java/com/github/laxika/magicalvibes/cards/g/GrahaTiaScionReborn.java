@@ -27,7 +27,7 @@ public class GrahaTiaScionReborn extends Card {
 
     public GrahaTiaScionReborn() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new OncePerTurnTriggerEffect(new SpellCastTriggerEffect(
+                OncePerTurnTriggerEffect.markOnAcceptance(new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new MayPayLifeEqualToAmountEffect(
                                 new EventValue(), heroToken(),

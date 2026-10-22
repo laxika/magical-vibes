@@ -19,6 +19,6 @@ public class PuppeteerClique extends Card {
         // the battlefield under your control. It gains haste. At the beginning of your next end
         // step, exile it.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect());
+                new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(false));
     }
 }

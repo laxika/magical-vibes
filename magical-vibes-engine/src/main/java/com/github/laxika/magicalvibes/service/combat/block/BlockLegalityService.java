@@ -586,9 +586,7 @@ public class BlockLegalityService {
                 restrictions.add(new AttackerRestriction(attacker, restriction));
             }
         }
-        boolean attackerLosesAbilities = bonus.losesAllAbilities() || bonus.losesAllNonManaAbilities()
-                || attacker.isLosesAllAbilitiesUntilEndOfTurn();
-        for (Permanent source : attackerLosesAbilities ? List.<Permanent>of() : context.attachedTo(attacker)) {
+        for (Permanent source : context.attachedTo(attacker)) {
             if (!source.isFaceDown()) {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof BlockabilityRestrictionEffect restriction
@@ -599,6 +597,7 @@ public class BlockLegalityService {
                             || restriction.blockableOnlyBy() != null
                             || restriction.cantBeBlockedByCreaturesMatching() != null
                             || restriction.unblockableUnlessAttackingOwnerOrOwnerControlledPermanent()
+                            || restriction.unblockableWhileAttackingAlone()
                             || restriction.requiresAllDefendingCreaturesToBlock())) {
                         restrictions.add(new AttackerRestriction(source, restriction));
                     }

@@ -145,7 +145,7 @@ class GrotagNightRunnerTest extends BaseCardTest {
         Permanent runner = addCreatureReady(player1, new GrotagNightRunner());
         runner.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).isNotEmpty();
         gd.playerBattlefields.get(player1.getId()).remove(runner);
         harness.setGraveyard(player1, List.of(runner.getCard()));

@@ -105,6 +105,7 @@ class GodosIrregularsTest extends BaseCardTest {
         addCreatureReady(player1, new GodosIrregulars());
         Permanent blocker = addCreatureReady(player2, new DeathmaskNezumi());
 
+        harness.setHand(player2, List.of());
         blockIrregulars();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.activateAbility(player1, 0, 0, null, blocker.getId());

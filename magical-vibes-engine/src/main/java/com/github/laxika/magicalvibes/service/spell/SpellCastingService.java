@@ -7708,6 +7708,12 @@ public class SpellCastingService {
                     .canPay(gameData.playerManaPools.get(entry.getControllerId()))) {
                 throw new IllegalStateException("Not enough mana to pay the additional cost");
             }
+        } else if (costs.putCountersOrPayManaCost() != null && selection.sacrificePermanentId() == null
+                && entry.getEffectsToResolve().stream().filter(CostEffect.class::isInstance).count() == 1) {
+            if (!new ManaCost(costs.putCountersOrPayManaCost().manaCost())
+                    .canPay(gameData.playerManaPools.get(entry.getControllerId()))) {
+                throw new IllegalStateException("Not enough mana to pay the additional cost");
+            }
         } else {
             additionalSpellCostService.validateAll(gameData, player, entry.getCard(), costs, selection, entry.getXValue());
         }

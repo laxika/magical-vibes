@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -2919,6 +2920,11 @@ public class TriggerCollectionService {
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
                 gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
                         cycledCard, cyclingPlayerId, new ArrayList<>(selfEffects), null));
+            } else if (graveyardTargetingSupport.findTarget(selfEffects) != null) {
+                // CR 603.3d: a "when you cycle this card" trigger targeting a card in a graveyard
+                // chooses it as the trigger goes on the stack (Grixis Sojourners).
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        cycledCard, cyclingPlayerId, new ArrayList<>(selfEffects)));
             } else {
                 StackEntry selfCycleEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, cycledCard,
                         cyclingPlayerId, cycledCard.getName() + "'s ability", new ArrayList<>(selfEffects));
@@ -12309,6 +12315,20 @@ public class TriggerCollectionService {
             if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
 
+            // The Aura's already-triggered "damage to enchanted permanent's controller" abilities can no
+            // longer see the permanent, so they use its controller as of when it left the battlefield.
+            for (StackEntry pending : gameData.stack) {
+                if (pending.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && perm.getId().equals(pending.getSourcePermanentId())
+                        && pending.getEffectsToResolve().stream().anyMatch(
+                        e -> e instanceof DealDamageToEnchantedPermanentControllerEffect)) {
+                    pending.setTargetId(dyingPermanentControllerId);
+                    if (pending.getSourcePermanentSnapshot() == null) {
+                        pending.setSourcePermanentSnapshot(new Permanent(perm));
+                    }
+                }
+            }
+
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD);
             if (effects == null || effects.isEmpty()) return;
 
@@ -17860,6 +17880,8 @@ public class TriggerCollectionService {
                     new ArrayList<>(effects));
             entry.setTargetId(landControllerId);
             entry.setTriggeringPermanentControllerId(landControllerId);
+            Permanent landPermanent = findPermanentByCard(gameData, enteringLand);
+            if (landPermanent != null) entry.setTriggeringPermanentId(landPermanent.getId());
             entry.setSourcePlanarObject(object.copy());
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);

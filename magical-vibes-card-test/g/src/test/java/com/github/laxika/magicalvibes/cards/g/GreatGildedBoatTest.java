@@ -82,8 +82,9 @@ class GreatGildedBoatTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(player2, List.of(0));
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(findPermanents(player1, "Human Soldier")).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Mountain");

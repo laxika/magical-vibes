@@ -164,8 +164,8 @@ class GraftedGrowthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GraftedGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
-                List.of(forest.getId(), creature.getId())))
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, forest.getId(), null,
+                List.of(forest.getId(), creature.getId()), List.of(), false, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

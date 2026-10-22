@@ -46,7 +46,8 @@ public class EachPlayerChoosesCreatureDestroyRestEffectHandler implements Normal
                     List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                     if (battlefield != null) {
                         for (Permanent perm : battlefield) {
-                            if (gameQueryService.isCreature(gameData, perm)) {
+                            if (gameQueryService.isCreature(gameData, perm)
+                                    && !gameQueryService.cantBeChosen(gameData, perm)) {
                                 creatures.add(perm);
                             }
                         }

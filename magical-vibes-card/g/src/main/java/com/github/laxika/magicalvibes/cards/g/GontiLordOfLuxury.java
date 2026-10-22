@@ -26,6 +26,6 @@ public class GontiLordOfLuxury extends Card {
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LookAtTopCardsOfTargetLibraryEffect(4,
-                        TargetLibraryAction.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM));
+                        TargetLibraryAction.EXILE_ONE_FACE_DOWN_CAST_ONLY_REST_TO_BOTTOM_RANDOM));
     }
 }

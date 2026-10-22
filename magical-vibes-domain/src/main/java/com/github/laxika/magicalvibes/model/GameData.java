@@ -1170,6 +1170,12 @@ public class GameData {
      */
     public CounterType chosenCostCounterType;
     /**
+     * The counter kinds the controller picked, one per counter, for a "remove N counters from this
+     * permanent" activation cost with N above one. Set only while the suspended activation is
+     * re-entered after those choices and cleared once the cost is paid.
+     */
+    public List<CounterType> chosenCostCounterTypes;
+    /**
      * Generic cost reduction left over after the cast spell's own mana cost was paid (its generic
      * part cannot go below zero). The kicker or offspring payment made next applies it to its own
      * generic cost, since reductions apply to the spell's total cost.
@@ -2607,6 +2613,8 @@ public class GameData {
      * and cease to exist on resolution (CR 707.10a) instead of being put into a graveyard.
      */
     public final Set<UUID> pendingFreeCastAsCopyIds = ConcurrentHashMap.newKeySet();
+    /** The value of X already announced and paid for a queued copy that is cast without paying its mana cost. */
+    public final Map<UUID, Integer> pendingFreeCastXValues = new ConcurrentHashMap<>();
 
     /**
      * Offered free-cast spells whose owner loses life equal to the spell's mana value if it is cast
@@ -7841,6 +7849,7 @@ public class GameData {
         copy.pendingDividedDamageTargetId = this.pendingDividedDamageTargetId;
         copy.pendingAbilityCounterCostActivation = this.pendingAbilityCounterCostActivation;
         copy.chosenCostCounterType = this.chosenCostCounterType;
+        copy.chosenCostCounterTypes = this.chosenCostCounterTypes == null ? null : List.copyOf(this.chosenCostCounterTypes);
         copy.unusedSpellCostReduction = this.unusedSpellCostReduction;
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.chosenSpellColor = this.chosenSpellColor;
@@ -9565,6 +9574,7 @@ public class GameData {
         });
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
+        copy.pendingFreeCastXValues.putAll(this.pendingFreeCastXValues);
         copy.pendingFreeCastLifeLosses.addAll(this.pendingFreeCastLifeLosses);
         copy.pendingFreeCastKickerOffers.putAll(this.pendingFreeCastKickerOffers);
         copy.freeCastKickerDecidedIds.addAll(this.freeCastKickerDecidedIds);

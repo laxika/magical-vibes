@@ -8,7 +8,7 @@ public record RevealFirstDrawInstantOrSorceryCreateTokenEffect(CreateTokenEffect
 
     @Override
     public CardEffect effectFor(Card drawnCard) {
-        return new RevealDrawnCardCreateTokenIfInstantOrSorceryEffect(drawnCard, tokenEffect);
+        return new RevealDrawnCardIfInstantOrSorceryEffect(drawnCard, tokenEffect);
     }
 
     @Override

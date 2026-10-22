@@ -188,6 +188,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileAnyNumberThenEffectChoiceMade;
     /** The cards chosen for the optional any-number graveyard exile, or an empty list for a decline. */
     public List<UUID> resolutionTimeExileAnyNumberThenEffectChosenCardIds;
+    /** Whether the one-card-of-each-card-type graveyard exile choice is awaiting its answer. */
+    public boolean resolutionTimeExileOneOfEachCardTypeResume;
+    /** Whether the one-card-of-each-card-type graveyard exile choice has been answered. */
+    public boolean resolutionTimeExileOneOfEachCardTypeChoiceMade;
+    /** The cards chosen for the one-card-of-each-card-type graveyard exile. */
+    public List<UUID> resolutionTimeExileOneOfEachCardTypeChosenCardIds;
     /** Whether the own-graveyard shuffle choice is awaiting its answer. */
     public boolean resolutionTimeShuffleOwnGraveyardCardsResume;
     /** Whether the own-graveyard shuffle choice has been answered. */

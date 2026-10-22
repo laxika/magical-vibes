@@ -90,11 +90,14 @@ class GoShintaiOfLostWisdomTest extends BaseCardTest {
         int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
 
-        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySizeBefore - 1);
-        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySizeBefore - 1);
+            assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        });
     }
 
     @Test

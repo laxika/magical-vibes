@@ -2092,8 +2092,19 @@ public class CardChoiceHandlerService {
 
         // Add to player's exile zone, tracked with source permanent if available (e.g. Karn Liberated)
         if (sourcePermanentId != null && exileChoice.faceDown()) {
-            exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            // "You may look at it for as long as it remains exiled" belongs to the exiling player even
+            // after control of the source changes (Gustha's Scepter).
+            StackEntry resolving = gameData.pendingEffectResolutionEntry;
+            boolean exilerKeepsLooking = resolving != null && resolving.getEffectsToResolve().stream()
+                    .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
+                            .ExileCardFromHandFaceDownWithSourceEffect exile && exile.toGraveyardOnControlLoss());
+            if (exilerKeepsLooking) {
+                exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId, playerId);
+                gameData.exileLookPermissions.put(card.getId(), playerId);
+            } else {
+                exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
+            }
             if (source != null && source.getCard().getActivatedAbilities().stream()
                     .flatMap(ability -> ability.getEffects().stream())
                     .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
@@ -2521,6 +2532,10 @@ public class CardChoiceHandlerService {
                     appendCards(GameLog.builder().text(player.getUsername() + " exiles "), chosenCards)
                             .text(" from " + targetName + "'s hand.").build());
             log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
+            if (!chosenCards.isEmpty()) {
+                triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
+                        gameData, targetPlayerId, chosenCards.size());
+            }
 
             // Track return-on-source-leave for exile-until-leaves effects (e.g. Kitesail Freebooter)
             if (sourcePermanentId != null && !revealedHandChoice.imprintOnSource()) {

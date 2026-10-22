@@ -84,7 +84,7 @@ class GontisAetherHeartTest extends BaseCardTest {
         assertThat(gd.extraTurns).isEmpty();
         assertThat(gd.stack).hasSize(1);
 
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }

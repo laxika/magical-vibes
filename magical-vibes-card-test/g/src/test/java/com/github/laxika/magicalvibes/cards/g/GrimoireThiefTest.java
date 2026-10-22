@@ -28,6 +28,7 @@ class GrimoireThiefTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -87,6 +88,7 @@ class GrimoireThiefTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Shock(), new GrizzlyBears(), new Shock()));
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.exiledCards).filteredOn(e -> thief.getId().equals(e.sourcePermanentId()))
@@ -146,6 +148,7 @@ class GrimoireThiefTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(first, second));
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -180,6 +183,7 @@ class GrimoireThiefTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(first, second, third, new Shock()));
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
         harness.publishState();
 

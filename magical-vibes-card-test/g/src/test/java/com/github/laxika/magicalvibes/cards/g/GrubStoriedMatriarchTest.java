@@ -80,10 +80,12 @@ class GrubStoriedMatriarchTest extends BaseCardTest {
         addBackFace(player1);
         Permanent target = addCreatureReady(player1, new GanglyStompling());
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, target.getId());
+        });
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()

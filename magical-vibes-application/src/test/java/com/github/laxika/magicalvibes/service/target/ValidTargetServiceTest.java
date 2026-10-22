@@ -1984,7 +1984,7 @@ class ValidTargetServiceTest {
             return Stream.of(
                     Arguments.of(
                             "PutCreatureFromOpponentGraveyard filters to creatures only",
-                            new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(),
+                            new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true),
                             Set.of("GY Creature")
                     ),
                     Arguments.of(
@@ -2125,7 +2125,7 @@ class ValidTargetServiceTest {
             gameData.playerGraveyards.put(player2Id, new ArrayList<>(List.of(gyInstant, gyBasicLand)));
 
             Card spell = createCard();
-            spell.addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect());
+            spell.addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);

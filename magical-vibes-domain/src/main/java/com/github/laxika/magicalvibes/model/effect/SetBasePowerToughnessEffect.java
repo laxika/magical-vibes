@@ -29,9 +29,29 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                  {@code ENCHANTED_CREATURE}/{@code EQUIPPED_CREATURE}/etc. for continuous static)
  * @param duration  how long a one-shot target or self setter remains active
  * @param filter    optional permanent predicate for continuous static scopes
+ * @param sameAbilityLayer4Part for a continuous static setter that is the layer 7b part of one ability
+ *                  whose layer 4 part is another effect on the same card (Graaz's "are Juggernauts ...
+ *                  and have base power and toughness 5/3"), that layer 4 effect (the instance in the
+ *                  card's STATIC slot, possibly a {@link ConditionalEffect} wrapper); {@code null}
+ *                  otherwise. CR 613.6: once the layer 4 part has applied to an object, this setter
+ *                  keeps applying to it even if the source's abilities are removed in layer 6.
  */
 public record SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
-                                           EffectDuration duration, PermanentPredicate filter) implements CardEffect {
+                                           EffectDuration duration, PermanentPredicate filter,
+                                           CardEffect sameAbilityLayer4Part) implements CardEffect {
+
+    public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
+                                       EffectDuration duration, PermanentPredicate filter) {
+        this(power, toughness, scope, duration, filter, null);
+    }
+
+    /**
+     * Marks this continuous static setter as the layer 7b part of the same ability as
+     * {@code layer4Part} (see {@link #sameAbilityLayer4Part}).
+     */
+    public SetBasePowerToughnessEffect partOfSameAbilityAs(CardEffect layer4Part) {
+        return new SetBasePowerToughnessEffect(power, toughness, scope, duration, filter, layer4Part);
+    }
 
     public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope) {
         this(power, toughness, scope, EffectDuration.UNTIL_END_OF_TURN, null);

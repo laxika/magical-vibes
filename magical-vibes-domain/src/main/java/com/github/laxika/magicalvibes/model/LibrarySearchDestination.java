@@ -63,6 +63,13 @@ public enum LibrarySearchDestination {
     CAST_ONE_AND_PUT_REST_INTO_HAND,
     /** Hold selected cards out of every zone until the bounded-pick follow-up completes. */
     HOLD_OUT,
+    /**
+     * Hold each chosen card out of every zone, a pick being mandatory only while nothing has been
+     * chosen yet ("choose a creature card and/or a land card"), then put the held cards into hand.
+     */
+    HOLD_OUT_THEN_HAND,
+    /** As {@link #HOLD_OUT_THEN_HAND}, but the controller then picks battlefield or hand for all held cards. */
+    HOLD_OUT_THEN_BATTLEFIELD_OR_HAND,
     /** Put one selected held-out card onto the battlefield and the rest into hand. */
     BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND,
     PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,

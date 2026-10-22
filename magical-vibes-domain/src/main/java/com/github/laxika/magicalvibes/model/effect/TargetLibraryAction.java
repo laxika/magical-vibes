@@ -22,8 +22,13 @@ public enum TargetLibraryAction {
     REVEAL_AND_PUT_ONE_INTO_GRAVEYARD,
     /** The controller exiles one of the looked-at cards (mandatory); the rest go back on top in any order (Sealed Fate). */
     EXILE_ONE,
-    /** The controller exiles one card face down, grants a cast permission for it, and puts the rest on the bottom randomly (Gonti, Lord of Luxury). */
+    /** The controller exiles one card face down, grants a cast permission for it, and puts the rest on the bottom randomly (Siphon Insight, which lets the card be played). */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+    /**
+     * As {@link #EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM}, but the permission is only to <em>cast</em>
+     * the exiled card, so an exiled land can't be played (Gonti, Lord of Luxury).
+     */
+    EXILE_ONE_FACE_DOWN_CAST_ONLY_REST_TO_BOTTOM_RANDOM,
     /** The controller exiles two cards face down, grants cast permissions for them, and puts the rest on the bottom randomly (Black Cat, Cunning Thief). */
     EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
     /** The controller exiles one card face down, grants a cast permission for it, and puts the rest into the target player's graveyard (Thief of Sanity). */

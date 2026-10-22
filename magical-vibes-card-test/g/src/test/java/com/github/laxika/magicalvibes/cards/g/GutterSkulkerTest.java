@@ -148,6 +148,24 @@ class GutterSkulkerTest extends BaseCardTest {
     }
 
     @Test
+    void enchantedCreatureIsUnblockableWhenAbilitiesWereRemovedBeforeTheAuraEntered() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.castFromHand(player2, new DressDown(), "{1}{U}");
+        resolveAllTriggers();
+        castShortcut(bears);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        bears.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(bears)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     void frontFaceCanBeBlockedAfterLosingItsOwnAbilities() {
         Permanent skulker = addCreatureReady(player1, new GutterSkulker());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());

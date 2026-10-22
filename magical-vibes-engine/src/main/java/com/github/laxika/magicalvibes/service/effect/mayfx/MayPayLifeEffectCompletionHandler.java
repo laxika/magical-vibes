@@ -44,6 +44,10 @@ public class MayPayLifeEffectCompletionHandler implements MayEffectHandlerBean {
             lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
         }
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (accepted && canPay && pendingEntry != null && pendingEntry.isMarkSourceOncePerTurnOnAcceptance()
+                && pendingEntry.getSourcePermanentId() != null) {
+            gameData.oncePerTurnTriggersFiredThisTurn.add(pendingEntry.getSourcePermanentId());
+        }
         if (pendingEntry != null && continuation != null) {
             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                     List.of(continuation));

@@ -182,7 +182,8 @@ class GwenomRemorselessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBeforeCasting = gd.getLife(player1.getId());
 
-        harness.castAndResolveFromLibraryTop(player1, player2.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.castAndResolveFromLibraryTop(player1, player2.getId()));
 
         harness.assertLife(player1, lifeBeforeCasting - 1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();

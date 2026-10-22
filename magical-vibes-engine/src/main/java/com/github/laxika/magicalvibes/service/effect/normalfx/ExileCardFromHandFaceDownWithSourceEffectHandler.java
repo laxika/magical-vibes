@@ -42,8 +42,9 @@ public class ExileCardFromHandFaceDownWithSourceEffectHandler implements NormalE
 
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
         if (sourcePermanentId == null) {
-            // The source has left the battlefield: nothing to track the exiled card with.
-            return;
+            // The source has left the battlefield, but the ability still resolves (CR 113.7a): the card
+            // is exiled face down and its exiler may look at it, though no permanent is linked to it.
+            sourcePermanentId = UUID.randomUUID();
         }
 
         if (e.toGraveyardOnControlLoss()) {

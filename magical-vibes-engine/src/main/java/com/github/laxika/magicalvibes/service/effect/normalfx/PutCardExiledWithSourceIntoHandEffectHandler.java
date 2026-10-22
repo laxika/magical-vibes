@@ -72,9 +72,17 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
                     .filter(exiled -> exiled.card().getId().equals(card.getId()))
                     .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::ownerId).findFirst().orElse(controllerId)
                     : controllerId;
+            boolean faceDown = gameData.exiledCards.stream()
+                    .anyMatch(exiled -> exiled.card().getId().equals(card.getId()) && exiled.faceDown());
             gameData.removeFromExile(card.getId());
             gameData.addCardToHand(destinationId, card);
-            gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " from exile into their hand."));
+            // A face-down exiled card's identity is hidden information, so the shared log must not name it.
+            if (faceDown) {
+                gameLogService.append(gameData, GameLog.text(
+                        controllerName + " puts a face-down card from exile into their hand."));
+            } else {
+                gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " from exile into their hand."));
+            }
             log.info("Game {} - {} returns {} from exile ({}) to hand",
                     gameData.id, controllerName, card.getName(), sourceName);
             return;

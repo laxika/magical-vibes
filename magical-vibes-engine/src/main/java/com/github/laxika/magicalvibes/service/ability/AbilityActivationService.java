@@ -201,6 +201,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -2633,6 +2634,9 @@ public class AbilityActivationService {
                 if (!gameData.interaction.isAwaitingInput()) {
                     triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
                 }
+                if (!gameData.interaction.isAwaitingInput()) {
+                    triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+                }
             }
         }
         if (!gameData.interaction.isAwaitingInput()
@@ -4322,10 +4326,26 @@ public class AbilityActivationService {
             if (counterKinds.size() > 1) {
                 ChoiceContext.SourceCounterCostTypeChoice kindChoice = new ChoiceContext.SourceCounterCostTypeChoice(
                         permanent.getId(), abilityIndex, xValue, targetId, targetZone, targetIds,
-                        damageAssignments, counterKinds);
+                        damageAssignments, counterKinds, 1, List.of());
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, kindChoice, kindChoice.options(),
                         permanent.getCard().getName() + " - Choose a kind of counter to remove."));
+                return;
+            }
+        }
+        if (pendingSourceCounterKindCost != null && pendingSourceCounterKindCost.count() > 1
+                && pendingSourceCounterKindCost.counterType() == CounterType.ANY
+                && gameData.chosenCostCounterTypes == null
+                && countPermanentCounters(permanent) > pendingSourceCounterKindCost.count()) {
+            List<CounterType> counterKinds = presentCounterKinds(permanent);
+            if (counterKinds.size() > 1) {
+                ChoiceContext.SourceCounterCostTypeChoice kindChoice = new ChoiceContext.SourceCounterCostTypeChoice(
+                        permanent.getId(), abilityIndex, xValue, targetId, targetZone, targetIds,
+                        damageAssignments, counterKinds, pendingSourceCounterKindCost.count(), List.of());
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, kindChoice, kindChoice.options(),
+                        permanent.getCard().getName() + " - Choose a kind of counter to remove (1 of "
+                                + pendingSourceCounterKindCost.count() + ")."));
                 return;
             }
         }
@@ -5071,6 +5091,17 @@ public class AbilityActivationService {
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - count);
                 }
                 case ANY -> {
+                    if (gameData.chosenCostCounterTypes != null && gameData.chosenCostCounterTypes.size() == count) {
+                        for (CounterType kind : gameData.chosenCostCounterTypes) {
+                            permanent.setCounterCount(kind, permanent.getCounterCount(kind) - 1);
+                            if (kind == CounterType.OIL) {
+                                gameData.recordOilCounterRemoved(permanent, 1);
+                            }
+                            if (kind == CounterType.MINUS_ONE_MINUS_ONE) removedMinus++;
+                            if (kind == CounterType.PLUS_ONE_PLUS_ONE) removedPlus++;
+                        }
+                        break;
+                    }
                     removedMinus = Math.min(count, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
                     permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - removedMinus);
                     int remaining = count - removedMinus;
@@ -8226,14 +8257,54 @@ public class AbilityActivationService {
         if (source == null) {
             throw new IllegalStateException("Source permanent is no longer on the battlefield");
         }
-        gameData.chosenCostCounterType = chosen;
+        List<CounterType> pickedKinds = null;
+        if (choice.required() > 1) {
+            pickedKinds = new ArrayList<>(choice.chosenSoFar());
+            pickedKinds.add(chosen);
+            while (pickedKinds.size() < choice.required()) {
+                List<CounterType> remainingKinds = remainingCounterKinds(source, pickedKinds);
+                int remainingCounters = 0;
+                for (CounterType kind : remainingKinds) {
+                    remainingCounters += source.getCounterCount(kind) - Collections.frequency(pickedKinds, kind);
+                }
+                int stillNeeded = choice.required() - pickedKinds.size();
+                if (remainingKinds.size() > 1 && remainingCounters > stillNeeded) {
+                    ChoiceContext.SourceCounterCostTypeChoice nextChoice = new ChoiceContext.SourceCounterCostTypeChoice(
+                            choice.sourcePermanentId(), choice.abilityIndex(), choice.xValue(), choice.targetId(),
+                            choice.targetZone(), choice.targetIds(), choice.damageAssignments(), remainingKinds,
+                            choice.required(), pickedKinds);
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            player.getId(), null, null, nextChoice, nextChoice.options(),
+                            source.getCard().getName() + " - Choose a kind of counter to remove ("
+                                    + (pickedKinds.size() + 1) + " of " + choice.required() + ")."));
+                    return;
+                }
+                if (remainingKinds.size() == 1) {
+                    pickedKinds.add(remainingKinds.getFirst());
+                } else {
+                    for (CounterType kind : remainingKinds) {
+                        int available = source.getCounterCount(kind) - Collections.frequency(pickedKinds, kind);
+                        for (int i = 0; i < available; i++) pickedKinds.add(kind);
+                    }
+                }
+            }
+        }
+        gameData.chosenCostCounterType = choice.required() > 1 ? null : chosen;
+        gameData.chosenCostCounterTypes = pickedKinds;
         try {
             activateAbilityInternal(gameData, player, -1, choice.abilityIndex(), choice.xValue(),
                     choice.targetId(), choice.targetZone(), null, null, choice.targetIds(),
                     choice.damageAssignments(), source, null);
         } finally {
             gameData.chosenCostCounterType = null;
+            gameData.chosenCostCounterTypes = null;
         }
+    }
+
+    private static List<CounterType> remainingCounterKinds(Permanent permanent, List<CounterType> picked) {
+        return presentCounterKinds(permanent).stream()
+                .filter(kind -> permanent.getCounterCount(kind) > Collections.frequency(picked, kind))
+                .toList();
     }
 
     /**
@@ -10283,6 +10354,10 @@ public class AbilityActivationService {
     }
 
     private void validateActivationLimitPerTurn(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
+        if (abilityIndex < permanent.getCard().getActivatedAbilities().size()
+                && permanent.getLostPrintedActivatedAbilityIndices().contains(abilityIndex)) {
+            throw new IllegalStateException("This permanent has lost that ability");
+        }
         validateActivationLimitPerGame(gameData, playerId, permanent, ability, abilityIndex);
 
         Integer maxActivationsPerTurn = ability.getMaxActivationsPerTurn();

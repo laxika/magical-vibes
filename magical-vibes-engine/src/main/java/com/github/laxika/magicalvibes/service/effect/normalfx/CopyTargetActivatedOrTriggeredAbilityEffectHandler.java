@@ -54,6 +54,10 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
             log.info("Game {} - Copy target ability is no longer legal", gameData.id);
             return;
         }
+        if (CopySupport.isAbilityThatCantBeCopied(targetEntry)) {
+            log.info("Game {} - Target ability cannot be copied", gameData.id);
+            return;
+        }
 
         UUID copyControllerId = targetEntry.getControllerId();
         Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());

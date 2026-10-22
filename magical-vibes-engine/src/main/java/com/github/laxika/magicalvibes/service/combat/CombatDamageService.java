@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombat
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -2895,6 +2896,7 @@ public class CombatDamageService {
                     CardEffect firedEffect = trigger.effect();
                     if (firedEffect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof SourceCounterThreshold
+                            || conditional.condition() instanceof SourceClassLevelAtLeast
                             || conditional.condition() instanceof SourceHasChosenMode)) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(perm, attackerId))) {

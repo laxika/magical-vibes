@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneOfEachCardTypeFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ public class ExileUpToOneOfEachCardTypeFromGraveyardEffectHandler implements Nor
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,8 +34,31 @@ public class ExileUpToOneOfEachCardTypeFromGraveyardEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var state = gameData.graveyardTargetOperation;
+        UUID defendingPlayerId = defendingPlayerId(gameData, entry);
+
+        if (!state.resolutionTimeExileOneOfEachCardTypeChoiceMade) {
+            List<Card> graveyard = defendingPlayerId == null
+                    ? null : gameData.playerGraveyards.get(defendingPlayerId);
+            if (graveyard == null || graveyard.isEmpty()) {
+                return;
+            }
+            state.resolutionTimeExileOneOfEachCardTypeResume = true;
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            playerInputService.beginMultiGraveyardChoice(gameData, entry.getControllerId(),
+                    new ArrayList<>(graveyard), ((ExileUpToOneOfEachCardTypeFromGraveyardEffect) effect)
+                            .cardTypeSlots().size(), 0,
+                    entry.getCard().getName() + "'s ability — Choose up to one card of each card type"
+                            + " from defending player's graveyard to exile.");
+            return;
+        }
+
+        List<UUID> targetCardIds = state.resolutionTimeExileOneOfEachCardTypeChosenCardIds;
+        state.resolutionTimeExileOneOfEachCardTypeChoiceMade = false;
+        state.resolutionTimeExileOneOfEachCardTypeChosenCardIds = null;
+        gameData.rerunCurrentEffectAfterInteraction = false;
+
         List<Card> exiledCards = new ArrayList<>();
-        List<UUID> targetCardIds = entry.getTargetCardIds();
         if (targetCardIds != null) {
             for (UUID cardId : targetCardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -55,5 +80,17 @@ public class ExileUpToOneOfEachCardTypeFromGraveyardEffectHandler implements Nor
                 }
             }
         }
+    }
+
+    private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
+        if (entry.getDefendingPlayerId() != null) {
+            return entry.getDefendingPlayerId();
+        }
+        UUID attackedId = entry.getAttackedTargetId();
+        if (attackedId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedId)
+                ? attackedId : gameQueryService.findPermanentController(gameData, attackedId);
     }
 }

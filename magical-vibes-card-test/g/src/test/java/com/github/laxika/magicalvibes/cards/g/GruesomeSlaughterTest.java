@@ -152,7 +152,7 @@ class GruesomeSlaughterTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }

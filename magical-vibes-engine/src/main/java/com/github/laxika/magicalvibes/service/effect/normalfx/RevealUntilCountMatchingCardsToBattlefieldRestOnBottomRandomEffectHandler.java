@@ -110,7 +110,9 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
                     gameData, controllerId, playerName, matchingCards, typedEffect.enterTapped());
             List<Card> remainingCards = new ArrayList<>(revealedCards);
             remainingCards.removeAll(matchingCards);
-            remainingCards.addAll(notPutOntoBattlefield);
+            // A card that was prevented from entering was never moved, so it stays in the library
+            // where it was revealed (on top, as every card above it has left).
+            gameData.playerDecks.get(controllerId).addAll(0, notPutOntoBattlefield);
             if (shuffleLibrary) {
                 putRevealedCardsIntoShuffledLibrary(gameData, controllerId, remainingCards);
             } else {

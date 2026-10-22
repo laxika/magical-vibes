@@ -153,7 +153,7 @@ class GorillaWarCryTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
 

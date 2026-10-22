@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -250,7 +251,8 @@ class GruesomeDiscoveryTest extends BaseCardTest {
     void morbidRespectsOpponentDiscardProtection() {
         Card first = new GruesomeDiscovery();
         Card second = new GruesomeDiscovery();
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player2, List.of(first, second));
         harness.setHand(player1, List.of(new GruesomeDiscovery()));
         harness.addMana(player1, ManaColor.BLACK, 4);

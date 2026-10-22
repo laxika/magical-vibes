@@ -13263,6 +13263,29 @@ public class GameQueryService {
         }
     }
 
+    /** Whether a static "can't be chosen" ability keeps the permanent out of every object choice. */
+    public boolean cantBeChosen(GameData gameData, Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect.class::isInstance)
+                && !hasLostAllAbilities(gameData, permanent);
+    }
+
+    /** Whether a battlefield permanent's static ability forbids choosing this card name. */
+    public boolean isCardNameUnchoosable(GameData gameData, String name) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (!permanent.isFaceDown()
+                        && permanent.getCard().getName().equalsIgnoreCase(name)
+                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(
+                                com.github.laxika.magicalvibes.model.effect.SourceNameCantBeChosenEffect.class::isInstance)
+                        && !hasLostAllAbilities(gameData, permanent)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Returns {@code true} if the permanent has lost its printed abilities, whether continuously
      * (Imprisoned in the Moon, Song of the Dryads) or until end of turn (Merfolk Trickster). Its

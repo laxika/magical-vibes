@@ -52,7 +52,9 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         boolean randomRest,
         LibraryScope scope,
         UUID playerId,
-        LibrarySearchDestination firstChosenDestination) implements CombatDamageAmountAwareEffect {
+        LibrarySearchDestination firstChosenDestination,
+        boolean mustChooseOne,
+        boolean chooseZoneAfterPicks) implements CombatDamageAmountAwareEffect {
 
     @Override
     public DynamicAmount combatDamageAmount() {
@@ -65,7 +67,18 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
             LibrarySearchDestination chosenDestination) {
         this(count, firstType, secondType, subtypePicks, restDestination, reveal,
                 chosenDestination, null, null, null, null, false,
-                LibraryScope.CONTROLLER, null, chosenDestination);
+                LibraryScope.CONTROLLER, null, chosenDestination, false, false);
+    }
+
+    public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+            DynamicAmount count, CardType firstType, CardType secondType,
+            List<CardSubtype> subtypePicks, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, CardPredicate firstPredicate,
+            String firstPrompt, CardPredicate secondPredicate, String secondPrompt, boolean randomRest,
+            LibraryScope scope, UUID playerId, LibrarySearchDestination firstChosenDestination) {
+        this(count, firstType, secondType, subtypePicks, restDestination, reveal, chosenDestination,
+                firstPredicate, firstPrompt, secondPredicate, secondPrompt, randomRest, scope, playerId,
+                firstChosenDestination, false, false);
     }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
@@ -108,6 +121,21 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.HAND);
     }
 
+    /**
+     * Green Sun's Twilight: reveal the top cards, choose a creature card and/or a land card (at least
+     * one when any is eligible), then put them into hand, or with {@code chooseZone} onto the
+     * battlefield or into hand as the controller decides after choosing; the rest go to the bottom in
+     * a random order.
+     */
+    public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect creatureAndLandRequiredRestOnBottomRandom(
+            DynamicAmount count, boolean chooseZone) {
+        return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+                count, CardType.CREATURE, CardType.LAND, List.of(),
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true, LibrarySearchDestination.HAND,
+                null, null, null, null, false, LibraryScope.CONTROLLER, null,
+                LibrarySearchDestination.HAND, true, chooseZone);
+    }
+
     /** Green Sun's Twilight: reveal, then put the chosen creature and/or land onto the battlefield. */
     public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect creatureAndLandToBattlefieldRestOnBottomRandom(
             DynamicAmount count) {
@@ -144,6 +172,7 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 count, firstType, secondType, subtypePicks, restDestination, reveal,
                 chosenDestination, firstPredicate, firstPrompt, secondPredicate, secondPrompt,
-                randomRest, LibraryScope.CONTROLLER, playerId, firstChosenDestination);
+                randomRest, LibraryScope.CONTROLLER, playerId, firstChosenDestination,
+                mustChooseOne, chooseZoneAfterPicks);
     }
 }

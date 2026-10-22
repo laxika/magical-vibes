@@ -200,7 +200,7 @@ class GossipsTalentTest extends BaseCardTest {
         addCreatureReady(player2, new Thrummingbird());
 
         declareAttackers(player2, List.of(0));
-        resolveCombat(player2);
+        gs.declareBlockers(gd, player1, List.of());
         resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =

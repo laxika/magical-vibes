@@ -175,6 +175,8 @@ class GraveResearcherReanimateTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         UUID copyId = researcher.getPreparedSpellCardId();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, copyId, target.getId()))

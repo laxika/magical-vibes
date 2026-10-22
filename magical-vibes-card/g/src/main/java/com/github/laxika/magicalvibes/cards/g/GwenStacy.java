@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
@@ -29,7 +30,8 @@ public class GwenStacy extends Card {
         setBackFaceCard(new GhostSpider());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(false));
+        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+                false, ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardOfOwnLibraryEffect(true));
 
         addActivatedAbility(new ActivatedAbility(
@@ -49,7 +51,8 @@ public class GwenStacy extends Card {
 class GhostSpider extends Card {
 
     GhostSpider() {
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(false));
+        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+                false, ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),

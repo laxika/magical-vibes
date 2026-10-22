@@ -19,7 +19,7 @@ public class GreasefangOkibaBoss extends Card {
                         .filter(new CardSubtypePredicate(CardSubtype.VEHICLE))
                         .targetGraveyard(true)
                         .grantHaste(true)
-                        .returnToHandAtEndStep(true)
+                        .returnToHandAtYourNextEndStep(true)
                         .build());
     }
 }

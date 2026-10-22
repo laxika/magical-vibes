@@ -401,9 +401,18 @@ public class PlayerInputService {
                 exileSourceIfDeclinedId, returnSourceToHandId));
     }
 
+    private List<UUID> choosablePermanentIds(GameData gameData, List<UUID> permanentIds) {
+        return permanentIds.stream()
+                .filter(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent == null || !gameQueryService.cantBeChosen(gameData, permanent);
+                })
+                .toList();
+    }
+
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
-                playerId, new ArrayList<>(validIds), List.of(),
+                playerId, new ArrayList<>(choosablePermanentIds(gameData, validIds)), List.of(),
                 gameData.interaction.permanentChoiceContext(), prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -413,7 +422,7 @@ public class PlayerInputService {
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds,
                                      PermanentChoiceContext context, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
-                playerId, new ArrayList<>(validIds), List.of(), context, prompt));
+                playerId, new ArrayList<>(choosablePermanentIds(gameData, validIds)), List.of(), context, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
@@ -450,7 +459,7 @@ public class PlayerInputService {
                                           List<UUID> validCardIds, int maxCount,
                                           MultiPermanentChoiceContext context, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
-                playerId, new ArrayList<>(validIds), List.of(), new ArrayList<>(validCardIds),
+                playerId, new ArrayList<>(choosablePermanentIds(gameData, validIds)), List.of(), new ArrayList<>(validCardIds),
                 maxCount, context, prompt));
     }
 
@@ -468,6 +477,19 @@ public class PlayerInputService {
         var choice = new PendingInteraction.ColorChoice(
                 context.controllerId(), null, null, context, List.of("REBOUND", "PLOT"),
                 "Choose whether " + context.card().getName() + " is exiled with rebound or becomes plotted.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.pendingInteractions.addLast(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
+    }
+
+    /** Asks the spell's controller whether rebound or a dream-counter exile replaces the spell going to the graveyard (CR 616.1). */
+    public void beginSpellReboundOrDreamCounterChoice(GameData gameData,
+                                                      ChoiceContext.SpellReboundOrDreamCounterChoice context) {
+        var choice = new PendingInteraction.ColorChoice(
+                context.controllerId(), null, null, context, List.of("REBOUND", "DREAM_COUNTER"),
+                "Choose whether " + context.card().getName() + " is exiled with rebound or with a dream counter.");
         if (gameData.interaction.isAwaitingInput()) {
             gameData.pendingInteractions.addLast(choice);
         } else {

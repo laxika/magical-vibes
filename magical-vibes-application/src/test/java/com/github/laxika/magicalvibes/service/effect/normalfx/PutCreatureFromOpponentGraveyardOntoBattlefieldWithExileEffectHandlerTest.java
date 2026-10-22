@@ -105,7 +105,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                 Card target = createCard("Grizzly Bears");
 
                 PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect effect =
-                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect();
+                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gruesome Encore"),
                         player1Id, "Gruesome Encore", List.of(effect), 0,
                         target.getId(), null);
@@ -133,7 +133,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                 UUID targetId = UUID.randomUUID();
 
                 PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect effect =
-                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect();
+                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gruesome Encore"),
                         player1Id, "Gruesome Encore", List.of(effect), 0,
                         targetId, null);
@@ -153,7 +153,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                 Card target = createCard("Grizzly Bears");
 
                 PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect effect =
-                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect();
+                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gruesome Encore"),
                         player1Id, "Gruesome Encore", List.of(effect), 0,
                         target.getId(), null);

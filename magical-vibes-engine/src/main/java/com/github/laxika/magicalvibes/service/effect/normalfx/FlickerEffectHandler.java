@@ -85,6 +85,14 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     e.timing() == ReturnTiming.IMMEDIATE ? entry.getXValue() + 1 : 1);
             return;
         }
+        if (e.timing() == ReturnTiming.NONE) {
+            exileTargetOnly(gameData, entry);
+            return;
+        }
+        if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.TARGET_EXILED_EARLIER) {
+            returnEarlierExile(gameData, entry, e);
+            return;
+        }
         if (e.timing() == ReturnTiming.IMMEDIATE) {
             resolveImmediate(gameData, entry, e);
             return;
@@ -98,7 +106,57 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             case ALL_PLAYERS_PERMANENTS -> resolveAllPlayersPermanentsAtStep(gameData, entry, e);
             case RETURNED_PERMANENTS -> resolveReturnedPermanentsAtStep(gameData, entry, e);
             case ENCHANTED_CREATURE_AND_AURAS -> resolveEnchantedCreatureAndAurasAtStep(gameData, entry, e);
+            case TARGET_EXILED_EARLIER -> { }
         }
+    }
+
+    /**
+     * Exiles the targeted permanent and returns nothing, remembering its last known card and
+     * controller so a later effect of the same resolution can return it from exile.
+     */
+    private void exileTargetOnly(GameData gameData, StackEntry entry) {
+        UUID targetId = entry.getTargetId();
+        Permanent target = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(),
+                target.getCard().getOwnerId() != null ? target.getCard().getOwnerId() : controllerId);
+        entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
+        entry.rememberRemovedPermanentController(target.getId(), ownerId);
+        permanentRemovalService.removePermanentToExile(gameData, target);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
+    }
+
+    /**
+     * Returns the card an earlier {@link ReturnTiming#NONE} flicker of this resolution exiled, either
+     * right away or at the next step, under its owner's control. Does nothing if the card is no
+     * longer in exile.
+     */
+    private void returnEarlierExile(GameData gameData, StackEntry entry, FlickerEffect e) {
+        UUID targetId = entry.getTargetId();
+        Card card = targetId == null ? null : entry.lastKnownPermanentCard(targetId);
+        if (card == null || gameData.findExiledCard(card.getId()) == null) {
+            return;
+        }
+        UUID ownerId = entry.lastKnownPermanentController(targetId);
+        if (e.timing() == ReturnTiming.IMMEDIATE) {
+            returnImmediateBatch(gameData, entry, e, List.of(new FlickeredPermanent(card, ownerId, ownerId, false)));
+            return;
+        }
+        gameData.queueDelayedAction(new PendingExileReturn(
+                card, ownerId, e.returnTapped(), false, e.returnStep(),
+                e.plusOnePlusOneCountersOnReturn(), List.of(),
+                false, false, false, false, null, null, false,
+                e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
+                Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                e.countersOnReturn(), e.returnLandsTapped())
+                .withTriggerSource(entry.getCard(), entry.getControllerId()));
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " will return at the beginning of the next "
+                        + e.returnStep().getDisplayName().toLowerCase() + "."));
     }
 
     private void resolveEnchantedCreatureAndAurasAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {

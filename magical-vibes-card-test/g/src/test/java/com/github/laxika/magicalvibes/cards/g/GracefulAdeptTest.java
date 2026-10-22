@@ -61,7 +61,7 @@ class GracefulAdeptTest extends BaseCardTest {
     @DisplayName("Losing all abilities restores the hand limit before until-end-of-turn effects expire")
     void losingAbilitiesRestoresHandLimit() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         var adept = harness.addToBattlefieldAndReturn(player1, new GracefulAdept());
         harness.setHand(player1, List.of(new Humble()));
         harness.addMana(player1, ManaColor.WHITE, 1);

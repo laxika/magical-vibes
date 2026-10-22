@@ -112,6 +112,14 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
 
         boolean randomBottom = e.randomRest()
                 || e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
+        LibrarySearchDestination firstDestination = e.firstChosenDestination();
+        LibrarySearchDestination secondDestination = e.chosenDestination();
+        if (e.mustChooseOne()) {
+            firstDestination = e.chooseZoneAfterPicks()
+                    ? LibrarySearchDestination.HOLD_OUT_THEN_BATTLEFIELD_OR_HAND
+                    : LibrarySearchDestination.HOLD_OUT_THEN_HAND;
+            secondDestination = firstDestination;
+        }
 
         // Nothing eligible — dispose everything.
         if (firstEligible.isEmpty() && secondEligible.isEmpty()) {
@@ -122,14 +130,14 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         if (!firstEligible.isEmpty()) {
             // First pick: the first type. The second pick runs (and disposes the rest) afterwards.
             beginPick(gameData, controllerId, firstEligible, topCards,
-                    e.firstPrompt() != null ? promptFor(e.firstPrompt(), e.firstChosenDestination())
-                            : promptFor(e.firstType(), e.firstChosenDestination()),
+                    e.firstPrompt() != null ? promptFor(e.firstPrompt(), firstDestination)
+                            : promptFor(e.firstType(), firstDestination),
                     e.secondPredicate() != null
                             ? LibrarySearchFollowUp.forSecondBoundedPick(
-                                    e.secondPredicate(), e.secondPrompt(), randomBottom, e.chosenDestination())
+                                    e.secondPredicate(), e.secondPrompt(), randomBottom, secondDestination)
                             : LibrarySearchFollowUp.forSecondBoundedPick(e.secondType(), toGraveyard,
-                                    randomBottom, e.chosenDestination()),
-                    toGraveyard, e.firstChosenDestination());
+                                    randomBottom, secondDestination),
+                    toGraveyard, firstDestination, !e.mustChooseOne() || !secondEligible.isEmpty());
             return;
         }
 
@@ -157,10 +165,17 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
     private void beginPick(GameData gameData, UUID controllerId, List<Card> eligible,
             List<Card> lookedAtCards, String prompt, LibrarySearchFollowUp followUp, boolean toGraveyard,
             LibrarySearchDestination destination) {
+        beginPick(gameData, controllerId, eligible, lookedAtCards, prompt, followUp, toGraveyard,
+                destination, true);
+    }
+
+    private void beginPick(GameData gameData, UUID controllerId, List<Card> eligible,
+            List<Card> lookedAtCards, String prompt, LibrarySearchFollowUp followUp, boolean toGraveyard,
+            LibrarySearchDestination destination, boolean canDecline) {
         boolean toBattlefield = destination == LibrarySearchDestination.BATTLEFIELD;
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
-                .canFailToFind(true)
+                .canFailToFind(canDecline)
                 .destination(destination)
                 .sourceCards(new ArrayList<>(lookedAtCards))
                 .reorderRemainingToBottom(!toGraveyard)
@@ -170,7 +185,7 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
                 .followUp(followUp)
                 .prompt(prompt)
                 .build();
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, canDecline));
     }
 
     private boolean beginSubtypePick(GameData gameData, UUID controllerId, List<Card> lookedAtCards,
@@ -219,7 +234,15 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         gameLogService.append(gameData, builder.build());
     }
 
+    private static boolean isHeldDestination(LibrarySearchDestination destination) {
+        return destination == LibrarySearchDestination.HOLD_OUT_THEN_HAND
+                || destination == LibrarySearchDestination.HOLD_OUT_THEN_BATTLEFIELD_OR_HAND;
+    }
+
     private static String promptFor(CardType type, LibrarySearchDestination destination) {
+        if (isHeldDestination(destination)) {
+            return "Choose a " + type.getDisplayName().toLowerCase() + " card from among them.";
+        }
         String destinationPhrase = isBattlefieldDestination(destination)
                 ? "onto the battlefield" : "into your hand";
         return "You may reveal a " + type.getDisplayName().toLowerCase()
@@ -227,6 +250,9 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
     }
 
     private static String promptFor(String description, LibrarySearchDestination destination) {
+        if (isHeldDestination(destination)) {
+            return "Choose " + description + " from among them.";
+        }
         String destinationPhrase = isBattlefieldDestination(destination)
                 ? "onto the battlefield" : "into your hand";
         return "You may reveal " + description + " from among them and put it "

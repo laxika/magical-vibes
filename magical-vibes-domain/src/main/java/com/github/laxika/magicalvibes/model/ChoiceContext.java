@@ -99,6 +99,25 @@ public sealed interface ChoiceContext {
             implements ChoiceContext {}
 
     /**
+     * The controller picks whether cards held out of every zone by a library look all go onto the
+     * battlefield or all into hand (Green Sun's Twilight).
+     */
+    record HeldCardsZoneChoice(UUID controllerId, List<Card> cards) implements ChoiceContext {
+        public HeldCardsZoneChoice {
+            cards = List.copyOf(cards);
+        }
+    }
+
+    /**
+     * A resolving hand-cast instant or sorcery spell has two exile replacement effects (rebound and a
+     * dream-counter exile such as Goliath Daydreamer's), so its controller picks which one applies
+     * (CR 616.1). {@code card} is the spell's card, {@code physicalCard} the card that actually leaves
+     * the stack.
+     */
+    record SpellReboundOrDreamCounterChoice(UUID controllerId, UUID ownerId, Card card, Card physicalCard)
+            implements ChoiceContext {}
+
+    /**
      * Several permanents each replace a resolving spell going to the graveyard with exiling it (Rod of
      * Absorption), so its controller picks which one applies (CR 616.1). The options are the
      * permanents' ids; {@code physicalCard} is the card that actually leaves the stack.
@@ -2492,17 +2511,20 @@ public sealed interface ChoiceContext {
     /**
      * The controller picks which kind of counter a "remove a counter from this permanent" activation
      * cost spends when the source holds several kinds. Carries the suspended activation so it can be
-     * re-entered with the chosen kind.
+     * re-entered with the chosen kind. When the cost removes several counters ({@code required} above
+     * one) the kinds are picked one counter at a time and {@code chosenSoFar} holds the earlier picks.
      */
     record SourceCounterCostTypeChoice(UUID sourcePermanentId, Integer abilityIndex, Integer xValue,
                                        UUID targetId, Zone targetZone, List<UUID> targetIds,
                                        Map<UUID, Integer> damageAssignments,
-                                       List<CounterType> counterTypes) implements ChoiceContext {
+                                       List<CounterType> counterTypes, int required,
+                                       List<CounterType> chosenSoFar) implements ChoiceContext {
 
         public SourceCounterCostTypeChoice {
             targetIds = targetIds != null ? List.copyOf(targetIds) : null;
             damageAssignments = damageAssignments != null ? Map.copyOf(damageAssignments) : null;
             counterTypes = List.copyOf(counterTypes);
+            chosenSoFar = List.copyOf(chosenSoFar);
         }
 
         public List<String> options() {

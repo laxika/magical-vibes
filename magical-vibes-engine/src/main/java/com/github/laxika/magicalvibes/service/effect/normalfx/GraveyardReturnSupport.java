@@ -347,6 +347,13 @@ public class GraveyardReturnSupport {
             // 2024-04-12); an Aura has nothing to enchant and stays in the graveyard.
         }
 
+        if (effect.destination() == GraveyardChoiceDestination.EXILE) {
+            exileCardFromAnyGraveyard(gameData, targetCard.getId(), targetCard);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(controllerId) + " exiles ", targetCard, " from a graveyard."));
+            return;
+        }
+
         // A card returned to HAND or to the top of a library always goes to its owner's zone
         // (only BATTLEFIELD returns can put a card under a non-owner's control). Battlefield
         // returns also use the owner when requested. Resolve the graveyard owner before removal.
@@ -456,6 +463,12 @@ public class GraveyardReturnSupport {
         if (effect.returnToHandAtEndStep() && returnedPermanent != null) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     returnedPermanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+        }
+
+        if (effect.returnToHandAtYourNextEndStep() && returnedPermanent != null) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    returnedPermanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
+                    controllerId));
         }
 
         if (effect.exileAtNextUpkeep() && returnedPermanent != null) {

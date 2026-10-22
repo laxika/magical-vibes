@@ -36,7 +36,6 @@ class GoldlustTriadTest extends BaseCardTest {
             resolveAllTriggers();
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
         });
 
         Permanent copy = findPermanents(player1, "Goldlust Triad").stream()
@@ -50,9 +49,12 @@ class GoldlustTriadTest extends BaseCardTest {
                 .anyMatch(action -> action.permanentId().equals(copy.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
+        while (gd.currentStep.ordinal() < TurnStep.END_OF_COMBAT.ordinal()) {
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        }
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(triad);
@@ -110,7 +112,6 @@ class GoldlustTriadTest extends BaseCardTest {
             declareAttackers(List.of(0));
             resolveAllTriggers();
             harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
         });
 
         assertThat(findPermanents(player1, "Goldlust Triad")).hasSize(2);

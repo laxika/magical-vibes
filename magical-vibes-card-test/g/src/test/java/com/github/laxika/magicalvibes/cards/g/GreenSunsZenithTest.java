@@ -356,8 +356,10 @@ class GreenSunsZenithTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zenith);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        // The controller shuffles two libraries (own after the search, the owner's afterwards), but
+        // Cosi's Trickster only counts an opponent shuffling "their" library, so only the first counts.
         assertThat(gd.stack.stream()
-                .filter(entry -> entry.getCard() instanceof CosisTrickster)).hasSize(2);
+                .filter(entry -> entry.getCard() instanceof CosisTrickster)).hasSize(1);
     }
 
     private void castZenith(int xValue) {

@@ -115,6 +115,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Service
 @RequiredArgsConstructor
 public class LibraryChoiceHandlerService {
+    public static final String HELD_TO_BATTLEFIELD = "Put the chosen cards onto the battlefield";
+    public static final String HELD_TO_HAND = "Put the chosen cards into your hand";
+
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final GameQueryService gameQueryService;
@@ -427,9 +430,18 @@ public class LibraryChoiceHandlerService {
 
         if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile
                 || destination == LibrarySearchDestination.HOLD_OUT
+                || destination == LibrarySearchDestination.HOLD_OUT_THEN_HAND
+                || destination == LibrarySearchDestination.HOLD_OUT_THEN_BATTLEFIELD_OR_HAND
                 || destination == LibrarySearchDestination.BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND) {
             if (sourceCards == null) {
                 throw new IllegalStateException("Missing source cards for revealed-card choice");
+            }
+
+            if (destination == LibrarySearchDestination.HOLD_OUT_THEN_HAND
+                    || destination == LibrarySearchDestination.HOLD_OUT_THEN_BATTLEFIELD_OR_HAND) {
+                handleHeldCardsChoice(gameData, player, cardIndex, canFailToFind, searchCards, sourceCards,
+                        accumulatedCards, followUp, destination, deckOwnerId);
+                return;
             }
 
             if (destination == LibrarySearchDestination.HOLD_OUT) {
@@ -2082,6 +2094,8 @@ public class LibraryChoiceHandlerService {
                 case CAST_ONE_AND_PUT_REST_INTO_HAND -> throw new IllegalStateException(
                         "CAST_ONE_AND_PUT_REST_INTO_HAND should be handled earlier");
                 case HOLD_OUT -> throw new IllegalStateException("HOLD_OUT should be handled earlier");
+                case HOLD_OUT_THEN_HAND, HOLD_OUT_THEN_BATTLEFIELD_OR_HAND -> throw new IllegalStateException(
+                        "HOLD_OUT_THEN_* should be handled earlier");
                 case BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND -> throw new IllegalStateException(
                         "BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND should be handled earlier");
                 case PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException(
@@ -3157,7 +3171,9 @@ public class LibraryChoiceHandlerService {
                 : spec.type().getDisplayName().toLowerCase();
         String destinationPhrase = spec.destination() == LibrarySearchDestination.BATTLEFIELD
                 ? "onto the battlefield" : "into your hand";
-        String prompt = spec.prompt() != null
+        String prompt = isHoldOutThenDestination(spec.destination())
+                ? "Choose " + (spec.prompt() != null ? category : "a " + category + " card") + " from among them."
+                : spec.prompt() != null
                 ? (spec.destination() == LibrarySearchDestination.HOLD_OUT
                         ? "Choose " + category + " from among them."
                         : "You may reveal " + category + " from among them and put it " + destinationPhrase + ".")
@@ -3186,7 +3202,8 @@ public class LibraryChoiceHandlerService {
         }
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
-                .canFailToFind(spec.destination() != LibrarySearchDestination.HOLD_OUT)
+                .canFailToFind(spec.destination() != LibrarySearchDestination.HOLD_OUT
+                        && !(isHoldOutThenDestination(spec.destination()) && accumulatedCards.isEmpty()))
                 .destination(spec.destination())
                 .sourceCards(new ArrayList<>(lookedAtCards))
                 .accumulatedCards(new ArrayList<>(accumulatedCards))
@@ -3198,6 +3215,92 @@ public class LibraryChoiceHandlerService {
                 .build();
         beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;
+    }
+
+    private static boolean isHoldOutThenDestination(LibrarySearchDestination destination) {
+        return destination == LibrarySearchDestination.HOLD_OUT_THEN_HAND
+                || destination == LibrarySearchDestination.HOLD_OUT_THEN_BATTLEFIELD_OR_HAND;
+    }
+
+    /**
+     * One pick of a bounded "choose a creature card and/or a land card" look: the chosen cards are held
+     * out until every pick is made, the rest go to the bottom in a random order, and the held cards then
+     * go into hand or, when the controller decides after choosing, all onto the battlefield or all into
+     * hand. While nothing has been chosen the pick cannot be declined.
+     */
+    private void handleHeldCardsChoice(GameData gameData, Player player, int cardIndex, boolean canFailToFind,
+                                       List<Card> searchCards, List<Card> sourceCards,
+                                       List<Card> accumulatedCards, LibrarySearchFollowUp followUp,
+                                       LibrarySearchDestination destination, UUID deckOwnerId) {
+        if (cardIndex == -1) {
+            if (!canFailToFind) {
+                throw new IllegalStateException("At least one card must be chosen");
+            }
+        } else {
+            if (cardIndex < 0 || cardIndex >= searchCards.size()) {
+                throw new IllegalStateException("Invalid card choice");
+            }
+            Card chosenCard = searchCards.get(cardIndex);
+            sourceCards.removeIf(card -> card.getId().equals(chosenCard.getId()));
+            accumulatedCards.add(chosenCard);
+        }
+
+        if (followUp.secondBoundedPick() != null
+                && startSecondBoundedPick(gameData, player.getId(), sourceCards, accumulatedCards,
+                        followUp.secondBoundedPick())) {
+            return;
+        }
+
+        if (!sourceCards.isEmpty()) {
+            List<Card> rest = new ArrayList<>(sourceCards);
+            Collections.shuffle(rest);
+            gameData.playerDecks.get(deckOwnerId).addAll(rest);
+            gameLogService.append(gameData, GameLog.text(player.getUsername()
+                    + " puts the unchosen cards on the bottom of their library in a random order."));
+        }
+        if (accumulatedCards.isEmpty()) {
+            finishSearchAndResume(gameData);
+            return;
+        }
+        if (destination == LibrarySearchDestination.HOLD_OUT_THEN_HAND) {
+            putHeldCardsIntoHand(gameData, player, accumulatedCards);
+            finishSearchAndResume(gameData);
+            return;
+        }
+        ChoiceContext.HeldCardsZoneChoice zoneChoice =
+                new ChoiceContext.HeldCardsZoneChoice(player.getId(), new ArrayList<>(accumulatedCards));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                player.getId(), null, null, zoneChoice, List.of(HELD_TO_BATTLEFIELD, HELD_TO_HAND),
+                "Put the chosen cards onto the battlefield or into your hand."));
+    }
+
+    private void putHeldCardsIntoHand(GameData gameData, Player player, List<Card> cards) {
+        for (Card card : cards) {
+            gameData.addCardToHand(player.getId(), card);
+        }
+        GameLog.Builder builder = GameLog.builder().text(player.getUsername() + " puts ");
+        for (int i = 0; i < cards.size(); i++) {
+            if (i > 0) builder.text(", ");
+            builder.card(cards.get(i));
+        }
+        gameLogService.append(gameData, builder.text(" into their hand.").build());
+    }
+
+    /** Applies the controller's battlefield-or-hand decision for the cards held out by a library look. */
+    public void completeHeldCardsZoneChoice(GameData gameData, Player player,
+                                            ChoiceContext.HeldCardsZoneChoice choice, String label) {
+        if (!HELD_TO_BATTLEFIELD.equals(label) && !HELD_TO_HAND.equals(label)) {
+            throw new IllegalArgumentException("Invalid choice: " + label);
+        }
+        gameData.interaction.clearAwaitingInput();
+        if (HELD_TO_BATTLEFIELD.equals(label)) {
+            placeCardsOnBattlefieldSimultaneously(gameData, choice.cards(), player.getId(), false,
+                    false, false, false, null, null, null);
+            performStateBasedActionsIfResolutionComplete(gameData);
+        } else {
+            putHeldCardsIntoHand(gameData, player, choice.cards());
+        }
+        finishSearchAndResume(gameData);
     }
 
     private void handleHeldOutCardChoice(GameData gameData, Player player, int cardIndex,

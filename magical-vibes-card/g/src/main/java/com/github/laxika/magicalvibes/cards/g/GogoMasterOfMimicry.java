@@ -20,8 +20,6 @@ import java.util.Set;
 public class GogoMasterOfMimicry extends Card {
 
     public GogoMasterOfMimicry() {
-        setCantBeCopied(true);
-
         addActivatedAbility(new ActivatedAbility(true, "{X}{X}",
                 List.of(new CopyTargetAbilityEffect()),
                 "{X}{X}, {T}: Copy target activated or triggered ability you control X times. You may choose new targets for the copies.",

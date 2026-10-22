@@ -619,7 +619,15 @@ onward only: ability removal is not retroactive on layers 1-5, a changeling unde
 keeps its types, §3). The same check gates the 7b static setters and — via
 `assembleStaticBonus`'s per-source `sourceAbilitiesGone` skip — all layer-7 handler outputs:
 a lose-all'd lord grants neither its keyword nor its 7c boost (Adaptive-Automaton-under-Humility
-doctrine), and a Blood-Mooned land's static grants stop entirely. Floating effects are the
+doctrine), and a Blood-Mooned land's static grants stop entirely.
+**Exception (CR 613.6):** an effect that already started applying in an earlier layer keeps applying
+to the same objects in later layers even if its ability is removed. A card declares that a 7b setter
+and a layer-4 effect are one ability with `SetBasePowerToughnessEffect#partOfSameAbilityAs(layer4Effect)`
+(the argument is the exact instance added to the STATIC slot, e.g. the `ConditionalEffect` wrapper
+for Goddric; Graaz's "are Juggernauts ... base 5/3"). The 7b step then keeps the setter, per target,
+only where `board.hasL4Contribution(layer4Effect, target)` — ungrouped effects are unchanged. A
+grouped `ConditionalEffect(SetBasePowerToughnessEffect)` is admitted in 7b by `admitsConditionalWrapper`
+so its entry takes part in the layered pass. Floating effects are the
 one-shot results of already-resolved spells/abilities and exist independently of their source.
 
 **The Cairn Wanderer distinction:** its graveyard-scanning keyword gain is applied CDA-first

@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -124,13 +127,17 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     deck, actual, controllerName, targetName, false, false);
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> resolveExileFaceDownWithPermission(
                     gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
-                    targetName, false, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM);
+                    targetName, false, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, null);
+            case EXILE_ONE_FACE_DOWN_CAST_ONLY_REST_TO_BOTTOM_RANDOM -> resolveExileFaceDownWithPermission(
+                    gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
+                    targetName, false, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+                    new CardNotPredicate(new CardTypePredicate(CardType.LAND)));
             case EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM -> resolveExileFaceDownWithPermission(
                     gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
-                    targetName, false, 2, LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM);
+                    targetName, false, 2, LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM, null);
             case EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> resolveExileFaceDownWithPermission(
                     gameData, entry, controllerId, targetPlayerId, deck, actual, controllerName,
-                    targetName, true, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD);
+                    targetName, true, 1, LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD, null);
             case MAY_PUT_NONLAND_PERMANENT_WITH_MANA_VALUE_X_ONTO_BATTLEFIELD ->
                     resolveMayPutNonlandPermanentOntoBattlefield(
                             gameData, controllerId, targetPlayerId, deck, actual,
@@ -287,7 +294,8 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
     private void resolveExileFaceDownWithPermission(GameData gameData, StackEntry entry,
             UUID controllerId, UUID targetPlayerId, List<Card> deck, int actual,
             String controllerName, String targetName, boolean restToGraveyard, int exileCount,
-            LibrarySearchDestination destination) {
+ LibrarySearchDestination destination,
+            CardPredicate permissionFilter) {
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
         gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual)
@@ -309,6 +317,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                         .prompt(prompt)
                         .destination(destination)
                         .sourcePermanentId(entry.getSourcePermanentId())
+                        .exilePlayPermissionFilter(permissionFilter)
                         .build(),
                 prompt,
                 false));

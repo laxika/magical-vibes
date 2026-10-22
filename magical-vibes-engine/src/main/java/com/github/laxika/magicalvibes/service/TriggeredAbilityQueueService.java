@@ -1008,10 +1008,18 @@ public class TriggeredAbilityQueueService {
             // from the ability's source (CR 702.16b), so protection from the attacker's color must not
             // hide a planeswalker here; the damage itself is prevented later (CR 702.16e).
             Permanent targetingSource = sourcePermanent;
+            Card targetingSourceCard = pending.sourceCard();
             if (sourcePermanent != null
                     && !sourcePermanent.getCard().getId().equals(pending.sourceCard().getId())) {
                 Permanent abilityPermanent = gameQueryService.findPermanentByCardId(gameData, pending.sourceCard().getId());
-                if (abilityPermanent != null) {
+                // An attack ability an Aura or Equipment grants to its creature has that creature as
+                // its source (CR 113.7), so the attached permanent must not replace it.
+                boolean grantedByAttachedPermanent = abilityPermanent != null
+                        && abilityPermanent.isAttached()
+                        && abilityPermanent.getAttachedTo().equals(sourcePermanent.getId());
+                if (grantedByAttachedPermanent) {
+                    targetingSourceCard = sourcePermanent.getCard();
+                } else if (abilityPermanent != null) {
                     targetingSource = abilityPermanent;
                 }
             }
@@ -1020,7 +1028,7 @@ public class TriggeredAbilityQueueService {
                     pending.effects(),
                     targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects()),
                     pending.controllerId(),
-                    pending.sourceCard(),
+                    targetingSourceCard,
                     TriggerTargetCollector.Options.ATTACK,
                     targetingSource,
                     defendingPlayerId(gameData, pending.attackedTargetId()));
