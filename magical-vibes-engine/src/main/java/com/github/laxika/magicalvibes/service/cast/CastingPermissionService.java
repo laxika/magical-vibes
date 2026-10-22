@@ -2470,7 +2470,7 @@ public class CastingPermissionService {
                 .anyMatch(AllowPlayFromAnyLibraryTopEffect.class::isInstance);
     }
 
-    private boolean hasLibraryTopPermissionForCard(GameData gameData, UUID castingPlayerId, Card card) {
+    public boolean hasLibraryTopPermissionForCard(GameData gameData, UUID castingPlayerId, Card card) {
         for (GameData.LibraryTopCardPermission permission : gameData.libraryTopCardPermissionsUntilEndOfTurn) {
             if (!permission.castingPlayerId().equals(castingPlayerId)) {
                 continue;

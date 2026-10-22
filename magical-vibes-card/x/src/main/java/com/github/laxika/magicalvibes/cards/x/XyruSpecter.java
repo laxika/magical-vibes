@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHan
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class XyruSpecter extends Card {
                                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),
                         new ChooseOneEffect.ChooseOneOption("Challenge", SequenceEffect.of(
                                 new RevealAnyNumberOfCardsFromHandEffect(
-                                        new CardColorPredicate(CardColor.BLACK)),
+                                        new CardTruePredicate(), new CardColorPredicate(CardColor.BLACK)),
                                 ConditionalEffect.unless(new EventValueAtLeast(2),
                                         new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)))))));
     }

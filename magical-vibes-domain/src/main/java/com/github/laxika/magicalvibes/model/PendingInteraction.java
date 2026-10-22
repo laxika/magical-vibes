@@ -1935,11 +1935,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                 ActivatedAbilityRevealContext activatedAbilityContext,
                                                 EachPlayerRevealContext eachPlayerRevealContext,
                                                 BattlefieldEntryRequest amplifyEntry,
-                                                DuplicateManaValueRevealContext duplicateManaValueRevealContext)
+                                                DuplicateManaValueRevealContext duplicateManaValueRevealContext,
+                                                java.util.List<UUID> countedCardIds)
             implements PendingInteraction {
 
         public RevealAnyNumberOfCardsFromHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+            countedCardIds = countedCardIds == null ? null : java.util.List.copyOf(countedCardIds);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName, java.util.List<UUID> countedCardIds) {
+            this(playerId, validCardIds, cardName, null, null, null, null, null, countedCardIds);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -1947,7 +1954,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                    ActivatedAbilityRevealContext activatedAbilityContext,
                                                    EachPlayerRevealContext eachPlayerRevealContext) {
             this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext,
-                    eachPlayerRevealContext, null, null);
+                    eachPlayerRevealContext, null, null, null);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -1956,14 +1963,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                    EachPlayerRevealContext eachPlayerRevealContext,
                                                    BattlefieldEntryRequest amplifyEntry) {
             this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext,
-                    eachPlayerRevealContext, amplifyEntry, null);
+                    eachPlayerRevealContext, amplifyEntry, null, null);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                    String cardName,
                                                    DuplicateManaValueRevealContext duplicateManaValueRevealContext) {
             this(playerId, validCardIds, cardName, null, null, null, null,
-                    duplicateManaValueRevealContext);
+                    duplicateManaValueRevealContext, null);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,

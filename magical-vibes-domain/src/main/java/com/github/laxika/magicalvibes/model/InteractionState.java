@@ -56,7 +56,7 @@ public class InteractionState {
                     reveal.playerId(), reveal.validCardIds(), reveal.cardName(), reveal.manaAbilityContext(),
                     reveal.activatedAbilityContext(), reveal.eachPlayerRevealContext(),
                     reveal.amplifyEntry() == null ? null : reveal.amplifyEntry().deepCopy(),
-                    reveal.duplicateManaValueRevealContext());
+                    reveal.duplicateManaValueRevealContext(), reveal.countedCardIds());
         }
         if (activeInteraction instanceof PendingInteraction.ColorChoice choice
                 && choice.context() instanceof ChoiceContext.CardNameChoice nameChoice

@@ -163,6 +163,8 @@ class XanatharGuildKingpinTest extends BaseCardTest {
     void cannotCastCreatureDuringUpkeep() {
         GrizzlyBears bears = new GrizzlyBears();
         resolveUpkeepTrigger(bears);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
@@ -203,6 +205,7 @@ class XanatharGuildKingpinTest extends BaseCardTest {
     void permissionsAndSpellLockExpireAtEndOfTurn() {
         Shock topCard = new Shock();
         resolveUpkeepTrigger(topCard);
+        harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);

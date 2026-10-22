@@ -3628,7 +3628,10 @@ public class LibraryChoiceHandlerService {
         // Put selected cards onto the battlefield
         // A cloaked card is a 2/2 face-down creature card as it enters (CR 701.58a), so creature-only
         // prohibitions such as Grafdigger's Cage stop it even when the card itself is not a creature.
+        // Cards exiled before the choice (Xenagos, the Reveler) enter from exile, so library-only
+        // restrictions such as Grafdigger's Cage don't apply to them.
         List<Card> blockedCards = selectedCards.stream()
+                .filter(card -> gameData.findExiledCard(card.getId()) == null)
                 .filter(card -> libraryRevealChoice.selectedToBattlefieldCloaked()
                         ? gameQueryService.isManifestBlockedFromZone(gameData, card, Zone.LIBRARY)
                         : gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY))
@@ -3799,7 +3802,9 @@ public class LibraryChoiceHandlerService {
             }
         } else if (libraryRevealChoice.remainingToExile()) {
             for (Card card : remainingCards) {
-                exileService.exileCard(gameData, controllerId, card);
+                if (gameData.findExiledCard(card.getId()) == null) {
+                    exileService.exileCard(gameData, controllerId, card);
+                }
             }
 
             if (selectedCards.isEmpty()) {

@@ -11695,6 +11695,7 @@ public class TriggerCollectionService {
                     && dyingPermanent.getCard().hasType(CardType.CREATURE)) {
                 continue;
             }
+            if (!hasActiveTriggeredAbilities(gameData, perm)) continue;
             List<CardEffect> effects = new ArrayList<>(
                     perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES));
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
@@ -13472,8 +13473,11 @@ public class TriggerCollectionService {
         }
         for (TargetedCreatureDeathTriggerWatcher watcher
                 : List.copyOf(gameData.targetedCreatureDeathTriggerWatchers)) {
-            if (!watcher.watchedPermanentId().equals(dyingPermanent.getId())
-                    || dyingPermanent.getCounterCount(watcher.counterType()) <= 0) {
+            if (!watcher.watchedPermanentId().equals(dyingPermanent.getId())) {
+                continue;
+            }
+            gameData.targetedCreatureDeathTriggerWatchers.remove(watcher);
+            if (dyingPermanent.getCounterCount(watcher.counterType()) <= 0) {
                 continue;
             }
             StackEntry entry = new StackEntry(
@@ -19781,6 +19785,7 @@ public class TriggerCollectionService {
                                                           List<Map.Entry<UUID, Permanent>> dyingCreatures) {
         List<CardEffect> effects = watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES);
         if (effects == null || effects.isEmpty()) return;
+        if (!hasActiveTriggeredAbilities(gameData, watcher)) return;
         Map.Entry<UUID, Permanent> firstOtherDeath = dyingCreatures.stream()
                 .filter(entry -> !entry.getKey().equals(watcher.getId()))
                 .filter(entry -> watcherControllerId.equals(

@@ -12691,7 +12691,8 @@ public class SpellCastingService {
                 .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, card);
         boolean canCastNormallyFromLibraryTop = castingPermissionService
                 .canCastFromTopOfLibraryNormally(gameData, playerId, card);
-        if (castFaceDown && !canCastNormallyFromLibraryTop) {
+        if (castFaceDown && !canCastNormallyFromLibraryTop
+                && !castingPermissionService.hasLibraryTopPermissionForCard(gameData, playerId, card)) {
             throw new IllegalStateException("No permission to cast the top card for its face-down cost");
         }
         if (canUseManaValueLifeAlternative && !canCastNormallyFromLibraryTop
@@ -12730,6 +12731,7 @@ public class SpellCastingService {
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(
                 gameData, playerId, card, effectiveXValue)
+                || castingPermissionService.isSpellTypeRestricted(gameData, playerId, card)
                 || castingPermissionService.isSpellCastingRestrictedByMostRecentSpell(
                 gameData, card, effectiveXValue)
                 || castingPermissionService.isSpellCastingRestrictedByTopLibraryCard(gameData, card)
@@ -13437,11 +13439,20 @@ public class SpellCastingService {
         ManaPool.FaceDownSpellsOrTurnFaceUpManaState faceDownMana = castFaceDown
                 ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : null;
         SpellManaPayment payment;
+        // A {C} symbol can be paid only with colorless mana (CR 107.4c), so an any-color permission
+        // converts only the colored symbols; the generic shortcut would let any mana pay {C}.
+        boolean anyColorForColoredSymbols = anyManaType && card.getParsedManaCost() != null
+                && card.getParsedManaCost().getColoredCosts().containsKey(ManaColor.COLORLESS);
+        boolean existingAnyColorPermission = pool.isAllManaSpendableAsAnyColor();
         try {
+            if (anyColorForColoredSymbols) {
+                pool.setAllManaSpendableAsAnyColor(true);
+            }
             payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
-                    null, false, faceDownCostAdjustment, 0, 0, "", "", sourceZone, anyManaType, false,
-                    replacementManaCost);
+                    null, false, faceDownCostAdjustment, 0, 0, "", "", sourceZone,
+                    anyManaType && !anyColorForColoredSymbols, false, replacementManaCost);
         } finally {
+            pool.setAllManaSpendableAsAnyColor(existingAnyColorPermission);
             if (faceDownMana != null) {
                 pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(faceDownMana);
             }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-/** Puts a counter on a target creature and watches that exact permanent for the rest of the turn. */
+/** Puts a counter on a target creature and watches that exact permanent until it dies. */
 public record PutCounterAndWatchTargetCreatureDeathEffect(
         CounterType counterType,
         PermanentPredicate targetRestriction,

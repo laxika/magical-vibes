@@ -553,8 +553,8 @@ public class CombatDamageService {
 
         applyDamageToEachPlayer(gameData, state, defenderId);
         Map<UUID, Set<Permanent>> damagedPlayerSources = new LinkedHashMap<>();
-        state.redirectedCombatDamageSourcesToPlayers.forEach((playerId, sources) ->
-                damagedPlayerSources.put(playerId, new LinkedHashSet<>(sources)));
+        state.redirectedCombatDamageToPlayers.forEach((playerId, damageBySource) ->
+                damagedPlayerSources.put(playerId, new LinkedHashSet<>(damageBySource.keySet())));
         state.combatDamageDealtToPlayer.forEach((source, damage) -> {
             if (damage > 0) damagedPlayerSources.computeIfAbsent(
                     state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
@@ -828,6 +828,12 @@ public class CombatDamageService {
                         ignored -> new LinkedHashMap<>()).computeIfAbsent(
                         state.combatDamageDealerControllers.getOrDefault(source, activeId),
                         ignored -> new LinkedHashMap<>()).put(source, damage));
+        state.redirectedCombatDamageToPlayers.forEach((recipientId, damageBySource) ->
+                damageBySource.forEach((source, damage) ->
+                        playerDamageByRecipientAndController.computeIfAbsent(
+                                recipientId, ignored -> new LinkedHashMap<>()).computeIfAbsent(
+                                state.combatDamageDealerControllers.getOrDefault(source, activeId),
+                                ignored -> new LinkedHashMap<>()).merge(source, damage, Integer::sum)));
         playerDamageByRecipientAndController.forEach((recipientId, damageByController) ->
                 damageByController.forEach((controllerId, damageBySource) -> {
                     processCombatDamageToPlayerTriggers(gameData, damageBySource, controllerId, recipientId,
@@ -881,19 +887,6 @@ public class CombatDamageService {
                                 gameData, recipientId, controllerId, amount, false));
             });
         });
-        state.redirectedCombatDamageSourcesToPlayers.forEach((recipientId, sources) -> {
-            Set<String> firedBatchedTriggerKeys = firedBatchedTriggerKeysByRecipient.computeIfAbsent(
-                    recipientId, ignored -> new HashSet<>());
-            for (Permanent source : sources) {
-                boolean alreadyDispatched = state.combatDamageDealtToPlayer.getOrDefault(source, 0) > 0
-                        && recipientId.equals(state.combatDamagePlayerRecipients.getOrDefault(source, defenderId));
-                if (!alreadyDispatched) {
-                    triggerCollectionService.checkDamageDealtToControllerTriggers(
-                            gameData, recipientId, source.getId(), true, firedBatchedTriggerKeys);
-                }
-            }
-        });
-
         recordCombatDamageBySource(gameData, state);
 
         // ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (e.g. Justice) were collected before the
@@ -2717,6 +2710,8 @@ public class CombatDamageService {
                 || (effect instanceof com.github.laxika.magicalvibes.model.effect.DiscoverEffect discover
                         && discover.discoverValue() instanceof EventValue)
                 || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
+                || (effect instanceof com.github.laxika.magicalvibes.model.effect.DrawCardForYouAndDamagedPlayerEffect both
+                        && both.amount() instanceof EventValue)
                 || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)
                 || (effect instanceof CreateTokenForTargetPlayerEffect create
                 && create.tokenEffect().amount() instanceof EventValue)
@@ -4680,8 +4675,11 @@ public class CombatDamageService {
         gameData.recordCombatDamageToPlayer(targetId, damage);
         if (damageSource != null) {
             state.combatDamageDealt.merge(damageSource, damage, Integer::sum);
-            state.redirectedCombatDamageSourcesToPlayers
-                    .computeIfAbsent(targetId, ignored -> new LinkedHashSet<>()).add(damageSource);
+            state.redirectedCombatDamageToPlayers
+                    .computeIfAbsent(targetId, ignored -> new LinkedHashMap<>()).merge(damageSource, damage, Integer::sum);
+            if (sourceControllerId != null) {
+                state.combatDamageDealerControllers.putIfAbsent(damageSource, sourceControllerId);
+            }
         }
         boolean artifactSource = damageSource != null && gameQueryService.isArtifact(gameData, damageSource);
         gameData.recordDamageToPlayer(targetId, damage, artifactSource ? damage : 0);
@@ -4692,28 +4690,6 @@ public class CombatDamageService {
         }
         triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(gameData, targetId, damage);
         triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, sourceId, damage);
-        if (damageSource != null && sourceControllerId != null && !portion.counterDamage()) {
-            checkRedirectedCombatDamageAllyTriggers(gameData, damageSource, sourceControllerId, targetId, damage);
-        }
-    }
-
-    /**
-     * The redirected part of combat damage is still combat damage dealt to a player (CR 510.2,
-     * CR 614.9), so "whenever a creature you control deals combat damage to a player" abilities and
-     * "whenever your opponents are dealt combat damage" abilities trigger for it.
-     */
-    private void checkRedirectedCombatDamageAllyTriggers(GameData gameData, Permanent damageSource,
-                                                         UUID sourceControllerId, UUID recipientId, int damage) {
-        Map<Permanent, Integer> damageBySource = new LinkedHashMap<>();
-        damageBySource.put(damageSource, damage);
-        Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
-        checkAllyCreatureCombatDamageToPlayerTriggers(gameData, damageSource, sourceControllerId, recipientId,
-                damage, damageBySource, firedBatchedAllyTriggerSources, false, false);
-        for (UUID otherPlayerId : gameData.orderedPlayerIds) {
-            if (otherPlayerId.equals(sourceControllerId)) continue;
-            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, damageSource, otherPlayerId, recipientId,
-                    damage, damageBySource, firedBatchedAllyTriggerSources, false, true);
-        }
     }
 
     private void dealRedirectedCombatDamageToPermanent(GameData gameData, CombatDamageState state,

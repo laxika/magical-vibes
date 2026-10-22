@@ -1794,7 +1794,7 @@ public class GameData {
     /** Active "whenever a creature dies this turn" delayed triggers, cleared at turn cleanup. */
     public final List<CreatureDeathTriggerWatcher> creatureDeathTriggerWatchers =
             Collections.synchronizedList(new ArrayList<>());
-    /** Active delayed triggers watching one exact creature permanent, cleared at turn cleanup. */
+    /** Active delayed triggers watching one exact creature permanent, removed when that permanent dies. */
     public final List<TargetedCreatureDeathTriggerWatcher> targetedCreatureDeathTriggerWatchers =
             Collections.synchronizedList(new ArrayList<>());
     /** Active delayed triggers for creatures damaged by a particular source, cleared at turn cleanup. */
@@ -3554,6 +3554,8 @@ public class GameData {
     public final Map<UUID, Permanent> simultaneousDyingPermanents = new ConcurrentHashMap<>();
     /** Last departure snapshots by card identity, retained for sacrifice-event collection this turn. */
     public final Map<UUID, Permanent> departedPermanentSnapshots = new ConcurrentHashMap<>();
+    /** Controller each departed permanent had immediately before it left the battlefield, keyed by card identity. */
+    public final Map<UUID, UUID> departedPermanentControllerIds = new ConcurrentHashMap<>();
     /**
      * Cards chosen as the damage source of a waiting redirect or next-damage prevention shield, keyed by
      * the permanent id the shield stores, so the source can be chosen again after it has left the
@@ -8683,6 +8685,7 @@ public class GameData {
         copy.simultaneousDyingPermanents.putAll(this.simultaneousDyingPermanents);
         this.departedPermanentSnapshots.forEach((cardId, permanent) ->
                 copy.departedPermanentSnapshots.put(cardId, new Permanent(permanent)));
+        copy.departedPermanentControllerIds.putAll(this.departedPermanentControllerIds);
         copy.waitingRedirectDamageSourceCards.putAll(this.waitingRedirectDamageSourceCards);
         copy.simultaneousDyingPermanentControllers.putAll(this.simultaneousDyingPermanentControllers);
         copy.simultaneousDyingPowers.putAll(this.simultaneousDyingPowers);

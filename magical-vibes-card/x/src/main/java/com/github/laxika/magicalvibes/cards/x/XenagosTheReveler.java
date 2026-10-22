@@ -56,7 +56,8 @@ public class XenagosTheReveler extends Card {
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardTypePredicate(CardType.LAND))),
-                        LookDestination.EXILE, true, LibrarySearchDestination.BATTLEFIELD, true)),
+                        LookDestination.EXILE, true, LibrarySearchDestination.BATTLEFIELD, true)
+                        .withExileBeforeChoosing()),
                 "−6: Exile the top seven cards of your library. You may put any number of creature and/or land cards from among them onto the battlefield."
         ));
     }

@@ -73,8 +73,8 @@ public class CombatDamageState {
     public final List<DelayedCombatDamageLookAtHandAndDrawQualification>
             delayedCombatDamageLookAtHandAndDrawQualifications = new ArrayList<>();
 
-    /** Sources whose redirected combat damage reached each player in this damage step. */
-    public final Map<UUID, Set<Permanent>> redirectedCombatDamageSourcesToPlayers = new LinkedHashMap<>();
+    /** Redirected combat damage each source dealt to each player in this damage step, keyed by recipient. */
+    public final Map<UUID, Map<Permanent, Integer>> redirectedCombatDamageToPlayers = new LinkedHashMap<>();
 
     public final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToCreatures = new HashMap<>();
     public final Map<UUID, UUID> combatDamageTargetControllers = new HashMap<>();

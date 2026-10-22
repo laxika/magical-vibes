@@ -42,8 +42,14 @@ public class RevealAnyNumberOfCardsFromHandEffectHandler implements NormalEffect
             return;
         }
 
+        List<UUID> countedCardIds = hand.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, revealEffect.countedFilter(), entry.getCard().getId(), gameData, controllerId))
+                .map(Card::getId)
+                .toList();
+
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
-                        controllerId, validCardIds, entry.getCard().getName()));
+                        controllerId, validCardIds, entry.getCard().getName(), countedCardIds));
     }
 }

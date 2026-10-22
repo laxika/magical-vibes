@@ -175,8 +175,13 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
         if (entry == null) {
             throw new IllegalStateException("No effect resolution is waiting for this choice");
         }
-        entry.setEventValue(selectedCards.size());
-        entry.setEventCardIds(selectedCards.stream().map(Card::getId).toList());
+        List<Card> countedCards = interaction.countedCardIds() == null
+                ? selectedCards
+                : selectedCards.stream()
+                        .filter(card -> interaction.countedCardIds().contains(card.getId()))
+                        .toList();
+        entry.setEventValue(countedCards.size());
+        entry.setEventCardIds(countedCards.stream().map(Card::getId).toList());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

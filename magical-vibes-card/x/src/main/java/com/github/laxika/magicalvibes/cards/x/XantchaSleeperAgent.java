@@ -24,7 +24,7 @@ import java.util.List;
 public class XantchaSleeperAgent extends Card {
 
     public XantchaSleeperAgent() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentGainsControlOfSourceEffect());
+        addEffect(EffectSlot.STATIC, new ChooseOpponentGainsControlOfSourceEffect());
         addEffect(EffectSlot.STATIC, new MustAttackEffect());
         addEffect(EffectSlot.STATIC, new CantAttackCardOwnerEffect());
         addActivatedAbility(new ActivatedAbility(

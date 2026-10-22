@@ -2498,6 +2498,8 @@ public class PermanentRemovalService {
         departureSnapshot.setLastKnownSupertypes(Set.copyOf(lastKnownCard.getSupertypes()));
         gameData.departedPermanentSnapshots.put(target.getCard().getId(), departureSnapshot);
         gameData.departedPermanentSnapshots.put(target.getOriginalCard().getId(), departureSnapshot);
+        gameData.departedPermanentControllerIds.put(target.getCard().getId(), controllerId);
+        gameData.departedPermanentControllerIds.put(target.getOriginalCard().getId(), controllerId);
         for (StackEntry entry : gameData.stack) {
             if (target.getId().equals(entry.getTriggeringPermanentId())
                     && entry.getEffectsToResolve().stream().anyMatch(

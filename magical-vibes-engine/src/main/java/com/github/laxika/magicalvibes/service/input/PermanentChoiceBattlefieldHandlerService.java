@@ -1524,11 +1524,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Capture effective power before removing from battlefield (static bonuses still apply)
         int power = gameQueryService.getEffectivePower(gameData, target);
 
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
-
-        String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
-        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
+        destructionSupport.sacrificeAndLog(gameData, target, sacrificingPlayerId);
 
         // Each opponent loses life equal to the sacrificed creature's power
         destructionSupport.applyOpponentsLoseLife(gameData, sacrificingPlayerId, power, context.sourceCardName());

@@ -227,6 +227,8 @@ import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMat
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MeliraPoisonReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.HalveTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSourceDamageBonusEffect;
@@ -11819,50 +11821,90 @@ public class GameQueryService {
         if (amount <= 0) {
             return amount;
         }
+        List<TokenCreationReplacement> replacements = new ArrayList<>(
+                tokenCreationReplacements(gameData, controllerId, tokenSubtypes, creatureToken, applicableReplacements));
+        replacements.sort(Comparator.comparingInt(r -> r.effect().replacementOrder()));
+        int adjustedAmount = amount;
+        for (TokenCreationReplacement replacement : replacements) {
+            adjustedAmount = MaroGoneNutsSupport.apply(
+                    gameData, (CardEffect) replacement.effect(), replacement.effect().replaceTokenCount(adjustedAmount));
+        }
+        return adjustedAmount;
+    }
+
+    /**
+     * One token-count replacement that applies to a token creation event.
+     *
+     * @param key    identifies the effect instance for CR 614.5 bookkeeping
+     * @param label  text shown to the player ordering the effects
+     * @param effect the replacement itself
+     */
+    public record TokenCreationReplacement(String key, String label, TokenCreationReplacementEffect effect) {}
+
+    /**
+     * The token-count replacements that apply to a creation of tokens with the given profile by
+     * {@code controllerId}, one per effect instance, in battlefield, planar, then turn-scoped order.
+     * The player creating the tokens orders them (CR 616.1); {@link #getTokenCreationAmount} applies
+     * them in a fixed order instead.
+     */
+    public List<TokenCreationReplacement> tokenCreationReplacements(GameData gameData, UUID controllerId,
+                                                                    Collection<CardSubtype> tokenSubtypes,
+                                                                    boolean creatureToken,
+                                                                    Predicate<TokenCreationReplacementEffect> applicableReplacements) {
         UUID effectiveControllerId = resolveTokenCreationController(gameData, controllerId, creatureToken);
-        int[] adjustedAmount = {amount};
-        List<TokenCreationReplacementEffect> replacements = new ArrayList<>();
+        List<TokenCreationReplacement> replacements = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            for (CardEffect effect : getActiveStaticEffects(gameData, p)) {
-                if (effect instanceof TokenCreationReplacementEffect replacement
+            List<CardEffect> statics = getActiveStaticEffects(gameData, p);
+            for (int i = 0; i < statics.size(); i++) {
+                if (statics.get(i) instanceof TokenCreationReplacementEffect replacement
                         && applicableReplacements.test(replacement)
                         && replacement.appliesToTokenCreator(playerId, effectiveControllerId)
                         && replacement.appliesTo(tokenSubtypes)
                         && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
                             || !multiply.creatureTokensOnly() || creatureToken)) {
-                    replacements.add(replacement);
+                    replacements.add(new TokenCreationReplacement("TokenCreation:" + p.getId() + ":" + i,
+                            p.getCard().getName() + ": " + describeTokenCreationReplacement(replacement), replacement));
                 }
             }
         });
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof TokenCreationReplacementEffect replacement
-                        && applicableReplacements.test(replacement)
+                List<CardEffect> statics = planar.getCard().getEffects(EffectSlot.STATIC);
+                for (int i = 0; i < statics.size(); i++) {
+                    if (statics.get(i) instanceof TokenCreationReplacementEffect replacement
+                            && applicableReplacements.test(replacement)
                             && replacement.appliesTo(tokenSubtypes)
                             && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
                             || !multiply.creatureTokensOnly() || creatureToken)) {
-                        replacements.add(replacement);
+                        replacements.add(new TokenCreationReplacement("TokenCreationPlanar:" + planar.getCard().getId() + ":" + i,
+                                planar.getCard().getName() + ": " + describeTokenCreationReplacement(replacement), replacement));
                     }
                 }
             }
         }
-        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn
-                .getOrDefault(effectiveControllerId, List.of())) {
-            if (effect instanceof TokenCreationReplacementEffect replacement
-                        && applicableReplacements.test(replacement)
+        List<CardEffect> untilEndOfTurn = gameData.playerStaticEffectsUntilEndOfTurn
+                .getOrDefault(effectiveControllerId, List.of());
+        for (int i = 0; i < untilEndOfTurn.size(); i++) {
+            if (untilEndOfTurn.get(i) instanceof TokenCreationReplacementEffect replacement
+                    && applicableReplacements.test(replacement)
                     && replacement.appliesTo(tokenSubtypes)
                     && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
                         || !multiply.creatureTokensOnly() || creatureToken)) {
-                replacements.add(replacement);
+                replacements.add(new TokenCreationReplacement("TokenCreationTurn:" + i,
+                        "Until end of turn: " + describeTokenCreationReplacement(replacement), replacement));
             }
         }
-        replacements.sort(Comparator.comparingInt(TokenCreationReplacementEffect::replacementOrder));
-        for (TokenCreationReplacementEffect replacement : replacements) {
-            adjustedAmount[0] = MaroGoneNutsSupport.apply(
-                    gameData, (CardEffect) replacement, replacement.replaceTokenCount(adjustedAmount[0]));
-        }
-        return adjustedAmount[0];
+        return replacements;
+    }
+
+    private static String describeTokenCreationReplacement(TokenCreationReplacementEffect replacement) {
+        return switch (replacement) {
+            case AddTokenCreationEffect add -> "create " + add.additionalTokens() + " additional"
+                    + (add.affectedSubtype() == null ? "" : " " + add.affectedSubtype().getDisplayName()) + " token";
+            case MultiplyTokenCreationEffect multiply -> "create " + multiply.multiplier() + " times as many tokens";
+            case HalveTokenCreationEffect halve -> "create half as many tokens";
+            default -> "change the number of tokens created";
+        };
     }
 
     /**

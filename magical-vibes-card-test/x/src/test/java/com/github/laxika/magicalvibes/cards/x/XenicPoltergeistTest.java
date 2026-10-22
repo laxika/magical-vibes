@@ -78,11 +78,13 @@ class XenicPoltergeistTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, findPermanent(player1, "Millstone"))).isTrue();
 
-        // Stop during player1's untap step to verify that the animation has not expired too early.
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.CLEANUP);
+        // Play through the opponent's turn, then perform player1's next untap step (no player gets priority
+        // during untap, so it is run directly) to verify that the animation has not expired too early.
+        harness.setHand(player2, List.of());
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.forceActivePlayer(player1);
+        harness.performUntapStep(player1);
 
         millstone = findPermanent(player1, "Millstone");
         assertThat(gqs.isCreature(gd, millstone)).isTrue();

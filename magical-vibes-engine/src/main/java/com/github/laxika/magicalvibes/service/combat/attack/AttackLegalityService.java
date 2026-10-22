@@ -613,7 +613,8 @@ public class AttackLegalityService {
         if (targetIsPlayer) {
             return attacker.getOriginalCard().getOwnerId().equals(targetId);
         }
-        return false;
+        return targetPermanent != null && gameQueryService.isPlaneswalker(gameData, targetPermanent)
+                && attacker.getOriginalCard().getOwnerId().equals(protectedPlayerId);
     }
 
     private boolean isAttackTargetRestricted(GameData gameData, Permanent target) {

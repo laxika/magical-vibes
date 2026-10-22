@@ -30,9 +30,13 @@ public class SourcePermanentControllerLosesLifeEffectHandler implements NormalEf
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        UUID controllerId = source == null
-                ? e.sourceControllerId()
-                : gameQueryService.findPermanentController(gameData, source.getId());
+        UUID controllerId;
+        if (source != null) {
+            controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        } else {
+            controllerId = gameData.departedPermanentControllerIds.getOrDefault(
+                    entry.getCard().getId(), e.sourceControllerId());
+        }
         if (controllerId != null && gameData.playerIds.contains(controllerId) && e.amount() > 0) {
             lifeSupport.applyLifeLoss(gameData, controllerId, e.amount(), entry.getCard().getName());
         }

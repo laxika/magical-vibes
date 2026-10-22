@@ -103,6 +103,7 @@ class XolatoyacTheSmilingFloodTest extends BaseCardTest {
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).contains(CardSubtype.ISLAND);
         forest.setCounterCount(CounterType.FLOOD, 0);
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).doesNotContain(CardSubtype.ISLAND);
+        harness.runStateBasedActions();
         forest.setCounterCount(CounterType.FLOOD, 1);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).doesNotContain(CardSubtype.ISLAND);

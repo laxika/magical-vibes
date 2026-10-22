@@ -1310,6 +1310,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.permanentsWithCountersPutThisTurn.clear();
         gameData.departedPermanentSnapshots.clear();
+        gameData.departedPermanentControllerIds.clear();
         gameData.firstCardCycledFreeUsesThisTurn.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();

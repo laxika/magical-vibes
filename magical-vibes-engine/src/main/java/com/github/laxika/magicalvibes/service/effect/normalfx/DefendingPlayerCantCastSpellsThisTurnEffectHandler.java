@@ -30,9 +30,13 @@ public class DefendingPlayerCantCastSpellsThisTurnEffectHandler implements Norma
             return;
         }
 
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        // CR 508.5: the defending player was fixed when the attack trigger was put on the stack, so it
+        // survives the attacked planeswalker leaving the battlefield and honors a battle's protector (CR 310.9d).
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : gameData.playerIds.contains(attackedTargetId)
+                        ? attackedTargetId
+                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (defendingPlayerId == null || !gameData.playerIds.contains(defendingPlayerId)) {
             return;
         }

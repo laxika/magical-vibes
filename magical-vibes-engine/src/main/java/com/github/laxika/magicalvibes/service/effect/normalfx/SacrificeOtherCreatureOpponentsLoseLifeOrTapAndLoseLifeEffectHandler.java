@@ -39,10 +39,13 @@ public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandle
         var e = (SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect) effect;
         UUID controllerId = entry.getControllerId();
                 String cardName = entry.getCard().getName();
-                UUID sourceCardId = entry.getCard().getId();
+                UUID sourcePermanentId = entry.getSourcePermanentId();
 
+                // "Other than this creature" compares object identity: a Demon that left and returned is a
+                // new object (CR 400.7) and may be sacrificed to the trigger of its previous incarnation.
                 List<UUID> otherCreatureIds = destructionSupport.collectCreatureIds(gameData, controllerId,
-                        p -> !p.getCard().getId().equals(sourceCardId));
+                        p -> !p.getId().equals(sourcePermanentId)
+                                && !gameQueryService.cantBeSacrificed(gameData, p));
 
                 if (otherCreatureIds.isEmpty()) {
                     // Can't sacrifice — tap source and controller loses life

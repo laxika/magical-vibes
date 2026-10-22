@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
+import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -48,6 +50,10 @@ public class PermanentControlSupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService replacementOrderService;
 
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
         if (!(token.amount() instanceof Fixed fixed)) {
@@ -91,8 +97,29 @@ public class PermanentControlSupport {
                     gameData, controllerId, jinnieFay, token, amount, power, toughness, sourceSetCode, additionalEffects);
             return List.of();
         }
+        if (amount > 0) {
+            // The player creating the tokens orders the count replacements (CR 616.1), so the creation
+            // may pause for a choice and then continue through applyCreateTokenAfterReplacementOrder.
+            var outcome = replacementOrderService.run(gameData, new TokenCreationEvent(
+                    controllerId, amount, Set.of(), token, power, toughness, sourceSetCode, additionalEffects,
+                    token.primaryType() == CardType.CREATURE));
+            if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
+                return applyCreateTokenAfterReplacementOrder(gameData, completed.event());
+            }
+            return List.of();
+        }
         return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
                 true, true, true, additionalEffects);
+    }
+
+    /**
+     * Creates the tokens of an event whose count replacements have all been applied, in the order the
+     * creating player chose. The event's amount is final, so the count replacements are not applied again.
+     */
+    public List<UUID> applyCreateTokenAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
+        return applyCreateToken(gameData, event.controllerId(), event.token(), event.amount(),
+                event.sourceSetCode(), event.power(), event.toughness(), true, true, true,
+                event.additionalEffects(), event.amount());
     }
 
     /** Creates tokens after Jinnie Fay's replacement choice has already been made. */
@@ -111,9 +138,14 @@ public class PermanentControlSupport {
     }
 
     private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalEffects, -1);
+    }
+
+    /** {@code orderedAmount} is the token count after its replacements were ordered and applied, or -1 to apply them in a fixed order. */
+    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects, int orderedAmount) {
         List<UUID> createdIds = new ArrayList<>();
         boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
-        int totalAmount = applyTokenMultiplier ? gameQueryService.getTokenCreationAmount(gameData, controllerId, amount, token.subtypes(), baseTokenIsCreature) : amount;
+        int totalAmount = orderedAmount >= 0 ? orderedAmount : applyTokenMultiplier ? gameQueryService.getTokenCreationAmount(gameData, controllerId, amount, token.subtypes(), baseTokenIsCreature) : amount;
         int additionalMapTokenCount = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalMapTokenCount(
                         gameData, controllerId, token, amount)

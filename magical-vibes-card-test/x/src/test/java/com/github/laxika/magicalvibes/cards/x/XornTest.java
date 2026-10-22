@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DeadlyDispute;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.f.ForswornPaladin;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.o.OjerTaqDeepestFoundation;
 import com.github.laxika.magicalvibes.cards.u.UnexpectedWindfall;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -132,5 +133,40 @@ class XornTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.assertNotOnBattlefield(player1, "Treasure");
+    }
+
+    @Test
+    void xornFirstThenDoublerCreatesFourTreasures() {
+        harness.addToBattlefield(player1, new Xorn());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        addCreatureReady(player1, new ForswornPaladin());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.passBothPriorities();
+        chooseReplacement("Xorn");
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(4);
+    }
+
+    @Test
+    void doublerFirstThenXornCreatesThreeTreasures() {
+        harness.addToBattlefield(player1, new Xorn());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        addCreatureReady(player1, new ForswornPaladin());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.passBothPriorities();
+        chooseReplacement("Doubling Season");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(3);
+    }
+
+    private void chooseReplacement(String sourceName) {
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(sourceName)).findFirst().orElseThrow());
     }
 }

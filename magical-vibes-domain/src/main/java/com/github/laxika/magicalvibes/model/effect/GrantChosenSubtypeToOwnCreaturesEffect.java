@@ -12,8 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param affectsAllZones when {@code true}, also applies to creature spells you control on the
  *                        stack and creature cards you own that aren't on the battlefield (hand,
  *                        graveyard, library, exile). Used by Arcane Adaptation.
- * @param scope           which permanents receive the subtype; only {@link GrantScope#OWN_CREATURES}
- *                        and {@link GrantScope#SELF} are supported.
+ * @param scope           which permanents receive the subtype; only {@link GrantScope#OWN_CREATURES},
+ *                        {@link GrantScope#ALL_OWN_CREATURES} and {@link GrantScope#SELF} are
+ *                        supported.
  * @param filter          optional predicate restricting the affected creatures.
  * @param overriding      replaces existing creature types instead of adding to them.
  */
@@ -31,9 +32,12 @@ public record GrantChosenSubtypeToOwnCreaturesEffect(boolean affectsAllZones,
         return new GrantChosenSubtypeToOwnCreaturesEffect(true, GrantScope.OWN_CREATURES, null, true);
     }
 
-    /** Battlefield-only variant granting to each creature you control (e.g. Xenograft). */
+    /**
+     * Battlefield-only variant granting to each creature you control, including the source when it
+     * is a creature (e.g. Xenograft animated by Opalescence).
+     */
     public GrantChosenSubtypeToOwnCreaturesEffect() {
-        this(false, GrantScope.OWN_CREATURES, null);
+        this(false, GrantScope.ALL_OWN_CREATURES, null);
     }
 
     public GrantChosenSubtypeToOwnCreaturesEffect(boolean affectsAllZones) {

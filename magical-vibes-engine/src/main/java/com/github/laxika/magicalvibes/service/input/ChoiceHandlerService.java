@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
 import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementEvent;
+import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -1995,6 +1996,14 @@ public class ChoiceHandlerService {
             }
             case LifeGainEvent gain -> {
                 lifeSupport.completeGainLife(gameData, gain);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            case TokenCreationEvent tokens -> {
+                List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterReplacementOrder(gameData, tokens);
+                StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                if (pendingEntry != null) {
+                    pendingEntry.getCreatedPermanentIds().addAll(createdIds);
+                }
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             }
             case DamageEvent damage -> throw new IllegalStateException("Damage finishes in DamageSupport");
