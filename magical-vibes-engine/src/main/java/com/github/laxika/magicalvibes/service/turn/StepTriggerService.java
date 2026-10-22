@@ -243,6 +243,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
@@ -365,6 +366,7 @@ public class StepTriggerService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final AmountEvaluationService amountEvaluationService;
     private final SagaChapterService sagaChapterService;
+    private final EffectResolutionService effectResolutionService;
 
     public StepTriggerService(DrawService drawService,
                               GameQueryService gameQueryService,
@@ -389,7 +391,8 @@ public class StepTriggerService {
                               GrantedUpkeepEffectSupport grantedUpkeepEffectSupport,
                               @Lazy ETBTokenTargetService etbTokenTargetService,
                               AmountEvaluationService amountEvaluationService,
-                              @Lazy SagaChapterService sagaChapterService) {
+                              @Lazy SagaChapterService sagaChapterService,
+                              @Lazy EffectResolutionService effectResolutionService) {
         this.drawService = drawService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -414,6 +417,7 @@ public class StepTriggerService {
         this.etbTokenTargetService = etbTokenTargetService;
         this.amountEvaluationService = amountEvaluationService;
         this.sagaChapterService = sagaChapterService;
+        this.effectResolutionService = effectResolutionService;
     }
 
     private record GrantedUpkeepSacrifice(AllPermanentsUpkeepSacrificeUnlessPayEffect effect,
@@ -752,15 +756,9 @@ public class StepTriggerService {
                     continue;
                 }
 
-                String echoCost = action.manaCost();
-                if (action.dynamicManaCost() != null) {
-                    Permanent source = gameQueryService.findPermanentById(gameData, action.permanentId());
-                    int amount = amountEvaluationService.evaluate(gameData, action.dynamicManaCost(),
-                            new AmountContext(controllerId, source, null, 0, 0));
-                    echoCost = "{" + Math.max(0, amount) + "}";
-                }
                 ForcedCostOrElseEffect payEchoOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayEchoCost(echoCost, action.handCardCost(), action.cost()),
+                        new PayEchoCost(action.manaCost(), action.handCardCost(), action.cost(),
+                                action.dynamicManaCost()),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true, action.paidEffects());
                 StackEntry entry = new StackEntry(
@@ -1698,6 +1696,7 @@ public class StepTriggerService {
                     perm.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
             eachUpkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
             eachUpkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
+            grantedUpkeepEffectSupport.appendGrantedEachUpkeepEffects(gameData, perm, eachUpkeepEffects);
             if (eachUpkeepEffects == null || eachUpkeepEffects.isEmpty()) return;
 
             for (CardEffect effect : eachUpkeepEffects) {
@@ -1854,14 +1853,23 @@ public class StepTriggerService {
 
         // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED effects
         // These fire during the enchanted permanent's controller's upkeep (e.g. Numbing Dose)
+        // and, for "At the beginning of your upkeep, enchanted permanent's controller ..." (Strangling
+        // Grasp), ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED fires during the Aura
+        // controller's upkeep with the enchanted permanent's controller baked in as the affected player.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
-            List<CardEffect> enchantedControllerUpkeepEffects = perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED);
+            boolean auraControllersUpkeep = !perm.getCard()
+                    .getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED).isEmpty();
+            List<CardEffect> enchantedControllerUpkeepEffects = perm.getCard().getEffects(
+                    auraControllersUpkeep
+                            ? EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED
+                            : EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED);
             if (enchantedControllerUpkeepEffects == null || enchantedControllerUpkeepEffects.isEmpty()) return;
             if (!perm.isAttached()) return;
 
             UUID enchantedPermanentControllerId = gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
             if (enchantedPermanentControllerId == null) return;
-            if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
+            UUID upkeepOwnerId = auraControllersUpkeep ? auraOwnerId : enchantedPermanentControllerId;
+            if (!upkeepOwnerId.equals(activePlayerId)) return;
             Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
             int enchantedPermanentPowerAtTrigger = enchantedPermanent == null
                     ? 0 : gameQueryService.getEffectivePower(gameData, enchantedPermanent);
@@ -3538,9 +3546,6 @@ public class StepTriggerService {
         int damagedPlayers = (int) gameData.combatDamageDealtToPlayersThisTurn.keySet().stream()
                 .filter(gameData.playerIds::contains)
                 .count();
-        if (damagedPlayers <= 0) {
-            return;
-        }
         for (DrawCardsAtNextMainPhase pending : pendingDraws) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -4512,9 +4517,9 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(new DiscardEffect(
                                         discardCount, DiscardRecipient.CONTROLLER))));
                         discardEntry.setNonTargeting(true);
-                        gameData.stack.add(discardEntry);
                         gameLogService.append(gameData,
                                 GameLog.cardThen(pending.followUpSourceCard(), "'s delayed trigger discards cards."));
+                        effectResolutionService.resolveEffects(gameData, discardEntry);
                     }
                 }
             }
@@ -7111,7 +7116,8 @@ public class StepTriggerService {
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
                 List<CardEffect> combatEffects = new ArrayList<>(
-                        gameQueryService.hasLostPrintedAbilities(gameData, perm) ? List.of()
+                        perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)
+                                ? List.of()
                                 : perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
                 combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                         gameData, perm, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));

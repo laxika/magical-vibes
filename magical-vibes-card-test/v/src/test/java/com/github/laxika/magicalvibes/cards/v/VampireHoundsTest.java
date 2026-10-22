@@ -175,6 +175,8 @@ class VampireHoundsTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.END_STEP));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.END_STEP));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);

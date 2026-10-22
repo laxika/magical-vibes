@@ -99,7 +99,8 @@ class VoltaicWhipTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertLife(player1, 19);
-        harness.assertLife(player2, 20);
+        // The unblocked equipped Grizzly Bears deals combat damage equal to its power, 4 with the Whip (CR 510.1a).
+        harness.assertLife(player2, 16);
     }
 
     @Test

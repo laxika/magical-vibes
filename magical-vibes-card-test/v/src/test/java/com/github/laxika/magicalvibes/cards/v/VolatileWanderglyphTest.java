@@ -76,7 +76,6 @@ class VolatileWanderglyphTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         tapAndResolve(wanderglyph);
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);

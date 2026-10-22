@@ -79,7 +79,6 @@ class VitalityHunterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, hunter.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

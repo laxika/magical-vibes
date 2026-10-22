@@ -78,7 +78,6 @@ class VerdurousGearhulkTest extends BaseCardTest {
         harness.passBothPriorities();
         UUID gearhulkId = harness.getPermanentId(player1, "Verdurous Gearhulk");
         harness.handlePermanentChosen(player1, gearhulkId);
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.handleListChoice(player1, "4");
         harness.passBothPriorities();
 

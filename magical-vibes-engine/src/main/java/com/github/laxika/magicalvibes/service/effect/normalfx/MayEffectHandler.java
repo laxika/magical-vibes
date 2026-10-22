@@ -73,10 +73,14 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         CardEffect leadingEffect = e.wrapped() instanceof SequenceEffect leadingSequence && !leadingSequence.steps().isEmpty()
                 ? leadingSequence.steps().getFirst() : e.wrapped();
-        if (leadingEffect instanceof DrawCardEffect
+        boolean drawThenDiscard = e.wrapped() instanceof SequenceEffect drawSequence
+                && drawSequence.steps().stream().anyMatch(com.github.laxika.magicalvibes.model.effect.DiscardEffect.class::isInstance);
+        if (leadingEffect instanceof DrawCardEffect && !drawThenDiscard
                 && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
             // The controller can't draw (e.g. Narset's draw limit), so the "may have you draw" choice
             // can't be carried out and no choice is offered; the "if they do" branch never happens.
+            // A "draw a card, then discard a card" loot is still offered: the discard is a separate
+            // instruction that is followed even though the draw is impossible (CR 608.2c, CR 609.3).
             insertElseEffect(entry, e);
             return;
         }
@@ -200,7 +204,10 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry.getAttackedTargetId());
             case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
             case TARGET_PERMANENT_CONTROLLER -> targetPermanentController(gameData, entry, targetId);
-            case TARGET_SPELL_CONTROLLER -> findTargetSpellControllerId(gameData, targetId);
+            case TARGET_SPELL_CONTROLLER -> {
+                UUID onStack = findTargetSpellControllerId(gameData, targetId);
+                yield onStack != null ? onStack : entry.getCounteredSpellControllerId();
+            }
             case TRIGGERING_PERMANENT_CONTROLLER -> findTriggeringPermanentControllerId(gameData, entry, targetId);
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetId == null
                     ? null
@@ -230,7 +237,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             insertElseEffect(entry, e);
             return;
         }
-        if (optionalAction instanceof DrawCardEffect
+        if (optionalAction instanceof DrawCardEffect && !drawThenDiscard
                 && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
             // The ability's controller is the one who would draw, whoever makes the choice.
             gameData.resolvingMayEffectFromStack = false;

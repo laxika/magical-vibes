@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -32,12 +34,14 @@ public class VizierOfTumblingSands extends Card {
                 )
         ));
 
-        // Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.) — discard cost is intrinsic.
-        // "When you cycle this card, untap target permanent." The reflexive trigger rides on the
-        // cycling ability: its target permanent is chosen at activation, the untap resolves, then the
-        // cycling draw resumes. Targeting is auto-derived from UntapPermanentsEffect's TargetSpec.
+        // Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.) with "When you cycle this card,
+        // untap target permanent." The untap target is chosen at activation and is optional (0 to 1),
+        // so cycling stays available with no legal target; the reflexive trigger then never goes on the
+        // stack, and the trigger resolves above the cycling draw.
         addHandActivatedAbility(new ActivatedAbility(false, "{1}{U}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET), new DrawCardEffect(1)),
-                "Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.)"));
+                List.of(new DrawCardEffect(1)),
+                "Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.)",
+                TargetFilters.permanent(), null, null, null, List.of(), 0, 1).withCyclingTriggerTargets());
+        addEffect(EffectSlot.ON_SELF_CYCLED, new UntapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

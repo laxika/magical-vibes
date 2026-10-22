@@ -32,7 +32,7 @@ class VenomousDragonflyTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Drake Hatchling");
     }
@@ -51,7 +51,7 @@ class VenomousDragonflyTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Drake Hatchling");
     }

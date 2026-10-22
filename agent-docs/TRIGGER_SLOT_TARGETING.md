@@ -745,6 +745,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 |---|---|---|---|
 | "At the beginning of your upkeep, ..." | `UPKEEP_TRIGGERED` | Aura controller's upkeep (aura is on their battlefield) | Call to the Kindred |
 | "At the beginning of enchanted creature's controller's upkeep, ..." | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Enchanted creature's controller is the active player | Necrotic Plague, Soul Bleed, Numbing Dose, Erosion (enchanted land) |
+| "At the beginning of your upkeep, enchanted permanent's controller ..." | `ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED` | Aura controller is the active player; enchanted permanent's controller baked in as `targetId` (`TARGET_PLAYER` recipients) | Strangling Grasp |
 | "At the beginning of enchanted player's upkeep, ..." | `ENCHANTED_PLAYER_UPKEEP_TRIGGERED` | Enchanted player is the active player (curses) | Curse of Oblivion, Curse of the Bloody Tome |
 | "At the beginning of enchanted player's draw step, ..." | `ENCHANTED_PLAYER_DRAW_TRIGGERED` | Enchanted player is the active player (curses) | Curse of Obsession (`MIC`) |
 | "Whenever enchanted opponent draws a card, ..." | `ON_ENCHANTED_PLAYER_DRAWS` | The player attached to this player Aura draws a card | Psychic Possession (`DIS`) |

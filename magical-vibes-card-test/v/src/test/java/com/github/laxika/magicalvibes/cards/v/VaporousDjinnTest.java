@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed(VaporousDjinn.class)
@@ -79,6 +81,7 @@ class VaporousDjinnTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(djinn);
 
+        harness.setHand(player2, List.of());
         advanceTurn(); // player2's turn — still phased out
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(djinn);
 
@@ -106,7 +109,7 @@ class VaporousDjinnTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
 
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(djinn);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
@@ -139,7 +142,7 @@ class VaporousDjinnTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntil(TurnStep.UPKEEP);
     }
 
     private Permanent addDjinn() {

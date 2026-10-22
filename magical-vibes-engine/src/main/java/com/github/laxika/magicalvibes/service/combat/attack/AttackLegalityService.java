@@ -284,7 +284,9 @@ public class AttackLegalityService {
             return false;
         }
         ConditionContext ctx = null;
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+        List<CardEffect> restrictionSources = new ArrayList<>(creature.getCard().getEffects(EffectSlot.STATIC));
+        restrictionSources.addAll(gameQueryService.getGrantedEffects(gameData, creature));
+        for (CardEffect effect : restrictionSources) {
             Condition condition = null;
             if (effect instanceof CantAttackUnlessEffect restriction) {
                 condition = restriction.condition();
@@ -940,7 +942,7 @@ public class AttackLegalityService {
                 }
                 // CR 701.15d: a player goading a creature again creates no additional requirement.
                 if (floatingEffect.effect() instanceof GoadStatusEffect goad && goad.makesGoaded()
-                        && !goadingPlayerIds.add(floatingEffect.controllerId())) {
+                        && !goadingPlayerIds.add(goadingPlayerId(floatingEffect))) {
                     continue;
                 }
                 count[0]++;
@@ -1109,11 +1111,11 @@ public class AttackLegalityService {
 
             boolean canAttackOtherPlayer = validTargetIds.stream()
                     .filter(gameData.playerIds::contains)
-                    .filter(id -> !id.equals(floatingEffect.controllerId()))
+                    .filter(id -> !id.equals(goadingPlayerId(floatingEffect)))
                     .anyMatch(id -> canAttackDefender(gameData, creature, id));
             if (canAttackOtherPlayer
                     && (!gameData.playerIds.contains(targetId)
-                    || targetId.equals(floatingEffect.controllerId()))) {
+                    || targetId.equals(goadingPlayerId(floatingEffect)))) {
                 return true;
             }
         }
@@ -1150,6 +1152,16 @@ public class AttackLegalityService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * The player whose attack requirement a floating effect imposes: the effect's own affected player
+     * when it names one (Vislor Turlough's goad keeps the original controller as the goading player
+     * while its duration tracks the new controller), otherwise the effect's controller.
+     */
+    private UUID goadingPlayerId(FloatingContinuousEffect floatingEffect) {
+        return floatingEffect.affectedPlayerId() != null
+                ? floatingEffect.affectedPlayerId() : floatingEffect.controllerId();
     }
 
     private List<FloatingContinuousEffect> floatingAttackRequirements(GameData gameData) {

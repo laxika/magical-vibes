@@ -28,5 +28,11 @@ public enum TriggerMode {
      * creation, not by a permanent entering, so effects that double or suppress enter triggers
      * (Elesh Norn, Mother of Machines) do not apply.
      */
-    TOKEN_CREATION
+    TOKEN_CREATION,
+    /**
+     * For "whenever one or more creature cards are put into your graveyard from anywhere": cards
+     * arriving from a library are counted by the library-batch slot instead, so a mill event
+     * triggers once with the whole batch rather than once per card.
+     */
+    LIBRARY_ARRIVALS_BATCHED
 }

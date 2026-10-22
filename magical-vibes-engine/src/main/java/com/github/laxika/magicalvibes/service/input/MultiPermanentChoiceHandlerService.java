@@ -95,6 +95,9 @@ public class MultiPermanentChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
 
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
@@ -909,6 +912,7 @@ public class MultiPermanentChoiceHandlerService {
 
         if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets attackTargets) {
             validateAtMostOnePermanentPerController(gameData, attackTargets.pending().sourceCard(), permanentIds);
+            validateOnePermanentPerPlayer(gameData, attackTargets.pending().sourceCard(), permanentIds);
         }
         if (context instanceof MultiPermanentChoiceContext.MadnessConvoke madnessConvoke
                 && !permanentIds.isEmpty()
@@ -1406,6 +1410,23 @@ public class MultiPermanentChoiceHandlerService {
         }
     }
 
+    private void validateOnePermanentPerPlayer(GameData gameData, Card sourceCard, List<UUID> permanentIds) {
+        if (sourceCard == null
+                || sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.ONE_PER_PLAYER) {
+            return;
+        }
+        Set<UUID> controllers = new HashSet<>();
+        for (UUID permanentId : permanentIds) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
+            if (controllerId == null || !controllers.add(controllerId)) {
+                throw new IllegalStateException("Must target exactly one permanent per player");
+            }
+        }
+        if (controllers.size() != gameData.orderedPlayerIds.size()) {
+            throw new IllegalStateException("Must target exactly one permanent per player");
+        }
+    }
+
     private void validateAtMostOneCardPerGraveyard(GameData gameData, Card sourceCard, List<UUID> cardIds) {
         if (sourceCard == null
                 || (sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
@@ -1532,6 +1553,11 @@ public class MultiPermanentChoiceHandlerService {
     private void handleCounterDistribution(
             GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.CounterDistribution context) {
+        if (context.spellCast() != null && context.counterType() == null && permanentIds.size() == 1) {
+            permanentChoiceSpellHandlerService.completeHandCastDistribution(gameData, context.spellCast(),
+                    permanentIds, java.util.Map.of(permanentIds.getFirst(), context.total()));
+            return;
+        }
         ChoiceContext.CounterDistributionAssignment assignment =
                 new ChoiceContext.CounterDistributionAssignment(
                         context.sourceCard(), context.controllerId(), context.effects(),
@@ -3390,7 +3416,10 @@ public class MultiPermanentChoiceHandlerService {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
                 if (entering != null) {
-                    entering.recordDevouredCreature(perm.getCard());
+                    Card devouredSnapshot = perm.getCard().createRuntimeCopyWithNewId();
+                    devouredSnapshot.setSubtypes(new ArrayList<>(
+                            gameQueryService.effectiveCreatureSubtypes(gameData, perm)));
+                    entering.recordDevouredCreature(devouredSnapshot);
                 }
                 devoured++;
             }

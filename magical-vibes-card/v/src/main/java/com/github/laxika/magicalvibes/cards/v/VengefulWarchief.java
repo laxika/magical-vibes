@@ -12,6 +12,6 @@ public class VengefulWarchief extends Card {
     public VengefulWarchief() {
         // Whenever you lose life for the first time each turn, put a +1/+1 counter on this creature.
         addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE,
-                new OncePerTurnTriggerEffect(new PutCountersOnSourceEffect(1, 1, 1)));
+                OncePerTurnTriggerEffect.firstLifeLoss(new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

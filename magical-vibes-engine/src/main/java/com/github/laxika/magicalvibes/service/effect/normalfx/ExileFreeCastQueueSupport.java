@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -241,12 +242,21 @@ public class ExileFreeCastQueueSupport {
             castNextFromQueue(gameData, playerId);
             return;
         }
-        StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
-        Card cardToCast = asCopy
-                && !card.hasType(CardType.INSTANT)
-                && !card.hasType(CardType.SORCERY)
-                ? copySupport.createTokenCopyCard(card)
-                : card;
+        boolean asAdventure = !asCopy && gameData.pendingFreeCastAdventureIds.remove(cardId)
+                && card.getBackFaceCard() != null
+                && card.getCastingOption(AdventureCast.class).isPresent();
+        Card cardToCast;
+        if (asAdventure) {
+            cardToCast = card.createRuntimeCopyWithFace(card.getBackFaceCard());
+            cardToCast.freeze();
+        } else {
+            cardToCast = asCopy
+                    && !card.hasType(CardType.INSTANT)
+                    && !card.hasType(CardType.SORCERY)
+                    ? copySupport.createTokenCopyCard(card)
+                    : card;
+        }
+        StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(cardToCast);
         List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
         ChooseOneEffect modal = spellEffects.stream()
                 .filter(ChooseOneEffect.class::isInstance)
@@ -518,6 +528,9 @@ public class ExileFreeCastQueueSupport {
                                    Card cardToCast, List<CardEffect> spellEffects,
                                    StackEntryType spellType, boolean asCopy, int effectiveXValue) {
         String playerName = gameData.playerIdToName.get(playerId);
+        boolean castWithAdventure = !asCopy && cardToCast != physicalCard
+                && physicalCard.getBackFaceCard() != null
+                && physicalCard.getCastingOption(AdventureCast.class).isPresent();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(physicalCard.getId());
         UUID ownerId = exiledEntry == null ? physicalCard.getOwnerId() : exiledEntry.ownerId();
 
@@ -554,8 +567,11 @@ public class ExileFreeCastQueueSupport {
                 // carried by the target-choice context from here on.
                 gameData.removeFromExile(physicalCard.getId());
             }
-            gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.ExileCastSpellTarget(
+            gameData.interaction.setPermanentChoiceContext(castWithAdventure
+                    ? new PermanentChoiceContext.ExileCastSpellTarget(
+                            cardToCast, playerId, spellEffects, spellType, false, List.of(), 0, false, 0,
+                            false, false, null, null, 0, physicalCard)
+                    : new PermanentChoiceContext.ExileCastSpellTarget(
                             cardToCast, playerId, spellEffects, spellType, asCopy));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + physicalCard.getName() + ".");
@@ -570,6 +586,10 @@ public class ExileFreeCastQueueSupport {
         );
         entry.setCopy(asCopy);
         entry.setCastCopy(asCopy);
+        if (castWithAdventure) {
+            entry.setPhysicalCard(physicalCard);
+            entry.setCastWithAdventure(true);
+        }
         if (!asCopy) {
             entry.setSourceZone(Zone.EXILE);
             entry.setOwnerIdOverride(ownerId);
@@ -895,6 +915,7 @@ public class ExileFreeCastQueueSupport {
         applyPendingFreeCastLifeLosses(gameData);
         gameData.pendingFreeCastManaValueBudget = null;
         gameData.pendingFreeCastLandPlayIds.clear();
+        gameData.pendingFreeCastAdventureIds.clear();
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         putRemainderIntoLibraryBottom(gameData);

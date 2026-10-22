@@ -130,6 +130,7 @@ class VictorysHeraldTest extends BaseCardTest {
     void grantsLastUntilEndOfTurn() {
         Permanent herald = addCreatureReady(player1, new VictorysHerald());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
@@ -141,8 +142,9 @@ class VictorysHeraldTest extends BaseCardTest {
         assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
         assertThat(herald.hasKeyword(Keyword.LIFELINK)).isTrue();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(TurnStep.UNTAP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
         assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();

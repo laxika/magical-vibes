@@ -624,6 +624,17 @@ public class GraveyardTargetingService {
      */
     public void handleAttackGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId) {
+        handleAttackGraveyardTargeting(gameData, controllerId, card, effects, sourcePermanentId,
+                defendingPlayerId, List.of());
+    }
+
+    /**
+     * As {@link #handleAttackGraveyardTargeting(GameData, UUID, Card, List, UUID, UUID)}, recording the
+     * declared attackers on the resulting trigger so an effect can total their power as it resolves.
+     */
+    public void handleAttackGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
+            List<Permanent> attackingPermanentSnapshots) {
         GraveyardSearchScope scope = effects.stream()
                 .map(e -> e.targetSpec().graveyardScope().orElse(null))
                 .filter(java.util.Objects::nonNull)
@@ -639,6 +650,8 @@ public class GraveyardTargetingService {
         GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(effects);
         CardPredicate filter = target == null ? null : target.filter();
         int maximumManaValue = target == null || target.maximumManaValue() == null
+                || target.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures totalPower
+                && totalPower.declaredAttackersOnly()
                 ? Integer.MAX_VALUE
                 : amountEvaluationService.evaluate(gameData, target.maximumManaValue(),
                         new AmountContext(controllerId,
@@ -684,6 +697,7 @@ public class GraveyardTargetingService {
                         0,
                         sourcePermanentId);
                 trigger.setNonTargeting(true);
+                trigger.setAttackingPermanentSnapshots(attackingPermanentSnapshots);
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         "'s attack ability triggers with no graveyard targets."));
@@ -718,6 +732,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        gameData.graveyardTargetOperation.attackingPermanentSnapshots = attackingPermanentSnapshots;
         Permanent attackingSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = attackingSource == null
                 ? null : gameQueryService.getEffectivePower(gameData, attackingSource);

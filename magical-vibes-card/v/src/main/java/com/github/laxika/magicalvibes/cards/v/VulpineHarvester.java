@@ -12,20 +12,13 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-
-import java.util.List;
 
 @CardRegistration(set = "MOC", collectorNumber = "19")
 @CardRegistration(set = "MOC", collectorNumber = "106")
 public class VulpineHarvester extends Card {
 
     public VulpineHarvester() {
-        var phyrexianAttacker = new PermanentAllOfPredicate(List.of(
-                new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN),
-                new PermanentIsAttackingPredicate()));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
                 new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)),
                 ReturnCardFromGraveyardEffect.builder()
@@ -33,7 +26,8 @@ public class VulpineHarvester extends Card {
                         .filter(new CardTypePredicate(CardType.ARTIFACT))
                         .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                         .targetGraveyard(true)
-                        .dynamicMaxManaValue(new TotalPowerOfControlledCreatures(phyrexianAttacker))
+                        .dynamicMaxManaValue(TotalPowerOfControlledCreatures.declaredAttackers(
+                                new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)))
                         .build()));
     }
 }

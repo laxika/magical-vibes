@@ -3,12 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardToSourceAndMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -17,14 +15,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves Voltaic Visionary's source-linked top-card exile and temporary play permission.
+ * Resolves Voltaic Visionary's top-card exile and temporary play permission. The exile does not depend on
+ * the source remaining on the battlefield: an ability resolves using last known information when its
+ * source has left (CR 608.2b).
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ExileTopCardToSourceAndMayPlayThisTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final ExileService exileService;
 
@@ -36,14 +35,6 @@ public class ExileTopCardToSourceAndMayPlayThisTurnEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        Permanent source = sourcePermanentId == null
-                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null) {
-            log.info("Game {} - source permanent no longer exists, source-linked exile fizzles",
-                    gameData.id);
-            return;
-        }
-
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -62,6 +53,6 @@ public class ExileTopCardToSourceAndMayPlayThisTurnEffectHandler implements Norm
                 .text(controllerName + " exiles ").card(topCard)
                 .text(" from the top of their library (may play it this turn).").build());
         log.info("Game {} - {} exiles {} from library top with source {}",
-                gameData.id, controllerName, topCard.getName(), source.getCard().getName());
+                gameData.id, controllerName, topCard.getName(), entry.getCard().getName());
     }
 }

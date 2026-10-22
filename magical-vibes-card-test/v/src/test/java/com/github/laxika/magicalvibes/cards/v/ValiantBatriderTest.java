@@ -81,10 +81,9 @@ class ValiantBatriderTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         dealCombatDamageToPlayer2();
 
-        castDarkRitualWithMana(2);
+        castDarkRitualWithMana(3);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.castFromHand(player2, new DarkRitual(), "{B}");
@@ -130,7 +129,6 @@ class ValiantBatriderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        harness.passBothPriorities();
 
         harness.castFromHand(player2, new DarkRitual(), "{B}");
         harness.passBothPriorities();

@@ -2055,10 +2055,14 @@ public class CombatAttackService {
                             // so it prompts after the first resolves its choice instead of overwriting it.
                             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                                     perm.getCard(), playerId, filteredEffects, null, 0, 0, 0, null, false, null,
-                                    perm.getId()));
+                                    perm.getId(), false,
+                                    attackerIndices.stream().map(battlefield::get)
+                                            .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList()));
                         } else {
                             graveyardTargetingService.handleAttackGraveyardTargeting(
-                                    gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null);
+                                    gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null,
+                                    attackerIndices.stream().map(battlefield::get)
+                                            .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                         }
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
@@ -2970,6 +2974,7 @@ public class CombatAttackService {
                         );
                         anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
                         anyAttackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
+                        anyAttackTrigger.setAttackingPermanentSnapshots(List.of(new Permanent(attacker)));
                         anyAttackTrigger.setTriggeringPermanentControllerId(playerId);
                         anyAttackTrigger.setNonTargeting(true);
                         anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
@@ -4061,10 +4066,16 @@ public class CombatAttackService {
                         && source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(OtherCreaturesMustAttackIfSourceAttacksEffect.class::isInstance));
         if (!sourceAttacks) return;
+        if (declaredAttackerIndices.stream()
+                .anyMatch(attacker -> canOnlyAttackAlone(gameData, battlefield.get(attacker)))) {
+            return;
+        }
         for (int index : attackableIndices) {
+            Permanent other = battlefield.get(index);
             if (!declaredAttackerIndices.contains(index)
-                    && !canOnlyAttackAlone(gameData, battlefield.get(index))) {
-                throw new IllegalStateException(battlefield.get(index).getCard().getName()
+                    && !canOnlyAttackAlone(gameData, other)
+                    && gameQueryService.getCreatureAttackTax(gameData, other) == 0) {
+                throw new IllegalStateException(other.getCard().getName()
                         + " must attack when the source creature attacks");
             }
         }

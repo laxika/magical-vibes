@@ -360,12 +360,15 @@ public class PlanechaseService {
         boolean needsSlotBySlotTargetSelection = card.getSpellTargets().size() > 1
                 || card.getSpellTargets().stream().anyMatch(target -> target.getMaxTargets() > 1
                 || target.getMinTargets() == 0 || target.getDynamicMinTargets() != null);
-        List<CardEffect> multiTargetEffects = needsSlotBySlotTargetSelection
-                ? effects.stream().filter(effect -> card.getEffectTargetIndex(effect) >= 0).toList()
-                : List.of();
+        boolean batchesWholeAbility = needsSlotBySlotTargetSelection
+                && effects.stream().anyMatch(effect -> card.getEffectTargetIndex(effect) >= 0);
+        List<CardEffect> multiTargetEffects = batchesWholeAbility ? effects : List.of();
         boolean multiTargetQueued = false;
 
         for (CardEffect effect : effects) {
+            if (batchesWholeAbility && card.getEffectTargetIndex(effect) < 0) {
+                continue;
+            }
             if (needsSlotBySlotTargetSelection && card.getEffectTargetIndex(effect) >= 0) {
                 if (isStandaloneSingleTargetEffect(card, effect, effects)) {
                     int targetGroupIndex = card.getEffectTargetIndex(effect);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ExilePlayDuration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class ExiledCardMayPlayChoiceInteractionHandler
     private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<PendingInteraction.ExiledCardMayPlayChoice> handledType() {
@@ -60,6 +63,14 @@ public class ExiledCardMayPlayChoiceInteractionHandler
             throw new IllegalStateException("Chosen card is no longer exiled");
         }
 
+        if (interaction.withoutPayingManaCost()) {
+            if (chosen.card().hasType(CardType.LAND)) {
+                gameData.pendingFreeCastLandPlayIds.add(chosenId);
+            }
+            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, List.of(chosenId));
+            return;
+        }
+
         gameData.interaction.clearAwaitingInput();
         gameData.exilePlayPermissions.put(chosenId, interaction.playerId());
         String durationDescription;
@@ -82,9 +93,6 @@ public class ExiledCardMayPlayChoiceInteractionHandler
             } else {
                 gameData.exilePlayAnyManaType.add(chosenId);
             }
-        }
-        if (interaction.withoutPayingManaCost()) {
-            gameData.exilePlayWithoutPayingManaCost.add(chosenId);
         }
         gameLogService.append(gameData, GameLog.cardThen(chosen.card(), durationDescription));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

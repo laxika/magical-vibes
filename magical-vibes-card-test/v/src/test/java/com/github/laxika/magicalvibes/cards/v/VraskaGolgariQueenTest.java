@@ -156,6 +156,7 @@ class VraskaGolgariQueenTest extends BaseCardTest {
     @Test
     void plusTwoWithNoOtherPermanentDoesNotGainLifeOrDraw() {
         Permanent vraska = addReadyVraska(5);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         int lifeBefore = gd.getLife(player1.getId());
 

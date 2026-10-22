@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -106,12 +108,18 @@ class VillageElderTest extends BaseCardTest {
         assertThat(mantis.getRegenerationShield()).isZero();
         harness.passBothPriorities();
 
-        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, mantis)).isFalse();
+        AtomicBoolean firstDestroyed = new AtomicBoolean(true);
+        harness.inMutationScope(() -> firstDestroyed.set(
+                harness.getPermanentRemovalService().tryDestroyPermanent(gd, mantis)));
+        assertThat(firstDestroyed).isFalse();
         harness.assertOnBattlefield(player1, "Giant Mantis");
         assertThat(mantis.isTapped()).isTrue();
         assertThat(mantis.getRegenerationShield()).isZero();
 
-        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, mantis)).isTrue();
+        AtomicBoolean secondDestroyed = new AtomicBoolean(false);
+        harness.inMutationScope(() -> secondDestroyed.set(
+                harness.getPermanentRemovalService().tryDestroyPermanent(gd, mantis)));
+        assertThat(secondDestroyed).isTrue();
         harness.assertInGraveyard(player1, "Giant Mantis");
     }
 

@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.r.RummagingGoblin;
 import com.github.laxika.magicalvibes.cards.t.TezzeretArtificeMaster;
 import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +27,7 @@ class ViviensJaguarTest extends BaseCardTest {
     void returnsToHandWithVivienPlaneswalker() {
         ViviensJaguar jaguar = new ViviensJaguar();
         harness.setGraveyard(player1, List.of(jaguar));
-        harness.addToBattlefield(player1, new VivienReid());
+        addVivien(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -64,7 +67,7 @@ class ViviensJaguarTest extends BaseCardTest {
     @DisplayName("An opponent's Vivien does not permit activation")
     void cannotActivateWithOpponentsVivien() {
         harness.setGraveyard(player1, List.of(new ViviensJaguar()));
-        harness.addToBattlefield(player2, new VivienReid());
+        addVivien(player2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -79,7 +82,7 @@ class ViviensJaguarTest extends BaseCardTest {
         ViviensJaguar first = new ViviensJaguar();
         ViviensJaguar second = new ViviensJaguar();
         harness.setGraveyard(player1, List.of(first, second));
-        harness.addToBattlefield(player1, new VivienReid());
+        addVivien(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -94,7 +97,7 @@ class ViviensJaguarTest extends BaseCardTest {
     @DisplayName("The ability still resolves after Vivien leaves the battlefield")
     void returnsAfterVivienLeaves() {
         harness.setGraveyard(player1, List.of(new ViviensJaguar()));
-        var vivien = harness.addToBattlefieldAndReturn(player1, new VivienReid());
+        var vivien = addVivien(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateGraveyardAbility(player1, 0);
@@ -116,7 +119,7 @@ class ViviensJaguarTest extends BaseCardTest {
     @DisplayName("The green mana requirement cannot be paid entirely with colorless mana")
     void cannotActivateWithoutGreenMana() {
         harness.setGraveyard(player1, List.of(new ViviensJaguar()));
-        harness.addToBattlefield(player1, new VivienReid());
+        addVivien(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
@@ -141,7 +144,7 @@ class ViviensJaguarTest extends BaseCardTest {
     @CardUsed({ViviensJaguar.class, VivienReid.class, RummagingGoblin.class, SnappingDrake.class})
     void olderActivationDoesNotReturnRediscardedJaguar() {
         addCreatureReady(player1, new RummagingGoblin());
-        harness.addToBattlefield(player1, new VivienReid());
+        addVivien(player1);
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(new ViviensJaguar()));
         harness.setLibrary(player1, List.of(new SnappingDrake()));
@@ -164,5 +167,11 @@ class ViviensJaguarTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Vivien's Jaguar");
         harness.assertNotInHand(player1, "Vivien's Jaguar");
+    }
+
+    private Permanent addVivien(Player player) {
+        Permanent vivien = harness.addToBattlefieldAndReturn(player, new VivienReid());
+        vivien.setCounterCount(CounterType.LOYALTY, vivien.getCard().getLoyalty());
+        return vivien;
     }
 }

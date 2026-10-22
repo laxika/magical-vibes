@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
@@ -22,7 +23,7 @@ public class VoraciousHydra extends Card {
     public VoraciousHydra() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Double the number of +1/+1 counters on this creature",
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
@@ -31,6 +32,6 @@ public class VoraciousHydra extends Card {
                         "This creature fights target creature you don't control",
                         new EnteringCreatureFightsTargetCreatureEffect(),
                         TargetFilters.creatureAnOpponentControls())
-        )));
+        ))));
     }
 }

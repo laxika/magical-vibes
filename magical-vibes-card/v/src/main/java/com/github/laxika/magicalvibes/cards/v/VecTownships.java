@@ -25,13 +25,13 @@ public class VecTownships extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SkipNextUntapEffect(TapUntapScope.SELF), new AwardManaEffect(ManaColor.GREEN)),
+                List.of(new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true), new AwardManaEffect(ManaColor.GREEN)),
                 "{T}: Add {G}. Vec Townships doesn't untap during your next untap step."
         ));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SkipNextUntapEffect(TapUntapScope.SELF), new AwardManaEffect(ManaColor.WHITE)),
+                List.of(new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true), new AwardManaEffect(ManaColor.WHITE)),
                 "{T}: Add {W}. Vec Townships doesn't untap during your next untap step."
         ));
     }

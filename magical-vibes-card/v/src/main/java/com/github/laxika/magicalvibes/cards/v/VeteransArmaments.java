@@ -19,6 +19,8 @@ public class VeteransArmaments extends Card {
     public VeteransArmaments() {
         // Equipped creature has "Whenever this creature attacks or blocks, it gets +1/+1 until end
         // of turn for each attacking creature." Counts every attacking creature (any controller).
+        // The granted ability belongs to the equipped creature, so its controller controls the trigger.
+        setAttackTriggerGrantedByEquipment(true);
         PermanentCount attackingCreatures = new PermanentCount(
                 new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
         addEffect(EffectSlot.ON_ATTACK,

@@ -204,6 +204,11 @@ public class AsEntersInteractionService {
                             || !gameQueryService.isCreature(gameData, permanent)) {
                         continue;
                     }
+                    if (permanent.getOriginalCard().getMorphCost() != null) {
+                        // A morph creature that is copying something (Vesuvan Shapeshifter) goes back to its own
+                        // card so the face-down creature can still be turned up with its own morph cost.
+                        permanent.setCard(permanent.getOriginalCard());
+                    }
                     permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
                 }
             }

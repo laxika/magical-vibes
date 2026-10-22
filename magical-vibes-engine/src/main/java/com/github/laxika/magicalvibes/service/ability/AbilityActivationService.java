@@ -1377,6 +1377,9 @@ public class AbilityActivationService {
         ActivatedAbility ability = abilities.get(idx);
 
         if (ability.getDescription() != null && ability.getDescription().startsWith("Scavenge ")) {
+            if (xValue != 0) {
+                throw new IllegalStateException("Scavenge can't be activated with a nonzero X");
+            }
             Integer sourcePower = gameQueryService.getEffectiveCardPower(gameData, card);
             List<CardEffect> scavengedEffects = ability.getEffects().stream().map(effect -> {
                 if (effect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counter) {
@@ -2347,10 +2350,14 @@ public class AbilityActivationService {
                     : 0;
         int activationCostModifier = getHandAbilityActivationCostModifier(
                 gameData, playerId, card, ability, effectiveXValue, -cyclingReduction);
+        ManaPool handManaPool = gameData.playerManaPools.get(playerId);
+        int handTreasureManaBefore = handManaPool.getTreasureManaTotal();
         if (abilityCost != null || activationCostModifier > 0) {
             payManaCostForSourceCard(gameData, playerId, card, abilityCost == null ? "{0}" : abilityCost, effectiveXValue,
                     false, false, activationCostModifier);
         }
+        gameData.abilityActivationUsedTreasureMana.put(card.getId(),
+                handTreasureManaBefore > handManaPool.getTreasureManaTotal());
 
         if (payLifeCost != null) {
             int amount = payLifeCost.effectiveAmount(gameData.getLife(playerId));
@@ -2607,6 +2614,8 @@ public class AbilityActivationService {
                     gameData, playerId, stackEntry, ability, null, playerId, List.of());
             triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
                     gameData, playerId, stackEntry, ability, null, playerId, List.of());
+            triggerCollectionService.checkOpponentActivatesAbilityTriggers(
+                    gameData, playerId, new Permanent(card), ability, playerId, List.of());
         }
         if (discarded) {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
@@ -2619,6 +2628,10 @@ public class AbilityActivationService {
                     triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
                 }
             }
+        }
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
         }
 
         gameLogService.append(gameData, GameLog.textCardText(
@@ -3950,6 +3963,8 @@ public class AbilityActivationService {
                                          UUID putExiledCardIntoGraveyardCardId,
                                          List<UUID> putBottomLibraryCardIds) {
         int effectiveXValue = xValue != null ? xValue : 0;
+        gameData.activationLifePaid = 0;
+        gameData.trackingActivationLifePaid = true;
 
         UUID playerId = player.getId();
         Permanent permanent = preResolvedSource != null
@@ -5747,8 +5762,8 @@ public class AbilityActivationService {
     }
 
     private void recordTappedCostPermanent(CardEffect costEffect, Permanent source, UUID chosenPermanentId) {
-        if (costEffect instanceof TapCreatureCost tapCost
-                && tapCost.trackTappedCreatureForSourceAbility()) {
+        if (costEffect instanceof TapCreatureCost tapCost && tapCost.trackTappedCreatureForSourceAbility()
+                || costEffect instanceof TapMultiplePermanentsCost) {
             source.recordTappedPermanentForAbility(chosenPermanentId);
         }
     }
@@ -10255,6 +10270,12 @@ public class AbilityActivationService {
 
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(permanent.getId());
         int currentCount = perAbilityCounts != null ? perAbilityCounts.getOrDefault(abilityIndex, 0) : 0;
+        if (ability.getEffects().stream().anyMatch(
+                com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class::isInstance)) {
+            // "Ignore this effect" is granted per player (Volrath's Curse), so a new controller of the
+            // enchanted creature isn't limited by what the previous controller already did this turn.
+            currentCount = permanent.isAuraEffectsIgnoredFor(playerId) ? currentCount : 0;
+        }
 
         if (ability.getMaxActivationsPerTurnAmount() != null) {
             // Cap recomputed from the current board at every activation (Withering Wisps).

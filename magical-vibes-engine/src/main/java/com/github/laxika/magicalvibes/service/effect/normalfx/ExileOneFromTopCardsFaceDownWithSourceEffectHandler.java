@@ -49,7 +49,12 @@ public class ExileOneFromTopCardsFaceDownWithSourceEffectHandler implements Norm
         List<Card> topCards = result.topCards();
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (topCards.size() == 1) {
-            exileService.exileCardFaceDown(gameData, controllerId, topCards.getFirst(), sourcePermanentId);
+            Card exiled = topCards.getFirst();
+            exileService.exileCardFaceDown(gameData, controllerId, exiled, sourcePermanentId);
+            if (exileEffect.castPermissionFilter() != null) {
+                gameData.exilePlayPermissions.put(exiled.getId(), controllerId);
+                gameData.exilePlayPermissionSpellFilters.put(exiled.getId(), exileEffect.castPermissionFilter());
+            }
             gameLogService.append(gameData, GameLog.text(
                     result.playerName() + " exiles a card face down with " + entry.getCard().getName() + "."));
             return;
@@ -68,8 +73,9 @@ public class ExileOneFromTopCardsFaceDownWithSourceEffectHandler implements Norm
                                 ? LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
                                 : LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM)
                         .sourcePermanentId(sourcePermanentId)
-                        .grantExilePlayPermission(false)
+                        .grantExilePlayPermission(exileEffect.castPermissionFilter() != null)
                         .allowAnyManaType(false)
+                        .exilePlayPermissionFilter(exileEffect.castPermissionFilter())
                         .build(),
                 prompt,
                 false));

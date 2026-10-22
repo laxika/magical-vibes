@@ -71,6 +71,10 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
         if (chosenCardIds == null) {
             chosenCardIds = List.of();
         }
+        PendingInteraction.DuplicateManaValueRevealContext duplicateContext = interaction.duplicateManaValueRevealContext();
+        if (duplicateContext != null && chosenCardIds.size() > duplicateContext.maxCount()) {
+            throw new IllegalStateException("Can reveal at most " + duplicateContext.maxCount() + " cards");
+        }
         Set<UUID> uniqueIds = new HashSet<>();
         for (UUID id : chosenCardIds) {
             if (!interaction.validCardIds().contains(id)) {

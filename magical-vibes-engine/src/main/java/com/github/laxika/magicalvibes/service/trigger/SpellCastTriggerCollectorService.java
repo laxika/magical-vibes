@@ -1807,7 +1807,7 @@ public class SpellCastTriggerCollectorService {
                 return false;
             }
         }
-        match.gameData().stack.add(new StackEntry(
+        StackEntry copyTrigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -1815,7 +1815,18 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(new CreateTokenCopyOfTargetedSpellPermanentEffect(
                         new StackEntry(spellEntry), trigger.copyEffect()))),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        List<UUID> copiedTargetIds = new ArrayList<>(spellEntry.getDeclaredTargetIds());
+        if (spellEntry.getTargetId() != null) {
+            copiedTargetIds.add(spellEntry.getTargetId());
+        }
+        for (UUID targetId : copiedTargetIds) {
+            Permanent target = gameQueryService.findPermanentById(match.gameData(), targetId);
+            if (target != null) {
+                copyTrigger.rememberLastKnownPermanentCard(targetId, target.getCard());
+            }
+        }
+        match.gameData().stack.add(copyTrigger);
         return true;
     }
 
@@ -3554,6 +3565,11 @@ public class SpellCastTriggerCollectorService {
         if (effect instanceof TriggeringSpellManaValueEffect manaValueAware) {
             return manaValueAware.snapshotTriggeringSpellManaValue(
                     spellSnapshot.getSpellManaValue());
+        }
+        if (effect instanceof DrawCardEffect draw && draw.amount() instanceof TriggeringSpellTargetCount targetCount) {
+            return new DrawCardEffect(
+                    new Fixed(countMatchingSpellTargets(gameData, spellSnapshot, targetCount, sourceControllerId)),
+                    draw.onlyIfSacrificed(), draw.castTimeXValue(), draw.rememberAmount());
         }
         if (effect instanceof PutCountersOnSelfEffect putCounters
                 && putCounters.amount() instanceof TriggeringSpellTargetCount targetCount) {

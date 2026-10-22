@@ -38,7 +38,9 @@ public class VillainousSyndication extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        // "When the fourth plan counter is put on this enchantment" is qualified by the counter placement
+        // itself, so the threshold is checked only when the counter is put, not again on resolution.
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(4, CounterType.PLAN),
                 SacrificeSelfThenEffect.reflexive(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

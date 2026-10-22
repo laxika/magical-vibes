@@ -51,6 +51,7 @@ class ValorsFlagshipTest extends BaseCardTest {
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
         harness.handlePermanentChosen(player1, pilots.get(0).getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();

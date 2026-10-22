@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOneFromTopCardsFaceDownWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
@@ -25,9 +24,6 @@ public class VivienChampionOfTheWilds extends Card {
     public VivienChampionOfTheWilds() {
         addEffect(EffectSlot.STATIC,
                 new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE)));
-        addEffect(EffectSlot.STATIC,
-                new AllowCastFromCardsExiledWithSourceEffect(
-                        false, new CardTypePredicate(CardType.CREATURE), false, false, 0));
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,
@@ -40,7 +36,7 @@ public class VivienChampionOfTheWilds extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new ExileOneFromTopCardsFaceDownWithSourceEffect(3)),
+                List.of(new ExileOneFromTopCardsFaceDownWithSourceEffect(3, false, new CardTypePredicate(CardType.CREATURE))),
                 "−2: Look at the top three cards of your library. Exile one face down and put the rest "
                         + "on the bottom of your library in any order. For as long as it remains exiled, "
                         + "you may cast it if it's a creature spell."));

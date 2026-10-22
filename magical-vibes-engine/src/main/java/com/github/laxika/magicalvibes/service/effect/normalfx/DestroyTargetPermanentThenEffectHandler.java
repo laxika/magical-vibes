@@ -78,7 +78,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                         gameData, target, new PermanentIsLandPredicate());
         int statValue = switch (e.stat()) {
             case NONE -> 0;
-            case MANA_VALUE -> target.getCard().getManaValue();
+            case MANA_VALUE -> gameQueryService.getPermanentManaValue(target);
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
             case TOTAL_COUNTERS -> target.getTotalCounterCount();
@@ -102,7 +102,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             statValue = switch (e.stat()) {
                 case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
                 case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
-                case MANA_VALUE -> target.getCard().getManaValue();
+                case MANA_VALUE -> gameQueryService.getPermanentManaValue(target);
                 default -> statValue;
             };
         }

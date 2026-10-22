@@ -75,10 +75,13 @@ class ViashinoBladescoutTest extends BaseCardTest {
         addBladescoutMana();
 
         harness.castCreature(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         harness.assertOnBattlefield(player1, "Viashino Bladescout");
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
     }
 

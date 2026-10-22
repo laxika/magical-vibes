@@ -1969,6 +1969,8 @@ public class GraveyardChoiceHandlerService {
         Integer pendingTriggeringPermanentPowerAtTrigger =
                 gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
         UUID pendingTriggeringPermanentId = gameData.graveyardTargetOperation.triggeringPermanentId;
+        List<Permanent> pendingAttackingPermanentSnapshots =
+                gameData.graveyardTargetOperation.attackingPermanentSnapshots;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
         UUID pendingSpellCounterTargetId = gameData.graveyardTargetOperation.spellCounterTargetId;
         List<UUID> pendingPermanentTargetIds = gameData.graveyardTargetOperation.permanentTargetIds;
@@ -2022,6 +2024,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger = false;
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = null;
         gameData.graveyardTargetOperation.triggeringPermanentId = null;
+        gameData.graveyardTargetOperation.attackingPermanentSnapshots = List.of();
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
         gameData.graveyardTargetOperation.permanentTargetIds = null;
@@ -2166,6 +2169,7 @@ public class GraveyardChoiceHandlerService {
                 triggeredEntry.setAttackedTargetId(pendingAttackedTargetId);
             }
             triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
+            triggeredEntry.setAttackingPermanentSnapshots(pendingAttackingPermanentSnapshots);
             if (pendingCard != null && pendingEffects.stream().anyMatch(effect ->
                     effect instanceof ReturnCardFromGraveyardEffect returnEffect
                             && returnEffect.exileSourceFromGraveyard())) {

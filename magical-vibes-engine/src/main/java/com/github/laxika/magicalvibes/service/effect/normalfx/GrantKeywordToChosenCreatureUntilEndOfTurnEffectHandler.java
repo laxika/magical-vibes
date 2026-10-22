@@ -44,7 +44,7 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
         var e = (GrantKeywordToChosenCreatureUntilEndOfTurnEffect) effect;
         UUID chosenCreatureId = e.chosenCreatureId() != null ? e.chosenCreatureId() : entry.getChosenPermanentId();
         if (chosenCreatureId == null) {
-            if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+            if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY || e.requiresChosenCreature()) {
                 return;
             }
             List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of());

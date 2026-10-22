@@ -61,7 +61,8 @@ class VenomcrawlerTest extends BaseCardTest {
 
         harness.runStateBasedActions();
         assertThat(gd.stack).hasSize(4);
-        for (int i = 0; i < 4; i++) {
+        // The first pass only answers the trigger-ordering prompt for the simultaneous triggers.
+        for (int i = 0; i < 5 && !gd.stack.isEmpty(); i++) {
             harness.passBothPriorities();
         }
 

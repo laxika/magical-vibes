@@ -25,6 +25,7 @@ class VekoDeathsDoorkeeperTest extends BaseCardTest {
     void returnsPerpetuallyModifiedCreatureCardAndAllowsAlternateCast() {
         Permanent veko = addReadyVeko();
         harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         GrizzlyBears target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
 
@@ -39,6 +40,7 @@ class VekoDeathsDoorkeeperTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

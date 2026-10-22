@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
 import com.github.laxika.magicalvibes.cards.w.WolfirAvenger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -129,10 +130,11 @@ class VisitorFromPlanetQTest extends BaseCardTest {
 
     @Test
     @CardUsed(NarsetParterOfVeils.class)
-    @DisplayName("A prevented draw does not cause a discard")
-    void doesNotDiscardWhenDrawIsPrevented() {
+    @DisplayName("A prevented draw does not stop the discard, which is a separate instruction (CR 608.2c, CR 609.3)")
+    void discardStillHappensWhenDrawIsPrevented() {
         harness.addToBattlefield(player1, owned(new VisitorFromPlanetQ(), player1));
-        harness.addToBattlefield(player2, owned(new NarsetParterOfVeils(), player2));
+        Permanent narset = harness.addToBattlefieldAndReturn(player2, owned(new NarsetParterOfVeils(), player2));
+        narset.setCounterCount(CounterType.LOYALTY, 5);
         Card firstDraw = owned(new Forest(), player1);
         Card preventedDraw = owned(new Forest(), player1);
         Card kept = owned(new GrizzlyBears(), player1);
@@ -146,10 +148,13 @@ class VisitorFromPlanetQTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(firstDraw));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, firstDraw);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstDraw);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(preventedDraw);
     }
 

@@ -17,6 +17,6 @@ public class VincentVengefulAtoner extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null, new PutCountersOnSourceEffect(1, 1, 1), false, true));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new ConditionalEffect(new SourcePowerAtLeast(7), new DealDamageToEachOtherOpponentEffect()));
+                ConditionalEffect.unless(new SourcePowerAtLeast(7), new DealDamageToEachOtherOpponentEffect()));
     }
 }

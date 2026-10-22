@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -1451,7 +1452,8 @@ public class MayCastHandlerService {
         // cost even when the mana cost is not paid (CR 601.2f), and it must be paid (CR 601.2h). This path can't take that
         // payment, so the card stays where it is rather than being cast with the cost skipped.
         if (cardToPlay.getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(SacrificePermanentOrDiscardCardCost.class::isInstance)) {
+                .anyMatch(effect -> effect instanceof SacrificePermanentOrDiscardCardCost
+                        || effect instanceof DiscardCardTypeCost)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                     " can't be cast without paying its additional cost."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2985,6 +2987,28 @@ public class MayCastHandlerService {
                         new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.CounterDistribution(
                                 card, playerId, spellEffects, null, distribution.counterType(), total, spellCast),
                         "Choose creatures for " + card.getName() + ".");
+                return;
+            }
+            boolean choosesDividedDamage = spellEffects.stream()
+                    .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
+                            && divided.mode() == com.github.laxika.magicalvibes.model.effect.DivisionMode.CHOSEN
+                            && !divided.etbAssignments());
+            int dividedTotal = choosesDividedDamage
+                    ? dealDividedDamageSupport.damageAssignedToSingleTarget(
+                            gameData, spellEffects, playerId, xValue, castForMadnessCost)
+                    : 0;
+            if (dividedTotal > 0) {
+                List<UUID> validPlayers = validTargets.stream().filter(gameData.playerIds::contains).toList();
+                List<UUID> validPermanents = validTargets.stream()
+                        .filter(id -> !gameData.playerIds.contains(id))
+                        .toList();
+                int maxTargets = Math.min(dividedTotal, validTargets.size());
+                playerInputService.beginMultiPermanentOrPlayerChoice(gameData, playerId, validPermanents,
+                        validPlayers, maxTargets,
+                        new MultiPermanentChoiceContext.CounterDistribution(
+                                card, playerId, spellEffects, null, null, dividedTotal, spellCast),
+                        "Choose up to " + maxTargets + " targets to divide " + dividedTotal + " damage among for "
+                                + card.getName() + ".");
                 return;
             }
             gameData.interaction.setPermanentChoiceContext(spellCast);

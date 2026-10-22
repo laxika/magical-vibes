@@ -78,8 +78,6 @@ class ValkiGodOfLiesTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, 1);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent tibalt = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(gd.emblems).hasSize(1);
@@ -121,8 +119,9 @@ class ValkiGodOfLiesTest extends BaseCardTest {
 
     @Test
     void tibaltMinusThreeAllowsCastingTheExiledCreatureAfterTibaltLeaves() {
-        Permanent tibalt = harness.addToBattlefieldAndReturn(player1, new TibaltCosmicImpostor());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MaskedVandal());
+        castTibaltFromHand();
+        Permanent tibalt = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
@@ -138,7 +137,8 @@ class ValkiGodOfLiesTest extends BaseCardTest {
 
     @Test
     void tibaltUltimateAllowsCastingCardsFromBothGraveyardsAfterHeDies() {
-        Permanent tibalt = harness.addToBattlefieldAndReturn(player1, new TibaltCosmicImpostor());
+        castTibaltFromHand();
+        Permanent tibalt = gd.playerBattlefields.get(player1.getId()).getFirst();
         tibalt.setCounterCount(CounterType.LOYALTY, 8);
         MaskedVandal ownCard = new MaskedVandal();
         MaskedVandal opponentCard = new MaskedVandal();
@@ -251,4 +251,13 @@ class ValkiGodOfLiesTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
+    private void castTibaltFromHand() {
+        harness.setHand(player1, List.of(new ValkiGodOfLies()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+    }
 }

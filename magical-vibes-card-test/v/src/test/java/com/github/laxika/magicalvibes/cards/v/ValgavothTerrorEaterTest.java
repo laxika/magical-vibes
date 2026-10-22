@@ -113,6 +113,7 @@ class ValgavothTerrorEaterTest extends BaseCardTest {
     void controlledExiledCreatureIsNotExiledAgainWhenItDies() {
         Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothTerrorEater());
         Card bears = new GrizzlyBears();
+        bears.setOwnerId(player2.getId());
         gd.addToExile(player2.getId(), bears, valgavoth.getId());
         prepareMainPhase(player1);
         harness.castFromExile(player1, bears.getId());

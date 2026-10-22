@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,7 +31,7 @@ public class VibraniumMiningMech extends Card {
             0,
             null,
             null,
-            List.of(),
+            List.of(CardSubtype.VIBRANIUM),
             Set.of(Keyword.INDESTRUCTIBLE),
             Set.of(),
             false,

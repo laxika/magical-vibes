@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -54,6 +54,10 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
         gameData.rerunCurrentEffectAfterInteraction = false;
         StackEntry copyEntry = new StackEntry(entry.getCard(), entry.getControllerId());
         copyEntry.setTargetId(chosenId);
+        Card lastKnownCard = entry.lastKnownPermanentCard(chosenId);
+        if (lastKnownCard != null) {
+            copyEntry.rememberLastKnownPermanentCard(chosenId, lastKnownCard);
+        }
         tokenCopyHandler.resolve(gameData, copyEntry, copyEffect.copyEffect());
     }
 
@@ -67,14 +71,17 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
         return live != null ? live : spellSnapshot;
     }
 
+    /**
+     * The spell's permanent targets that can still be copied. The trigger's condition was judged when the
+     * spell was cast, so a target that changed control or left the battlefield is still copied, using its
+     * last known card (CR 608.2h).
+     */
     private List<UUID> validTargetIds(GameData gameData, StackEntry entry, StackEntry spellSnapshot) {
         List<UUID> targetIds = permanentTargetIds(gameData, spellSnapshot);
         List<UUID> validIds = new ArrayList<>();
         for (UUID targetId : targetIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
-            if (permanent != null
-                    && !targetId.equals(entry.getSourcePermanentId())
-                    && entry.getControllerId().equals(gameData.findControllerOf(permanent))) {
+            if (gameQueryService.findPermanentById(gameData, targetId) != null
+                    || entry.lastKnownPermanentCard(targetId) != null) {
                 validIds.add(targetId);
             }
         }

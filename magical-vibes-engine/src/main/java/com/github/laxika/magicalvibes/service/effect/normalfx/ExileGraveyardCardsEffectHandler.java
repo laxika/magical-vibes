@@ -454,6 +454,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveAllGraveyards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect effect) {
         int[] totalExiled = {0};
+        UUID sourcePermanentId = effect.trackWithSource()
+                && entry.getSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null
+                ? entry.getSourcePermanentId() : null;
+        List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = effect.trackWithSource()
+                ? persistentExileCastPermissions(entry) : List.of();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         gameData.runAsSingleCardExileBatch(() -> {
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -472,7 +478,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 }
                 if (toExile.isEmpty()) continue;
                 for (Card card : toExile) {
-                    exileService.exileCard(gameData, playerId, card);
+                    if (sourcePermanentId == null) {
+                        exileService.exileCard(gameData, playerId, card);
+                    } else {
+                        exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+                    }
+                    grantPersistentExileCastPermission(gameData, card, playerId,
+                            entry.getControllerId(), persistentPermissions);
                     totalExiled[0]++;
                 }
                 graveyard.removeAll(toExile);

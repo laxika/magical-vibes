@@ -30,6 +30,6 @@ public class VisionQuest extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new SpellXAtLeast(4),
-                new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.HASTE, null)));
+                new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.HASTE, null, true)));
     }
 }

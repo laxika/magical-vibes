@@ -135,9 +135,9 @@ public class VerdantMasteryLandChoiceInteractionHandler
         List<Permanent> batch = new ArrayList<>();
         for (Card card : cards) {
             Permanent permanent = new Permanent(card);
+            permanent.tap();
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, enterTappedTypes, batch);
-            permanent.tap();
             batch.add(permanent);
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(
                     card, gameData.playerIdToName.get(controllerId)));
@@ -145,6 +145,9 @@ public class VerdantMasteryLandChoiceInteractionHandler
                 permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
                 permanent.setSummoningSick(false);
             }
+        }
+        for (Card card : cards) {
+            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, null, false);
         }
     }
 }

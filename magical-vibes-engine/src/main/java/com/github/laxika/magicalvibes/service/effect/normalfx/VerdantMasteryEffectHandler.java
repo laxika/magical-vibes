@@ -66,7 +66,8 @@ public class VerdantMasteryEffectHandler implements NormalEffectHandlerBean {
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.VerdantMasterySearchChoice(
-                        controllerId, searchableCards, verdantMastery.alternateCost()));
+                        controllerId, searchableCards, verdantMastery.alternateCost(),
+                        librarySearchSupport.oppositionAgentControllerId(gameData, controllerId)));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId)
                         + " searches their library for up to four basic land cards."));

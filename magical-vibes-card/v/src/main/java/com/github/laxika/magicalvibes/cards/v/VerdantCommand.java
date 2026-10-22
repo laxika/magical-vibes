@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsLoyaltyAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -36,6 +37,7 @@ public class VerdantCommand extends Card {
         var loyaltyAbility = new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.ACTIVATED_ABILITY)),
+                        new StackEntryIsLoyaltyAbilityPredicate(),
                         new StackEntryCardTypeInPredicate(Set.of(CardType.PLANESWALKER)))),
                 "Target must be a loyalty ability of a planeswalker.");
         var squirrels = new CreateTokenEffect(

@@ -60,6 +60,14 @@ public class VhalEagerScholar extends Card {
                 "{T}: Draw a card, then discard a card. Put a study counter on Vhal, Eager Scholar."));
     }
 
+    public static void addSpecializedLootAbility(Card card) {
+        card.addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                "{T}: Draw a card, then discard a card."));
+    }
+
     private void addSpecializeAbility(CardColor color, CardSubtype basicLandType) {
         CardPredicate discardFilter = new CardAnyOfPredicate(List.of(
                 new CardColorPredicate(color), new CardSubtypePredicate(basicLandType)));
@@ -79,7 +87,7 @@ public class VhalEagerScholar extends Card {
         return switch (color) {
             case WHITE -> DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                     CounterType.PLUS_ONE_PLUS_ONE, new EventValue(), null);
-            case BLUE -> LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new EventValue());
+            case BLUE -> LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new EventValue(), 1);
             case BLACK -> new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                     new CardTypePredicate(CardType.CREATURE), 1, false, false,
                     null, 0, new EventValue(), null, null, null, 0,

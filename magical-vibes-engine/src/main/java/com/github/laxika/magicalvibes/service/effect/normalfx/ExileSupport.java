@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -128,12 +130,50 @@ public class ExileSupport {
                 }
             }
 
+            grantPersistentCastPermission(gameData, exiledCard, sourceCard, sourcePermanentId);
+
             gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", sourceCard, "."));
             log.info("Game {} - {} exiles {} (tracked with source)",
                     gameData.id, sourceCard.getName(), exiledCard.getName());
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
         return true;
+    }
+
+    /**
+     * Gives a card just exiled with {@code sourceCard}'s ability the play permission of the source's
+     * static "you may play cards exiled with this" effect when that permission outlives the source
+     * (Tibalt, Cosmic Impostor's emblem).
+     */
+    private void grantPersistentCastPermission(GameData gameData, Card exiledCard, Card sourceCard,
+                                               UUID sourcePermanentId) {
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+        if (sourceControllerId == null) {
+            return;
+        }
+        for (CardEffect staticEffect : sourceCard.getEffects(EffectSlot.STATIC)) {
+            if (!(staticEffect instanceof AllowCastFromCardsExiledWithSourceEffect permission)
+                    || !permission.persistsAfterSourceLeaves()) {
+                continue;
+            }
+            if (permission.ownOnly() && !sourceControllerId.equals(exiledCard.getOwnerId())) {
+                continue;
+            }
+            if (permission.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(exiledCard, permission.filter(), null)) {
+                continue;
+            }
+            UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
+                    ? gameData.findExiledCard(exiledCard.getId()).ownerId() : sourceControllerId;
+            gameData.exilePlayPermissions.put(exiledCard.getId(), permittedPlayer);
+            if (permission.anyManaType()) {
+                gameData.exilePlayAnyManaTypeWhileExiled.add(exiledCard.getId());
+            }
+            if (permission.withoutPayingManaCost()) {
+                gameData.exilePlayWithoutPayingManaCost.add(exiledCard.getId());
+            }
+            return;
+        }
     }
 
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,

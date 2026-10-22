@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentsThenRevealTopCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class SacrificeTargetPermanentsThenRevealTopCardEffectHandler implements 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final AuraAttachmentService auraAttachmentService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -87,6 +89,9 @@ public class SacrificeTargetPermanentsThenRevealTopCardEffectHandler implements 
         if (!isPermanentCard(topCard)) {
             return;
         }
+        if (topCard.isAura() && !topCard.isEnchantZone() && !hasLegalAuraHost(gameData, controllerId, topCard)) {
+            return;
+        }
 
         library.removeFirst();
         Permanent permanent = new Permanent(topCard);
@@ -103,6 +108,15 @@ public class SacrificeTargetPermanentsThenRevealTopCardEffectHandler implements 
 
         log.info("Game {} - {} puts {} onto the battlefield via {}",
                 gameData.id, playerName, topCard.getName(), sourceName);
+    }
+
+    /** An Aura with no legal object or player to enchant stays in its current zone (CR 303.4g). */
+    private boolean hasLegalAuraHost(GameData gameData, UUID controllerId, Card aura) {
+        boolean permanentHost = gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(permanent -> auraAttachmentService.canEnchant(gameData, aura, controllerId, permanent));
+        return permanentHost || gameData.orderedPlayerIds.stream()
+                .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
     }
 
     private boolean isPermanentCard(Card card) {

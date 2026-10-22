@@ -16,13 +16,13 @@ public class ViviensGrizzly extends Card {
     public ViviensGrizzly() {
         addActivatedAbility(new ActivatedAbility(
                 false,
-                "{3}",
+                "{3}{G}",
                 List.of(new LookAtTopCardMayRevealMatchingToHandEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardTypePredicate(CardType.PLANESWALKER))),
                         LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.BOTTOM)),
-                "{3}: Look at the top card of your library. If it's a creature or planeswalker card, "
+                "{3}{G}: Look at the top card of your library. If it's a creature or planeswalker card, "
                         + "you may reveal it and put it into your hand. If you don't put the card into "
                         + "your hand, put it on the bottom of your library."
         ));

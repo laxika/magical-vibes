@@ -1542,7 +1542,16 @@ public sealed interface ChoiceContext {
     record SpellColorChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing a number at resolution for a spell with no permanent to store it on. */
-    record SpellNumberChoice(UUID controllerId) implements ChoiceContext {}
+    /**
+     * A number chosen for a spell. When {@code anyNonNegativeNumber} is set the offered options are only
+     * suggestions and any non-negative integer is accepted ("choose a number" with no upper bound).
+     */
+    record SpellNumberChoice(UUID controllerId, boolean anyNonNegativeNumber) implements ChoiceContext {
+
+        public SpellNumberChoice(UUID controllerId) {
+            this(controllerId, false);
+        }
+    }
 
     /** Choosing odd or even at resolution for a spell with no permanent to store it on. */
     record SpellManaValueParityChoice(UUID controllerId) implements ChoiceContext {}

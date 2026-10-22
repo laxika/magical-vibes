@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
@@ -2532,6 +2533,13 @@ public class BattlefieldPlacementService {
                                                       List<Permanent> simultaneouslyEntered) {
         Set<CardSubtype> subtypes = EnumSet.noneOf(CardSubtype.class);
         subtypes.addAll(entering.getCard().getSubtypes());
+        for (TextReplacement replacement : entering.getTextReplacements()) {
+            CardSubtype from = TextChangeTransformer.creatureTypeForWord(replacement.fromWord());
+            CardSubtype to = TextChangeTransformer.creatureTypeForWord(replacement.toWord());
+            if (from != null && to != null && subtypes.remove(from)) {
+                subtypes.add(to);
+            }
+        }
         subtypes.addAll(entering.getTransientSubtypes());
         subtypes.addAll(entering.getGrantedSubtypes());
         boolean changeling = !entering.isLosesAllAbilitiesUntilEndOfTurn()
@@ -2606,7 +2614,7 @@ public class BattlefieldPlacementService {
     private void applyControlledCreaturesEnterWithAdditionalCounters(GameData gameData, UUID controllerId,
                                                                      Permanent permanent, List<Permanent> simultaneouslyEntered,
                                                                      boolean afterSubtypeChoice) {
-        if (!permanent.getCard().hasType(CardType.CREATURE)) return;
+        boolean enteringIsCreature = permanent.getCard().hasType(CardType.CREATURE);
 
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
@@ -2639,7 +2647,7 @@ public class BattlefieldPlacementService {
                                     countersEffect.count(),
                                     countersEffect.allCreatures()));
                         }))
-                .filter(sourced -> sourced.allCreatures() || sourced.subtype() != null)
+                .filter(sourced -> sourced.allCreatures() ? enteringIsCreature : sourced.subtype() != null)
                 .toList();
         if (effects.isEmpty()) return;
 

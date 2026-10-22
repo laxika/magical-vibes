@@ -19,8 +19,10 @@ class VeteranBeastriderTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            resolveAllTriggers();
+        });
     }
 
     @Test

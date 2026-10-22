@@ -29,8 +29,7 @@ public class VitoThornOfTheDuskRose extends Card {
                 false,
                 "{3}{B}{B}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "{3}{B}{B}: Creatures you control gain lifelink until end of turn."
         ));

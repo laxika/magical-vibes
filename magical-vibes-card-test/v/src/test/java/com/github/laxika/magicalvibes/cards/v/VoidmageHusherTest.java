@@ -25,7 +25,6 @@ class VoidmageHusherTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new AshcoatBear(), "{1}{G}");
-        harness.handleMayAbilityChosen(player2, true);
         harness.passPriority(player2);
 
         harness.castFromHand(player1, new VoidmageHusher(), "{3}{U}");
@@ -37,6 +36,7 @@ class VoidmageHusherTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Voidmage Husher");
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.assertInHand(player2, "Voidmage Husher");
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Ashcoat Bear");
@@ -104,8 +104,8 @@ class VoidmageHusherTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VoidmageHusher());
         AshcoatBear bear = new AshcoatBear();
         harness.castFromHand(player1, bear, "{1}{G}");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Voidmage Husher");
         harness.assertNotOnBattlefield(player1, "Voidmage Husher");
@@ -123,17 +123,17 @@ class VoidmageHusherTest extends BaseCardTest {
         Permanent assemblyWorker = harness.addToBattlefieldAndReturn(player2, new AssemblyWorker());
         assemblyWorker.setSummoningSick(false);
         UUID activatedAbilityTargetId = assemblyWorker.getId();
-        UUID activatedAbilityCardId = assemblyWorker.getCard().getId();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player2, 0, null, activatedAbilityTargetId);
+        UUID activatedAbilityId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player2);
 
         harness.castFromHand(player1, new VoidmageHusher(), "{3}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, activatedAbilityCardId);
+        harness.handlePermanentChosen(player1, activatedAbilityId);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -147,6 +147,7 @@ class VoidmageHusherTest extends BaseCardTest {
     void mayReturnToHandWhenControllerCastsSpell() {
         harness.addToBattlefield(player1, new VoidmageHusher());
         harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -160,6 +161,7 @@ class VoidmageHusherTest extends BaseCardTest {
     void mayDeclineReturningToHand() {
         harness.addToBattlefield(player1, new VoidmageHusher());
         harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.passBothPriorities();

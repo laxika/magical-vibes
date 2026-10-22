@@ -30,8 +30,10 @@ class VesselOfEndlessRestTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.copyOf(
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()));
+        harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player1, "Cathedral Sanctifier");
         assertThat(gd.playerDecks.get(player1.getId()).getLast().getName()).isEqualTo("Cathedral Sanctifier");
@@ -47,7 +49,9 @@ class VesselOfEndlessRestTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.copyOf(
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()));
+        harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player2, "Moorland Inquisitor");
         assertThat(gd.playerDecks.get(player2.getId()).getLast().getName()).isEqualTo("Moorland Inquisitor");
@@ -105,9 +109,11 @@ class VesselOfEndlessRestTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.copyOf(
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()));
+        harness.passBothPriorities();
         harness.assertNotInGraveyard(player1, "Cathedral Sanctifier");
     }
 

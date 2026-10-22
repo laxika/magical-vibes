@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.c.CunningSurvivor;
+import com.github.laxika.magicalvibes.cards.e.EffieFastLearner;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VarchildBetrayerOfKjeldor.class, CunningSurvivor.class, LightningBolt.class})
+@CardUsed({VarchildBetrayerOfKjeldor.class, EffieFastLearner.class, LightningBolt.class})
 class VarchildBetrayerOfKjeldorTest extends BaseCardTest {
 
     @Test
@@ -40,7 +41,7 @@ class VarchildBetrayerOfKjeldorTest extends BaseCardTest {
     @DisplayName("Opposing Survivors can't block")
     void opposingSurvivorCannotBlock() {
         Permanent varchild = addCreatureReady(player1, new VarchildBetrayerOfKjeldor());
-        Permanent survivor = addCreatureReady(player2, new CunningSurvivor());
+        Permanent survivor = addCreatureReady(player2, new EffieFastLearner());
         varchild.setAttacking(true);
 
         prepareDeclareBlockers(player1);
@@ -56,18 +57,21 @@ class VarchildBetrayerOfKjeldorTest extends BaseCardTest {
     @DisplayName("Opposing Survivors can't attack Varchild's controller")
     void opposingSurvivorCannotAttackController() {
         addCreatureReady(player1, new VarchildBetrayerOfKjeldor());
-        addCreatureReady(player2, new CunningSurvivor());
+        addCreatureReady(player2, new EffieFastLearner());
 
-        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> harness.getCombatAttackService().handleDeclareAttackersStep(gd));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test
     @DisplayName("Leaving the battlefield gives control of all Survivors to Varchild's controller")
     void gainsControlOfSurvivorsWhenLeaving() {
         Permanent varchild = harness.addToBattlefieldAndReturn(player1, new VarchildBetrayerOfKjeldor());
-        Permanent survivor = addCreatureReady(player2, new CunningSurvivor());
+        Permanent survivor = addCreatureReady(player2, new EffieFastLearner());
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 

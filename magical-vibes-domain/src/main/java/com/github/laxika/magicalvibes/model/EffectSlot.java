@@ -648,6 +648,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Ob Nixilis, Unshackled. */
     ON_OPPONENT_SEARCHES_LIBRARY,
     ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+    /** Triggers during the upkeep of the Aura's own controller ("At the beginning of your upkeep,
+     *  enchanted permanent's controller ..."). Checked in {@code StepTriggerService} next to
+     *  {@link #ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED}; the enchanted permanent's controller
+     *  is baked in as {@code targetId} so {@code TARGET_PLAYER}-scoped effects act on them, while the
+     *  Aura's controller controls the ability. Used by Strangling Grasp. */
+    ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED,
     /** Triggers during the draw step of the enchanted permanent's controller ("At the beginning of
      *  the draw step of enchanted creature's controller, that player draws an additional card").
      *  Checked in {@code StepTriggerService.handleDrawStepTriggers}; bakes that player as

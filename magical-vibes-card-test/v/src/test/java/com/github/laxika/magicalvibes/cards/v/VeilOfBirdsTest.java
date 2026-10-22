@@ -101,7 +101,7 @@ class VeilOfBirdsTest extends BaseCardTest {
         harness.castFromHand(player2, new DarkRitual(), "{B}");
         resolveAllTriggers();
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(veil);
         assertThat(gqs.isCreature(gd, veil)).isTrue();

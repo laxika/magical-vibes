@@ -92,6 +92,8 @@ public class GraveyardTargetOperationState {
     public boolean sourceAlternateCostAtTrigger;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */
     public Integer triggeringPermanentPowerAtTrigger;
+    /** Declared attackers of an attack trigger, retained through its graveyard target selection. */
+    public List<Permanent> attackingPermanentSnapshots = List.of();
     /** Permanent that caused a triggered ability, retained through graveyard target selection. */
     public UUID triggeringPermanentId;
     /** Attack destination captured for an attack trigger whose graveyard target is chosen interactively. */

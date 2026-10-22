@@ -78,6 +78,7 @@ class VibraniumStrikeGauntletsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
         first.setAttacking(true);
         harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
 
         resolveCombat();
         resolveAllTriggers();
@@ -121,6 +122,8 @@ class VibraniumStrikeGauntletsTest extends BaseCardTest {
         gauntlets.setAttachedTo(creature.getId());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         resolveCombat(player2);
         resolveAllTriggers();

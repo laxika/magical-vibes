@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -126,9 +127,10 @@ public class EtbEffectResolver {
         // enters-the-battlefield trigger and never goes on the stack.
         register(ReturnSelfToHandIfDashCostPaidEffect.class, (ctx, effect) -> null);
 
-        // "Gain life equal to that creature's toughness" — read toughness at trigger time.
+        // "Gain life equal to that creature's toughness" — the toughness is read on resolution, from the
+        // entering creature's last known information if it has left the battlefield.
         register(GainLifeEqualToToughnessEffect.class, (ctx, effect) ->
-                new GainLifeEffect(ctx.card().getToughness()));
+                new GainLifeEffect(new SourceToughness()));
 
         // Conditional ETB effects: immutable cast-time conditions are evaluated while the trigger
         // is created, gate types (Metalcraft / Morbid / Raid / ControlsAnother) stay wrapped for

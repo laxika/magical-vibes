@@ -225,9 +225,9 @@ class VenomTest extends BaseCardTest {
     @DisplayName("Venom's controller controls both triggers when it enchants an opponent's attacker")
     void auraControllerControlsTriggersOnOpponentsCreature() {
         Permanent attacker = addCreatureReady(player1, new Squire());
-        Permanent venom = addVenomAttachedTo(player2, attacker);
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new WormwoodTreefolk());
+        Permanent venom = addVenomAttachedTo(player2, attacker);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

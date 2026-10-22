@@ -51,7 +51,8 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                                 draft.mode() == DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND
                                         ? new DraftCardIntoHandEffect(factory)
                                         : new ConjureCardOntoBattlefieldEffect(factory, Set.of(CardType.LAND),
-                                        draft.conjure()));
+                                        draft.conjure(), draft.entryCounterType(),
+                                        draft.entryCounterCount()));
                     })
                     .toList();
             playerInputService.beginChooseModeChoice(

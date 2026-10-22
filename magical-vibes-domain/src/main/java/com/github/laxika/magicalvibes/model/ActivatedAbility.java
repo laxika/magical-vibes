@@ -154,6 +154,7 @@ public class ActivatedAbility {
      * cycle this card" trigger rather than to the cycling ability itself.
      */
     private boolean cyclingTriggerTargets;
+    private boolean cyclingTriggerTargetsChosenOnTriggerIfOmitted;
     /** Counter type that supplies the target limit instead of a paid X value. */
     private CounterType sourceCounterScaledTargetsType;
     /** Dynamic amount that supplies the maximum number of targets at activation time. */
@@ -394,6 +395,7 @@ public class ActivatedAbility {
         copy.xScaledTargets = this.xScaledTargets;
         copy.exactXTargets = this.exactXTargets;
         copy.cyclingTriggerTargets = this.cyclingTriggerTargets;
+        copy.cyclingTriggerTargetsChosenOnTriggerIfOmitted = this.cyclingTriggerTargetsChosenOnTriggerIfOmitted;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.dynamicMaxTargets = this.dynamicMaxTargets;
         copy.requiresXValue = this.requiresXValue;
@@ -813,6 +815,21 @@ public class ActivatedAbility {
         return this;
     }
 
+    /**
+     * As {@link #withCyclingTriggerTargets()}, but when no target is announced with the cycling
+     * ability the card's {@code ON_SELF_CYCLED} trigger chooses its target when it is put on the
+     * stack (CR 603.3d) instead of being dropped; the card must carry a card-level target filter.
+     */
+    public ActivatedAbility withCyclingTriggerTargetsChosenOnTriggerIfOmitted() {
+        this.cyclingTriggerTargets = true;
+        this.cyclingTriggerTargetsChosenOnTriggerIfOmitted = true;
+        return this;
+    }
+
+    public boolean isCyclingTriggerTargetsChosenOnTriggerIfOmitted() {
+        return cyclingTriggerTargetsChosenOnTriggerIfOmitted;
+    }
+
     public boolean isCyclingTriggerTargets() {
         return cyclingTriggerTargets;
     }
@@ -947,14 +964,16 @@ public class ActivatedAbility {
 
     /**
      * Whether this is an embalm or eternalize ability. Both keywords are modelled as a
-     * graveyard-activated ability that creates a token copy of its source
-     * ({@link CreateTokenCopyOfSourceEffect}), so the presence of that effect is the structural
-     * marker shared by both. Read by "creature card with eternalize or embalm" searches
+     * graveyard-activated ability that creates a token copy of its source with no mana cost
+     * ({@link CreateTokenCopyOfSourceEffect#removeManaCost()}). A token-copy ability granted by
+     * another card (Assemble from Parts) keeps its mana cost and is not embalm or eternalize.
+     * Read by "creature card with eternalize or embalm" searches
      * ({@code CardHasEmbalmOrEternalizePredicate}) and by the "whenever you activate an eternalize
      * or embalm ability" trigger (Vizier of the Anointed).
      */
     public boolean isEmbalmOrEternalize() {
-        return effects.stream().anyMatch(CreateTokenCopyOfSourceEffect.class::isInstance);
+        return effects.stream().anyMatch(effect -> effect instanceof CreateTokenCopyOfSourceEffect copy
+                && copy.removeManaCost());
     }
 
     /**

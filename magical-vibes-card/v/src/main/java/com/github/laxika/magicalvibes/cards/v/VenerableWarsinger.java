@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -14,12 +15,13 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class VenerableWarsinger extends Card {
 
     public VenerableWarsinger() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, ReturnCardFromGraveyardEffect.builder()
+        // Whenever this creature deals combat damage to a player, you may return target creature card
+        // with mana value X or less from your graveyard to the battlefield, where X is the damage dealt.
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
-                .upTo(true)
                 .dynamicMaxManaValue(new EventValue())
-                .build());
+                .build(), "Return target creature card to the battlefield?"));
     }
 }

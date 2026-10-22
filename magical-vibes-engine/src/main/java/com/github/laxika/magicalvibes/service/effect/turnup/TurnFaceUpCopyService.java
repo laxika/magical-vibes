@@ -69,20 +69,7 @@ public class TurnFaceUpCopyService {
             return;
         }
         permanent.turnFaceUp();
-        List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
-                .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
-                .filter(TurnFaceUpReplacementEffect.class::isInstance)
-                .map(TurnFaceUpReplacementEffect.class::cast)
-                .toList();
-        for (TurnFaceUpReplacementEffect replacement : replacements) {
-            if (!replacement.appliesWithoutPayingCost()) {
-                continue;
-            }
-            int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
-                    AmountContext.forEnteringPermanent(controllerId, permanent, 0));
-            permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, null, permanent, replacement.counterType(), counterCount);
-        }
+        applyTurnFaceUpReplacements(gameData, controllerId, permanent, false);
         if (prepareChoice(gameData, permanent, controllerId)) {
             return;
         }
@@ -152,6 +139,10 @@ public class TurnFaceUpCopyService {
             if (target != null && effect != null && gameQueryService.isCreature(gameData, target)) {
                 permanentCopierService.applyCloneCopy(source, target, null, null);
                 addSourceCopyException(source, effect);
+                // The copied creature's "as this is turned face up" replacement applies to the
+                // permanent still being turned face up (Hooded Hydra copied by Vesuvan Shapeshifter).
+                applyTurnFaceUpReplacements(gameData, controllerId, source,
+                        gameData.permanentsTurnedFaceUpThisTurn.contains(source.getId()));
                 gameLogService.append(gameData,
                         GameLog.textCardText(source.getCard().getName() + " becomes a copy of ",
                                 target.getCard(), "."));
@@ -238,6 +229,24 @@ public class TurnFaceUpCopyService {
         }
         if (resolveAutoPass) {
             turnProgressionService.resolveAutoPass(gameData);
+        }
+    }
+
+    private void applyTurnFaceUpReplacements(GameData gameData, UUID controllerId, Permanent permanent,
+                                             boolean paidTurnFaceUpCost) {
+        List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
+                .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                .filter(TurnFaceUpReplacementEffect.class::isInstance)
+                .map(TurnFaceUpReplacementEffect.class::cast)
+                .toList();
+        for (TurnFaceUpReplacementEffect replacement : replacements) {
+            if (!paidTurnFaceUpCost && !replacement.appliesWithoutPayingCost()) {
+                continue;
+            }
+            int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
+                    AmountContext.forEnteringPermanent(controllerId, permanent, 0));
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, null, permanent, replacement.counterType(), counterCount);
         }
     }
 

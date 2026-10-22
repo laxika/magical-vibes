@@ -1699,6 +1699,21 @@ public class PlayerInputService {
         beginSpellNumberChoice(gameData, playerId, 0, maxNumber);
     }
 
+    /**
+     * Offers {@code 0..suggestedMaxNumber} but accepts any non-negative integer, so the offered list
+     * carries no information about hidden game state.
+     */
+    public void beginUnboundedSpellNumberChoice(GameData gameData, UUID playerId, int suggestedMaxNumber) {
+        ChoiceContext.SpellNumberChoice choiceContext = new ChoiceContext.SpellNumberChoice(playerId, true);
+        List<String> numbers = java.util.stream.IntStream.rangeClosed(0, suggestedMaxNumber)
+                .mapToObj(Integer::toString)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, numbers, "Choose a number."));
+        log.info("Game {} - Awaiting {} to choose a number for a spell", gameData.id,
+                gameData.playerIdToName.get(playerId));
+    }
+
     public void beginSpellNumberChoice(GameData gameData, UUID playerId, List<Integer> choices) {
         ChoiceContext.SpellNumberChoice choiceContext = new ChoiceContext.SpellNumberChoice(playerId);
         List<String> numbers = choices.stream().distinct().map(String::valueOf).toList();

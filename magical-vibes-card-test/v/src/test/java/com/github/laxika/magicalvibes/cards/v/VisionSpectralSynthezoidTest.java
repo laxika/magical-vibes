@@ -84,6 +84,7 @@ class VisionSpectralSynthezoidTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Swiftfoot Boots");
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

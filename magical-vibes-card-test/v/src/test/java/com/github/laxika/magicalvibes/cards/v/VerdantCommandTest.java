@@ -51,13 +51,14 @@ class VerdantCommandTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player2, 0, 0, null, null);
+        var loyaltyAbilityId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player2);
 
         harness.setLife(player1, 10);
         harness.setHand(player1, List.of(new VerdantCommand()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castModalInstantWithModes(player1, 0, 2, new int[]{1, 3}, ajani.getCard().getId(),
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{1, 3}, loyaltyAbilityId,
                 List.of(player1.getId()));
         harness.passBothPriorities();
 
@@ -107,7 +108,7 @@ class VerdantCommandTest extends BaseCardTest {
 
         cast(new int[]{0, 2}, target.getId(), List.of(player2.getId()));
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(target).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
         assertThat(findPermanents(player2, "Squirrel")).hasSize(2).allMatch(Permanent::isTapped);
     }

@@ -49,8 +49,11 @@ public class GrantAdditionalBlockToTargetUntilEndOfTurnEffectHandler implements 
             if (target == null) {
                 continue; // Partially resolves — skip removed targets.
             }
-            target.setAdditionalBlocksUntilEndOfTurn(
-                    target.getAdditionalBlocksUntilEndOfTurn() + grant.additionalBlocks());
+            int currentAdditionalBlocks = target.getAdditionalBlocksUntilEndOfTurn();
+            if (currentAdditionalBlocks != Integer.MAX_VALUE) {
+                // An unlimited grant (Valor Made Real) already covers any further additional block.
+                target.setAdditionalBlocksUntilEndOfTurn(currentAdditionalBlocks + grant.additionalBlocks());
+            }
 
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())

@@ -152,8 +152,8 @@ class VampiricEmbraceTest extends BaseCardTest {
     @DisplayName("The counter is placed on an enchanted creature controlled by an opponent")
     void countersOpponentControlledEnchantedCreature() {
         Permanent enchantedCreature = addCreatureReady(player2, new GorillaWarrior());
-        attachAura(player1, enchantedCreature);
         Permanent blocker = addCreatureReady(player1, new GorillaWarrior());
+        attachAura(player1, enchantedCreature);
 
         blocker.setAttacking(true);
         enchantedCreature.setBlocking(true);

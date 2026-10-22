@@ -76,7 +76,6 @@ class VuzzleSpaceshipTest extends BaseCardTest {
     void lasersDoesNotTriggerBelowThreeCounters() {
         Permanent spaceship = addSpaceship(player1);
         spaceship.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 

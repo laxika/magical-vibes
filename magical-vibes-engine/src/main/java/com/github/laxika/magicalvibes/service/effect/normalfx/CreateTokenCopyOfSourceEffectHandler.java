@@ -185,17 +185,22 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                             gameData, entry.getControllerId(), tokenCard);
 
-                    // Vizier of Many Faces: the embalm token is itself a Clone. Route it through the
-                    // copy-on-enter replacement so it enters as a copy of a chosen creature; the clone
-                    // flow (CloneService.completeCloneEntry) puts it onto the battlefield and re-applies
-                    // the embalm color/type/no-mana-cost transformation to the final copy.
+                    // Vizier of Many Faces: the embalm token is itself a Clone. Each copy goes through the
+                    // normal entry path so it enters as a copy of a chosen creature (CR 614.1c); copies
+                    // beyond the first (Anointed Procession) wait their turn in the pending entry-copy
+                    // queue. The clone flow re-applies the embalm color/type/no-mana-cost transformation.
                     if (tokenCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                            .anyMatch(eff -> eff instanceof CopyPermanentOnEnterEffect)
-                            && cloneService.prepareCloneReplacementEffect(gameData, entry.getControllerId(), tokenCard, null)) {
+                            .anyMatch(eff -> eff instanceof CopyPermanentOnEnterEffect)) {
+                        Permanent cloneToken = new Permanent(tokenCard);
+                        battlefieldEntryService.putPermanentOntoBattlefield(
+                                gameData, entry.getControllerId(), cloneToken,
+                                enterTappedTypesSnapshot, simultaneouslyEntered);
+                        simultaneouslyEntered.add(cloneToken);
+                        entry.getCreatedPermanentIds().add(cloneToken.getId());
                         gameLogService.append(gameData, GameLog.textCardText(
                                 "A token copy of ", sourceCard, " is created."));
                         log.info("Game {} - Token clone copy of {} created via embalm", gameData.id, sourceCard.getName());
-                            return;
+                        continue;
                     }
 
                     Permanent tokenPermanent = new Permanent(tokenCard);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +43,8 @@ class VeteranDungeoneerTest extends BaseCardTest {
     @Test
     @DisplayName("An opposing controller chooses their own dungeon and receives its room benefit")
     void opposingControllerChoosesDungeon() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new VeteranDungeoneer(), "{3}{W}");
         resolveAllTriggers();
         harness.handleListChoice(player2, "Dungeon of the Mad Mage");

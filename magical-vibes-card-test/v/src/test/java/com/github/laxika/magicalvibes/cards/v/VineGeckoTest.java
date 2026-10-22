@@ -145,6 +145,7 @@ class VineGeckoTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         resolveAllTriggers();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);

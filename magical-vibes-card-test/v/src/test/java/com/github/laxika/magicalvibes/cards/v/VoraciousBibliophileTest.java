@@ -107,6 +107,7 @@ class VoraciousBibliophileTest extends BaseCardTest {
     @Test
     void doesNotTriggerForOpponentsTargetedSpell() {
         harness.addToBattlefield(player1, new VoraciousBibliophile());
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player2, ManaColor.RED, 1);

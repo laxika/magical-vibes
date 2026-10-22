@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.cards.v.ViconiaNightsingersDisciple;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -74,10 +73,11 @@ public class SpecializeViconiaEffectHandler implements NormalEffectHandlerBean {
                                            List<ConjureDuplicateOfTargetExiledCardIntoHandEffect> triggers) {
         int minimumTargets = triggers.size() == 2 ? 0 : 1;
         for (ConjureDuplicateOfTargetExiledCardIntoHandEffect trigger : triggers) {
-            specialized.target(new ExiledCardPredicateTargetFilter(
+            int targetIndex = specialized.target(new ExiledCardPredicateTargetFilter(
                             trigger.filter(), "Target must be a matching card exiled with Viconia."),
                             minimumTargets, 1)
-                    .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, trigger);
+                    .getIndex();
+            specialized.registerEffectTargetIndex(trigger, targetIndex);
         }
     }
 

@@ -148,6 +148,7 @@ public class CharacteristicState {
         this.colors.addAll(permanent.getGrantedColors());
         if (!permanent.isFaceDown()) {
             this.keywords.addAll(card.getKeywords());
+            this.meleeInstances = keywords.contains(Keyword.MELEE) ? 1 : 0;
         }
         if (permanent.isSuspected()) {
             this.keywords.add(Keyword.MENACE);
@@ -284,7 +285,6 @@ public class CharacteristicState {
      */
     public void snapshotSeededCharacteristics() {
         flankingInstances = keywords.contains(Keyword.FLANKING) ? 1 : 0;
-        meleeInstances = keywords.contains(Keyword.MELEE) ? 1 : 0;
         seeded = true;
         seededColors.clear();
         seededColors.addAll(colors);

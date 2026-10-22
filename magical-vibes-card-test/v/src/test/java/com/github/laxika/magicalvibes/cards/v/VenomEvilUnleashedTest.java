@@ -57,6 +57,7 @@ class VenomEvilUnleashedTest extends BaseCardTest {
     void deathtouchExpiresAtEndOfTurn() {
         Permanent cats = addCreatureReady(player1, new KravensCats());
         readyAbility();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
         harness.activateGraveyardAbility(player1, 0, cats.getId());
         harness.passBothPriorities();

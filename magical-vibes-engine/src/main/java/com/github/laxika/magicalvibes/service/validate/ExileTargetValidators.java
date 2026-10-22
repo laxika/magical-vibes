@@ -113,9 +113,8 @@ public class ExileTargetValidators {
             throw new IllegalStateException("Effect requires a target card");
         }
         ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
-        Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
-        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0
-                || ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId())) {
+        if (exiled == null || !com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler
+                .isSuspended(ctx.gameData(), exiled)) {
             throw new IllegalStateException("Target card must be suspended");
         }
     }

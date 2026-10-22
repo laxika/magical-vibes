@@ -44,7 +44,16 @@ public class RemoveCounterFromReferencedPermanentEffectHandler implements Normal
 
     private Permanent findAttached(GameData gameData, StackEntry entry) {
         Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-        if (source == null || !source.isAttached()) {
+        if (source == null) {
+            Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+            if (sourceSnapshot == null) {
+                return null;
+            }
+            UUID host = sourceSnapshot.getAttachedTo() != null
+                    ? sourceSnapshot.getAttachedTo() : sourceSnapshot.getLastAttachedTo();
+            return findPermanent(gameData, host);
+        }
+        if (!source.isAttached()) {
             return null;
         }
         return findPermanent(gameData, source.getAttachedTo());

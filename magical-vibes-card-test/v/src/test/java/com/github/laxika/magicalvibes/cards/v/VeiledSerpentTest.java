@@ -175,7 +175,7 @@ class VeiledSerpentTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, serpent)).isTrue();
         assertThat(gqs.isEnchantment(gd, serpent)).isTrue();
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(serpent.isAttacking()).isTrue();
     }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VaevictisAsmadiTheDire extends Card {
 
     public VaevictisAsmadiTheDire() {
-        setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
+        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_PLAYER);
         target(TargetFilters.permanent(), 0, 99)
                 .addEffect(EffectSlot.ON_ATTACK, new SacrificeTargetPermanentsThenRevealTopCardEffect());
     }

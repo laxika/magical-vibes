@@ -175,6 +175,7 @@ class VraskaBetrayalsStingTest extends BaseCardTest {
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerPoisonCounters.put(player2.getId(), 3);
         harness.setLibrary(player1, List.of(new CopperLonglegs()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -185,13 +186,14 @@ class VraskaBetrayalsStingTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(4);
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         harness.assertLife(player1, 19);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
     @Test
     void zeroAllowsChoosingNothingForProliferate() {
         Permanent vraska = addReadyVraska(player1, 6);
         harness.setLibrary(player1, List.of(new CopperLonglegs()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -199,7 +201,7 @@ class VraskaBetrayalsStingTest extends BaseCardTest {
 
         assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         harness.assertLife(player1, 19);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
     @Test

@@ -139,6 +139,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.epic.EpicService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -232,6 +233,8 @@ class StepTriggerServiceTest {
     private AmountEvaluationService amountEvaluationService;
     @Mock
     private SagaChapterService sagaChapterService;
+    @Mock
+    private EffectResolutionService effectResolutionService;
 
     @Test
     void drawStepExpiresOnlyActivePlayersPaymentObligations() {
@@ -291,7 +294,8 @@ class StepTriggerServiceTest {
                 grantedUpkeepEffectSupport,
                 etbTokenTargetService,
                 amountEvaluationService,
-                sagaChapterService);
+                sagaChapterService,
+                effectResolutionService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

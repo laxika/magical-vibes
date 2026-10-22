@@ -59,7 +59,7 @@ public class NinjutsuEffectHandler implements NormalEffectHandlerBean {
 
         Permanent permanent = new Permanent(card, Zone.HAND);
         permanent.tap();
-        permanent.setAttacking(true);
+        permanent.enterAttacking(true);
         permanent.setAttackTarget(e.attackTargetId());
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
 

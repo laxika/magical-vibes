@@ -1174,6 +1174,7 @@ public class GameQueryService {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof OwnCardTypeGrantingEffect grant
                         && grant.cardType() == type
+                        && (card.getOwnerId() == null || card.getOwnerId().equals(playerId))
                         && predicateEvaluationService.matchesCardPredicate(
                         card, grant.filter(), source.getCard().getId(), gameData, playerId)) {
                     return true;
@@ -4629,7 +4630,8 @@ public class GameQueryService {
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(e -> e instanceof TargetingRestrictionEffect r
                         && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
-                        && r.mode() == TargetColorMode.ANY);
+                        && r.mode() == TargetColorMode.ANY
+                        && r.hexproofLike());
     }
 
     /**
@@ -4648,17 +4650,22 @@ public class GameQueryService {
             return true;
         }
         UUID targetControllerId = findPermanentController(gameData, permanent.getId());
-        if (targetControllerId == null || targetControllerId.equals(targetingControllerId)) {
+        if (targetControllerId == null) {
             return false;
         }
-        boolean hexproofLifted = ignoresOpponentPermanentHexproof(gameData, targetingControllerId)
+        boolean opponentOfController = !targetControllerId.equals(targetingControllerId);
+        boolean hexproofLifted = opponentOfController
+                && (ignoresOpponentPermanentHexproof(gameData, targetingControllerId)
                 || (isCreature(gameData, permanent)
-                && ignoresOpponentCreatureHexproof(gameData, targetingControllerId));
+                && ignoresOpponentCreatureHexproof(gameData, targetingControllerId)));
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(e -> e instanceof TargetingRestrictionEffect r
                         && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
                         && r.opponentOnly()
                         && r.mode() == TargetColorMode.ANY
+                        && (r.opponentsOf() != null
+                        ? !r.opponentsOf().equals(targetingControllerId)
+                        : opponentOfController)
                         && (!hexproofLifted || !r.hexproofLike()));
     }
 
@@ -5407,6 +5414,16 @@ public class GameQueryService {
 
     public int replacePoisonCounters(GameData gameData, UUID playerId, int count,
                                      UUID placingPlayerId) {
+        return replacePlayerCountersPlacedBy(gameData, playerId, count, placingPlayerId);
+    }
+
+    /** Applies rad-counter replacements for a player receiving counters placed by {@code placingPlayerId}. */
+    public int replaceRadCounters(GameData gameData, UUID playerId, int count, UUID placingPlayerId) {
+        return replacePlayerCountersPlacedBy(gameData, playerId, count, placingPlayerId);
+    }
+
+    private int replacePlayerCountersPlacedBy(GameData gameData, UUID playerId, int count,
+                                              UUID placingPlayerId) {
         int result = replacePlayerCounters(gameData, playerId, count);
         if (result <= 0 || placingPlayerId == null) {
             return result;
@@ -6698,7 +6715,11 @@ public class GameQueryService {
 
         for (Emblem emblem : gameData.emblems) {
             List<Permanent> ownerBf = gameData.playerBattlefields.get(emblem.controllerId());
-            if (ownerBf == null || !ownerBf.contains(target)) continue;
+            // A last-known-information snapshot is no longer on the battlefield, but the controller the
+            // caller supplied still has its emblem apply to it.
+            boolean targetUnderEmblemControl = ownerBf != null && ownerBf.contains(target)
+                    || emblem.controllerId().equals(targetControllerId);
+            if (!targetUnderEmblemControl) continue;
             AccumulatorSnapshot beforeEmblem = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof GrantActivatedAbilityEffect grant
@@ -12375,7 +12396,7 @@ public class GameQueryService {
         }
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (!playerId.equals(controllerId)) {
+            if (!playerId.equals(controllerId) || permanent.isFaceDown() || hasLostAllAbilities(gameData, permanent)) {
                 return;
             }
             forEachStaticEffect(permanent, (effect, instance) -> {

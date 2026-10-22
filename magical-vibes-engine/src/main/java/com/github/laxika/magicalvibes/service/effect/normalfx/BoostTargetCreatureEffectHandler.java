@@ -109,7 +109,16 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
             target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
             gameData.stack.stream()
                     .filter(stackEntry -> target.getId().equals(stackEntry.getSourcePermanentId()))
-                    .forEach(stackEntry -> stackEntry.setSourcePermanentSnapshot(new Permanent(target)));
+                    .forEach(stackEntry -> {
+                        Permanent previous = stackEntry.getSourcePermanentSnapshot();
+                        Permanent refreshed = new Permanent(target);
+                        if (previous != null && previous.getId().equals(target.getId())) {
+                            // The refresh only updates last-known stats; the face the ability was put on
+                            // the stack with must stay recorded so a stale transform can be recognized.
+                            refreshed.setTransformationSequence(previous.getTransformationSequence());
+                        }
+                        stackEntry.setSourcePermanentSnapshot(refreshed);
+                    });
         }
 
         gameLogService.append(gameData, GameLog.builder()

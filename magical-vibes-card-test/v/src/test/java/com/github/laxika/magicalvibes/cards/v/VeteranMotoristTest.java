@@ -165,6 +165,7 @@ class VeteranMotoristTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
         harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();

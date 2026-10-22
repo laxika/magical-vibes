@@ -141,6 +141,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsIn
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongAttachedEquipment;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommandersInPlay;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueNotedForSourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentCardsDrawnThisTurn;
@@ -250,6 +251,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalPowerOfTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.ManaValueOfLastCardExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.ToughnessOfLastCardExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
@@ -751,7 +753,9 @@ public class AmountEvaluationService {
             case GreatestManaValueAmongAttachedEquipment ignored ->
                     greatestManaValueAmongAttachedEquipment(gameData, ctx);
             case GreatestManaValueAmongOwnedCommanders ignored ->
-                    greatestManaValueAmongOwnedCommanders(gameData, ctx);
+                    greatestManaValueAmongOwnedCommanders(gameData, ctx, true);
+            case GreatestManaValueAmongOwnedCommandersInPlay ignored ->
+                    greatestManaValueAmongOwnedCommanders(gameData, ctx, false);
             case GreatestManaValueAmongSpellsCastThisTurn a ->
                     greatestManaValueAmongSpellsCastThisTurn(gameData, a, ctx);
             case GreatestManaValueNotedForSourceThisTurn ignored ->
@@ -905,6 +909,8 @@ public class AmountEvaluationService {
                     totalManaValueOfCardsExiledWithSource(gameData, ctx);
             case ManaValueOfLastCardExiledWithSource ignored ->
                     manaValueOfLastCardExiledWithSource(gameData, ctx);
+            case ToughnessOfLastCardExiledWithSource ignored ->
+                    toughnessOfLastCardExiledWithSource(gameData, ctx);
             case TotalManaValueOfCardsInGraveyard a ->
                     totalManaValueOfCardsInGraveyard(gameData, a, ctx);
             case TotalManaValueOfCardsOwnedInExile ignored ->
@@ -2011,20 +2017,9 @@ public class AmountEvaluationService {
         if (battlefield == null) return 0;
 
         Set<CardSubtype> found = EnumSet.noneOf(CardSubtype.class);
-        Set<CardSubtype> allCreatureTypes = EnumSet.noneOf(CardSubtype.class);
-        for (CardSubtype subtype : CardSubtype.values()) {
-            if (gameQueryService.isCreatureSubtype(subtype)) {
-                allCreatureTypes.add(subtype);
-            }
-        }
-
         for (Permanent permanent : battlefield) {
             if (!gameQueryService.isCreature(gameData, permanent)) continue;
-            if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
-                found.addAll(allCreatureTypes);
-            } else {
-                found.addAll(gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
-            }
+            found.addAll(gameQueryService.effectiveCreatureSubtypes(gameData, permanent));
         }
         return found.size();
     }
@@ -2600,6 +2595,18 @@ public class AmountEvaluationService {
 
     private int totalPowerOfControlledCreatures(
             GameData gameData, TotalPowerOfControlledCreatures amount, AmountContext ctx) {
+        if (amount.declaredAttackersOnly()) {
+            if (ctx.stackEntry() == null) return 0;
+            return ctx.stackEntry().getAttackingPermanentSnapshots().stream()
+                    .filter(attacker -> amount.filter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(attacker, amount.filter(),
+                            FilterContext.empty().withSourceControllerId(ctx.controllerId())))
+                    .mapToInt(attacker -> {
+                        Permanent current = gameQueryService.findPermanentById(gameData, attacker.getId());
+                        return current == null ? attacker.getLastKnownPower()
+                                : gameQueryService.getEffectivePower(gameData, current);
+                    }).sum();
+        }
         if (ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
@@ -2882,7 +2889,7 @@ public class AmountEvaluationService {
         return greatest;
     }
 
-    private int greatestManaValueAmongOwnedCommanders(GameData gameData, AmountContext ctx) {
+    private int greatestManaValueAmongOwnedCommanders(GameData gameData, AmountContext ctx, boolean anyZone) {
         if (ctx.controllerId() == null) return 0;
 
         Set<UUID> commanderIds = gameData.playerCommanders
@@ -2899,20 +2906,22 @@ public class AmountEvaluationService {
                 .toList()) {
             greatest = Math.max(greatest, card.getManaValue());
         }
-        for (Map<UUID, List<Card>> zone : List.of(gameData.playerHands, gameData.playerDecks,
-                gameData.playerGraveyards)) {
-            for (List<Card> cards : zone.values()) {
-                for (Card card : cards) {
-                    if (commanderIds.contains(card.getId())) {
-                        greatest = Math.max(greatest, card.getManaValue());
+        if (anyZone) {
+            for (Map<UUID, List<Card>> zone : List.of(gameData.playerHands, gameData.playerDecks,
+                    gameData.playerGraveyards)) {
+                for (List<Card> cards : zone.values()) {
+                    for (Card card : cards) {
+                        if (commanderIds.contains(card.getId())) {
+                            greatest = Math.max(greatest, card.getManaValue());
+                        }
                     }
                 }
             }
-        }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            for (Card card : gameData.getPlayerExiledCards(playerId)) {
-                if (commanderIds.contains(card.getId())) {
-                    greatest = Math.max(greatest, card.getManaValue());
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                for (Card card : gameData.getPlayerExiledCards(playerId)) {
+                    if (commanderIds.contains(card.getId())) {
+                        greatest = Math.max(greatest, card.getManaValue());
+                    }
                 }
             }
         }
@@ -3666,6 +3675,16 @@ public class AmountEvaluationService {
         if (ctx.sourcePermanent() == null) return 0;
         List<Card> exiled = gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId());
         return exiled.isEmpty() ? 0 : exiled.getLast().getManaValue();
+    }
+
+    private int toughnessOfLastCardExiledWithSource(GameData gameData, AmountContext ctx) {
+        List<Card> exiled = ctx.sourcePermanent() == null
+                ? List.of() : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId());
+        if (exiled.isEmpty()) {
+            return ctx.eventValue();
+        }
+        Integer toughness = gameQueryService.getEffectiveCardToughness(gameData, exiled.getLast());
+        return toughness == null ? 0 : Math.max(0, toughness);
     }
 
     private int totalManaValueOfCardsOwnedInExile(GameData gameData, AmountContext ctx) {

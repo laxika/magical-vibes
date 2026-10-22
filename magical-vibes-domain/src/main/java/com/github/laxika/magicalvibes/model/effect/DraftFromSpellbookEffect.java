@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.List;
@@ -20,13 +21,24 @@ public record DraftFromSpellbookEffect(
         List<Supplier<? extends Card>> cardFactories,
         int offeredCardCount,
         DraftMode mode,
-        boolean conjure) implements CardEffect {
+        boolean conjure,
+        CounterType entryCounterType,
+        int entryCounterCount) implements CardEffect {
 
     public enum DraftMode {
         PERPETUALLY_BECOMES_ENCHANTMENT,
         MAY_CAST_WITHOUT_PAYING_MANA_COST,
         MAY_CAST_WITHOUT_PAYING_MANA_COST_TO_CONTROLLER,
         CONJURE_TO_HAND
+    }
+
+    public DraftFromSpellbookEffect(
+            List<SpellbookCard> spellbook,
+            List<Supplier<? extends Card>> cardFactories,
+            int offeredCardCount,
+            DraftMode mode,
+            boolean conjure) {
+        this(spellbook, cardFactories, offeredCardCount, mode, conjure, null, 0);
     }
 
     public DraftFromSpellbookEffect {
@@ -65,6 +77,17 @@ public record DraftFromSpellbookEffect(
             List<Supplier<? extends Card>> cardFactories) {
         return new DraftFromSpellbookEffect(List.of(), cardFactories, cardFactories.size(),
                 DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, true);
+    }
+
+    /**
+     * "Conjure a card of your choice from … spellbook onto the battlefield with {@code count}
+     * {@code counterType} counters on it": the counters are placed as the card enters, so they belong
+     * to this entry only and are not part of the card if it is later played again.
+     */
+    public static DraftFromSpellbookEffect conjureOntoBattlefieldWithCounters(
+            List<Supplier<? extends Card>> cardFactories, CounterType counterType, int count) {
+        return new DraftFromSpellbookEffect(List.of(), cardFactories, cardFactories.size(),
+                DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, true, counterType, count);
     }
 
     /** "Conjure a card of your choice from … spellbook into your hand", handled by {@code mode}. */

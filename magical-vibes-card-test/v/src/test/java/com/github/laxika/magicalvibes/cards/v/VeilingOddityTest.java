@@ -51,6 +51,7 @@ class VeilingOddityTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -74,6 +75,7 @@ class VeilingOddityTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -122,6 +124,7 @@ class VeilingOddityTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         if (!gd.stack.isEmpty()) {

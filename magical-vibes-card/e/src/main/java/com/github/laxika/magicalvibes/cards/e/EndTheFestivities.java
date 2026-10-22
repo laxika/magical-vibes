@@ -32,6 +32,7 @@ public class EndTheFestivities extends Card {
 
         addSimultaneousEffects(EffectSlot.SPELL,
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                new MassDamageEffect(1, false, false, true, opponentCreatureOrPlaneswalker));
+                new MassDamageEffect(1, false, false, true, opponentCreatureOrPlaneswalker)
+                        .withFilterAppliedToPlaneswalkers());
     }
 }

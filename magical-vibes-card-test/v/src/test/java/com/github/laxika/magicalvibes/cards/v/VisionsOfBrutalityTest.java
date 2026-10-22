@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -114,6 +115,7 @@ class VisionsOfBrutalityTest extends BaseCardTest {
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
 
         harness.resolveCombatDamage();
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(blocker.getId(), 4));
         harness.assertNotOnBattlefield(player2, "Cinder Hellion");
         harness.assertNotOnBattlefield(player1, "Cinder Hellion");
         harness.assertNotOnBattlefield(player1, "Visions of Brutality");

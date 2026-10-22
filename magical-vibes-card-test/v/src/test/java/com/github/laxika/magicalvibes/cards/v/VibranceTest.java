@@ -78,6 +78,7 @@ class VibranceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 22);
         harness.assertNotOnBattlefield(player1, "Vibrance");

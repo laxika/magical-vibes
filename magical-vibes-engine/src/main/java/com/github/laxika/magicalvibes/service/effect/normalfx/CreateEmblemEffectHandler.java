@@ -38,29 +38,39 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
         CreateEmblemEffect emblemEffect = (CreateEmblemEffect) effect;
 
         for (UUID recipientId : recipients(gameData, entry, emblemEffect)) {
-            if (!gameData.playerIds.contains(recipientId)) {
-                continue;
-            }
-            String playerName = gameData.playerIdToName.get(recipientId);
-
-            Card emblemSource = new Card();
-            emblemSource.setName(entry.getCard() != null ? entry.getCard().getName() : "");
-            emblemSource.setType(CardType.EMBLEM);
-            emblemSource.setCardText(emblemEffect.reminderText());
-            emblemSource.setOwnerId(recipientId);
-            emblemSource.freeze();
-            gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), emblemSource,
-                    emblemEffect.activatedAbilities(), gameData.nextTimestamp()));
-            if (emblemEffect.staticEffects().stream().anyMatch(DrawOnControlledCreatureEntersEffect.class::isInstance)) {
-                gameData.creatureEntersDrawSources
-                        .computeIfAbsent(recipientId, ignored -> java.util.Collections.synchronizedList(new java.util.ArrayList<>()))
-                        .add(emblemSource);
-            }
-
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " gets an emblem with \"" + emblemEffect.reminderText() + "\"."));
-            log.info("Game {} - {} gets an emblem from {}", gameData.id, playerName, entry.getCard().getName());
+            createEmblem(gameData, recipientId, entry.getCard() != null ? entry.getCard().getName() : "",
+                    emblemEffect);
         }
+    }
+
+    /**
+     * Gives {@code recipientId} an emblem described by {@code emblemEffect}, attributed to the card
+     * named {@code sourceName}. Shared with the as-enters form, which has no stack entry.
+     */
+    public void createEmblem(GameData gameData, UUID recipientId, String sourceName,
+                             CreateEmblemEffect emblemEffect) {
+        if (!gameData.playerIds.contains(recipientId)) {
+            return;
+        }
+        String playerName = gameData.playerIdToName.get(recipientId);
+
+        Card emblemSource = new Card();
+        emblemSource.setName(sourceName);
+        emblemSource.setType(CardType.EMBLEM);
+        emblemSource.setCardText(emblemEffect.reminderText());
+        emblemSource.setOwnerId(recipientId);
+        emblemSource.freeze();
+        gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), emblemSource,
+                emblemEffect.activatedAbilities(), gameData.nextTimestamp()));
+        if (emblemEffect.staticEffects().stream().anyMatch(DrawOnControlledCreatureEntersEffect.class::isInstance)) {
+            gameData.creatureEntersDrawSources
+                    .computeIfAbsent(recipientId, ignored -> java.util.Collections.synchronizedList(new java.util.ArrayList<>()))
+                    .add(emblemSource);
+        }
+
+        gameLogService.append(gameData, GameLog.text(
+                playerName + " gets an emblem with \"" + emblemEffect.reminderText() + "\"."));
+        log.info("Game {} - {} gets an emblem from {}", gameData.id, playerName, sourceName);
     }
 
     private static List<UUID> recipients(GameData gameData, StackEntry entry,

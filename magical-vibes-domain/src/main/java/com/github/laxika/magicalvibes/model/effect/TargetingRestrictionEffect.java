@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Static marker restricting which spells and/or abilities may target this permanent. Scanned at
@@ -31,6 +32,9 @@ import java.util.Set;
  * @param mode         how {@code colors} is interpreted
  * @param hexproofLike whether hexproof-ignoring effects may bypass this restriction
  * @param sourceCardTypes card types relevant to a card-type restriction; empty for color-based restrictions
+ * @param opponentsOf  when non-null, an {@code opponentOnly} restriction blocks every player other than this
+ *                     one rather than the opponents of the protected permanent's controller ("spells or
+ *                     abilities your opponents control" granted to any creature, Vines of Vastwood)
  */
 public record TargetingRestrictionEffect(
         TargetingSourceKind kind,
@@ -38,7 +42,14 @@ public record TargetingRestrictionEffect(
         Set<CardColor> colors,
         TargetColorMode mode,
         boolean hexproofLike,
-        Set<CardType> sourceCardTypes) implements CardEffect {
+        Set<CardType> sourceCardTypes,
+        UUID opponentsOf) implements CardEffect {
+
+    public TargetingRestrictionEffect(TargetingSourceKind kind, boolean opponentOnly,
+                                      Set<CardColor> colors, TargetColorMode mode,
+                                      boolean hexproofLike, Set<CardType> sourceCardTypes) {
+        this(kind, opponentOnly, colors, mode, hexproofLike, sourceCardTypes, null);
+    }
 
     public TargetingRestrictionEffect(TargetingSourceKind kind, boolean opponentOnly,
                                       Set<CardColor> colors, TargetColorMode mode) {
@@ -78,6 +89,11 @@ public record TargetingRestrictionEffect(
     public static TargetingRestrictionEffect opponentSpellsAndAbilities() {
         return new TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS_AND_ABILITIES, true, Set.of(), TargetColorMode.ANY, false);
+    }
+
+    /** The same restriction, but its "opponents" are the opponents of {@code playerId} instead. */
+    public TargetingRestrictionEffect withOpponentsOf(UUID playerId) {
+        return new TargetingRestrictionEffect(kind, opponentOnly, colors, mode, hexproofLike, sourceCardTypes, playerId);
     }
 
     /** Can't be the target of spells or abilities from sources that are not the given color. Gaea's Revenge. */

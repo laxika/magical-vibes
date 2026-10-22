@@ -400,13 +400,9 @@ public class PermanentChoiceTriggerHandlerService {
         if (effects.stream().anyMatch(OptionalTargetEffect.class::isInstance)) {
             return true;
         }
-        if (card.getSpellTargets().size() != 1) {
-            return false;
-        }
-        var target = card.getSpellTargets().getFirst();
-        return target.getMinTargets() == 0
-                && target.getMaxTargets() == 1
-                && effects.stream().anyMatch(effect -> isBoundToTargetGroup(card, effect, target.getIndex()));
+        return card.getSpellTargets().stream()
+                .filter(target -> effects.stream().anyMatch(effect -> isBoundToTargetGroup(card, effect, target.getIndex())))
+                .anyMatch(target -> target.getMinTargets() == 0 && target.getMaxTargets() == 1);
     }
 
     /**

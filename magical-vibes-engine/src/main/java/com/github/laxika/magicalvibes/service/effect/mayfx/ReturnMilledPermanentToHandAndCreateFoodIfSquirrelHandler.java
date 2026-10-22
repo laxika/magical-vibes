@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class ReturnMilledPermanentToHandAndCreateFoodIfSquirrelHandler implement
     private final PredicateEvaluationService predicateEvaluationService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final InputCompletionService inputCompletionService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,7 +66,7 @@ public class ReturnMilledPermanentToHandAndCreateFoodIfSquirrelHandler implement
                 returnedSquirrel = gameQueryService.cardHasSubtype(
                         card, CardSubtype.SQUIRREL, gameData, ownerId);
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-                gameData.addCardToHand(ownerId, card);
+                graveyardService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
             }
 
             if (returnedSquirrel || controlsSquirrel(gameData, ability.controllerId())) {

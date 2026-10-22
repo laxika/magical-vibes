@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,10 @@ public class GrantTargetingRestrictionToTargetUntilEndOfTurnEffectHandler implem
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
+        CardEffect restriction = grant.restriction() instanceof TargetingRestrictionEffect targeting
+                && targeting.opponentOnly()
+                ? targeting.withOpponentsOf(entry.getControllerId())
+                : grant.restriction();
         for (UUID targetId : targetIds) {
             if (gameQueryService.findPermanentById(gameData, targetId) == null) {
                 continue;
@@ -42,7 +47,7 @@ public class GrantTargetingRestrictionToTargetUntilEndOfTurnEffectHandler implem
                     entry.getCard().getName(),
                     entry.getSourcePermanentId(),
                     entry.getControllerId(),
-                    new GrantEffectEffect(grant.restriction(), GrantScope.TARGET),
+                    new GrantEffectEffect(restriction, GrantScope.TARGET),
                     targetId,
                     null,
                     null,

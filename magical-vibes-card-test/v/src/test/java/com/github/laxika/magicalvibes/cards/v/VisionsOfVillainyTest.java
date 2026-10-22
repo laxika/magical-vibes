@@ -110,12 +110,13 @@ class VisionsOfVillainyTest extends BaseCardTest {
     void discountedSpellStillDrawsTwoAndLosesTwoLife() {
         harness.addToBattlefield(player1, new HydraTroopers());
         harness.setLibrary(player1, List.of(new HydraulicHelper(), new HydraulicHelper()));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
         harness.castFromHand(player1, new VisionsOfVillainy(), "{1}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
     }
 }

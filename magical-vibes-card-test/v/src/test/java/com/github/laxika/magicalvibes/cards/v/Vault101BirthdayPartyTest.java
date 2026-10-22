@@ -46,6 +46,7 @@ class Vault101BirthdayPartyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)
                 .validCardIds()).containsExactly(equipment.getId());
         harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent enteredEquipment = findPermanent(player1, "Pip-Boy 3000");
@@ -98,6 +99,7 @@ class Vault101BirthdayPartyTest extends BaseCardTest {
         triggerChapter();
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(findPermanent(player1, "Pip-Boy 3000").getAttachedTo()).isNull();

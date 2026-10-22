@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
  * (e.g. Breath of Dreams granting {@link CumulativeUpkeepEffect} to green creatures) and via
  * {@link GrantTriggeredAbilityEffect} with an {@link EffectSlot#UPKEEP_TRIGGERED} slot (e.g.
  * Avarice Amulet granting its equipped creature "At the beginning of your upkeep, draw a card").
+ * {@link #appendGrantedEachUpkeepEffects} collects the {@link EffectSlot#EACH_UPKEEP_TRIGGERED}
+ * grants (Verdant Embrace), whose trigger is controlled by the granted permanent's controller.
  */
 @Component
 @RequiredArgsConstructor
@@ -29,6 +31,15 @@ public class GrantedUpkeepEffectSupport {
                 into.add(granted);
             } else if (granted instanceof GrantTriggeredAbilityEffect grant
                     && grant.slot() == EffectSlot.UPKEEP_TRIGGERED) {
+                into.add(grant.grantedEffect());
+            }
+        }
+    }
+
+    public void appendGrantedEachUpkeepEffects(GameData gameData, Permanent permanent, List<CardEffect> into) {
+        for (CardEffect granted : gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects()) {
+            if (granted instanceof GrantTriggeredAbilityEffect grant
+                    && grant.slot() == EffectSlot.EACH_UPKEEP_TRIGGERED) {
                 into.add(grant.grantedEffect());
             }
         }

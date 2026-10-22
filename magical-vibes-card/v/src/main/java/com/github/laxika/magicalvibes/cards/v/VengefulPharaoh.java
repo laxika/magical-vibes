@@ -15,12 +15,14 @@ public class VengefulPharaoh extends Card {
     public VengefulPharaoh() {
         // Whenever combat damage is dealt to you or a planeswalker you control, if this card is in
         // your graveyard, destroy target attacking creature, then put this card on top of your
-        // library. The intervening-if is re-checked on resolution (CR 603.4), so the ability does
-        // nothing if the card left the graveyard after the trigger.
+        // library. The intervening-if is re-checked on resolution (CR 603.4) for both halves, so the
+        // ability does nothing if the card left the graveyard after the trigger, even if it has since
+        // returned there as a new object (CR 400.7).
         target(TargetFilters.attackingCreature())
                 .addEffect(EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
                         new ConditionalEffect(new SourceCardInGraveyard(), new DestroyTargetPermanentEffect()));
         addEffect(EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
-                new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(0));
+                new ConditionalEffect(new SourceCardInGraveyard(),
+                        new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(0)));
     }
 }

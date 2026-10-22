@@ -78,8 +78,8 @@ public class LookAtTopCardMayRevealMatchingToHandHandler implements MayEffectHan
                     && deck != null && !deck.isEmpty()) {
                 Card bottomCard = deck.removeFirst();
                 deck.addLast(bottomCard);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " puts ", bottomCard, " on the bottom of their library."));
+                gameLogService.append(gameData, GameLog.text(
+                        player.getUsername() + " puts the card on the bottom of their library."));
                 log.info("Game {} - {} declines hand; puts {} on the bottom of their library",
                         gameData.id, player.getUsername(), bottomCard.getName());
             } else if (effect.otherwiseDestination()

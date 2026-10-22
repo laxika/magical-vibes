@@ -8,17 +8,25 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
                                       boolean firstTokenCreation, boolean firstLifeGain,
-                                      boolean firstLandGraveyardEvent, boolean firstLifeLoss) implements CardEffect {
+                                      boolean firstLandGraveyardEvent, boolean firstLifeLoss,
+                                      boolean firstCycling) implements CardEffect {
+
+    public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
+                                   boolean firstTokenCreation, boolean firstLifeGain,
+                                   boolean firstLandGraveyardEvent, boolean firstLifeLoss) {
+        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, firstLandGraveyardEvent,
+                firstLifeLoss, false);
+    }
 
     public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
                                    boolean firstTokenCreation, boolean firstLifeGain,
                                    boolean firstLandGraveyardEvent) {
-        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, firstLandGraveyardEvent, false);
+        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, firstLandGraveyardEvent, false, false);
     }
 
     public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
                                    boolean firstTokenCreation, boolean firstLifeGain) {
-        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, false, false);
+        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, false, false, false);
     }
 
     /**
@@ -28,6 +36,15 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
      */
     public static OncePerTurnTriggerEffect firstLifeLoss(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, false, true);
+    }
+
+    /**
+     * Triggers only for the controller's first cycling event each turn, counting cycling events made
+     * before the source entered. Every copy present for that first event triggers, and the limit
+     * belongs to the controller rather than the source (Valiant Rescuer).
+     */
+    public static OncePerTurnTriggerEffect firstCycling(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, false, false, true);
     }
 
     /** Includes land-graveyard events that occurred before the source entered. */
@@ -64,6 +81,18 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
 
     /** Key marking an ability that triggers only for its controller's first discard event each turn. */
     public static final String FIRST_DISCARD_EVENT_KEY = "first-discard-event";
+
+    /** Key marking an ability that triggers only when its controller discards a nonland card for the first time each turn. */
+    public static final String FIRST_NONLAND_DISCARD_KEY = "first-nonland-discard";
+
+    /**
+     * Triggers only when the controller discards a nonland card for the first time each turn, counting
+     * nonland discards made before the source entered (Veronica, Dissident Scribe). Cards discarded
+     * together count as one event. Valid on the per-card discard slot.
+     */
+    public static OncePerTurnTriggerEffect firstNonlandDiscard(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, FIRST_NONLAND_DISCARD_KEY);
+    }
 
     /**
      * Triggers only for the controller's first discard event each turn, counting discards made before

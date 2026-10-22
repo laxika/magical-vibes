@@ -757,8 +757,10 @@ public class UntapStepService {
      */
     private boolean counterLockPreventsUntap(GameData gameData, Permanent permanent) {
         // A creature that has lost all abilities (Darksteel Mutation) loses its own printed and granted
-        // "doesn't untap" locks too; an aura-granted lock comes from the aura, which is unaffected.
-        boolean ownLockApplies = !gameQueryService.hasLostAllAbilities(gameData, permanent)
+        // "doesn't untap" locks too; a face-down permanent has no abilities at all. An aura-granted lock
+        // comes from the aura, which is unaffected.
+        boolean ownLockApplies = !permanent.isFaceDown()
+                && !gameQueryService.hasLostAllAbilities(gameData, permanent)
                 && (hasActiveCounterLock(permanent, permanent,
                         permanent.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.SELF)
                 // Granted, not printed: Mindbender Spores gives the creature it blocks

@@ -24,7 +24,7 @@ public class VowToErebor extends Card {
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.DWARF)),
                         new MayEffect(
-                                new AttachOneOfControlledEquipmentToTargetCreatureEffect(),
+                                new AttachOneOfControlledEquipmentToTargetCreatureEffect(false),
                                 "Attach an Equipment you control to that creature?")));
     }
 }

@@ -200,6 +200,7 @@ class VrondissRageOfAncientsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         Permanent dragonSpirit = findPermanent(player1, "Dragon Spirit");
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, dragonSpirit.getId());
 
         assertThat(dragonSpirit.getMarkedDamage()).isEqualTo(2);

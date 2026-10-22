@@ -13,6 +13,6 @@ public class VanguardSeraph extends Card {
     public VanguardSeraph() {
         // Whenever you gain life for the first time each turn, surveil 1.
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
-                new OncePerTurnTriggerEffect(new SurveilEffect(1)));
+                OncePerTurnTriggerEffect.firstLifeGain(new SurveilEffect(1)));
     }
 }

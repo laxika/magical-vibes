@@ -37,8 +37,7 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var conjure = (ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffect) effect;
-        List<UUID> validIds = currentControlledDealerIds(gameData, entry.getControllerId(),
-                conjure.combatDamageDealerIds());
+        List<UUID> validIds = currentDealerIds(gameData, conjure.combatDamageDealerIds());
         if (validIds.isEmpty()) {
             return;
         }
@@ -56,15 +55,15 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
 
     public void completeChoice(GameData gameData, UUID chosenPermanentId,
                                PermanentChoiceContext.ConjureDuplicateOfCombatDamageDealerChoice context) {
-        if (!context.combatDamageDealerIds().contains(chosenPermanentId)
-                || !context.controllerId().equals(gameQueryService.findPermanentController(gameData, chosenPermanentId))) {
+        if (!context.combatDamageDealerIds().contains(chosenPermanentId)) {
             return;
         }
         conjureDuplicate(gameData, context.controllerId(), chosenPermanentId);
     }
 
-    private List<UUID> currentControlledDealerIds(GameData gameData, UUID controllerId, List<UUID> dealerIds) {
-        return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+    private List<UUID> currentDealerIds(GameData gameData, List<UUID> dealerIds) {
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
                 .filter(permanent -> dealerIds.contains(permanent.getId()))
                 .map(Permanent::getId)
                 .toList();

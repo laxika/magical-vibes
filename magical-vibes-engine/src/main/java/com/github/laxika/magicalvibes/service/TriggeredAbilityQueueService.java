@@ -1068,6 +1068,18 @@ public class TriggeredAbilityQueueService {
             if (targetGroup != null && targetGroup.getMaxTargets() > 1) {
                 int minTargets = targetGroup.getMinTargets();
                 int maxTargets = Math.min(targetGroup.getMaxTargets(), candidateTargets.size());
+                if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_PLAYER) {
+                    boolean everyPlayerHasTarget = gameData.orderedPlayerIds.stream()
+                            .allMatch(playerId -> candidateTargets.stream()
+                                    .anyMatch(id -> playerId.equals(gameQueryService.findPermanentController(gameData, id))));
+                    if (!everyPlayerHasTarget) {
+                        gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                                "'s triggered ability has too few valid targets."));
+                        continue;
+                    }
+                    minTargets = gameData.orderedPlayerIds.size();
+                    maxTargets = minTargets;
+                }
                 if (candidateTargets.size() < minTargets) {
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s triggered ability has too few valid targets."));
@@ -2932,6 +2944,8 @@ public class TriggeredAbilityQueueService {
                 scope = graveyardFilter.scope();
             }
             Integer aggregateManaValueCap = describedTarget != null && describedTarget.maximumManaValue() != null
+                    && !(describedTarget.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures totalPower
+                    && totalPower.declaredAttackersOnly())
                     ? amountEvaluationService.evaluate(gameData, describedTarget.maximumManaValue(),
                     new AmountContext(pending.controllerId(), null, null,
                             pending.xValue(), pending.xValue()))
@@ -3044,6 +3058,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
                     pending.sourcePowerAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentId = pending.triggeringPermanentId();
+            gameData.graveyardTargetOperation.attackingPermanentSnapshots = pending.attackingPermanentSnapshots();
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
             gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance =
                     pending.markSourceOncePerTurnOnAcceptance();

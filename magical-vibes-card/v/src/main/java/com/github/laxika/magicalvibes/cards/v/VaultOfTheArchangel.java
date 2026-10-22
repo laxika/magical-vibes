@@ -27,7 +27,7 @@ public class VaultOfTheArchangel extends Card {
                 "{2}{W}{B}",
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK),
-                        GrantScope.OWN_CREATURES
+                        GrantScope.ALL_OWN_CREATURES
                 )),
                 "{2}{W}{B}, {T}: Creatures you control gain deathtouch and lifelink until end of turn."
         ));

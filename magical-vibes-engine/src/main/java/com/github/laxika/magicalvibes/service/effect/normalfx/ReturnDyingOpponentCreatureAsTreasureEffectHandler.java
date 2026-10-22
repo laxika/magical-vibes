@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureAsTreasureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -46,7 +45,7 @@ public class ReturnDyingOpponentCreatureAsTreasureEffectHandler implements Norma
 
         entry.setTargetId(treasureEffect.dyingCardId());
         GraveyardReturnSupport.StolenCreatureResult result =
-                graveyardReturnSupport.stealFromOpponentGraveyard(gameData, entry, controllerId);
+                graveyardReturnSupport.stealFromGraveyard(gameData, entry, controllerId, false);
         if (result == null) {
             return;
         }
@@ -74,10 +73,6 @@ public class ReturnDyingOpponentCreatureAsTreasureEffectHandler implements Norma
     }
 
     private void addTreasureAbilityEffects(GameData gameData, StackEntry entry, Permanent permanent) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET), permanent.getId(), null, null,
-                EffectDuration.PERMANENT, 0));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                 new GrantActivatedAbilityEffect(new ActivatedAbility(

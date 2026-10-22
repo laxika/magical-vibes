@@ -151,6 +151,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsFaceDownPredicate,
         PermanentIsHistoricPredicate,
         PermanentIsHostOfSourceAuraPredicate,
+        PermanentIsLastKnownHostOfSourceAuraPredicate,
         PermanentIsKindredPredicate,
         PermanentIsLandPredicate,
         PermanentIsUnblockedAttackingPredicate,

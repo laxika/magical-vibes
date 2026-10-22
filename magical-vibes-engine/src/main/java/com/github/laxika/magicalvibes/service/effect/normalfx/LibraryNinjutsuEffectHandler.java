@@ -52,7 +52,7 @@ public class LibraryNinjutsuEffectHandler implements NormalEffectHandlerBean {
         Permanent permanent = new Permanent(card, Zone.LIBRARY);
         permanent.tap();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
-        permanent.setAttacking(true);
+        permanent.enterAttacking(true);
         permanent.setAttackTarget(libraryNinjutsu.attackTargetId());
 
         gameLogService.append(gameData, GameLog.cardThen(card, " enters the battlefield tapped and attacking."));

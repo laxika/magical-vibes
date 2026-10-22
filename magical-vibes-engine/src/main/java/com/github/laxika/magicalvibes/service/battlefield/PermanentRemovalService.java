@@ -1842,6 +1842,7 @@ public class PermanentRemovalService {
                     || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
                     || kind == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP
                     || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
+                    || kind == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
                     || kind == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
                     && action.sourceCard() != null
                     ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), "")

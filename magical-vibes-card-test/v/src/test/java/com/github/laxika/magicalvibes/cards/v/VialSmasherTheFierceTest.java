@@ -62,6 +62,7 @@ class VialSmasherTheFierceTest extends BaseCardTest {
         assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
 
         harness.handlePermanentChosen(player1, planeswalker.getId());
+        resolveAllTriggers();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         harness.assertLife(player2, 20);
@@ -81,6 +82,7 @@ class VialSmasherTheFierceTest extends BaseCardTest {
         assertThat(choice.validPermanentIds()).containsExactly(planeswalker.getId());
         assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
 
         harness.assertLife(player2, 18);
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);

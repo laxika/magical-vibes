@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -41,7 +42,7 @@ public class VizierOfTheScorpion extends Card {
                 ConditionalEffect.unless(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, 1, army),
+                                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), army, false, true),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 ConditionalEffect.unless(new NotCondition(controlsArmy),
@@ -54,6 +55,6 @@ public class VizierOfTheScorpion extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                 new PermanentIsTokenPredicate()));
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, zombieToken));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, zombieToken));
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -59,6 +61,13 @@ public class BecomeCopyOfTopCreatureCardUntilEndOfTurnEffectHandler implements N
 
         String originalName = source.getCard().getName();
         permanentCopierService.applyCloneCopy(source, topCard, null, null, Set.of());
+        if (effect instanceof BecomeCopyOfTopCreatureCardUntilEndOfTurnEffect copyEffect
+                && !copyEffect.additionalKeywords().isEmpty()) {
+            EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(source.getCard().getKeywords());
+            keywords.addAll(copyEffect.additionalKeywords());
+            source.getCard().setKeywords(keywords);
+        }
         source.setCopyUntilEndOfTurn(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(),

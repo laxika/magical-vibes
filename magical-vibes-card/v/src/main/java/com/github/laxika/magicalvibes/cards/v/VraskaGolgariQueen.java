@@ -38,7 +38,7 @@ public class VraskaGolgariQueen extends Card {
                         new SacrificePermanentThenEffect(
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                                 SequenceEffect.of(new GainLifeEffect(1), new DrawCardEffect(1)),
-                                "another permanent"),
+                                "another permanent", false, false),
                         "Sacrifice another permanent?")),
                 "+2: You may sacrifice another permanent. If you do, you gain 1 life and draw a card."
         ));

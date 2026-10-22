@@ -63,12 +63,22 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         entry.clearReturnedPermanentIds();
-        entry.setEventValue(0);
         var returnEffect = (ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect;
+        // A cap that reads the triggering event's value (Vhal's "mana value up to the number of study
+        // counters removed") needs it intact while the cap is evaluated; the value is then replaced by
+        // the number of cards returned, as for every other form of this effect.
+        boolean capReadsEventValue = returnEffect.dynamicMaxTotalManaValue() != null
+                && amountEvaluationService.referencesEventValue(returnEffect.dynamicMaxTotalManaValue());
+        if (!capReadsEventValue) {
+            entry.setEventValue(0);
+        }
         if (returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS) {
             resolveFromAllGraveyards(gameData, entry, returnEffect);
         } else {
             resolveForController(gameData, entry, effect, entry.getControllerId());
+        }
+        if (capReadsEventValue && entry.getReturnedPermanentIds().isEmpty()) {
+            entry.setEventValue(0);
         }
     }
 

@@ -36,7 +36,7 @@ public class PreventXDamageToControllerAndRedirectToTargetPlayerEffectHandler im
                 controllerId, xValue, entry.getSourcePermanentId(), entry.getCard(), targetPlayerId));
 
         String controllerName = gameData.playerIdToName.get(controllerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.getOrDefault(targetPlayerId, "the targeted planeswalker");
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" — the next " + xValue + " damage that would be dealt to " + controllerName + " this turn is prevented. If prevented, ").card(entry.getCard()).text(" deals that much damage to " + targetName + ".").build());
         log.info("Game {} - Damage redirect shield {} added: protecting {} → redirecting to {}",

@@ -144,6 +144,40 @@ public class DamageTriggerCollectorService {
     }
 
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)
+    private boolean handleAllySourceDealtDamageToPlayerTriggeringConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        Permanent watcher = match.permanent();
+        GameData gameData = match.gameData();
+        Permanent source = dc.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
+        if (watcher == null || source == null || dc.amount() <= 0) return false;
+        if (trigger.predicate() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(
+                source, trigger.predicate(), FilterContext.of(gameData)
+                        .withSourceCardId(watcher.getCard().getId())
+                        .withSourceControllerId(match.controllerId())
+                        .withSourcePermanentId(watcher.getId())
+                        .withSourcePermanentSnapshot(watcher))) return false;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger.wrapped())),
+                null,
+                watcher.getId());
+        entry.setTriggeringPermanentId(source.getId());
+        entry.setEventValue(dc.amount());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        return true;
+    }
+
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)
     private boolean handleAllyCreatureDealsDamageToPlaneswalker(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {

@@ -75,7 +75,8 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         }
 
         boolean graveyardCandidateAvailable = interaction.pool().stream()
-                .anyMatch(card -> !interaction.libraryCardIds().contains(card.getId()));
+                .anyMatch(card -> !interaction.libraryCardIds().contains(card.getId())
+                        && !interaction.handCardIds().contains(card.getId()));
         if (selectedIds.isEmpty() && interaction.maxCount() == 1 && graveyardCandidateAvailable) {
             throw new IllegalStateException("Must find a card in the graveyard");
         }
@@ -129,6 +130,29 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         boolean fromLibrary = interaction.libraryCardIds().contains(chosen.getId());
         boolean fromHand = interaction.handCardIds().contains(chosen.getId());
         boolean fromOutsideGame = interaction.outsideGameCardIds().contains(chosen.getId());
+        List<UUID> attachTargetIds = List.of();
+        List<UUID> attachPlayerIds = List.of();
+        if (toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
+            attachTargetIds = gameData.orderedPlayerIds.stream()
+                    .flatMap(battlefieldPlayerId -> gameData.playerBattlefields
+                            .getOrDefault(battlefieldPlayerId, List.of()).stream())
+                    .filter(permanent -> auraAttachmentService.canEnchant(
+                            gameData, chosen, playerId, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            attachPlayerIds = chosen.isEnchantPlayer()
+                    ? gameData.orderedPlayerIds.stream()
+                    .filter(targetPlayerId -> auraAttachmentService.canEnchantPlayer(
+                            gameData, chosen, playerId, targetPlayerId))
+                    .toList()
+                    : List.of();
+            if (attachTargetIds.isEmpty() && attachPlayerIds.isEmpty()) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(playerId) + " finds ", chosen,
+                        ", but it can't legally enchant anything, so it remains where it is."));
+                return false;
+            }
+        }
         List<Card> zone = fromLibrary
                 ? gameData.playerDecks.getOrDefault(playerId, List.of())
                 : fromHand
@@ -148,27 +172,6 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             return false;
         }
         if (toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
-            List<UUID> attachTargetIds = gameData.orderedPlayerIds.stream()
-                    .flatMap(battlefieldPlayerId -> gameData.playerBattlefields
-                            .getOrDefault(battlefieldPlayerId, List.of()).stream())
-                    .filter(permanent -> auraAttachmentService.canEnchant(
-                            gameData, chosen, playerId, permanent))
-                    .map(Permanent::getId)
-                    .toList();
-            List<UUID> attachPlayerIds = chosen.isEnchantPlayer()
-                    ? gameData.orderedPlayerIds.stream()
-                    .filter(targetPlayerId -> auraAttachmentService.canEnchantPlayer(
-                            gameData, chosen, playerId, targetPlayerId))
-                    .toList()
-                    : List.of();
-            if (attachTargetIds.isEmpty() && attachPlayerIds.isEmpty()) {
-                graveyardService.addCardToGraveyard(gameData, playerId, chosen,
-                        fromHand ? Zone.HAND : Zone.GRAVEYARD);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        gameData.playerIdToName.get(playerId) + " puts ", chosen,
-                        " into their graveyard because it cannot legally enchant anything."));
-                return false;
-            }
             gameData.interaction.setPendingAuraCard(chosen);
             gameData.interaction.setPendingAuraOwnerId(playerId);
             gameData.interaction.clearAwaitingInput();

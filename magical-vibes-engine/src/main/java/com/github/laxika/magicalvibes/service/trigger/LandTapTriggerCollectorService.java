@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapLandsThatCouldProduceSameManaAsTappedLandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -974,13 +975,22 @@ public class LandTapTriggerCollectorService {
         // Only triggers for opponents' lands
         if (match.controllerId().equals(lt.tappingPlayerId())) return false;
 
-        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        var gameData = match.gameData();
+        Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
         if (tappedLand == null) return false;
 
-        tappedLand.setSkipUntapCount(tappedLand.getSkipUntapCount() + 1);
-
-        gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
-                " triggers — ", tappedLand.getCard(), " doesn't untap during its controller's next untap step."));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new SkipNextUntapEffect(TapUntapScope.TRIGGERING))),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringPermanentId(tappedLand.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

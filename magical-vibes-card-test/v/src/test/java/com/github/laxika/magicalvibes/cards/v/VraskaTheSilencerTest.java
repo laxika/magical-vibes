@@ -100,7 +100,6 @@ class VraskaTheSilencerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
@@ -112,7 +111,7 @@ class VraskaTheSilencerTest extends BaseCardTest {
     void returnsOwnCreatureThatDiedUnderOpponentControl() {
         harness.addToBattlefield(player1, new VraskaTheSilencer());
         Permanent stolen = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
-        gd.stolenCreatures.put(stolen.getId(), player1.getId());
+        setOwnerAndController(stolen, player1, player2);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

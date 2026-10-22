@@ -1258,6 +1258,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
+            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
+                throw new IllegalArgumentException("Invalid card name: " + colorName);
+            }
             handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -7582,7 +7585,13 @@ public class ChoiceHandlerService {
     private void handleSpellNumberChoice(GameData gameData, Player player, String numberText) {
         PendingInteraction.ColorChoice active =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (active == null || !active.options().contains(numberText)) {
+        if (active == null) {
+            throw new IllegalStateException("Invalid number choice");
+        }
+        boolean anyNonNegative = active.context() instanceof ChoiceContext.SpellNumberChoice numberChoice
+                && numberChoice.anyNonNegativeNumber();
+        if (!active.options().contains(numberText)
+                && !(anyNonNegative && numberText != null && numberText.matches("\\d{1,9}"))) {
             throw new IllegalStateException("Invalid number choice");
         }
 

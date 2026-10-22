@@ -1076,10 +1076,7 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        GameLog.Builder revealBuilder = GameLog.builder().text(casterName + " looks at " + targetName + "'s hand: ");
-        appendCardList(revealBuilder, hand);
-        revealBuilder.text(".");
-        gameLogService.append(gameData, revealBuilder.build());
+        gameLogService.append(gameData, GameLog.text(casterName + " looks at " + targetName + "'s hand."));
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {

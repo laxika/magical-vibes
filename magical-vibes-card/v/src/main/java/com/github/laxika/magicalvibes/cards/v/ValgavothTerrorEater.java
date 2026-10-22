@@ -20,7 +20,7 @@ public class ValgavothTerrorEater extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessSacrificesEffect(nonland, "nonland permanent", 3));
-        addEffect(EffectSlot.STATIC, new ExileOpponentCardsInsteadOfGraveyardEffect(true));
+        addEffect(EffectSlot.STATIC, ExileOpponentCardsInsteadOfGraveyardEffect.forCardsYouDidntControl(true));
         addEffect(EffectSlot.STATIC, AllowCastFromCardsExiledWithSourceEffect
                 .payingLifeEqualToManaValue());
     }

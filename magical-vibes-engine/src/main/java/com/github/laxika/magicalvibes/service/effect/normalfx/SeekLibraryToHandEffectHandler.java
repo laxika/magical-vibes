@@ -56,6 +56,7 @@ public class SeekLibraryToHandEffectHandler implements NormalEffectHandlerBean {
                 gameData, controllerId, chosen);
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks and puts a card into hand.").build());
+        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(chosen));
     }
 
     private void logNoMatch(GameData gameData, StackEntry entry) {

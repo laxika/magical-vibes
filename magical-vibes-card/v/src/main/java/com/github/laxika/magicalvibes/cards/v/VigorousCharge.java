@@ -24,6 +24,6 @@ public class VigorousCharge extends Card {
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
-                                new GainLifeEffect(new EventValue()))));
+                                new GainLifeEffect(new EventValue()), true)));
     }
 }

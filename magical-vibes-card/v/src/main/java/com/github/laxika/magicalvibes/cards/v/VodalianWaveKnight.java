@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -25,7 +24,6 @@ public class VodalianWaveKnight extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1,
                 new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK, CardSubtype.KNIGHT)),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
     }

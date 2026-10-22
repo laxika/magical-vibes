@@ -106,7 +106,6 @@ class VivienChampionOfTheWildsTest extends BaseCardTest {
         assertThat(exiled.faceDown()).isTrue();
         assertThat(exiled.sourcePermanentId()).isEqualTo(vivien.getId());
         assertThat(gd.getCardsExiledByPermanent(vivien.getId())).containsExactly(chosen);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, third);
 
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -261,6 +260,7 @@ class VivienChampionOfTheWildsTest extends BaseCardTest {
     void plusOneExpiresAtControllersNextTurnAndSurvivesSourceRemoval() {
         Permanent vivien = addReadyVivien(3);
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Shock(), new Shock()));
         harness.setLibrary(player2, List.of(new Shock(), new Shock()));
 

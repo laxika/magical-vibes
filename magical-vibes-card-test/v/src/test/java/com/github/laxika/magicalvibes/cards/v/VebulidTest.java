@@ -78,6 +78,8 @@ class VebulidTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Vebulid");
         harness.assertInGraveyard(player1, "Vebulid");
@@ -104,7 +106,8 @@ class VebulidTest extends BaseCardTest {
                 .anyMatch(action -> action.permanentId().equals(vebulid.getId())
                         && action.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Vebulid");
         harness.assertInGraveyard(player2, "Vebulid");

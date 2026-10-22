@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -276,6 +277,9 @@ public class DrawService {
             }
             for (int i = 0; i < drawAmount && gameData.status != GameStatus.FINISHED; i++) {
                 resolveDrawCardInternal(gameData, playerId, cycledCard);
+                if (i + 1 < drawAmount && !drawChoicePending(gameData)) {
+                    logIntermediateRevealedTopCard(gameData, playerId);
+                }
                 if (drawChoicePending(gameData)) {
                     for (int remaining = i + 1; remaining < drawAmount; remaining++) {
                         gameData.pendingCardDraws.addLast(playerId);
@@ -289,6 +293,44 @@ public class DrawService {
                 gameData.pendingCardDraws.addAll(laterDraws);
             }
         }
+    }
+
+    /**
+     * Between the draws of a multi-card instruction no game state is broadcast, so a library top card
+     * that a static ability reveals to everyone is announced in the game log as it becomes the top card.
+     */
+    private void logIntermediateRevealedTopCard(GameData gameData, UUID drawingPlayerId) {
+        List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
+        if (deck == null || deck.isEmpty() || gameData.status == GameStatus.FINISHED) {
+            return;
+        }
+        boolean revealed = false;
+        for (UUID ownerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                    continue;
+                }
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
+                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed
+                            && (topCardRevealed.allPlayers() || ownerId.equals(drawingPlayerId))) {
+                        revealed = true;
+                    }
+                }
+            }
+        }
+        if (!revealed) {
+            return;
+        }
+        String playerName = gameData.playerIdToName.get(drawingPlayerId);
+        gameLogService.append(gameData, GameLog.builder()
+                .text("The top card of " + playerName + "'s library is revealed: ")
+                .card(deck.getFirst())
+                .text(".")
+                .build());
     }
 
     /** Continues an already adjusted draw instruction after its current replacement is answered. */

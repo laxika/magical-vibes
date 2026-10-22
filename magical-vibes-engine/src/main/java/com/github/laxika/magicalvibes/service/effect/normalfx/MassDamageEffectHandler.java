@@ -70,8 +70,11 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 return e.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext);
             }
-            return (e.damagesPlaneswalkers() && p.getCard().hasType(CardType.PLANESWALKER))
-                    || (e.damagesBattles() && p.getCard().hasType(CardType.BATTLE));
+            if (e.damagesPlaneswalkers() && p.getCard().hasType(CardType.PLANESWALKER)) {
+                return !e.filterAppliesToPlaneswalkers() || e.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext);
+            }
+            return (e.damagesBattles() && p.getCard().hasType(CardType.BATTLE));
         };
 
         boolean previousExilesCreaturesDamaged = entry.isExilesCreaturesDamaged();

@@ -23,15 +23,19 @@ class VeneratedStormsingerTest extends BaseCardTest {
     void attackingCreatesTappedAndAttackingWarriorToken() {
         addCreatureReady(player1, new VeneratedStormsinger());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().isTapped()).isTrue();
-        assertThat(tokens.getFirst().isAttackedThisTurn()).isTrue();
+        assertThat(tokens.getFirst().isAttacking()).isTrue();
+        // CR 508.4: a creature put onto the battlefield attacking is attacking but never "attacked".
+        assertThat(tokens.getFirst().isAttackedThisTurn()).isFalse();
     }
 
     @Test
@@ -117,7 +121,7 @@ class VeneratedStormsingerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Warrior");
         harness.assertLife(player1, 21);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -137,7 +141,7 @@ class VeneratedStormsingerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Venerated Stormsinger");
         harness.assertOnBattlefield(player1, "Warrior");
         harness.assertLife(player1, 21);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 18);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -146,7 +150,7 @@ class VeneratedStormsingerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Warrior");
         harness.assertLife(player1, 21);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -168,7 +172,7 @@ class VeneratedStormsingerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Venerated Stormsinger");
         harness.assertNotOnBattlefield(player1, "Warrior");
         harness.assertLife(player1, 22);
-        harness.assertLife(player2, 18);
+        harness.assertLife(player2, 14);
     }
 
     private void killPermanent(com.github.laxika.magicalvibes.model.Player controller, String name) {

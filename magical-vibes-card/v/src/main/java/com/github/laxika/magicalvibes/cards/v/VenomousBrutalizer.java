@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 
 @CardRegistration(set = "ONE", collectorNumber = "193")
 public class VenomousBrutalizer extends Card {
 
     public VenomousBrutalizer() {
+        addEffect(EffectSlot.STATIC, new ToxicEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayPayManaEffect("{1}{G}", new ProliferateEffect(new Fixed(1)), "Pay {1}{G}?"));
     }

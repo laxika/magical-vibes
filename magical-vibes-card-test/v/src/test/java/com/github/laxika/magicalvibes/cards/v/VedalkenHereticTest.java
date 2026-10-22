@@ -96,6 +96,7 @@ class VedalkenHereticTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveInstant(player1, 0, List.of(heretic.getId(), player2.getId()));
+        resolveAllTriggers();
 
         harness.assertLife(player2, 19);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

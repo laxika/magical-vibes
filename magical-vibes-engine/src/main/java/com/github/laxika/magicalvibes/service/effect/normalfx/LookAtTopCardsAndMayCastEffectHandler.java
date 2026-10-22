@@ -51,8 +51,7 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
                 + entry.getCard().getName() + ")."));
 
         List<Card> castable = topCards.stream()
-                .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, lookEffect.castPredicate(), entry.getCard().getId(), gameData, controllerId))
+                .filter(card -> canCastEitherFace(gameData, entry, lookEffect, controllerId, card))
                 .toList();
         if (castable.isEmpty()) {
             Collections.shuffle(topCards);
@@ -76,5 +75,25 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
                         true));
         log.info("Game {} - {} looks at the top {} cards for {}",
                 gameData.id, gameData.playerIdToName.get(controllerId), count, entry.getCard().getName());
+    }
+
+    /**
+     * CR 712.11b: a player casting a modal double-faced card chooses which face to cast, so the card
+     * is offered when either face matches the cast predicate.
+     */
+    private boolean canCastEitherFace(GameData gameData, StackEntry entry, LookAtTopCardsAndMayCastEffect effect,
+                                      UUID controllerId, Card card) {
+        if (matchesCastPredicate(gameData, entry, effect, controllerId, card)) {
+            return true;
+        }
+        return card.isModalDoubleFaced() && card.getBackFaceCard() != null
+                && matchesCastPredicate(gameData, entry, effect, controllerId, card.getBackFaceCard());
+    }
+
+    private boolean matchesCastPredicate(GameData gameData, StackEntry entry, LookAtTopCardsAndMayCastEffect effect,
+                                         UUID controllerId, Card card) {
+        return predicateEvaluationService.matchesCardPredicate(
+                card, effect.castPredicate(), entry.getCard().getId(), gameData, controllerId,
+                entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot());
     }
 }

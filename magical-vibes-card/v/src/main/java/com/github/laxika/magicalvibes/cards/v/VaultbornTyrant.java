@@ -12,8 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BIG", collectorNumber = "20")
@@ -22,7 +25,8 @@ public class VaultbornTyrant extends Card {
     public VaultbornTyrant() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentPowerAtLeastPredicate(4),
+                        new PermanentAnyOfPredicate(List.of(new PermanentIsSourcePermanentPredicate(),
+                                new PermanentPowerAtLeastPredicate(4))),
                         SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect(1))));
         addEffect(EffectSlot.ON_DEATH,
                 new ConditionalEffect(new NotCondition(new SourceIsToken()),

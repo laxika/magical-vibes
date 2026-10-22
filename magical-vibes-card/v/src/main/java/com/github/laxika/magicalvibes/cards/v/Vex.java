@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerDrawsCar
 public class Vex extends Card {
 
     public Vex() {
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new MayEffect(
                 new TargetSpellControllerDrawsCardEffect(),
                 "Draw a card?",
                 null,
                 MayChoicePlayer.TARGET_SPELL_CONTROLLER));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

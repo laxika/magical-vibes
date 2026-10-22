@@ -347,7 +347,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     record VerdantMasterySearchChoice(UUID playerId, java.util.List<Card> pool,
-                                      boolean alternateCost)
+                                      boolean alternateCost, UUID oppositionAgentControllerId)
             implements PendingInteraction {
         public VerdantMasterySearchChoice {
             pool = java.util.List.copyOf(pool);
@@ -357,9 +357,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return pool.stream().map(Card::getId).toList();
         }
 
+        /** Opposition Agent: the Agent's controller makes the search choice for the searching player. */
         @Override
         public UUID decidingPlayerId() {
-            return playerId;
+            return oppositionAgentControllerId != null ? oppositionAgentControllerId : playerId;
         }
 
         @Override
@@ -1918,7 +1919,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    record DuplicateManaValueRevealContext(CreateTokenEffect token) {
+    record DuplicateManaValueRevealContext(CreateTokenEffect token, int maxCount) {
     }
 
     record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -1980,6 +1981,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
+            if (duplicateManaValueRevealContext != null) {
+                return new InteractionOptions.MultiCardPick(validCardIds, 0,
+                        Math.min(duplicateManaValueRevealContext.maxCount(), validCardIds.size()));
+            }
             int required = activatedAbilityContext == null ? 0 : activatedAbilityContext.xValue();
             return new InteractionOptions.MultiCardPick(validCardIds, required,
                     activatedAbilityContext == null ? validCardIds.size() : required);

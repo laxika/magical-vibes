@@ -2613,6 +2613,12 @@ public class GameData {
     public final Set<UUID> pendingFreeCastLandPlayIds = ConcurrentHashMap.newKeySet();
 
     /**
+     * Adventurer cards in {@link #pendingFreeCastQueue} that are cast as their Adventure rather than as
+     * the card itself, because only the Adventure's mana value fits the effect's limit (CR 715.3a).
+     */
+    public final Set<UUID> pendingFreeCastAdventureIds = ConcurrentHashMap.newKeySet();
+
+    /**
      * Total mana value still available to the spells in {@link #pendingFreeCastQueue} when their
      * cast shares one limit (Primeval Spawn), or null when it is not limited. Each spell spends its
      * own mana value as it is cast, so a split card spends only the half being cast (CR 709.3a).
@@ -2859,6 +2865,20 @@ public class GameData {
     /** Tracks how many cards each player has discarded this turn (any discard, any source). Used by
      *  "cards discarded this turn" effects, e.g. Dream Salvage. Cleared at the start of each turn. */
     public final Map<UUID, Integer> cardsDiscardedThisTurn = new ConcurrentHashMap<>();
+
+    /** Whether life payments are currently being summed into {@link #activationLifePaid}: set when an
+     *  activated ability's activation begins and cleared once its activation triggers are collected. */
+    public boolean trackingActivationLifePaid;
+
+    /** Life paid so far as part of the activation currently being announced (including life paid in
+     *  place of Phyrexian mana), so "if life was paid to activate it" triggers see the amount actually
+     *  paid (Verrak, Warped Sengir). */
+    public int activationLifePaid;
+
+    /** Tracks how many nonland cards each player has discarded this turn (any discard, any source), so
+     *  "for the first time each turn" discard triggers can count discards made before their source
+     *  entered (Veronica, Dissident Scribe). Cleared at the start of each turn. */
+    public final Map<UUID, Integer> nonlandCardsDiscardedThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks how many cards each player cycled this turn. Cleared at the start of each turn. */
     public final Map<UUID, Integer> cardsCycledThisTurn = new ConcurrentHashMap<>();
@@ -8507,6 +8527,7 @@ public class GameData {
         copy.cardsDrawnLastTurn.putAll(this.cardsDrawnLastTurn);
         this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
+        copy.nonlandCardsDiscardedThisTurn.putAll(this.nonlandCardsDiscardedThisTurn);
         copy.cardsCycledThisTurn.putAll(this.cardsCycledThisTurn);
         copy.discardEventPlayerId = this.discardEventPlayerId;
         copy.discardEventCardCount = this.discardEventCardCount;
@@ -9495,6 +9516,7 @@ public class GameData {
         copy.freeCastKickedIds.addAll(this.freeCastKickedIds);
         copy.deferredExileBottomSourceIds.addAll(this.deferredExileBottomSourceIds);
         copy.pendingFreeCastLandPlayIds.addAll(this.pendingFreeCastLandPlayIds);
+        copy.pendingFreeCastAdventureIds.addAll(this.pendingFreeCastAdventureIds);
         copy.pendingFreeCastManaValueBudget = this.pendingFreeCastManaValueBudget;
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
         copy.pendingExileFreeCastRemainderToLibraryBottom.addAll(this.pendingExileFreeCastRemainderToLibraryBottom);

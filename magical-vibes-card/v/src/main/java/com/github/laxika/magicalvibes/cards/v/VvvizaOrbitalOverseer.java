@@ -13,23 +13,24 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "YEOE", collectorNumber = "28")
 public class VvvizaOrbitalOverseer extends Card {
 
-    private static final CreateTokenEffect LANDER = new CreateTokenEffect(
-            CardType.CREATURE, 1, "Lander", 2, 1, null, null,
-            List.of(CardSubtype.LANDER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
-            false, false, Map.of(), List.of(new ActivatedAbility(
+    private static final CreateTokenEffect LANDER = CreateTokenEffect.ofArtifactToken(
+            1, "Lander", List.of(CardSubtype.LANDER), List.of(new ActivatedAbility(
                     true,
                     "{2}",
                     List.of(
@@ -38,7 +39,11 @@ public class VvvizaOrbitalOverseer extends Card {
                                     LibrarySearchDestination.BATTLEFIELD_TAPPED)
                     ),
                     "{2}, {T}, Sacrifice this token: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."
-            )), false, false, false, 0, Set.of());
+            )));
+
+    private static final AnimatePermanentsEffect ANIMATE_LANDER = new AnimatePermanentsEffect(
+            new Fixed(2), new Fixed(1), List.of(), Set.of(Keyword.FLYING), null, Set.of(CardType.CREATURE),
+            GrantScope.TOKENS_CREATED_THIS_RESOLUTION, EffectDuration.PERMANENT, null);
 
     public VvvizaOrbitalOverseer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DraftFromSpellbookEffect.conjureOntoBattlefield(List.of(
@@ -48,5 +53,6 @@ public class VvvizaOrbitalOverseer extends Card {
                 SusurSecundiVoidAltar::new,
                 UthrosTitanicGodcore::new)));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, LANDER);
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ANIMATE_LANDER);
     }
 }

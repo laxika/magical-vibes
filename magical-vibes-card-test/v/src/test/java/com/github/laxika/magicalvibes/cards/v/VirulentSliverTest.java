@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.h.HomingSliver;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -85,7 +86,7 @@ class VirulentSliverTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new HomingSliver());
         attacker.setAttacking(true);
 
-        resolveCombat(player1);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player1));
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
         assertThat(gd.stack).hasSize(2);
@@ -104,7 +105,7 @@ class VirulentSliverTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new HomingSliver());
         attacker.setAttacking(true);
 
-        resolveCombat(player1);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player1));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();

@@ -74,7 +74,7 @@ class VaevictisAsmadiTheDireTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(vaevictis);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }

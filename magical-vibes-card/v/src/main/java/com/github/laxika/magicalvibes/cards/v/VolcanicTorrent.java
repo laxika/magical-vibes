@@ -25,6 +25,7 @@ public class VolcanicTorrent extends Card {
         // to the number of spells its controller has cast this turn.
         addEffect(EffectSlot.SPELL, new MassDamageEffect(
                 new SpellsCastThisTurn(CountScope.CONTROLLER), false, true,
-                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
+                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))
+                .withFilterAppliedToPlaneswalkers());
     }
 }

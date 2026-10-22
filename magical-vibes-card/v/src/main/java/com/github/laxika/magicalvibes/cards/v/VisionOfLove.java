@@ -23,10 +23,10 @@ public class VisionOfLove extends Card {
                                 new SacrificePermanentThenEffect(
                                         new PermanentIsArtifactPredicate(),
                                         new DrawCardEffect(2),
-                                        "an artifact")),
+                                        "an artifact", false, false)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Discard a card. If you do, draw two cards",
-                                new DiscardCardThenEffect(
+                                DiscardCardThenEffect.continuing(
                                         null,
                                         new DrawCardEffect(2),
                                         "a card"))

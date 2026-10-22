@@ -28,10 +28,10 @@ public class VuzzleSpaceship extends Card {
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         // If it would be dealt damage, remove that many +1/+1 counters instead.
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect());
+        addEffect(EffectSlot.STATIC, PreventDamageAndRemovePlusOnePlusOneCountersEffect.replacingDamageWithCounterRemoval());
 
         // Lasers [3] → Whenever Vuzzle Spaceship attacks, it deals 1 damage to any target.
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),
                 new DealDamageToAnyTargetEffect(1)));
     }

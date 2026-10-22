@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -41,12 +42,13 @@ public class VolatileFault extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new DestroyTargetPermanentThenEffect(
-                                new SearchLibraryEffect(
+                                new MayEffect(new SearchLibraryEffect(
                                         new CardAllOfPredicate(List.of(
                                                 new CardSupertypePredicate(CardSupertype.BASIC),
                                                 new CardTypePredicate(CardType.LAND)
                                         )),
                                         LibrarySearchDestination.BATTLEFIELD),
+                                "Search your library for a basic land card?"),
                                 ThenEffectRecipient.TARGET_CONTROLLER),
                         CreateTokenEffect.ofTreasureToken(1)
                 ),

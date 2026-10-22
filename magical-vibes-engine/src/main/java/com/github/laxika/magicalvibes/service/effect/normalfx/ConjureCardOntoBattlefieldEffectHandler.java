@@ -31,6 +31,9 @@ public class ConjureCardOntoBattlefieldEffectHandler implements NormalEffectHand
         Card card = conjure.cardFactory().get();
         card.setOwnerId(entry.getControllerId());
         Permanent permanent = new Permanent(card);
+        if (conjure.entryCounterType() != null && conjure.entryCounterCount() > 0) {
+            permanent.setCounterCount(conjure.entryCounterType(), conjure.entryCounterCount());
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(
                 gameData, entry.getControllerId(), permanent, conjure.enterTappedTypes());
         entry.getCreatedPermanentIds().add(permanent.getId());

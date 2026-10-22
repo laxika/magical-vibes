@@ -326,7 +326,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<Card> sourceCards = new ArrayList<>(topCards);
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         String prompt = randomBottom
+                ? e.reveal()
                 ? "You may reveal a matching card from among them and put it on top of your library. "
+                + "The rest go to the bottom of your library in a random order."
+                : "You may put one of those cards on top of your library. "
                 + "The rest go to the bottom of your library in a random order."
                 : e.optional() && e.choosePredicate() != null
                 ? "You may reveal a matching card from among them and put it on top of your library. "
@@ -334,7 +337,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 : "Put one card on top of your library. The rest go to the bottom of your library.";
         LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, matchingCards)
                 .canFailToFind(e.optional())
-                .reveals(randomBottom || (e.optional() && e.choosePredicate() != null))
+                .reveals((randomBottom && e.reveal()) || (e.optional() && e.choosePredicate() != null))
                 .sourceCards(sourceCards)
                 .reorderRemainingToBottom(true)
                 .shuffleAfterSelection(false)

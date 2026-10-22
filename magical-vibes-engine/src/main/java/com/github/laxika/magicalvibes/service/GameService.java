@@ -1482,7 +1482,11 @@ public class GameService {
                 morphAdditionalCostPermanentIds, null, false);
         // Turning a permanent face up is a special action; state-based actions are checked before
         // the player next receives priority (CR 704.3), e.g. an aura it no longer may enchant falls off.
-        stateBasedActionService.performStateBasedActions(gameData);
+        // While a face-up choice is still pending (Vesuvan Shapeshifter's copy choice), the permanent is not
+        // yet in its final state, so the check waits until the choice completes.
+        if (!gameData.interaction.isAwaitingInput()) {
+            stateBasedActionService.performStateBasedActions(gameData);
+        }
     }
 
     /** Completes a face-up payment after the player has chosen X for a disguise cost. */

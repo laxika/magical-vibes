@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -12,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class VampireSoulcaller extends Card {
 
     public VampireSoulcaller() {
+        // This creature can't block.
+        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+
+        // When this creature enters, return target creature card from your graveyard to your hand.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureCardFromTargetHandForValkiEffect;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ public class ChooseCreatureCardFromTargetHandForValkiEffectHandler implements No
 
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,13 +30,15 @@ public class ChooseCreatureCardFromTargetHandForValkiEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID targetPlayerId = ((ChooseCreatureCardFromTargetHandForValkiEffect) effect).targetPlayerId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null
                 || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+            // Valki already left: the hand is still revealed, but the card does not move (CR 610.3b).
+            cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
             return;
         }
 
-        UUID targetPlayerId = ((ChooseCreatureCardFromTargetHandForValkiEffect) effect).targetPlayerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         boolean hasCreature = hand != null && hand.stream().anyMatch(card -> card.hasType(CardType.CREATURE));
         if (hasCreature) {

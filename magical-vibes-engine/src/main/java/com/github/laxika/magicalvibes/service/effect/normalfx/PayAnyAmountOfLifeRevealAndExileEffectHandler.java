@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeRevealAndExileEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class PayAnyAmountOfLifeRevealAndExileEffectHandler implements NormalEffe
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,8 +65,9 @@ public class PayAnyAmountOfLifeRevealAndExileEffectHandler implements NormalEffe
             return;
         }
 
-        // A player can't pay more life than they have.
-        int maxLife = gameData.getLife(controllerId);
+        // A player can't pay more life than they have, and can't pay any life while their life total can't change.
+        int maxLife = gameQueryService.canPlayerLoseLife(gameData, controllerId)
+                ? gameData.getLife(controllerId) : 0;
         if (maxLife <= 0) {
             log.info("Game {} - {} has no life to pay for {}", gameData.id, playerName, cardName);
             return;

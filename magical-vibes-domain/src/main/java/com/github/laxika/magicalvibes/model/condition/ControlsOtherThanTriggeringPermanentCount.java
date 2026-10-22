@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.model.condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * The controller controls at least {@code minCount} matching permanents, excluding both the
- * source permanent and the permanent that caused the enter-the-battlefield trigger.
+ * The controller controls at least {@code minCount} matching permanents, excluding only the
+ * permanent that caused the enter-the-battlefield trigger. The trigger source itself is counted
+ * when it matches, e.g. a land that is a Mountain through Prismatic Omen.
  */
 public record ControlsOtherThanTriggeringPermanentCount(int minCount, PermanentPredicate filter)
         implements Condition {

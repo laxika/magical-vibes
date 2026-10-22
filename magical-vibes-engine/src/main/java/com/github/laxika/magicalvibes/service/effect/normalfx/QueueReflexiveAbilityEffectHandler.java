@@ -69,6 +69,22 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
+        if (queueEffect.sourcePermanentId() != null) {
+            Permanent reflexiveSource = gameQueryService.findPermanentById(gameData, queueEffect.sourcePermanentId());
+            StackEntry sourceContext = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    entry.getCard(),
+                    entry.getControllerId(),
+                    entry.getCard().getName() + "'s reflexive ability",
+                    List.of(),
+                    0,
+                    queueEffect.sourcePermanentId());
+            sourceContext.setSourcePermanentSnapshot(reflexiveSource == null ? null : new Permanent(reflexiveSource));
+            resolve(gameData, sourceContext, new QueueReflexiveAbilityEffect(queueEffect.effect(),
+                    queueEffect.optionalTarget(), queueEffect.useEventValueAsX(),
+                    queueEffect.useEntryTargetAsTriggeringPermanent()));
+            return;
+        }
         if (queueEffect.effect() instanceof CombatDamageTriggerContextEffect contextEffect
                 && contextEffect.combatDamageTriggerContext()
                 == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER

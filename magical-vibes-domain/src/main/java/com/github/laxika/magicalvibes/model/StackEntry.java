@@ -242,6 +242,8 @@ public class StackEntry {
     @Setter private Zone sourceZone;
     /** Whether this is the activated ability created by cycling a card from hand. */
     @Setter private boolean cyclingAbility;
+    /** Whether this is a planeswalker loyalty ability, as opposed to another ability the planeswalker has. */
+    @Setter private boolean loyaltyAbility;
     /** Cards exiled from the graveyard to pay this spell's delve cost. */
     @Setter private List<UUID> delvedCardIds = List.of();
     /** The cards exiled to pay this spell's delve cost, kept even after they leave exile (Soulflayer). */
@@ -979,6 +981,7 @@ public class StackEntry {
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
         this.cyclingAbility = source.cyclingAbility;
+        this.loyaltyAbility = source.loyaltyAbility;
         this.delvedCardIds = source.delvedCardIds.isEmpty() ? List.of() : new ArrayList<>(source.delvedCardIds);
         this.delvedCards = source.delvedCards.isEmpty() ? List.of() : new ArrayList<>(source.delvedCards);
         this.ownerIdOverride = source.ownerIdOverride;
@@ -1365,6 +1368,7 @@ public class StackEntry {
         this.faceDownTurnsFaceUpOnDamageOrTap = false;
         this.entersTapped = false;
         this.cyclingAbility = false;
+        this.loyaltyAbility = false;
         this.buyback = false;
         this.putCounterCostPaid = false;
         this.collectEvidenceCostPaid = false;

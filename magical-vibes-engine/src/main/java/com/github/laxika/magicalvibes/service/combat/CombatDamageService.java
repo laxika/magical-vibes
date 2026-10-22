@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEff
 import com.github.laxika.magicalvibes.model.effect.CombatExcessDamageAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceAwareEffect;
@@ -85,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
@@ -784,7 +786,7 @@ public class CombatDamageService {
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
         processDelayedDestroyCreatureDamagedTriggers(gameData, state.combatDamageDealtToCreatures);
 
-        processDelayedPlaneswalkerCombatDamageTriggers(gameData, state.combatDamageDealt);
+        processDelayedPlaneswalkerCombatDamageTriggers(gameData, state.combatDamageDealtToPlaneswalker);
 
         // Tamiyo, Field Researcher's +1: "until your next turn, whenever either of those creatures
         // deals combat damage, you draw a card".
@@ -1999,7 +2001,7 @@ public class CombatDamageService {
                     allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
                 }
                 allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, creature, EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                        gameData, creature, attackerId, EffectSlot.ON_DAMAGE_TO_OPPONENT));
             }
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
@@ -2011,9 +2013,9 @@ public class CombatDamageService {
             // Combat-damage-to-player triggers granted continuously by a static ability
             // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
             allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, creature, EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                    gameData, creature, attackerId, EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, creature, EffectSlot.ON_DAMAGE_TO_PLAYER));
+                    gameData, creature, attackerId, EffectSlot.ON_DAMAGE_TO_PLAYER));
             TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
             int creatureTriggerCopies = 1
@@ -2128,8 +2130,14 @@ public class CombatDamageService {
                         UUID mayGraveyardOwnerId =
                                 may.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
                                         ? defenderId : attackerId;
+                        // A graveyard return whose mana value limit is the damage dealt (Venerable Warsinger)
+                        // fixes that limit now, so only creature cards up to the damage are offered.
+                        CardEffect graveyardMay = may.wrapped() instanceof ReturnCardFromGraveyardEffect returnEffect
+                                ? new MayEffect(returnEffect.snapshotCombatDamage(damageDealt), may.prompt(),
+                                        may.elseEffect(), may.choicePlayer(), may.choicePlayerId())
+                                : effect;
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                                creature.getCard(), attackerId, List.of(effect), mayGraveyardOwnerId,
+                                creature.getCard(), attackerId, List.of(graveyardMay), mayGraveyardOwnerId,
                                 1, 0, 1, null, false, null, creature.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));
@@ -2672,6 +2680,8 @@ public class CombatDamageService {
                         && discover.discoverValue() instanceof EventValue)
                 || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
                 || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)
+                || (effect instanceof CreateTokenForTargetPlayerEffect create
+                && create.tokenEffect().amount() instanceof EventValue)
                 || (effect instanceof CombatDamageAmountAwareEffect amountAware
                 && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount()));
     }
@@ -3052,23 +3062,30 @@ public class CombatDamageService {
                         state.combatDamagePlayerRecipients.getOrDefault(source, defenderId));
             });
         }
+        // One trigger per damaged recipient: each damaged player and each damaged planeswalker is a
+        // separate "combat damage is dealt to" event, so simultaneous damage to a player and a
+        // planeswalker they control triggers twice (Vengeful Pharaoh ruling, 2011-09-22).
+        List<UUID> triggerRecipientIds = new ArrayList<>(damagedPlayerIds);
         for (var entry : state.damageToPlaneswalkers.entrySet()) {
             if (entry.getValue() <= 0) continue;
             UUID planeswalkerController = gameQueryService.findPermanentController(gameData, entry.getKey());
             if (planeswalkerController != null) {
-                damagedPlayerIds.add(planeswalkerController);
+                triggerRecipientIds.add(planeswalkerController);
             }
         }
 
-        for (UUID playerId : damagedPlayerIds) {
+        for (UUID playerId : triggerRecipientIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : new ArrayList<>(graveyard)) {
                 List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
                         gameData, card, EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER);
                 if (effects.isEmpty()) continue;
+                List<CardEffect> boundEffects = effects.stream()
+                        .map(e -> triggerCollectionService.bindSourceCardInGraveyardVersion(gameData, e, card.getId()))
+                        .toList();
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        card, playerId, new ArrayList<>(effects), null));
+                        card, playerId, new ArrayList<>(boundEffects), null));
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s graveyard trigger triggers."));
             }
         }
@@ -3537,15 +3554,15 @@ public class CombatDamageService {
     }
 
     private void processDelayedPlaneswalkerCombatDamageTriggers(GameData gameData,
-                                                                Map<Permanent, Integer> combatDamageDealt) {
-        if (combatDamageDealt.isEmpty()
+                                                                Map<Permanent, Integer> combatDamageDealtToPlaneswalker) {
+        if (combatDamageDealtToPlaneswalker.isEmpty()
                 || !gameData.hasDelayedAction(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class)) {
             return;
         }
 
         for (DelayedDestroyCreatureDealingCombatDamageToPlaneswalker delayed
                 : gameData.getDelayedActions(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class)) {
-            for (var entry : combatDamageDealt.entrySet()) {
+            for (var entry : combatDamageDealtToPlaneswalker.entrySet()) {
                 Permanent creature = entry.getKey();
                 if (entry.getValue() <= 0
                         || !delayed.planeswalkerId().equals(creature.getAttackTarget())) {

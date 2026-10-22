@@ -720,6 +720,40 @@ public class PotentialManaService {
     }
 
     /**
+     * The mana the player could still produce right now that may be spent only on costs containing
+     * {X} (Rosheen Meanderer). It is left out of {@link #buildVirtualManaPool} because it can't pay
+     * ordinary costs; a pay-{X} ability that can use it adds it on top.
+     */
+    public int potentialXCostOnlyMana(GameData gameData, UUID playerId) {
+        int total = 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        for (Permanent perm : battlefield) {
+            if (perm.isTapped()) {
+                continue;
+            }
+            List<ActivatedAbility> abilities = activatedAbilitiesFor(gameData, perm, perm.getCard());
+            int best = 0;
+            for (int i = 0; i < abilities.size(); i++) {
+                ActivatedAbility ability = abilities.get(i);
+                if (!canTapForManaNow(ability, i, perm, gameData, playerId)) {
+                    continue;
+                }
+                for (CardEffect effect : ability.getEffects()) {
+                    if (effect instanceof AwardRestrictedManaEffect restricted
+                            && restricted.restriction() instanceof ManaRestriction.XCosts) {
+                        best = Math.max(best, estimateManaAmount(restricted.amount(), perm, gameData));
+                    }
+                }
+            }
+            total += best;
+        }
+        return total;
+    }
+
+    /**
      * The abilities {@code abilityIndex} is measured against — the same list
      * {@code AbilityActivationService.activateAbility} resolves an index against, so a planner's
      * index and the engine's never name different abilities. Falls back to the printed list for

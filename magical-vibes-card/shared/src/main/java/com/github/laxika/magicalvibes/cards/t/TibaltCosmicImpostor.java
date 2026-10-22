@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,10 +28,10 @@ public class TibaltCosmicImpostor extends Card {
                         true, null, false, false, 0, null,
                         false, false, false, true);
         addEffect(EffectSlot.STATIC, permission);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateEmblemEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateEmblemAsEntersEffect(new CreateEmblemEffect(
                 List.of(permission),
                 "You may play cards exiled with Tibalt, Cosmic Impostor, and you may spend mana as though it were mana of any color to cast those spells."
-        ));
+        )));
 
         addActivatedAbility(new ActivatedAbility(
                 +2,
@@ -39,7 +40,7 @@ public class TibaltCosmicImpostor extends Card {
         ));
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new ExileTargetPermanentEffect()),
+                List.of(new ExileTargetPermanentAndTrackWithSourceEffect()),
                 "−3: Exile target artifact or creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(
@@ -52,7 +53,8 @@ public class TibaltCosmicImpostor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(
-                        new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS),
+                        new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_PLAYERS, null, null, false,
+                                true, false, null, false, false),
                         new AwardManaEffect(ManaColor.RED, 3)
                 ),
                 "−8: Exile all graveyards. Add {R}{R}{R}."

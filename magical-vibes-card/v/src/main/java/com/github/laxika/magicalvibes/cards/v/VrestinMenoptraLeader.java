@@ -9,12 +9,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTriggeringAttackersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -57,12 +54,7 @@ public class VrestinMenoptraLeader extends Card {
         PermanentAllOfPredicate attackingInsect = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.INSECT)));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
-                new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.INSECT)),
-                new PutCounterOnEachMatchingPermanentEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        1,
-                        attackingInsect,
-                        EachPermanentScope.ALL_PLAYERS)));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                new PutCounterOnTriggeringAttackersEffect(CounterType.PLUS_ONE_PLUS_ONE, attackingInsect));
     }
 }

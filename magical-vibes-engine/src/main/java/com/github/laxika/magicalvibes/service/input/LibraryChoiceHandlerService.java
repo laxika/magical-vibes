@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingReturnTwoExiledWithSourceCards;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -117,6 +118,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
@@ -563,6 +565,10 @@ public class LibraryChoiceHandlerService {
                         gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
                         if (librarySearch.allowAnyManaType()) {
                             gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+                        }
+                        if (librarySearch.exilePlayPermissionFilter() != null) {
+                            gameData.exilePlayPermissionSpellFilters.put(chosenCard.getId(),
+                                    librarySearch.exilePlayPermissionFilter());
                         }
                     }
                 } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
@@ -3419,6 +3425,17 @@ public class LibraryChoiceHandlerService {
         if (psychoticEpisodeChoice != null) {
             handlePsychoticEpisodeChoice(gameData, player, psychoticEpisodeChoice,
                     allRevealedCards, cardIds);
+            return;
+        }
+
+        PendingValkiCopyChoice valkiCopyChoice = gameData.pollPendingInteraction(PendingValkiCopyChoice.class);
+        if (valkiCopyChoice != null) {
+            Permanent valki = gameQueryService.findPermanentById(gameData, valkiCopyChoice.sourcePermanentId());
+            if (valki != null) {
+                permanentCopierService.applyCloneCopy(valki, allCardsMatchingIds(allRevealedCards, cardIds).getFirst(),
+                        null, null, Set.of());
+            }
+            finishSearchAndResume(gameData);
             return;
         }
 

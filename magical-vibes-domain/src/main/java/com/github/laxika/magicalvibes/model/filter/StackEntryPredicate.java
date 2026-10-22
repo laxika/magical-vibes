@@ -16,6 +16,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryCastWithWarpCostPredicate,
         StackEntryColorInPredicate,
         StackEntryIsMulticoloredPredicate,
+        StackEntryIsLoyaltyAbilityPredicate,
         StackEntryControlledByChosenPlayerPredicate,
         StackEntryControlledByEnchantedPlayerPredicate,
         StackEntryControlledByPredicate,

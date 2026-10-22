@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 import java.util.List;
 import java.util.Map;
@@ -24,12 +23,8 @@ public class ValorsFlagship extends Card {
                 List.of(CardSubtype.PILOT), Set.of(), Set.of())
                 .withTokenEffects(Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2)));
 
-        addHandActivatedAbility(new ActivatedAbility(
-                false,
-                "{X}{2}{W}",
-                List.of(pilot, new DrawCardEffect(1)),
-                "Cycling {X}{2}{W} ({X}{2}{W}, Discard this card: Draw a card.)"
-        ));
+        addEffect(EffectSlot.ON_SELF_CYCLED, pilot);
+        addCycling("{X}{2}{W}");
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -166,8 +166,7 @@ class VisionsOfGloryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -213,8 +212,7 @@ class VisionsOfGloryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
     }
 

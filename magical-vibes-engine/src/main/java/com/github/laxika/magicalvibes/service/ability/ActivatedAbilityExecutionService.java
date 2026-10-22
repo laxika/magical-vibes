@@ -1065,6 +1065,7 @@ public class ActivatedAbilityExecutionService {
                 permanentTargetIds
         );
         snapshot.setActivePlayerId(gameData.activePlayerId);
+        snapshot.setLoyaltyAbility(ability.getLoyaltyCost() != null);
         snapshot.setTargetFilter(ability.getTargetFilter());
         if (!ability.getMultiTargetFilters().isEmpty()) {
             snapshot.setTargetFilters(new ArrayList<>(ability.getMultiTargetFilters()));
@@ -2227,6 +2228,7 @@ public class ActivatedAbilityExecutionService {
                 effectivePermanentTargetIds
         );
         stackEntry.setActivePlayerId(gameData.activePlayerId);
+        stackEntry.setLoyaltyAbility(ability.getLoyaltyCost() != null);
         if (permanent.getCard().isAura()) {
             stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         }

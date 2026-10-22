@@ -157,7 +157,8 @@ class VisionsOfPhyrexiaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -238,8 +239,8 @@ class VisionsOfPhyrexiaTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new VisionsOfPhyrexia());
-        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest()));
-        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

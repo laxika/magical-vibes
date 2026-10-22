@@ -28,7 +28,7 @@ public class VraskaSwarmsEminence extends Card {
     public VraskaSwarmsEminence() {
         CardEffect putCounterOnDealer = new PutCounterOnReferencedPermanentEffect(
                 PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE);
-        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
+        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH), putCounterOnDealer));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,

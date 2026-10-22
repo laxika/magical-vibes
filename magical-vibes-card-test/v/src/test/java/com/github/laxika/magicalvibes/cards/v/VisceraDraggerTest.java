@@ -46,7 +46,7 @@ class VisceraDraggerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Viscera Dragger");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Viscera Dragger");
     }
 

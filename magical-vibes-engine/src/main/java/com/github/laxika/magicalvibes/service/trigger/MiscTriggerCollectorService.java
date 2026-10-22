@@ -1124,6 +1124,11 @@ public class MiscTriggerCollectorService {
         if (!lifeLoss.losingPlayerId().equals(gameData.activePlayerId)) {
             return false;
         }
+        int lifeLostEarlierThisTurn = gameData.lifeLostThisTurn.getOrDefault(lifeLoss.losingPlayerId(), 0)
+                - lifeLoss.lifeLostAmount();
+        if (lifeLostEarlierThisTurn > 0) {
+            return false;
+        }
 
         Set<UUID> firedForOpponents = gameData.firstOpponentLifeLossTriggersFiredThisTurn
                 .computeIfAbsent(match.permanent().getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet());
@@ -1973,7 +1978,7 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -1981,7 +1986,11 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        if (ctx instanceof TriggerContext.CreatureCardsPutIntoGraveyardFromLibrary batch) {
+            entry.setEventValue(batch.creatureCardCount());
+        }
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on creature cards put into graveyard from library",

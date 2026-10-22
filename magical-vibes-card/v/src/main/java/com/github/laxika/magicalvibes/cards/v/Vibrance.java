@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -38,7 +39,7 @@ public class Vibrance extends Card {
                 "Target must be any target"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED, 2),
-                        new DealDamageToAnyTargetEffect(3)));
+                        new DealDamageToAnyTargetEffect(3)), TriggerMode.INDEPENDENT);
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.GREEN, 2),

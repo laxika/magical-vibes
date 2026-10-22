@@ -37,7 +37,8 @@ public class DestroySourceThenDealDamageToControllerEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DestroySourceThenDealDamageToControllerEffect) effect;
         UUID sourceId = entry.getSourcePermanentId();
-        Permanent source = sourceId == null ? null : gameQueryService.findPermanentById(gameData, sourceId);
+        Permanent livingSource = sourceId == null ? null : gameQueryService.findPermanentById(gameData, sourceId);
+        Permanent source = livingSource != null ? livingSource : lastKnownSource(gameData, entry, sourceId);
         if (source == null) {
             return;
         }
@@ -57,7 +58,9 @@ public class DestroySourceThenDealDamageToControllerEffectHandler implements Nor
                 sourceId);
         damageEntry.setSourcePermanentSnapshot(sourceSnapshot);
 
-        destructionSupport.tryDestroyAndLog(gameData, source, entry.getCard().getName());
+        if (livingSource != null) {
+            destructionSupport.tryDestroyAndLog(gameData, livingSource, entry.getCard().getName());
+        }
 
         if (!gameData.playerIds.contains(entry.getControllerId())
                 || damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
@@ -67,5 +70,17 @@ public class DestroySourceThenDealDamageToControllerEffectHandler implements Nor
         int rawDamage = damage;
         damageSupport.dealDamageToPlayer(gameData, damageEntry, entry.getControllerId(), rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    private Permanent lastKnownSource(GameData gameData, StackEntry entry, UUID sourceId) {
+        if (entry.getSourcePermanentSnapshot() != null) {
+            return entry.getSourcePermanentSnapshot();
+        }
+        if (sourceId == null) {
+            return null;
+        }
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> snapshot.getId().equals(sourceId))
+                .findFirst().orElse(null);
     }
 }

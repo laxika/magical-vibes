@@ -160,8 +160,14 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
 
     private void beginAuraReturnChoice(GameData gameData, StackEntry entry, ExiledCardEntry auraEntry,
                                        List<UUID> hostCandidates, boolean underControllerControl) {
-        Card auraCard = auraEntry.card();
         UUID chooserId = underControllerControl ? entry.getControllerId() : auraEntry.ownerId();
+        beginAuraReturnChoice(gameData, chooserId, auraEntry, hostCandidates);
+    }
+
+    /** Removes the Aura from exile and has {@code chooserId} choose the object it enchants (CR 303.4f). */
+    void beginAuraReturnChoice(GameData gameData, UUID chooserId, ExiledCardEntry auraEntry,
+                               List<UUID> hostCandidates) {
+        Card auraCard = auraEntry.card();
         if (!gameData.removeFromExile(auraCard.getId())) {
             return;
         }
@@ -181,7 +187,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
         }
     }
 
-    private List<UUID> legalAuraHosts(GameData gameData, Card auraCard, UUID auraControllerId) {
+    List<UUID> legalAuraHosts(GameData gameData, Card auraCard, UUID auraControllerId) {
         List<UUID> hosts = new ArrayList<>();
         gameData.forEachPermanent((ignored, candidate) -> {
             if (auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, candidate)) {

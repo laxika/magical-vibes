@@ -100,6 +100,7 @@ class VampiricTouchTest extends BaseCardTest {
     @DisplayName("Does not gain life when the only target leaves the battlefield before resolution")
     void noLifeGainWhenTargetLeavesBattlefield() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new VampiricTouch()));

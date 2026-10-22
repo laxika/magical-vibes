@@ -171,6 +171,9 @@ another player's dash costs.
   (`battlefieldHandlers`, `spellSelfHandlers`); `register(...)` routes by `onSpellItself()`.
 - `cast/costmod/ReduceOwnCastCostEffectHandler.java` — spell-self handler for
   `ReduceOwnCastCostEffect(DynamicAmount)`; evaluates via `AmountEvaluationService`.
+- `cast/costmod/ReduceOwnFlashbackCostEffectHandler.java` — spell-self handler for
+  `ReduceOwnFlashbackCostEffect(DynamicAmount)`; reduces generic mana only when `context.flashbackCost()`
+  (Visions of Dominance). Cast-from-graveyard by other means (Yawgmoth's Will) is not reduced.
 - `cast/costmod/ReduceGraveyardSpellCastCostEffectHandler.java` — battlefield handler for
   `ReduceGraveyardSpellCastCostEffect(int)`; applies only to spells cast from a graveyard.
 - `cast/costmod/ReduceOwnColoredCastCostEffectHandler.java` — spell-self handler for

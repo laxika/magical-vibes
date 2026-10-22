@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -53,13 +54,16 @@ public class ExileTopCardOfDamagedPlayerLibraryMayCastOrCreateTreasureEffectHand
         }
         List<Card> library = gameData.playerDecks.get(damagedPlayerId);
         if (library == null || library.isEmpty()) {
+            // Nothing was exiled, so the controller can't have cast it: "If you don't, create a Treasure token."
+            vaanExileCastSupport.createTreasureDuringResolution(
+                    gameData, controllerId, entry.getCard(), entry.getSourcePermanentId());
             return;
         }
 
         Card topCard = library.removeFirst();
         exileService.exileCard(gameData, damagedPlayerId, topCard);
         gameLogService.append(gameData, GameLog.cardThen(topCard, " is exiled from the top of the library."));
-        if (topCard.hasType(CardType.LAND)) {
+        if (topCard.hasType(CardType.LAND) && topCard.getCastingOption(AdventureCast.class).isEmpty()) {
             vaanExileCastSupport.createTreasureDuringResolution(
                     gameData, controllerId, entry.getCard(), entry.getSourcePermanentId());
             return;

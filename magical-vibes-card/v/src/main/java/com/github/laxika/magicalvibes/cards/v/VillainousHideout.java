@@ -11,9 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEf
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -37,9 +35,7 @@ public class VillainousHideout extends Card {
                 List.of(new DrawDiscardAndConniveEffect(true)),
                 "{3}, {T}: Target Villain you control connives. Activate only as a sorcery.",
                 new ControlledPermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.VILLAIN))),
+                        new PermanentHasSubtypePredicate(CardSubtype.VILLAIN),
                         "Target must be a Villain you control"),
                 null,
                 null,

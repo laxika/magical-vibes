@@ -102,6 +102,8 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             logNoMatch(gameData, entry);
         }
         List<Card> soughtCards = new ArrayList<>(cardsToSeek);
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<Card> simultaneousCreatureEntries = new ArrayList<>();
         for (int i = 0; i < cardsToSeek; i++) {
             Card chosen = matchingCards.remove(ThreadLocalRandom.current().nextInt(matchingCards.size()));
             deck.removeIf(card -> card.getId().equals(chosen.getId()));
@@ -120,12 +122,15 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 }
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, permanent,
-                        battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+                        battlefieldEntryService.snapshotEnterTappedTypes(gameData), simultaneouslyEntered);
+                simultaneouslyEntered.add(permanent);
                 if (seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
                     permanent.tap();
                 }
                 if (seek.battlefieldCloaked()) {
                     battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, chosen);
+                } else if (gameQueryService.isCreature(gameData, permanent)) {
+                    simultaneousCreatureEntries.add(chosen);
                 }
                 gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                         .text(seek.battlefieldCloaked()
@@ -150,6 +155,16 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 throw new IllegalStateException("Unsupported Seek destination: " + seek.destination());
             }
             soughtCards.add(chosen);
+        }
+        if (!simultaneousCreatureEntries.isEmpty()) {
+            simultaneouslyEntered.forEach(permanent -> gameData.permanentsEnteringSimultaneously.add(permanent.getId()));
+            try {
+                for (Card creature : simultaneousCreatureEntries) {
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, creature, null, false);
+                }
+            } finally {
+                simultaneouslyEntered.forEach(permanent -> gameData.permanentsEnteringSimultaneously.remove(permanent.getId()));
+            }
         }
         if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
             registerOneShotPermissionGroup(gameData, soughtCards, persistentPermissions);

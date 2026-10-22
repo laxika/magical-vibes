@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -28,6 +30,9 @@ public class VolrathTheShapestealer extends Card {
                 List.of(new BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
                         new PermanentIsCreaturePredicate(), 7, 5, true)),
                 "{1}: Until your next turn, Volrath becomes a copy of target creature, except it's 7/5 and it has this ability.",
-                creatureTarget));
+                new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasCountersPredicate(CounterType.ANY))),
+                        "Target must be a creature with a counter on it.")));
     }
 }

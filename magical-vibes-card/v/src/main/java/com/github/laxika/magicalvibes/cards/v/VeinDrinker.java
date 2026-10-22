@@ -17,10 +17,13 @@ public class VeinDrinker extends Card {
     public VeinDrinker() {
         // {R}, {T}: This creature deals damage equal to its power to target creature.
         // That creature deals damage equal to its power to this creature.
+        // The damage is one-sided when this creature has left the battlefield: it still deals damage
+        // using its last known power, and the target deals nothing back.
         addActivatedAbility(new ActivatedAbility(
                 true, "{R}",
-                List.of(new SourceFightsTargetCreatureEffect()),
-                "{R}, {T}: This creature fights target creature.",
+                List.of(new SourceFightsTargetCreatureEffect(false)),
+                "{R}, {T}: This creature deals damage equal to its power to target creature. "
+                        + "That creature deals damage equal to its power to this creature.",
                 TargetFilters.creature()
         ));
 

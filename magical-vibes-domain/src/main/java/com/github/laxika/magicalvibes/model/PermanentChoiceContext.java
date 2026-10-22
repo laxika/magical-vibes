@@ -2914,8 +2914,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        boolean sourceAlternateCostAtTrigger,
                                        UUID triggeringPermanentId,
                                        UUID sourcePermanentId,
-                                       boolean markSourceOncePerTurnOnAcceptance)
+                                       boolean markSourceOncePerTurnOnAcceptance,
+                                       List<Permanent> attackingPermanentSnapshots)
     implements PermanentChoiceContext {
+
+        public SpellGraveyardTargetTrigger {
+            attackingPermanentSnapshots = attackingPermanentSnapshots == null
+                    ? List.of() : List.copyOf(attackingPermanentSnapshots);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger,
+                                           boolean sourceAlternateCostAtTrigger,
+                                           UUID triggeringPermanentId,
+                                           UUID sourcePermanentId,
+                                           boolean markSourceOncePerTurnOnAcceptance) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
+                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, List.of());
+        }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount,

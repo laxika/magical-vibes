@@ -7,7 +7,9 @@ import java.util.UUID;
 
 /**
  * Makes the controller draw and then discard the given number of cards. The source or targeted
- * permanent gets a +1/+1 counter for each nonland card discarded this way.
+ * permanent gets a +1/+1 counter for each nonland card discarded this way. Any permanent can
+ * connive (CR 701.50a); the card's own target filter narrows which permanents are legal ("target
+ * creature connives", "target Villain you control connives").
  *
  * @param amount number of cards to draw and discard
  * @param targetPermanent whether the counter is applied to this effect's targeted permanent
@@ -67,7 +69,7 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
             return TargetSpec.NONE;
         }
         return targetPermanent
-                ? TargetSpec.benign(TargetPredicates.creature())
+                ? TargetSpec.benign(TargetPredicates.permanent())
                 : new TargetSpec(null, false, null, true, 1);
     }
 

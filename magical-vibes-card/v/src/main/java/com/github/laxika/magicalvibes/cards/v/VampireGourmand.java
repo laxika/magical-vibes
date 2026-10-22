@@ -28,7 +28,7 @@ public class VampireGourmand extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )),
                         SequenceEffect.of(new DrawCardEffect(), new MakeCreatureUnblockableEffect(true)),
-                        "another creature"
+                        "another creature", false, false
                 ),
                 "Sacrifice another creature?"
         ));

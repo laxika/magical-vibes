@@ -626,7 +626,9 @@ public class AnimationSupport {
      */
     public void animatePermanentTarget(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
-        if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
+        if (effect.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
+            targetIds = List.copyOf(entry.getCreatedPermanentIds());
+        } else if (effect.scope() == GrantScope.TARGET && !entry.getTargetIds().isEmpty()
                 && entry.targetsForResolvingEffectGroup() != null) {
             targetIds = entry.targetsForResolvingEffectGroup();
         } else if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()

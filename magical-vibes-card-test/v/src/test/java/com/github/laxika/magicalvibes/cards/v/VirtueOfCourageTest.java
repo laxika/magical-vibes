@@ -241,6 +241,7 @@ class VirtueOfCourageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DreamsGrip;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -178,7 +179,8 @@ class VulshokGauntletsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DreamsGrip()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castModalInstant(player1, 0, 1, List.of(creature.getId()));
+        harness.castModalInstant(player1, 0, ChooseOneEffect.encodeModeSelection(1, 2, new int[]{1}),
+                List.of(creature.getId()));
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isFalse();

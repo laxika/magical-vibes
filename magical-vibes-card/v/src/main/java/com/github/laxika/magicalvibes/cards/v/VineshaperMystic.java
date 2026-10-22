@@ -7,11 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
-import java.util.List;
 
 @CardRegistration(set = "XLN", collectorNumber = "214")
 public class VineshaperMystic extends Card {
@@ -19,11 +15,8 @@ public class VineshaperMystic extends Card {
     public VineshaperMystic() {
         // When this creature enters, put a +1/+1 counter on each of up to two target Merfolk you control.
         target(new ControlledPermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)
-                )),
-                "Target must be a Merfolk creature you control"
+                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
+                "Target must be a Merfolk you control"
         ), 0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

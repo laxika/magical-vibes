@@ -575,7 +575,11 @@ public class DamagePreventionService {
                             && (!effect.preventOnlyIfCounterAvailable() || hasCounter);
                 },
                 this::removePlusOneCountersForDamage,
-                (gd, c, damage) -> !gameQueryService.isDamagePreventable(gd, c.combatDamage())));
+                (gd, c, damage) -> {
+                    var effect = preventRemovePlusOneCountersEffect(gd, c.permanent());
+                    return effect != null && !effect.preventsDamage()
+                            || !gameQueryService.isDamagePreventable(gd, c.combatDamage());
+                }));
         steps.add(step("SelfDamageControlChangeUnpreventable",
                 "Have an opponent gain control of it (the damage can't be prevented)", prevention, false,
                 (gd, c, damage) -> damage > 0 && !preventable(gd, c) && c.applySelfDamagePrevention()
@@ -746,7 +750,8 @@ public class DamagePreventionService {
     /**
      * Protean Hydra / Unbreathing Horde / Rock Hydra / Ugin's Conjurant / Magma Pummeler: removes
      * +1/+1 counters for the damage. Counters are removed whether or not damage can be prevented;
-     * the prevention itself only happens when it can.
+     * the prevention itself only happens when it can. A replacement without prevention (Vuzzle
+     * Spaceship) replaces the damage outright, so none of it is dealt.
      */
     private int removePlusOneCountersForDamage(GameData gameData, CreatureDamageStep.Context context, int damage) {
         Permanent permanent = context.permanent();
@@ -773,6 +778,9 @@ public class DamagePreventionService {
                 permanentControlSupportProvider.getObject().applyCreateToken(
                         gameData, controllerId, tokenTemplate.withAmount(amount), permanent.getCard().getSetCode());
             }
+        }
+        if (!effect.preventsDamage()) {
+            return 0;
         }
         return preventable ? damage - amount : damage;
     }

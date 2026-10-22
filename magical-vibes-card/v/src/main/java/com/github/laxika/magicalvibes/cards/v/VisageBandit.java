@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,5 +25,8 @@ public class VisageBandit extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )), "creature you control", Set.of(CardSubtype.SHAPESHIFTER, CardSubtype.ROGUE), Map.of()
         ));
+
+        // Plot {2}{U}
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{U}"))));
     }
 }

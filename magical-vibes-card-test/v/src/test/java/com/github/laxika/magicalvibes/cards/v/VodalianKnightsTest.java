@@ -188,12 +188,11 @@ class VodalianKnightsTest extends BaseCardTest {
     @Test
     @DisplayName("Losing the last Island triggers sacrifice after entering safely")
     void losingLastIslandTriggersSacrifice() {
-        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent knights = addCreatureReady(player1, new VodalianKnights());
         Permanent orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(orb), null, null);
-        harness.handlePermanentChosen(player1, island.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knights);

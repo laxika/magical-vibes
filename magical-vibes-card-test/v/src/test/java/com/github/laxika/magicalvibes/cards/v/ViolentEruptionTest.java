@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfRegatha;
 import com.github.laxika.magicalvibes.cards.p.PardicCollaborator;
 import com.github.laxika.magicalvibes.cards.u.Unhinge;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -45,8 +46,8 @@ class ViolentEruptionTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, creature.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Pardic Collaborator");
@@ -135,6 +136,7 @@ class ViolentEruptionTest extends BaseCardTest {
     @Test
     void madnessOffersBattleAsLegalDamageTarget() {
         Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfRegatha());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
         discardViaUnhinge();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

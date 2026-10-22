@@ -54,7 +54,7 @@ public class PayAnyAmountOfEnergyThenExileTopCardsAndMayPlayOneWithoutPayingEffe
             return;
         }
 
-        gameData.playerEnergyCounters.put(controllerId, currentEnergy - amount);
+        gameData.removePlayerEnergyCounters(controllerId, amount);
         String playerName = gameData.playerIdToName.getOrDefault(controllerId, "Player");
         if (amount == 0) {
             gameLogService.append(gameData, GameLog.text(playerName + " pays no energy for "

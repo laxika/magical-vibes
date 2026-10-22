@@ -24,6 +24,7 @@ class VoraciousTomeSkimmerTest extends BaseCardTest {
         Card topCard = new GrizzlyBears();
         harness.addToBattlefield(player1, new VoraciousTomeSkimmer());
         harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new DarkRitual()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player2);

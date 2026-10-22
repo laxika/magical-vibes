@@ -43,7 +43,7 @@ public class VivienOfTheArkbow extends Card {
                 -9,
                 List.of(
                         new BoostAllOwnCreaturesEffect(4, 4),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "\u22129: Creatures you control get +4/+4 and gain trample until end of turn."
         ));

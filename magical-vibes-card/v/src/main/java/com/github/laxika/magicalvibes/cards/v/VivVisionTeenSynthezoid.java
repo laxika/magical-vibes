@@ -16,7 +16,7 @@ import java.util.List;
 public class VivVisionTeenSynthezoid extends Card {
 
     public VivVisionTeenSynthezoid() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(
                 new SourcePowerAtLeast(4),
                 new DrawCardEffect()));
 

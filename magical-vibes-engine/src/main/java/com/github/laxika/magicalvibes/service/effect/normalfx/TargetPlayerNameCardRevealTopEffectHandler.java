@@ -37,7 +37,7 @@ public class TargetPlayerNameCardRevealTopEffectHandler implements NormalEffectH
                 entry.getControllerId(), targetPlayerId, entry.getSourcePermanentId(),
                 revealEffect.damageOnMiss(), entry.getCard());
 
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 targetPlayerId, null, null, choiceContext, cardNames, "Choose a card name."));
 

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
+import java.util.Set;
 
 public class TheGrandEvolution extends Card {
 
@@ -23,6 +24,7 @@ public class TheGrandEvolution extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 new MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(10, 2));
 
+        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
         target(TargetFilters.creatureYouControl(), 0, 99)
                 .addEffect(EffectSlot.SAGA_CHAPTER_II,
                         DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(

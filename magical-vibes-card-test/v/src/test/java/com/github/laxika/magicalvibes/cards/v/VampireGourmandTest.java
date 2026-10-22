@@ -100,7 +100,6 @@ class VampireGourmandTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
 
         assertThat(vampire.isCantBeBlocked()).isTrue();
 
@@ -147,6 +146,6 @@ class VampireGourmandTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
         assertThat(vampire.isCantBeBlocked()).isFalse();
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 }

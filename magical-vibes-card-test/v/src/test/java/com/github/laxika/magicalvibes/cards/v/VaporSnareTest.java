@@ -4,12 +4,17 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -119,8 +124,13 @@ class VaporSnareTest extends BaseCardTest {
     @DisplayName("A borrowed land pays upkeep and returns to its owner's hand")
     void borrowedLandReturnsToOwner() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Forest borrowedForest = new Forest();
+        borrowedForest.setOwnerId(player2.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, borrowedForest);
         gd.stolenCreatures.put(land.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
+                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), land.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         castVaporSnare(creature);
 
         advanceToUpkeep(player1);

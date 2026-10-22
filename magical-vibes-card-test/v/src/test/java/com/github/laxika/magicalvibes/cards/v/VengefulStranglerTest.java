@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FalkenrathPerforator;
 import com.github.laxika.magicalvibes.cards.p.PlayWithFire;
 import com.github.laxika.magicalvibes.cards.s.StranglingGrasp;
 import com.github.laxika.magicalvibes.cards.w.WrennAndSeven;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,6 +25,7 @@ class VengefulStranglerTest extends BaseCardTest {
     void returnsAttachedToOpponentPlaneswalker() {
         Permanent strangler = harness.addToBattlefieldAndReturn(player1, new VengefulStrangler());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WrennAndSeven());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player2, List.of(new PlayWithFire()));
         harness.addMana(player2, ManaColor.RED, 1);
 

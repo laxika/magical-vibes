@@ -3537,8 +3537,7 @@ public class ConditionEvaluationService {
         if (battlefield == null) return 0;
         long count = 0;
         for (Permanent permanent : battlefield) {
-            if (!isSource(permanent, ctx)
-                    && (ctx.triggeringPermanentId() == null
+            if ((ctx.triggeringPermanentId() == null
                     || !permanent.getId().equals(ctx.triggeringPermanentId()))
                     && matchesPermanent(gameData, permanent, filter, ctx)) {
                 count += countContribution(gameData, permanent, filter);

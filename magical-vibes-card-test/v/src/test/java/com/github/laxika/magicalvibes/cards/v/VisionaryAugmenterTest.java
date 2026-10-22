@@ -22,7 +22,10 @@ class VisionaryAugmenterTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode puts two +1/+1 counters on Visionary Augmenter")
     void fabricateCountersMode() {
-        castAugmenter(0);
+        castAugmenter();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         Permanent augmenter = findPermanent(player1, "Visionary Augmenter");
@@ -34,7 +37,10 @@ class VisionaryAugmenterTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode creates two 1/1 colorless Servo artifact creature tokens")
     void fabricateServoMode() {
-        castAugmenter(1);
+        castAugmenter();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
@@ -71,7 +77,7 @@ class VisionaryAugmenterTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate creates Servos if its source dies before the trigger resolves")
     void fabricateCreatesServosWhenSourceDies() {
-        castAugmenter(0);
+        castAugmenter();
         harness.passBothPriorities();
         Permanent augmenter = findPermanent(player1, "Visionary Augmenter");
         harness.setHand(player2, List.of(new ChandrasPyrohelix()));
@@ -87,10 +93,10 @@ class VisionaryAugmenterTest extends BaseCardTest {
                 .hasSize(2);
     }
 
-    private void castAugmenter(int mode) {
+    private void castAugmenter() {
         harness.setHand(player1, List.of(new VisionaryAugmenter()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
     }
 
 }

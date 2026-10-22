@@ -35,6 +35,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class VoidEffectHandler implements NormalEffectHandlerBean {
 
+    private static final int SUGGESTED_MAXIMUM_NUMBER = 16;
+
     private final PlayerInputService playerInputService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final CardRevealService cardRevealService;
@@ -57,8 +59,8 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
 
         if (gameData.chosenSpellNumber == null) {
             gameData.rerunCurrentEffectAfterInteraction = true;
-            playerInputService.beginSpellNumberChoice(gameData, entry.getControllerId(),
-                    maximumRelevantManaValue(gameData, targetPlayerId));
+            playerInputService.beginUnboundedSpellNumberChoice(gameData, entry.getControllerId(),
+                    SUGGESTED_MAXIMUM_NUMBER);
             return;
         }
 
@@ -68,29 +70,6 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
 
         destroyMatchingPermanents(gameData, entry, chosenNumber);
         discardMatchingCards(gameData, entry, targetPlayerId, chosenNumber);
-    }
-
-    private int maximumRelevantManaValue(GameData gameData, UUID targetPlayerId) {
-        int maximum = 0;
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent permanent : battlefield) {
-                Card card = permanent.getCard();
-                if ((card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE))
-                        && card.getManaValue() > maximum) {
-                    maximum = card.getManaValue();
-                }
-            }
-        }
-
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        if (hand != null) {
-            for (Card card : hand) {
-                if (!card.hasType(CardType.LAND) && card.getManaValue() > maximum) {
-                    maximum = card.getManaValue();
-                }
-            }
-        }
-        return maximum == Integer.MAX_VALUE ? maximum : maximum + 1;
     }
 
     private void destroyMatchingPermanents(GameData gameData, StackEntry entry, int chosenNumber) {

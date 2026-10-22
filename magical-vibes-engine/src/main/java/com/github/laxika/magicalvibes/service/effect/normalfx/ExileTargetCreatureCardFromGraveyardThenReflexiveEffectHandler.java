@@ -45,8 +45,10 @@ public class ExileTargetCreatureCardFromGraveyardThenReflexiveEffectHandler impl
             return;
         }
 
-        int toughness = targetCard.getToughness() == null ? 0 : Math.max(0, targetCard.getToughness());
-        if (!graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard)) {
+        Integer effectiveToughness = gameQueryService.getEffectiveCardToughness(gameData, targetCard);
+        int toughness = effectiveToughness == null ? 0 : Math.max(0, effectiveToughness);
+        if (!graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard,
+                entry.getSourcePermanentId())) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target is no longer in a graveyard)."));
             return;

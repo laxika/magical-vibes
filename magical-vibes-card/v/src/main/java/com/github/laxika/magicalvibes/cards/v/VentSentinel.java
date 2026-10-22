@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -25,7 +27,10 @@ public class VentSentinel extends Card {
                 "{1}{R}",
                 List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(
                         new PermanentCount(
-                                new PermanentHasKeywordPredicate(Keyword.DEFENDER), CountScope.CONTROLLER))),
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasKeywordPredicate(Keyword.DEFENDER))),
+                                CountScope.CONTROLLER))),
                 "{1}{R}, {T}: This creature deals damage to target player or planeswalker equal to the number of creatures you control with defender.",
                 new AnyTargetPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),

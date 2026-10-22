@@ -58,9 +58,10 @@ class VisageBanditTest extends BaseCardTest {
 
     @Test
     void cannotChooseOpponentsCreature() {
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new VisageBandit());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new VisageBandit());
         harness.castFromHand(player1, new VisageBandit(), "{3}{U}");
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -84,11 +85,12 @@ class VisageBanditTest extends BaseCardTest {
 
     @Test
     void copyingDoesNotCopyCountersOrTappedState() {
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new VisageBandit());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         own.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         own.tap();
         VisageBandit bandit = new VisageBandit();
         harness.castFromHand(player1, bandit, "{3}{U}");
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, own.getId());
@@ -127,8 +129,9 @@ class VisageBanditTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, bandit.getId()))
                 .hasMessageContaining("sorcery speed");
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        Permanent own = harness.addToBattlefieldAndReturn(player1, new VisageBandit());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.castFromExile(player1, bandit.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, own.getId());

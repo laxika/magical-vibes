@@ -28,6 +28,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     void mayRemoveTwoCountersToCopyKickedPermanentSpellAsToken() {
         castVerazol();
         castKickedElite();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
@@ -44,6 +45,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     void decliningDoesNotRemoveCountersOrCopySpell() {
         castVerazol();
         castKickedElite();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
@@ -57,6 +59,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     void createsCopyDuringCounterRemovalAbilityResolution() {
         castVerazol();
         castKickedElite();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -72,6 +75,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     void copiedPermanentRetainsKickedEntryCounters() {
         castVerazol();
         castKickedElite();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -87,6 +91,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
         findPermanent(player1, "Verazol, the Split Current")
                 .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         castKickedElite();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

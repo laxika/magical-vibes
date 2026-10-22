@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "228")
@@ -23,8 +22,8 @@ public class ValakutTheMoltenPinnacle extends Card {
     public ValakutTheMoltenPinnacle() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.MOUNTAIN),
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                         new ConditionalEffect(
                                 new ControlsOtherThanTriggeringPermanentCount(
                                         5, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),

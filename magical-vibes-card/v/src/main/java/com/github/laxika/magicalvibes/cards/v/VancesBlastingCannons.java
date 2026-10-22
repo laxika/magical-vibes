@@ -36,9 +36,9 @@ public class VancesBlastingCannons extends Card {
         // Whenever you cast your third spell in a turn, you may transform
         // Vance's Blasting Cannons.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new MayEffect(
-                        new NthSpellCastTriggerEffect(3, List.of(new TransformSelfEffect())),
-                        "Transform Vance's Blasting Cannons?"));
+                new NthSpellCastTriggerEffect(3, List.of(
+                        new MayEffect(new TransformSelfEffect(),
+                                "Transform Vance's Blasting Cannons?"))));
     }
 
     @Override

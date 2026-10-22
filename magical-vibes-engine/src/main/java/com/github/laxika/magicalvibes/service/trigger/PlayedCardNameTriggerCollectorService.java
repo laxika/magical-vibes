@@ -352,6 +352,9 @@ public class PlayedCardNameTriggerCollectorService {
                 match.permanent().getId());
         entry.setTargetId(playingPlayerId);
         entry.setNonTargeting(true);
+        // Snapshot the source so a transform instruction can tell whether it has already transformed
+        // since this trigger was put on the stack (CR 701.27f).
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when {} is played from exile",

@@ -32,7 +32,8 @@ class VivisPersistenceTest extends BaseCardTest {
         assertThat(wizard.getEffectivePower()).isZero();
         assertThat(wizard.getEffectiveToughness()).isEqualTo(1);
 
-        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }

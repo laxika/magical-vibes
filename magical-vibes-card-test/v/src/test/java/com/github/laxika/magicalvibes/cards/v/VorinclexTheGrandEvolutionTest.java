@@ -173,17 +173,21 @@ class VorinclexTheGrandEvolutionTest extends BaseCardTest {
     }
 
     @Test
-    void chapterIIIReturnsUnderChapterControllersControlRatherThanOwnersControl() {
-        Permanent saga = addBackFaceSaga(2);
-        saga.getOriginalCard().setOwnerId(player2.getId());
+    void chapterIIIReturnsUnderOwnersControlRatherThanChapterControllersControl() {
+        VorinclexTheGrandEvolution card = new VorinclexTheGrandEvolution();
+        card.setOwnerId(player2.getId());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, card);
+        saga.setCard(card.getBackFaceCard());
+        saga.setTransformed(true);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         advanceSagaToNextChapter();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
+        assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> !permanent.isTransformed()
                         && permanent.getOriginalCard() instanceof VorinclexTheGrandEvolution);
-        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
     @Test

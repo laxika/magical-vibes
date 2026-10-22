@@ -551,6 +551,8 @@ public class GraveyardService {
                                        UUID cardControllerId, boolean suppressOncePerBatchLandTriggers) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         gameData.spellsWithPlotOnResolution.remove(card.getId());
+        UUID resolvedCardControllerId = cardControllerId != null ? cardControllerId
+                : battlefieldControllerId != null ? battlefieldControllerId : ownerId;
         // CR 614.7 â€” self-replacement effects apply first
 
         if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)
@@ -622,7 +624,7 @@ public class GraveyardService {
                 && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
                 || !battlefieldSnapshot.isFaceDown() && !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
             if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)
-                    || opponentHasExileReplacementEffect(gameData, ownerId) != null
+                    || opponentHasExileReplacementEffect(gameData, ownerId, resolvedCardControllerId) != null
                     || shouldExileOwnCardInsteadOfGraveyard(
                     gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
                 var choice = new PendingInteraction.ColorChoice(
@@ -736,10 +738,10 @@ public class GraveyardService {
         }
 
         OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
-                gameData, ownerId);
+                gameData, ownerId, resolvedCardControllerId);
         if (opponentExileReplacement == null) {
             opponentExileReplacement = leavingSourceOpponentExileReplacement(
-                    ownerId, card, battlefieldControllerId, battlefieldSnapshot);
+                    ownerId, card, battlefieldControllerId, battlefieldSnapshot, resolvedCardControllerId);
         }
         if (opponentExileReplacement != null && !isToken(gameData, card)) {
             if (opponentExileReplacement.effect().addVoidCounter()) {
@@ -966,10 +968,12 @@ public class GraveyardService {
     /**
      * Fires "when this card is put into a graveyard from anywhere" triggered abilities
      * (EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, e.g. Purity). The card has already
-     * entered the graveyard; the trigger goes on the stack under its owner's control.
+     * entered the graveyard, and the ability is checked there, so graveyard ability loss (Yixlid Jailer)
+     * suppresses it (CR 603.6c). The trigger goes on the stack under its owner's control.
      */
     private void collectPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID ownerId, Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)) {
+        for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                gameData, card, EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
@@ -1673,7 +1677,8 @@ public class GraveyardService {
                 }
             }
         }
-        OpponentExileReplacement opponentReplacement = opponentHasExileReplacementEffect(gameData, ownerId);
+        OpponentExileReplacement opponentReplacement = opponentHasExileReplacementEffect(gameData, ownerId,
+                battlefieldControllerId != null ? battlefieldControllerId : ownerId);
         if (!token && opponentReplacement != null && !opponentReplacement.effect().addVoidCounter()
                 && !opponentReplacement.effect().trackWithSource()) {
             return true;
@@ -1860,7 +1865,8 @@ public class GraveyardService {
      */
     private OpponentExileReplacement leavingSourceOpponentExileReplacement(UUID ownerId, Card card,
                                                                            UUID battlefieldControllerId,
-                                                                           Permanent battlefieldSnapshot) {
+                                                                           Permanent battlefieldSnapshot,
+                                                                           UUID cardControllerId) {
         if (battlefieldSnapshot == null || battlefieldControllerId == null
                 || battlefieldControllerId.equals(ownerId) || battlefieldSnapshot.isFaceDown()
                 || battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn()
@@ -1869,7 +1875,8 @@ public class GraveyardService {
             return null;
         }
         for (CardEffect effect : battlefieldSnapshot.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
+            if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
+                    && exileReplacementApplies(replacement, battlefieldControllerId, cardControllerId)) {
                 return new OpponentExileReplacement(replacement, battlefieldSnapshot.getId());
             }
         }
@@ -1877,7 +1884,7 @@ public class GraveyardService {
     }
 
     private OpponentExileReplacement opponentHasExileReplacementEffect(
-            GameData gameData, UUID ownerId) {
+            GameData gameData, UUID ownerId, UUID cardControllerId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(ownerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
@@ -1887,7 +1894,8 @@ public class GraveyardService {
                     continue;
                 }
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
+                    if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
+                            && exileReplacementApplies(replacement, playerId, cardControllerId)) {
                         return new OpponentExileReplacement(replacement, p.getId());
                     }
                 }
@@ -1903,12 +1911,18 @@ public class GraveyardService {
                 continue;
             }
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
+                if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
+                        && exileReplacementApplies(replacement, dyingControllerId, cardControllerId)) {
                     return new OpponentExileReplacement(replacement, p.getId());
                 }
             }
         }
         return null;
+    }
+
+    private static boolean exileReplacementApplies(ExileOpponentCardsInsteadOfGraveyardEffect replacement,
+                                                   UUID sourceControllerId, UUID cardControllerId) {
+        return !replacement.onlyCardsYouDidntControl() || !sourceControllerId.equals(cardControllerId);
     }
 
     private record OpponentExileReplacement(ExileOpponentCardsInsteadOfGraveyardEffect effect,

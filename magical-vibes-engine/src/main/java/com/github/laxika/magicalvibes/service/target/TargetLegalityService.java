@@ -102,6 +102,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasAnyTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsLoyaltyAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
@@ -2881,7 +2882,7 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT, ONE_PER_OPPONENT_IF_ABLE,
-                         AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
+                         ONE_PER_PLAYER, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
                          DIFFERENT_MANA_VALUES, SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST -> {
                         // Handled by early returns above.
                     }
@@ -3574,20 +3575,21 @@ public class TargetLegalityService {
                 }
             }
             if (multiTargetConstraint == MultiTargetConstraint.SHARE_TOUGHNESS) {
-                int firstLegalIndex = -1;
-                for (int i = 0; i < targetLegal.length; i++) {
-                    if (targetLegal[i]) {
-                        firstLegalIndex = i;
-                        break;
+                boolean equalToughness = true;
+                for (int i = 0; i < declaredTargetIds.size() && equalToughness; i++) {
+                    for (int j = i + 1; j < declaredTargetIds.size() && equalToughness; j++) {
+                        if (!targetLegal[i] || !targetLegal[j]) {
+                            continue;
+                        }
+                        Permanent a = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
+                        Permanent b = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(j));
+                        equalToughness = a != null && b != null
+                                && gameQueryService.haveEqualToughness(gameData, a, b);
                     }
                 }
-                if (firstLegalIndex >= 0) {
-                    Permanent firstLegalTarget = gameQueryService.findPermanentById(
-                            gameData, declaredTargetIds.get(firstLegalIndex));
-                    for (int i = firstLegalIndex + 1; i < declaredTargetIds.size(); i++) {
-                        Permanent target = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
-                        if (targetLegal[i] && (target == null || firstLegalTarget == null
-                                || !gameQueryService.haveEqualToughness(gameData, firstLegalTarget, target))) {
+                if (!equalToughness) {
+                    for (int i = 0; i < targetLegal.length; i++) {
+                        if (targetLegal[i]) {
                             targetLegal[i] = false;
                             entry.markTargetIllegal(i);
                         }
@@ -5427,6 +5429,9 @@ public class TargetLegalityService {
                     && (sourcePermanent.isCommander()
                     || sourcePermanent.getOriginalCard() != null
                     && gameData.isCommander(sourcePermanent.getOriginalCard().getId()));
+        }
+        if (predicate instanceof StackEntryIsLoyaltyAbilityPredicate) {
+            return stackEntry.isLoyaltyAbility();
         }
         if (predicate instanceof StackEntryIsMulticoloredPredicate) {
             return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).size() >= 2;

@@ -688,6 +688,43 @@ ask me. Don't commit until I say so.
 
 ---
 
+## 48. Declining an optional player target group in a multi-group trigger
+
+**Status:** open · **Found:** 2026-10-22, while fixing V-card test failures
+
+**Failing tests:**
+- `VolatileArsonistTest.canDeclineEveryTargetGroup(boolean)` (both parameterizations)
+
+**What the rules require.** Volatile Arsonist: "Whenever this creature attacks, it deals 1 damage to
+up to one target creature, up to one target player, and up to one target planeswalker." Each "up to
+one" lets the controller choose zero targets for that instance of "target" (CR 601.2c, applied to
+triggered abilities by CR 603.3d), so declining all three groups must be possible. The controller
+may also choose themselves for the player group, which `canChooseControllerAsPlayerTarget` covers.
+
+**Why it's large.** The trigger target prompts (`ETBTokenTargetService.processNextETBTokenMultiTargetTrigger`
+and `PermanentChoiceTriggerHandlerService.handleETBTokenMultiTargetTrigger`) use a single-select
+`PermanentChoice` and treat "choose your own player id" as "stop this group" only when the
+controller is not a legal target for it. For a player group that allows any player, the same answer
+means "target myself", so a single-slot optional player group can't be declined at all. Fixing it
+needs a distinct decline input, for example routing optional single-slot groups through
+`beginMultiPermanentOrPlayerChoice` (an empty selection declines). That changes the prompt type for
+every multi-group trigger card and the tests and AI code that answer those prompts.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 48: give optional ("up to one") target groups of
+multi-group triggered abilities a decline answer that is distinct from choosing the controller as a
+player target. Start with Volatile Arsonist: make
+VolatileArsonistTest.canDeclineEveryTargetGroup pass while keeping
+canChooseControllerAsPlayerTarget passing. Find the other cards that go through
+ETBTokenTargetService / PermanentChoiceTriggerHandlerService multi-target triggers and update their
+tests and the AI target selection to the new prompt. Verify every CR number with the rules MCP.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

@@ -29,20 +29,19 @@ class VithianRenegadesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casting Vithian Renegades puts it on the stack with target")
-    void castingPutsOnStackWithTarget() {
+    @DisplayName("Casting Vithian Renegades puts it on the stack without a target")
+    void castingPutsOnStackWithoutTarget() {
         harness.addToBattlefield(player2, new RodOfRuin());
         harness.setHand(player1, List.of(new VithianRenegades()));
         giveMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Rod of Ruin");
-        harness.castCreature(player1, 0, targetId);
+        harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test

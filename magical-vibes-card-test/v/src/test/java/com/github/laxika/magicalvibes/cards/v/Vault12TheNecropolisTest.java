@@ -106,7 +106,7 @@ class Vault12TheNecropolisTest extends BaseCardTest {
         gd.playerRadCounters.put(player2.getId(), 2);
 
         advanceToNextChapter();
-        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
         gd.playerRadCounters.put(player1.getId(), 4);
         gd.playerRadCounters.put(player2.getId(), 1);
         harness.passBothPriorities();
@@ -124,6 +124,7 @@ class Vault12TheNecropolisTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
         Permanent token = findPermanent(player1, "Zombie Mutant");
+        gd.playerRadCounters.put(player1.getId(), 0);
 
         advanceToNextChapter();
         assertThat(gd.stack).hasSize(1);

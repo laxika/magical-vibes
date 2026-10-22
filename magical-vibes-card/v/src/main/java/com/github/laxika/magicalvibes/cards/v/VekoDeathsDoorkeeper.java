@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureCardToHandAndPerpetuallyModifyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -24,14 +24,12 @@ public class VekoDeathsDoorkeeper extends Card {
 
     public VekoDeathsDoorkeeper() {
         // Extort.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(
-                        null,
-                        List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)),
-                        "{W/B}"
-                ),
-                "Pay {W/B} to extort?"
-        ));
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                null,
+                List.of(new MayPayManaEffect("{W/B}",
+                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true),
+                        "Pay {W/B} to extort?")),
+                (String) null));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

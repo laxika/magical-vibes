@@ -222,10 +222,12 @@ class VolrathsCurseTest extends BaseCardTest {
     @DisplayName("Sacrificing the enchanted creature immediately puts the Curse in the graveyard")
     void sacrificingEnchantedCreatureRemovesAuraImmediately() {
         Permanent gnomes = addCreatureReady(player1, new BottleGnomes());
+        addCreatureReady(player1, new BottleGnomes());
+        addFillers(player2, 2);
         Permanent curse = harness.addToBattlefieldAndReturn(player2, new VolrathsCurse());
         curse.setAttachedTo(gnomes.getId());
 
-        harness.activateAbility(player1, 1, 0, null, null);
+        harness.activateAbility(player1, 2, 0, null, null);
         harness.handlePermanentChosen(player1, gnomes.getId());
 
         assertThat(gd.stack).isEmpty();

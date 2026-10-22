@@ -22,8 +22,27 @@ public record MassDamageEffect(
         boolean exileInsteadOfDie,
         boolean cantRegenerate,
         boolean damagesBattles,
-        boolean tapDamagedCreatures
+        boolean tapDamagedCreatures,
+        boolean filterAppliesToPlaneswalkers
 ) implements BoardWipeEffect {
+
+    public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
+                            boolean damagesPlaneswalkers, PermanentPredicate filter,
+                            boolean perCreatureAmount, boolean exileInsteadOfDie,
+                            boolean cantRegenerate, boolean damagesBattles,
+                            boolean tapDamagedCreatures) {
+        this(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount, exileInsteadOfDie,
+                cantRegenerate, damagesBattles, tapDamagedCreatures, false);
+    }
+
+    /**
+     * Also checks {@code filter} against planeswalkers, for a filter that describes them too
+     * ("each creature and planeswalker your opponents control"). By default the filter describes creatures only.
+     */
+    public MassDamageEffect withFilterAppliedToPlaneswalkers() {
+        return new MassDamageEffect(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount,
+                exileInsteadOfDie, cantRegenerate, damagesBattles, tapDamagedCreatures, true);
+    }
 
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
                             boolean damagesPlaneswalkers, PermanentPredicate filter,

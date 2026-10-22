@@ -68,13 +68,12 @@ class VonasHungerTest extends BaseCardTest {
 
         castAndResolve();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.maxCount()).isEqualTo(1);
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
-        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handlePermanentChosen(player2, second.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first, land);
         assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());

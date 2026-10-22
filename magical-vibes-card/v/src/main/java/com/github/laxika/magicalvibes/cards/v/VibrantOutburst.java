@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -21,14 +22,18 @@ import java.util.List;
 public class VibrantOutburst extends Card {
 
     public VibrantOutburst() {
+        // The two instances of "target" are separate, so the same creature may be chosen for both (CR 115.3).
+        setAllowSharedTargets(true);
+
         // Vibrant Outburst deals 3 damage to any target.
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate()
+                        new PermanentIsPlaneswalkerPredicate(),
+                        new PermanentIsBattlePredicate()
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "First target must be a creature, player, or planeswalker"
+                "First target must be a creature, player, planeswalker, or battle"
         )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
 
         // Tap up to one target creature.

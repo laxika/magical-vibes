@@ -37,7 +37,7 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
-                entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
+                entry.getControllerId(), new HashMap<>(), entry.getCard().getName(), entry);
     }
 
     public void completeVote(GameData gameData, List<UUID> permanentIds,
@@ -47,11 +47,11 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
             votes.merge(permanentIds.getFirst(), 1, Integer::sum);
         }
         beginNextVote(gameData, context.remainingPlayerIds(), context.effectControllerId(), votes,
-                context.sourceName());
+                context.sourceName(), null);
     }
 
     private void beginNextVote(GameData gameData, List<UUID> remainingPlayerIds, UUID effectControllerId,
-                               Map<UUID, Integer> votes, String sourceName) {
+                               Map<UUID, Integer> votes, String sourceName, StackEntry resolvingEntry) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         while (!remaining.isEmpty()) {
             UUID choosingPlayerId = remaining.removeFirst();
@@ -69,18 +69,21 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
         }
 
         votingFinishedSupport.finishVoting(gameData, effectControllerId);
-        finishVote(gameData, votes, sourceName);
+        finishVote(gameData, votes, sourceName, resolvingEntry);
     }
 
-    private void finishVote(GameData gameData, Map<UUID, Integer> votes, String sourceName) {
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+    private void finishVote(GameData gameData, Map<UUID, Integer> votes, String sourceName,
+                            StackEntry resolvingEntry) {
+        StackEntry pendingEntry = resolvingEntry != null ? resolvingEntry : gameData.pendingEffectResolutionEntry;
         if (pendingEntry == null) {
             throw new IllegalStateException("Voter's Dilemma resolution is not resumable");
         }
 
         if (votes.isEmpty()) {
-            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                    List.of(new EachPlayerDrawsCardEffect(1)));
+            int insertIndex = resolvingEntry != null
+                    ? resolvingEntry.getResolvingEffectIndex() + 1
+                    : gameData.pendingEffectResolutionIndex;
+            pendingEntry.insertEffectsToResolve(insertIndex, List.of(new EachPlayerDrawsCardEffect(1)));
             return;
         }
 

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.m.MuragandaPetroglyphs;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +25,10 @@ class VolatileClawsTest extends BaseCardTest {
 
         assertThat(own.getEffectivePower()).isEqualTo(4);
         assertThat(own.getEffectiveToughness()).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(own, CardSubtype.GOBLIN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(own, CardSubtype.ELF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.ELF)).isTrue();
         assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(opponent, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, opponent, CardSubtype.GOBLIN)).isFalse();
     }
 
     @Test
@@ -39,14 +38,14 @@ class VolatileClawsTest extends BaseCardTest {
 
         cast();
         assertThat(own.getEffectivePower()).isEqualTo(4);
-        assertThat(GameQueryService.permanentHasSubtype(own, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.GOBLIN)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(own.getEffectivePower()).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(own, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.GOBLIN)).isFalse();
     }
 
     @Test

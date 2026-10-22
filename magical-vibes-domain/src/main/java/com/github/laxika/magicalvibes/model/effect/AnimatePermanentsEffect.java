@@ -36,6 +36,9 @@ import java.util.Set;
  *       end of turn.</li>
  *   <li>{@link GrantScope#OWN_PERMANENTS} — all permanents you control matching {@link #filter}
  *       (The Antiquities War III) until end of turn.</li>
+ *   <li>{@link GrantScope#TOKENS_CREATED_THIS_RESOLUTION} — the tokens created earlier in the same
+ *       resolution, with {@link EffectDuration#PERMANENT} ("create a Lander token. It becomes a 2/1
+ *       artifact creature and gains flying" — Vv'viza, Orbital Overseer).</li>
  * </ul>
  */
 public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,

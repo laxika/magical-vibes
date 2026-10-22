@@ -22,7 +22,7 @@ public class VisionarysDance extends Card {
                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.FLYING), Set.of()));
 
         addHandActivatedAbility(new ActivatedAbility(false, "{2}",
-                List.of(LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1)),
+                List.of(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1)),
                 "Discard this card: Look at the top two cards of your library. Put one of them into your hand and the other into your graveyard."));
     }
 }

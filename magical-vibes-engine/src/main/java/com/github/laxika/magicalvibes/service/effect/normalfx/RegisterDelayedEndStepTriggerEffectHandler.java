@@ -28,7 +28,11 @@ public class RegisterDelayedEndStepTriggerEffectHandler implements NormalEffectH
         for (DelayedTargetGroup group : registration.targetGroups()) {
             triggerCard.target(group.filter(), group.minTargets(), group.maxTargets());
         }
-        triggerCard.registerEffectTargetIndex(registration.triggerEffect(), 0);
+        if (!registration.targetGroups().isEmpty()) {
+            // Without declared groups the effect is unbound, so it sees every affected object
+            // ("up to two target planeswalkers ... phase out" is one delayed ability over both).
+            triggerCard.registerEffectTargetIndex(registration.triggerEffect(), 0);
+        }
 
         if (registration.targetGroups().isEmpty()) {
             List<UUID> affectedPermanentIds = entry.targetsForEffect(registration);
@@ -36,9 +40,7 @@ public class RegisterDelayedEndStepTriggerEffectHandler implements NormalEffectH
                 affectedPermanentIds = entry.getTargetIds();
             }
             if (!affectedPermanentIds.isEmpty()) {
-                for (UUID affectedPermanentId : affectedPermanentIds) {
-                    queueDelayedTrigger(gameData, entry, triggerCard, affectedPermanentId, registration);
-                }
+                queueDelayedTrigger(gameData, entry, triggerCard, affectedPermanentIds, registration);
                 return;
             }
             if (entry.getTargetId() == null
@@ -51,14 +53,16 @@ public class RegisterDelayedEndStepTriggerEffectHandler implements NormalEffectH
                 ? entry.getTargetId()
                 : entry.getTriggeringPermanentId() != null
                 ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
-        queueDelayedTrigger(gameData, entry, triggerCard, affectedPermanentId, registration);
+        queueDelayedTrigger(gameData, entry, triggerCard, List.of(affectedPermanentId), registration);
     }
 
+    /** One delayed ability covers all of its chosen objects, so "up to two target ..." is a single trigger. */
     private void queueDelayedTrigger(GameData gameData, StackEntry entry, Card triggerCard,
-                                     UUID affectedPermanentId,
+                                     List<UUID> affectedPermanentIds,
                                      RegisterDelayedEndStepTriggerEffect registration) {
         gameData.queueDelayedAction(new DelayedEndStepTrigger(
                 entry.getControllerId(), triggerCard, entry.getSourcePermanentId(),
-                affectedPermanentId, registration.triggerEffect(), registration.targetGroups()));
+                affectedPermanentIds.getFirst(), registration.triggerEffect(), registration.targetGroups(),
+                affectedPermanentIds));
     }
 }

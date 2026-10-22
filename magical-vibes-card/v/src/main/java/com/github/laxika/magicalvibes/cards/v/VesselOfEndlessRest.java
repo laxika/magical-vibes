@@ -19,11 +19,10 @@ public class VesselOfEndlessRest extends Card {
 
     public VesselOfEndlessRest() {
         // When this artifact enters, put target card from a graveyard on the bottom of its owner's library.
-        // The ETB pipeline has no graveyard-target selector, so this resolves as a mandatory
-        // resolution-time choice across all graveyards (identical in practice).
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .targetGraveyard(true)
                 .build());
 
         addActivatedAbility(new ActivatedAbility(

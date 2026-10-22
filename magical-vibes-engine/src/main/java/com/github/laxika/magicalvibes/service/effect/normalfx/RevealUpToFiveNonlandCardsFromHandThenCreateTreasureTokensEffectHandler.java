@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 public class RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffectHandler
         implements NormalEffectHandlerBean {
 
+    private static final int MAX_REVEALED_CARDS = 5;
+
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -31,7 +33,6 @@ public class RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffectHan
         UUID controllerId = entry.getControllerId();
         List<UUID> validCardIds = gameData.playerHands.getOrDefault(controllerId, List.of()).stream()
                 .filter(card -> !card.hasType(CardType.LAND))
-                .limit(5)
                 .map(Card::getId)
                 .toList();
 
@@ -44,6 +45,6 @@ public class RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffectHan
                 new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
                         controllerId, validCardIds, entry.getCard().getName(),
                         new PendingInteraction.DuplicateManaValueRevealContext(
-                                CreateTokenEffect.ofTreasureToken(1))));
+                                CreateTokenEffect.ofTreasureToken(1), MAX_REVEALED_CARDS)));
     }
 }

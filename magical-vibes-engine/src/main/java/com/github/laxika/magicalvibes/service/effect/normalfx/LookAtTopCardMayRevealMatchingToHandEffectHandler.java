@@ -85,8 +85,8 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
                 == LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.BOTTOM) {
             Card bottomCard = deck.removeFirst();
             deck.addLast(bottomCard);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    playerName + " puts ", bottomCard, " on the bottom of their library."));
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " puts the card on the bottom of their library (" + sourceName + ")."));
             log.info("Game {} - {} puts non-matching {} on the bottom of their library ({})",
                     gameData.id, playerName, bottomCard.getName(), sourceName);
             return;

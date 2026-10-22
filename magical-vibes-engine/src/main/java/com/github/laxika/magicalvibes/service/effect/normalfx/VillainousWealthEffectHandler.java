@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -56,6 +57,9 @@ public class VillainousWealthEffectHandler implements NormalEffectHandlerBean {
             Card card = gameData.findExiledCard(cardId).card();
             if (isCastableSpell(card) && card.getManaValue() <= x) {
                 castableSpellIds.add(cardId);
+            } else if (isCastableAsAdventureWithin(card, x)) {
+                gameData.pendingFreeCastAdventureIds.add(cardId);
+                castableSpellIds.add(cardId);
             }
         }
 
@@ -70,6 +74,18 @@ public class VillainousWealthEffectHandler implements NormalEffectHandlerBean {
                         controllerId, castableSpellIds, castableSpellIds.size()));
         log.info("Game {} - {} awaiting cast choices for {} exiled spells",
                 gameData.id, sourceName, castableSpellIds.size());
+    }
+
+    /**
+     * Cast as an Adventure only the Adventure's characteristics are evaluated (CR 715.3a), so an
+     * adventurer card whose own mana value is too high is still offered when its Adventure fits.
+     */
+    private static boolean isCastableAsAdventureWithin(Card card, int maxManaValue) {
+        Card adventure = card.getBackFaceCard();
+        return adventure != null
+                && card.getCastingOption(AdventureCast.class).isPresent()
+                && (adventure.hasType(CardType.INSTANT) || adventure.hasType(CardType.SORCERY))
+                && adventure.getManaValue() <= maxManaValue;
     }
 
     private static boolean isCastableSpell(Card card) {

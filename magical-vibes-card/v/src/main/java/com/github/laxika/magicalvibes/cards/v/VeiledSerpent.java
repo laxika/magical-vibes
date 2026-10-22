@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPer
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -21,11 +24,15 @@ public class VeiledSerpent extends Card {
         addCycling("{2}");
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
                 null,
-                List.of(new BecomeCreatureEffect(4, 4, CardSubtype.SERPENT)),
+                // The intervening "if" is rechecked before each effect, so the grant comes first: once the
+                // Serpent becomes a creature it is no longer an enchantment.
+                List.of(new GrantStaticEffectToSourceEffect(new GrantEffectEffect(
+                                new CantAttackUnlessEffect(
+                                        new DefendingPlayerControlsPermanent(
+                                                new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
+                                        "an Island"),
+                                GrantScope.SELF)),
+                        new BecomeCreatureEffect(4, 4, CardSubtype.SERPENT)),
                 new SourceIsEnchantment()));
-
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
-                new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                "an Island"));
     }
 }

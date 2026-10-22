@@ -107,6 +107,7 @@ class VernalBloomTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
 
         harness.tapPermanent(player1, 2);
+        harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

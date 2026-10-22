@@ -1279,7 +1279,9 @@ public class SpellCastingService {
 
     /**
      * CR 601.2c: the player must announce an appropriate object for each target the spell requires, and a
-     * counter mode requires a spell on the stack, so such a mode is refused while the stack holds none.
+     * counter mode requires a spell on the stack, so such a mode is refused while the stack holds none. A mode
+     * whose own stack-entry filter may admit abilities ("counter target loyalty ability") is satisfied by any
+     * stack object; the filter itself is enforced when the target is chosen.
      */
     private void validateChosenModesHaveLegalSpellTargets(GameData gameData,
                                                           List<ChooseOneEffect.ChooseOneOption> chosenModes) {
@@ -1289,9 +1291,12 @@ public class SpellCastingService {
         boolean spellOnStack = gameData.stack.stream()
                 .anyMatch(entry -> entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                         && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
+        boolean anyObjectOnStack = !gameData.stack.isEmpty();
         for (ChooseOneEffect.ChooseOneOption mode : chosenModes) {
+            boolean modeMaySelectAbility = mode.targetFilter() instanceof StackEntryPredicateTargetFilter;
             for (CardEffect effect : mode.effectsForSelection()) {
-                if (effect instanceof CounterSpellEffect && !spellOnStack) {
+                if (effect instanceof CounterSpellEffect
+                        && !(modeMaySelectAbility ? anyObjectOnStack : spellOnStack)) {
                     throw new IllegalStateException("No legal target for the chosen mode");
                 }
             }

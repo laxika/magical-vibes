@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Puts {@code effect} onto the stack as a reflexive triggered ability.
@@ -10,10 +11,14 @@ import java.util.Objects;
  *
  * @param effect the effect of the reflexive triggered ability
  * @param useEventValueAsX whether the preceding event value supplies X for the reflexive ability
+ * @param sourcePermanentId when non-null, the permanent that is the source of the reflexive ability
+ *                          instead of the permanent whose ability queued it ("When a creature is put
+ *                          onto the battlefield this way, it deals damage ...")
  */
 public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
                                            boolean useEventValueAsX,
-                                           boolean useEntryTargetAsTriggeringPermanent)
+                                           boolean useEntryTargetAsTriggeringPermanent,
+                                           UUID sourcePermanentId)
         implements CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
@@ -27,6 +32,16 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
     public QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
                                        boolean useEventValueAsX) {
         this(effect, optionalTarget, useEventValueAsX, false);
+    }
+
+    public QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
+                                       boolean useEventValueAsX,
+                                       boolean useEntryTargetAsTriggeringPermanent) {
+        this(effect, optionalTarget, useEventValueAsX, useEntryTargetAsTriggeringPermanent, null);
+    }
+
+    public QueueReflexiveAbilityEffect(CardEffect effect, UUID sourcePermanentId) {
+        this(effect, false, false, false, sourcePermanentId);
     }
 
     public QueueReflexiveAbilityEffect {
@@ -44,7 +59,7 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
                 ? manaAware.snapshotTriggeringSpellManaValue(manaValue)
                 : effect;
         return new QueueReflexiveAbilityEffect(snapshot, optionalTarget, useEventValueAsX,
-                useEntryTargetAsTriggeringPermanent);
+                useEntryTargetAsTriggeringPermanent, sourcePermanentId);
     }
 
     /** A combat-damage trigger needs the context of the reflexive effect it queues ("that player"). */

@@ -42,14 +42,30 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
         for (UUID sourceId : sourceIds) {
             Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
             if (source != null) {
-                dealDamage(gameData, entry, targetEffect, source);
+                dealDamage(gameData, entry, targetEffect, source,
+                        gameQueryService.findPermanentController(gameData, source.getId()));
+            } else if (entry.getSourcePermanentSnapshot() != null
+                    && sourceId.equals(entry.getSourcePermanentSnapshot().getId())) {
+                dealDamage(gameData, entry, targetEffect, entry.getSourcePermanentSnapshot(),
+                        gameData.activePlayerId);
+            } else {
+                entry.getAttackingPermanentSnapshots().stream()
+                        .filter(snapshot -> sourceId.equals(snapshot.getId()))
+                        .findFirst()
+                        .ifPresent(snapshot -> dealDamage(gameData, entry, targetEffect, snapshot,
+                                entry.getTriggeringPermanentControllerId()));
             }
         }
     }
 
+    /**
+     * Deals the damage from a creature that may have left the battlefield. A creature that has left
+     * uses its last known information (CR 608.2h); a creature that attacked was controlled by the
+     * active player, so that player is its last known controller.
+     */
     private void dealDamage(GameData gameData, StackEntry entry,
-                            TargetCreatureDealsDamageToControllerEffect targetEffect, Permanent target) {
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+                            TargetCreatureDealsDamageToControllerEffect targetEffect, Permanent target,
+                            UUID controllerId) {
         if (controllerId == null) {
             return;
         }

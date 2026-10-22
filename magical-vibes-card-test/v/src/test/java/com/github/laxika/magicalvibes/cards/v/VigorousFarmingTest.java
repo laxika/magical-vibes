@@ -77,7 +77,7 @@ class VigorousFarmingTest extends BaseCardTest {
     void opponentsEndStepDoesNotEnhanceYourLibraryLand() {
         harness.addToBattlefield(player1, new FutureSight());
         harness.addToBattlefield(player1, new VigorousFarming());
-        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

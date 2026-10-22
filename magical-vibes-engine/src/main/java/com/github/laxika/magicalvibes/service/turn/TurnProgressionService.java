@@ -1197,6 +1197,7 @@ public class TurnProgressionService {
         gameData.cardsDrawnThisTurn.clear();
         gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();
+        gameData.nonlandCardsDiscardedThisTurn.clear();
         gameData.cardsCycledThisTurn.clear();
         gameData.lifeGainedThisTurn.clear();
         gameData.lifeLostLastTurn.clear();

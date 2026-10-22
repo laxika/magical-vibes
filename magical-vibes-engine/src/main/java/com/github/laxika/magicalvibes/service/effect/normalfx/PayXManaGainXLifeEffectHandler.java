@@ -90,12 +90,15 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
     private int maxPotentialX(GameData gameData, UUID controllerId) {
         int untappedSources = potentialManaService.buildVirtualManaPool(gameData, controllerId).getTotal()
                 - gameData.playerManaPools.get(controllerId).getTotal();
-        return payableFromPool(gameData.playerManaPools.get(controllerId)) + untappedSources;
+        return payableFromPool(gameData.playerManaPools.get(controllerId)) + untappedSources
+                + potentialManaService.potentialXCostOnlyMana(gameData, controllerId);
     }
 
-    /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
+    /**
+     * Generic-payable mana in the pool right now. The ability is not an artifact ability, so
+     * artifact-only and Myr-only mana cannot pay it; X-cost-only mana can.
+     */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+        return pool.getTotal() + pool.getXCostOnlyColorless();
     }
 }

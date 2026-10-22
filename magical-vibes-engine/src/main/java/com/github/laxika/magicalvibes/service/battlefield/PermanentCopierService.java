@@ -47,6 +47,10 @@ public class PermanentCopierService {
         Card original = permanent.getBecomeCreatureBaseCard() != null
                 && permanent.getBecomeCreatureResultCard() == permanent.getCard()
                 ? permanent.getBecomeCreatureBaseCard() : permanent.getCard();
+        if (permanent.getFullTextCopyBaseCard() != null) {
+            // Text borrowed from the graveyard (Volrath's Shapeshifter) is not copiable (CR 707.2).
+            original = permanent.getFullTextCopyBaseCard();
+        }
         if (!permanent.getNonCopiableKeywords().isEmpty()) {
             Card withoutGrantedKeywords = original.createRuntimeCopy();
             Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
@@ -134,8 +138,9 @@ public class PermanentCopierService {
         copy.setType(target.getType());
         copy.setAdditionalTypes(target.getAdditionalTypes());
         copy.setManaCost(target.getManaCost());
-        copy.setColor(copyColor ? target.getColor() : null);
-        copy.setColors(copyColor ? target.getColors() : List.of());
+        Card currentCard = clonePerm.getCard();
+        copy.setColor(copyColor ? target.getColor() : currentCard.getColor());
+        copy.setColors(copyColor ? target.getColors() : currentCard.getColors());
         copy.setSupertypes(target.getSupertypes());
         copy.setSubtypes(target.getSubtypes());
         copy.setCardText(target.getCardText());

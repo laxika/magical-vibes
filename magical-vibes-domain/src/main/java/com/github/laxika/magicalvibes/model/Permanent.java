@@ -671,7 +671,7 @@ public class Permanent {
     @Setter private long permanentBaseToughnessOverrideTimestamp;
     private boolean transformed;
     /** Number of face changes, used to prevent an older ability from transforming this object again. */
-    private int transformationSequence;
+    @Setter private int transformationSequence;
     /** Effective toughness recorded immediately before this object leaves the battlefield. */
     @Setter private Integer lastKnownToughness;
     /** Effective power recorded immediately before this permanent leaves the battlefield. */

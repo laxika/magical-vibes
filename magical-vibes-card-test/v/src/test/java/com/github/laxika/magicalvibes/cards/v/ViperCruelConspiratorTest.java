@@ -114,12 +114,17 @@ class ViperCruelConspiratorTest extends BaseCardTest {
         Permanent attacker = setUpLoneAttacker();
         int power = gqs.getEffectivePower(gd, attacker);
         int toughness = gqs.getEffectiveToughness(gd, attacker);
-        activate(0, attacker);
-        activate(1, attacker);
-        harness.handleListChoice(player1, DEATHTOUCH_MODE);
-        activate(1, attacker);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
         harness.handleListChoice(player1, LIFELINK_MODE);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, DEATHTOUCH_MODE);
+        harness.passBothPriorities();
 
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(power + 1);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
         harness.forceStep(TurnStep.END_STEP);

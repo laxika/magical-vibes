@@ -28,7 +28,7 @@ public class VatOfRebirth extends Card {
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.CREATURE)
                         )),
-                        new TriggeringPermanentControllerConditionalEffect(
+                        TriggeringPermanentControllerConditionalEffect.another(
                                 new PutCountersOnSelfEffect(CounterType.OIL))));
 
         addActivatedAbility(new ActivatedAbility(

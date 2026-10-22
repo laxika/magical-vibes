@@ -73,7 +73,6 @@ class VengefulPossessionTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, false);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -127,7 +126,6 @@ class VengefulPossessionTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -144,7 +142,6 @@ class VengefulPossessionTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isFalse();

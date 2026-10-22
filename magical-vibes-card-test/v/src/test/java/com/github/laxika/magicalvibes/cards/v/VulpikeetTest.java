@@ -48,6 +48,8 @@ class VulpikeetTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.COLORLESS, 2);
             harness.castWithAlternateCost(player1, 0, source.getId());
             resolveAllTriggers();
+            harness.handleListChoice(player1, "TOP");
+            resolveAllTriggers();
 
             assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                     .isEqualTo(mutation == 0 ? 2 : 5);

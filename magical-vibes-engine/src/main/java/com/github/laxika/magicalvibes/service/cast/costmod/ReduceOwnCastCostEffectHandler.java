@@ -37,6 +37,6 @@ public class ReduceOwnCastCostEffectHandler implements CostModificationHandlerBe
         var reduce = (ReduceOwnCastCostEffect) effect;
         int amount = amountEvaluationService.evaluate(context.gameData(), reduce.amount(),
                 AmountContext.forCasting(context.castingPlayerId(), 0, context.spell()));
-        return -amount;
+        return -Math.max(0, amount);
     }
 }

@@ -16,13 +16,13 @@ public class VampireOpportunist extends Card {
 
     public VampireOpportunist() {
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{6}{B}",
                 List.of(
                         new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(2)
                 ),
-                "{6}{B}, {T}: Each opponent loses 2 life and you gain 2 life."
+                "{6}{B}: Each opponent loses 2 life and you gain 2 life."
         ));
     }
 }

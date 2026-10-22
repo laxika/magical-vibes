@@ -43,7 +43,7 @@ public class VerdantMasterySearchChoiceInteractionHandler
     public void handleAnswer(GameData gameData, Player player,
                              PendingInteraction.VerdantMasterySearchChoice interaction,
                              InteractionAnswer answer) {
-        if (!player.getId().equals(interaction.playerId())) {
+        if (!player.getId().equals(interaction.decidingPlayerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 

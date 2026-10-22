@@ -388,6 +388,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.cardsDrawnThisTurn.put(playerId, 0);
             gameData.cardsDrawnLastTurn.put(playerId, 0);
             gameData.cardsDiscardedThisTurn.put(playerId, 0);
+            gameData.nonlandCardsDiscardedThisTurn.put(playerId, 0);
             gameData.playerDamagePreventionShields.put(playerId, 0);
             gameData.playerCombatDamagePreventionShields.put(playerId, 0);
             gameData.permanentsEnteredBattlefieldThisTurn.put(playerId, Collections.synchronizedList(new ArrayList<>()));

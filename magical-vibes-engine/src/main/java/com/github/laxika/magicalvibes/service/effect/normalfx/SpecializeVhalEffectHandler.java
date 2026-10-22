@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.v.VhalEagerScholar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveVhalStudyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeVhalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
@@ -47,62 +47,60 @@ public class SpecializeVhalEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        int removedStudyCounters = source.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.STUDY);
-        source.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.STUDY, 0);
-
         Card specialized = source.getCard().createRuntimeCopy();
         specialized.clearRulesTextAndAbilities();
         VhalEagerScholar.setSpecializedBaseCharacteristics(specialized);
-        VhalEagerScholar.addLootAbility(specialized);
+        VhalEagerScholar.addSpecializedLootAbility(specialized);
         specialized.setPower(4);
         specialized.setToughness(4);
 
-        CardEffect specializedTrigger = VhalEagerScholar.specializedTrigger(specialize.color());
         setFaceCharacteristics(specialized, specialize.color());
-        installSpecializedTrigger(specialized, specialize.color(), specializedTrigger);
+        installSpecializedTargets(specialized, specialize.color());
         source.exchangeCard(specialized);
 
-        if (specialize.color() == CardColor.BLUE || removedStudyCounters > 0) {
-            if (specialized.getSpellTargets().isEmpty()) {
-                enqueueNonTargetingTrigger(gameData, entry, specialized, specializedTrigger,
-                        removedStudyCounters);
-            } else {
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        specialized,
-                        entry.getControllerId(),
-                        List.of(specializedTrigger),
-                        entry.getSourcePermanentId(),
-                        List.of(),
-                        0,
-                        0,
-                        List.of(),
-                        specialize.color() == CardColor.BLACK ? removedStudyCounters : 0,
-                        List.of(),
-                        false,
-                        null,
-                        null,
-                        removedStudyCounters));
-            }
+        enqueueNonTargetingTrigger(gameData, entry, specialized,
+                new RemoveVhalStudyCountersEffect(specialize.color()), 0);
+    }
+
+    public void enqueueSpecializedTrigger(GameData gameData, StackEntry entry, Card specialized,
+                                          CardColor color, int removedStudyCounters) {
+        CardEffect specializedTrigger = VhalEagerScholar.specializedTrigger(color);
+        if (specialized.getSpellTargets().isEmpty()) {
+            enqueueNonTargetingTrigger(gameData, entry, specialized, specializedTrigger, removedStudyCounters);
+        } else {
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    specialized,
+                    entry.getControllerId(),
+                    List.of(specializedTrigger),
+                    entry.getSourcePermanentId(),
+                    List.of(),
+                    0,
+                    0,
+                    List.of(),
+                    color == CardColor.BLACK ? removedStudyCounters : 0,
+                    List.of(),
+                    false,
+                    null,
+                    null,
+                    removedStudyCounters));
         }
     }
 
-    private void installSpecializedTrigger(Card specialized, CardColor color, CardEffect trigger) {
+    private void installSpecializedTargets(Card specialized, CardColor color) {
         switch (color) {
             case WHITE -> specialized.targetUpTo(new com.github.laxika.magicalvibes.model.amount.EventValue(),
-                            TargetFilters.creature(), 100)
-                    .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, trigger);
+                    TargetFilters.creature(), 100);
             case BLACK -> specialized.target(
-                            new GraveyardCardPredicateTargetFilter(
-                                    new CardAllOfPredicate(List.of(
-                                            new CardTypePredicate(CardType.CREATURE),
-                                            new CardMaxManaValueXPredicate())),
-                                    GraveyardSearchScope.ALL_GRAVEYARDS))
-                    .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, trigger);
+                    new GraveyardCardPredicateTargetFilter(
+                            new CardAllOfPredicate(List.of(
+                                    new CardTypePredicate(CardType.CREATURE),
+                                    new CardMaxManaValueXPredicate())),
+                            GraveyardSearchScope.ALL_GRAVEYARDS));
             case RED -> specialized.target(new PermanentPredicateTargetFilter(
-                            VhalEagerScholar.creatureOrPlaneswalkerAnOpponentControls(),
-                            "Target must be a creature or planeswalker an opponent controls"))
-                    .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, trigger);
-            default -> specialized.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, trigger);
+                    VhalEagerScholar.creatureOrPlaneswalkerAnOpponentControls(),
+                    "Target must be a creature or planeswalker an opponent controls"));
+            default -> {
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,14 +22,17 @@ public class VerdantEmbrace extends Card {
     public VerdantEmbrace() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new CreateTokenEffect(
-                        "Saproling",
-                        1,
-                        1,
-                        CardColor.GREEN,
-                        List.of(CardSubtype.SAPROLING),
-                        Set.of(),
-                        Set.of()
-                ));
+                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                        EffectSlot.EACH_UPKEEP_TRIGGERED,
+                        new CreateTokenEffect(
+                                "Saproling",
+                                1,
+                                1,
+                                CardColor.GREEN,
+                                List.of(CardSubtype.SAPROLING),
+                                Set.of(),
+                                Set.of()
+                        ),
+                        GrantScope.ENCHANTED_CREATURE));
     }
 }

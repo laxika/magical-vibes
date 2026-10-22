@@ -913,6 +913,14 @@ public class InteractionPromptProjectionRegistry {
                 .filter(card -> interaction.validCardIds().contains(card.getId()))
                 .map(cardViewFactory::create)
                 .toList();
+        if (interaction.duplicateManaValueRevealContext() != null) {
+            return InteractionPromptMessage.multiCardPick(
+                    new ArrayList<>(interaction.validCardIds()), cardViews,
+                    Math.min(interaction.duplicateManaValueRevealContext().maxCount(),
+                            interaction.validCardIds().size()),
+                    "Choose up to " + interaction.duplicateManaValueRevealContext().maxCount()
+                            + " cards to reveal from your hand for " + interaction.cardName() + ".");
+        }
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews,
                 interaction.activatedAbilityContext() == null

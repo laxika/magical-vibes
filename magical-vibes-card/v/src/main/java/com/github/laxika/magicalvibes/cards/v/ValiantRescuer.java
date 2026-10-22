@@ -17,7 +17,7 @@ public class ValiantRescuer extends Card {
 
     public ValiantRescuer() {
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
-                new OncePerTurnTriggerEffect(new CyclingTriggerEffect(
+                OncePerTurnTriggerEffect.firstCycling(new CyclingTriggerEffect(
                         new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()))));
         addCycling("{2}");

@@ -117,7 +117,7 @@ class VirulentSwipeTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Virulent Swipe");
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 

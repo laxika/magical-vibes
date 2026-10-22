@@ -48,7 +48,7 @@ public class GoadSourceCreatureWhileControllerControlsItEffectHandler
                 controllerId,
                 effect,
                 sourcePermanentId,
-                null,
+                entry.getControllerId(),
                 null,
                 EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD,
                 0));

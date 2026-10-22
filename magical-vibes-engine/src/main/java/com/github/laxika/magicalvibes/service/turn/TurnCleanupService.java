@@ -24,7 +24,9 @@ import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTr
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedFromAllCreaturesDuringCleanupEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePersistenceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureDamagePersistenceEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
@@ -283,6 +285,14 @@ public class TurnCleanupService {
             }
         });
 
+        boolean allCreaturesKeepDamage;
+        synchronized (gameData.floatingEffects) {
+            allCreaturesKeepDamage = gameData.floatingEffects.stream()
+                    .anyMatch(fe -> fe.effect() instanceof GrantStaticEffectToSourceEffect grant
+                            && grant.staticEffect() instanceof DamageNotRemovedFromAllCreaturesDuringCleanupEffect
+                            && gameQueryService.findPermanentById(gameData, fe.sourcePermanentId()) != null);
+        }
+
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             List<CardEffect> activeStaticEffects = new ArrayList<>(gameQueryService.getActiveStaticEffects(gameData, p));
@@ -290,6 +300,9 @@ public class TurnCleanupService {
             activeStaticEffects.addAll(p.getPersistentTriggeredEffects(EffectSlot.STATIC));
             boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
                     && activeStaticEffects.stream().anyMatch(DamagePersistenceEffect.class::isInstance);
+            if (!damagePersists && allCreaturesKeepDamage && isCreatureForCleanup(gameData, p)) {
+                damagePersists = true;
+            }
             if (!damagePersists && !controllersWithOpponentDamagePersistence.isEmpty()
                     && isCreatureForCleanup(gameData, p)) {
                 damagePersists = controllersWithOpponentDamagePersistence.stream()

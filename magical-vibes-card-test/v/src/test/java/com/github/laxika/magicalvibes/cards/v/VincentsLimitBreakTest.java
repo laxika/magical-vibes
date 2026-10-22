@@ -107,9 +107,7 @@ class VincentsLimitBreakTest extends BaseCardTest {
     void borrowedCreatureReturnsToOwner() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card creatureCard = creature.getCard();
-        gd.playerBattlefields.get(player2.getId()).remove(creature);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
 
         cast(creature, 2, 5);
         destroy(player2, creature);

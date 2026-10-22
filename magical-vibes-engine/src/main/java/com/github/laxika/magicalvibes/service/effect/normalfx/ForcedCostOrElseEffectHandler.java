@@ -364,6 +364,14 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 resolvedEchoCost = echoCost.handCardCost();
             } else if (echoCost.cost() != null) {
                 resolvedEchoCost = echoCost.cost();
+            } else if (echoCost.dynamicEchoCost() != null) {
+                Permanent echoSource = entry.getSourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                int amount = amountEvaluationService.evaluate(gameData, echoCost.dynamicEchoCost(),
+                        new com.github.laxika.magicalvibes.service.effect.AmountContext(
+                                entry.getControllerId(), echoSource, null, 0, 0));
+                resolvedEchoCost = new com.github.laxika.magicalvibes.model.effect.PayManaCost(
+                        "{" + Math.max(0, amount) + "}");
             } else {
                 resolvedEchoCost = new com.github.laxika.magicalvibes.model.effect.PayManaCost(echoCost.echoCost());
             }

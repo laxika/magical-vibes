@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
+import com.github.laxika.magicalvibes.cards.m.MindControl;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Vorapede.class, DoomBlade.class, GrizzlyBears.class, GrafdiggersCage.class})
+@CardUsed({Vorapede.class, DoomBlade.class, GrizzlyBears.class, GrafdiggersCage.class, MindControl.class})
 class VorapedeTest extends BaseCardTest {
 
     @Test
@@ -128,23 +129,28 @@ class VorapedeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Undying returns a stolen Vorapede to its owner")
+    @DisplayName("Undying returns a stolen Vorapede to its owner, with the thief controlling the trigger")
     void undyingReturnsToOwnerRatherThanController() {
-        Permanent vorapede = harness.addToBattlefieldAndReturn(player2, new Vorapede());
-        gd.stolenCreatures.put(vorapede.getId(), player1.getId());
+        Permanent vorapede = addCreatureReady(player2, new Vorapede());
+        harness.setHand(player1, List.of(new MindControl()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, vorapede.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Vorapede");
+
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-
         harness.castAndResolveInstant(player1, 0, vorapede.getId());
-        harness.assertInGraveyard(player1, "Vorapede");
+
+        harness.assertInGraveyard(player2, "Vorapede");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Vorapede");
-        harness.assertNotOnBattlefield(player2, "Vorapede");
-        harness.assertNotInGraveyard(player1, "Vorapede");
-        assertThat(findPermanent(player1, "Vorapede")
+        harness.assertOnBattlefield(player2, "Vorapede");
+        harness.assertNotOnBattlefield(player1, "Vorapede");
+        harness.assertNotInGraveyard(player2, "Vorapede");
+        assertThat(findPermanent(player2, "Vorapede")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

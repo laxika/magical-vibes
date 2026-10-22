@@ -269,6 +269,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLastKnownHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsKindredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
@@ -377,6 +378,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasAnyTargetPredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsLoyaltyAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
@@ -1594,6 +1596,16 @@ public class PredicateEvaluationService {
                 }
                 UUID sourceObjectId = sourceObjectIdForAttachment(gameData, sourceCardId, filterContext);
                 yield sourceObjectId != null && permanent.getAttachedTo().equals(sourceObjectId);
+            }
+            case PermanentIsLastKnownHostOfSourceAuraPredicate ignored -> {
+                Permanent sourceSnapshot = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourceSnapshot == null) {
+                    Permanent sourceAura = gameData == null || sourceCardId == null
+                            ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
+                    yield sourceAura != null && sourceAura.isAttached()
+                            && permanent.getId().equals(sourceAura.getAttachedTo());
+                }
+                yield permanent.getId().equals(sourceSnapshot.getAttachedTo());
             }
             case PermanentIsHostOfSourceAuraPredicate ignored -> {
                 Permanent sourceAura = null;
@@ -3022,7 +3034,8 @@ public class PredicateEvaluationService {
                             && matchesPermanentPredicate(permanent,
                                     new PermanentColorInPredicate(Set.of(gameData.chosenSpellColor)), filterContext);
             case PermanentNamedPredicate namedPredicate ->
-                    namesMatch(effectiveName(permanent, filterContext), namedPredicate.cardName());
+                    !permanent.isFaceDown()
+                            && namesMatch(effectiveName(permanent, filterContext), namedPredicate.cardName());
             case PermanentHasNoNamePredicate ignored -> {
                 String name = effectiveName(permanent, filterContext);
                 yield permanent.isFaceDown() || name == null || name.isEmpty();
@@ -3697,6 +3710,10 @@ public class PredicateEvaluationService {
                 }
                 Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
                 yield host != null && sourceControllerId.equals(gameData.findControllerOf(host));
+            }
+            case PermanentIsLastKnownHostOfSourceAuraPredicate ignored -> {
+                Permanent sourceAura = context == null ? null : context.sourcePermanentSnapshot();
+                yield sourceAura != null && permanent.getId().equals(sourceAura.getAttachedTo());
             }
             case PermanentIsHostOfSourceAuraPredicate ignored -> {
                 // Recursion-safe: attachment state is stored on the source snapshot, not derived
@@ -5068,6 +5085,7 @@ public class PredicateEvaluationService {
                 }
                 yield false;
             }
+            case StackEntryIsLoyaltyAbilityPredicate ignored -> entry.isLoyaltyAbility();
             case StackEntryIsMulticoloredPredicate ignored ->
                     entry.getCard().getColors() != null && entry.getCard().getColors().size() >= 2;
             case StackEntryCardTypeInPredicate cardTypeIn ->

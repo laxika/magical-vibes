@@ -42,6 +42,7 @@ class VisageOfBolasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bolas.getId()));
 
         harness.assertInHand(player1, "Nicol Bolas, the Deceiver");
         harness.assertNotInGraveyard(player1, "Nicol Bolas, the Deceiver");
@@ -58,13 +59,11 @@ class VisageOfBolasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
-                .isEqualTo(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()
-                .getFirst().getName()).isEqualTo("Nicol Bolas, the Deceiver");
+        var choice = gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.libraryCardIds()).containsExactly(bolas.getId());
+        assertThat(choice.pool()).singleElement()
+                .satisfies(card -> assertThat(card.getName()).isEqualTo("Nicol Bolas, the Deceiver"));
     }
 
     @Test
@@ -171,7 +170,7 @@ class VisageOfBolasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bolas.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bolas);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -187,7 +186,7 @@ class VisageOfBolasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bolas);

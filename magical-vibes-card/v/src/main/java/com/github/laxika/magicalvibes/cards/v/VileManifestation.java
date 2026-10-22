@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 public class VileManifestation extends Card {
 
     public VileManifestation() {
-        // Cycling {2} — auto-loaded from the Scryfall keyword.
+        addCycling("{2}");
 
         // This creature gets +1/+0 for each card with cycling in your graveyard.
         CardsInGraveyard cyclingCardsInGraveyard =

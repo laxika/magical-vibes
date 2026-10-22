@@ -104,12 +104,18 @@ class VaziKeenNegotiatorTest extends BaseCardTest {
     }
 
     @Test
-    void cannotActivateWithoutAnOpponentTarget() {
+    void soleOpponentIsTheTargetWhenNoneIsChosen() {
         Permanent vazi = addCreatureReady(player1, new VaziKeenNegotiator());
+        harness.setHand(player1, List.of(new WilyGoblin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(vazi.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1);
+        assertThat(vazi.isTapped()).isTrue();
     }
 
     @Test

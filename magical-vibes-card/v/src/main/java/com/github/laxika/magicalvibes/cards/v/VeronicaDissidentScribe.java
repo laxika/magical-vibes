@@ -31,7 +31,7 @@ public class VeronicaDissidentScribe extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                        new OncePerTurnTriggerEffect(junkToken())));
+                        OncePerTurnTriggerEffect.firstNonlandDiscard(junkToken())));
     }
 
     private static CreateTokenEffect junkToken() {

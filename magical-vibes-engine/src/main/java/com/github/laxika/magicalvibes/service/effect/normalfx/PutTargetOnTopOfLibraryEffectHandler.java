@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -58,15 +61,45 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
             }
         }
 
+        Set<UUID> ownersToShuffle = new LinkedHashSet<>();
         if (e.scope() != PutOnTopOfLibraryScope.SELF) {
             UUID targetId = entry.targetsForEffect(e).stream().findFirst().orElse(entry.getTargetId());
-            tuck(gameData, gameQueryService.findPermanentById(gameData, targetId), bothAndShuffle);
+            tuckRecordingOwner(gameData, gameQueryService.findPermanentById(gameData, targetId),
+                    bothAndShuffle, ownersToShuffle);
         }
         if (e.scope() != PutOnTopOfLibraryScope.TARGET) {
-            tuck(gameData, gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()), bothAndShuffle);
+            tuckRecordingOwner(gameData, gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()),
+                    bothAndShuffle, ownersToShuffle);
+        }
+        for (UUID ownerId : ownersToShuffle) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Puts the permanent on top of its owner's library. When {@code deferShuffle} is set, the owner is
+     * recorded instead of shuffled, so that both halves of "then those players shuffle" shuffle each
+     * owner's library once after both cards have moved.
+     */
+    private void tuckRecordingOwner(GameData gameData, Permanent permanent, boolean deferShuffle,
+                                    Set<UUID> ownersToShuffle) {
+        if (permanent == null) return;
+        UUID ownerId = gameData.stolenCreatures.get(permanent.getId());
+        if (ownerId == null) {
+            ownerId = gameData.ownerOf(permanent.getOriginalCard());
+        }
+        if (ownerId == null) {
+            ownerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        }
+        if (permanentRemovalService.removePermanentToLibraryTop(gameData, permanent, false)) {
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is put on top of its owner's library."));
+            log.info("Game {} - {} put on top of library", gameData.id, permanent.getCard().getName());
+            if (deferShuffle && ownerId != null) {
+                ownersToShuffle.add(ownerId);
+            }
+        }
     }
 
     private void tuck(GameData gameData, Permanent permanent, boolean shuffle) {
