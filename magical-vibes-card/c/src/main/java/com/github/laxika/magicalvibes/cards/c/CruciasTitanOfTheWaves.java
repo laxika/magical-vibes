@@ -18,7 +18,7 @@ public class CruciasTitanOfTheWaves extends Card {
 
     public CruciasTitanOfTheWaves() {
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MayEffect(
-                new DiscardCardThenEffect(
+                DiscardCardThenEffect.continuing(
                         null,
                         SequenceEffect.of(
                                 CreateTokenEffect.ofTreasureToken(1),

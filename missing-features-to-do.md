@@ -748,49 +748,6 @@ I say so.
 
 ---
 
-## 50. "If you do" discards that resolve as reflexive triggers (and one the other way round)
-
-**Status:** open · **Found:** 2026-10-23, auditing `DiscardCardThenEffect` users after the G-card fixes
-
-**Failing tests:** possibly `PatientInstructorTest.tokenCreationIsPartOfRecruitResolution` (already fails at HEAD) and
-`InvasionOfErgamonTest` (Truga Cliffcharger); the others' tests may assert the wrong (reflexive) flow.
-
-**What the rules require.** CR 603.12: only "When you do" / "when ... this way" creates a reflexive triggered ability.
-"Discard a card. If you do, X" does X during the same resolution. `DiscardCardThenEffect` pushes `thenEffect` as a
-reflexive trigger unless `resolveThenDuringSameResolution` is set (`DiscardCardThenEffect.continuing(...)` or the
-9/10-arg constructor). Great Gilded Boat and Gristle Glutton were fixed this way; an audit of all 70 users found:
-- Reflexive but should be same-resolution ("If you do"):
-  - `ChandraSparkHunter` (DFT 116) — "+2: You may sacrifice an artifact or discard a card. If you do, draw a card."
-    (discard branch only; `VisionOfLove` shows the right shape)
-  - `CruciasTitanOfTheWaves` (YBRO 18) — "you may discard a card. If you do, create a Treasure token and choose
-    ambitious or expedient ..." (then-effect is a `SequenceEffect` with a `ChooseOneEffect`; check it works inline)
-  - `FormidableSpeaker` (ECL 176) — "you may discard a card. If you do, search your library for a creature card ..."
-  - `RankOfficer` (MH1 102) — "you may discard a card. If you do, create a 2/2 black Zombie creature token."
-  - `PatientInstructor` (HOB 162) — recruit; the other recruit cards (Bard's Company, Great Gilded Boat, ...) already
-    pass `resolveThenDuringSameResolution=true`
-  - `TrugaCliffcharger` (shared module, back face of Invasion of Ergamon, MOM 233) — "you may discard a card. If you
-    do, search your library for a land or battle card ..."
-- Same-resolution but should be reflexive ("When you do"):
-  - `DokuchiSilencer` (NEO 95) — "you may discard a creature card. When you do, destroy target creature or
-    planeswalker that player controls." The target must be chosen when the reflexive trigger is put on the stack,
-    after the discard. `DiscardCardThenEffectHandler` binds the damaged player for
-    `DamagedPlayerControlsTargetEffect`; keep that binding working on the reflexive path.
-
-**Why it's large.** It isn't large — seven card changes — but each card's tests may encode the wrong stack flow
-(extra `passBothPriorities`/`resolveAllTriggers`), so every test class needs reading against the Oracle text.
-
-**Prompt to start it:**
-
-```
-Fix the seven DiscardCardThenEffect cards in missing-features-to-do.md entry 50: make the "If you do" ones resolve
-in the same resolution (DiscardCardThenEffect.continuing / resolveThenDuringSameResolution) and make Dokuchi
-Silencer's "When you do" a reflexive trigger that targets after the discard. Verify each Oracle text first, read
-every test of each card, fix tests only where they encode the wrong stack flow, and add a test per card for the
-corrected timing. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 51. Aura and Equipment restrictions modelled as abilities granted to the creature
 
 **Status:** open · **Found:** 2026-10-23, auditing `GrantEffectEffect` attached scopes after the Gutter Shortcut fix

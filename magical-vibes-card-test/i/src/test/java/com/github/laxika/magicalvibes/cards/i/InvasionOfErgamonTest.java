@@ -91,7 +91,6 @@ class InvasionOfErgamonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -152,8 +151,8 @@ class InvasionOfErgamonTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 

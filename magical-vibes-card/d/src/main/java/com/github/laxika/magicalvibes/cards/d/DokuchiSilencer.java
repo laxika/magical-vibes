@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -29,9 +28,7 @@ public class DokuchiSilencer extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentIsPlaneswalkerPredicate())),
                                 0),
-                        "a creature card",
-                        DiscardRecipient.CONTROLLER,
-                        true),
+                        "a creature card"),
                 "Discard a creature card to destroy target creature or planeswalker that player controls?"));
     }
 }

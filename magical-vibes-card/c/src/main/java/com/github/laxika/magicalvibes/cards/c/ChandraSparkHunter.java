@@ -50,10 +50,11 @@ public class ChandraSparkHunter extends Card {
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Sacrifice an artifact. If you do, draw a card",
                                         new SacrificePermanentThenEffect(
-                                                new PermanentIsArtifactPredicate(), new DrawCardEffect(1), "an artifact")),
+                                                new PermanentIsArtifactPredicate(), new DrawCardEffect(1), "an artifact",
+                                                false, false)),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Discard a card. If you do, draw a card",
-                                        new DiscardCardThenEffect(
+                                        DiscardCardThenEffect.continuing(
                                                 null, new DrawCardEffect(1), "a card"))
                         )),
                         "You may sacrifice an artifact or discard a card.")),

@@ -59,7 +59,6 @@ class ChandraSparkHunterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw a card");
         harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         harness.assertInGraveyard(player1, "Ornithopter");
@@ -78,7 +77,6 @@ class ChandraSparkHunterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "Discard a card. If you do, draw a card");
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Air Response Unit");
@@ -246,4 +244,37 @@ class ChandraSparkHunterTest extends BaseCardTest {
         return chandra;
     }
 
+    @Test
+    void plusTwoDrawsDuringTheSameResolutionAfterDiscarding() {
+        addChandra();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AirResponseUnit()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Discard a card. If you do, draw a card");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Air Response Unit");
+    }
+
+    @Test
+    void plusTwoDrawsDuringTheSameResolutionAfterSacrificing() {
+        addChandra();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Sacrifice an artifact. If you do, draw a card");
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
 }

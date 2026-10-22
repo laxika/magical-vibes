@@ -69,13 +69,33 @@ class CruciasTitanOfTheWavesTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
     }
 
+    @Test
+    void treasureAndModeChoiceHappenDuringTheSameResolutionAsTheDiscard() {
+        GrizzlyBears discarded = new GrizzlyBears();
+        HillGiant greater = new HillGiant();
+        harness.addToBattlefield(player1, new CruciasTitanOfTheWaves());
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(greater));
+
+        advanceToEndStep(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        harness.handleListChoice(player1, "Ambitious");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(greater);
+    }
+
     private void resolveEndStepTrigger(boolean acceptDiscard, String mode) {
         advanceToEndStep(player1);
         harness.handleMayAbilityChosen(player1, acceptDiscard);
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
-        harness.passBothPriorities();
     }
 
     private void advanceToEndStep(Player activePlayer) {

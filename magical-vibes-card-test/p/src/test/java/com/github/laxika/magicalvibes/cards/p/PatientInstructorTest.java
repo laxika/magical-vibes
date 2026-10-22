@@ -68,9 +68,6 @@ class PatientInstructorTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Patient Instructor");
         harness.handleCardChosen(player1, 1);
-        if (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
 
         harness.assertInGraveyard(player1, "Patient Instructor");
         harness.assertInHand(player1, "Forest");
@@ -86,9 +83,6 @@ class PatientInstructorTest extends BaseCardTest {
     private void castAndResolve(Card discardedCard, Card drawnCard) {
         beginRecruit(discardedCard, drawnCard);
         harness.handleCardChosen(player1, 0);
-        if (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
     }
 
     private void beginRecruit(Card otherCard, Card drawnCard) {

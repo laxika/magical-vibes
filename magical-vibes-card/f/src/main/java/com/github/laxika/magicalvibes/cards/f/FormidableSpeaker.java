@@ -23,7 +23,7 @@ public class FormidableSpeaker extends Card {
 
     public FormidableSpeaker() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(
+                DiscardCardThenEffect.continuing(
                         null,
                         new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE)),
                         "a card"),

@@ -21,7 +21,7 @@ public class RankOfficer extends Card {
         // When this creature enters, you may discard a card. If you do, create a 2/2 black Zombie
         // creature token.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(null, CreateTokenEffect.blackZombie(1), "a card"),
+                DiscardCardThenEffect.continuing(null, CreateTokenEffect.blackZombie(1), "a card"),
                 "Discard a card to create a 2/2 black Zombie creature token?"
         ));
 

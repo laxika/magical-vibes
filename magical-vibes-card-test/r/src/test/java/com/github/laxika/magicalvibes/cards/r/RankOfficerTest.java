@@ -42,13 +42,32 @@ class RankOfficerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
 
         harness.handleCardChosen(player1, 0);
-        resolveAllTriggers();
 
         Permanent zombie = findPermanent(player1, "Zombie");
         assertThat(zombie.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
         assertThat(zombie.getCard().getPower()).isEqualTo(2);
         assertThat(zombie.getCard().getToughness()).isEqualTo(2);
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The Zombie is created during the same resolution as the discard")
+    void zombieIsCreatedDuringTheSameResolutionAsTheDiscard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, new ArrayList<>(List.of(new RankOfficer(), new GrizzlyBears())));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
     }
 
     @Test

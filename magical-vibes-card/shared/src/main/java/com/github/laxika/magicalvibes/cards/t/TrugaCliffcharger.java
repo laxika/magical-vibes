@@ -16,7 +16,7 @@ public class TrugaCliffcharger extends Card {
 
     public TrugaCliffcharger() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(
+                DiscardCardThenEffect.continuing(
                         null,
                         new SearchLibraryEffect(
                                 new CardAnyOfPredicate(List.of(

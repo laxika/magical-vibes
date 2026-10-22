@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -28,6 +29,7 @@ public class PatientInstructor extends Card {
                                 new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),
                                 "a card",
-                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
+                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                                false, null, null, DiscardRecipient.CONTROLLER, true)));
     }
 }
