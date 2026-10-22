@@ -193,7 +193,7 @@ public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean {
             return List.of();
         }
         return destructionSupport.collectCreatureIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private List<UUID> opponentsOf(GameData gameData, UUID controllerId) {

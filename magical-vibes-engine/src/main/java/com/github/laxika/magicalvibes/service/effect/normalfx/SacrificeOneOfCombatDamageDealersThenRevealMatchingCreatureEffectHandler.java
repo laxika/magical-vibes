@@ -49,7 +49,7 @@ public class SacrificeOneOfCombatDamageDealersThenRevealMatchingCreatureEffectHa
             }
             for (Permanent permanent : battlefield) {
                 if (typedEffect.combatDamageDealerIds().contains(permanent.getId())
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                     validIds.add(permanent.getId());
                 }
             }

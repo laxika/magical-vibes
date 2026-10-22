@@ -119,7 +119,7 @@ public class EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandl
     private List<UUID> eligibleCreatureIds(GameData gameData, UUID playerId) {
         return destructionSupport.collectCreatureIds(gameData, playerId,
                 permanent -> !permanent.getCard().isToken()
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent));
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

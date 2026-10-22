@@ -769,7 +769,7 @@ public class BattlefieldPlacementService {
         }
         List<UUID> candidates = gameData.playerBattlefields.getOrDefault(request.controllerId(), List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent))
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
                 .map(Permanent::getId).toList();
         if (candidates.isEmpty()) {
             entering.setNativeDevourResolved(true);

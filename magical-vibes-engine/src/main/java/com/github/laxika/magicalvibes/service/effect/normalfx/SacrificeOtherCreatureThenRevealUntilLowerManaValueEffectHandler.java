@@ -45,7 +45,7 @@ public class SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler
         UUID sourceCardId = entry.getCard().getId();
         List<UUID> creatureIds = destructionSupport.collectCreatureIds(
                 gameData, controllerId, permanent -> !permanent.getCard().getId().equals(sourceCardId)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent));
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
 
         if (creatureIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);

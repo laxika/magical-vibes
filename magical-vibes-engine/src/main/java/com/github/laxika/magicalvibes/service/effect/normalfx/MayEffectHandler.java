@@ -258,7 +258,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && (sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.TARGET_PLAYER
                 || sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER)) {
             cannotSacrifice = gameData.playerBattlefields.getOrDefault(choicePlayerId, List.of()).stream()
-                    .noneMatch(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                    .noneMatch(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent, sacrifice.filter())
                             && (sacrifice.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
                             gameData, permanent, sacrifice.filter())));
         }

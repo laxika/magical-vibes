@@ -182,7 +182,7 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
     private List<UUID> nonlandPermanentIds(GameData gameData, UUID playerId, UUID excludedPermanentId) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
                 p -> !gameQueryService.isLand(gameData, p)
-                        && !gameQueryService.cantBeSacrificed(gameData, p)
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, p)
                         && !p.getId().equals(excludedPermanentId));
     }
 }

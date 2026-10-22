@@ -95,7 +95,7 @@ public class TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandle
         }
         for (Permanent permanent : battlefield) {
             if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)
-                    && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                    && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                 validIds.add(permanent.getId());
             }
         }

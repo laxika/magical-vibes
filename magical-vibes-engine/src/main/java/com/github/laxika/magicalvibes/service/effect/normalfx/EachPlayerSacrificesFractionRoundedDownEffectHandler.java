@@ -56,7 +56,7 @@ public class EachPlayerSacrificesFractionRoundedDownEffectHandler implements Nor
                 continue;
             }
             List<UUID> sacrificable = matching.stream()
-                    .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                    .filter(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
                     .map(Permanent::getId)
                     .toList();
             if (sacrificable.size() <= count) {

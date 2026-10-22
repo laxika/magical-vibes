@@ -82,6 +82,6 @@ public class TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler implement
             return List.of();
         }
         return destructionSupport.collectCreatureIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 }

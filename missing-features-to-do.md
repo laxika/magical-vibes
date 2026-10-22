@@ -36,19 +36,26 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 21. "Can't be chosen" on auto-resolved and suggested choices (Glimpse, the Unthinkable)
+## 21. "Can't be chosen" on remaining auto-resolved choices (Glimpse, the Unthinkable)
 
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
+**Status:** open (partly done) · **Found:** 2026-10-14, while fixing G-card tests
 
 **Failing tests:** none yet. `GlimpseTheUnthinkablePlaytestTest` passes, but its support is partial.
 
 **What the rules require.** Glimpse, the Unthinkable has "Glimpse, the Unthinkable can't be chosen" and
-"The name Glimpse, the Unthinkable can't be chosen." `CantBeChosenEffect` and `SourceNameCantBeChosenEffect`
-filter `PlayerInputService.beginPermanentChoice`/`beginMultiPermanentChoice`, Divine Reckoning's choice and
-the card-name list choices in `ChoiceHandlerService.handleListChoice`. Two paths still ignore them:
-- choices the engine auto-resolves because only one candidate exists (for example a forced sacrifice), which
-  never reach the prompt filter, so Glimpse can still be "chosen" there;
-- name-suggestion lists, which still offer the name.
+"The name Glimpse, the Unthinkable can't be chosen." Already done: permanent-choice prompts, Divine
+Reckoning, card-name answers and name-suggestion lists (`InteractionPromptProjectionRegistry`), and the
+candidate lists of resolution-time "sacrifice a/N permanent(s)" effects (`GameQueryService.cantBeChosenToSacrifice`,
+used by `SacrificePermanentsEffectHandler`, `DestructionSupport.performSacrificeCreatureForPlayer`, the
+each-player/each-opponent/target-player sacrifice handlers, devour). Still ignoring it:
+- sacrifice-as-a-cost choices (`GameQueryService.canSacrificePermanentForCosts` and the cost handlers; that
+  helper is also used by "sacrifice all" and "sacrifice this" costs, so it can't simply call `cantBeChosen`);
+- "choose N to keep, then sacrifice/destroy the rest" effects that auto-keep when there is one candidate
+  (`EachPlayerChoosesCreatureThenSacrificesRestEffectHandler`, party, vow, lands-of-each-type, …) — there
+  Glimpse can't be kept, so it should be sacrificed with the rest;
+- other single-candidate auto-picks that are not sacrifices (for example Turf War, transform-chosen-permanent,
+  `SacrificeCreatureWithLeastToughnessEffectHandler`'s tie-break, Make an Example piles);
+- AI name choices (`ColorChoiceAiStrategy`) can still answer Glimpse's name, which the engine rejects.
 
 **Why it's large.** Every auto-resolving "choose a permanent" path builds its own candidate list, so each one
 has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when Glimpse was the only candidate).
@@ -57,8 +64,9 @@ has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when G
 
 ```
 Finish "can't be chosen" support for Glimpse, the Unthinkable (missing-features-to-do.md entry 21): make
-every auto-resolved single-candidate permanent choice and every name-suggestion list honour
-CantBeChosenEffect / SourceNameCantBeChosenEffect. Add tests to GlimpseTheUnthinkablePlaytestTest first.
+sacrifice-cost choices, "choose to keep, sacrifice the rest" auto-picks and the remaining non-sacrifice
+single-candidate permanent choices honour CantBeChosenEffect, and stop the AI from naming an unchoosable
+name. Add tests to GlimpseTheUnthinkablePlaytestTest first.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

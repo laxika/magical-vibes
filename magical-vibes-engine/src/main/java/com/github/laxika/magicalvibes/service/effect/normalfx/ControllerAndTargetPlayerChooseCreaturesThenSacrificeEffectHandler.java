@@ -42,7 +42,7 @@ public class ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
         }
 
         List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
         if (creatureIds.isEmpty()) {
             return;
         }

@@ -67,7 +67,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p) && !gameQueryService.cantBeSacrificed(gameData, p)) {
+                if (gameQueryService.isCreature(gameData, p) && !gameQueryService.cantBeChosenToSacrifice(gameData, p)) {
                     creatureIds.add(p.getId());
                 }
             }

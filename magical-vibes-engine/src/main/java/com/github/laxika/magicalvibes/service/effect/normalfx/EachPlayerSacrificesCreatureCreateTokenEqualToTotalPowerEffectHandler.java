@@ -102,7 +102,7 @@ public class EachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerEffectHandl
 
     private List<UUID> eligibleCreatureIds(GameData gameData, UUID playerId) {
         return destructionSupport.collectCreatureIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private int totalEffectivePower(GameData gameData, List<UUID> permanentIds) {

@@ -53,7 +53,7 @@ public class DanseMacabreEffectHandler implements NormalEffectHandlerBean {
             }
             List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, playerId,
                     permanent -> !permanent.getCard().isToken()
-                            && !gameQueryService.cantBeSacrificed(gameData, permanent));
+                            && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
             if (!creatureIds.isEmpty()) {
                 choosers.add(new PendingForcedSacrifice(playerId, 1, creatureIds));
             }

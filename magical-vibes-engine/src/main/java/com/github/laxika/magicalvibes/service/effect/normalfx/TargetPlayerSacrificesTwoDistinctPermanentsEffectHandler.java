@@ -105,7 +105,7 @@ public class TargetPlayerSacrificesTwoDistinctPermanentsEffectHandler implements
                 .withSourcePermanentId(source != null ? source.getId() : null);
         return battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, filter, context))
-                .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
+                .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                 .map(Permanent::getId)
                 .toList();
     }

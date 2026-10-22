@@ -58,7 +58,7 @@ public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
             }
 
             List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, playerId,
-                    permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                    permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
             if (creatureIds.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(playerName + " has no creature to sacrifice."));
             } else if (creatureIds.size() == 1) {

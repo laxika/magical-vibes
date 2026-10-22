@@ -61,7 +61,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (!gameQueryService.cantBeSacrificed(gameData, p)
+                if (!gameQueryService.cantBeChosenToSacrifice(gameData, p, e.filter())
                         && predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) {
                     validIds.add(p.getId());
                 }

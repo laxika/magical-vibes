@@ -98,7 +98,7 @@ public class EachPlayerSacrificesOneOfEachTypeEffectHandler implements NormalEff
     private List<UUID> candidates(GameData gameData, UUID playerId, CardType type) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
                 permanent -> matchesType(gameData, permanent, type)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent));
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private boolean matchesType(GameData gameData, Permanent permanent, CardType type) {

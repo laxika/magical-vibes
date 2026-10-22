@@ -73,7 +73,7 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
 
         List<UUID> otherCreatureIds = destructionSupport.collectCreatureIds(gameData, controllerId,
                 p -> (excludedPermanentId == null || !p.getId().equals(excludedPermanentId))
-                        && !gameQueryService.cantBeSacrificed(gameData, p));
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, p));
 
         if (otherCreatureIds.isEmpty()) {
             dealDamage(gameData, entry, e.damage(), controllerId);
@@ -115,7 +115,7 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
             UUID excludedPermanentId = source == null ? null : source.getAttachedTo();
             List<UUID> otherCreatureIds = destructionSupport.collectCreatureIds(gameData, controllerId,
                     p -> (excludedPermanentId == null || !p.getId().equals(excludedPermanentId))
-                            && !gameQueryService.cantBeSacrificed(gameData, p));
+                            && !gameQueryService.cantBeChosenToSacrifice(gameData, p));
             if (otherCreatureIds.size() == 1) {
                 Permanent creature = gameQueryService.findPermanentById(gameData, otherCreatureIds.getFirst());
                 if (creature != null) {

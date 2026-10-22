@@ -91,7 +91,7 @@ public class EachPlayerSacrificesCreatureEffectHandler implements NormalEffectHa
 
     private List<UUID> eligibleCreatureIds(GameData gameData, UUID playerId) {
         return destructionSupport.collectCreatureIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

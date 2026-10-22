@@ -128,6 +128,7 @@ public class TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPerman
     private boolean isSelectable(GameData gameData, Permanent permanent, boolean sacrificeableOnly) {
         return (gameQueryService.isCreature(gameData, permanent)
                 || gameQueryService.isPlaneswalker(gameData, permanent))
+                && !gameQueryService.cantBeChosen(gameData, permanent)
                 && (!sacrificeableOnly || !gameQueryService.cantBeSacrificed(gameData, permanent));
     }
 }

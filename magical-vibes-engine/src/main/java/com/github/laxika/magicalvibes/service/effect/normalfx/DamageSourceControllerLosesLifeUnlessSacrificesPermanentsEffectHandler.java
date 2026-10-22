@@ -113,7 +113,7 @@ public class DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffectHand
             return List.of();
         }
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private void loseLife(GameData gameData, EachPlayerSacrificeOrLoseLifeState state,

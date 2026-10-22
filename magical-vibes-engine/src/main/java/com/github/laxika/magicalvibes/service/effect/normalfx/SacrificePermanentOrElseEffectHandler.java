@@ -80,7 +80,7 @@ public class SacrificePermanentOrElseEffectHandler implements NormalEffectHandle
         for (Permanent permanent : battlefield) {
             if (predicateEvaluationService.matchesPermanentPredicate(
                     permanent, effect.filter(), filterContext)
-                    && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                    && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                 eligibleIds.add(permanent.getId());
             }
         }

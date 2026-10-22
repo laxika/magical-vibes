@@ -56,7 +56,7 @@ public class SacrificePermanentOrLoseLifeEffectHandler implements NormalEffectHa
 
         List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, playerId,
                 p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())
-                        && !gameQueryService.cantBeSacrificed(gameData, p));
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, p));
 
         if (matchingIds.isEmpty()) {
             lifeSupport.applyLifeLoss(gameData, playerId, e.lifeLoss(), entry.getCard().getName());

@@ -13265,9 +13265,44 @@ public class GameQueryService {
 
     /** Whether a static "can't be chosen" ability keeps the permanent out of every object choice. */
     public boolean cantBeChosen(GameData gameData, Permanent permanent) {
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return !permanent.isFaceDown()
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect.class::isInstance)
                 && !hasLostAllAbilities(gameData, permanent);
+    }
+
+    /**
+     * Whether {@code permanent} is out of the running when a player chooses which permanent to
+     * sacrifice to a resolving spell or ability ("sacrifice a creature"): it can't be sacrificed, or
+     * it can't be chosen (Glimpse, the Unthinkable). Only for sacrifices that involve a choice —
+     * "sacrifice all" and "sacrifice this" sacrifices use {@link #cantBeSacrificed} alone.
+     */
+    public boolean cantBeChosenToSacrifice(GameData gameData, Permanent permanent) {
+        return cantBeSacrificed(gameData, permanent) || cantBeChosen(gameData, permanent);
+    }
+
+    /**
+     * As {@link #cantBeChosenToSacrifice(GameData, Permanent)} for a sacrifice described by
+     * {@code filter}, except that a filter naming one specific object ("sacrifice it", "sacrifice
+     * this creature") involves no choice, so only "can't be sacrificed" applies to it.
+     */
+    public boolean cantBeChosenToSacrifice(GameData gameData, Permanent permanent,
+                                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        return designatesSpecificObject(filter)
+                ? cantBeSacrificed(gameData, permanent)
+                : cantBeChosenToSacrifice(gameData, permanent);
+    }
+
+    private static boolean designatesSpecificObject(
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        if (filter instanceof com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate allOf) {
+            return allOf.predicates().stream().anyMatch(GameQueryService::designatesSpecificObject);
+        }
+        return filter instanceof com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate
+                || filter instanceof com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate
+                || filter instanceof com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate
+                || filter instanceof com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate
+                || filter instanceof com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
     }
 
     /** Whether a battlefield permanent's static ability forbids choosing this card name. */

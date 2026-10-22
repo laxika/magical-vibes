@@ -153,7 +153,7 @@ public class DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffectHandler
     private List<UUID> creatureIds(GameData gameData, UUID playerId) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
                 permanent -> gameQueryService.isCreature(gameData, permanent)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent));
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private boolean canPayLife(GameData gameData, UUID playerId, int amount) {

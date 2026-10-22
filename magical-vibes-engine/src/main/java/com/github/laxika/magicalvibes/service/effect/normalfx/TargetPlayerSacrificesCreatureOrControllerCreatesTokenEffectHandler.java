@@ -78,7 +78,7 @@ public class TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffectHandler
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                     creatureIds.add(permanent.getId());
                 }
             }

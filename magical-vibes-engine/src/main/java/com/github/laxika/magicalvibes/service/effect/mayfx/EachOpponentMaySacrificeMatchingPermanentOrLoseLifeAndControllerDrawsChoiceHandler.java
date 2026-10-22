@@ -90,7 +90,7 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
                 .withSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
         var filter = new PermanentSharesCardTypeWithSourcePermanentPredicate();
         return !destructionSupport.collectPermanentIds(gameData, ability.controllerId(),
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context))
                 .isEmpty();
     }

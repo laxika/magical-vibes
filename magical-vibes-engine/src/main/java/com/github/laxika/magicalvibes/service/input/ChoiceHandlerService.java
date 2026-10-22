@@ -290,8 +290,15 @@ public class ChoiceHandlerService {
     @Autowired @Lazy
     private LandManaReplacementService landManaReplacementService;
 
-    private static boolean isCardNameChoice(ChoiceContext context) {
+    /**
+     * Whether {@code context} asks the player to choose (name) a card name, so a static "the name
+     * ... can't be chosen" ability (Glimpse, the Unthinkable) restricts the answer and its offered
+     * suggestions. Liar's Pendulum's later yes/no guess shares the context but is not a name choice.
+     */
+    public static boolean isCardNameChoice(ChoiceContext context) {
         return context instanceof ChoiceContext.CardNameChoice
+                || context instanceof ChoiceContext.LiarsPendulumChoice pendulum && pendulum.chosenName() == null
+                || context instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice
                 || context instanceof ChoiceContext.DualCardNameChoice
                 || context instanceof ChoiceContext.ExileByNameChoice
                 || context instanceof ChoiceContext.ChooseCardNameAtResolutionChoice

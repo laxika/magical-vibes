@@ -90,7 +90,7 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler impleme
             }
 
             List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId,
-                    permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                    permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)
                             && predicateEvaluationService.matchesPermanentPredicate(
                             gameData, permanent, effect.sacrificeFilter()));
             if (creatureIds.isEmpty()) {

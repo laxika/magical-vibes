@@ -62,7 +62,7 @@ public class AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler
             return List.of();
         }
         return destructionSupport.collectCreatureIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     /** Enqueues the may prompt for the first remaining opponent. */

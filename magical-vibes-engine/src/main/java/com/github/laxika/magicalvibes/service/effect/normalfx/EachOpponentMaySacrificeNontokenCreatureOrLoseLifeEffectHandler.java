@@ -102,7 +102,7 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
                 .withSourcePermanentId(sourcePermanentId)
                 .withSourcePermanentSnapshot(sourcePermanentSnapshot);
         return !destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, NONTOKEN_CREATURE, context)).isEmpty();
     }

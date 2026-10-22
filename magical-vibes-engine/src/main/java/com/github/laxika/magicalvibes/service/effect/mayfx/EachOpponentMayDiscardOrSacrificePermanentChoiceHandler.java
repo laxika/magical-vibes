@@ -138,7 +138,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
                 .withSourcePermanentId(ability.sourcePermanentId())
                 .withSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
         return !destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, sacrificeFilter, context)).isEmpty();
     }

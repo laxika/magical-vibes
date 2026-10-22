@@ -52,7 +52,7 @@ public class SacrificeAnotherCreatureGainLifeAndDrawEqualToPowerEffectHandler im
                         ? p.getId().equals(sourcePermanentId)
                         : p.getCard() == entry.getCard();
                 if (!isSource && gameQueryService.isCreature(gameData, p)
-                        && !gameQueryService.cantBeSacrificed(gameData, p)) {
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, p)) {
                     validIds.add(p.getId());
                 }
             }

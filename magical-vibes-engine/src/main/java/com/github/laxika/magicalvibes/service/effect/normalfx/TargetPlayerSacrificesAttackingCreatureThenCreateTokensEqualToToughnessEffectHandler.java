@@ -87,7 +87,7 @@ public class TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToTough
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)
                     && permanent.isAttacking()
-                    && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                    && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                 validIds.add(permanent.getId());
             }
         }

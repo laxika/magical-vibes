@@ -140,7 +140,7 @@ public class EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler imple
             return List.of();
         }
         return destructionSupport.collectCreatureIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private UUID sourceControllerId(GameData gameData, PendingMayAbility ability) {

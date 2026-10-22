@@ -108,7 +108,7 @@ public class EachOpponentSacrificesPermanentCreateTokensEffectHandler
         FilterContext context = FilterContext.of(gameData).withSourceControllerId(sourceControllerId);
         return destructionSupport.collectPermanentIds(gameData, playerId, permanent ->
                 predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent));
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

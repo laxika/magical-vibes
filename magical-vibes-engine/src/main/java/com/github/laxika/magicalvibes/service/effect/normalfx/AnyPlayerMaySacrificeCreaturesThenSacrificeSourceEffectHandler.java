@@ -63,7 +63,7 @@ public class AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffectHandler
                 .stream()
                 .filter(permanentId -> {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-                    return permanent != null && !gameQueryService.cantBeSacrificed(gameData, permanent);
+                    return permanent != null && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent);
                 })
                 .toList();
     }

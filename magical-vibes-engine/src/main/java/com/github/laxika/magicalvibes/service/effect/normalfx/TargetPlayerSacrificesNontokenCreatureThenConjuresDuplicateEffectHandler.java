@@ -124,7 +124,7 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)
                     && !permanent.getCard().isToken()
-                    && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                    && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                 creatureIds.add(permanent.getId());
             }
         }

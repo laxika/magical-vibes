@@ -144,7 +144,7 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
             return List.of();
         }
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 gameData, permanent, effect.filter()));
     }

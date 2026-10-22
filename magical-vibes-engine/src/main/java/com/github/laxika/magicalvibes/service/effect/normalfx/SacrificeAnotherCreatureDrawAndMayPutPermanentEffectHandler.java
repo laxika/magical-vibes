@@ -48,7 +48,7 @@ public class SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler impleme
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
                         && !permanent.getCard().getId().equals(sourceCardId)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                     creatureIds.add(permanent.getId());
                 }
             }

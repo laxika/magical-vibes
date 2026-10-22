@@ -45,7 +45,7 @@ public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandle
                 // new object (CR 400.7) and may be sacrificed to the trigger of its previous incarnation.
                 List<UUID> otherCreatureIds = destructionSupport.collectCreatureIds(gameData, controllerId,
                         p -> !p.getId().equals(sourcePermanentId)
-                                && !gameQueryService.cantBeSacrificed(gameData, p));
+                                && !gameQueryService.cantBeChosenToSacrifice(gameData, p));
 
                 if (otherCreatureIds.isEmpty()) {
                     // Can't sacrifice — tap source and controller loses life

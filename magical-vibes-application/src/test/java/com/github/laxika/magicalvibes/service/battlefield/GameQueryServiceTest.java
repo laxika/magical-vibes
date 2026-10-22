@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -1337,6 +1341,51 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createPlaneswalker("Some Planeswalker"));
 
             assertThat(gqs.cantHaveCounters(gd, perm)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("cantBeChosenToSacrifice")
+    class CantBeChosenToSacrifice {
+
+        @Test
+        @DisplayName("a creature without restrictions can be chosen to sacrifice")
+        void plainCreatureCanBeChosen() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(gqs.cantBeChosenToSacrifice(gd, perm)).isFalse();
+        }
+
+        @Test
+        @DisplayName("a permanent that can't be chosen can't be chosen to sacrifice")
+        void cantBeChosenPermanentIsExcluded() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Glimpse, the Unthinkable", 4, 5, CardColor.BLUE, new CantBeChosenEffect()));
+
+            assertThat(gqs.cantBeChosenToSacrifice(gd, perm)).isTrue();
+            assertThat(gqs.cantBeChosenToSacrifice(gd, perm, new PermanentIsCreaturePredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("a sacrifice naming one specific permanent involves no choice")
+        void specificPermanentFilterIgnoresCantBeChosen() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Glimpse, the Unthinkable", 4, 5, CardColor.BLUE, new CantBeChosenEffect()));
+
+            assertThat(gqs.cantBeChosenToSacrifice(gd, perm,
+                    new PermanentIsSpecificPermanentPredicate(perm.getId()))).isFalse();
+            assertThat(gqs.cantBeChosenToSacrifice(gd, perm, new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(), new PermanentIsSourcePermanentPredicate())))).isFalse();
+        }
+
+        @Test
+        @DisplayName("a face-down permanent has no can't-be-chosen ability")
+        void faceDownPermanentCanBeChosen() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Glimpse, the Unthinkable", 4, 5, CardColor.BLUE, new CantBeChosenEffect()));
+            perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+            assertThat(gqs.cantBeChosenToSacrifice(gd, perm)).isFalse();
         }
     }
 

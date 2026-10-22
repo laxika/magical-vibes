@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1472,8 +1473,14 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectColorChoice(
             GameData gameData, PendingInteraction.ColorChoice interaction) {
+        List<String> options = gameQueryService != null
+                && ChoiceHandlerService.isCardNameChoice(interaction.context())
+                ? interaction.options().stream()
+                        .filter(name -> !gameQueryService.isCardNameUnchoosable(gameData, name))
+                        .toList()
+                : interaction.options();
         return InteractionPromptMessage.listPick(
-                interaction.options(),
+                options,
                 interaction.prompt(),
                 isCardNameChoice(interaction.context()),
                 interaction.disabledOptions());

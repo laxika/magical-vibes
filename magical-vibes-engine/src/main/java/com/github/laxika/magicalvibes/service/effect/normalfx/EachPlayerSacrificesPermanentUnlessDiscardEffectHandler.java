@@ -172,7 +172,7 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
     private List<UUID> permanentIds(GameData gameData, UUID playerId, UUID sourceControllerId) {
         return gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)
                 ? destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
                 : List.of();
     }
 
