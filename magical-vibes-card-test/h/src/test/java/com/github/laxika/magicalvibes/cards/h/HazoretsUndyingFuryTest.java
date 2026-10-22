@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.b.BorrowedGrace;
 import com.github.laxika.magicalvibes.cards.c.CollectiveBrutality;
+import com.github.laxika.magicalvibes.cards.c.CollectiveEffort;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -23,13 +26,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, CollectiveBrutality.class,
-        Forest.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class})
+@CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
+        CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class})
 class HazoretsUndyingFuryTest extends BaseCardTest {
 
     @Nested
-    @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, CollectiveBrutality.class,
-            Forest.class, GrizzlyBears.class, HollowOne.class, Shock.class})
+    @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, BorrowedGrace.class, CollectiveBrutality.class,
+            CollectiveEffort.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, HollowOne.class, Shock.class})
     @DisplayName("Shuffle, exile the top four, may cast spells with mana value 5 or less")
     class ExileAndCast {
 
@@ -150,6 +153,99 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
             PendingInteraction.ColorChoice modes =
                     (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
             assertThat(modes.options()).contains("Target opponent loses 2 life and you gain 2 life");
+
+            harness.handleListChoice(player1, "Target opponent loses 2 life and you gain 2 life");
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.handlePermanentChosen(player1, player2.getId());
+
+            // Escalate is paid after targets are chosen: discard the Forest for the second mode.
+            assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Collective Brutality"));
+            harness.handleCardChosen(player1, 0);
+            harness.assertInGraveyard(player1, "Forest");
+            assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Collective Brutality"));
+
+            int p1Life = gd.getLife(player1.getId());
+            int p2Life = gd.getLife(player2.getId());
+            harness.passBothPriorities();
+            harness.handleCardChosen(player1, 0);
+
+            harness.assertInGraveyard(player2, "Shock");
+            assertThat(gd.getLife(player2.getId())).isEqualTo(p2Life - 2);
+            assertThat(gd.getLife(player1.getId())).isEqualTo(p1Life + 2);
+        }
+
+        @Test
+        void paysEscalateManaFromPoolForAnotherModeOfAFreeSpell() {
+            BorrowedGrace grace = new BorrowedGrace();
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            cast(List.of(grace));
+            gd.playerManaPools.get(player1.getId()).clear();
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+            harness.handleMultipleCardsChosen(player1, List.of(grace.getId()));
+            harness.handleListChoice(player1, "Creatures you control get +2/+0 until end of turn");
+            harness.handleListChoice(player1, "Creatures you control get +0/+2 until end of turn");
+
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        }
+
+        @Test
+        void castsOneModeOfAFreeSpellWhenEscalateManaIsUnaffordable() {
+            BorrowedGrace grace = new BorrowedGrace();
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            cast(List.of(grace));
+            gd.playerManaPools.get(player1.getId()).clear();
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+            harness.handleMultipleCardsChosen(player1, List.of(grace.getId()));
+            harness.handleListChoice(player1, "Creatures you control get +2/+0 until end of turn");
+
+            assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Borrowed Grace"));
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        }
+
+        @Test
+        void tapsCreaturesForEscalateAfterChoosingTargetsOfAFreeSpell() {
+            CollectiveEffort effort = new CollectiveEffort();
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+            cast(List.of(effort));
+
+            harness.handleMultipleCardsChosen(player1, List.of(effort.getId()));
+            harness.handleListChoice(player1, "Destroy target enchantment");
+            harness.handleListChoice(player1, "Put a +1/+1 counter on each creature target player controls");
+            harness.handlePermanentChosen(player1, anthem.getId());
+            harness.handlePermanentChosen(player1, player1.getId());
+
+            assertThat(bears.isTapped()).isFalse();
+            harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+            assertThat(bears.isTapped()).isTrue();
+
+            harness.passBothPriorities();
+            harness.assertInGraveyard(player2, "Glorious Anthem");
+            assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        }
+
+        @Test
+        void cannotChooseMoreModesThanEscalatePaymentsAvailable() {
+            CollectiveBrutality brutality = new CollectiveBrutality();
+            harness.setHand(player2, List.of(new Shock()));
+            cast(List.of(brutality));
+
+            harness.handleMultipleCardsChosen(player1, List.of(brutality.getId()));
+            harness.handleListChoice(player1, "Target opponent loses 2 life and you gain 2 life");
+
+            // An empty hand can't pay escalate, so the single mode is cast straight away.
+            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.ColorChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+            assertThat(gd.stack).anyMatch(e -> e.getCard().getName().equals("Collective Brutality"));
         }
     }
 

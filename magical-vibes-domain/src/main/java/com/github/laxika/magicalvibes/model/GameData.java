@@ -2638,6 +2638,12 @@ public class GameData {
     public final Set<UUID> freeCastKickedIds = ConcurrentHashMap.newKeySet();
 
     /**
+     * Number of modes chosen for a queued free cast of an escalate spell, keyed by the id of the card
+     * being cast, when more than one mode was chosen; its escalate cost is paid once targets are chosen.
+     */
+    public final Map<UUID, Integer> freeCastEscalateModeCounts = new ConcurrentHashMap<>();
+
+    /**
      * Lands in {@link #pendingFreeCastQueue} that the resolving effect lets its controller play
      * rather than cast (Brilliant Ultimatum, Gix, Yawgmoth Praetor). They are played only on the
      * controller's turn while they have a land play left.
@@ -9579,6 +9585,7 @@ public class GameData {
         copy.pendingFreeCastKickerOffers.putAll(this.pendingFreeCastKickerOffers);
         copy.freeCastKickerDecidedIds.addAll(this.freeCastKickerDecidedIds);
         copy.freeCastKickedIds.addAll(this.freeCastKickedIds);
+        copy.freeCastEscalateModeCounts.putAll(this.freeCastEscalateModeCounts);
         copy.deferredExileBottomSourceIds.addAll(this.deferredExileBottomSourceIds);
         copy.pendingFreeCastLandPlayIds.addAll(this.pendingFreeCastLandPlayIds);
         copy.pendingFreeCastAdventureIds.addAll(this.pendingFreeCastAdventureIds);

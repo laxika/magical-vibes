@@ -373,7 +373,8 @@ public sealed interface MultiPermanentChoiceContext {
 
     /**
      * The caster chooses which permanents to tap for a "tap N untapped permanents" additional cost
-     * of a spell cast without paying its mana cost; {@code entry} is put on the stack once they are tapped.
+     * of a spell cast without paying its mana cost, or to tap or sacrifice for its escalate cost;
+     * {@code entry} is put on the stack once the cost is paid.
      */
     record FreeCastTapCost(StackEntry entry, int requiredCount) implements MultiPermanentChoiceContext {
     }

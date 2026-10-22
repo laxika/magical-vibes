@@ -286,7 +286,7 @@ public class ExileFreeCastQueueSupport {
                 return;
             }
             int maximumChoices = additionalCosts.hasEscalate()
-                    ? Math.min(1, modal.choicesMax())
+                    ? maxEscalateModes(gameData, playerId, cardToCast, additionalCosts, modal.choicesMax())
                     : modal.choicesMax();
             if (modal.choicesRequired() > maximumChoices) {
                 skipCardWithUnsupportedCost(gameData, playerId, card, asCopy);
@@ -455,6 +455,10 @@ public class ExileFreeCastQueueSupport {
             castXValue = 0;
         }
         spendManaValueBudget(gameData, castCard.getManaValue());
+        if (chosenModeIndices.size() > 1
+                && additionalSpellCostService.peek(gameData, context.controllerId(), castCard).hasEscalate()) {
+            gameData.freeCastEscalateModeCounts.put(castCard.getId(), chosenModeIndices.size());
+        }
         List<String> labels = chosenModeIndices.stream()
                 .map(context.effect().options()::get)
                 .map(ChooseOneEffect.ChooseOneOption::label)
@@ -649,6 +653,10 @@ public class ExileFreeCastQueueSupport {
 
     /** Pauses a prepared free cast for a required creature sacrifice, after target selection. */
     public boolean beginSacrificeCostIfNeeded(GameData gameData, StackEntry entry) {
+        Integer escalateModes = gameData.freeCastEscalateModeCounts.remove(entry.getCard().getId());
+        if (escalateModes != null) {
+            return beginEscalateCost(gameData, entry, escalateModes);
+        }
         List<CardEffect> costs = entry.getEffectsToResolve().stream().filter(CostEffect.class::isInstance).toList();
         if (costs.size() == 1 && costs.getFirst() instanceof com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost) {
             List<UUID> candidates = spellCastingService.beholdCostCandidates(gameData, entry);
@@ -815,6 +823,110 @@ public class ExileFreeCastQueueSupport {
         return true;
     }
 
+    /**
+     * The most modes a free cast of an escalate spell may choose: one, plus one for each escalate
+     * payment the caster can still make (CR 702.120a). The spell is cast from exile, so every card in
+     * the caster's hand can be discarded.
+     */
+    private int maxEscalateModes(GameData gameData, UUID playerId, Card card,
+                                 AdditionalSpellCostService.ExtractedCosts costs, int choicesMax) {
+        int modes = 1;
+        while (modes < choicesMax && canPayEscalate(gameData, playerId, card, costs, modes + 1)) {
+            modes++;
+        }
+        return modes;
+    }
+
+    private boolean canPayEscalate(GameData gameData, UUID playerId, Card card,
+                                   AdditionalSpellCostService.ExtractedCosts costs, int modes) {
+        int payments = modes - 1;
+        if (costs.escalateDiscardCost() != null) {
+            return gameData.playerHands.getOrDefault(playerId, List.of()).size() >= payments;
+        }
+        if (costs.escalateManaCost() != null) {
+            return spellCastingService.canPayFreeCastEscalateMana(
+                    gameData, playerId, card, costs.escalateManaCost(), modes);
+        }
+        if (costs.escalateSacrificeCost() != null) {
+            return escalateSacrificeCandidates(gameData, playerId, costs.escalateSacrificeCost()).size()
+                    >= costs.escalateSacrificeCost().count() * payments;
+        }
+        if (costs.escalateTapCost() != null) {
+            return escalateTapCandidates(gameData, playerId, costs.escalateTapCost()).size() >= payments;
+        }
+        return false;
+    }
+
+    private List<UUID> escalateSacrificeCandidates(GameData gameData, UUID playerId,
+                                                   com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost cost) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, cost.filter())
+                        && gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
+    }
+
+    private List<UUID> escalateTapCandidates(GameData gameData, UUID playerId,
+                                             com.github.laxika.magicalvibes.model.effect.EscalateTapCost cost) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped()
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, cost.filter()))
+                .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
+    }
+
+    /**
+     * Pays the escalate cost of a free cast whose caster chose {@code modes} modes, after its targets
+     * were chosen (CR 601.2h). Mana comes from the caster's mana pool; a discard, sacrifice or tap
+     * pauses for the caster to choose what pays it. Returns whether the cast is paused.
+     */
+    private boolean beginEscalateCost(GameData gameData, StackEntry entry, int modes) {
+        UUID playerId = entry.getControllerId();
+        Card card = entry.getCard();
+        entry.setModalModeCount(modes);
+        AdditionalSpellCostService.ExtractedCosts costs = additionalSpellCostService.peek(gameData, playerId, card);
+        int payments = modes - 1;
+        if (costs.escalateManaCost() != null) {
+            spellCastingService.payFreeCastEscalateMana(gameData, entry, costs.escalateManaCost(), modes);
+            return false;
+        }
+        if (costs.escalateDiscardCost() != null) {
+            List<Integer> candidates = new ArrayList<>();
+            for (int i = 0; i < gameData.playerHands.getOrDefault(playerId, List.of()).size(); i++) {
+                candidates.add(i);
+            }
+            if (candidates.size() < payments) throw new IllegalStateException("Not enough cards to pay escalate");
+            playerInputService.beginDiscardChoice(gameData, playerId, candidates,
+                    "Choose " + payments + (payments == 1 ? " card" : " cards") + " to discard to escalate "
+                            + card.getName() + ".", payments, DiscardFollowUp.NONE.withPendingSpellCast(entry));
+            return true;
+        }
+        List<UUID> candidates;
+        int required;
+        CostEffect cost;
+        String verb;
+        if (costs.escalateSacrificeCost() != null) {
+            cost = costs.escalateSacrificeCost();
+            candidates = escalateSacrificeCandidates(gameData, playerId, costs.escalateSacrificeCost());
+            required = costs.escalateSacrificeCost().count() * payments;
+            verb = "sacrifice";
+        } else if (costs.escalateTapCost() != null) {
+            cost = costs.escalateTapCost();
+            candidates = escalateTapCandidates(gameData, playerId, costs.escalateTapCost());
+            required = payments;
+            verb = "tap";
+        } else {
+            return false;
+        }
+        if (candidates.size() < required) throw new IllegalStateException("Not enough permanents to pay escalate");
+        List<CardEffect> effects = new ArrayList<>(entry.getEffectsToResolve());
+        effects.add(cost);
+        entry.replaceEffectsToResolve(effects);
+        playerInputService.beginMultiPermanentChoice(gameData, playerId, candidates, required,
+                new MultiPermanentChoiceContext.FreeCastTapCost(entry, required),
+                "Choose " + required + " permanents to " + verb + " to escalate " + card.getName() + ".");
+        return true;
+    }
+
     private boolean canPutCountersAsFreeCastCost(GameData gameData, StackEntry entry, UUID permanentId) {
         PutCountersOnControlledCreatureOrPayManaCost cost = entry.getEffectsToResolve().stream()
                 .filter(PutCountersOnControlledCreatureOrPayManaCost.class::isInstance)
@@ -907,7 +1019,8 @@ public class ExileFreeCastQueueSupport {
     public void completeTapCost(GameData gameData, List<UUID> permanentIds,
                                 MultiPermanentChoiceContext.FreeCastTapCost context) {
         spellCastingService.payAdditionalCostsForFreeCast(gameData, context.entry(),
-                new AdditionalSpellCostService.CostSelection(null, null, null, null, null, 0, -1,
+                new AdditionalSpellCostService.CostSelection(null, null, null, null, null,
+                        Objects.requireNonNullElse(context.entry().getModalModeCount(), 0), -1,
                         List.copyOf(permanentIds), null, null, List.of(), List.of()));
         completeCastAfterDiscard(gameData, context.entry());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
@@ -1019,6 +1132,7 @@ public class ExileFreeCastQueueSupport {
         gameData.pendingFreeCastManaValueBudget = null;
         gameData.pendingFreeCastLandPlayIds.clear();
         gameData.pendingFreeCastAdventureIds.clear();
+        gameData.freeCastEscalateModeCounts.clear();
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         putRemainderIntoLibraryBottom(gameData);

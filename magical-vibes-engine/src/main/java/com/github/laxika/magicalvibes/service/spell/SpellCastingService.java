@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
+import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -13183,6 +13184,27 @@ public class SpellCastingService {
         });
         gameData.addSpellCastManaSpent(card.getId(), manaSpent);
         applyPathOfAncestryMana(gameData, playerId, card, pathOfAncestryBefore);
+    }
+
+    /**
+     * Whether the caster's mana pool can pay escalate's mana for {@code modesChosen} modes of a spell
+     * cast without paying its mana cost (CR 702.120a: escalate is an additional cost, so it is still paid).
+     */
+    public boolean canPayFreeCastEscalateMana(GameData gameData, UUID playerId, Card card,
+                                              EscalateManaCost cost, int modesChosen) {
+        String suffix = additionalSpellCostService.escalateManaSuffix(cost, modesChosen);
+        if (suffix.isEmpty()) {
+            return true;
+        }
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
+        return pool != null && new ManaCost(suffix).canPayWithAdditionalGenericCost(pool, 0, additionalCost);
+    }
+
+    /** Pays escalate's mana for {@code modesChosen} modes of a prepared spell cast without paying its mana cost. */
+    public void payFreeCastEscalateMana(GameData gameData, StackEntry entry, EscalateManaCost cost, int modesChosen) {
+        payEscalateManaOnly(gameData, entry.getControllerId(), entry.getCard(),
+                additionalSpellCostService.escalateManaSuffix(cost, modesChosen), 0);
     }
 
     private <T> T withMulticoloredSpellMana(GameData gameData, UUID playerId, Card card,

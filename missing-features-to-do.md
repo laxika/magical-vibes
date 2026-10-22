@@ -72,34 +72,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 27. Escalate on spells cast without paying their mana cost
-
-**Status:** open · **Found:** 2026-10-16, while fixing H-card tests
-
-**Failing tests:**
-- `HazoretsUndyingFuryTest$ExileAndCast.mayPayEscalateToChooseAnotherModeOfAFreeSpell()`
-
-**What the rules require.** Escalate is an additional cost, so it can still be paid when a spell is cast
-without paying its mana cost (Hazoret's Undying Fury ruling 2017-07-14: "You can, however, pay additional
-costs"). `ExileFreeCastQueueSupport.castNextFromQueue` caps an escalate spell at one mode
-(`maximumChoices = min(1, …)`), so the caster can never choose more modes and pay for them.
-
-**Why it's large.** The free-cast queue has no interactive payment for a variable additional cost.
-Choosing N modes has to be followed by paying N−1 escalate costs (discard, sacrifice, tap or mana) as
-part of 601.2h, after targets are chosen. The target step (`ExileCastSpellTarget`) currently puts the
-spell straight on the stack, so it would need a cost-payment step in between.
-
-**Prompt to start it:**
-
-```
-Let spells cast without paying their mana cost from the free-cast queue (ExileFreeCastQueueSupport) choose
-extra escalate modes and pay the escalate cost for each (Collective Brutality via Hazoret's Undying Fury).
-Pay the cost after targets are chosen (CR 601.2h). Start with HazoretsUndyingFuryTest
-mayPayEscalateToChooseAnotherModeOfAFreeSpell. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 29. Powerstone and Thran Turbine mana for resolution-time costs
 
 **Status:** open · **Found:** 2026-10-16, while adding Hydraulic Helper's restriction

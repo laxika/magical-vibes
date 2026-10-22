@@ -238,6 +238,13 @@ public class ValidTargetService {
             allowedTargets = new java.util.HashSet<>(allowedTargets);
             allowedTargets.add(TargetType.PERMANENT);
         }
+        // A prepared modal spell (its modes already chosen) still lists its modal among its card
+        // effects, so a slot declared as a player target only shows up through its filter.
+        if (isMultiTarget && positionIndex < targetFilters.size()
+                && targetFilters.get(positionIndex) instanceof PlayerPredicateTargetFilter) {
+            allowedTargets = new java.util.HashSet<>(allowedTargets);
+            allowedTargets.add(TargetType.PLAYER);
+        }
 
         if (allowedTargets.equals(Set.of(TargetType.SPELL_ON_STACK))) {
             TargetFilter filter = positionIndex < targetFilters.size() ? targetFilters.get(positionIndex)
