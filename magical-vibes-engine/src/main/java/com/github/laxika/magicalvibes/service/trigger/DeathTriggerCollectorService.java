@@ -3726,8 +3726,9 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDestroyEnchanted(TriggerMatchContext match,
             DestroyReferencedPermanentEffect effect, TriggerContext ctx) {
-        // Yoke of the Damned: needs its source Aura's permanent id to re-derive the enchanted creature.
-        match.gameData().stack.add(new StackEntry(
+        // Yoke of the Damned: the Aura may leave the battlefield in the same event that triggered it, so the
+        // snapshot keeps the creature it was attached to for the destroy to find after the Aura is gone.
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -3735,7 +3736,9 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }
@@ -3871,15 +3874,17 @@ public class DeathTriggerCollectorService {
             MayEffect may, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         MayEffect resolvedMay = may;
+        UUID dyingCardId = null;
         if (may.wrapped() instanceof DyingCreatureNameAwareEffect aware && cd.dyingCard() != null) {
             resolvedMay = new MayEffect(aware.boundToDyingCreatureName(cd.dyingCard().getName()),
                     may.prompt(), may.elseEffect());
         } else if (may.wrapped() instanceof DyingCreatureCardAwareEffect aware && cd.dyingCard() != null) {
-            UUID dyingCardId = cd.dyingPermanent() == null ? cd.dyingCard().getId()
+            dyingCardId = cd.dyingPermanent() == null ? cd.dyingCard().getId()
                     : cd.dyingPermanent().getOriginalCard().getId();
             resolvedMay = new MayEffect(aware.boundToDyingCard(dyingCardId), may.prompt());
         }
-        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), resolvedMay);
+        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), resolvedMay,
+                dyingCardId);
         logAllyNontokenCreatureDeath(match);
         return true;
     }

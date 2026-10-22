@@ -667,6 +667,8 @@ public class GameData {
      */
     public final Map<UUID, UUID> untapLockActivatorBySource = new ConcurrentHashMap<>();
     public final Map<UUID, Long> exileEntryVersions = new ConcurrentHashMap<>();
+    /** Number of times each card has entered a hand through {@link #addCardToHand}. A card that returns to hand is a new object (CR 400.7), so a delayed effect that refers to an earlier hand entry checks this version. */
+    public final Map<UUID, Long> handEntryVersions = new ConcurrentHashMap<>();
     /**
      * Exile-entry version of the card at the moment a {@link PendingExileReturn} was queued, keyed by the
      * queued instance. A delayed return applies only to the exile object it was scheduled for (CR 400.7),
@@ -2142,6 +2144,10 @@ public class GameData {
      *  {@link #cardsGrantedFlashbackCostsUntilEndOfTurn}. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Subset of {@link #cardsGrantedFlashbackUntilEndOfTurn} granted while graveyard cards had already lost all
+     *  abilities, so the later grant survives that loss (e.g. Snapcaster Mage under Yixlid Jailer). */
+    public final Set<UUID> cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     /** Optional fixed flashback costs for cards granted flashback until end of turn. */
     public final Map<UUID, String> cardsGrantedFlashbackCostsUntilEndOfTurn = new ConcurrentHashMap<>();
 
@@ -2199,6 +2205,10 @@ public class GameData {
      *  player. Every unconsumed grant applies to the same next creature spell and is consumed by
      *  {@link #recordSpellCast}. Cleared at end of turn. */
     public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowermentsThisTurn = new ConcurrentHashMap<>();
+
+    /** Pending "When you next cast a creature spell this turn, ..." delayed triggers, keyed by player.
+     *  All fire on the next creature spell cast and are cleared at end of turn. */
+    public final Map<UUID, List<DelayedSpellCastTrigger>> nextCreatureSpellDelayedTriggersThisTurn = new ConcurrentHashMap<>();
 
     /** Pending one-shot grants that give the next creature spell cascade, keyed by player. */
     public final Map<UUID, Integer> nextCreatureSpellCascadeThisTurn = new ConcurrentHashMap<>();
@@ -5397,6 +5407,20 @@ public class GameData {
                 .add(empowerment);
     }
 
+    /** Registers a delayed trigger for the player's next creature spell this turn. */
+    public void addNextCreatureSpellDelayedTrigger(UUID playerId, DelayedSpellCastTrigger trigger) {
+        nextCreatureSpellDelayedTriggersThisTurn
+                .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
+                .add(trigger);
+    }
+
+    /** Removes and returns every delayed trigger waiting for the next creature spell the player casts. */
+    public List<DelayedSpellCastTrigger> consumeNextCreatureSpellDelayedTriggers(UUID playerId, Card card) {
+        if (card == null || !card.hasType(CardType.CREATURE)) return List.of();
+        List<DelayedSpellCastTrigger> triggers = nextCreatureSpellDelayedTriggersThisTurn.remove(playerId);
+        return triggers == null ? List.of() : new ArrayList<>(triggers);
+    }
+
     /** Adds one pending cascade grant for the next creature spell this turn. */
     public void addNextCreatureSpellCascade(UUID playerId) {
         nextCreatureSpellCascadeThisTurn.merge(playerId, 1, Integer::sum);
@@ -6479,6 +6503,7 @@ public class GameData {
         graveyardPlayPermissionsExpireEndOfTurn.remove(card.getId());
         graveyardCardsEnterTapped.remove(card.getId());
         exileInsteadOfGraveyard.remove(card.getId());
+        handEntryVersions.merge(card.getId(), 1L, Long::sum);
         playerHands.get(playerId).add(card);
     }
 
@@ -8074,6 +8099,7 @@ public class GameData {
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.untapLockActivatorBySource.putAll(this.untapLockActivatorBySource);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
+        copy.handEntryVersions.putAll(this.handEntryVersions);
         copy.pendingExileReturnExileVersions.putAll(this.pendingExileReturnExileVersions);
         copy.pendingExileReturnEarliestTurns.putAll(this.pendingExileReturnEarliestTurns);
         this.permanentsCantAttackUntilNextTurn.forEach((permanentId, controllers) ->
@@ -9619,6 +9645,8 @@ public class GameData {
 
         // --- Until-end-of-turn casting permissions ---
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
+        copy.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.addAll(
+                this.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn);
         copy.cardsGrantedFlashbackCostsUntilEndOfTurn.putAll(this.cardsGrantedFlashbackCostsUntilEndOfTurn);
         copy.cardsGrantedWarpUntilEndOfTurn.addAll(this.cardsGrantedWarpUntilEndOfTurn);
         copy.warpExileEntryVersions.putAll(this.warpExileEntryVersions);
@@ -9653,6 +9681,8 @@ public class GameData {
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.nextCreatureSpellCascadeThisTurn.putAll(this.nextCreatureSpellCascadeThisTurn);
+        this.nextCreatureSpellDelayedTriggersThisTurn.forEach((k, v) ->
+                copy.nextCreatureSpellDelayedTriggersThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowerments.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowerments.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);

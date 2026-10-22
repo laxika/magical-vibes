@@ -19,17 +19,18 @@ import java.util.List;
 public class YawgmothsDayPlanner extends Card {
 
     public YawgmothsDayPlanner() {
-        // {T}, Pay 2 life: Add {B}{B}. Spend this mana only to cast a spell from your graveyard.
+        // {T}, Pay 2 life: Add {B}{B}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(new PayLifeCost(2), new AwardRestrictedManaEffect(
-                        ManaColor.BLACK, 2, new ManaRestriction.GraveyardSpells())),
-                "{T}, Pay 2 life: Add {B}{B}. Spend this mana only to cast a spell from your graveyard."
+                        ManaColor.BLACK, 2, new ManaRestriction.ProducedByLifeLossAbility())),
+                "{T}, Pay 2 life: Add {B}{B}."
         ));
 
-        // You may cast spells from your graveyard.
-        addEffect(EffectSlot.STATIC, new CastSpellsFromGraveyardEffect(new CardTruePredicate()));
+        // You may cast spells from your graveyard. Only mana produced by abilities that caused you to lose life
+        // may be spent to cast spells this way.
+        addEffect(EffectSlot.STATIC, new CastSpellsFromGraveyardEffect(new CardTruePredicate(), true));
 
         // If a card would be put into your graveyard from anywhere, exile it instead.
         addEffect(EffectSlot.STATIC, new ExileOwnCardsInsteadOfGraveyardEffect());

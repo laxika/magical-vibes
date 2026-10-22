@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -44,12 +47,21 @@ public class RevealTopCardMayPlayFreeHandler implements MayEffectHandlerBean {
                 .map(RevealTopCardMayPlayFreeEffect.class::cast)
                 .findFirst()
                 .orElseThrow();
-        if (!accepted && effect.drawIfDeclined()) {
-            UUID libraryOwnerId = effect.libraryOwnerId() != null ? effect.libraryOwnerId() : player.getId();
+        UUID libraryOwnerId = effect.libraryOwnerId() != null ? effect.libraryOwnerId() : player.getId();
+        if (effect.drawIfDeclined() && (!accepted || isUncastableTopCard(gameData, player, libraryOwnerId, ability))) {
             drawService.resolveDrawCard(gameData, libraryOwnerId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
         mayCastHandlerService.handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability);
+    }
+
+    private boolean isUncastableTopCard(GameData gameData, Player player, UUID libraryOwnerId,
+                                        PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        return deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())
+                && (mayCastHandlerService.cannotPlayFromLibrary(gameData, player.getId(), card)
+                || !card.hasType(CardType.LAND) && !mayCastHandlerService.hasLegalFreeCastTarget(gameData, player, card));
     }
 }

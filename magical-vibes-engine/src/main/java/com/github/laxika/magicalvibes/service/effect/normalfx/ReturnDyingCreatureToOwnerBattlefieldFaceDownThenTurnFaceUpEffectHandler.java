@@ -65,8 +65,6 @@ public class ReturnDyingCreatureToOwnerBattlefieldFaceDownThenTurnFaceUpEffectHa
                 gameData.playerIdToName.get(ownerId) + " returns ", cardToReturn,
                 " to the battlefield face down under its owner's control."));
 
-        if (cardToReturn.hasType(CardType.CREATURE)) {
-            gameServiceProvider.getObject().turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent);
-        }
+        gameServiceProvider.getObject().turnPermanentFaceUpWithoutPayingManaCostOfAnyType(gameData, permanent);
     }
 }

@@ -3382,11 +3382,9 @@ public class MultiPermanentChoiceHandlerService {
 
         context.resolvingEntry().setEventValue(tapped);
         context.resolvingEntry().setXValue(tapped);
-        if (tapped > 0) {
-            queueReflexiveAbilityEffectHandler.resolve(gameData, context.resolvingEntry(),
-                    new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
-                            context.reflexiveEffect()));
-        }
+        queueReflexiveAbilityEffectHandler.resolve(gameData, context.resolvingEntry(),
+                new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
+                        context.reflexiveEffect()));
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }

@@ -277,6 +277,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBestowedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
@@ -1000,7 +1001,10 @@ public class PredicateEvaluationService {
                 yield p.parity().matches(manaValue);
             }
             case CardMaxManaValuePredicate p ->
-                    card.getManaValue() <= p.maxManaValue();
+                    card.getManaValue() + (p.includeXValue() && xValue != null
+                            && card.getParsedManaCost() != null
+                            ? xValue * card.getParsedManaCost().getXSymbolCount() : 0)
+                            <= p.maxManaValue();
             case CardGenericManaCostAtMostPredicate p -> {
                 if (card.getManaCost() == null || card.getManaCost().isBlank()) {
                     yield false;
@@ -1793,6 +1797,8 @@ public class PredicateEvaluationService {
             }
             case PermanentIsTappedPredicate ignored ->
                     permanent.isTapped();
+            case PermanentIsBestowedPredicate ignored ->
+                    permanent.isBestow();
             case PermanentIsRenownedPredicate ignored ->
                     permanent.isRenowned();
             case PermanentIsSuspectedPredicate ignored ->
@@ -2609,7 +2615,9 @@ public class PredicateEvaluationService {
                         ? defendingPlayerId.equals(controllerId)
                         : gameData.currentStep == TurnStep.BEGINNING_OF_COMBAT
                         ? !controllerId.equals(gameData.activePlayerId)
-                        : gameQueryService.isDefendingPlayer(gameData, controllerId));
+                        : (gameQueryService.isDefendingPlayer(gameData, controllerId)
+                        || (gameData.currentStep != null && gameData.currentStep.isCombatPhase()
+                        && gameData.orderedPlayerIds.size() == 2 && !controllerId.equals(gameData.activePlayerId))));
             }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
                     !permanent.isSummoningSick();
@@ -3819,6 +3827,7 @@ public class PredicateEvaluationService {
             case PermanentIsColorlessPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsPlaneswalkerPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsBestowedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsRenownedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsSuspectedPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsTappedPredicate ignored -> matchesStaticLeaf(permanent, predicate);

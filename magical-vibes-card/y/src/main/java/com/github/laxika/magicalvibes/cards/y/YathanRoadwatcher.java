@@ -19,7 +19,7 @@ public class YathanRoadwatcher extends Card {
 
     public YathanRoadwatcher() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new WasCast(),
+                new WasCast(true),
                 new MillControllerThenEffect(4,
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

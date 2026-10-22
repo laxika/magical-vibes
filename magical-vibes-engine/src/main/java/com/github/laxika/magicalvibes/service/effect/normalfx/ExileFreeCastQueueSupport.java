@@ -414,7 +414,7 @@ public class ExileFreeCastQueueSupport {
 
         playerInputService.beginExileFreeCastModeChoice(
                 gameData, context.controllerId(), context.cardToCast(), context.effect(), context.spellType(),
-                chosenModeIndices, offeredModes, context.maximumChoices(), context.copy());
+                chosenModeIndices, offeredModes, context.maximumChoices(), context.copy(), context.payManaCost());
     }
 
     private void finishModalCast(GameData gameData, Player player,
@@ -466,7 +466,7 @@ public class ExileFreeCastQueueSupport {
             List<Integer> trial = new ArrayList<>(chosenModeIndices);
             trial.add(modeIndex);
             if (trial.size() < modal.choicesRequired()
-                    || isLegalModalSelection(gameData, card, controllerId, modal, trial)) {
+                    || isLegalModalSelection(gameData, card, controllerId, modal, trial, maximumChoices)) {
                 legal.add(modeIndex);
             }
         }
@@ -474,10 +474,11 @@ public class ExileFreeCastQueueSupport {
     }
 
     private boolean isLegalModalSelection(GameData gameData, Card card, UUID controllerId,
-                                          ChooseOneEffect modal, List<Integer> chosenModeIndices) {
+                                          ChooseOneEffect modal, List<Integer> chosenModeIndices,
+                                          int maximumChoices) {
         try {
             PreparedModalCast prepared = prepareModalCast(
-                    gameData, card, controllerId, modal, chosenModeIndices);
+                    gameData, card, controllerId, modal, chosenModeIndices, null, maximumChoices);
             if (prepared.card().getManaValue() > availableManaValue(gameData)) {
                 return false;
             }
@@ -511,13 +512,35 @@ public class ExileFreeCastQueueSupport {
     public PreparedModalCast prepareModalCast(GameData gameData, Card card, UUID controllerId,
                                                ChooseOneEffect modal, List<Integer> chosenModeIndices,
                                                Boolean castFromOwnHand) {
+        return prepareModalCast(gameData, card, controllerId, modal, chosenModeIndices, castFromOwnHand,
+                modal.choicesMax());
+    }
+
+    /**
+     * As {@link #prepareModalCast(GameData, Card, UUID, ChooseOneEffect, List, Boolean)}, for a cast
+     * that may choose up to {@code maximumChoices} modes, more than the card's own modal allows.
+     */
+    public PreparedModalCast prepareModalCast(GameData gameData, Card card, UUID controllerId,
+                                               ChooseOneEffect modal, List<Integer> chosenModeIndices,
+                                               Boolean castFromOwnHand, int maximumChoices) {
+        maximumChoices = Math.max(maximumChoices, modal.choicesMax());
+        ChooseOneEffect castModal = maximumChoices == modal.choicesMax() ? modal : new ChooseOneEffect(
+                modal.options(), modal.optional(), modal.choicesRequired(), maximumChoices,
+                modal.allModesWhenOptionalCostPaid(), modal.modesMayRepeat(), null,
+                modal.modeCosts(), modal.modeBudget(), modal.choicesEqualModalXValue());
         int[] indices = chosenModeIndices.stream().mapToInt(Integer::intValue).toArray();
         int modeEncoding = modal.modesMayRepeat()
-                ? modal.encodeRepeatedSelection(indices)
-                : ChooseOneEffect.encodeModeSelection(modal.choicesRequired(), modal.choicesMax(), indices);
+                ? castModal.encodeRepeatedSelection(indices)
+                : ChooseOneEffect.encodeModeSelection(modal.choicesRequired(), maximumChoices, indices);
 
         Card runtimeCard = card.createRuntimeCopy();
         List<CardEffect> effects = new ArrayList<>(runtimeCard.getEffects(EffectSlot.SPELL));
+        if (castModal != modal) {
+            int modalIndex = effects.indexOf(modal);
+            if (modalIndex >= 0) {
+                effects.set(modalIndex, castModal);
+            }
+        }
         additionalSpellCostService.extractAndRemove(gameData, controllerId, runtimeCard, effects, false);
         int effectiveXValue = spellCastingService.prepareModalSpellCast(
                 gameData, controllerId, runtimeCard, effects, modeEncoding, castFromOwnHand);

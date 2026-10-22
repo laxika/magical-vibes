@@ -837,7 +837,7 @@ public class GraveyardService {
         if (sourceZone == Zone.HAND) {
             collectPutIntoGraveyardFromHandTriggers(gameData, ownerId, card);
         }
-        if (sourceZone == Zone.LIBRARY) {
+        if (sourceZone == Zone.LIBRARY && !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY)) {
                 StackEntry selfTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
                         card.getName() + "'s ability", new ArrayList<>(List.of(effect)), null, (UUID) null);
@@ -2531,6 +2531,7 @@ public class GraveyardService {
         cards.forEach(card -> gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.cardsGrantedJumpStartUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.cardsGrantedFlashbackUntilEndOfTurn.remove(card.getId()));
+        cards.forEach(card -> gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.cardsGrantedHarmonizeUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
         // A card that left the graveyard is a new object (CR 400.7), so a later return to the graveyard

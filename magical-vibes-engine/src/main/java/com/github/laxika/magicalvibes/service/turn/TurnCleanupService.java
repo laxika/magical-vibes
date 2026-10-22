@@ -532,6 +532,7 @@ public class TurnCleanupService {
         gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.clear();
         gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.clear();
         gameData.cardsGrantedWarpUntilEndOfTurn.clear();
         gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
@@ -551,6 +552,7 @@ public class TurnCleanupService {
         gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.nextCreatureSpellCascadeThisTurn.clear();
+        gameData.nextCreatureSpellDelayedTriggersThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellEntryCounters.clear();
         gameData.spellGrantedSubtypesOnEntry.clear();

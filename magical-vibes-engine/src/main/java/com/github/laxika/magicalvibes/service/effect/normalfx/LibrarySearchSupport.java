@@ -707,6 +707,9 @@ public class LibrarySearchSupport {
         if (pick.cardName() != null) {
             return pick.cardName().equals(card.getName());
         }
+        if (pick.basicOnly() && !(card.getSupertypes().contains(CardSupertype.BASIC) && card.hasType(CardType.LAND))) {
+            return false;
+        }
         return pick.color() != null
                 ? card.getColors().contains(pick.color())
                 : card.getSubtypes().contains(pick.subtype());

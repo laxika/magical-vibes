@@ -41,6 +41,13 @@ public class ReturnDyingCreatureToOwnerBattlefieldFaceDownAsLandEffectHandler
         if (dyingCardId == null) {
             return;
         }
+        // CR 400.7: the trigger refers to the creature's stay in the graveyard it died into; if that card has
+        // since left and re-entered the graveyard it is a new object and this does nothing.
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && dyingCardId.equals(entry.getTriggeringCardId())
+                && gameData.graveyardEntryVersion(dyingCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
 
         Card cardToReturn = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);

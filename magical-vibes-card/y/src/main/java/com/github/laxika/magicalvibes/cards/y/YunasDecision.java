@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -33,13 +34,14 @@ public class YunasDecision extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 SequenceEffect.of(
                                         new DrawCardEffect(),
-                                        new MayEffect(
-                                                new PutCardToBattlefieldEffect(creatureCard, "creature"),
-                                                "Put a creature card from your hand onto the battlefield?"),
-                                        new MayEffect(
-                                                new PutCardToBattlefieldEffect(landCard, "land"),
-                                                "Put a land card from your hand onto the battlefield?")),
-                                "a creature")),
+                                        new PutCardsOntoBattlefieldTogetherEffect(List.of(
+                                                new MayEffect(
+                                                        new PutCardToBattlefieldEffect(creatureCard, "creature"),
+                                                        "Put a creature card from your hand onto the battlefield?"),
+                                                new MayEffect(
+                                                        new PutCardToBattlefieldEffect(landCard, "land"),
+                                                        "Put a land card from your hand onto the battlefield?")))),
+                                "a creature", false, false)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Find Another Way — Return one or two target permanent cards from your graveyard to your hand",
                         new ReturnTargetCardsFromGraveyardToHandEffect(

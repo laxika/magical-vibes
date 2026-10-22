@@ -375,7 +375,12 @@ public class PermanentChoiceSpellHandlerService {
                                 ect.cardToCast().getName());
                     }
                 } catch (IllegalStateException ex) {
-                    if (ect.resolutionCast()) {
+                    if (gameData.outsideGamePlayPermissions.contains(ect.cardToCast().getId())) {
+                        gameData.outsideGamePlayPermissions.remove(ect.cardToCast().getId());
+                        gameData.outsideGameAdditionalModalModePermissions.remove(ect.cardToCast().getId());
+                        log.info("Game {} - outside-game cast of {} could not be completed",
+                                gameData.id, ect.cardToCast().getName());
+                    } else if (ect.resolutionCast()) {
                         gameData.removeFromExile(ect.cardToCast().getId());
                         gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
                                 " can't be cast and ceases to exist."));

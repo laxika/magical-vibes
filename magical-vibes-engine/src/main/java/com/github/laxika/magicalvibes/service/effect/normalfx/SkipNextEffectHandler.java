@@ -50,7 +50,7 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
                 : entry.getTargetId();
         if (e.recipient() == SkipRecipient.TARGET_PLAYER
                 && (affectedPlayerId == null || !gameData.playerIds.contains(affectedPlayerId))) {
-            affectedPlayerId = entry.getDeclaredTargetIds().stream()
+            affectedPlayerId = entry.getTargetIds().stream()
                     .filter(gameData.playerIds::contains)
                     .findFirst().orElse(null);
         }

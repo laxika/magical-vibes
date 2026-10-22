@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -81,8 +82,9 @@ class YaroksWavecrasherTest extends BaseCardTest {
     void returnsCreatureToOwnerRatherThanController() {
         GreenwoodSentinel sentinel = new GreenwoodSentinel();
         sentinel.setOwnerId(player2.getId());
-        UUID sentinelId = harness.addToBattlefieldAndReturn(player1, sentinel).getId();
-        gd.stolenCreatures.put(sentinelId, player2.getId());
+        Permanent sentinelPermanent = harness.addToBattlefieldAndReturn(player1, sentinel);
+        setOwnerAndController(sentinelPermanent, player2, player1);
+        UUID sentinelId = sentinelPermanent.getId();
         harness.castFromHand(player1, new YaroksWavecrasher(), "{3}{U}");
 
         resolveAllTriggers();

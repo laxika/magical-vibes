@@ -117,6 +117,7 @@ class YggdrasilRebirthEngineTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
 
+        declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();

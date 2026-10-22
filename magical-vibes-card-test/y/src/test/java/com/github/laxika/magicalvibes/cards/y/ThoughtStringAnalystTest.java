@@ -46,6 +46,7 @@ class ThoughtStringAnalystTest extends BaseCardTest {
         Card topCard = new Divination();
         harness.setLibrary(player2, List.of(topCard));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new ThoughtStringAnalyst());
 
         advanceToUpkeep(player1);

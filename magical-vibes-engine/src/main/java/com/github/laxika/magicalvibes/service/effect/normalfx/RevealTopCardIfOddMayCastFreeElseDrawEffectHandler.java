@@ -37,6 +37,7 @@ public class RevealTopCardIfOddMayCastFreeElseDrawEffectHandler implements Norma
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
+            drawService.resolveDrawCard(gameData, controllerId);
             return;
         }
 

@@ -150,6 +150,7 @@ class YouFindSomePrisonersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(chosen, new Forest(), new Forest(), new Forest()));
         castInterrogateThem();
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -169,6 +170,7 @@ class YouFindSomePrisonersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(chosen, new Forest(), new Forest(), new Forest(), new Forest()));
         castInterrogateThem();
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

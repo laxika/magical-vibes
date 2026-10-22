@@ -145,6 +145,22 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /**
+     * Ordinary mana, spendable on anything, that is tagged as produced by an ability that caused you to lose
+     * life. Only a graveyard permission that demands such mana (Yawgmoth's Day Planner) looks at the tag.
+     */
+    record ProducedByLifeLossAbility() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addLifeLossAbilityMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "from an ability that caused life loss";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override

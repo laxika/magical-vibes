@@ -46,6 +46,6 @@ public class SearchLibraryForOneCardOfEachSubtypeEffectHandler implements Normal
         }
 
         librarySearchSupport.startSingleSearchToHandPicks(gameData, controllerId,
-                LibrarySearchFollowUp.subtypeToHandPicks(searchEffect.subtypes()));
+                LibrarySearchFollowUp.subtypeToHandPicks(searchEffect.subtypes(), searchEffect.basicOnly()));
     }
 }

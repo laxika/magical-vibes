@@ -26,7 +26,7 @@ import java.util.List;
 public class YshtolaNightsBlessed extends Card {
 
     public YshtolaNightsBlessed() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new AnyPlayerLostLifeThisTurn(4),
                 new DrawCardEffect(1)
         ));

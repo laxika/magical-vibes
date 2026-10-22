@@ -1374,15 +1374,14 @@ public class GameQueryService {
         }
         CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
         if (activeState != null) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || activeState.isLosesAllAbilities()) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || activeState.isLosesAllAbilities()) {
                 return Set.of();
             }
         } else {
             LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
             try {
                 CharacteristicState state = pass.board().states().get(permanent.getId());
-                if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         || state != null && state.isLosesAllAbilities()) {
                     return Set.of();
                 }
@@ -1619,7 +1618,7 @@ public class GameQueryService {
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf != null) {
             for (Permanent perm : bf) {
-                if (hasLostAllAbilities(gameData, perm)) continue;
+                if (perm.isFaceDown() || hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GraveyardAbilityGrantingEffect g) {
                         if (!graveyardGrantApplies(gameData, ownerId, card, g)) continue;
@@ -1705,7 +1704,7 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (hasLostAllAbilities(gameData, permanent)) continue;
+                if (permanent.isFaceDown() || hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GraveyardAbilityGrantingEffect grant
                             && graveyardGrantApplies(gameData, ownerId, card, grant)) {
@@ -2627,7 +2626,25 @@ public class GameQueryService {
         return gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
                 && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance));
+                .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance)
+                && !hasLayeredAllAbilitiesLost(gameData, permanent));
+    }
+
+    /**
+     * Returns whether a layer-6 "loses all abilities" effect (e.g. an Aura such as Lignify) currently
+     * removes the permanent's abilities, which turns off its graveyard-wide static effect.
+     */
+    private boolean hasLayeredAllAbilitiesLost(GameData gameData, Permanent permanent) {
+        CharacteristicState state = LayerSystemService.activeStateFor(permanent.getId());
+        if (state == null && layerSystemService.activePass(gameData) == null) {
+            LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+            try {
+                state = LayerSystemService.activeStateFor(permanent.getId());
+            } finally {
+                layerSystemService.endPass(pass);
+            }
+        }
+        return state != null && state.isLosesAllAbilities();
     }
 
     /** Returns a graveyard card's effects in the given slot, respecting global ability loss. */
@@ -4296,7 +4313,9 @@ public class GameQueryService {
         } else {
             value = power ? card.getPower() : card.getToughness();
             UUID ownerId = holderId != null ? holderId : findNonBattlefieldCardOwner(gameData, card);
-            if (ownerId != null && amountEvaluationService != null) {
+            boolean graveyardAbilitiesLost = findCardInGraveyardById(gameData, card.getId()) != null
+                    && graveyardCardsHaveLostAllAbilities(gameData);
+            if (ownerId != null && amountEvaluationService != null && !graveyardAbilitiesLost) {
                 for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof SetPowerToughnessToAmountEffect characteristic) {
                         value = amountEvaluationService.evaluate(gameData,

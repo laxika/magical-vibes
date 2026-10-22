@@ -134,6 +134,8 @@ class YasminKhanTest extends BaseCardTest {
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(yasmin), null, null);
         harness.passBothPriorities();

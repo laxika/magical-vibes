@@ -3642,6 +3642,15 @@ public class PermanentChoiceBattlefieldHandlerService {
                         }
                     }
                 }
+                if (auraGraveyardReturn.enterWithCounter() != null && auraGraveyardReturn.enterWithCounterCount() > 0) {
+                    com.github.laxika.magicalvibes.model.CounterType counterType = auraGraveyardReturn.enterWithCounter();
+                    int placed = gameQueryService.replaceCounters(gameData, auraPerm, auraControllerId, counterType,
+                            auraGraveyardReturn.enterWithCounterCount(), auraControllerId);
+                    if (placed > 0) {
+                        auraPerm.setCounterCount(counterType, auraPerm.getCounterCount(counterType) + placed);
+                        auraPerm.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                    }
+                }
                 if (auraGraveyardReturn.grantHaste()) {
                     auraPerm.getPersistentGrantedKeywords().add(Keyword.HASTE);
                 }

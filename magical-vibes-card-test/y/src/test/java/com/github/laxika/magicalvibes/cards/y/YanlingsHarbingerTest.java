@@ -28,10 +28,12 @@ class YanlingsHarbingerTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may ability returns Mu Yanling, Celestial Wind from the graveyard")
     void acceptingMayFindsMuYanlingInGraveyard() {
-        harness.setGraveyard(player1, List.of(new MuYanlingCelestialWind()));
+        MuYanlingCelestialWind graveyardCopy = new MuYanlingCelestialWind();
+        harness.setGraveyard(player1, List.of(graveyardCopy));
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCopy.getId()));
 
         harness.assertInHand(player1, "Mu Yanling, Celestial Wind");
         harness.assertNotInGraveyard(player1, "Mu Yanling, Celestial Wind");
@@ -45,11 +47,10 @@ class YanlingsHarbingerTest extends BaseCardTest {
 
         resolveMay(true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards().getFirst().getName()).isEqualTo("Mu Yanling, Celestial Wind");
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(search.pool()).hasSize(1);
+        assertThat(search.pool().getFirst().getName()).isEqualTo("Mu Yanling, Celestial Wind");
     }
 
     @Test
@@ -73,7 +74,7 @@ class YanlingsHarbingerTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
@@ -88,7 +89,7 @@ class YanlingsHarbingerTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(muYanling);

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBestowedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -42,7 +43,9 @@ public class YennaRedtoothRegent extends Card {
                                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
                                 false, false, null, Set.of(), true),
                         new ConditionalEffect(
-                                new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.AURA)),
+                                new TargetPermanentMatches(new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.AURA),
+                                        new PermanentNotPredicate(new PermanentIsBestowedPredicate())))),
                                 SequenceEffect.of(
                                         new UntapPermanentsEffect(TapUntapScope.SELF),
                                         new ScryEffect(2)))

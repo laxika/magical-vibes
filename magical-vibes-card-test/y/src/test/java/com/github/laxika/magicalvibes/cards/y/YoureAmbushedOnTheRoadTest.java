@@ -79,8 +79,8 @@ class YoureAmbushedOnTheRoadTest extends BaseCardTest {
 
     @Test
     void retreatReturnsBorrowedCreatureToItsOwner() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        setOwnerAndController(creature, player2, player1);
         harness.setHand(player1, List.of(new YoureAmbushedOnTheRoad()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

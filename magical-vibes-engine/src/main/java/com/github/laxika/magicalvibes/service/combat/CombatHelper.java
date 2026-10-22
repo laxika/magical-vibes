@@ -219,8 +219,9 @@ public final class CombatHelper {
         return controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);
     }
 
-    public static boolean isCantBeBlockedDueToAttackingAlone(GameData gameData, Permanent attacker) {
-        boolean hasEffect = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+    public static boolean isCantBeBlockedDueToAttackingAlone(GameQueryService gameQueryService,
+                                                             GameData gameData, Permanent attacker) {
+        boolean hasEffect = gameQueryService.getActiveStaticEffects(gameData, attacker).stream()
                 .anyMatch(CantBeBlockedIfAttackingAloneEffect.class::isInstance);
         if (!hasEffect) return false;
         UUID controllerId = gameData.findControllerOf(attacker);

@@ -95,6 +95,7 @@ class YumaProudProtectorTest extends BaseCardTest {
     @Test
     void decliningSacrificeDoesNotDraw() {
         harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.enterBattlefieldAndReturn(player1, new YumaProudProtector());
 
@@ -108,6 +109,7 @@ class YumaProudProtectorTest extends BaseCardTest {
 
     @Test
     void acceptingWithoutLandDoesNotDraw() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.enterBattlefieldAndReturn(player1, new YumaProudProtector());
 

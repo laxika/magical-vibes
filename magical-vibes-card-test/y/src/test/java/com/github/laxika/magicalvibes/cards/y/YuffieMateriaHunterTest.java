@@ -76,7 +76,7 @@ class YuffieMateriaHunterTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
                 () -> gs.declareBlockers(gd, player2, List.of()));
         harness.activateHandAbility(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
         harness.assertInHand(player1, "Grizzly Bears");
         Permanent yuffie = findPermanent(player1, "Yuffie, Materia Hunter");

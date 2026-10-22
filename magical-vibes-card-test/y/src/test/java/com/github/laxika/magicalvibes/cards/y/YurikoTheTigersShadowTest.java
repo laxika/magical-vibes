@@ -62,6 +62,7 @@ class YurikoTheTigersShadowTest extends BaseCardTest {
     @DisplayName("An empty library causes no additional life loss and is not a failed draw")
     void emptyLibraryDoesNotCauseLifeLossOrGameLoss() {
         addCreatureReady(player1, new YurikoTheTigersShadow());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

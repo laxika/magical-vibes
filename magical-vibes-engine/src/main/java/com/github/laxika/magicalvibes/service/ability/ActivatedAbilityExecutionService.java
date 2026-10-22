@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
+import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -61,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithM
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.WhenYouNextCastCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
@@ -1451,6 +1453,11 @@ public class ActivatedAbilityExecutionService {
                                 + "(uncounterable={}, +1/+1 counters={})",
                         gameData.id, permanent.getCard().getName(), playerId,
                         empower.uncounterable(), empower.additionalPlusOneCounters());
+            } else if (effect instanceof WhenYouNextCastCreatureSpellThisTurnEffect delayed) {
+                gameData.addNextCreatureSpellDelayedTrigger(playerId,
+                        new DelayedSpellCastTrigger(permanent.getCard(), delayed.effect()));
+                log.info("Game {} - {} creates a delayed trigger for the next creature spell of player {}",
+                        gameData.id, permanent.getCard().getName(), playerId);
             } else if (effect instanceof AwardRestrictedManaOfColorsEffect restrictedOfColors) {
                 int picks = amountEvaluationService.evaluate(gameData, restrictedOfColors.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;

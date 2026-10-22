@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BrunaTheFadingLight;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.g.GiselaTheBrokenBlade;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -137,7 +138,8 @@ class YoureInCommandTest extends BaseCardTest {
     }
 
     @Test
-    void commanderDamageCausesLossOutsideCommanderFormat() {
+    void commanderDamageCausesLossInCommanderFormat() {
+        gd.format = DeckFormat.COMMANDER;
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         castYoureInCommand(target);
         harness.setLife(player2, 100);

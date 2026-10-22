@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.action.DelayedEndStepIfStillInHandTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpecificCardFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandAndRegisterExileAtNextEndStepEffect;
@@ -60,8 +60,9 @@ public class SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler
 
         Card triggerCard = entry.getCard().createRuntimeCopy();
         triggerCard.clearRuntimeSpellTargets();
-        gameData.queueDelayedAction(new DelayedEndStepTrigger(
-                controllerId, triggerCard, entry.getSourcePermanentId(), null,
+        gameData.queueDelayedAction(new DelayedEndStepIfStillInHandTrigger(
+                controllerId, triggerCard, entry.getSourcePermanentId(), chosen.getId(),
+                gameData.handEntryVersions.getOrDefault(chosen.getId(), 0L),
                 new ExileSpecificCardFromHandEffect(chosen.getId())));
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks and puts " + chosen.getName() + " into hand.").build());

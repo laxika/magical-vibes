@@ -23,7 +23,7 @@ public class ReflectiveRimekin extends Card {
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.INSTANT),
                                         new CardTypePredicate(CardType.SORCERY))),
-                                new CardMaxManaValuePredicate(3))),
+                                new CardMaxManaValuePredicate(3, true))),
                         List.of(new CopyTriggeringSpellEffect())));
     }
 }

@@ -1682,7 +1682,8 @@ public class GameActionAvailabilityService {
                     && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
             boolean isHarmonize = (harmonize.isPresent() && flashback.isEmpty() && !isDisturb) || grantedHarmonize;
             boolean grantedFlashback = flashback.isEmpty()
-                    && !graveyardAbilitiesSuppressed
+                    && (!graveyardAbilitiesSuppressed
+                    || gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.contains(card.getId()))
                     && !isDisturb
                     && !isHarmonize
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
@@ -1878,6 +1879,10 @@ public class GameActionAvailabilityService {
                     && pool.getColoredSpellWithoutXOnlyColorless() > 0) {
                 paymentPool = new ManaPool(pool);
                 paymentPool.promoteColoredSpellWithoutXOnlyMana();
+            }
+            if (isGrantedCyclingGraveyardCast
+                    && filteredGraveyardPermission.get().permission().requiresLifeLossAbilityMana()) {
+                paymentPool = pool.lifeLossAbilityManaPool();
             }
             ManaPool finalPaymentPool = paymentPool;
             boolean canPayMana = paysLifeEqualToManaValue

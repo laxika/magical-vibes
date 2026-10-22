@@ -99,10 +99,10 @@ class YareTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new NobleElephant());
         addAttacker();
         castYare(player2, blocker);
+        gs.declareBlockers(gd, player2, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(blocker.getPowerModifier()).isZero();
         assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isZero();
@@ -222,8 +222,11 @@ class YareTest extends BaseCardTest {
             addAttacker();
         }
 
-        castYare(player2, blocker);
-        castYare(player2, blocker);
+        harness.setHand(player2, List.of(new Yare(), new Yare()));
+        harness.addMana(player2, ManaColor.WHITE, 6);
+        harness.castInstant(player2, 0, blocker.getId());
+        harness.castInstant(player2, 0, blocker.getId());
+        resolveAllTriggers();
 
         assertThat(blocker.getPowerModifier()).isEqualTo(6);
         assertThat(blocker.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(4);

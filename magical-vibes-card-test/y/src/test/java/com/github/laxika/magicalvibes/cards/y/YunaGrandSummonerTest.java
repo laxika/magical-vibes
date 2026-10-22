@@ -131,11 +131,11 @@ class YunaGrandSummonerTest extends BaseCardTest {
     }
 
     @Test
-    void silverCountersAreIncludedInTheTotal() {
+    void countersOfEveryTypeAreIncludedInTheTotal() {
         Permanent yuna = addCreatureReady(player1, new YunaGrandSummoner());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         creature.setCounterCount(CounterType.CHARGE, 1);
-        creature.setCounterCount(CounterType.SILVER, 2);
+        creature.setCounterCount(CounterType.LORE, 2);
         harness.setHand(player1, List.of(new FlameJavelin()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveInstant(player1, 0, creature.getId());

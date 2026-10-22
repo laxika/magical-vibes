@@ -22,7 +22,7 @@ public class YuanTiScaleshield extends Card {
         addEffect(EffectSlot.SPELL,
                 new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_PERMANENTS));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new OpponentCastSpellThisTurn(new CardMaxManaValuePredicate(3)),
+                new OpponentCastSpellThisTurn(new CardMaxManaValuePredicate(3, true)),
                 new SeekLibraryEffect(1, new CardTypePredicate(CardType.CREATURE))));
     }
 }

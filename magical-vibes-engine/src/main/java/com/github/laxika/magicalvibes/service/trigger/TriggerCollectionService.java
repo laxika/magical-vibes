@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -268,6 +269,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -610,15 +612,19 @@ public class TriggerCollectionService {
             if (delayed.sourceMustRemainOnBattlefield() && source == null) {
                 continue;
             }
-            if (delayed.spellFilter() != null
-                    && !predicateEvaluationService.matchesCardPredicate(
-                            spellCard, delayed.spellFilter(), null, gameData, castingPlayerId)) {
-                continue;
-            }
             StackEntry spellEntry = gameData.stack.stream()
                     .filter(candidate -> spellCard.getId().equals(candidate.getCard().getId()))
                     .findFirst()
                     .orElse(null);
+            // A spell with {X} on the stack is evaluated with its chosen X (CR 202.3e).
+            Integer spellXValue = spellEntry != null && spellCard.getParsedManaCost() != null
+                    && spellCard.getParsedManaCost().hasX() ? spellEntry.getXValue() : null;
+            if (delayed.spellFilter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(
+                            spellCard, delayed.spellFilter(), null, gameData, castingPlayerId,
+                            null, null, spellXValue)) {
+                continue;
+            }
             if (delayed.stackEntryFilter() != null
                     && (spellEntry == null
                     || !targetLegalityService.matchesStackEntryPredicate(
@@ -1508,6 +1514,23 @@ public class TriggerCollectionService {
                     spellCard, " has cascade from Sloppity Bilepiper."));
             log.info("Game {} - queued {} delayed cascade grant(s) for {}",
                     gameData.id, pendingCreatureSpellCascades, spellCard.getName());
+        }
+
+        // "When you next cast a creature spell this turn, ..." delayed triggers (Yuna, Grand Summoner):
+        // each goes on the stack above the spell as its own triggered ability.
+        for (DelayedSpellCastTrigger delayed : gameData.consumeNextCreatureSpellDelayedTriggers(
+                castingPlayerId, spellCard)) {
+            StackEntry delayedTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    delayed.source(),
+                    castingPlayerId,
+                    delayed.source().getName() + "'s ability",
+                    new ArrayList<>(List.of(delayed.effect())));
+            delayedTrigger.setTriggeringCardId(spellCard.getId());
+            gameData.stack.add(delayedTrigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(delayed.source()));
+            log.info("Game {} - delayed cast trigger of {} queued for {}",
+                    gameData.id, delayed.source().getName(), spellCard.getName());
         }
 
         // COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL — Eminence and similar command-zone spell-cast triggers
@@ -19243,7 +19266,8 @@ public class TriggerCollectionService {
             // Card-type predicates read the dying permanent's last-known card, so an animated land
             // that was a creature when it died counts as a creature (CR 608.2h).
             boolean typeBased = conditional.predicate() instanceof CardTypePredicate
-                    || conditional.predicate() instanceof CardAnyOfPredicate;
+                    || conditional.predicate() instanceof CardAnyOfPredicate
+                    || conditional.predicate() instanceof CardSupertypePredicate;
             Permanent typeSnapshot = dyingPermanent == null ? null
                     : gameData.simultaneousDyingPermanents.getOrDefault(dyingPermanent.getId(), dyingPermanent);
             Card typeCard = typeBased && typeSnapshot != null && typeSnapshot.getCard() != null

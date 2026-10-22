@@ -12,7 +12,7 @@ public class YotianDissident extends Card {
 
     public YotianDissident() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+                .addEffect(EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

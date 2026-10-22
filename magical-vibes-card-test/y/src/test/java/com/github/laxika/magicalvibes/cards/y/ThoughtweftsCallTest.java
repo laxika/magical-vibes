@@ -65,8 +65,8 @@ class ThoughtweftsCallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent permanent = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(permanent.getEffectivePower()).isEqualTo(3);
-        assertThat(permanent.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(3);
     }
 
     @Test
@@ -141,8 +141,8 @@ class ThoughtweftsCallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent permanent = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(permanent.getEffectivePower()).isEqualTo(4);
-        assertThat(permanent.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(4);
     }
 
     @Test
@@ -159,8 +159,8 @@ class ThoughtweftsCallTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         assertThat(gd.playerBattlefields.get(player1.getId())).allSatisfy(permanent -> {
-            assertThat(permanent.getEffectivePower()).isEqualTo(3);
-            assertThat(permanent.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(3);
         });
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -169,8 +169,8 @@ class ThoughtweftsCallTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent later = gd.playerBattlefields.get(player1.getId()).getLast();
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -179,8 +179,8 @@ class ThoughtweftsCallTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
         Permanent opposing = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opposing.getEffectivePower()).isEqualTo(2);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
     }
 
     private void castWithMode(int modeIndex) {

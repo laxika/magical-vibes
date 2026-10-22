@@ -77,7 +77,6 @@ class YathanTombguardTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player2);
-        harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 19);

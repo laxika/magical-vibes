@@ -15,8 +15,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "250")
@@ -43,7 +47,9 @@ public class YunaHopeOfSpira extends Card {
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2), GrantScope.ALL_OWN_CREATURES,
-                        new PermanentIsEnchantmentPredicate())));
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsEnchantmentPredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -52,6 +58,7 @@ public class YunaHopeOfSpira extends Card {
                 .upTo(true)
                 .enterWithCounter(CounterType.FINALITY)
                 .enterWithCounterCount(1)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

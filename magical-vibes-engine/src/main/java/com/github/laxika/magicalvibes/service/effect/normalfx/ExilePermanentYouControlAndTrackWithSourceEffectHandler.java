@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -39,7 +41,8 @@ public class ExilePermanentYouControlAndTrackWithSourceEffectHandler
         var exileEffect = (ExilePermanentYouControlAndTrackWithSourceEffect) effect;
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = findSourcePermanentId(gameData, entry);
-        if (sourcePermanentId == null) {
+        if (sourcePermanentId == null
+                || (exileEffect.untilSourceLeaves() && !sourceIsOnBattlefield(gameData, sourcePermanentId))) {
             return;
         }
 
@@ -60,7 +63,7 @@ public class ExilePermanentYouControlAndTrackWithSourceEffectHandler
             Permanent permanent = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
             if (permanent != null) {
                 exileAndQueueFollowUp(gameData, entry, permanent, sourcePermanentId,
-                        entry.getCard(), exileEffect.thenEffect());
+                        entry.getCard(), exileEffect.thenEffect(), exileEffect.untilSourceLeaves());
             }
             return;
         }
@@ -68,7 +71,7 @@ public class ExilePermanentYouControlAndTrackWithSourceEffectHandler
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.PermanentYouControlToExile(
                         entry.getCard(), sourcePermanentId, controllerId, exileEffect.filter(),
-                        exileEffect.thenEffect()));
+                        exileEffect.thenEffect(), exileEffect.untilSourceLeaves()));
         playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds,
                 entry.getCard().getName() + " — choose a permanent to exile.");
     }
@@ -77,21 +80,45 @@ public class ExilePermanentYouControlAndTrackWithSourceEffectHandler
                                         PermanentChoiceContext.PermanentYouControlToExile context) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
         if (permanent != null
+                && (!context.untilSourceLeaves() || sourceIsOnBattlefield(gameData, context.sourcePermanentId()))
                 && context.controllerId().equals(gameQueryService.findPermanentController(gameData,
                 permanentId))
                 && matches(gameData, permanent, context.sourceCard(), context.controllerId(),
                 context.sourcePermanentId(), context.filter())) {
             exileAndQueueFollowUp(gameData, gameData.pendingEffectResolutionEntry, permanent,
-                    context.sourcePermanentId(), context.sourceCard(), context.thenEffect());
+                    context.sourcePermanentId(), context.sourceCard(), context.thenEffect(),
+                    context.untilSourceLeaves());
         }
     }
 
+    /**
+     * An "until this leaves the battlefield" exile does nothing once its source has already left
+     * before the ability resolved (CR 610.3b). Separate enters/leaves trigger pairs (Wormfang Newt)
+     * still exile, because their return is a different ability.
+     */
+    private boolean sourceIsOnBattlefield(GameData gameData, UUID sourcePermanentId) {
+        return sourcePermanentId != null
+                && gameQueryService.findPermanentById(gameData, sourcePermanentId) != null;
+    }
+
     private void exileAndQueueFollowUp(GameData gameData, StackEntry entry, Permanent permanent,
-                                       UUID sourcePermanentId, Card sourceCard, CardEffect thenEffect) {
+                                       UUID sourcePermanentId, Card sourceCard, CardEffect thenEffect,
+                                       boolean untilSourceLeaves) {
         int exiledPower = thenEffect == null ? 0 : gameQueryService.getEffectivePower(gameData, permanent);
+        List<Card> leavingCards = List.copyOf(permanent.cardsLeavingBattlefield());
         if (!exileSupport.exilePermanentAndTrackWithSource(
                 gameData, permanent, sourcePermanentId, sourceCard)) {
             return;
+        }
+        if (untilSourceLeaves) {
+            for (Card leavingCard : leavingCards) {
+                ExiledCardEntry exiled = leavingCard.isToken() ? null
+                        : gameData.findExiledCard(leavingCard.getId());
+                if (exiled != null) {
+                    gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                            new PendingExileReturn(leavingCard, exiled.ownerId()));
+                }
+            }
         }
         if (thenEffect != null && entry != null) {
             entry.setEventValue(exiledPower);

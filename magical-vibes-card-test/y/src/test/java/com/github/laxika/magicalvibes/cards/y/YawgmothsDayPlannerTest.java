@@ -44,7 +44,7 @@ class YawgmothsDayPlannerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Dark Ritual"));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK))
-                .isEqualTo(1);
+                .isEqualTo(4);
     }
 
     @Test

@@ -124,6 +124,7 @@ class YavimayaBloomsageChannelTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, wurm.getId());
         harness.passBothPriorities();
         var spellId = bloomsage.getPreparedSpellCardId();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 

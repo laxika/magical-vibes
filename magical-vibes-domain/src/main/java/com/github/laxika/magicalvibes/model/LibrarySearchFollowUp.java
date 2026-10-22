@@ -118,20 +118,26 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * a single search and retains the library restriction established when that search began.
      */
     public record ToHandPick(CardColor color, CardSubtype subtype, String cardName,
-                             java.util.Set<UUID> searchableCardIds, boolean includeGraveyard) {
+                             java.util.Set<UUID> searchableCardIds, boolean includeGraveyard, boolean basicOnly) {
+
+        public ToHandPick(CardColor color, CardSubtype subtype, String cardName,
+                          java.util.Set<UUID> searchableCardIds, boolean includeGraveyard) {
+            this(color, subtype, cardName, searchableCardIds, includeGraveyard, false);
+        }
 
         public ToHandPick(CardColor color, CardSubtype subtype, String cardName,
                           java.util.Set<UUID> searchableCardIds) {
-            this(color, subtype, cardName, searchableCardIds, false);
+            this(color, subtype, cardName, searchableCardIds, false, false);
         }
 
         public ToHandPick(CardColor color, CardSubtype subtype, String cardName) {
-            this(color, subtype, cardName, null, false);
+            this(color, subtype, cardName, null, false, false);
         }
 
         /** Carries the initial search restriction across subsequent choices of the same search. */
         public ToHandPick withinSingleSearch(java.util.Set<UUID> cardIds) {
-            return new ToHandPick(color, subtype, cardName, java.util.Set.copyOf(cardIds), includeGraveyard);
+            return new ToHandPick(color, subtype, cardName, java.util.Set.copyOf(cardIds), includeGraveyard,
+                    basicOnly);
         }
 
         public static ToHandPick ofColor(CardColor color) {
@@ -140,6 +146,11 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public static ToHandPick ofSubtype(CardSubtype subtype) {
             return new ToHandPick(null, subtype, null);
+        }
+
+        /** A basic land card with the given land subtype (Yasharn's basic Forest). */
+        public static ToHandPick ofBasicSubtype(CardSubtype subtype) {
+            return new ToHandPick(null, subtype, null, null, false, true);
         }
 
         public static ToHandPick ofName(String cardName) {
@@ -159,7 +170,8 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             if (cardName != null) {
                 return cardName;
             }
-            return color != null ? color.name().toLowerCase() : subtype.getDisplayName();
+            String descriptor = color != null ? color.name().toLowerCase() : subtype.getDisplayName();
+            return basicOnly ? "basic " + descriptor : descriptor;
         }
     }
 
@@ -848,7 +860,14 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** The queue of subtypes still to search for, one card per subtype to hand (Gem of Becoming). */
     public static LibrarySearchFollowUp subtypeToHandPicks(List<CardSubtype> subtypes) {
-        return toHandPicks(subtypes.stream().map(ToHandPick::ofSubtype).toList());
+        return subtypeToHandPicks(subtypes, false);
+    }
+
+    /** As {@link #subtypeToHandPicks(List)}; {@code basicOnly} restricts each pick to basic lands. */
+    public static LibrarySearchFollowUp subtypeToHandPicks(List<CardSubtype> subtypes, boolean basicOnly) {
+        return toHandPicks(subtypes.stream()
+                .map(subtype -> basicOnly ? ToHandPick.ofBasicSubtype(subtype) : ToHandPick.ofSubtype(subtype))
+                .toList());
     }
 
     /**

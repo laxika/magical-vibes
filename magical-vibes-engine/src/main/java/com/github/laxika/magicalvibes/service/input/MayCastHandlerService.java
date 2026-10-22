@@ -398,6 +398,14 @@ public class MayCastHandlerService {
                 notPlayedDestination, true);
     }
 
+    public boolean cannotPlayFromLibrary(GameData gameData, UUID playerId, Card card) {
+        return card.isCastOnlyFromGraveyard()
+                || !card.hasType(CardType.LAND)
+                && (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.LIBRARY, playerId)
+                || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                || !additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, card));
+    }
+
     public void handleLookAtTopCardMayPlayLandOrCastFreeChoice(GameData gameData, Player player,
                                                                 boolean accepted,
                                                                 PendingMayAbility ability) {
@@ -443,11 +451,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (cardToPlay.isCastOnlyFromGraveyard()
-                || !cardToPlay.hasType(CardType.LAND)
-                && (!gameQueryService.canCastSpellFromZone(gameData, cardToPlay, Zone.LIBRARY, player.getId())
-                || castingPermissionService.isSpellLimitReached(gameData, player.getId(), cardToPlay)
-                || !additionalSpellCostService.satisfiableWithoutManaCost(gameData, player.getId(), cardToPlay))) {
+        if (cannotPlayFromLibrary(gameData, player.getId(), cardToPlay)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                     " cannot be cast from the library."));
             handlePlayFromLibraryOrExileChoice(gameData, player, false, ability,

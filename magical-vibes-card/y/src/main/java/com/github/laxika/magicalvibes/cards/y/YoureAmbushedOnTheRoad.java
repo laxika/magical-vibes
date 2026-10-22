@@ -23,7 +23,7 @@ public class YoureAmbushedOnTheRoad extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Stand and Fight — Target creature gets +1/+3 until end of turn",
                         new BoostTargetCreatureEffect(1, 3),
-                        TargetFilters.creatureYouControl())
+                        TargetFilters.creature())
         )));
     }
 }

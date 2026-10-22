@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSourceFromCombatAndUnblockSoleBlockersEffect;
 
@@ -13,6 +14,6 @@ public class YdwenEfreet extends Card {
     public YdwenEfreet() {
         addEffect(EffectSlot.ON_BLOCK, new FlipCoinWinEffect(
                 null,
-                new RemoveSourceFromCombatAndUnblockSoleBlockersEffect()));
+                new RemoveSourceFromCombatAndUnblockSoleBlockersEffect()), TriggerMode.ONCE_PER_BLOCK);
     }
 }

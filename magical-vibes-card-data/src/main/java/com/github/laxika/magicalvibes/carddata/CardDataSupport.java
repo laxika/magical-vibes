@@ -240,16 +240,21 @@ public final class CardDataSupport {
 
     /**
      * @return null for an absent value, 0 for one that is present but not a number — power and
-     * toughness are printed as "*" on characteristic-defining creatures
+     * toughness are printed as "*" on characteristic-defining creatures. A "*" without its
+     * characteristic-defining ability counts as 0, so "1+*" and "*+1" are 1.
      */
     public static Integer parseInt(String value) {
         if (value == null) return null;
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            return 0;
+            java.util.regex.Matcher m = STAR_PLUS_CONSTANT.matcher(value);
+            return m.matches() ? Integer.parseInt(m.group(1) != null ? m.group(1) : m.group(2)) : 0;
         }
     }
+
+    private static final java.util.regex.Pattern STAR_PLUS_CONSTANT =
+            java.util.regex.Pattern.compile("(?:(\\d+)\\+\\*|\\*\\+(\\d+))");
 
     /** A string field's value, or null when the node does not carry it. */
     public static String text(JsonNode node, String field) {

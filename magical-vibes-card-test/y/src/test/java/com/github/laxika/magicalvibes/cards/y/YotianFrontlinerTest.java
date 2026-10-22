@@ -58,7 +58,7 @@ class YotianFrontlinerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent frontliner = findPermanent(player1, "Yotian Frontliner");
-        assertThat(frontliner.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, frontliner, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -96,7 +96,7 @@ class YotianFrontlinerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
         assertThat(frontliner.getPowerModifier()).isZero();
         assertThat(frontliner.getToughnessModifier()).isZero();
     }

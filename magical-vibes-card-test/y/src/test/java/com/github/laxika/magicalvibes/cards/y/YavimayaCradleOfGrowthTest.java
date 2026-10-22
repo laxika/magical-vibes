@@ -88,6 +88,7 @@ class YavimayaCradleOfGrowthTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, swamp, CardSubtype.SWAMP)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, swamp, CardSubtype.FOREST)).isTrue();
         harness.tapPermanent(player1, 1);
+        harness.handleListChoice(player1, "BLACK");
 
         assertThat(swamp.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);

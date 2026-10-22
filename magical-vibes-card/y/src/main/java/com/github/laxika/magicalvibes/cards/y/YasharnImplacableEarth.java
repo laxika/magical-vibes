@@ -6,10 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachSubtypeEffect;
 
 import java.util.List;
 
@@ -17,16 +14,8 @@ import java.util.List;
 public class YasharnImplacableEarth extends Card {
 
     public YasharnImplacableEarth() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.FOREST),
-                        CardPredicateUtils.basicLand())),
-                LibrarySearchDestination.HAND));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.PLAINS),
-                        CardPredicateUtils.basicLand())),
-                LibrarySearchDestination.HAND));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryForOneCardOfEachSubtypeEffect(
+                List.of(CardSubtype.FOREST, CardSubtype.PLAINS), null, LibrarySearchDestination.HAND, true));
         addEffect(EffectSlot.STATIC, new PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect());
     }
 }

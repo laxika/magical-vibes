@@ -179,6 +179,12 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> flashbackOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells from a graveyard. */
     private final EnumMap<ManaColor, Integer> graveyardOnlyMana = new EnumMap<>(ManaColor.class);
+    /**
+     * Per-color count of ordinary mana that was produced by an ability that caused its controller to lose life
+     * (Yawgmoth's Day Planner). Not a separate bucket: it tags mana that also sits in the main pool, and is
+     * clamped to the main pool amount whenever read.
+     */
+    private final EnumMap<ManaColor, Integer> lifeLossAbilityMana = new EnumMap<>(ManaColor.class);
     /** Graveyard-only mana temporarily promoted during a graveyard spell payment. */
     private final EnumMap<ManaColor, Integer> promotedGraveyardOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can't be spent to cast spells from the controller's hand. */
@@ -431,6 +437,7 @@ public class ManaPool {
         mergeMana(pathOfAncestryMana, source.pathOfAncestryMana);
         mergeMana(flashbackOnlyMana, source.flashbackOnlyMana);
         mergeMana(graveyardOnlyMana, source.graveyardOnlyMana);
+        mergeMana(lifeLossAbilityMana, source.lifeLossAbilityMana);
         mergeMana(promotedGraveyardOnlyMana, source.promotedGraveyardOnlyMana);
         mergeMana(nonHandSpellOnlyMana, source.nonHandSpellOnlyMana);
         mergeMana(abilityProhibitedNonHandSpellOnlyMana, source.abilityProhibitedNonHandSpellOnlyMana);
@@ -568,6 +575,7 @@ public class ManaPool {
         pathOfAncestryMana.putAll(source.pathOfAncestryMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         graveyardOnlyMana.putAll(source.graveyardOnlyMana);
+        lifeLossAbilityMana.putAll(source.lifeLossAbilityMana);
         promotedGraveyardOnlyMana.putAll(source.promotedGraveyardOnlyMana);
         nonHandSpellOnlyMana.putAll(source.nonHandSpellOnlyMana);
         abilityProhibitedNonHandSpellOnlyMana.putAll(source.abilityProhibitedNonHandSpellOnlyMana);
@@ -1165,6 +1173,7 @@ public class ManaPool {
             riotGrantingMana.put(color, 0);
             pathOfAncestryMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
+            lifeLossAbilityMana.put(color, 0);
             graveyardOnlyMana.put(color, 0);
             promotedGraveyardOnlyMana.put(color, 0);
             nonHandSpellOnlyMana.put(color, 0);
@@ -2804,6 +2813,40 @@ public class ManaPool {
     public void removeFlashbackOnlyMana(ManaColor color, int amount) {
         int current = flashbackOnlyMana.getOrDefault(color, 0);
         flashbackOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
+    /** Adds ordinary mana tagged as produced by an ability that caused its controller to lose life. */
+    public void addLifeLossAbilityMana(ManaColor color, int amount) {
+        add(color, amount);
+        lifeLossAbilityMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Amount of ordinary mana of the color still in the pool that was produced by life-loss abilities. */
+    public int getLifeLossAbilityMana(ManaColor color) {
+        return Math.min(lifeLossAbilityMana.getOrDefault(color, 0), Math.max(0, get(color)));
+    }
+
+    /**
+     * Returns a fresh pool holding only the ordinary mana that was produced by life-loss abilities, for paying
+     * a spell cast through a permission that accepts no other mana. Pair with {@link #spendLifeLossAbilityMana}.
+     */
+    public ManaPool lifeLossAbilityManaPool() {
+        ManaPool restricted = new ManaPool();
+        for (ManaColor color : ManaColor.values()) {
+            int amount = getLifeLossAbilityMana(color);
+            if (amount > 0) {
+                restricted.add(color, amount);
+            }
+        }
+        return restricted;
+    }
+
+    /** Removes mana spent from a {@link #lifeLossAbilityManaPool()} copy from this pool and its life-loss tag. */
+    public void spendLifeLossAbilityMana(ManaColor color, int amount) {
+        for (int i = 0; i < amount; i++) {
+            remove(color);
+        }
+        lifeLossAbilityMana.put(color, Math.max(0, lifeLossAbilityMana.getOrDefault(color, 0) - amount));
     }
 
     public void addGraveyardOnlyMana(ManaColor color, int amount) {

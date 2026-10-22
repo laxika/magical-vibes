@@ -49,6 +49,6 @@ public class YannikScavengingSentinel extends Card {
         var counterTargets = target(TargetFilters.creature(), 0, 99);
         registerEffectTargetIndex(distributeCounters, counterTargets.getIndex());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExilePermanentYouControlAndTrackWithSourceEffect(anotherCreature, distributeCounters));
+                new ExilePermanentYouControlAndTrackWithSourceEffect(anotherCreature, distributeCounters, true));
     }
 }

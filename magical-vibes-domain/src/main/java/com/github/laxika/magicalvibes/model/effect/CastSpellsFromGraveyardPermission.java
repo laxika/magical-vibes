@@ -78,6 +78,14 @@ public interface CastSpellsFromGraveyardPermission extends GraveyardPlayPermissi
         return false;
     }
 
+    /**
+     * True if only mana produced by abilities that caused the caster to lose life may be spent to cast a
+     * spell through this permission (Yawgmoth's Day Planner).
+     */
+    default boolean requiresLifeLossAbilityMana() {
+        return false;
+    }
+
     /** Condition that must be met to use this permission. */
     default Condition availabilityCondition() {
         return null;

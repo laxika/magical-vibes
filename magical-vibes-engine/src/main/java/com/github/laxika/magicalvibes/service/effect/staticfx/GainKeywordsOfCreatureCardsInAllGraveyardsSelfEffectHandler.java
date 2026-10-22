@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,8 @@ public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler impleme
             Keyword.DESERTWALK
     );
 
+    private final GameQueryService gameQueryService;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return GainKeywordsOfCreatureCardsInAllGraveyardsEffect.class;
@@ -58,6 +61,7 @@ public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler impleme
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         GameData gameData = context.gameData();
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;

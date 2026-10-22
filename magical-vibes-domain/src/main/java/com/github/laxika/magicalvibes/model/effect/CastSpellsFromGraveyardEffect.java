@@ -12,7 +12,8 @@ import java.util.List;
  */
 public record CastSpellsFromGraveyardEffect(CardPredicate filter, List<CastingCost> additionalCosts,
                                             CounterType enterWithCounter, int enterWithCounterCount,
-                                            boolean onlyDuringControllerTurn)
+                                            boolean onlyDuringControllerTurn,
+                                            boolean requiresLifeLossAbilityMana)
         implements CastSpellsFromGraveyardPermission {
 
     public CastSpellsFromGraveyardEffect {
@@ -26,18 +27,28 @@ public record CastSpellsFromGraveyardEffect(CardPredicate filter, List<CastingCo
     }
 
     public CastSpellsFromGraveyardEffect(CardPredicate filter) {
-        this(filter, List.of(), null, 0, false);
+        this(filter, List.of(), null, 0, false, false);
+    }
+
+    public CastSpellsFromGraveyardEffect(CardPredicate filter, boolean requiresLifeLossAbilityMana) {
+        this(filter, List.of(), null, 0, false, requiresLifeLossAbilityMana);
+    }
+
+    public CastSpellsFromGraveyardEffect(CardPredicate filter, List<CastingCost> additionalCosts,
+                                         CounterType enterWithCounter, int enterWithCounterCount,
+                                         boolean onlyDuringControllerTurn) {
+        this(filter, additionalCosts, enterWithCounter, enterWithCounterCount, onlyDuringControllerTurn, false);
     }
 
     public CastSpellsFromGraveyardEffect(CardPredicate filter, List<? extends CastingCost> additionalCosts,
                                          CounterType enterWithCounter) {
         this(filter, List.copyOf(additionalCosts), enterWithCounter,
-                enterWithCounter == null ? 0 : 1, false);
+                enterWithCounter == null ? 0 : 1, false, false);
     }
 
     public CastSpellsFromGraveyardEffect(CardPredicate filter,
                                          List<? extends CastingCost> additionalCosts,
                                          boolean onlyDuringControllerTurn) {
-        this(filter, List.copyOf(additionalCosts), null, 0, onlyDuringControllerTurn);
+        this(filter, List.copyOf(additionalCosts), null, 0, onlyDuringControllerTurn, false);
     }
 }

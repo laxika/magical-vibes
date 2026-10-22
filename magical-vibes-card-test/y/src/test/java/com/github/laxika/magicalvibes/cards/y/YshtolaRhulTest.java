@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.stream.Stream;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,6 +67,7 @@ class YshtolaRhulTest extends BaseCardTest {
     @Test
     @DisplayName("Can flicker itself and trigger again in the additional end step")
     void canFlickerItself() {
+        forceDiscardPromptAtCleanup();
         harness.addToBattlefield(player1, new YshtolaRhul());
         UUID originalId = harness.getPermanentId(player1, "Y'shtola Rhul");
         harness.forceActivePlayer(player1);
@@ -88,11 +92,12 @@ class YshtolaRhulTest extends BaseCardTest {
     @Test
     @DisplayName("Returns a stolen Y'shtola to its owner and still creates an additional end step")
     void returnsStolenCreatureToOwner() {
+        forceDiscardPromptAtCleanup();
         YshtolaRhul card = new YshtolaRhul();
         card.setOwnerId(player2.getId());
-        harness.addToBattlefield(player1, card);
-        UUID originalId = harness.getPermanentId(player1, "Y'shtola Rhul");
-        gd.stolenCreatures.put(originalId, player2.getId());
+        Permanent yshtola = harness.addToBattlefieldAndReturn(player1, card);
+        setOwnerAndController(yshtola, player2, player1);
+        UUID originalId = yshtola.getId();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -126,15 +131,14 @@ class YshtolaRhulTest extends BaseCardTest {
     @Test
     @DisplayName("A target that changes controller prevents flickering and the additional end step")
     void illegalTargetPreventsAdditionalEndStep() {
+        forceDiscardPromptAtCleanup();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new YshtolaRhul());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.handlePermanentChosen(player1, target.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         harness.passBothPriorities();
         harness.passUntil(TurnStep.CLEANUP);
 
@@ -142,5 +146,10 @@ class YshtolaRhulTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Y'shtola Rhul");
         assertThat(gd.endStepsThisTurn).isEqualTo(1);
         assertThat(gd.additionalEndStepsPending).isZero();
+    }
+
+    private void forceDiscardPromptAtCleanup() {
+        List<Card> hand = Stream.generate(() -> (Card) new GrizzlyBears()).limit(8).toList();
+        harness.setHand(player1, hand);
     }
 }

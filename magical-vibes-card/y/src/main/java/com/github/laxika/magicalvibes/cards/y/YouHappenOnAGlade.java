@@ -24,8 +24,8 @@ public class YouHappenOnAGlade extends Card {
                                 new Fixed(2), CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Make Camp — Return target permanent card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardIsPermanentPredicate(), 1))
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(
+                                new CardIsPermanentPredicate()))
         )));
     }
 }

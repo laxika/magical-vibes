@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsThenReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -24,6 +25,8 @@ import java.util.Set;
 public class YotiaDeclaresWar extends Card {
 
     public YotiaDeclaresWar() {
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+
         addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
                 1, "Ornithopter", 0, 2, null,
                 List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));

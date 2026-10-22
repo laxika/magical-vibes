@@ -131,7 +131,6 @@ class YannikScavengingSentinelTest extends BaseCardTest {
         resolvePartnerWithNoSearch();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, yannik.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(yannik.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
@@ -148,7 +147,6 @@ class YannikScavengingSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, yannik.getId());
         harness.handlePermanentChosen(player1, otherTarget.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, otherTarget));
         harness.passBothPriorities();

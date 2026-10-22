@@ -181,6 +181,7 @@ class YawgmothsTestamentTest extends BaseCardTest {
         DarkRitual exiledRitual = new DarkRitual();
         DarkRitual handRitual = new DarkRitual();
         harness.setExile(player1, List.of(exiledRitual));
+        harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         YawgmothsTestament testament = resolveTestament();
         harness.setHand(player1, List.of(handRitual));

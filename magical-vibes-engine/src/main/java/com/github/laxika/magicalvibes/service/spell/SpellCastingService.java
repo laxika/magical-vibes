@@ -9935,6 +9935,15 @@ public class SpellCastingService {
         var disturbOpt = graveyardAbilitiesSuppressed
                 ? Optional.<DisturbCast>empty()
                 : card.getCastingOption(DisturbCast.class);
+        // Disturb is an alternative cost the caster chooses. With a graveyard-play permission (Yawgmoth's Will)
+        // the front face can instead be cast for its normal cost, which applies when the disturb cost can't be paid.
+        if (disturbOpt.isPresent() && flashbackOpt.isEmpty()
+                && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
+                && disturbOpt.get().getCost(ManaCastingCost.class)
+                .map(c -> !new ManaCost(c.manaCost()).canPay(gameData.playerManaPools.get(playerId), 0))
+                .orElse(false)) {
+            disturbOpt = Optional.empty();
+        }
         var graveyardCastOpt = card.getCastingOption(GraveyardCast.class);
         if (graveyardAbilitiesSuppressed) {
             graveyardCastOpt = Optional.empty();
@@ -9964,7 +9973,8 @@ public class SpellCastingService {
                 || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.RETRACE, Zone.GRAVEYARD)
                 || castingPermissionService.hasGrantedRetrace(gameData, playerId, card))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize && !isJumpStart;
-        boolean grantedFlashback = !graveyardAbilitiesSuppressed
+        boolean grantedFlashback = (!graveyardAbilitiesSuppressed
+                || gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.contains(card.getId()))
                 && flashbackOpt.isEmpty()
                 && !isDisturb
                 && !isHarmonize
@@ -11672,7 +11682,6 @@ public class SpellCastingService {
             throw new IllegalStateException("No permanent can pay the sacrifice cost");
         }
         boolean supportedSacrificeCreatureCost = additionalCosts.sacrificeCreatureCost() != null
-                && new SacrificeCreatureCost().equals(additionalCosts.sacrificeCreatureCost())
                 && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
                 .allMatch(SacrificeCreatureCost.class::isInstance);
         if (supportedSacrificeCreatureCost && !additionalSpellCostService.satisfiable(gameData, playerId, card)) {
@@ -16271,6 +16280,22 @@ public class SpellCastingService {
                         throw new IllegalStateException("Not enough mana to pay flashback cost");
                     }
                     cost.payFlashbackFromGraveyard(pool, manaXValue + paymentAdditionalCost);
+                } else if (isGrantedCyclingGraveyardCast
+                        && castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
+                        .filter(permission -> permission.permission().requiresLifeLossAbilityMana()).isPresent()) {
+                    int manaXValue = cost.hasX() ? effectiveXValue : 0;
+                    ManaPool lifeLossPool = pool.lifeLossAbilityManaPool();
+                    if (!cost.canPayFromGraveyard(lifeLossPool, manaXValue + paymentAdditionalCost)) {
+                        throw new IllegalStateException("Not enough mana from abilities that caused life loss");
+                    }
+                    Map<ManaColor, Integer> lifeLossBefore = new EnumMap<>(ManaColor.class);
+                    for (ManaColor color : ManaColor.values()) {
+                        lifeLossBefore.put(color, lifeLossPool.get(color));
+                    }
+                    cost.payFromGraveyard(lifeLossPool, manaXValue + paymentAdditionalCost);
+                    for (ManaColor color : ManaColor.values()) {
+                        pool.spendLifeLossAbilityMana(color, lifeLossBefore.get(color) - lifeLossPool.get(color));
+                    }
                 } else {
                     int manaXValue = cost.hasX() ? effectiveXValue : 0;
                     if (!cost.canPayFromGraveyard(pool, manaXValue + paymentAdditionalCost)) {

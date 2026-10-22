@@ -8,12 +8,21 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param filter permanents that may be chosen
  * @param thenEffect optional reflexive ability queued after a successful exile
+ * @param untilSourceLeaves whether the exiled card returns immediately when the source leaves the
+ *                          battlefield (Yannik, Scavenging Sentinel: "until Yannik leaves the
+ *                          battlefield"), rather than through a leaves-the-battlefield ability of the
+ *                          source (Wormfang Newt)
  */
 public record ExilePermanentYouControlAndTrackWithSourceEffect(PermanentPredicate filter,
-                                                                CardEffect thenEffect)
+                                                                CardEffect thenEffect,
+                                                                boolean untilSourceLeaves)
         implements CardEffect {
 
     public ExilePermanentYouControlAndTrackWithSourceEffect(PermanentPredicate filter) {
-        this(filter, null);
+        this(filter, null, false);
+    }
+
+    public ExilePermanentYouControlAndTrackWithSourceEffect(PermanentPredicate filter, CardEffect thenEffect) {
+        this(filter, thenEffect, false);
     }
 }

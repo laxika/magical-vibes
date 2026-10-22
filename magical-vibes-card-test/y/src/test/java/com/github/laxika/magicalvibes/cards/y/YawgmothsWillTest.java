@@ -186,12 +186,12 @@ class YawgmothsWillTest extends BaseCardTest {
         harness.setHand(player1, List.of(new YawgmothsWill()));
         harness.setGraveyard(player1, List.of(new LunarchVeteran()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 

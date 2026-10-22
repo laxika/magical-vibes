@@ -2017,6 +2017,20 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleCardPutIntoGraveyardConditional(TriggerMatchContext match,
+            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
+            return false;
+        }
+        if (!predicateEvaluationService.matchesCardPredicate(cardPut.card(), conditional.predicate(), null,
+                match.gameData(), match.controllerId())) {
+            return false;
+        }
+        return handleCardPutIntoGraveyardDefault(match, conditional, ctx);
+    }
+
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class,
                     slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),

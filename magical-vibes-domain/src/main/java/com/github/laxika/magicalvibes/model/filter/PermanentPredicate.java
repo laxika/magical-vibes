@@ -159,6 +159,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsMulticoloredPredicate,
         PermanentIsModifiedPredicate,
         PermanentIsPlaneswalkerPredicate,
+        PermanentIsBestowedPredicate,
         PermanentIsRenownedPredicate,
         PermanentIsSuspectedPredicate,
         PermanentIsSourceCardPredicate,

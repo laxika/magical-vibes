@@ -39,7 +39,7 @@ class YunasDecisionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -164,7 +164,7 @@ class YunasDecisionTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Forest");
     }

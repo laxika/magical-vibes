@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -40,5 +41,7 @@ public class YgraEaterOfAll extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                         new PutCountersOnSourceEffect(1, 1, 2)
                 ));
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                new CounterUnlessSacrificesEffect(new PermanentHasSubtypePredicate(CardSubtype.FOOD), "Food"));
     }
 }

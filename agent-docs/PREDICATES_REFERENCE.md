@@ -103,6 +103,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentProtectedByOpponentOfSourceControllerPredicate` | `()` | battles whose protector is an opponent of the source controller; needs game data and a `FilterContext` source controller. Etched Host Doombringer |
 | `PermanentIsKindredPredicate` | `()` | kindred permanents, including continuous card-type changes |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
+| `PermanentIsBestowedPredicate` | `()` | permanents that are currently bestowed Auras (CR 702.103f — `Permanent.bestow`, cleared once the Aura becomes unattached). Combine with `PermanentHasSubtypePredicate(AURA)` negated to tell a real Aura from a bestowed one, e.g. Yenna's "if the token is an Aura" (a copy of a bestowed Aura is a creature, CR 707.2) |
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
 | `PermanentIsSuspectedPredicate` | `()` | permanents that have the suspected designation |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
@@ -497,7 +498,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardManaValueParityPredicate` | `(ManaValueParity parity)` | a card whose mana value is odd or even; when evaluating an X spell at cast time, the chosen X is included, while an unannounced X remains potentially playable |
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
-| `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |
+| `CardMaxManaValuePredicate` | `(int maxManaValue[, boolean includeXValue])` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter). With `includeXValue` true, a spell's `{X}` symbols count at the X it was cast with, as on the stack (CR 202.3e) — used by cast-history conditions such as Yuan-ti Scaleshield's "opponent cast a spell with mana value 3 or less"; the default ignores X |
 | `CardGenericManaCostAtMostPredicate` | `(int maxGenericCost)` | a card whose printed mana cost is only generic mana totalling ≤ N (`{0}` or `{1}` for N=1); colored, hybrid, Phyrexian and `{X}` costs and cards with no mana cost never match, unlike the mana-value predicate. Use for "mana cost {0} or {1}" searches (Urza's Saga chapter III) |
 | `CardMaxManaValueXPredicate` | `()` | a card with mana value ≤ the resolving spell's X; before X is chosen, it matches permissively |
 | `CardManaValueEqualsXPredicate` | `()` | a card with mana value exactly equal to the resolving spell or ability's X; before X is chosen, it matches permissively (Lazotep Quarry) |

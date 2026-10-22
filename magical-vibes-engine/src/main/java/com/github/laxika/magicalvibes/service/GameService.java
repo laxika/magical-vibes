@@ -1791,23 +1791,32 @@ public class GameService {
     /** Turns a targeted face-down creature face up without using its morph or disguise action. */
     public void turnPermanentFaceUpWithoutPayingManaCost(GameData gameData, Permanent permanent) {
         if (runAsActionIfNeeded(gameData,
-                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, true))) return;
-        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, true);
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, FaceUpTypeCheck.EFFECTIVE_CREATURE))) return;
+        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, FaceUpTypeCheck.EFFECTIVE_CREATURE);
+    }
+
+    /** Turns a face-down permanent face up without paying its mana cost, whatever its printed card type. */
+    public void turnPermanentFaceUpWithoutPayingManaCostOfAnyType(GameData gameData, Permanent permanent) {
+        if (runAsActionIfNeeded(gameData,
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, FaceUpTypeCheck.NONE))) return;
+        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, FaceUpTypeCheck.NONE);
     }
 
     /** Turns a face-down permanent face up when its printed card is a creature. */
     public void turnPermanentFaceUpIfCreatureCardWithoutPayingManaCost(GameData gameData, Permanent permanent) {
         if (runAsActionIfNeeded(gameData,
-                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, false))) return;
-        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, false);
+                () -> turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent,
+                        FaceUpTypeCheck.ORIGINAL_CREATURE))) return;
+        turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent, FaceUpTypeCheck.ORIGINAL_CREATURE);
     }
 
+    private enum FaceUpTypeCheck { EFFECTIVE_CREATURE, ORIGINAL_CREATURE, NONE }
+
     private void turnPermanentFaceUpWithoutPayingManaCost(GameData gameData, Permanent permanent,
-                                                           boolean requireEffectiveCreature) {
+                                                           FaceUpTypeCheck typeCheck) {
         synchronized (gameData) {
             if (permanent == null || !permanent.isFaceDown()
-                    || (requireEffectiveCreature && !gameQueryService.isCreature(gameData, permanent))
-                    || (!requireEffectiveCreature && !permanent.getOriginalCard().hasType(CardType.CREATURE))
+                    || !faceUpTypeCheckPasses(gameData, permanent, typeCheck)
                     || gameQueryService.isTurnFaceUpPrevented(gameData, permanent)) {
                 return;
             }
@@ -1817,6 +1826,14 @@ public class GameService {
             }
             finishTurningFaceUp(gameData, permanent, controllerId, null, false, false);
         }
+    }
+
+    private boolean faceUpTypeCheckPasses(GameData gameData, Permanent permanent, FaceUpTypeCheck typeCheck) {
+        return switch (typeCheck) {
+            case EFFECTIVE_CREATURE -> gameQueryService.isCreature(gameData, permanent);
+            case ORIGINAL_CREATURE -> permanent.getOriginalCard().hasType(CardType.CREATURE);
+            case NONE -> true;
+        };
     }
 
     private void finishTurningFaceUp(GameData gameData, Permanent permanent, UUID controllerId,

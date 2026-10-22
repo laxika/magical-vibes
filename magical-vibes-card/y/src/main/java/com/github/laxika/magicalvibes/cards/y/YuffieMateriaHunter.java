@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmen
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,11 +29,9 @@ public class YuffieMateriaHunter extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                 "Target must be a noncreature artifact"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD));
-
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new AttachOneOfControlledEquipmentToSourceEffect(),
-                        "Attach an Equipment you control to Yuffie?"));
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                        new MayEffect(new AttachOneOfControlledEquipmentToSourceEffect(),
+                                "Attach an Equipment you control to Yuffie?")));
     }
 }

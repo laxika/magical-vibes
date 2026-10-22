@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsThenReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,6 +29,7 @@ public class TapAnyNumberOfPermanentsThenReflexiveAbilityEffectHandler
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +56,10 @@ public class TapAnyNumberOfPermanentsThenReflexiveAbilityEffectHandler
         if (eligibleIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" resolves, but there are no eligible untapped permanents to tap.").build());
+            entry.setEventValue(0);
+            entry.setXValue(0);
+            queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
+                    new QueueReflexiveAbilityEffect(tapEffect.reflexiveEffect()));
             return;
         }
 

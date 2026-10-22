@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
@@ -13,11 +15,15 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.OutsideGameCards;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastCardFromOutsideGameWithNormalCostEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -29,6 +35,7 @@ import java.util.UUID;
 /**
  * Starts a normal-cost instant or sorcery cast from a sideboard during resolution. A split card is
  * cast through {@link SplitCardCastSupport}, so only one half is cast and only its cost is paid.
+ * A spell with {X} in its mana cost has X announced first (CR 601.2b), before its targets.
  */
 @Slf4j
 @Component
@@ -40,22 +47,41 @@ public class OutsideGameNormalCostCastSupport {
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final SpellCastingService spellCastingService;
     private final SplitCardCastSupport splitCardCastSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PotentialManaService potentialManaService;
+    private final CastingCostService castingCostService;
 
     public OutsideGameNormalCostCastSupport(GameLogService gameLogService,
                                             @Lazy PlayerInputService playerInputService,
                                             @Lazy InputCompletionService inputCompletionService,
                                             ExileCastTargetSupport exileCastTargetSupport,
                                             @Lazy SpellCastingService spellCastingService,
-                                            @Lazy SplitCardCastSupport splitCardCastSupport) {
+                                            @Lazy SplitCardCastSupport splitCardCastSupport,
+                                            @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
+                                            @Lazy PotentialManaService potentialManaService,
+                                            @Lazy CastingCostService castingCostService) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.spellCastingService = spellCastingService;
         this.splitCardCastSupport = splitCardCastSupport;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.potentialManaService = potentialManaService;
+        this.castingCostService = castingCostService;
     }
 
     public void castFromOutsideGameWithNormalCost(GameData gameData, Player player, UUID cardId) {
+        castFromOutsideGameWithNormalCost(gameData, player, cardId, null);
+    }
+
+    /** Resumes a cast after the controller announced the value of X for the spell. */
+    public void resumeCastWithX(GameData gameData, Player player, UUID cardId, int chosenX) {
+        castFromOutsideGameWithNormalCost(gameData, player, cardId, chosenX);
+    }
+
+    private void castFromOutsideGameWithNormalCost(GameData gameData, Player player, UUID cardId,
+                                                   Integer chosenX) {
         Card card = OutsideGameCards.view(gameData, player.getId()).stream()
                 .filter(candidate -> candidate.getId().equals(cardId))
                 .findFirst()
@@ -103,6 +129,11 @@ public class OutsideGameNormalCostCastSupport {
                     List.of(), offeredModes, maximumChoices, false, true);
             return;
         }
+        if (chosenX == null && card.getParsedManaCost() != null && card.getParsedManaCost().hasX()) {
+            beginXValueChoice(gameData, player, cardId, card);
+            return;
+        }
+        int xValue = chosenX == null ? 0 : chosenX;
         if (EffectResolution.needsTarget(card)) {
             List<UUID> candidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, player.getId());
             boolean legalTargets = card.getMaxTargets() > 1
@@ -121,20 +152,32 @@ public class OutsideGameNormalCostCastSupport {
             StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, player.getId(), spellEffects, spellType, false, List.of(), 0,
-                    true, 0, false, true));
+                    true, 0, false, true, xValue));
             playerInputService.beginPermanentChoice(gameData, player.getId(), candidates,
                     "Choose a target for " + card.getName() + ".");
             return;
         }
 
         try {
-            spellCastingService.playCardFromExileAsResolutionCast(gameData, player, cardId, 0, (UUID) null);
+            spellCastingService.playCardFromExileAsResolutionCast(gameData, player, cardId, xValue, (UUID) null);
         } catch (IllegalStateException ex) {
             gameData.outsideGamePlayPermissions.remove(cardId);
             log.info("Game {} - {} could not pay the normal cost for {} from outside the game",
                     gameData.id, player.getUsername(), card.getName());
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void beginXValueChoice(GameData gameData, Player player, UUID cardId, Card card) {
+        int tax = castingCostService.getCastCostModifier(gameData, player.getId(), card, 0, Zone.OUTSIDE_GAME);
+        int maxX = card.getParsedManaCost().calculateMaxX(
+                potentialManaService.buildVirtualManaPool(gameData, player.getId()), tax);
+        PendingMayAbility ability = new PendingMayAbility(card, player.getId(),
+                List.<CardEffect>of(new MayCastCardFromOutsideGameWithNormalCostEffect(UUID.randomUUID())),
+                "Cast " + card.getName() + " from outside the game?", cardId, (UUID) null);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
+                player.getId(), 0, Math.max(0, maxX), "Choose a value for X to cast " + card.getName() + ".",
+                card.getName(), true, card.getManaCost(), ability));
     }
 
     public void castPreparedModalCard(GameData gameData, Player player,

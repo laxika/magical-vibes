@@ -566,11 +566,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** The controller chooses one matching permanent they control to exile until the source leaves. */
     record PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
-                                      PermanentPredicate filter, CardEffect thenEffect)
+                                      PermanentPredicate filter, CardEffect thenEffect,
+                                      boolean untilSourceLeaves)
             implements PermanentChoiceContext {
         public PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
                                           PermanentPredicate filter) {
-            this(sourceCard, sourcePermanentId, controllerId, filter, null);
+            this(sourceCard, sourcePermanentId, controllerId, filter, null, false);
         }
     }
 

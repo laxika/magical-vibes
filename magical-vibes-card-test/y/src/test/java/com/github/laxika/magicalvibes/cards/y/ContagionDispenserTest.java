@@ -172,6 +172,7 @@ class ContagionDispenserTest extends BaseCardTest {
     @Test
     void doesNotDraftWhenAnOpponentProliferatesDuringTheControllersTurn() {
         harness.addToBattlefield(player1, new ContagionDispenser());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         harness.setHand(player2, List.of(new SteadyProgress()));
         harness.addMana(player2, ManaColor.BLUE, 1);

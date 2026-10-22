@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.WhenYouNextCastCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 import java.util.List;
@@ -27,7 +29,8 @@ public class YunaGrandSummoner extends Card {
                 null,
                 List.of(
                         new AwardAnyColorManaEffect(),
-                        new EmpowerNextCreatureSpellThisTurnEffect(false, 2)
+                        new WhenYouNextCastCreatureSpellThisTurnEffect(
+                                new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(new Fixed(2)))
                 ),
                 "{T}: Add one mana of any color. When you next cast a creature spell this turn, that creature enters with two additional +1/+1 counters on it."
         ));
