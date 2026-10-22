@@ -81,6 +81,7 @@ public sealed interface DelayedAction permits
         DelayedCombatDamageBecomeMonarch,
         DelayedCombatDamageReflection,
         DelayedBlockerBoost,
+        DelayedBlockOrBecomesBlockedTrigger,
         DelayedAttackerBoost,
         DelayedAttackerKeywordGrant,
         DelayedOpponentAttackerBoost,

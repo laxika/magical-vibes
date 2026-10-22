@@ -34,7 +34,11 @@ import java.util.function.Supplier;
  * {@link Scope#PER_SOURCE} rule ("if a source would deal damage to you…") is asked about each
  * portion as damage from that source alone and changes only that portion; a {@link Scope#WHOLE}
  * rule ("prevent all damage that would be dealt to you") is asked once about the whole event. A
- * whole-event prevention leaves damage that can't be prevented alone. A per-source rule is offered
+ * whole-event prevention leaves damage that can't be prevented alone. A
+ * {@link Scope#WHOLE_INCLUDING_UNPREVENTABLE} prevention is asked about all of the damage, including
+ * damage that can't be prevented, because what it does besides preventing depends on the full amount
+ * (Gloom Surgeon still exiles cards for damage it can't prevent); it still only removes the damage
+ * that can be prevented. A per-source rule is offered
  * for one portion at a time: applying it to each source's damage gives the same result in any
  * order, so only its order against other rules is the player's to choose, and the next portion's
  * option appears once the first is applied.
@@ -67,7 +71,8 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
     /** Whether a rule is about each source's damage or about all the damage the recipient is dealt. */
     protected enum Scope {
         PER_SOURCE,
-        WHOLE
+        WHOLE,
+        WHOLE_INCLUDING_UNPREVENTABLE
     }
 
     /**
@@ -98,6 +103,12 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         /** This rule, asked once about all the damage the recipient is dealt. */
         Rule<C> whole() {
             return new Rule<>(family, kind, pure, Scope.WHOLE, instances, label, transform, apply);
+        }
+
+        /** This rule, asked once about all the damage the recipient is dealt, even damage that can't be prevented. */
+        Rule<C> wholeIncludingUnpreventable() {
+            return new Rule<>(family, kind, pure, Scope.WHOLE_INCLUDING_UNPREVENTABLE, instances, label, transform,
+                    apply);
         }
     }
 
@@ -228,7 +239,7 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         for (Rule<C> rule : rules()) {
             if (!event.hasPortions()) {
                 collect(gameData, rule, event, "", options);
-            } else if (rule.scope() == Scope.WHOLE) {
+            } else if (rule.scope() != Scope.PER_SOURCE) {
                 collect(gameData, rule, wholeView(gameData, event, rule), "", options);
             } else {
                 for (DamagePortion portion : event.portions()) {
@@ -296,6 +307,10 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         if (portionSourceId == null) {
             DamageEvent view = wholeView(gameData, event, rule);
             ApplyResult<DamageEvent> result = invoke(gameData, rule, view, selected.instance(), forReal);
+            if (rule.scope() == Scope.WHOLE_INCLUDING_UNPREVENTABLE) {
+                return mapResult(result, after -> event.withPreventableAmount(
+                        Math.max(0, event.preventableAmount() - (view.amount() - after.amount()))));
+            }
             return mapResult(result, after -> rule.kind() == ReplacementOption.Kind.PREVENTION
                     ? event.withPreventableAmount(after.amount())
                     : event.withAmount(after.amount()));
@@ -339,6 +354,10 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
      * damage that can be prevented.
      */
     private DamageEvent wholeView(GameData gameData, DamageEvent event, Rule<C> rule) {
+        if (rule.scope() == Scope.WHOLE_INCLUDING_UNPREVENTABLE) {
+            return singleSource(gameData, event, event.portions().getFirst(), event.amount(),
+                    event.preventableAmount() == 0);
+        }
         int amount = rule.kind() == ReplacementOption.Kind.PREVENTION ? event.preventableAmount() : event.amount();
         return singleSource(gameData, event, event.portions().getFirst(), amount, false);
     }

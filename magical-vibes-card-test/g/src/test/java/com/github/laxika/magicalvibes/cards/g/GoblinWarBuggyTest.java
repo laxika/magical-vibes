@@ -114,7 +114,6 @@ class GoblinWarBuggyTest extends BaseCardTest {
     private void castAndResolveGoblinWarBuggy() {
         harness.castFromHand(player1, new GoblinWarBuggy(), "{1}{R}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Goblin War Buggy");
     }
 }

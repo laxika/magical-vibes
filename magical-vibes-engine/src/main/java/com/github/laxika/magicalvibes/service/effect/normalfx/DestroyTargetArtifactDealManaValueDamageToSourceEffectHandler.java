@@ -34,6 +34,8 @@ public class DestroyTargetArtifactDealManaValueDamageToSourceEffectHandler imple
         // The mana value is read before destruction; the artifact permanent itself stays usable as
         // the last-known-information damage source afterwards (CR 608.2h).
         int manaValue = artifact.getCard().getManaValue();
+        entry.rememberRemovedPermanentController(artifact.getId(),
+                gameQueryService.findPermanentController(gameData, artifact.getId()));
 
         destructionSupport.tryDestroyAndLog(gameData, artifact, entry.getCard().getName(), false);
 

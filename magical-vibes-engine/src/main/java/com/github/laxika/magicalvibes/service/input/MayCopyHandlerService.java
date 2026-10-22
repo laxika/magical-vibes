@@ -669,7 +669,7 @@ public class MayCopyHandlerService {
                 } catch (IllegalStateException ignored) {
                 }
             }
-        } else if (EffectResolution.needsTarget(spellCard)) {
+        } else if (EffectResolution.needsTarget(spellCard) || targetSpellEntry.getTargetZone() == Zone.GRAVEYARD) {
             Zone targetZone = targetSpellEntry.getTargetZone() != null ? targetSpellEntry.getTargetZone() : Zone.BATTLEFIELD;
 
             List<UUID> candidateTargets = new ArrayList<>();
@@ -691,6 +691,13 @@ public class MayCopyHandlerService {
             }
 
             for (UUID candidate : candidateTargets) {
+                if (targetZone == Zone.GRAVEYARD) {
+                    // A graveyard-card target (Cremate) is checked against the spell's graveyard target rules.
+                    if (targetRedirectionSupport.isValidNewTargetForSpell(gameData, targetSpellEntry, candidate)) {
+                        validTargets.add(candidate);
+                    }
+                    continue;
+                }
                 try {
                     targetLegalityService.validateSpellTargeting(
                             gameData,

@@ -4058,6 +4058,20 @@ public class AbilityActivationService {
             }
         }
 
+        // "any target chosen at random" (Goblin Test Pilot): the target is picked uniformly among the
+        // legal targets as part of activating the ability, so players can respond knowing it.
+        if (targetId == null && (targetIds == null || targetIds.isEmpty())
+                && activationEffects.stream().anyMatch(CardEffect::targetChosenAtRandom)) {
+            var validTargets = validTargetService.computeValidTargetsForAbility(
+                    gameData, permanent.getCard(), ability, playerId, permanentIndex, List.of(), effectiveXValue);
+            List<UUID> randomTargetPool = new ArrayList<>(validTargets.validPermanentIds());
+            randomTargetPool.addAll(validTargets.validPlayerIds());
+            if (randomTargetPool.isEmpty()) {
+                throw new IllegalStateException("No legal target");
+            }
+            targetId = randomTargetPool.get(ThreadLocalRandom.current().nextInt(randomTargetPool.size()));
+        }
+
         TapCreaturesForManaCost tapCreaturesForManaCost = abilityEffects.stream()
                 .filter(TapCreaturesForManaCost.class::isInstance)
                 .map(TapCreaturesForManaCost.class::cast)

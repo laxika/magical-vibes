@@ -21,7 +21,8 @@ public class ErrandRiderOfGondor extends Card {
 
     public ErrandRiderOfGondor() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        // "Then if you don't control …" is checked on resolution, not an intervening-if (CR 603.4).
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
                 new NotCondition(new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))))),

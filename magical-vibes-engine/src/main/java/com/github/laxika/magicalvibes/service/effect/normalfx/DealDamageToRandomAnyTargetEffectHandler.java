@@ -9,10 +9,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,16 +37,8 @@ public class DealDamageToRandomAnyTargetEffectHandler implements NormalEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToRandomAnyTargetEffect) effect;
 
-        List<UUID> pool = new ArrayList<>(gameData.playerIds);
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)
-                        || gameQueryService.isPlaneswalker(gameData, permanent)) {
-                    pool.add(permanent.getId());
-                }
-            }
-        }
-        if (pool.isEmpty()) return;
+        UUID chosen = entry.getTargetId();
+        if (chosen == null) return;
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -61,7 +50,6 @@ public class DealDamageToRandomAnyTargetEffectHandler implements NormalEffectHan
                 AmountContext.forStackEntry(entry, source));
         int rawDamage = damage;
 
-        UUID chosen = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
         damageSupport.resolveAnyTargetDamage(gameData, entry, chosen, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }

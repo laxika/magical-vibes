@@ -109,11 +109,15 @@ class GoblinKitesTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.activateAbility(player1, 0, null, merfolk.getId());
-        harness.passBothPriorities();
+        // Stay in this end step after the ability resolves, before "until end of turn" ends.
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, merfolk.getId());
+            harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.FLYING)).isTrue();
-        assertThat(gameLogContains("coin flip for Goblin Kites")).isFalse();
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+            assertThat(gqs.hasKeyword(gd, merfolk, Keyword.FLYING)).isTrue();
+            assertThat(gameLogContains("coin flip for Goblin Kites")).isFalse();
+        });
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.assertOnBattlefield(player1, "River Merfolk");

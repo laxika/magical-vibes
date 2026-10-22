@@ -63,11 +63,7 @@ abstract class PlayerDamageCandidateSource extends DamageCandidateSource<PlayerD
         StackEntry entry = event.entry();
         Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        UUID sourceControllerId = sourcePermanent == null ? null
-                : gameQueryService.findPermanentController(gameData, sourcePermanent.getId());
-        if (sourceControllerId == null) {
-            sourceControllerId = entry.getControllerId();
-        }
+        UUID sourceControllerId = gameQueryService.findDamageSourceController(gameData, entry, sourcePermanent);
         Set<CardColor> sourceColors = sourcePermanent == null
                 ? gameQueryService.getEffectiveCardColors(gameData, entry.getEffectiveDamageSourceCard())
                 : gameQueryService.getEffectiveColors(gameData, sourcePermanent);

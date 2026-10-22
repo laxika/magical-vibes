@@ -70,17 +70,23 @@ class GoblinCrashPilotTest extends BaseCardTest {
 
     @Test
     void crewingAfterEndStepBeginsSacrificesNoncreatureNextTurnWithoutDamage() {
+        // An empty hand keeps the opponent's cleanup discard from asking for input.
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new GoblinCrashPilot());
         Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
         declareAttackers(player1, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
 
-        harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        assertThat(gqs.isCreature(gd, vehicle)).isTrue();
-        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.HASTE)).isTrue();
-        harness.assertOnBattlefield(player1, "Dusk Legion Dreadnought");
+        // Stay in this end step after the crew ability resolves, before "until end of turn" ends.
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+            assertThat(gqs.isCreature(gd, vehicle)).isTrue();
+            assertThat(gqs.hasKeyword(gd, vehicle, Keyword.HASTE)).isTrue();
+            harness.assertOnBattlefield(player1, "Dusk Legion Dreadnought");
+        });
 
         harness.passUntil(player2, TurnStep.END_STEP);
         assertThat(gqs.isCreature(gd, vehicle)).isFalse();

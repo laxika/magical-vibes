@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DrippingDead;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -36,7 +37,7 @@ class KrosanVorineTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIds()).containsExactly(vorine.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(vorine.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -60,7 +61,7 @@ class KrosanVorineTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
     }
 
     @Test
@@ -97,12 +98,13 @@ class KrosanVorineTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers();
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(vorine.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
-        assertThat(blocker.getMustBlockIds()).containsExactly(vorine.getId());
     }
 
     @Test

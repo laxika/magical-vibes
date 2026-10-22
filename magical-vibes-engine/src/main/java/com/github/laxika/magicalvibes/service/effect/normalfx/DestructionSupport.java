@@ -36,10 +36,10 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedBlockOrBecomesBlockedTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
@@ -120,7 +120,7 @@ public class DestructionSupport {
     private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
     private final ReturnToHandEffectHandler returnToHandEffectHandler;
     private final ControllerLosesGameEffectHandler controllerLosesGameHandler;
-    private final GrantEffectToSourceUntilEndOfCombatEffectHandler grantEffectToSourceUntilEndOfCombatHandler;
+    private final RegisterDelayedBlockOrBecomesBlockedTriggerEffectHandler registerDelayedBlockOrBecomesBlockedTriggerHandler;
     private final PreventDamageFromChosenSourceEffectHandler preventDamageFromChosenSourceHandler;
     private final BoostAllOwnCreaturesEffectHandler boostAllOwnCreaturesHandler;
     private final BounceSupport bounceSupport;
@@ -888,8 +888,8 @@ public class DestructionSupport {
                     && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).
                 removeAllCountersHandler.resolve(gameData, entry, removeCounters);
-            } else if (elseEffect instanceof GrantEffectToSourceUntilEndOfCombatEffect grant) {
-                grantEffectToSourceUntilEndOfCombatHandler.resolve(gameData, entry, grant);
+            } else if (elseEffect instanceof RegisterDelayedBlockOrBecomesBlockedTriggerEffect delayed) {
+                registerDelayedBlockOrBecomesBlockedTriggerHandler.resolve(gameData, entry, delayed);
             } else if (elseEffect instanceof OpponentGainsControlOfSourceCreatureEffect gainControl) {
                 // "an opponent gains control of it" (Rogue Skycaptain).
                 opponentGainsControlOfSourceHandler.resolve(gameData, entry, gainControl);

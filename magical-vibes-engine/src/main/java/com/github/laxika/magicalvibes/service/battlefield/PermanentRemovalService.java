@@ -2893,7 +2893,7 @@ public class PermanentRemovalService {
                 && ownSubtypeExileReplacement(gameData, target, controllerId, creatureSubtypesAtDeath);
         boolean controlledPermanentExileReplacement = gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn
                 .contains(controllerId);
-        boolean exileInstead = (!gameQueryService.hasLostPrintedAbilities(gameData, target)
+        boolean exileInstead = (hadPrintedAbilitiesAtDeparture
                         && GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()))
                 || opponentExileReplacement != null
                 || bloodCounterReplacement != null

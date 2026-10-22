@@ -935,11 +935,9 @@ public class DeathTriggerCollectorService {
         if (resolvedMay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || resolvedMay.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || graveyardTarget) {
-            match.gameData().queueInteraction(graveyardTarget
-                    ? new PermanentChoiceContext.DeathTriggerTarget(sd.dyingCard(), sd.controllerId(),
-                            new ArrayList<>(List.of(resolvedMay)), sd.dyingPower())
-                    : new PermanentChoiceContext.DeathTriggerTarget(
-                            sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(resolvedMay))));
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(resolvedMay)), sd.dyingPower(),
+                    new Permanent(match.permanent())));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

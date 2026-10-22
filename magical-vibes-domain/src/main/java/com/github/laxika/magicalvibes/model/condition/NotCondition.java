@@ -16,4 +16,10 @@ public record NotCondition(Condition inner) implements Condition {
     public String conditionNotMetReason() {
         return inner.conditionName();
     }
+
+    /** "If you control no …" is checked as the trigger event occurs exactly when its positive form is. */
+    @Override
+    public boolean isEtbTriggerGate() {
+        return inner.isEtbTriggerGate();
+    }
 }

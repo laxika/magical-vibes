@@ -192,14 +192,17 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                     return prevented(ctx);
                 }));
         all.add(effect("PreventCombatDamageAndExile", PREVENTION,
-                ctx -> ctx.combat() && !ctx.targetProtectedFromPrevention()
+                ctx -> ctx.combat()
                         && prevention.hasPreventCombatDamageToSelfAndExile(ctx.gameData(), ctx.target()),
                 ctx -> ctx.target().getCard().getName() + ": prevent the combat damage and exile that many cards",
                 ctx -> {
-                    prevention.applyPreventCombatDamageToSelfAndExile(ctx.gameData(), ctx.target(), ctx.amount());
+                    if (!prevention.applyPreventCombatDamageToSelfAndExile(ctx.gameData(), ctx.target(), ctx.amount())
+                            || ctx.targetProtectedFromPrevention()) {
+                        return ctx.event();
+                    }
                     logPrevented(ctx, null);
                     return prevented(ctx);
-                }).whole());
+                }).wholeIncludingUnpreventable());
         all.add(preventAll("CombatDamageFromBlockerPrevented", "Prevent combat damage from creatures blocking it",
                 ctx -> ctx.combat() && ctx.damageSource() != null
                         && prevention.isCombatDamageFromBlockerPrevented(ctx.gameData(), ctx.target(), ctx.damageSource())));

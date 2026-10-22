@@ -1071,6 +1071,19 @@ public class GameQueryService {
      *
      * @return the controlling player's ID, or {@code null} if the permanent is not on any battlefield
      */
+    /**
+     * The controller of a permanent dealing damage: its current controller, or — when it has left the
+     * battlefield — the last-known controller {@code entry} recorded for it (CR 608.2h), falling back to
+     * the controller of {@code entry} itself.
+     */
+    public UUID findDamageSourceController(GameData gameData, StackEntry entry, Permanent source) {
+        UUID controllerId = source == null ? null : findPermanentController(gameData, source.getId());
+        if (controllerId == null && source != null && entry != null) {
+            controllerId = entry.lastKnownPermanentController(source.getId());
+        }
+        return controllerId != null || entry == null ? controllerId : entry.getControllerId();
+    }
+
     public UUID findPermanentController(GameData gameData, UUID permanentId) {
         return findInBattlefields(gameData, permanentId, (playerId, p) -> playerId);
     }
@@ -12105,10 +12118,7 @@ public class GameQueryService {
      * damage, so its doublings are not applied.
      */
     public int getExplicitSourceDamageMultiplier(GameData gameData, StackEntry entry, Permanent explicitSource) {
-        UUID controllerId = findPermanentController(gameData, explicitSource.getId());
-        if (controllerId == null && entry != null) {
-            controllerId = entry.getControllerId();
-        }
+        UUID controllerId = findDamageSourceController(gameData, entry, explicitSource);
         return getControllerDamageMultiplier(gameData, controllerId, entry, false, explicitSource)
                 * getPermanentDamageMultiplier(gameData, explicitSource.getId());
     }

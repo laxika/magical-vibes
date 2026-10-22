@@ -32,9 +32,9 @@ public class SwoopingTalon extends Card {
         )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new MustBlockSourceEffect(null)
+                        new MustBlockSourceEffect(null, null, true)
                 ),
-                "Have target creature untap and block Swooping Talon this turn if able?"
+                "Have target creature untap and block Swooping Talon if able?"
         ));
 
         addActivatedAbility(new ActivatedAbility(

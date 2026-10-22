@@ -56,7 +56,8 @@ public class MorphicTideAuraEffectHandler implements NormalEffectHandlerBean {
 
         List<UUID> validPermanentIds = new ArrayList<>();
         gameData.forEachPermanent((ignored, permanent) -> {
-            if (auraAttachmentService.canEnchant(gameData, auraCard, controllerId, permanent)) {
+            if (!auraEffect.batchAuraCardIds().contains(permanent.getCard().getId())
+                    && auraAttachmentService.canEnchant(gameData, auraCard, controllerId, permanent)) {
                 validPermanentIds.add(permanent.getId());
             }
         });
@@ -83,6 +84,7 @@ public class MorphicTideAuraEffectHandler implements NormalEffectHandlerBean {
         Permanent aura = new Permanent(auraCard);
         aura.setAttachedTo(targetId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, aura);
+        battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, auraCard, null, false);
 
         if (target != null && auraCard.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(ControlEnchantedCreatureEffect.class::isInstance)) {

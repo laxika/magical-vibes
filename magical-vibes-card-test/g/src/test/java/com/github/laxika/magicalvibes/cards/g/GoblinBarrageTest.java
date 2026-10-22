@@ -98,7 +98,8 @@ class GoblinBarrageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrificeNoKickerTarget(player1, 0, creatureTarget, null))
+        assertThatThrownBy(() -> harness.castKickedSorceryWithSacrifice(
+                player1, 0, creatureTarget, player2.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
     }

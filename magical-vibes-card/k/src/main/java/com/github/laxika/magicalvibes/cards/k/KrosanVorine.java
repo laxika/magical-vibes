@@ -30,7 +30,7 @@ public class KrosanVorine extends Card {
         )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new MustBlockSourceEffect(null)
+                        new MustBlockSourceEffect(null, null, true)
                 ),
                 "Have target creature defending player controls untap and block Krosan Vorine if able?"
         ));

@@ -37,7 +37,7 @@ class GoblinGrapplerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIds()).containsExactly(grappler.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(grappler.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -61,7 +61,7 @@ class GoblinGrapplerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
     }
 
     @Test
@@ -98,12 +98,13 @@ class GoblinGrapplerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers();
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(grappler.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
-        assertThat(blocker.getMustBlockIds()).containsExactly(grappler.getId());
     }
 
     @Test
@@ -121,7 +122,7 @@ class GoblinGrapplerTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");
-        assertThat(blocker.getMustBlockIds()).containsExactly(grappler.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(grappler.getId());
     }
 
     @Test
@@ -137,6 +138,6 @@ class GoblinGrapplerTest extends BaseCardTest {
                 () -> harness.handleMayAbilityChosen(player1, true));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
     }
 }

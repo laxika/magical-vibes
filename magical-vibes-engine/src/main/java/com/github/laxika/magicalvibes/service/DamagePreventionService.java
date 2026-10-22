@@ -257,10 +257,11 @@ public class DamagePreventionService {
      * Gloom Surgeon: "If combat damage would be dealt to this creature, prevent that damage and exile
      * that many cards from the top of your library." Returns {@code true} when the damage is fully
      * prevented (the caller must then deal no damage to {@code target}). Only call this from the combat
-     * damage path — noncombat damage is unaffected. Exiling stops early on an empty library.
+     * damage path — noncombat damage is unaffected. Exiling stops early on an empty library, and it
+     * happens even when the damage can't be prevented (per the card's ruling), in which case this
+     * returns {@code false}.
      */
     public boolean applyPreventCombatDamageToSelfAndExile(GameData gameData, Permanent target, int damage) {
-        if (!gameQueryService.isDamagePreventable(gameData, true)) return false;
         if (damage <= 0) return false;
         if (!gameQueryService.hasActiveStaticEffect(gameData, target,
                 PreventCombatDamageToSelfAndExileFromLibraryEffect.class)) return false;
@@ -272,10 +273,10 @@ public class DamagePreventionService {
                 gameData.addToExile(controllerId, deck.removeFirst());
                 exiled++;
             }
-            log.info("Game {} - {} exiles {} card(s) from library top for combat damage prevented to {}",
+            log.info("Game {} - {} exiles {} card(s) from library top for combat damage to {}",
                     gameData.id, gameData.playerIdToName.get(controllerId), exiled, target.getCard().getName());
         }
-        return true;
+        return gameQueryService.isDamagePreventable(gameData, true);
     }
 
     /**
@@ -3935,10 +3936,12 @@ public class DamagePreventionService {
                 });
     }
 
-    /** Whether Gloom Surgeon would prevent combat damage dealt to {@code target}. */
+    /**
+     * Whether Gloom Surgeon's ability applies to combat damage dealt to {@code target}; it applies even
+     * when the damage can't be prevented, since the library exile still happens.
+     */
     public boolean hasPreventCombatDamageToSelfAndExile(GameData gameData, Permanent target) {
-        return gameQueryService.isDamagePreventable(gameData, true)
-                && gameQueryService.hasActiveStaticEffect(gameData, target,
+        return gameQueryService.hasActiveStaticEffect(gameData, target,
                 PreventCombatDamageToSelfAndExileFromLibraryEffect.class);
     }
 

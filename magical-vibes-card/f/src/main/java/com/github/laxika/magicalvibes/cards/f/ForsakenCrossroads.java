@@ -32,7 +32,7 @@ public class ForsakenCrossroads extends Card {
         // player, you may untap Forsaken Crossroads instead.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new ControllerIsStartingPlayer(), new ScryEffect(1)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
                 new NotCondition(new ControllerIsStartingPlayer()),
                 new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
                         "Untap Forsaken Crossroads instead?", new ScryEffect(1))));

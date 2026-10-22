@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FreneticRaptor;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -48,7 +49,7 @@ class LowlandTrackerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(defendingCreature.isTapped()).isFalse();
-        assertThat(defendingCreature.getMustBlockIds()).containsExactly(tracker.getId());
+        assertThat(defendingCreature.getRequiredBlockSourceIds()).containsExactly(tracker.getId());
 
         prepareDeclareBlockers();
 
@@ -69,12 +70,13 @@ class LowlandTrackerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, defendingCreature.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers();
+        assertThat(defendingCreature.getRequiredBlockSourceIds()).containsExactly(tracker.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
-        assertThat(defendingCreature.getMustBlockIds()).containsExactly(tracker.getId());
     }
 
     @Test
@@ -90,7 +92,7 @@ class LowlandTrackerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(defendingCreature.isTapped()).isTrue();
-        assertThat(defendingCreature.getMustBlockIds()).isEmpty();
+        assertThat(defendingCreature.getRequiredBlockSourceIds()).isEmpty();
     }
 
     @Test

@@ -97,10 +97,10 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     void countsOwnedPermanentsUnderOpponentControlButLeavesBorrowedPermanents() {
         Card ownedCreature = new GrizzlyBears();
         Card borrowedCreature = new GrizzlyBears();
-        Permanent owned = harness.addToBattlefieldAndReturn(player2, ownedCreature);
-        Permanent borrowed = harness.addToBattlefieldAndReturn(player1, borrowedCreature);
-        gd.stolenCreatures.put(owned.getId(), player1.getId());
-        gd.stolenCreatures.put(borrowed.getId(), player2.getId());
+        Permanent owned = harness.addToBattlefieldAndReturn(player1, ownedCreature);
+        Permanent borrowed = harness.addToBattlefieldAndReturn(player2, borrowedCreature);
+        setOwnerAndController(owned, player1, player2);
+        setOwnerAndController(borrowed, player2, player1);
         harness.setLibrary(player1, List.of());
 
         resolveGlimpseFromSuspend();

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.MorphicTideAuraEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.ZoneToLibraryService;
 import java.util.ArrayList;
@@ -37,7 +36,6 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final LegendRuleService legendRuleService;
     private final ZoneToLibraryService zoneToLibraryService;
 
     @Override
@@ -92,6 +90,11 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
                         acceptedCardIds, rejectedCardIds, false);
             }
         }
+        Set<UUID> batchAuraCardIds = revealedByPlayer.values().stream()
+                .flatMap(List::stream)
+                .filter(Card::isAura)
+                .map(Card::getId)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
         for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
             for (Card card : playerCards.getValue()) {
                 if (!card.isAura()) {
@@ -100,17 +103,13 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
                 acceptedCardIds.computeIfAbsent(playerCards.getKey(), ignored -> java.util.HashSet.newHashSet(1))
                         .add(card.getId());
                 followUps.add(new MorphicTideAuraEffect(
-                        playerCards.getKey(), card, tide.randomBottomOrder()));
+                        playerCards.getKey(), card, tide.randomBottomOrder(), batchAuraCardIds));
             }
         }
 
         enteredByController.forEach((controllerId, permanents) -> permanents.forEach(permanent ->
                 battlefieldEntryService.processCreatureETBEffects(
                         gameData, controllerId, permanent.getCard(), null, false)));
-
-        if (!gameData.interaction.isAwaitingInput()) {
-            gameData.orderedPlayerIds.forEach(playerId -> legendRuleService.checkLegendRule(gameData, playerId));
-        }
 
         for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
             Set<UUID> accepted = acceptedCardIds.getOrDefault(playerCards.getKey(), Set.of());

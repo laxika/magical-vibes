@@ -1917,6 +1917,11 @@ public class StackEntry {
         }
     }
 
+    /** The controller {@code permanentId} had when it left the battlefield, if this entry recorded it. */
+    public UUID lastKnownPermanentController(UUID permanentId) {
+        return permanentId == null ? null : removedPermanentControllers.get(permanentId);
+    }
+
     public Card lastKnownPermanentCard(UUID permanentId) {
         return lastKnownPermanentCards.get(permanentId);
     }

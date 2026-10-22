@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.action.DelayedBlockOrBecomesBlockedTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
@@ -911,6 +912,11 @@ public class CombatBlockService {
         // Once per unique blocker, not once per attacker blocked.
         processDelayedBlockerBoostTriggers(gameData, blockerAssignments, defenderBattlefield);
 
+        // "Whenever this blocks or becomes blocked by a creature this combat" delayed triggers
+        // (Goblin Flotilla), once per blocking pair.
+        processDelayedBlockOrBecomesBlockedTriggers(gameData, blockerAssignments, attackerBattlefield,
+                defenderBattlefield);
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
 
@@ -1013,6 +1019,8 @@ public class CombatBlockService {
             }
         }
         checkAnyCreaturesBlockTriggers(gameData, assignments);
+        processDelayedBlockOrBecomesBlockedTriggers(gameData, assignments, attackerBattlefield,
+                defenderBattlefield);
         if (!blockerWasBlocking) {
             processDelayedBlockerBoostTriggers(gameData, assignments, defenderBattlefield);
         }
@@ -1341,6 +1349,39 @@ public class CombatBlockService {
      * Fires delayed "whenever a creature blocks this turn, it gets +X/+Y" triggers (Battle Cry).
      * One trigger per unique blocker per registered delayed action.
      */
+    private void processDelayedBlockOrBecomesBlockedTriggers(GameData gameData,
+                                                             List<BlockerAssignment> blockerAssignments,
+                                                             List<Permanent> attackerBattlefield,
+                                                             List<Permanent> defenderBattlefield) {
+        if (blockerAssignments.isEmpty() || !gameData.hasDelayedAction(DelayedBlockOrBecomesBlockedTrigger.class)) {
+            return;
+        }
+        for (DelayedBlockOrBecomesBlockedTrigger delayed
+                : gameData.getDelayedActions(DelayedBlockOrBecomesBlockedTrigger.class)) {
+            for (BlockerAssignment assignment : blockerAssignments) {
+                Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
+                Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
+                Permanent other = delayed.permanentId().equals(blocker.getId()) ? attacker
+                        : delayed.permanentId().equals(attacker.getId()) ? blocker
+                        : null;
+                if (other == null) {
+                    continue;
+                }
+                StackEntry se = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        delayed.sourceCard(),
+                        delayed.controllerId(),
+                        delayed.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(List.of(delayed.effect())),
+                        other.getId(),
+                        delayed.permanentId());
+                se.setNonTargeting(true);
+                gameData.stack.add(se);
+                gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed trigger triggers."));
+            }
+        }
+    }
+
     private void processDelayedBlockerBoostTriggers(GameData gameData,
                                                     List<BlockerAssignment> blockerAssignments,
                                                     List<Permanent> defenderBattlefield) {

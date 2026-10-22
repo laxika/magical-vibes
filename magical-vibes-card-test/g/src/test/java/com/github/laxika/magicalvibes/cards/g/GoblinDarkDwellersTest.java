@@ -133,6 +133,12 @@ class GoblinDarkDwellersTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(spell.getId())
                 && gd.playerBattlefields.get(player1.getId()).contains(land));
+
+        harness.handlePermanentChosen(player1, land.getId());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(spell.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.playerHands.get(player1.getId())).contains(land.getCard());
     }
 
     @Test

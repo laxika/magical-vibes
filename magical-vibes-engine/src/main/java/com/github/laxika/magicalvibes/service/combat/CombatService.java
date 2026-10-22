@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedBlockOrBecomesBlockedTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
@@ -151,6 +152,7 @@ public class CombatService {
             permanent.clearUntilEndOfCombatAnimation();
         }));
         gameData.declaredAttackerIdsThisCombat.clear();
+        gameData.clearDelayedActions(DelayedBlockOrBecomesBlockedTrigger.class);
         gameData.ragingRiverBlockRestrictionsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatSharedDamagePreventionAllocations.clear();

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
- * Deals damage to a single "any target" (creature, planeswalker or player) chosen uniformly at
- * random as the effect resolves. Nothing is targeted, so no target is declared on activation and
- * shroud/protection do not restrict the pool — protection only prevents the damage itself.
+ * Deals damage to "any target chosen at random" (creature, planeswalker or player). The target is
+ * chosen uniformly at random among the legal targets as the ability is activated, so players can
+ * respond knowing it, and it is rechecked for legality on resolution like any other target.
  *
  * <p>Used by Goblin Test Pilot ("{T}: This creature deals 2 damage to any target chosen at
  * random.").
@@ -17,6 +17,16 @@ public record DealDamageToRandomAnyTargetEffect(DynamicAmount damage) implements
 
     public DealDamageToRandomAnyTargetEffect(int damage) {
         this(new Fixed(damage));
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetPredicates.anyTarget());
+    }
+
+    @Override
+    public boolean targetChosenAtRandom() {
+        return true;
     }
 
     @Override

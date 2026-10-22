@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -726,6 +727,19 @@ public class ExileFreeCastQueueSupport {
                 return true;
             }
             beginFreeCastSacrifice(gameData, entry, sacrificeCandidates, sacrificeOrDiscard.description());
+            return true;
+        }
+        if (costs.size() == 1 && costs.getFirst() instanceof ReturnPermanentToHandCost returnCost) {
+            // "As an additional cost to cast this spell, return a land you control to its owner's hand"
+            // (Devour in Flames) still has to be paid when the spell is cast without paying its mana cost.
+            List<UUID> candidates = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
+                    .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, returnCost.filter()))
+                    .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
+            if (candidates.isEmpty()) throw new IllegalStateException("Nothing can pay the return-to-hand cost");
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.FreeCastSacrificeCost(entry));
+            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
+                    "Choose a permanent to return to its owner's hand to cast " + entry.getCard().getName() + ".");
             return true;
         }
         if (costs.size() == 1 && costs.getFirst() instanceof SacrificePermanentCost sacrificeCost

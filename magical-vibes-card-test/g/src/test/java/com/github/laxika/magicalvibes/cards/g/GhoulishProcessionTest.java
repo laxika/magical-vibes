@@ -222,9 +222,13 @@ class GhoulishProcessionTest extends BaseCardTest {
 
             harness.setLife(player2, 20);
             int zombieIndex = gd.playerBattlefields.get(player1.getId()).indexOf(zombie);
-            declareAttackers(player1, List.of(zombieIndex));
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+                declareAttackers(player1, List.of(zombieIndex));
+                resolveAllTriggers();
+            });
+            harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
+            harness.assertLife(player2, 18);
             harness.assertNotOnBattlefield(player1, "Zombie");
         }
     }

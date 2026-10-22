@@ -40,7 +40,7 @@ class SwoopingTalonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIds()).containsExactly(talon.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(talon.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -83,7 +83,7 @@ class SwoopingTalonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
     }
 
     @Test
@@ -120,12 +120,13 @@ class SwoopingTalonTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         prepareDeclareBlockers();
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(talon.getId());
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
-        assertThat(blocker.getMustBlockIds()).containsExactly(talon.getId());
     }
 
 

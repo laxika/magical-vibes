@@ -163,16 +163,21 @@ class GoblinFlotillaTest extends BaseCardTest {
 
         declineBeginningOfCombatPayment(player1, player1);
 
-        int seasingerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(seasinger);
-        harness.activateAbility(player2, seasingerIndex, null, flotilla.getId());
-        resolveAllTriggers();
+        // Seasinger takes Flotilla after attackers are declared, while the combat is still going.
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                    () -> declareAttackers(player1, List.of(attackerIndex)));
+            int seasingerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(seasinger);
+            harness.activateAbility(player2, seasingerIndex, null, flotilla.getId());
+            resolveAllTriggers();
+        });
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(flotilla);
 
-        attacker.setAttacking(true);
         prepareDeclareBlockers(player1);
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(flotilla);
-        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex,
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
 
         assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getSourcePermanentId()).isEqualTo(flotilla.getId());

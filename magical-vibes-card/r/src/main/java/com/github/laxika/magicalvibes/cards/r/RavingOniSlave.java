@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class RavingOniSlave extends Card {
 
     public RavingOniSlave() {
-        ConditionalEffect lifeLoss = new ConditionalEffect(
+        // "you lose 3 life if you don't control a Demon" is checked only on resolution, not an
+        // intervening-if (CR 603.4), so the ability triggers even while you control a Demon.
+        ConditionalEffect lifeLoss = ConditionalEffect.unless(
                 new NotCondition(new ControlsPermanentCount(1,
                         new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
                 new LoseLifeEffect(3)

@@ -188,15 +188,14 @@ public class DamageSupport {
                 : (entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()));
-        UUID sourceControllerId = sourcePermanentForBonus == null
-                ? entry.getControllerId()
-                : gameQueryService.findPermanentController(gameData, sourcePermanentForBonus.getId());
+        UUID sourceControllerId = gameQueryService.findDamageSourceController(
+                gameData, entry, sourcePermanentForBonus);
         Permanent effectiveDamageSource = sourcePermanentForBonus;
         UUID sourcePermId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
         damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
         UUID damageSourceControllerId = damageSource != null
-                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                ? gameQueryService.findDamageSourceController(gameData, entry, damageSource)
                 : entry.getControllerId();
         if (gameQueryService.isCreature(gameData, target)
                 && gameQueryService.noncombatDamageToOpponentCreatureAsCounters(
@@ -480,7 +479,7 @@ public class DamageSupport {
                 ? gameQueryService.getEffectiveName(gameData, damageSource)
                 : sourceCard == null ? null : sourceCard.getName();
         UUID sourceControllerId = damageSource != null
-                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                ? gameQueryService.findDamageSourceController(gameData, entry, damageSource)
                 : entry != null && entry.getSourcePermanentId() != null
                         ? gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId())
                         : entry == null ? null : entry.getControllerId();
@@ -546,6 +545,7 @@ public class DamageSupport {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
+        if (controllerId == null) controllerId = entry.lastKnownPermanentController(damageSource.getId());
         if (controllerId == null) return;
         queueLifelinkGain(gameData, entry, controllerId, damageSource.getId(), damageSource.getCard(), damage);
     }

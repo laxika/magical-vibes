@@ -22,6 +22,6 @@ public class KeldonChampion extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetPlayerOrPlaneswalkerEffect(3));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{2}{R}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{R}{R}"));
     }
 }

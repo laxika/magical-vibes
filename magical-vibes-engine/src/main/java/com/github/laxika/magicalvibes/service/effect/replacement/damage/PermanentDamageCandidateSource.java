@@ -76,11 +76,7 @@ abstract class PermanentDamageCandidateSource extends DamageCandidateSource<Perm
             // that granted the ability), so restrictions on the permanent's own damage don't apply.
             damageSource = null;
         }
-        UUID sourceControllerId = damageSource == null ? null
-                : gameQueryService.findPermanentController(gameData, damageSource.getId());
-        if (sourceControllerId == null) {
-            sourceControllerId = entry.getControllerId();
-        }
+        UUID sourceControllerId = gameQueryService.findDamageSourceController(gameData, entry, damageSource);
         Card sourceCard = damageSource == null ? entry.getEffectiveDamageSourceCard() : damageSource.getCard();
         UUID sourcePermanentId = explicitSource != null ? explicitSource.getId() : entry.getSourcePermanentId();
         UUID damageSourceKey = sourcePermanentId != null ? sourcePermanentId
