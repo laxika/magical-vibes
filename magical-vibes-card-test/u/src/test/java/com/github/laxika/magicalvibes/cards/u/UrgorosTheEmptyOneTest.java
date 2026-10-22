@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -133,6 +135,8 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudreaderSphinx()));
         int handSize = gd.playerHands.get(player1.getId()).size();
         addCreatureReady(player1, new UrgorosTheEmptyOne()).setAttacking(true);
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
 
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
@@ -148,6 +152,8 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         int handSize = gd.playerHands.get(player1.getId()).size();
         addCreatureReady(player1, new UrgorosTheEmptyOne()).setAttacking(true);
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
 
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
@@ -179,7 +185,8 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
     void drawsWhenDiscardIsProhibited() {
         harness.setHand(player2, List.of(new CloudreaderSphinx()));
         harness.setLibrary(player1, List.of(new CloudreaderSphinx()));
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
         int handSize = gd.playerHands.get(player1.getId()).size();
         addCreatureReady(player1, new UrgorosTheEmptyOne()).setAttacking(true);
 

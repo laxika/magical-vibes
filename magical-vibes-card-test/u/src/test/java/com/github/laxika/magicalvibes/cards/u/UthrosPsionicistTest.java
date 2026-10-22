@@ -61,8 +61,8 @@ class UthrosPsionicistTest extends BaseCardTest {
     void secondSpellReceivesFullReduction() {
         harness.addToBattlefield(player1, new UthrosPsionicist());
         harness.setHand(player1, List.of(new GrizzlyBears(), new UthrosPsionicist()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

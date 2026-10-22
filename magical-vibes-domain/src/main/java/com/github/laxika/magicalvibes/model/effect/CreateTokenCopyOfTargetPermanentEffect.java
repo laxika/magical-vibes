@@ -49,8 +49,56 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         List<CardColor> additionalColors,
         String nameOverride,
         boolean replaceCardTypes,
-        boolean hasteUntilEndOfTurn
+        boolean hasteUntilEndOfTurn,
+        AnimatePermanentsEffect animateIfNotCreature
 ) implements CardEffect {
+    public CreateTokenCopyOfTargetPermanentEffect {
+        if (animateIfNotCreature != null
+                && (!(animateIfNotCreature.power() instanceof Fixed)
+                || !(animateIfNotCreature.toughness() instanceof Fixed)
+                || animateIfNotCreature.scope() != GrantScope.TARGET
+                || animateIfNotCreature.duration() != EffectDuration.PERMANENT)) {
+            throw new IllegalArgumentException(
+                    "Post-entry animation must be a permanent TARGET animation with fixed power and toughness");
+        }
+    }
+
+    /** Backward-compatible constructor for copies without a post-entry animation. */
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes,
+            Set<CardType> additionalTypes,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean sacrificeAtEndStep,
+            boolean tappedAndAttacking,
+            boolean trackWithSource,
+            boolean createForTargetController,
+            CardColor colorOverride,
+            Set<Keyword> additionalKeywords,
+            boolean sacrificeAtNextUpkeep,
+            Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+            List<CardSubtype> creatureSubtypeOverride,
+            boolean tapped,
+            boolean removeLegendary,
+            DynamicAmount amount,
+            boolean exileAtEndOfCombat,
+            Set<CardSupertype> additionalSupertypes,
+            boolean chooseAttackTarget,
+            List<CardColor> additionalColors,
+            String nameOverride,
+            boolean replaceCardTypes,
+            boolean hasteUntilEndOfTurn) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource,
+                createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
+                additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount,
+                exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, nameOverride,
+                replaceCardTypes, hasteUntilEndOfTurn, null);
+    }
+
     /** Backward-compatible constructor for copies whose granted haste lasts for the token's whole life. */
     public CreateTokenCopyOfTargetPermanentEffect(
             List<CardSubtype> additionalSubtypes,
@@ -130,7 +178,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, true, hasteUntilEndOfTurn);
+                nameOverride, true, hasteUntilEndOfTurn, animateIfNotCreature);
     }
 
     /**
@@ -143,7 +191,24 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, true);
+                nameOverride, replaceCardTypes, true, animateIfNotCreature);
+    }
+
+    /**
+     * Returns this copy effect with a permanent animation applied to each created token that is not a
+     * creature once it has entered, for "if the token isn't a creature, it becomes a 2/2 Robot Villain
+     * creature in addition to its other types". Unlike a copy exception (CR 707.9b), the animation is
+     * a separate effect applied after the token entered, so it is not part of the token's copiable
+     * values and entry triggers see the plain copy. The animation must be a permanent {@code TARGET}
+     * animation with fixed power and toughness.
+     */
+    public CreateTokenCopyOfTargetPermanentEffect withAnimationIfNotCreature(AnimatePermanentsEffect animation) {
+        return new CreateTokenCopyOfTargetPermanentEffect(additionalSubtypes, additionalTypes, powerOverride,
+                toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep,
+                tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
+                sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary,
+                amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animation);
     }
 
     /** Backward-compatible full constructor without a name override. */

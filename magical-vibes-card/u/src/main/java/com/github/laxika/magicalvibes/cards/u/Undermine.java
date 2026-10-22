@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLif
 public class Undermine extends Card {
 
     public Undermine() {
-        addEffect(EffectSlot.SPELL, new TargetSpellControllerLosesLifeEffect(3));
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addEffect(EffectSlot.SPELL, new TargetSpellControllerLosesLifeEffect(3));
     }
 }

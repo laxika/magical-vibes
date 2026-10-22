@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -18,11 +20,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "TDM", collectorNumber = "233")
 public class UreniTheSongUnending extends Card {
 
     public UreniTheSongUnending() {
+        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
+
         PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

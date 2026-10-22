@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -35,6 +36,7 @@ public class UmbrisFearManifest extends Card {
         )).addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsSourceCardPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE),
                                 new PermanentHasSubtypePredicate(CardSubtype.HORROR))),
                         new ExileTopUntilLandOfTargetOpponentEffect()));

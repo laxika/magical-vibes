@@ -121,11 +121,14 @@ class UnnaturalSpeedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            gs.declareAttackers(gd, player1, List.of(0));
 
-        assertThat(target.isAttacking()).isTrue();
-        assertThat(target.isTapped()).isTrue();
+            assertThat(target.isAttacking()).isTrue();
+            assertThat(target.isTapped()).isTrue();
+        });
     }
 }

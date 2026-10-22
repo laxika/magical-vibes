@@ -66,17 +66,18 @@ public class TurnOwnCreatureFaceUpEffectHandler implements NormalEffectHandlerBe
     private List<UUID> eligibleIds(GameData gameData, UUID controllerId) {
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> permanent.isFaceDown() && gameQueryService.isCreature(gameData, permanent))
-                .filter(permanent -> !isCloakedInstantOrSorcery(permanent))
+                .filter(permanent -> !isInstantOrSorceryFaceDownCard(permanent))
                 .map(Permanent::getId)
                 .toList();
     }
 
     /**
      * A cloaked permanent represented by an instant or sorcery card is revealed and left face down
-     * when it would turn face up (CR 701.58g), so it is never a turn-face-up target.
+     * when it would turn face up (CR 701.58g), and so is a manifested one (CR 701.40g), so neither is ever
+     * a turn-face-up target.
      */
-    private boolean isCloakedInstantOrSorcery(Permanent permanent) {
-        return permanent.isCloaked()
+    private boolean isInstantOrSorceryFaceDownCard(Permanent permanent) {
+        return (permanent.isCloaked() || permanent.isManifested())
                 && (permanent.getCard().hasType(CardType.INSTANT) || permanent.getCard().hasType(CardType.SORCERY));
     }
 

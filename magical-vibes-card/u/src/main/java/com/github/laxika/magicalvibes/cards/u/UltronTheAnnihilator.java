@@ -8,8 +8,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -25,8 +28,12 @@ public class UltronTheAnnihilator extends Card {
     public UltronTheAnnihilator() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ROBOT_TOKEN);
         addEffect(EffectSlot.ON_ATTACK, ROBOT_TOKEN);
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(new CardTypePredicate(CardType.ARTIFACT), DRAIN));
+        addEffect(EffectSlot.ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
+                        DRAIN));
         addEffect(EffectSlot.ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD, DRAIN);
     }
 }

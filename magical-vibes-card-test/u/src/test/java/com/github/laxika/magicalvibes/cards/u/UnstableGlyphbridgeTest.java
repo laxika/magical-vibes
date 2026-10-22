@@ -199,10 +199,12 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         Permanent glyph = addTransformedGlyphbridge();
         addCreatureReady(player2, new GrizzlyBears());
         declareAttackers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
         harness.setHand(player2, List.of(new DarksteelRelic()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gd.playerBattlefields.get(player1.getId()).remove(glyph);
+        harness.clearPriorityPassed();
 
         assertThat(harness.getGameActionAvailabilityService()
                 .getPlayableCardIndices(gd, player2.getId())).contains(0);

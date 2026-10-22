@@ -2493,6 +2493,8 @@ public class AbilityActivationService {
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
+            triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
+                    gameData, playerId, stackEntry, ability, new Permanent(card), List.of());
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         if (!ability.isManaAbility()) {
@@ -2596,6 +2598,8 @@ public class AbilityActivationService {
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
+            triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
+                    gameData, playerId, stackEntry, ability, new Permanent(card), List.of());
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         if (!ability.isManaAbility()) {
@@ -8651,9 +8655,12 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Loyalty abilities can only be activated when the stack is empty");
             }
         }
-        // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi), plus any
-        // one-shot extra activations granted to this planeswalker this turn (The Chain Veil).
-        int maxActivations = (gameQueryService.hasExtraLoyaltyActivation(gameData, playerId) ? 2 : 1)
+        // Once per turn (twice with AllowExtraLoyaltyActivationEffect, e.g. Oath of Teferi, or with a
+        // this-turn "twice rather than once" grant, e.g. Urza Assembles the Titans), plus any one-shot extra
+        // activations granted to this planeswalker this turn (The Chain Veil).
+        boolean twiceThisTurn = gameQueryService.hasExtraLoyaltyActivation(gameData, playerId)
+                || gameData.playersAllowedTwiceLoyaltyActivationsThisTurn.contains(playerId);
+        int maxActivations = (twiceThisTurn ? 2 : 1)
                 + permanent.getExtraLoyaltyActivationsThisTurn()
                 + gameData.playerExtraLoyaltyActivationsThisTurn.getOrDefault(playerId, 0);
         if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) {

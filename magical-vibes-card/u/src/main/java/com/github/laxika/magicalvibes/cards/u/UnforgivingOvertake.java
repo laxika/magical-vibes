@@ -31,8 +31,7 @@ public class UnforgivingOvertake extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
-                // The target's controller must lose life before destruction while the target exists.
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

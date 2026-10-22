@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToPlaneswalkersEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowTwiceLoyaltyActivationsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -26,6 +27,8 @@ public class UrzaAssemblesTheTitans extends Card {
                 new CardMaxManaValuePredicate(6)
         ));
 
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+
         addEffect(EffectSlot.SAGA_CHAPTER_I, new ScryEffect(4));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new MayEffect(
                 new RevealTopCardMatchingToHandEffect(planeswalker),
@@ -37,6 +40,6 @@ public class UrzaAssemblesTheTitans extends Card {
                 "Put a planeswalker card with mana value 6 or less from your hand onto the battlefield?"
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantExtraLoyaltyActivationToPlaneswalkersEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new AllowTwiceLoyaltyActivationsThisTurnEffect());
     }
 }

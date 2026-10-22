@@ -26,6 +26,6 @@ public class UltraMagnusArmoredCarrier extends Card {
                 new PermanentIsAttackingPredicate()));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new AttackingCreaturesTotalPowerAtLeast(8),
-                new TransformSelfEffect()));
+                new TransformSelfEffect(), false));
     }
 }

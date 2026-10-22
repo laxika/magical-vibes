@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSameNameCardsFromHandAndLibraryThenSeekEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
@@ -49,12 +51,14 @@ public class ExileSameNameCardsFromHandAndLibraryThenSeekEffectHandler
         List<Card> matchingCards = matchingCards(gameData, controllerId, exileThenSeek.cardName());
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            entry.insertEffectsToResolve(entry.getEffectsToResolve().indexOf(effect) + 1,
+                    List.of(new SeekCardsToHandEffect(new Fixed(1), exileThenSeek.seekFilter())));
             return;
         }
 
         playerInputService.beginMultiZoneExileChoice(
                 gameData, controllerId, matchingCards, controllerId, exileThenSeek.cardName(), false,
-                new SeekCardsToHandEffect(new EventValue(), exileThenSeek.seekFilter()));
+                new SeekCardsToHandEffect(new Sum(new EventValue(), new Fixed(1)), exileThenSeek.seekFilter()));
     }
 
     private List<Card> matchingCards(GameData gameData, UUID controllerId, String cardName) {

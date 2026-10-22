@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import java.util.ArrayList;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.ObjectProvider;
@@ -43,6 +45,9 @@ public class InputCompletionService {
             eachPlayerMayPutSupport;
 
 
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport exileBottomRandomSupport;
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
@@ -87,10 +92,26 @@ public class InputCompletionService {
         processMayAbilitiesThenAutoPass(gameData, false);
     }
 
+    /**
+     * Bottoms the cards left in exile by effects whose free cast has now finished (targets chosen or the cast
+     * abandoned). A cast still paused on its kicker offer keeps them exiled.
+     */
+    public void flushDeferredExileBottoms(GameData gameData) {
+        if (gameData.deferredExileBottomSourceIds.isEmpty() || !gameData.pendingFreeCastKickerOffers.isEmpty()
+                || gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        for (UUID sourceId : new ArrayList<>(gameData.deferredExileBottomSourceIds)) {
+            gameData.deferredExileBottomSourceIds.remove(sourceId);
+            exileBottomRandomSupport.bottomCardsExiledWithSource(gameData, sourceId, null);
+        }
+    }
+
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
         if (gameData.waitingForSubgame) return;
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        flushDeferredExileBottoms(gameData);
         if (resumeSuspendedInteraction(gameData)) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (cloneService != null && cloneService.beginNextQueuedEntryCopyChoice(gameData)) return;

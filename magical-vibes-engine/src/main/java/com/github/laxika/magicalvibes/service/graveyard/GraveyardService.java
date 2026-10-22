@@ -553,7 +553,8 @@ public class GraveyardService {
         gameData.spellsWithPlotOnResolution.remove(card.getId());
         // CR 614.7 â€” self-replacement effects apply first
 
-        if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)) {
+        if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)
+                && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
             UUID extraTurnControllerId = battlefieldControllerId != null ? battlefieldControllerId : ownerId;
             exileService.exileCard(gameData, ownerId, card);
             gameData.queueExtraTurnFirst(extraTurnControllerId, false);
@@ -1688,7 +1689,8 @@ public class GraveyardService {
      */
     public ChoiceContext.DeathExileReplacement.Kind ownDeathReplacementKind(GameData gameData, Permanent dying) {
         Card card = dying.getCard();
-        if (hasExileAndTakeExtraTurnReplacementEffect(card)) {
+        if (hasExileAndTakeExtraTurnReplacementEffect(card)
+                && !gameQueryService.hasLostPrintedAbilities(gameData, dying)) {
             return ChoiceContext.DeathExileReplacement.Kind.EXTRA_TURN;
         }
         if (gameQueryService.hasLostPrintedAbilities(gameData, dying)) {
@@ -2209,6 +2211,18 @@ public class GraveyardService {
                     enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, equipment,
                             playerId, equipment.getId(), dyingPermanent);
                 }
+            }
+            // Equipment that leaves at the same time as the damaged creature still triggers from its
+            // last known state (CR 603.10a), so it is checked against the simultaneous-death snapshots.
+            for (Map.Entry<UUID, Permanent> dyingEquipment : gameData.simultaneousDyingPermanents.entrySet()) {
+                Permanent equipment = dyingEquipment.getValue();
+                UUID equipmentControllerId = gameData.simultaneousDyingPermanentControllers.get(dyingEquipment.getKey());
+                if (equipmentControllerId == null || !equipment.isAttached()
+                        || !sourcePermanentId.equals(equipment.getAttachedTo())) {
+                    continue;
+                }
+                enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, equipment,
+                        equipmentControllerId, equipment.getId(), dyingPermanent);
             }
         }
 
@@ -2820,6 +2834,11 @@ public class GraveyardService {
                 gameData, ownerId, cardsEntered, entered);
         triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
                 gameData, ownerId, creatureCardsEntered);
+        for (Card card : entered) {
+            if (card.hasType(CardType.CREATURE)) {
+                triggerCollectionService.checkCreatureCardMilledTriggers(gameData, ownerId, card);
+            }
+        }
         return entered;
     }
 

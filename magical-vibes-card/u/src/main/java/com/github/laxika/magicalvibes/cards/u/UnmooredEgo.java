@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -20,6 +19,6 @@ public class UnmooredEgo extends Card {
                 "Target must be an opponent"
         )).addEffect(EffectSlot.SPELL,
                 new ChooseCardNameAndExileFromZonesEffect(
-                        List.of(CardType.ARTIFACT, CardType.LAND), null, true, 4));
+                        List.of(), null, 4, true));
     }
 }

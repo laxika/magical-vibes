@@ -21,7 +21,7 @@ import java.util.List;
 public class UnderhandedDesigns extends Card {
 
     public UnderhandedDesigns() {
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, new MayPayManaEffect(
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, new MayPayManaEffect(
                 "{1}",
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),

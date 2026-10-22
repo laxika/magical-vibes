@@ -1366,7 +1366,15 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.MultiGraveyardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(),
-                cardViews(interaction.cards()),
+                interaction.cards().stream().map(card -> {
+                    ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+                    boolean visible = exiled == null || !exiled.faceDown()
+                            || interaction.playerId().equals(gameData.exileLookPermissions.get(card.getId()))
+                            || gameData.additionalExileLookPermissions.getOrDefault(card.getId(), java.util.Set.of())
+                                    .contains(interaction.playerId());
+                    return visible ? cardViewFactory.create(card)
+                            : CardView.builder().id(card.getId()).name("Face-down card").build();
+                }).toList(),
                 interaction.maxCount(),
                 interaction.prompt());
     }

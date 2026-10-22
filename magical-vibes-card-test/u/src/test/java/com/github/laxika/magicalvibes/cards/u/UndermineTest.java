@@ -143,10 +143,10 @@ class UndermineTest extends BaseCardTest {
         AncientKavu kavu = new AncientKavu();
         harness.setHand(player1, List.of(kavu, new Undermine()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0, kavu.getId());
 
         harness.assertInGraveyard(player1, "Ancient Kavu");

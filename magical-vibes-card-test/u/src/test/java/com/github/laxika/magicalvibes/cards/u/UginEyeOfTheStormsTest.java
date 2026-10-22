@@ -182,6 +182,8 @@ class UginEyeOfTheStormsTest extends BaseCardTest {
         Ornithopter previouslyExiled = new Ornithopter();
         harness.setLibrary(player1, List.of(previouslyExiled, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addReadyUgin(23);
 
         harness.activateAbility(player1, 0, 2, null, null);

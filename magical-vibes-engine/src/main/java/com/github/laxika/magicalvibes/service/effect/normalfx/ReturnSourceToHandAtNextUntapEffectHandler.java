@@ -34,7 +34,7 @@ public class ReturnSourceToHandAtNextUntapEffectHandler implements NormalEffectH
         if (source == null) {
             return;
         }
-        source.setReturnToHandAtNextUntap(true);
+        source.setReturnToHandAtNextUntapPlayerId(entry.getControllerId());
         log.info("Game {} - {} scheduled to return to hand at next untap", gameData.id, entry.getCard().getName());
     }
 }

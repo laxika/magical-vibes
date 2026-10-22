@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "77")
 public class UndyingEvil extends Card {
 
     public UndyingEvil() {
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.UNDYING, GrantScope.TARGET));
+        target(TargetFilters.creature())
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.UNDYING, GrantScope.TARGET));
     }
 }

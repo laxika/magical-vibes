@@ -1591,8 +1591,11 @@ public class LibraryChoiceHandlerService {
             UUID sourcePermanentId = librarySearch.sourcePermanentId();
             exileService.exileCard(gameData, deckOwnerId, chosenCard, sourcePermanentId);
             if (gameData.pendingEffectResolutionEntry != null) {
-                gameData.pendingEffectResolutionEntry.setEventValue(
-                        gameData.pendingEffectResolutionEntry.getEventValue() + 1);
+                StackEntry resolving = gameData.pendingEffectResolutionEntry;
+                resolving.setEventValue(resolving.getEventValue() + 1);
+                List<UUID> exiledThisResolution = new ArrayList<>(resolving.getResolutionExiledCardIds());
+                exiledThisResolution.add(chosenCard.getId());
+                resolving.setResolutionExiledCardIds(exiledThisResolution);
             }
             if (requireDifferentNames) {
                 excludedCardNames.add(chosenCard.getName());

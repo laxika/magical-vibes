@@ -1055,10 +1055,19 @@ public class DeathTriggerCollectorService {
                 : DyingCreatureAttachmentSnapshot.capture(match.gameData(), dyingPermanent.getId());
         if (dyingPermanent == null
                 || !DyingCreatureAttachmentSnapshot.satisfiedAtDeath(attachmentSnapshot, effect.predicate(),
-                        p -> predicateEvaluationService.matchesPermanentPredicate(
-                                dyingPermanent, p, FilterContext.of(match.gameData())
-                                        .withSourceControllerId(sd.controllerId())
-                                        .withSourcePermanentId(match.permanent().getId())))) {
+                        p -> {
+                            // CR 603.10a: stat conditions look back at the toughness the creature had
+                            // on the battlefield, including static bonuses that stopped applying at death.
+                            Boolean lastKnownMatch = dyingPermanent.getLastKnownToughness() == null
+                                    ? null
+                                    : TriggerCollectionService.matchesDyingStats(p, sd.dyingPower(),
+                                            dyingPermanent.getLastKnownToughness());
+                            return lastKnownMatch != null ? lastKnownMatch
+                                    : predicateEvaluationService.matchesPermanentPredicate(
+                                    dyingPermanent, p, FilterContext.of(match.gameData())
+                                            .withSourceControllerId(sd.controllerId())
+                                            .withSourcePermanentId(match.permanent().getId()));
+                        })) {
             return false;
         }
 

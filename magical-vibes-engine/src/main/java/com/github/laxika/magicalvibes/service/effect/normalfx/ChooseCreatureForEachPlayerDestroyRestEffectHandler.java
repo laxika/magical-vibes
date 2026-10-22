@@ -60,7 +60,7 @@ public class ChooseCreatureForEachPlayerDestroyRestEffectHandler implements Norm
         } else {
             destructionSupport.beginNextDestroyRestChoice(
                     gameData, choosers, protectedIds, entry.getCard().getName(),
-                    new PermanentIsCreaturePredicate(), "Choose a creature to keep.", false);
+                    new PermanentIsCreaturePredicate(), "Choose a creature to keep.", true);
         }
     }
 }

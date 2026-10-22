@@ -1800,7 +1800,7 @@ public class ActivatedAbilityExecutionService {
                 // "Add one mana of any color. During your next untap step, … return this land to
                 // its owner's hand" (Undiscovered Paradise). Mana abilities resolve without the
                 // stack, so the bounce flag is set inline rather than through the normal handler.
-                permanent.setReturnToHandAtNextUntap(true);
+                permanent.setReturnToHandAtNextUntapPlayerId(player.getId());
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " will return to its owner's hand during its controller's next untap step."));
             } else if (effect instanceof SacrificeSelfAtEndStepEffect sacrifice) {

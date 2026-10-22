@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -24,6 +24,6 @@ public class UneasyPartings extends Card {
                         new PermanentIsAttackingPredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))), 1));
         target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect());
+                new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
     }
 }

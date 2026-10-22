@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -189,6 +190,20 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         return null;
     }
 
+    /** Gives a card just exiled with the source the source's active "until end of turn, you may play" permission. */
+    private void grantUntilEndOfTurnPlayPermission(GameData gameData, Card card, UUID sourcePermanentId) {
+        var grant = sourcePermanentId == null ? null
+                : gameData.exilePlayUntilEndOfTurnGrantsBySource.get(sourcePermanentId);
+        if (grant == null) {
+            return;
+        }
+        gameData.exilePlayPermissions.put(card.getId(), grant.permittedPlayerId());
+        gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
+        if (!card.hasType(CardType.LAND) && grant.amount() < 0) {
+            gameData.exilePlayCostModifiers.put(card.getId(), grant);
+        }
+    }
+
     private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,
                                Card sourceCard, UUID sourcePermanentId, int count,
                                List<PersistentPermission> persistentPermissions,
@@ -215,6 +230,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                 // controller's "you may look at" permission is recorded per card instead.
                 gameData.exileLookPermissions.put(card.getId(), sourceControllerId);
             }
+            grantUntilEndOfTurnPlayPermission(gameData, card, sourcePermanentId);
             if (e.markWithIntelCounters()) {
                 gameData.exiledCardsWithIntelCounters.add(card.getId());
             }

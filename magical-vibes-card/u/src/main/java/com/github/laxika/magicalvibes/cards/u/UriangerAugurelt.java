@@ -29,7 +29,7 @@ public class UriangerAugurelt extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MayEffect(new ExileTopCardsToSourceEffect(1), "Exile it face down?")),
+                List.of(new MayEffect(ExileTopCardsToSourceEffect.faceDownLookedAtByExiler(1), "Exile it face down?")),
                 "{T}: Look at the top card of your library. You may exile it face down."
         ));
         addActivatedAbility(new ActivatedAbility(

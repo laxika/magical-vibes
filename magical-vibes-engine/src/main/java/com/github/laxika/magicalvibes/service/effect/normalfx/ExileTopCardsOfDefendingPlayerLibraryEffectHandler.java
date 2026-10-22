@@ -38,7 +38,9 @@ public class ExileTopCardsOfDefendingPlayerLibraryEffectHandler implements Norma
         UUID defendingObjectId = entry.getTargetId() != null
                 ? entry.getTargetId()
                 : entry.getAttackedTargetId();
-        UUID defendingPlayerId = gameData.playerIds.contains(defendingObjectId)
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : gameData.playerIds.contains(defendingObjectId)
                 ? defendingObjectId
                 : gameQueryService.findPermanentController(gameData, defendingObjectId);
         if (defendingPlayerId == null) {

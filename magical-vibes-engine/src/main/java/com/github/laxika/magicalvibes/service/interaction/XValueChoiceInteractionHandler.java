@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AsEntersDiscardEntry;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithCostReductionEffect;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.ExileTargetCardFromGraveyardAndMayCastCopyHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileNormalCostCopySupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileReducedCastSupport;
 import com.github.laxika.magicalvibes.service.battlefield.AsEntersDiscardSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
@@ -37,6 +39,7 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
     private final ObjectProvider<ExileTargetCardFromGraveyardAndMayCastCopyHandler> graveyardCopyHandler;
     private final ObjectProvider<ExileNormalCostCopySupport> exileNormalCostCopySupport;
     private final ObjectProvider<AsEntersDiscardSupport> asEntersDiscardSupport;
+    private final ObjectProvider<ExileReducedCastSupport> exileReducedCastSupport;
 
     @Autowired
     public XValueChoiceInteractionHandler(InputCompletionService inputCompletionService,
@@ -44,7 +47,9 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
                                           ObjectProvider<MayCastHandlerService> mayCastHandlerService,
                                           ObjectProvider<ExileTargetCardFromGraveyardAndMayCastCopyHandler> graveyardCopyHandler,
                                           ObjectProvider<ExileNormalCostCopySupport> exileNormalCostCopySupport,
-                                          ObjectProvider<AsEntersDiscardSupport> asEntersDiscardSupport) {
+                                          ObjectProvider<AsEntersDiscardSupport> asEntersDiscardSupport,
+                                          ObjectProvider<ExileReducedCastSupport> exileReducedCastSupport) {
+        this.exileReducedCastSupport = exileReducedCastSupport;
         this.asEntersDiscardSupport = asEntersDiscardSupport;
         this.graveyardCopyHandler = graveyardCopyHandler;
         this.exileNormalCostCopySupport = exileNormalCostCopySupport;
@@ -83,6 +88,16 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
         }
         if (interaction.graveyardCastAbility() != null) {
             var ability = interaction.graveyardCastAbility();
+            if (ability.effects().stream().anyMatch(MayCastExiledCardWithCostReductionEffect.class::isInstance)) {
+                int reduction = ability.effects().stream()
+                        .filter(MayCastExiledCardWithCostReductionEffect.class::isInstance)
+                        .map(MayCastExiledCardWithCostReductionEffect.class::cast)
+                        .findFirst().orElseThrow().genericCostReduction();
+                gameData.interaction.clearAwaitingInput();
+                exileReducedCastSupport.getObject().resumeCastWithX(
+                        gameData, player, ability.targetCardId(), reduction, chosenValue);
+                return;
+            }
             if (ability.effects().stream().anyMatch(AsEntersDiscardEntry.class::isInstance)) {
                 asEntersDiscardSupport.getObject().handleCount(gameData, player, ability, chosenValue);
                 return;

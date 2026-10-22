@@ -65,6 +65,7 @@ class UndeadAlchemistMindcrankTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
         // Zombie tokens should have been created
+        resolveAllTriggers();
         long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())
                 .count();
@@ -127,6 +128,7 @@ class UndeadAlchemistMindcrankTest extends BaseCardTest {
 
         assertThatCode(() -> harness.passBothPriorities())
                 .doesNotThrowAnyException();
+        resolveAllTriggers();
 
         // Deck should be empty after the mill chain
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();

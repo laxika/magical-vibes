@@ -13,12 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,12 +32,17 @@ import java.util.Set;
 public class UnctusGrandMetatect extends Card {
 
     public UnctusGrandMetatect() {
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, new TriggeringPermanentConditionalEffect(
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentIsSourceCardPredicate(),
+                        SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
+                GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)),
+                        new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                )),
-                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
+                ))));
 
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));

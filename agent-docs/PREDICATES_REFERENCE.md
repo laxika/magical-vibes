@@ -495,6 +495,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardToughnessLessThanSourceToughnessPredicate` | `()` | a creature card whose printed toughness is less than the source permanent's effective toughness; needs `GameData` and `sourceCardId` (Thunderkin Awakener) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is at most the source permanent's effective power; needs `GameData` and `sourceCardId` (Arcane Proxy) |
 | `CardMaxManaValuePredicate` | `(int maxManaValue)` | a card with mana value ≤ N (e.g. Teshar's "mana value 3 or less" graveyard filter) |
+| `CardGenericManaCostAtMostPredicate` | `(int maxGenericCost)` | a card whose printed mana cost is only generic mana totalling ≤ N (`{0}` or `{1}` for N=1); colored, hybrid, Phyrexian and `{X}` costs and cards with no mana cost never match, unlike the mana-value predicate. Use for "mana cost {0} or {1}" searches (Urza's Saga chapter III) |
 | `CardMaxManaValueXPredicate` | `()` | a card with mana value ≤ the resolving spell's X; before X is chosen, it matches permissively |
 | `CardManaValueEqualsXPredicate` | `()` | a card with mana value exactly equal to the resolving spell or ability's X; before X is chosen, it matches permissively (Lazotep Quarry) |
 | `CardManaValueLessThanXPredicate` | `()` | a card with mana value strictly less than the resolving spell or ability's X; useful when a prior cost snapshots a comparison value into X |

@@ -71,9 +71,9 @@ class UnchartedHavenTest extends BaseCardTest {
     @Test
     @DisplayName("Separate Havens retain independent color choices")
     void separateHavensChooseIndependentColors() {
-        Permanent first = harness.enterBattlefieldAndReturn(player1, new UnchartedHaven());
+        Permanent first = harness.enterLandBattlefieldAndReturn(player1, new UnchartedHaven());
         harness.handleListChoice(player1, "WHITE");
-        Permanent second = harness.enterBattlefieldAndReturn(player1, new UnchartedHaven());
+        Permanent second = harness.enterLandBattlefieldAndReturn(player1, new UnchartedHaven());
         harness.handleListChoice(player1, "GREEN");
         harness.performUntapStep(player1);
 

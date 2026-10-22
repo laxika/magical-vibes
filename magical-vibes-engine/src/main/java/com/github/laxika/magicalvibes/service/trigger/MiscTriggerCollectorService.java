@@ -103,8 +103,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
@@ -129,14 +127,10 @@ public class MiscTriggerCollectorService {
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final ExileService exileService;
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final ETBTokenTargetService etbTokenTargetService;
-    // @Lazy to break indirect circular dependency:
-    // MiscTriggerCollectorService → PermanentControlSupport → TriggerCollectionService → MiscTriggerCollectorService
-    private PermanentControlSupport permanentControlSupport;
     private PermanentRemovalService permanentRemovalService;
 
     @CollectsTrigger(value = PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect.class,
@@ -177,32 +171,20 @@ public class MiscTriggerCollectorService {
                                        @Lazy GraveyardService graveyardService,
                                        GameQueryService gameQueryService,
                                        PredicateEvaluationService predicateEvaluationService,
-                                       ExileService exileService,
                                        @Lazy DrawService drawService,
                                        AmountEvaluationService amountEvaluationService,
                                        ConditionEvaluationService conditionEvaluationService,
                                        @Lazy ETBTokenTargetService etbTokenTargetService,
-                                       @Lazy PermanentControlSupport permanentControlSupport,
                                        @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameLogService = gameLogService;
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
-        this.exileService = exileService;
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.etbTokenTargetService = etbTokenTargetService;
-        this.permanentControlSupport = permanentControlSupport;
         this.permanentRemovalService = permanentRemovalService;
-    }
-
-    /**
-     * Sets the PermanentControlSupport for manual (non-Spring) construction where
-     * the circular dependency prevents passing it in the constructor.
-     */
-    public void setPermanentControlSupport(PermanentControlSupport permanentControlSupport) {
-        this.permanentControlSupport = permanentControlSupport;
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_GIVES_GIFT)
@@ -2679,29 +2661,19 @@ public class MiscTriggerCollectorService {
             ExileMilledCreatureAndCreateTokenEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureCardMilled milled = (TriggerContext.CreatureCardMilled) ctx;
         var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-        String milledCardName = milled.milledCard().getName();
+        Card sourceCard = match.permanent().getCard();
 
-        // Exile from graveyard if still there (may already be exiled by another trigger)
-        List<Card> graveyard = gameData.playerGraveyards.get(milled.milledPlayerId());
-        if (graveyard.remove(milled.milledCard())) {
-            exileService.exileCard(gameData, milled.milledPlayerId(), milled.milledCard());
-        }
-
-        // Create the token for the controller of the triggering permanent
-        CreateTokenEffect tokenEffect = new CreateTokenEffect(
-                effect.tokenName(), effect.tokenPower(), effect.tokenToughness(),
-                effect.tokenColor(), effect.tokenSubtypes(),
-                Set.of(), Set.of()
-        );
-        permanentControlSupport.applyCreateToken(
-                gameData, match.controllerId(), tokenEffect, match.permanent().getCard().getSetCode()
-        );
-
-        gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
-                "'s ability triggers — exiling ", milled.milledCard(), " and creating a 2/2 black Zombie creature token."));
-        log.info("Game {} - {} triggers on creature card milled: exile {} + create Zombie token",
-                gameData.id, cardName, milledCardName);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)));
+        entry.setTriggeringCardId(milled.milledCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(milled.milledCard().getId()));
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on creature card milled", gameData.id, sourceCard.getName());
         return true;
     }
 

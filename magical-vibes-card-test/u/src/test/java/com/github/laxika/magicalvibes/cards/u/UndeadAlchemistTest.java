@@ -170,6 +170,7 @@ class UndeadAlchemistTest extends BaseCardTest {
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
+            resolveAllTriggers();
 
             // 4 cards milled, all creatures → all exiled, 4 Zombie tokens created
             assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -229,6 +230,7 @@ class UndeadAlchemistTest extends BaseCardTest {
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
+            resolveAllTriggers();
 
             // 4 cards milled: 2 creatures exiled + 2 tokens, 2 instants in graveyard
             assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -264,6 +266,7 @@ class UndeadAlchemistTest extends BaseCardTest {
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
+            resolveAllTriggers();
 
             // Each creature card triggers both Alchemists → 4 creatures × 2 triggers = 8 tokens
             assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -336,6 +339,12 @@ class UndeadAlchemistTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(attacker);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 
     @Test

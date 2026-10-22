@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Offers a card in exile as a free cast and then bottoms the rest of what the same permanent exiled
- * (Possibility Storm). The bottoming runs before the cast so the chosen card — which leaves exile to
- * go on the stack — is the only one that stays out of the library; declining bottoms it too, and so does
- * a chosen card that turns out to be uncastable.
+ * (Possibility Storm). The rest stay exiled until the cast is complete, including its target choice
+ * (the bottoming is deferred through {@code GameData.deferredExileBottomSourceIds}); declining bottoms
+ * them at once, and so does a chosen card that turns out to be uncastable.
  */
 @Slf4j
 @Component
@@ -40,15 +40,11 @@ public class MayCastExiledCardThenBottomRestHandler implements MayEffectHandlerB
         var typedEffect = (MayCastExiledCardThenBottomRestEffect) ability.effects().getFirst();
 
         if (accepted && ability.targetCardId() != null) {
-            exileBottomRandomSupport.bottomCardsExiledWithSource(
-                    gameData, typedEffect.sourcePermanentId(), ability.targetCardId());
+            gameData.deferredExileBottomSourceIds.add(typedEffect.sourcePermanentId());
             exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
             // A card that could not be cast (no legal target) is still among the cards exiled with the
             // source, so it goes to the bottom with the rest.
-            if (!gameData.interaction.isAwaitingInput() && gameData.findExiledCard(ability.targetCardId()) != null) {
-                exileBottomRandomSupport.bottomCardsExiledWithSource(
-                        gameData, typedEffect.sourcePermanentId(), null);
-            }
+            inputCompletionService.flushDeferredExileBottoms(gameData);
             return;
         }
 

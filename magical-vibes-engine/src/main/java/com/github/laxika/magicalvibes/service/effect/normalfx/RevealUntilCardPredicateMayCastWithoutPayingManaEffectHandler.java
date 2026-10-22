@@ -70,7 +70,7 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
             revealedCards.add(card);
             if (predicateEvaluationService.matchesCardPredicate(
                     card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId,
-                    entry.getSourcePermanentId(), null)) {
+                    entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot())) {
                 foundCard = card;
                 break;
             }
@@ -152,7 +152,7 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
             exiledCards.add(card);
             if (predicateEvaluationService.matchesCardPredicate(
                     card, effect.predicate(), entry.getCard().getId(), gameData, controllerId,
-                    entry.getSourcePermanentId(), null)) {
+                    entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot())) {
                 foundCard = card;
                 break;
             }

@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.cards.h.HonorOfThePure;
 import com.github.laxika.magicalvibes.cards.j.JayaBallard;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -121,7 +123,8 @@ class UrzasRuinousBlastTest extends BaseCardTest {
 
     @Test
     void legendaryPlaneswalkerEnablesCastingAndSurvives() {
-        harness.addToBattlefield(player1, new JayaBallard());
+        Permanent jaya = harness.addToBattlefieldAndReturn(player1, new JayaBallard());
+        jaya.setCounterCount(CounterType.LOYALTY, 3);
         harness.addToBattlefield(player2, new MoxAmber());
         harness.addToBattlefield(player2, new DampingSphere());
         harness.setHand(player1, List.of(new UrzasRuinousBlast()));

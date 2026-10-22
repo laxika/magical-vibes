@@ -115,6 +115,7 @@ class UnsettlingTwinsTest extends BaseCardTest {
     void analystReturnsTheUnchosenCardAfterManifesting() {
         Card manifestedCard = new UnsettlingTwins();
         Card graveyardCard = new Forest();
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new ParanormalAnalyst());
         harness.setLibrary(player1, List.of(manifestedCard, graveyardCard));
         harness.enterBattlefieldAndReturn(player1, new UnsettlingTwins());
@@ -135,6 +136,7 @@ class UnsettlingTwinsTest extends BaseCardTest {
     @Test
     void manifestDreadStillTriggersAnalystWithAnEmptyLibrary() {
         harness.addToBattlefield(player1, new ParanormalAnalyst());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.enterBattlefieldAndReturn(player1, new UnsettlingTwins());
         harness.passBothPriorities();

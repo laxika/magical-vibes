@@ -86,7 +86,7 @@ class UnexpectedFangsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.getCounterCount(CounterType.LIFELINK)).isEqualTo(1);

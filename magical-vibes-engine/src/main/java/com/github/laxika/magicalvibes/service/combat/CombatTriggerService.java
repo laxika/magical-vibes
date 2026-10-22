@@ -65,6 +65,13 @@ public class CombatTriggerService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final GraveyardTargetingService graveyardTargetingService;
 
+    private boolean isOwnAttackTrigger(Permanent perm, EffectSlot slot) {
+        return slot == EffectSlot.ON_ATTACK
+                && (perm.getCard().isAttackTriggerOwnedByAura()
+                || (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                && !perm.getCard().isAttackTriggerGrantedByEquipment()));
+    }
+
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
      * on the specified creature. Queues targeted triggers for target selection,
@@ -291,10 +298,7 @@ public class CombatTriggerService {
                                     // Aura's own "whenever enchanted creature attacks" ability is controlled by the
                                     // Aura's controller and has the Aura as its source. An Equipment's "whenever
                                     // equipped creature attacks" ability is likewise the Equipment's own ability.
-                                    boolean permOwnedAttackTrigger = slot == EffectSlot.ON_ATTACK
-                                            && (perm.getCard().isAttackTriggerOwnedByAura()
-                                            || (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                                            && !perm.getCard().isAttackTriggerGrantedByEquipment()));
+                                    boolean permOwnedAttackTrigger = isOwnAttackTrigger(perm, slot);
                                     UUID grantedAttackControllerId = permOwnedAttackTrigger
                                             ? auraOwnerId : finalCreatureControllerId;
                                     UUID targetChooserId = slot == EffectSlot.ON_ATTACK
@@ -318,11 +322,11 @@ public class CombatTriggerService {
                                         .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
                                         ? finalCreatureControllerId
                                         : null;
-                                // A token-creating ability granted to the enchanted creature (Invocation of
-                                // Saint Traft) is an ability of that creature, so the creature is its source
+                                // An attack ability granted to the enchanted creature (Invocation of Saint Traft,
+                                // Unquenchable Fury) is an ability of that creature, so the creature is its source
                                 // and its controller controls it (CR 113.7, CR 113.8).
                                 boolean grantedToCreature = slot == EffectSlot.ON_ATTACK
-                                        && triggeringPlayerId != null;
+                                        && (triggeringPlayerId != null || !isOwnAttackTrigger(perm, slot));
                                 StackEntry trigger = new StackEntry(
                                         StackEntryType.TRIGGERED_ABILITY,
                                         perm.getCard(),

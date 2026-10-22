@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -214,6 +217,19 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         CardEffect optionalAction = e.wrapped() instanceof SequenceEffect sequence
                 && !sequence.steps().isEmpty() ? sequence.steps().getFirst() : e.wrapped();
+        UUID discarderId = optionalAction instanceof DiscardEffect discard
+                ? switch (discard.recipient()) {
+                    case CONTROLLER -> entry.getControllerId();
+                    case TARGET_PLAYER -> targetId;
+                    default -> null;
+                }
+                : null;
+        if (discarderId != null && gameData.playerHands.getOrDefault(discarderId, List.of()).isEmpty()) {
+            // Nothing can be discarded, so no discard choice is offered and "if you don't" applies.
+            gameData.resolvingMayEffectFromStack = false;
+            insertElseEffect(entry, e);
+            return;
+        }
         if (optionalAction instanceof DrawCardEffect
                 && drawService.isDrawPrevented(gameData, entry.getControllerId())) {
             // The ability's controller is the one who would draw, whoever makes the choice.
@@ -250,14 +266,23 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // The resolved effect acts for the triggering permanent's controller as of resolution, which
             // can differ from the trigger-time controller if control changed while the ability waited.
             entry.setTriggeringPermanentControllerId(choicePlayerId);
+            if (e.wrapped() instanceof DrawCardForTargetPlayerEffect draw
+                    && !draw.targetsPlayer() && draw.targetGroup() < 0) {
+                entry.setTargetId(choicePlayerId);
+            }
         }
 
+        // "Its controller may draw a card" draws for the triggering permanent's controller as of
+        // resolution, which is the player making the choice.
+        UUID pendingTargetId = e.choicePlayer() == MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER
+                && e.wrapped() instanceof DrawCardForTargetPlayerEffect
+                ? choicePlayerId : targetId;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 defendingPlayerChoice ? entry.getControllerId() : choicePlayerId,
                 List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
-                targetId,
+                pendingTargetId,
                 null,
                 entry.getSourcePermanentId(),
                 null,

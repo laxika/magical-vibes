@@ -23,6 +23,7 @@ public class CopyTriggeredAbilityFromSnapshotEffectHandler implements NormalEffe
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -71,6 +72,9 @@ public class CopyTriggeredAbilityFromSnapshotEffectHandler implements NormalEffe
                     "Choose a new target for the copy of "
                             + snapshot.getCard().getName() + "'s triggered ability?",
                     copyCard.getId()));
+        } else if (!snapshot.isNonTargeting() && !copyEntry.getDeclaredTargetIds().isEmpty()) {
+            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), entry.getControllerId(),
+                    copyEntry.getTargetableId(), 0);
         }
     }
 }

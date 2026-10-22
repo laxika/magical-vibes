@@ -47,4 +47,13 @@ public class EntryReplacementHandlerRegistry {
             handler.apply(gameData, controllerId, enteringPermanent, effect, xValue, kicked);
         }
     }
+
+    public void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent,
+                      CardEffect effect, int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
+        EntryReplacementHandlerBean handler = handlers.get(effect.getClass());
+        if (handler != null) {
+            handler.apply(gameData, controllerId, enteringPermanent, effect, xValue, kicked,
+                    repeatedAdditionalCosts);
+        }
+    }
 }

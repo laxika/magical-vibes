@@ -63,12 +63,13 @@ class UrzaChiefArtificerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         Permanent construct = findPermanent(player1, "Construct");
         assertThat(construct.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(construct.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(construct.getEffectivePower()).isEqualTo(4);
-        assertThat(construct.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(4);
     }
 }

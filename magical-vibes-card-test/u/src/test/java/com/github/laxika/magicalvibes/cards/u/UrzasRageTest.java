@@ -73,6 +73,7 @@ class UrzasRageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player2, rage.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(23);
     }

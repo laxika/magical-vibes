@@ -26,7 +26,8 @@ public class CopyControllerAllSpellsAndAbilitiesEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<CardEffect> copyEffects = new ArrayList<>();
+        List<CardEffect> spellCopyEffects = new ArrayList<>();
+        List<CardEffect> abilityCopyEffects = new ArrayList<>();
         for (StackEntry stackEntry : List.copyOf(gameData.stack)) {
             if (stackEntry == entry || !controllerId.equals(stackEntry.getControllerId())) {
                 continue;
@@ -36,14 +37,18 @@ public class CopyControllerAllSpellsAndAbilitiesEffectHandler implements NormalE
             switch (stackEntry.getEntryType()) {
                 case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL,
                         BATTLE_SPELL, SORCERY_SPELL, INSTANT_SPELL ->
-                        copyEffects.add(new CopyControllerCastSpellEffect(snapshot, controllerId));
+                        spellCopyEffects.add(new CopyControllerCastSpellEffect(snapshot, controllerId));
                 case ACTIVATED_ABILITY ->
-                        copyEffects.add(new CopyControllerActivatedAbilityEffect(snapshot, null, controllerId));
+                        abilityCopyEffects.add(new CopyControllerActivatedAbilityEffect(snapshot, null, controllerId));
                 case TRIGGERED_ABILITY ->
-                        copyEffects.add(new CopyTriggeredAbilityFromSnapshotEffect(snapshot));
+                        abilityCopyEffects.add(new CopyTriggeredAbilityFromSnapshotEffect(snapshot));
             }
         }
 
+        // Spell copies go on the stack first so the copied abilities end up above them, as the card's
+        // text orders it ("copy all spells you control, then copy all other activated and triggered abilities").
+        List<CardEffect> copyEffects = new ArrayList<>(spellCopyEffects);
+        copyEffects.addAll(abilityCopyEffects);
         if (!copyEffects.isEmpty()) {
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, copyEffects);
         }

@@ -59,7 +59,6 @@ public class TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler
             for (UUID chosenId : chosenIds) {
                 ExiledCardEntry exiled = gameData.exiledCards.stream()
                         .filter(candidate -> chosenId.equals(candidate.card().getId())
-                                && !candidate.faceDown()
                                 && gameData.playerIds.contains(candidate.ownerId())
                                 && !player.getId().equals(candidate.ownerId()))
                         .findFirst().orElse(null);

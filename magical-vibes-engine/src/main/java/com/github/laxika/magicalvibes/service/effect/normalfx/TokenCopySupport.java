@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffe
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -40,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /** Shared token-copy creation used by target-copy effects and last-known-information riders. */
@@ -55,6 +58,7 @@ public class TokenCopySupport {
     private final SagaChapterService sagaChapterService;
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.aura.AuraAttachmentService auraAttachmentService;
+    private final ObjectProvider<AnimationSupport> animationSupport;
 
     public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                         Permanent sourcePermanent,
@@ -572,7 +576,32 @@ public class TokenCopySupport {
 
         battlefieldEntryService.checkAllyTokenEntersTriggers(
                 gameData, tokenControllerId, tokens.stream().map(Permanent::getId).toList());
+        animateTokensThatAreNotCreatures(gameData, entry, tokens, tokenControllerId, effect);
         return createdIds;
+    }
+
+    /**
+     * Applies the effect's post-entry animation to each token that is not a creature. The tokens have
+     * already entered as plain copies, so entry triggers did not see the animation's types.
+     */
+    private void animateTokensThatAreNotCreatures(GameData gameData, StackEntry entry, List<Permanent> tokens,
+                                                  UUID tokenControllerId,
+                                                  CreateTokenCopyOfTargetPermanentEffect effect) {
+        AnimatePermanentsEffect animation = effect.animateIfNotCreature();
+        if (animation == null) {
+            return;
+        }
+        int power = ((Fixed) animation.power()).value();
+        int toughness = ((Fixed) animation.toughness()).value();
+        String sourceName = entry.getCard() == null ? effect.nameOverride() : entry.getCard().getName();
+        for (Permanent token : tokens) {
+            if (gameQueryService.findPermanentById(gameData, token.getId()) == null
+                    || gameQueryService.isCreature(gameData, token)) {
+                continue;
+            }
+            animationSupport.getObject().animatePermanently(gameData, token, animation, power, toughness,
+                    sourceName, entry.getSourcePermanentId(), entry.getControllerId());
+        }
     }
 
     /** Resumes the token-copy batch after one legal, untargeted Aura attachment choice. */

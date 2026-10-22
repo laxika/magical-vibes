@@ -322,7 +322,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                                             ExileGraveyardCardsEffect effect) {
         List<UUID> targetPlayerIds = entry.getTargetIds().isEmpty()
                 ? entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId())
-                : entry.getTargetIds();
+                : entry.targetsForEffect(effect);
         for (UUID targetPlayerId : targetPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
             String playerName = gameData.playerIdToName.get(targetPlayerId);

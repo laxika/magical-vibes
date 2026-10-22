@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardGenericManaCostAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -65,7 +65,7 @@ public class UrzasSaga extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_III, new SearchLibraryEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
-                        new CardMaxManaValuePredicate(1)
+                        new CardGenericManaCostAtMostPredicate(1)
                 )),
                 LibrarySearchDestination.BATTLEFIELD
         ));

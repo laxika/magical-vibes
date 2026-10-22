@@ -26,6 +26,8 @@ public class AllowPlayCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
         if (sourcePermanentId == null) return;
 
         var permission = (AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect) effect;
+        gameData.exilePlayUntilEndOfTurnGrantsBySource.put(sourcePermanentId,
+                new ExilePlayCostModifier(entry.getControllerId(), null, -permission.spellCostReduction()));
         List<ExiledCardEntry> matchingEntries = gameData.getExiledWithPermanentEntries(
                 sourcePermanentId, entry.getCard().getId());
         for (ExiledCardEntry matchingEntry : matchingEntries) {

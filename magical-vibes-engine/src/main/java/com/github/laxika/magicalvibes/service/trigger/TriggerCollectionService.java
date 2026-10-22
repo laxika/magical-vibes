@@ -19081,7 +19081,20 @@ public class TriggerCollectionService {
                     : DyingCreatureAttachmentSnapshot.capture(gameData, dyingPermanent.getId());
             boolean matches = DyingCreatureAttachmentSnapshot.satisfiedAtDeath(attachmentSnapshot,
                     conditional.predicate(),
-                    p -> predicateEvaluationService.matchesPermanentPredicate(perm, p, matchContext));
+                    p -> {
+                        // CR 603.10a: stat conditions look back at the creature as it last existed on the
+                        // battlefield, including controller-dependent static bonuses that ended at death.
+                        Integer lastKnownToughness = perm.getLastKnownToughness();
+                        if (lastKnownToughness != null) {
+                            int lastKnownPower = perm.getLastKnownPower() != null
+                                    ? perm.getLastKnownPower() : perm.getEffectivePower();
+                            Boolean statMatch = matchesDyingStats(p, lastKnownPower, lastKnownToughness);
+                            if (statMatch != null) {
+                                return statMatch;
+                            }
+                        }
+                        return predicateEvaluationService.matchesPermanentPredicate(perm, p, matchContext);
+                    });
             if (!matches) {
                 return null;
             }
@@ -19147,7 +19160,7 @@ public class TriggerCollectionService {
     }
 
     /** Evaluates a power or toughness predicate against last-known stats, or null for any other predicate. */
-    private static Boolean matchesDyingStats(PermanentPredicate predicate, int power, int toughness) {
+    static Boolean matchesDyingStats(PermanentPredicate predicate, int power, int toughness) {
         if (predicate instanceof com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate p) {
             return toughness >= p.minToughness();
         }

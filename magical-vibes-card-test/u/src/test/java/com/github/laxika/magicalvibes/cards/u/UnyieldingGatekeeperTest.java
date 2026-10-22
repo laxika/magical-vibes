@@ -7,8 +7,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -65,8 +70,13 @@ class UnyieldingGatekeeperTest extends BaseCardTest {
 
     @Test
     void controlledStolenPermanentReturnsUnderAbilityControllersControl() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new UnyieldingGatekeeper());
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        UnyieldingGatekeeper targetCard = new UnyieldingGatekeeper();
+        targetCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), target,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         Permanent gatekeeper = castFaceDown();
 
         turnFaceUp(gatekeeper);

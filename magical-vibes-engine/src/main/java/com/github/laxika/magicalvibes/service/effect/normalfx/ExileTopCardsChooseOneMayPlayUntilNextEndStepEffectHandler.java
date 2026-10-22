@@ -26,6 +26,7 @@ import java.util.UUID;
 public class ExileTopCardsChooseOneMayPlayUntilNextEndStepEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -68,7 +69,18 @@ public class ExileTopCardsChooseOneMayPlayUntilNextEndStepEffectHandler implemen
                     .text(" from the top of their library.").build());
         }
 
-        if (!exiledIds.isEmpty()) {
+        if (!exiledIds.isEmpty() && !exileEffect.chooseOnExile()) {
+            for (UUID exiledId : exiledIds) {
+                exileSupport.grantPlayUntilOwnersNextEndStep(gameData, exiledId, permissionPlayerId);
+                if (exileEffect.withoutPayingManaCost()) {
+                    gameData.exilePlayWithoutPayingManaCost.add(exiledId);
+                }
+            }
+            gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledIds);
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(permissionPlayerId)
+                            + " may play one of those cards until their next end step."));
+        } else if (!exiledIds.isEmpty()) {
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.ExiledCardMayPlayChoice(
                             permissionPlayerId, exiledIds, ExilePlayDuration.NEXT_END_STEP,

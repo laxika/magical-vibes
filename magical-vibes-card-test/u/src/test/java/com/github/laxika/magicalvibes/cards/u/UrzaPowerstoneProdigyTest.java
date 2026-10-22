@@ -83,6 +83,8 @@ class UrzaPowerstoneProdigyTest extends BaseCardTest {
 
         lootAndDiscard(0, urza);
         assertThat(countPermanents(player1, "Powerstone")).isZero();
+        declareAttackers(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         lootAndDiscard(0, urza);
 
         assertThat(countPermanents(player1, "Powerstone")).isEqualTo(1);
@@ -126,7 +128,7 @@ class UrzaPowerstoneProdigyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         lootAndDiscard(0, urza);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
         lootAndDiscard(0, urza);
 

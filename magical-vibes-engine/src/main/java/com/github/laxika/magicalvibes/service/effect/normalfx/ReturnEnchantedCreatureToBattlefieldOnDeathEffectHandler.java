@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -72,6 +73,14 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
+                    gameData.id, entry.getCard().getName(), dyingCreatureCardId);
+            return false;
+        }
+
+        // Grafdigger's Cage etc.: a creature card that can't enter the battlefield from a graveyard
+        // stays where it is, so the return does nothing.
+        if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, creatureCard, Zone.GRAVEYARD)) {
+            log.info("Game {} - {} death trigger blocked (creature card {} can't enter from a graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return false;
         }

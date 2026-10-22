@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
@@ -967,8 +968,11 @@ public class ConditionEvaluationService {
                             .contains(completed.dungeon()));
             case ControllerHasBoon ignored ->
                     ctx.controllerId() != null
-                            && gameData.boons.stream()
-                            .anyMatch(boon -> ctx.controllerId().equals(boon.controllerId()));
+                            && (gameData.boons.stream()
+                            .anyMatch(boon -> ctx.controllerId().equals(boon.controllerId()))
+                            || gameData.hasDelayedAction(DelayedControllerSpellCastTrigger.class,
+                            trigger -> trigger.persistsUntilConsumed()
+                                    && ctx.controllerId().equals(trigger.controllerId())));
             case ControllerHasEmblem ignored ->
                     ctx.controllerId() != null
                             && gameData.emblems.stream()
@@ -1678,13 +1682,17 @@ public class ConditionEvaluationService {
                                 gameData, targetSpell.getControllerId(), ctx.sourceCard()));
             }
             case TargetSpellManaSpentLessThanManaValue ignored -> {
-                com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
-                        : gameData.stack.stream()
-                                .filter(se -> se.getTargetableId().equals(ctx.targetId()))
-                                .findFirst().orElse(null);
-                yield targetSpell != null
-                        && targetSpell.getManaSpentToCast()
-                        < targetSpell.getSpellManaValue();
+                if (ctx.targetId() == null) {
+                    yield false;
+                }
+                com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
+                        .filter(se -> se.getTargetableId().equals(ctx.targetId()))
+                        .findFirst().orElse(null);
+                if (targetSpell != null) {
+                    yield targetSpell.getManaSpentToCast() < targetSpell.getSpellManaValue();
+                }
+                GameData.CounteredSpellManaCost countered = gameData.counteredSpellManaCosts.get(ctx.targetId());
+                yield countered != null && countered.manaSpent() < countered.manaValue();
             }
             case TargetSpellManaValueAtMostGreatestControlledPermanentManaValue ignored ->
                     targetSpellManaValueAtMostGreatestControlledPermanentManaValue(gameData, ctx);

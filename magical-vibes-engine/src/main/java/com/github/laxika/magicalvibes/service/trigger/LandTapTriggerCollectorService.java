@@ -821,7 +821,10 @@ public class LandTapTriggerCollectorService {
 
         var gameData = match.gameData();
         Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
-        if (tappedLand == null || !landProducesManaColor(gameData, tappedLand, trigger.color())) return false;
+        boolean producedThisTap = lt.producedColors().contains(trigger.color());
+        if (tappedLand == null || !(producedThisTap || landProducesManaColor(gameData, tappedLand, trigger.color()))) {
+            return false;
+        }
 
         gameData.playerManaPools.get(lt.tappingPlayerId()).add(trigger.color());
         gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),

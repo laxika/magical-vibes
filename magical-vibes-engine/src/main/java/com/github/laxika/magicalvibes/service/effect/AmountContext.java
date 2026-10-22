@@ -204,6 +204,13 @@ public record AmountContext(
                 List.of(), permanent.getCard());
     }
 
+    /** Entry-replacement context that also carries the kicker payments of the spell that put the permanent in. */
+    public static AmountContext forEnteringPermanent(UUID controllerId, Permanent permanent, int xValue,
+                                                     List<String> repeatedAdditionalCosts) {
+        return new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
+                repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, permanent.getCard());
+    }
+
     /** Source-less context for heuristic estimation (AI evaluation). */
     public static AmountContext forEstimation(UUID controllerId) {
         return new AmountContext(controllerId, null, null, 0, 0);

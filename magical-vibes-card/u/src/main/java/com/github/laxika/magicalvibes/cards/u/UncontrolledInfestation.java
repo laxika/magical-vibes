@@ -26,6 +26,6 @@ public class UncontrolledInfestation extends Card {
                 "Target must be a nonbasic land"
         ));
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
-                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

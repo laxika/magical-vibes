@@ -462,6 +462,21 @@ public class MayCastHandlerService {
                     notPlayedDestination, publiclyRevealed);
             return;
         } else {
+            // CR 601.2b: a modal spell's mode is chosen as it is cast, before it can be responded to.
+            ChooseOneEffect modal = singleChoiceModal(cardToPlay);
+            if (modal != null) {
+                Map<String, Integer> modes = new LinkedHashMap<>();
+                for (int mode = 0; mode < modal.options().size(); mode++) {
+                    if (modal.options().get(mode).handOnly()) continue;
+                    modes.put(modal.options().get(mode).label(), mode);
+                }
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        player.getId(), null, null,
+                        new ChoiceContext.LibraryFreeCastModeChoice(cardToPlay.getId(), modes),
+                        new ArrayList<>(modes.keySet()), "Choose a mode for " + cardToPlay.getName() + "."));
+                return;
+            }
+
             // Cast the spell without paying its mana cost
             deck.removeFirst();
 

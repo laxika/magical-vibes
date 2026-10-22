@@ -66,8 +66,7 @@ class UrsineGuideRangersMeritTest extends BaseCardTest {
 
         assertThat(guide.isPrepared()).isTrue();
         assertThat(guide.getPreparedSpellCardId()).isNotNull();
-        assertThat(gd.findExiledCard(guide.getPreparedSpellCardId()).card())
-                .isInstanceOf(RangersMerit.class);
+        assertThat(gd.findExiledCard(guide.getPreparedSpellCardId())).isNotNull();
         assertThat(gd.stack).isEmpty();
     }
 

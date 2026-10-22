@@ -38,12 +38,10 @@ public class DestroyTargetEquipmentAndDamageAttachedCreatureEffectHandler
             attachedCreature = null;
         }
 
-        boolean destroyed = destructionSupport.tryDestroyAndLog(
-                gameData, equipment, entry.getCard().getName());
-        if (destroyed && attachedCreature != null
+        destructionSupport.tryDestroyAndLog(gameData, equipment, entry.getCard().getName());
+        if (attachedCreature != null
                 && !damageSupport.isDamagePreventedForCreature(gameData, entry, attachedCreature)) {
-            damageSupport.dealCreatureDamage(gameData, entry, attachedCreature,
-                    2);
+            damageSupport.dealCreatureDamage(gameData, entry, attachedCreature, 2);
         }
     }
 }

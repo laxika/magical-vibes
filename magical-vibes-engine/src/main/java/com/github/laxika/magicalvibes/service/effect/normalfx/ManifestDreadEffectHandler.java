@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Resolves manifest dread for the source-linked exiled card's owner, an effect controller, or a targeted spell's controller. */
@@ -43,6 +44,8 @@ public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
             }
         } else if (manifestDreadEffect.useControllerLibrary()) {
             libraryOwnerId = entry.getControllerId();
+        } else if (manifestDreadEffect.libraryOwnerId() != null) {
+            libraryOwnerId = manifestDreadEffect.libraryOwnerId();
         } else {
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId == null) {
@@ -54,6 +57,14 @@ public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             libraryOwnerId = exiledCard.ownerId();
+            // Each player who owns a card exiled with the source manifests dread in turn (2024-09-20 ruling
+            // when the enters ability resolved more than once); the rest are queued after this effect.
+            List<CardEffect> otherOwners = findOtherOwners(gameData, sourcePermanentId, libraryOwnerId).stream()
+                    .<CardEffect>map(ownerId -> new ManifestDreadEffect(false, false, ownerId))
+                    .toList();
+            if (!otherOwners.isEmpty()) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, otherOwners);
+            }
         }
 
         LibraryRevealSupport.TopCardsResult result = libraryRevealSupport.takeTopCardsFromLibrary(
@@ -68,6 +79,17 @@ public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData, PendingInteraction.LibraryRevealChoice.manifestDread(
                 result.controllerId(), result.topCards(),
                 "Choose one of these cards to manifest. Put the other into your graveyard."));
+    }
+
+    private List<UUID> findOtherOwners(GameData gameData, UUID sourcePermanentId, UUID firstOwnerId) {
+        synchronized (gameData.exiledCards) {
+            return gameData.exiledCards.stream()
+                    .filter(exiled -> sourcePermanentId.equals(exiled.sourcePermanentId()))
+                    .map(ExiledCardEntry::ownerId)
+                    .filter(ownerId -> !ownerId.equals(firstOwnerId))
+                    .distinct()
+                    .toList();
+        }
     }
 
     private ExiledCardEntry findExiledCard(GameData gameData, UUID sourcePermanentId) {

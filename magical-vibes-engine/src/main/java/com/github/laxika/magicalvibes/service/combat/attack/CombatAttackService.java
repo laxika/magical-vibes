@@ -1236,12 +1236,13 @@ public class CombatAttackService {
                         && ce.condition() instanceof ExactlyAttackers
                         ? ce.wrapped() : e);
 
-                // Pack-tactics-style conditions qualify the attack event itself, so the condition
-                // is measured now and the surviving effect is not re-evaluated during resolution.
-                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                // Pack-tactics-style intervening-if conditions qualify the attack event itself, so the
+                // condition is measured now and the surviving effect is not re-evaluated during resolution.
+                // A non-intervening "if" in the effect text (Formidable) is checked only on resolution.
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce && ce.interveningIf()
                         && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
                         && !conditionEvaluationService.isMet(gameData, ce.condition(), attackCountCtx));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce && ce.interveningIf()
                         && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast
                         ? ce.wrapped() : e);
                 ConditionContext attackedTargetContext = ConditionContext.forPermanent(attacker, playerId)

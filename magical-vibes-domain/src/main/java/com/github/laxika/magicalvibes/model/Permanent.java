@@ -382,11 +382,11 @@ public class Permanent {
      *  {@link #sacrificeAtNextCleanup} the sweep runs before {@link #resetModifiers()}, so the flag
      *  deliberately survives that reset. */
     @Setter private boolean returnToHandAtNextCleanup;
-    /** If true, this permanent is returned to its owner's hand during its controller's next untap step
-     *  as that player untaps their permanents ({@code ReturnSourceToHandAtNextUntapEffect},
-     *  Undiscovered Paradise). Swept by {@code UntapStepService} (not during a skipped untap step).
-     *  Survives {@link #resetModifiers()}. */
-    @Setter private boolean returnToHandAtNextUntap;
+    /** The player whose next untap step returns this permanent to its owner's hand
+     *  ({@code ReturnSourceToHandAtNextUntapEffect}, Undiscovered Paradise), or null. This is the player
+     *  who set it up, not whoever controls the permanent at that untap step. Swept by
+     *  {@code UntapStepService} (not during a skipped untap step). Survives {@link #resetModifiers()}. */
+    @Setter private UUID returnToHandAtNextUntapPlayerId;
     /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (CR-style designation). While
      *  prepared, a copy of its prepare spell sits in exile (see {@link #preparedSpellCardId}) and the controller
      *  may cast it; casting it unprepares this permanent. */
@@ -1092,7 +1092,7 @@ public class Permanent {
         });
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
-        this.returnToHandAtNextUntap = source.returnToHandAtNextUntap;
+        this.returnToHandAtNextUntapPlayerId = source.returnToHandAtNextUntapPlayerId;
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
@@ -1425,6 +1425,10 @@ public class Permanent {
     /** Sets the permanent's status for an entry replacement without applying untap effects. */
     public void enterUntapped() {
         this.tapped = false;
+    }
+
+    public boolean isReturnToHandAtNextUntap() {
+        return returnToHandAtNextUntapPlayerId != null;
     }
 
     public void untap() {

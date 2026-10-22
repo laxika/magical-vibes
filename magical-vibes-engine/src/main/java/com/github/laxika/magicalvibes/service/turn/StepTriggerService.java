@@ -4825,10 +4825,6 @@ public class StepTriggerService {
             List<UnattachEquipmentAtNextEndStep> pendingUnattaches =
                     gameData.drainDelayedActions(UnattachEquipmentAtNextEndStep.class);
             for (UnattachEquipmentAtNextEndStep pending : pendingUnattaches) {
-                Permanent equipment = gameQueryService.findPermanentById(gameData, pending.equipmentId());
-                if (equipment == null || equipment.getAttachedTo() == null) {
-                    continue;
-                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),

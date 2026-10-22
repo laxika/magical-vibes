@@ -400,7 +400,11 @@ public class DrawService {
         }
 
         Integer pendingExileTopCard = gameData.pendingNextDrawExileTopCard.get(playerId);
-        if (pendingExileTopCard != null && pendingExileTopCard > 0) {
+        // CR 616.1: while dredge is on offer the affected player chooses its order against this replacement, so
+        // dredge is offered first and declining it (re-entering with skipDredge) applies the exile.
+        boolean dredgeOfferedFirst = !skipDredge && pendingExileTopCard != null && pendingExileTopCard > 0
+                && !dredgeSupport.eligibleGraveyardIndices(gameData, playerId).isEmpty();
+        if (!dredgeOfferedFirst && pendingExileTopCard != null && pendingExileTopCard > 0) {
             if (pendingExileTopCard == 1) {
                 gameData.pendingNextDrawExileTopCard.remove(playerId);
             } else {
@@ -1341,7 +1345,8 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean hasEffect = !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
                 if (hasEffect) {
                     return permanent;
@@ -1369,7 +1374,7 @@ public class DrawService {
         Card exiled = deck.removeFirst();
         exileService.exileCard(gameData, playerId, exiled, source.getId());
         gameData.exilePlayPermissions.put(exiled.getId(), playerId);
-        gameData.exilePlayPermissionSourcePermanents.put(exiled.getId(), source.getId());
+        gameData.exilePlayPermissionStaticSourcePermanents.put(exiled.getId(), source.getId());
         gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
 
         gameLogService.append(gameData, GameLog.builder()

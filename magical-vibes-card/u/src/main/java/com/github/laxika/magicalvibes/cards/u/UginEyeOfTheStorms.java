@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AllowCastCardsExiledWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -61,7 +61,7 @@ public class UginEyeOfTheStorms extends Card {
                 -11,
                 List.of(
                         new SearchLibraryForCardsToExileWithSourceEffect(colorlessNonland),
-                        new AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(colorlessNonland, true)
+                        new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(colorlessNonland, true, true)
                 ),
                 "−11: Search your library for any number of colorless nonland cards, exile them, then shuffle. "
                         + "Until end of turn, you may cast those cards without paying their mana costs."

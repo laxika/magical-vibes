@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KeeningStone;
 import com.github.laxika.magicalvibes.cards.r.Regress;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -259,6 +260,7 @@ class UlamogTheInfiniteGyreTest extends BaseCardTest {
     void annihilatorStillAppliesWhenAttackedPlaneswalkerLeavesInResponse() {
         addCreatureReady(player1, new UlamogTheInfiniteGyre());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GideonJura());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
         for (int i = 0; i < 4; i++) {
             harness.addToBattlefield(player2, new Island());
         }

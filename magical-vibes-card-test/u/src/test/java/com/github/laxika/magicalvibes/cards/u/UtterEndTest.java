@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SarkhanTheDragonspeaker;
 import com.github.laxika.magicalvibes.cards.s.SuspensionField;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -98,7 +100,8 @@ class UtterEndTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a planeswalker")
     void exilesPlaneswalker() {
-        harness.addToBattlefield(player2, new SarkhanTheDragonspeaker());
+        Permanent sarkhan = harness.addToBattlefieldAndReturn(player2, new SarkhanTheDragonspeaker());
+        sarkhan.setCounterCount(CounterType.LOYALTY, 4);
         UUID targetId = harness.getPermanentId(player2, "Sarkhan, the Dragonspeaker");
 
         prepareUtterEnd();

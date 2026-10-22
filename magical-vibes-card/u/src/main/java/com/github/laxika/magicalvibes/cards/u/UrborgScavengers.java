@@ -18,6 +18,6 @@ public class UrborgScavengers extends Card {
                 new ExileTargetCardFromGraveyardPutCounterOnSourceEffect());
         addEffect(EffectSlot.ON_ATTACK,
                 new ExileTargetCardFromGraveyardPutCounterOnSourceEffect());
-        addEffect(EffectSlot.STATIC, new GainKeywordsOfCardsExiledWithSourceEffect());
+        addEffect(EffectSlot.STATIC, new GainKeywordsOfCardsExiledWithSourceEffect(false));
     }
 }

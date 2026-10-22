@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +65,6 @@ class UnstableFrontierTest extends BaseCardTest {
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
         assertThat(bonus.landSubtypeOverriding()).isTrue();
         assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
         assertThat(forest.getTransientSubtypes()).isEmpty();
 
         int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
@@ -78,11 +78,12 @@ class UnstableFrontierTest extends BaseCardTest {
     @DisplayName("Override is cleared at end of turn")
     void overrideClearedAtEndOfTurn() {
         Permanent forest = becomeIsland();
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.computeStaticBonus(gd, forest).landSubtypeOverriding()).isTrue();
 
+        assertThat(gqs.computeStaticBonus(gd, forest).landSubtypeOverriding()).isTrue();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.computeStaticBonus(gd, forest).landSubtypeOverriding()).isFalse();
         harness.forceActivePlayer(player1);
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -147,6 +148,8 @@ class UnstableFrontierTest extends BaseCardTest {
     @Test
     @DisplayName("Unstable Frontier can target itself and regains its abilities after cleanup")
     void canTargetItself() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent frontier = harness.addToBattlefieldAndReturn(player1, new UnstableFrontier());
         harness.forceActivePlayer(player1);
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
@@ -30,9 +31,13 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         // Rule 724.1a: Triggered abilities that haven't been put on the stack yet cease to exist
         gameData.pendingMayAbilities.clear();
+        gameData.pendingInteractions.removeIf(PermanentChoiceContext.DeathTriggerTarget.class::isInstance);
 
         // Rule 724.1b: Exile every object on the stack
         turnSupport.exileStackEntries(gameData);
+        // The resolving spell was exiled above; its disposition must not run later (the discard prompt
+        // pauses resolution), or it would be put into a graveyard after the exile.
+        entry.setSpellDispositionHandled(true);
 
         // Rule 724.1d: Remove creatures from combat. An "exile at end of combat" delayed action has no
         // stated duration, so it survives the skipped combat and waits for the next end of combat (CR 603.7b).

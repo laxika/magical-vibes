@@ -131,6 +131,11 @@ public class CounterSupport {
     }
 
     public boolean counterSpell(GameData gameData, StackEntry source, StackEntry target) {
+        if (target.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && target.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+            gameData.recordCounteredSpellManaCost(target.getTargetableId(),
+                    target.getManaSpentToCast(), target.getSpellManaValue());
+        }
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);

@@ -23,15 +23,16 @@ import java.util.List;
 public class UltimaOriginOfOblivion extends Card {
 
     public UltimaOriginOfOblivion() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        var blightedLand = target(TargetFilters.land());
+        blightedLand.addEffect(EffectSlot.ON_ATTACK,
+                new PutCounterOnTargetPermanentEffect(CounterType.BLIGHT));
+        blightedLand.addEffect(EffectSlot.ON_ATTACK,
                 new GrantEffectsToCounterBearersEffect(CounterType.BLIGHT, List.of(
                         new LoseAllLandTypesEffect(GrantScope.ALL_LANDS, null),
                         new LosesAllAbilitiesEffect(GrantScope.ALL_LANDS),
                         new GrantActivatedAbilityEffect(
-                                ManaAbilities.tapFor(ManaColor.COLORLESS), GrantScope.ALL_LANDS))));
-
-        target(TargetFilters.land()).addEffect(EffectSlot.ON_ATTACK,
-                new PutCounterOnTargetPermanentEffect(CounterType.BLIGHT));
+                                ManaAbilities.tapFor(ManaColor.COLORLESS), GrantScope.ALL_LANDS)),
+                        true));
 
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                 new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS));

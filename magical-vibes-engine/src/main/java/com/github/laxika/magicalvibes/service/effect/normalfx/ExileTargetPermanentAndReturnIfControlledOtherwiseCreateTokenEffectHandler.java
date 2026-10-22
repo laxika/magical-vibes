@@ -1,16 +1,20 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnIfControlledOtherwiseCreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +28,7 @@ public class ExileTargetPermanentAndReturnIfControlledOtherwiseCreateTokenEffect
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
@@ -60,6 +65,11 @@ public class ExileTargetPermanentAndReturnIfControlledOtherwiseCreateTokenEffect
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled."));
 
         if (controlledByAbilityController && !card.isToken()) {
+            if (card.isAura()) {
+                battlefieldEntryBatchSupport.begin(gameData, List.of(new BattlefieldEntryCard(
+                        abilityControllerId, ownerId, card, Zone.EXILE, null, null, null, List.of(), true)));
+                return;
+            }
             gameData.removeFromExile(card.getId());
             Permanent returned = new Permanent(card);
             returned.tap();

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
@@ -296,6 +297,11 @@ public class GameData {
      * Populated during spell payment and consumed when spell-cast triggers fire.
      */
     public final Map<UUID, Integer> spellCastManaSpent = new ConcurrentHashMap<>();
+    /**
+     * Mana spent and mana value of each spell countered this game, keyed by its targetable id. A
+     * counter removes the spell from the stack, so later effects of the same spell read it from here.
+     */
+    public final Map<UUID, CounteredSpellManaCost> counteredSpellManaCosts = new ConcurrentHashMap<>();
     /** Amount of Path of Ancestry mana spent to cast each spell. */
     public final Map<UUID, Integer> spellCastPathOfAncestryManaSpent = new ConcurrentHashMap<>();
     /** Amount of mana produced by creatures and spent to cast each spell. */
@@ -446,6 +452,10 @@ public class GameData {
      * {@code null} component is left to the card's own value (a power-only exchange).
      */
     public record PerpetualBasePowerToughness(Integer power, Integer toughness, long timestamp) {
+    }
+
+    /** Mana spent to cast a countered spell and that spell's mana value at the time it was on the stack. */
+    public record CounteredSpellManaCost(int manaSpent, int manaValue) {
     }
     /** Perpetual base-power/base-toughness setters keyed by physical card identity. */
     public final Map<UUID, PerpetualBasePowerToughness> perpetualCardBasePowerToughness =
@@ -1525,6 +1535,9 @@ public class GameData {
      *  When the source permanent leaves the battlefield, the exiled cards return.
      *  A source may hold more than one pending return (e.g. Realm Razer exiles all lands). */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
+    /** Maps a permanent to the card its "when this leaves the battlefield" return puts into hand (Ugin, the Ineffable's
+     *  Spirit). Kept outside the permanent's abilities, so losing abilities or being a copy does not affect it. */
+    public final Map<UUID, ReturnExiledCardToHandEffect> exiledCardReturnToHandOnPermanentLeave = new ConcurrentHashMap<>();
     /** Exile returns keyed by the player whose opponent must become monarch. */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnOpponentBecomesMonarch = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
@@ -2100,6 +2113,10 @@ public class GameData {
      *  (The Chain Veil); applies to planeswalkers that come under the player's control later in the turn too. */
     public final Map<UUID, Integer> playerExtraLoyaltyActivationsThisTurn = new ConcurrentHashMap<>();
 
+    /** Players whose planeswalkers may activate loyalty abilities twice this turn rather than once (Urza Assembles
+     *  the Titans chapter III). Membership is a cap, not a count: several such effects do not stack. */
+    public final Set<UUID> playersAllowedTwiceLoyaltyActivationsThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Sen Triplets: while set, {@link #senControllerPlayerId} may play lands and cast spells from
      *  {@link #senControlledPlayerId}'s hand this turn (that hand is also revealed to the controller,
      *  and the controlled player is silenced + can't activate abilities). Both cleared at end of turn. */
@@ -2576,6 +2593,12 @@ public class GameData {
     /** Free casts from exile paused on a kicker offer, keyed by the exiled card's id. */
     public final Map<UUID, FreeCastKickerOffer> pendingFreeCastKickerOffers = new ConcurrentHashMap<>();
 
+    /**
+     * Permanents whose exiled cards must go to the bottom of their owners' libraries once the free cast that is
+     * still choosing its targets (or kicker) finishes (Unpredictable Cyclone, Tibalt's Trickery, Possibility Storm).
+     */
+    public final Set<UUID> deferredExileBottomSourceIds = ConcurrentHashMap.newKeySet();
+
     /** Exiled cards whose free cast already had its kicker offer answered (so it is not offered twice). */
     public final Set<UUID> freeCastKickerDecidedIds = ConcurrentHashMap.newKeySet();
 
@@ -2665,8 +2688,15 @@ public class GameData {
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps a source permanent to the latest card whose permission it granted. */
     public final Map<UUID, UUID> exilePlayPermissionSourceCards = new ConcurrentHashMap<>();
+    /** Source permanents whose "until end of turn, you may play cards exiled with it" permission is active
+     *  (Urianger Augurelt), mapped to the permission holder and the generic cost reduction (stored as a negative
+     *  amount). Cards exiled with the source later that turn receive the permission too (CR 611.2c). Cleared during cleanup. */
+    public final Map<UUID, ExilePlayCostModifier> exilePlayUntilEndOfTurnGrantsBySource = new ConcurrentHashMap<>();
     /** Maps a card with a source-controlled exile-play permission to its source permanent. */
     public final Map<UUID, UUID> exilePlayPermissionSourcePermanents = new ConcurrentHashMap<>();
+    /** Maps a card whose play permission comes from a static ability of a source permanent to that permanent.
+     *  The permission lasts only while the source keeps the ability (Uba Mask), not while its controller changes. */
+    public final Map<UUID, UUID> exilePlayPermissionStaticSourcePermanents = new ConcurrentHashMap<>();
     /** Maps a card exiled by a Saga's chapter to that Saga: the exiling player may play it during any turn
      *  they put a lore counter on the Saga (Summon: Brynhildr). The permission is renewed each such turn. */
     public final Map<UUID, UUID> exilePlayPermissionLoreCounterSagas = new ConcurrentHashMap<>();
@@ -5738,6 +5768,10 @@ public class GameData {
         return consumed[0];
     }
 
+    public void recordCounteredSpellManaCost(UUID spellTargetableId, int manaSpent, int manaValue) {
+        counteredSpellManaCosts.put(spellTargetableId, new CounteredSpellManaCost(manaSpent, manaValue));
+    }
+
     public int getSpellCastManaSpent(UUID spellCardId) {
         return spellCastManaSpent.getOrDefault(spellCardId, 0);
     }
@@ -7017,6 +7051,7 @@ public class GameData {
             foretoldCardTurnsTaken.remove(cardId);
             exilePlayPermissionSourceCards.entrySet().removeIf(entry -> cardId.equals(entry.getValue()));
             exilePlayPermissionSourcePermanents.remove(cardId);
+            exilePlayPermissionStaticSourcePermanents.remove(cardId);
             exileCastPermissionsUntilEndOfTurn.removeIf(permission -> permission.cardId().equals(cardId));
             antedCardIds.remove(cardId);
             stashCounterCardIds.remove(cardId);
@@ -8872,6 +8907,7 @@ public class GameData {
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
                 copy.exileReturnOnPermanentLeave.put(k, new ArrayList<>(v)));
+        copy.exiledCardReturnToHandOnPermanentLeave.putAll(this.exiledCardReturnToHandOnPermanentLeave);
         this.exileReturnOnOpponentBecomesMonarch.forEach((k, v) ->
                 copy.exileReturnOnOpponentBecomesMonarch.put(k, new ArrayList<>(v)));
 
@@ -9268,6 +9304,8 @@ public class GameData {
         copy.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.addAll(
                 this.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn);
         copy.playerExtraLoyaltyActivationsThisTurn.putAll(this.playerExtraLoyaltyActivationsThisTurn);
+        copy.playersAllowedTwiceLoyaltyActivationsThisTurn.addAll(this.playersAllowedTwiceLoyaltyActivationsThisTurn);
+        copy.counteredSpellManaCosts.putAll(this.counteredSpellManaCosts);
         copy.senControllerPlayerId = this.senControllerPlayerId;
         copy.senControlledPlayerId = this.senControlledPlayerId;
 
@@ -9331,8 +9369,10 @@ public class GameData {
         copy.exilePlayForLifeEqualToManaValue.addAll(this.exilePlayForLifeEqualToManaValue);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
         copy.exilePlayPermissionSourcePermanents.putAll(this.exilePlayPermissionSourcePermanents);
+        copy.exilePlayPermissionStaticSourcePermanents.putAll(this.exilePlayPermissionStaticSourcePermanents);
         copy.exilePlayPermissionLoreCounterSagas.putAll(this.exilePlayPermissionLoreCounterSagas);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
+        copy.exilePlayUntilEndOfTurnGrantsBySource.putAll(this.exilePlayUntilEndOfTurnGrantsBySource);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
         copy.exilePlayPermissionsExpireAtEndStep.addAll(this.exilePlayPermissionsExpireAtEndStep);
@@ -9453,6 +9493,7 @@ public class GameData {
         copy.pendingFreeCastKickerOffers.putAll(this.pendingFreeCastKickerOffers);
         copy.freeCastKickerDecidedIds.addAll(this.freeCastKickerDecidedIds);
         copy.freeCastKickedIds.addAll(this.freeCastKickedIds);
+        copy.deferredExileBottomSourceIds.addAll(this.deferredExileBottomSourceIds);
         copy.pendingFreeCastLandPlayIds.addAll(this.pendingFreeCastLandPlayIds);
         copy.pendingFreeCastManaValueBudget = this.pendingFreeCastManaValueBudget;
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);

@@ -26,6 +26,6 @@ public class Unwind extends Card {
         ))
                 .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
                 .addEffect(EffectSlot.SPELL,
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 3));
+                        new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsLandPredicate(), 3));
     }
 }

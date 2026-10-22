@@ -38,7 +38,7 @@ class UltronUnlimitedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ultron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        Permanent token = findPermanents(player1, "Robot Villain Token").stream()
+        Permanent token = findPermanents(player1, "Robot").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
@@ -68,7 +68,7 @@ class UltronUnlimitedTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(findPermanents(player1, "Robot Villain Token"))
+        assertThat(findPermanents(player1, "Robot"))
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
@@ -88,7 +88,7 @@ class UltronUnlimitedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ultron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(countPermanents(player1, "Robot Villain Token")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Robot")).isEqualTo(1);
         harness.assertInGraveyard(player1, "Mountain");
         harness.assertInHand(player1, "Hypnotic Grifter");
     }
@@ -109,8 +109,8 @@ class UltronUnlimitedTest extends BaseCardTest {
 
         assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(countPermanents(player1, "Robot Villain Token")).isZero();
-        assertThat(countPermanents(player2, "Robot Villain Token")).isZero();
+        assertThat(countPermanents(player1, "Robot")).isZero();
+        assertThat(countPermanents(player2, "Robot")).isZero();
     }
 
     @Test
@@ -134,6 +134,6 @@ class UltronUnlimitedTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(countPermanents(player1, "Robot Villain Token")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Robot")).isEqualTo(1);
     }
 }

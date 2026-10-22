@@ -79,6 +79,7 @@ class UnbreakableFormationTest extends BaseCardTest {
         harness.setHand(player1, List.of(formation, new Expansion()));
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0);
         harness.castInstant(player1, 0, 0, formation.getId());

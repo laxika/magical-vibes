@@ -2935,7 +2935,7 @@ public class AdditionalSpellCostService {
                 .distinct()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(java.util.Objects::nonNull)
-                .mapToInt(permanent -> permanent.getCard().getManaValue())
+                .mapToInt(gameQueryService::getPermanentManaValue)
                 .sum();
     }
 

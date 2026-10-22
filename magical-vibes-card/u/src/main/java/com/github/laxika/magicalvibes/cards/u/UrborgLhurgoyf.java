@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.MillAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,8 +27,7 @@ public class UrborgLhurgoyf extends Card {
         Sum kicks = new Sum(
                 new RepeatedAdditionalCostCount("{U}"),
                 new RepeatedAdditionalCostCount("{B}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MillEffect(new Scaled(kicks, 3), MillRecipient.CONTROLLER));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillAsEntersEffect(new Scaled(kicks, 3), false));
 
         CardsInGraveyard creatureCards = new CardsInGraveyard(
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);

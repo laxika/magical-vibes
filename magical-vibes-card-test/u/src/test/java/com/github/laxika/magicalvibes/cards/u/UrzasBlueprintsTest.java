@@ -105,10 +105,10 @@ class UrzasBlueprintsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Echo does not create an enters-the-battlefield trigger")
-    void enteringDoesNotCreateAnEchoRegistrationTrigger() {
+    @DisplayName("Echo registration trigger resolves without leaving anything on the stack")
+    void enteringLeavesNoStackEntriesAfterEchoRegistration() {
         harness.castFromHand(player1, new UrzasBlueprints(), "{6}");
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Urza's Blueprints");
         assertThat(gd.stack).isEmpty();

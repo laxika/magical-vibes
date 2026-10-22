@@ -165,7 +165,8 @@ class UnleashFuryTest extends BaseCardTest {
     void targetRemovedInResponse() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new UnleashFury(), new GraspOfDarkness()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castInstant(player1, 0, bears.getId());

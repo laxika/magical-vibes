@@ -22,7 +22,7 @@ class UrabrasksForgeTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     @Test
@@ -111,9 +111,9 @@ class UrabrasksForgeTest extends BaseCardTest {
         Permanent forge = harness.addToBattlefieldAndReturn(player1, new UrabrasksForge());
         forge.setCounterCount(CounterType.OIL, 3);
         harness.addToBattlefield(player2, new Cankerbloom());
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         advanceToCombat(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.activateAbility(player2, 0, null, forge.getId());
         resolveAllTriggers();
 
@@ -132,9 +132,9 @@ class UrabrasksForgeTest extends BaseCardTest {
     void removedCounterlessForgeCreatesZeroPowerToken() {
         Permanent forge = harness.addToBattlefieldAndReturn(player1, new UrabrasksForge());
         harness.addToBattlefield(player2, new Cankerbloom());
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         advanceToCombat(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.activateAbility(player2, 0, null, forge.getId());
         resolveAllTriggers();
 

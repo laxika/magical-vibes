@@ -172,6 +172,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";
         }
+        if (predicate instanceof CardGenericManaCostAtMostPredicate p) {
+            return "card with mana cost {" + p.maxGenericCost() + "} or less made only of generic mana";
+        }
         if (predicate instanceof CardMaxManaValueXPredicate) {
             return "card with mana value X or less";
         }

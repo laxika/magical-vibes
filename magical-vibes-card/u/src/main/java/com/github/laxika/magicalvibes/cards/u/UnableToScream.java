@@ -23,6 +23,8 @@ public class UnableToScream extends Card {
                 .addEffect(EffectSlot.STATIC,
                         new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC,
+                        new GrantCardTypeEffect(CardType.CREATURE, GrantScope.ENCHANTED_CREATURE))
+                .addEffect(EffectSlot.STATIC,
                         new GrantSubtypeEffect(CardSubtype.TOY, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC,
                         new SetBasePowerToughnessEffect(0, 2, GrantScope.ENCHANTED_CREATURE))

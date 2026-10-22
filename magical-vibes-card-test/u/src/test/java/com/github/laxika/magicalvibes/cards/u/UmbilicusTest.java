@@ -125,8 +125,8 @@ class UmbilicusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Umbilicus());
         GorillaWarrior card = new GorillaWarrior();
         card.setOwnerId(player1.getId());
-        Permanent gorilla = harness.addToBattlefieldAndReturn(player2, card);
-        gd.stolenCreatures.put(gorilla.getId(), player1.getId());
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, card);
+        setOwnerAndController(gorilla, player1, player2);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();

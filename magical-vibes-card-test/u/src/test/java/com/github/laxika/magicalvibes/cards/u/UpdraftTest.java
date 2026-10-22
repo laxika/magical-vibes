@@ -115,6 +115,7 @@ class UpdraftTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new BalduvianBears(), new BalduvianBears()));
         harness.setLibrary(player2, List.of(new BalduvianBears(), new BalduvianBears()));
         harness.setHand(player1, List.of(new Updraft()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castAndResolveInstant(player1, 0, bears.getId());

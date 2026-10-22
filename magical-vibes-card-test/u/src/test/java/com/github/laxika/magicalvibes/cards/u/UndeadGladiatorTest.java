@@ -155,12 +155,14 @@ class UndeadGladiatorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(gladiator);
 
-        harness.passBothPriorities();
-        harness.activateGraveyardAbility(player1, 0);
-        harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
-        harness.activateHandAbility(player1, 0, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.passBothPriorities();
+            harness.activateGraveyardAbility(player1, 0);
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+            harness.activateHandAbility(player1, 0, null);
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondDraw);
         assertThat(gd.playerGraveyards.get(player1.getId()))

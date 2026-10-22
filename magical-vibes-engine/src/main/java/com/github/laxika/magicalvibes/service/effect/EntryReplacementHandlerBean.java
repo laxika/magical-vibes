@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Handles a replacement effect that changes how a permanent enters the battlefield. */
@@ -31,5 +32,14 @@ public interface EntryReplacementHandlerBean {
     default void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent,
                        CardEffect effect, int xValue, boolean kicked) {
         apply(gameData, controllerId, enteringPermanent, effect, xValue);
+    }
+
+    /**
+     * Applies the replacement with the kicker payments of the spell that put the permanent onto the
+     * battlefield, for amounts that count repeated kicker costs ("mill three for each time it was kicked").
+     */
+    default void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent,
+                       CardEffect effect, int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
+        apply(gameData, controllerId, enteringPermanent, effect, xValue, kicked);
     }
 }

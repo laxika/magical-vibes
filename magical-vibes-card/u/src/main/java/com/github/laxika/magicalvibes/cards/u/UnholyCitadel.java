@@ -22,7 +22,7 @@ public class UnholyCitadel extends Card {
         PermanentHasSupertypePredicate legendary = new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY);
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
                 new BandsWithOtherEffect(legendary),
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
                         legendary

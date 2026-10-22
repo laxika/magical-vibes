@@ -128,6 +128,7 @@ class UndyingRageTest extends BaseCardTest {
     void doesNotReturnAnotherCopyFromGraveyard() {
         UndyingRage otherCopy = new UndyingRage();
         harness.setGraveyard(player1, List.of(otherCopy));
+        harness.setHand(player1, List.of());
         Permanent creature = addCreatureReady(player1, new BenalishCavalry());
         Permanent aura = attachUndyingRage(player1, creature);
 

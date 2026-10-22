@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.cards.s.SanitariumSkeleton;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -107,8 +108,9 @@ class UninvitedGeistTest extends BaseCardTest {
         assertThat(geist.isTransformed()).isTrue();
 
         geist.setAttacking(true);
-        prepareDeclareBlockers();
-        resolveCombat();
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(geist.isTransformed()).isTrue();

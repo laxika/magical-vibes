@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -37,7 +38,7 @@ public class UrzaLordProtector extends Card {
                 )), 1, CostModificationScope.SELF));
 
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{7}",
                 List.of(new ConditionalEffect(
                         new AllOf(List.of(
@@ -51,7 +52,8 @@ public class UrzaLordProtector extends Card {
                         )),
                         new MeldWithNamedCreatureEffect(PARTNER_NAME, new PermanentIsArtifactPredicate()))),
                 "{7}: If you both own and control Urza, Lord Protector and an artifact named The Mightstone "
-                        + "and Weakstone, exile them, then meld them into Urza, Planeswalker. Activate only as a sorcery."
+                        + "and Weakstone, exile them, then meld them into Urza, Planeswalker. Activate only as a sorcery.",
+                ActivationTimingRestriction.SORCERY_SPEED
         ));
     }
 

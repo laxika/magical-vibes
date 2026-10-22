@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -32,15 +32,12 @@ public class UnluckyCabbageMerchant extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                         new MayEffect(
-                                new SearchLibraryAndConditionalEffect(
-                                        CardPredicateUtils.basicLand(),
-                                        LibrarySearchDestination.BATTLEFIELD_TAPPED,
-                                        CardPredicateUtils.basicLand(),
-                                        SequenceEffect.of(
-                                                new PutTargetPermanentIntoLibraryNFromTopEffect(
-                                                        new CardsInLibrary(CountScope.ANY_PLAYER), true),
-                                                new ShuffleLibraryEffect(false)),
-                                        false),
+                                SequenceEffect.of(
+                                        new SearchLibraryEffect(CardPredicateUtils.basicLand(),
+                                                LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                                        new PutTargetPermanentIntoLibraryNFromTopEffect(
+                                                new CardsInLibrary(CountScope.ANY_PLAYER), true),
+                                        new ShuffleLibraryEffect(false)),
                                 "Search your library for a basic land card?")));
     }
 

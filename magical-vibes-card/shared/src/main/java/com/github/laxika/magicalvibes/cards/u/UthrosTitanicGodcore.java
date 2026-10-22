@@ -45,7 +45,7 @@ public class UthrosTitanicGodcore extends Card {
                         ManaColor.BLUE,
                         new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)
                 )),
-                "{U}, {T}: Add {U} for each artifact you control."
-        ));
+                "{U}, {T}: Add {U} for each artifact you control. Activate only if this Planet has twelve or more charge counters on it."
+        ).withRequiredSourceCounters(CounterType.CHARGE, 12));
     }
 }

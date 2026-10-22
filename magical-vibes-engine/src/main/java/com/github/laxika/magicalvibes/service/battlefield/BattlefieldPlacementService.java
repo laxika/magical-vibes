@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -397,7 +398,7 @@ public class BattlefieldPlacementService {
             applySpellEntryCounters(gameData, controllerId, permanent);
             applySpellGrantedSubtypes(gameData, permanent);
             applySpellCastCharacteristics(gameData, permanent, request.sourceStackEntry());
-            applyEntryReplacementEffects(gameData, controllerId, permanent, xValue, kicked);
+            applyEntryReplacementEffects(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
             applyEnterWithKeywords(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
             applyControlledPermanentEntryCharacteristics(gameData, controllerId, permanent);
             applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
@@ -2192,14 +2193,16 @@ public class BattlefieldPlacementService {
     }
 
     private void applyEntryReplacementEffects(GameData gameData, UUID controllerId,
-                                              Permanent permanent, int xValue, boolean kicked) {
+                                              Permanent permanent, int xValue, boolean kicked,
+                                              List<String> repeatedAdditionalCosts) {
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
         List<CardEffect> entryEffects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
         entryEffects.addAll(permanent.getCard().getEffects(EffectSlot.STATIC));
         for (CardEffect effect : entryEffects) {
-            entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue, kicked);
+            entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue, kicked,
+                    repeatedAdditionalCosts);
         }
     }
 
@@ -2258,7 +2261,26 @@ public class BattlefieldPlacementService {
                         repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, sourceCard,
                         sourceStackEntry, null, null, 0, 0, List.of(), false, convokeCreatureCount,
                         List.of()));
-        if (enterWith.count() instanceof CardsInGraveyard graveyardCount
+        count += enteredFromGraveyardSelfCount(gameData, controllerId, permanent, sourceCard, enterWith.count());
+        applyEntryCounters(gameData, controllerId, permanent, enterWith.type(), count);
+    }
+
+    /**
+     * Counts the entering card itself for each graveyard term of an enters-with-counters amount
+     * (the card is still in its graveyard as it enters, per the Unbreathing Horde ruling). Looks
+     * through {@link Sum} terms, so "each other Zombie you control and each Zombie card in your
+     * graveyard" counts the Horde itself when it returns from a graveyard.
+     */
+    private int enteredFromGraveyardSelfCount(GameData gameData, UUID controllerId, Permanent permanent,
+                                              Card sourceCard, DynamicAmount amount) {
+        if (amount instanceof Sum sum) {
+            int total = 0;
+            for (DynamicAmount term : sum.amounts()) {
+                total += enteredFromGraveyardSelfCount(gameData, controllerId, permanent, sourceCard, term);
+            }
+            return total;
+        }
+        if (amount instanceof CardsInGraveyard graveyardCount
                 && !graveyardCount.excludeSourceCard()
                 && permanent.getEnteredFromGraveyardOwnerId() != null
                 && (graveyardCount.scope() == CountScope.ANY_PLAYER
@@ -2267,9 +2289,9 @@ public class BattlefieldPlacementService {
                 && predicateEvaluationService.matchesCardPredicate(
                 sourceCard, graveyardCount.filter(), null, gameData,
                 permanent.getEnteredFromGraveyardOwnerId())) {
-            count++;
+            return 1;
         }
-        applyEntryCounters(gameData, controllerId, permanent, enterWith.type(), count);
+        return 0;
     }
 
     private boolean matchesEnterWithCountersPredicate(GameData gameData, UUID controllerId, Card card,

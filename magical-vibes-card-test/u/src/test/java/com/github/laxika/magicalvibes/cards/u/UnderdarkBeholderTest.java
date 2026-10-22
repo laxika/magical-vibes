@@ -128,6 +128,7 @@ class UnderdarkBeholderTest extends BaseCardTest {
         Card equalManaValue = new Divination();
         Card lowerManaValue = new Shock();
         harness.setLibrary(player1, List.of(equalManaValue, lowerManaValue));
+        harness.setHand(player1, List.of());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -150,6 +151,7 @@ class UnderdarkBeholderTest extends BaseCardTest {
         Card land = new Forest();
         Card spell = new Divination();
         harness.setLibrary(player1, List.of(land, spell));
+        harness.setHand(player1, List.of());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

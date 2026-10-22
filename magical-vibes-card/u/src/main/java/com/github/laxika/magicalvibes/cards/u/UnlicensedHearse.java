@@ -26,7 +26,8 @@ public class UnlicensedHearse extends Card {
                 true,
                 null,
                 List.of(new ExileGraveyardCardsEffect(
-                        2, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null, false, true, false)),
+                        2, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null, false, true, false,
+                        null, false, true)),
                 "{T}: Exile up to two target cards from a single graveyard."
         ));
 

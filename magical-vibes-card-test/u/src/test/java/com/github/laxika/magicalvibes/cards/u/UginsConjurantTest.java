@@ -83,9 +83,9 @@ class UginsConjurantTest extends BaseCardTest {
         conjurant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setHand(player1, List.of(new SteadyAim(), new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castAndResolveInstant(player1, 0, conjurant.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, conjurant.getId());
 
         assertThat(conjurant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

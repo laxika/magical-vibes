@@ -107,7 +107,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
         harness.assertLife(player2, 20);
-        assertThat(gameLogContains("redirected Underworld Dreams damage")).isTrue();
+        assertThat(enchantedCreature.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

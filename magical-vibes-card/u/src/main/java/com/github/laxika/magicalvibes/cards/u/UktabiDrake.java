@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 public class UktabiDrake extends Card {
 
     public UktabiDrake() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{1}{G}{G}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{1}{G}{G}"));
     }
 }

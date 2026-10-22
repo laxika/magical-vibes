@@ -42,6 +42,7 @@ public class GainKeywordsOfCardsExiledWithSourceSelfEffectHandler implements Sta
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        boolean includesProtection = ((GainKeywordsOfCardsExiledWithSourceEffect) effect).includesProtection();
         for (Card card : context.gameData().getCardsExiledByPermanent(context.sourceId())) {
             for (Keyword keyword : card.getKeywords()) {
                 if (WATCHED_KEYWORDS.contains(keyword)) {
@@ -49,7 +50,7 @@ public class GainKeywordsOfCardsExiledWithSourceSelfEffectHandler implements Sta
                 }
             }
             for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
-                if (staticEffect instanceof ProtectionGrantingEffect protection
+                if (includesProtection && staticEffect instanceof ProtectionGrantingEffect protection
                         && protection.protectionScope() == null) {
                     accumulator.addGrantedEffect(staticEffect);
                 }

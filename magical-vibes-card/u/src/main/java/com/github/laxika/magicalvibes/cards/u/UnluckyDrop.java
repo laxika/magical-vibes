@@ -15,12 +15,13 @@ import java.util.List;
 public class UnluckyDrop extends Card {
 
     public UnluckyDrop() {
+        var artifactOrCreature = new PermanentAnyOfPredicate(List.of(
+                new PermanentIsArtifactPredicate(),
+                new PermanentIsCreaturePredicate()
+        ));
         target(new PermanentPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate()
-                )),
+                artifactOrCreature,
                 "Target must be an artifact or creature"
-        )).addEffect(EffectSlot.SPELL, new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0));
+        )).addEffect(EffectSlot.SPELL, new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0, artifactOrCreature));
     }
 }

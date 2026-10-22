@@ -14,7 +14,7 @@ import java.util.List;
 public class UrzasBlueprints extends Card {
 
     public UrzasBlueprints() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{6}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{6}"));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

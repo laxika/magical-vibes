@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -24,8 +25,8 @@ import java.util.List;
 public class UroTitanOfNaturesWrath extends Card {
 
     public UroTitanOfNaturesWrath() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfUnlessEscapedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggerEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfUnlessEscapedEffect(), TriggerMode.INDEPENDENT);
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggerEffect(), TriggerMode.INDEPENDENT);
         addEffect(EffectSlot.ON_ATTACK, triggerEffect());
 
         addCastingOption(new GraveyardCast(null, "{G}{G}{U}{U}", List.of(

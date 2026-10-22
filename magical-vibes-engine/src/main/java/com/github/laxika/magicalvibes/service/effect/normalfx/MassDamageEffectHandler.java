@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -83,8 +86,13 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
 
+            Map<UUID, Integer> damageBefore = e.exileInsteadOfDie()
+                    ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
             damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter,
                     e.exileInsteadOfDie(), e.cantRegenerate(), e.tapDamagedCreatures());
+            if (e.exileInsteadOfDie() && e.damagesPlaneswalkers()) {
+                markDamagedPlaneswalkersForExile(gameData, damageBefore);
+            }
 
             if (e.damagesPlayers()) {
                 for (UUID playerId : gameData.orderedPlayerIds) {
@@ -94,6 +102,19 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
             }
         } finally {
             entry.setExilesCreaturesDamaged(previousExilesCreaturesDamaged);
+        }
+    }
+
+    /** Marks each planeswalker this effect dealt damage to so it is exiled instead of dying this turn. */
+    private void markDamagedPlaneswalkersForExile(GameData gameData, Map<UUID, Integer> damageBefore) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().hasType(CardType.PLANESWALKER)
+                        && gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanent.getId(), 0)
+                        > damageBefore.getOrDefault(permanent.getId(), 0)) {
+                    permanent.setExileInsteadOfDieThisTurn(true);
+                }
+            }
         }
     }
 }

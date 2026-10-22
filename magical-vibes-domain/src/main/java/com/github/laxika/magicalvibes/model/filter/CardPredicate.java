@@ -71,6 +71,7 @@ public sealed interface CardPredicate permits
         CardManaValueEqualsXPredicate,
         CardManaValueLessThanXPredicate,
         CardMaxManaValuePredicate,
+        CardGenericManaCostAtMostPredicate,
         CardMaxManaValueXPredicate,
         CardMinManaValuePredicate,
         CardNamedPredicate,

@@ -126,7 +126,7 @@ class UnidentifiedHovershipTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hovership);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hovership));
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
@@ -155,7 +155,7 @@ class UnidentifiedHovershipTest extends BaseCardTest {
 
         Permanent hovership = findPermanent(player1, "Unidentified Hovership");
         assertThat(gd.getCardsExiledByPermanent(hovership.getId())).hasSize(2);
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hovership);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hovership));
         harness.passBothPriorities();
 
         Set<UUID> manifestingPlayers = new HashSet<>();
@@ -186,7 +186,7 @@ class UnidentifiedHovershipTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -223,8 +223,8 @@ class UnidentifiedHovershipTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
         resolveAllTriggers();
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd,
-                findPermanent(player1, "Unidentified Hovership"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd,
+                findPermanent(player1, "Unidentified Hovership")));
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player2, List.of(lastCard.getId()));
 

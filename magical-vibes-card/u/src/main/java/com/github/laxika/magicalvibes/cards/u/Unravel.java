@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class Unravel extends Card {
 
     public Unravel() {
-        // The draw condition reads the target spell while it is still on the stack, so it must
-        // resolve before the counter removes that spell.
+        // Counter first, then draw (CR 608.2c). The condition reads the countered spell's mana spent
+        // from its last-known record, so it still applies once the spell has left the stack.
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new TargetSpellManaSpentLessThanManaValue(), new DrawCardEffect()));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlay
 public class UnluckyWitness extends Card {
 
     public UnluckyWitness() {
-        addEffect(EffectSlot.ON_DEATH, new ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect(2));
+        addEffect(EffectSlot.ON_DEATH, ExileTopCardsChooseOneMayPlayUntilNextEndStepEffect.mayPlayOneOfThem(2));
     }
 }

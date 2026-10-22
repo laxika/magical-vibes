@@ -81,6 +81,9 @@ public class ReturnTargetCreatureAndAurasOrEquipmentEffectHandler implements Nor
         if (isEquipment && attach && gameQueryService.findPermanentById(gameData, attachment.getId()) != null) {
             equipSupport.notifyEquipmentAttached(gameData, attachment, null);
         }
+        if (!isEquipment && attach) {
+            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, creature.getId(), false);
+        }
 
         GameLog.Builder log = GameLog.builder().card(card);
         if (attach) {

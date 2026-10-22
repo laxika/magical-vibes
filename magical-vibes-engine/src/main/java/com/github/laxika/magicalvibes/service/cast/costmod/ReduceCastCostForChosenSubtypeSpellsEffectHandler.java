@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.cast.costmod;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
@@ -24,7 +25,13 @@ public class ReduceCastCostForChosenSubtypeSpellsEffectHandler implements CostMo
 
     @Override
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
-        if (!source.controlledBy(context.castingPlayerId()) || source.sourcePermanent() == null) {
+        var reduce = (ReduceCastCostForChosenSubtypeSpellsEffect) effect;
+        boolean applies = switch (reduce.scope()) {
+            case SELF -> source.controlledBy(context.castingPlayerId());
+            case OPPONENT -> !source.controlledBy(context.castingPlayerId());
+            case ALL -> true;
+        };
+        if (!applies || source.sourcePermanent() == null) {
             return 0;
         }
         var chosenSubtype = source.sourcePermanent().getChosenSubtype();
@@ -35,7 +42,7 @@ public class ReduceCastCostForChosenSubtypeSpellsEffectHandler implements CostMo
         boolean hasChosenSubtype = spell.hasKeyword(Keyword.CHANGELING)
                 || gameQueryService.cardHasSubtype(spell, chosenSubtype, context.gameData(), spell.getOwnerId());
         return hasChosenSubtype
-                ? -((ReduceCastCostForChosenSubtypeSpellsEffect) effect).amount()
+                ? -reduce.amount()
                 : 0;
     }
 }

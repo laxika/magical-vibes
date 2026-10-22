@@ -34,6 +34,7 @@ class UroTitanOfNaturesWrathTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.playerBattlefields.get(player1.getId()))

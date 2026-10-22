@@ -169,7 +169,7 @@ class UnderrealmLichTest extends BaseCardTest {
         assertThat(lich.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, lich, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(TurnStep.CLEANUP);
         harness.passUntil(TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, lich, Keyword.INDESTRUCTIBLE)).isFalse();

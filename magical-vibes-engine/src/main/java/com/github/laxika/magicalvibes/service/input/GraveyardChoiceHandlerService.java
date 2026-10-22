@@ -920,7 +920,6 @@ public class GraveyardChoiceHandlerService {
                 for (UUID cardId : cardIds) {
                     ExiledCardEntry exiled = gameData.exiledCards.stream()
                             .filter(candidate -> cardId.equals(candidate.card().getId())
-                                    && !candidate.faceDown()
                                     && gameData.playerIds.contains(candidate.ownerId())
                                     && !multiGraveyardChoice.playerId().equals(candidate.ownerId()))
                             .findFirst().orElse(null);

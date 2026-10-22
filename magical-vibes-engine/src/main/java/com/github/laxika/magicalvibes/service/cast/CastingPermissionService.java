@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNames
 import com.github.laxika.magicalvibes.model.effect.TopLibraryCardCastPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
+import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -2925,6 +2926,20 @@ public class CastingPermissionService {
         return anyManaIds;
     }
 
+    /** Whether the permanent is still on the battlefield with the static ability that grants a permission. */
+    private boolean staticAbilitySourceStillGrants(GameData gameData, UUID sourcePermanentId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (sourcePermanentId.equals(permanent.getId())) {
+                    return !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                            && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
+                }
+            }
+        }
+        return false;
+    }
+
     /** Returns whether the player has an active direct permission to play the exiled card. */
     public boolean hasExilePlayPermission(GameData gameData, UUID playerId, UUID cardId) {
         for (var battlefield : gameData.playerBattlefields.entrySet()) {
@@ -2942,6 +2957,8 @@ public class CastingPermissionService {
             return true;
         }
         if (!playerId.equals(gameData.exilePlayPermissions.get(cardId))) return false;
+        UUID staticSourceId = gameData.exilePlayPermissionStaticSourcePermanents.get(cardId);
+        if (staticSourceId != null && !staticAbilitySourceStillGrants(gameData, staticSourceId)) return false;
         if (gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.containsKey(cardId)
                 && gameData.exilePlayPermissionsDuringOwnersNextTurnOnly.contains(cardId)) return false;
         if (!gameData.hasExilePlayPermissionRemaining(cardId)) return false;

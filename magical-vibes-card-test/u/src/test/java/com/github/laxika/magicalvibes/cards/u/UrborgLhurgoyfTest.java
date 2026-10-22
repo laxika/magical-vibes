@@ -166,6 +166,5 @@ class UrborgLhurgoyfTest extends BaseCardTest {
 
         harness.castCreatureWithRepeatedCosts(player1, 0, kickerPayments);
         harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 }

@@ -108,6 +108,7 @@ class UrbanEvolutionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new UrbanEvolution(), "{3}{G}{U}");
         harness.passBothPriorities();
 

@@ -162,13 +162,17 @@ class UginsMasteryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new UginsMastery()));
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
         Permanent faceDown = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isManifested).findFirst().orElseThrow();
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(3, 4, 5));
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        declareAttackers(List.of(battlefield.size() - 3, battlefield.size() - 2, battlefield.size() - 1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -183,13 +187,17 @@ class UginsMasteryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GiantGrowth()));
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
         Permanent faceDown = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isManifested).findFirst().orElseThrow();
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(3, 4, 5));
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        declareAttackers(List.of(battlefield.size() - 3, battlefield.size() - 2, battlefield.size() - 1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

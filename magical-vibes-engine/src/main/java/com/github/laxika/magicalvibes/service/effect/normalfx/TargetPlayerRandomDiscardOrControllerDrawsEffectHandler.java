@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class TargetPlayerRandomDiscardOrControllerDrawsEffectHandler implements 
 
     private final DrawService drawService;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -40,6 +42,12 @@ public class TargetPlayerRandomDiscardOrControllerDrawsEffectHandler implements 
             drawService.resolveDrawCard(gameData, controllerId);
         } else {
             gameData.discardCausedByOpponent = true;
+            if (gameQueryService.isDiscardPrevented(gameData, targetPlayerId)) {
+                gameLogService.append(gameData, GameLog.text(targetName + " can't discard cards. "
+                        + gameData.playerIdToName.get(controllerId) + " draws a card."));
+                drawService.resolveDrawCard(gameData, controllerId);
+                return;
+            }
             playerInteractionSupport.resolveRandomDiscardCards(gameData, targetPlayerId, entry.getCard().getName(), 1);
         }
     

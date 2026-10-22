@@ -42,6 +42,7 @@ class UrborgTombOfYawgmothTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
 
         harness.tapPermanent(player1, 2);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
@@ -77,7 +78,7 @@ class UrborgTombOfYawgmothTest extends BaseCardTest {
 
         assertThat(gqs.effectiveBasicLandTypes(gd, urborg)).contains(CardSubtype.SWAMP);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
@@ -136,7 +137,7 @@ class UrborgTombOfYawgmothTest extends BaseCardTest {
         harness.handleListChoice(player1, "FOREST");
 
         assertThat(gqs.effectiveBasicLandTypes(gd, urborg)).containsExactly(CardSubtype.FOREST);
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();

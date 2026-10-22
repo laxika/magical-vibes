@@ -3,13 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,12 +53,15 @@ public class RemoveRefineCounterFromExiledCardEffectHandler implements NormalEff
         if (ownerId == null) {
             return;
         }
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+        StackEntry castTrigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
                 card,
                 ownerId,
-                java.util.List.of(new MayCastExiledCardWithCostReductionEffect(4)),
-                "Cast " + card.getName() + " for {4} less?",
-                cardId));
+                card.getName() + "'s cast ability",
+                new ArrayList<>(List.<CardEffect>of(new MayCastExiledCardWithCostReductionEffect(4))));
+        castTrigger.setTargetId(cardId);
+        castTrigger.setTargetZone(Zone.EXILE);
+        gameData.stack.add(castTrigger);
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " has its last refine counter removed. You may cast it for {4} less."));
         log.info("Game {} - {} last refine counter removed; cast offer queued", gameData.id, card.getName());

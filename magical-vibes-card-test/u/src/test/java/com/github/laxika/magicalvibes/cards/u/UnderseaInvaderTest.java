@@ -31,7 +31,7 @@ class UnderseaInvaderTest extends BaseCardTest {
         harness.castFromHand(player1, new UnderseaInvader(), "{4}{U}{U}");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();

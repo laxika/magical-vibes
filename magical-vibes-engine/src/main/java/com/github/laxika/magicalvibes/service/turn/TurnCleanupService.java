@@ -512,6 +512,7 @@ public class TurnCleanupService {
         gameData.playersCantActivateNonManaAbilitiesThisTurn.clear();
         gameData.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.clear();
         gameData.playerExtraLoyaltyActivationsThisTurn.clear();
+        gameData.playersAllowedTwiceLoyaltyActivationsThisTurn.clear();
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
         gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
@@ -626,6 +627,7 @@ public class TurnCleanupService {
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
         }
         gameData.exilePlayPermissionsExpireEndOfTurn.clear();
+        gameData.exilePlayUntilEndOfTurnGrantsBySource.clear();
 
         // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
         // Keep any-mana permission attached to a card whose play permission lasts through a later

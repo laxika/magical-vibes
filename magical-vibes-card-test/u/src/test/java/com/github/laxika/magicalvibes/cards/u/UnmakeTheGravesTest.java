@@ -115,6 +115,7 @@ class UnmakeTheGravesTest extends BaseCardTest {
         Card opponentCreature = new LlanowarElves();
         harness.setGraveyard(player1, List.of(ownCreature));
         harness.setGraveyard(player2, List.of(opponentCreature));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new UnmakeTheGraves()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 

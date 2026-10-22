@@ -95,7 +95,8 @@ class UrbanRetreatTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
         harness.passBothPriorities();
 
-        harness.handleCardChosen(player1, -1);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(card));

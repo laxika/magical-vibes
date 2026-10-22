@@ -224,9 +224,10 @@ another player's dash costs.
   enchanted by the source Aura whose name equals its `chosenName` (Curse of Silence, {2}). Its own
   record because both the matching name and enchanted player live on the source permanent.
 - `cast/costmod/ReduceCastCostForChosenSubtypeSpellsEffectHandler.java` — battlefield handler for
-  `ReduceCastCostForChosenSubtypeSpellsEffect(int amount)`; applies only to the source controller's
-  creature spells with the source permanent's chosen creature subtype (Urza's Incubator, {2}). It
-  handles the source-relative subtype and changeling check that a fixed `CardPredicate` cannot carry.
+  `ReduceCastCostForChosenSubtypeSpellsEffect(int amount, CostModificationScope scope)`; the scope picks
+  whose creature spells with the source permanent's chosen creature subtype qualify: `SELF` for Herald's
+  Horn ({1}), `ALL` for Urza's Incubator ({2}, every player's spells). The `(int amount)` constructor is
+  `SELF`. It handles the source-relative subtype and changeling check that a fixed `CardPredicate` cannot carry.
 - `cast/costmod/IncreaseSpellCostEffectHandler.java` — battlefield handler for
   `IncreaseSpellCostEffect(CardPredicate, int, CostModificationScope)`, the tax-side mirror of
   `ReduceCastCostForMatchingSpellsEffect`; scopes by the same `SELF`/`OPPONENT`/`ALL` and returns

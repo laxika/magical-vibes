@@ -1508,6 +1508,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
@@ -2055,8 +2056,7 @@ public class EnterTriggerCollectorService {
             return true;
         }
         Permanent entering = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
-        enqueue(match, new BecomeCopyOfEnteringCreatureEffect(enteringPermanentId,
-                        entering == null ? null : new Permanent(entering)),
+        enqueue(match, new BecomeCopyOfEnteringCreatureEffect(enteringPermanentId, entering),
                 match.permanent().getId(), pe.perEffectTriggerCount());
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (become a copy of it)",

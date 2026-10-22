@@ -36,6 +36,7 @@ class UrzasConstructionDroneTest extends BaseCardTest {
     void attacksAndSeeksAnUrzasLand() {
         addReadyDrone();
         Card sought = new UrzasMine();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(sought, new Forest()));
 
         declareAttack();

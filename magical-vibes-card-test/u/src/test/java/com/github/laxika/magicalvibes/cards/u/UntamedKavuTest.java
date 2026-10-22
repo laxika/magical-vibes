@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -91,7 +92,7 @@ class UntamedKavuTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent attacker = findPermanent(player1, "Untamed Kavu");
         attacker.setSummoningSick(false);
-        addCreatureReady(player2, new UntamedKavu());
+        Permanent blocker = addCreatureReady(player2, new UntamedKavu());
         harness.setLife(player2, 20);
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -99,6 +100,8 @@ class UntamedKavuTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isFalse();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 2, player2.getId(), 3));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         harness.assertOnBattlefield(player1, "Untamed Kavu");

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -513,6 +514,24 @@ public class GameViewProjectionFactory {
         return false;
     }
 
+    /**
+     * Whether the player is deciding on a pending "you may exile it face down" for the top card of
+     * their own library that they are allowed to look at (Urianger Augurelt's Draw Arcanum), so the
+     * card must be shown to them before they choose.
+     */
+    private boolean isChoosingWhetherToExileLookedAtTopCard(GameData data, UUID playerId) {
+        if (data.pendingMayAbilities.isEmpty()) {
+            return false;
+        }
+        PendingMayAbility pending = data.pendingMayAbilities.getFirst();
+        UUID choosingPlayerId = pending.choicePlayerId() != null
+                ? pending.choicePlayerId() : pending.controllerId();
+        return playerId.equals(choosingPlayerId) && pending.effects().stream().anyMatch(effect ->
+                effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect exile
+                        && exile.faceDown() && exile.exilerMayLookWhileExiled()
+                        && exile.scope() == com.github.laxika.magicalvibes.model.effect.LibraryScope.CONTROLLER);
+    }
+
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
         // Determine which players have their top card visible to the viewer.
         // PlayWithTopCardRevealedEffect = publicly revealed to all players.
@@ -536,6 +555,9 @@ public class GameViewProjectionFactory {
             }
             if (pid.equals(viewerId)
                     && data.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(pid)) {
+                revealedPlayerIds.add(pid);
+            }
+            if (pid.equals(viewerId) && isChoosingWhetherToExileLookedAtTopCard(data, pid)) {
                 revealedPlayerIds.add(pid);
             }
             UUID freePlayCardId = data.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(pid);

@@ -855,23 +855,28 @@ public class UntapStepService {
     }
 
     /**
-     * Returns every permanent the active player controls that carries a "return this to its owner's
-     * hand during your next untap step" rider (Undiscovered Paradise). Happens as that player
-     * untaps their permanents — including when the permanent itself did not untap.
+     * Returns every permanent whose "return this to its owner's hand during your next untap step" rider
+     * (Undiscovered Paradise) was set up by the active player, wherever it is controlled now. The rider
+     * belongs to the player who set it up, so a control change does not move it to the new controller's
+     * untap step. Happens as that player untaps their permanents, including when the permanent itself
+     * did not untap.
      */
     private void returnPermanentsFlaggedForUntap(GameData gameData, UUID activePlayerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
-        if (battlefield == null || battlefield.isEmpty()) {
-            return;
+        List<Permanent> returning = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
+            battlefield.stream()
+                    .filter(permanent -> activePlayerId.equals(permanent.getReturnToHandAtNextUntapPlayerId()))
+                    .forEach(returning::add);
         }
-        List<Permanent> returning = battlefield.stream()
-                .filter(Permanent::isReturnToHandAtNextUntap)
-                .toList();
         if (returning.isEmpty()) {
             return;
         }
         for (Permanent permanent : returning) {
-            permanent.setReturnToHandAtNextUntap(false);
+            permanent.setReturnToHandAtNextUntapPlayerId(null);
             permanentRemovalService.removePermanentToHand(gameData, permanent);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);

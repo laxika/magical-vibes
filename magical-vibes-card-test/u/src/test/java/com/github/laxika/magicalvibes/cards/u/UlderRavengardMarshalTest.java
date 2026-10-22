@@ -79,6 +79,7 @@ class UlderRavengardMarshalTest extends BaseCardTest {
 
     @Test
     void attackTriggerExcludesTokensAndNonattackingCreatures() {
+        harness.setHand(player1, List.of());
         addReadyCreature(new UlderRavengardMarshal());
         Permanent bears = addReadyCreature(new GrizzlyBears());
         Card token = new GrizzlyBears();
@@ -98,6 +99,7 @@ class UlderRavengardMarshalTest extends BaseCardTest {
 
     @Test
     void attackTriggerDoesNotConjureWhenTargetLeavesBattlefield() {
+        harness.setHand(player1, List.of());
         addReadyCreature(new UlderRavengardMarshal());
         Permanent bears = addReadyCreature(new GrizzlyBears());
         declareAttackers(List.of(0, 1));
@@ -112,6 +114,7 @@ class UlderRavengardMarshalTest extends BaseCardTest {
 
     @Test
     void grantedDoubleTeamConjuresWhenRecipientAttacksWithoutUlder() {
+        harness.setHand(player1, List.of());
         Permanent bears = addReadyCreature(new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new UlderRavengardMarshal());
         harness.handlePermanentChosen(player1, bears.getId());

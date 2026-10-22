@@ -9978,7 +9978,17 @@ public class SpellCastingService {
                         : Optional.empty();
         Optional<CastingPermissionService.FilteredGraveyardPermission> availableFilteredPermission =
                 castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card);
-        boolean usesNormalGraveyardPermission = exileGraveyardCardIndices == null
+        // CR 118.9a: one alternative cost applies to a spell, so a card with both its printed escape and a
+        // granted escape is cast with one of them. The granted escape stands in when the printed one is unpayable.
+        boolean grantedEscapeStandsInForPrintedEscape = exileGraveyardCardIndices != null
+                && availableFilteredPermission.isPresent()
+                && availableFilteredPermission.get().permission().escape()
+                && graveyardCastOpt.filter(GraveyardCast::escape)
+                .map(GraveyardCast::alternateManaCost)
+                .map(manaCost -> !new ManaCost(manaCost).canPay(gameData.playerManaPools.get(playerId), 0))
+                .orElse(false);
+        boolean usesNormalGraveyardPermission = (exileGraveyardCardIndices == null
+                || grantedEscapeStandsInForPrintedEscape)
                 && availableFilteredPermission.isPresent();
         boolean isGraveyardCast = !usesNormalGraveyardPermission
                 && graveyardCastOpt.isPresent() && flashbackOpt.isEmpty()
@@ -15436,8 +15446,9 @@ public class SpellCastingService {
     }
 
     /**
-     * Finds a flashback card in another player's graveyard that the caster may cast as though it were
-     * in their own graveyard (Shaman's Trance). Cards without flashback are not found here.
+     * Finds a card in another player's graveyard that the caster may cast from there. A flashback card
+     * qualifies through the other-graveyard grant (Shaman's Trance); any other card qualifies only through
+     * a graveyard-cast filter permission that covers other graveyards (The Great Work chapter III).
      */
     private GraveyardCardLocation findFlashbackableOtherGraveyardCardLocation(GameData gameData, UUID playerId,
                                                                              UUID cardId) {
@@ -15451,8 +15462,11 @@ public class SpellCastingService {
             List<Card> graveyard = entry.getValue();
             for (int i = 0; i < graveyard.size(); i++) {
                 Card card = graveyard.get(i);
-                if (cardId.equals(card.getId()) && card.effectiveFlashbackCast().isPresent()
-                        && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)) {
+                if (cardId.equals(card.getId())
+                        && ((card.effectiveFlashbackCast().isPresent()
+                                && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId))
+                        || castingPermissionService.findGraveyardCastFilterPermission(gameData, card, playerId)
+                                .isPresent())) {
                     return new GraveyardCardLocation(graveyard, i);
                 }
             }

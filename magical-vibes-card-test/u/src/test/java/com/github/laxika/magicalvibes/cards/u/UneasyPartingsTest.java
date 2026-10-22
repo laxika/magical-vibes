@@ -30,7 +30,7 @@ class UneasyPartingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertOwnerChoice(player2);
-        harness.handleListChoice(player2, "Put it on top");
+        harness.handleListChoice(player2, "Top");
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard(), oldTop);
         harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
@@ -45,7 +45,7 @@ class UneasyPartingsTest extends BaseCardTest {
         cast(target, 4);
 
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Put it on the bottom");
+        harness.handleListChoice(player2, "Bottom");
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop, target.getCard());
         harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
@@ -101,7 +101,7 @@ class UneasyPartingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertOwnerChoice(player2);
-        harness.handleListChoice(player2, "Put it on the bottom");
+        harness.handleListChoice(player2, "Bottom");
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop, card);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
@@ -119,7 +119,7 @@ class UneasyPartingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetLibraryDestinationChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop);
         harness.assertInGraveyard(player2, "Guardian of the Halls");
         harness.assertInGraveyard(player1, "Uneasy Partings");
@@ -135,7 +135,7 @@ class UneasyPartingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertOwnerChoice(player2);
-        harness.handleListChoice(player2, "Put it on top");
+        harness.handleListChoice(player2, "Top");
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard());
         harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
@@ -155,7 +155,7 @@ class UneasyPartingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertOwnerChoice(player2);
-        harness.handleListChoice(player2, "Put it on the bottom");
+        harness.handleListChoice(player2, "Bottom");
 
         harness.assertNotOnBattlefield(player2, "Guardian of the Halls");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(oldTop);
@@ -173,7 +173,7 @@ class UneasyPartingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertOwnerChoice(player2);
-        harness.handleListChoice(player2, "Put it on top");
+        harness.handleListChoice(player2, "Top");
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(card, oldTop);
         harness.assertNotOnBattlefield(player2, "Dryad Arbor");
@@ -201,10 +201,10 @@ class UneasyPartingsTest extends BaseCardTest {
     }
 
     private void assertOwnerChoice(com.github.laxika.magicalvibes.model.Player owner) {
-        PendingInteraction.ColorChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        PendingInteraction.TargetLibraryDestinationChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.TargetLibraryDestinationChoice.class);
         assertThat(choice.playerId()).isEqualTo(owner.getId());
-        assertThat(choice.options()).containsExactly("Put it on top", "Put it on the bottom");
+        assertThat(choice.options()).containsExactly("Top", "Bottom");
     }
 
 }

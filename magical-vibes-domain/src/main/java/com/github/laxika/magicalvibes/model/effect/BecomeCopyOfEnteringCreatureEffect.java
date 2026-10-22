@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
  *
  * @param enteringPermanentId the battlefield id of the creature that entered (null in the card
  *                            definition, filled in at trigger time)
+ * @param enteringPermanent   the entering creature's permanent object, used as last-known information
+ *                            when it is no longer on the battlefield at resolution
  */
-public record BecomeCopyOfEnteringCreatureEffect(UUID enteringPermanentId, Permanent enteringSnapshot) implements CardEffect {
+public record BecomeCopyOfEnteringCreatureEffect(UUID enteringPermanentId, Permanent enteringPermanent) implements CardEffect {
 
     public BecomeCopyOfEnteringCreatureEffect(UUID enteringPermanentId) {
         this(enteringPermanentId, null);

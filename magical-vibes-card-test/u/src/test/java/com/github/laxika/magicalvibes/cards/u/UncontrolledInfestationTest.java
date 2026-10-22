@@ -120,7 +120,8 @@ class UncontrolledInfestationTest extends BaseCardTest {
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
-        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
 
         resolveAllTriggers();
@@ -141,6 +142,9 @@ class UncontrolledInfestationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.tapPermanent(player2, 0);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+        harness.passPriority(player2);
         assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.handlePermanentChosen(player1, destination.getId());

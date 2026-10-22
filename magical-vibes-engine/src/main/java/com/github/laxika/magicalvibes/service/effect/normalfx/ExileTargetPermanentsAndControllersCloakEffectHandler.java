@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,6 +41,7 @@ public class ExileTargetPermanentsAndControllersCloakEffectHandler implements No
             targetIds = List.of(entry.getTargetId());
         }
 
+        List<UUID> exiledControllers = new ArrayList<>();
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -54,10 +56,14 @@ public class ExileTargetPermanentsAndControllersCloakEffectHandler implements No
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
-            cloakTopCard(gameData, controllerId);
+            exiledControllers.add(controllerId);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+
+        for (UUID controllerId : exiledControllers) {
+            cloakTopCard(gameData, controllerId);
+        }
     }
 
     private void cloakTopCard(GameData gameData, UUID controllerId) {

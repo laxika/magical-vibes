@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,14 +39,7 @@ public class PerpetuallyBoostTargetCreatureSpellEffectHandler implements NormalE
             return;
         }
 
-        Card copy = targetSpell.getCard().createRuntimeCopy();
-        if (copy.getPower() != null) {
-            copy.setPower(copy.getPower() + boost.powerBoost());
-        }
-        if (copy.getToughness() != null) {
-            copy.setToughness(copy.getToughness() + boost.toughnessBoost());
-        }
-        targetSpell.setCastCard(copy);
-        targetSpell.setPhysicalCard(copy);
+        PerpetualCardPowerToughnessSupport.remember(gameData, targetSpell.getCard(),
+                boost.powerBoost(), boost.toughnessBoost());
     }
 }

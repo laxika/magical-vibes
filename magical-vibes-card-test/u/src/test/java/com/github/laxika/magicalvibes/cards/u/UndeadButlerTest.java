@@ -50,7 +50,7 @@ class UndeadButlerTest extends BaseCardTest {
         Card butlerCard = putButlerOnBattlefield();
 
         destroyButler();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
@@ -78,7 +78,7 @@ class UndeadButlerTest extends BaseCardTest {
         Card butlerCard = putButlerOnBattlefield();
 
         destroyButler();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -115,7 +115,7 @@ class UndeadButlerTest extends BaseCardTest {
         Card butlerCard = putButlerOnBattlefield();
 
         destroyButler();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(butlerCard);
@@ -134,7 +134,7 @@ class UndeadButlerTest extends BaseCardTest {
 
         destroyButler();
         harness.setGraveyard(player1, List.of(target));
-        harness.passBothPriorities();
+        resolveAllTriggers();
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
             harness.handleMayAbilityChosen(player1, true);
         }

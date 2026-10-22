@@ -11,6 +11,6 @@ public class WretchedBonemass extends Card {
     public WretchedBonemass() {
         TotalPowerOfCardsExiledWithSource totalPower = new TotalPowerOfCardsExiledWithSource();
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(totalPower, totalPower));
-        addEffect(EffectSlot.STATIC, new GainKeywordsOfCardsExiledWithSourceEffect());
+        addEffect(EffectSlot.STATIC, new GainKeywordsOfCardsExiledWithSourceEffect(true));
     }
 }

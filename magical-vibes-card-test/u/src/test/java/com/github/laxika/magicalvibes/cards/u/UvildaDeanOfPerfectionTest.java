@@ -53,7 +53,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         harness.setExile(player1, List.of(ritual));
         gd.exiledCardRefineCounters.put(ritual.getId(), 1);
 
-        triggerUpkeep(player1);
+        offerLastCounterCast();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThat(gd.exiledCardRefineCounters).doesNotContainKey(ritual.getId());
@@ -76,9 +76,9 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         nassari.setTransformed(true);
         nassari.setSummoningSick(false);
         harness.setLibrary(player2, List.of(new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         triggerUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         Card exiled = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(c -> c instanceof DarkRitual)
@@ -180,9 +180,9 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     void castsASorceryDuringUpkeepPayingOnlyItsColoredCost() {
         SerpentineCurve curve = new SerpentineCurve();
         prepareLastCounterCast(curve);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         offerLastCounterCast();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
@@ -212,9 +212,9 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
     void reducedCostCastAllowsChoosingANonzeroX() {
         MultipleChoice choice = new MultipleChoice();
         prepareLastCounterCast(choice);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         offerLastCounterCast();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
@@ -254,9 +254,9 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         SerpentineCurve curve = new SerpentineCurve();
         harness.setLibrary(player2, List.of());
         prepareLastCounterCast(curve);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         offerLastCounterCast();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -43,12 +44,19 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Equipment";
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        // A trigger granted by an attachment ("it gets ...") boosts the creature that triggered it,
-        // even if the attachment moved or left the battlefield before resolution.
-        UUID attachedId = entry.getAttachedPermanentSnapshot() != null ? entry.getAttachedPermanentSnapshot().getId()
-                : equipment != null ? equipment.getAttachedTo()
-                : entry.getSourcePermanentSnapshot() != null
-                ? entry.getSourcePermanentSnapshot().getAttachedTo() : entry.getTargetId();
+        // An activated ability refers to the "equipped creature" as it is when the ability resolves (CR 301.5f),
+        // so a Jitte-style ability follows the equipment if it was moved before resolution. A trigger granted by
+        // an attachment ("it gets ...") boosts the creature that triggered it, even if the attachment moved or
+        // left the battlefield before resolution.
+        UUID attachedId;
+        if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY && equipment != null) {
+            attachedId = equipment.getAttachedTo();
+        } else {
+            attachedId = entry.getAttachedPermanentSnapshot() != null ? entry.getAttachedPermanentSnapshot().getId()
+                    : equipment != null ? equipment.getAttachedTo()
+                    : entry.getSourcePermanentSnapshot() != null
+                    ? entry.getSourcePermanentSnapshot().getAttachedTo() : entry.getTargetId();
+        }
         Permanent equippedCreature = attachedId == null ? null : gameQueryService.findPermanentById(gameData, attachedId);
 
         if (e.orControlledCreatureMatching() != null) {

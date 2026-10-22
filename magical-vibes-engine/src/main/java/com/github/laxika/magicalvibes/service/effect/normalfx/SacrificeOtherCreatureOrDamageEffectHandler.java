@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -14,6 +16,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +81,14 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
             return;
         }
 
+        if (e.recipient() == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), controllerId, List.of(e),
+                    "Sacrifice another creature instead of " + cardName + " dealing damage to you?",
+                    null, null, entry.getSourcePermanentId()));
+            return;
+        }
+
         if (otherCreatureIds.size() == 1) {
             Permanent creature = gameQueryService.findPermanentById(gameData, otherCreatureIds.getFirst());
             if (creature != null) {
@@ -89,6 +100,41 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SacrificeCreature(controllerId));
         playerInputService.beginPermanentChoice(gameData, controllerId, otherCreatureIds,
                 "Choose a creature other than " + cardName + " to sacrifice.");
+    }
+
+    /**
+     * Resolves the accept/decline answer to "sacrifice another creature instead?". Accepting sacrifices
+     * a creature other than the enchanted one (asking when several are eligible); declining, or having
+     * nothing left to sacrifice, deals the damage to the enchanted creature's controller.
+     */
+    public void resolveMayChoice(GameData gameData, boolean accepted, PendingMayAbility ability) {
+        var e = (SacrificeOtherCreatureOrDamageEffect) ability.effects().getFirst();
+        UUID controllerId = ability.controllerId();
+        if (accepted) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+            UUID excludedPermanentId = source == null ? null : source.getAttachedTo();
+            List<UUID> otherCreatureIds = destructionSupport.collectCreatureIds(gameData, controllerId,
+                    p -> (excludedPermanentId == null || !p.getId().equals(excludedPermanentId))
+                            && !gameQueryService.cantBeSacrificed(gameData, p));
+            if (otherCreatureIds.size() == 1) {
+                Permanent creature = gameQueryService.findPermanentById(gameData, otherCreatureIds.getFirst());
+                if (creature != null) {
+                    destructionSupport.sacrificeAndLog(gameData, creature, controllerId);
+                }
+                return;
+            }
+            if (otherCreatureIds.size() > 1) {
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SacrificeCreature(controllerId));
+                playerInputService.beginPermanentChoice(gameData, controllerId, otherCreatureIds,
+                        "Choose a creature other than " + ability.sourceCard().getName() + " to sacrifice.");
+                return;
+            }
+        }
+        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+                controllerId, ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(e)),
+                controllerId, ability.sourcePermanentId());
+        dealDamage(gameData, damageEntry, e.damage(), controllerId);
+        gameOutcomeService.checkWinCondition(gameData);
     }
 
     private UUID sacrificingPlayer(StackEntry entry, DamageRecipient recipient) {

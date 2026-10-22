@@ -87,7 +87,7 @@ class UrabraskHereticPraetorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(land));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -107,7 +107,7 @@ class UrabraskHereticPraetorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UrabraskHereticPraetor());
         harness.setLibrary(player2, List.of(creature));
         advanceToUpkeep(player2);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
 
         harness.addMana(player2, ManaColor.GREEN, 1);

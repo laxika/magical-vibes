@@ -63,6 +63,7 @@ class UnstoppablePlanTest extends BaseCardTest {
         Permanent opposingPlan = harness.addToBattlefieldAndReturn(player2, new UnstoppablePlan());
         plan.tap();
         opposingPlan.tap();
+        opposingPlan.setSkipUntapCount(1);
 
         advanceToEndStepTrigger();
 

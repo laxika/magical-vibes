@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePo
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardGenericManaCostAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -952,6 +953,9 @@ public class PredicateEvaluationService {
                 Permanent sourcePermanent = sourcePermanentId == null
                         ? findPermanentByOriginalCardId(gameData, sourceCardId)
                         : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (sourcePermanent == null) {
+                    sourcePermanent = sourcePermanentSnapshot;
+                }
                 yield sourcePermanent != null
                         && card.getManaValue() < sourcePermanent.getCounterCount(p.counterType());
             }
@@ -981,6 +985,17 @@ public class PredicateEvaluationService {
             }
             case CardMaxManaValuePredicate p ->
                     card.getManaValue() <= p.maxManaValue();
+            case CardGenericManaCostAtMostPredicate p -> {
+                if (card.getManaCost() == null || card.getManaCost().isBlank()) {
+                    yield false;
+                }
+                ManaCost cost = new ManaCost(card.getManaCost());
+                yield cost.getColoredCosts().isEmpty()
+                        && !cost.hasHybridMana()
+                        && !cost.hasPhyrexianMana()
+                        && !cost.hasX()
+                        && cost.getGenericCost() <= p.maxGenericCost();
+            }
             case CardMaxManaValueXPredicate ignored ->
                     xValue == null || card.getManaValue() <= xValue;
             case CardManaValueLessThanXPredicate ignored ->

@@ -797,8 +797,7 @@ public class AsEntersInteractionService {
             UUID entryControllerId = controllerId;
             synchronized (gameData.exiledCards) {
                 eligibleCards = gameData.exiledCards.stream()
-                        .filter(exiled -> !exiled.faceDown()
-                                && gameData.playerIds.contains(exiled.ownerId())
+                        .filter(exiled -> gameData.playerIds.contains(exiled.ownerId())
                                 && !entryControllerId.equals(exiled.ownerId()))
                         .map(ExiledCardEntry::card)
                         .toList();

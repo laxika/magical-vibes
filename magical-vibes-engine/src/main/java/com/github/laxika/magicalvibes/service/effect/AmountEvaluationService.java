@@ -1341,6 +1341,15 @@ public class AmountEvaluationService {
                 int power = gameQueryService.getEffectivePower(gameData, enchanted);
                 return allowNegative ? power : Math.max(0, power);
             }
+            // Last known information (CR 608.2h): the enchanted creature's power just before it left.
+            UUID enchantedId = source.getAttachedTo();
+            Permanent departed = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> enchantedId.equals(snapshot.getId()))
+                    .findFirst().orElse(null);
+            if (departed != null && departed.getLastKnownPower() != null) {
+                int power = departed.getLastKnownPower();
+                return allowNegative ? power : Math.max(0, power);
+            }
         }
         Integer lastKnownPower = ctx.triggeringPermanentPowerAtTrigger();
         if (lastKnownPower == null) {
