@@ -131,6 +131,56 @@ class ManaCostTest {
     }
 
     @Nested
+    @DisplayName("Resolution-time cost payment")
+    class ResolutionCostPayment {
+
+        @Test
+        @DisplayName("Powerstone and Thran Turbine mana pay a resolution-time cost")
+        void powerstoneAndSpellProhibitedManaPay() {
+            ManaPool pool = new ManaPool();
+            pool.addPowerstoneOnlyColorless(1, true);
+            pool.addSpellProhibitedMana(ManaColor.COLORLESS, 2);
+            ManaCost cost = new ManaCost("{3}");
+
+            assertThat(cost.canPay(pool)).isFalse();
+            assertThat(cost.canPayResolutionCost(pool)).isTrue();
+
+            cost.payResolutionCost(pool);
+
+            assertThat(pool.getTotalAllMana()).isZero();
+            assertThat(pool.getPersistentPowerstoneOnlyColorless()).isZero();
+        }
+
+        @Test
+        @DisplayName("Spend-only-on-abilities mana can't pay a resolution-time cost")
+        void abilityOnlyManaCannotPay() {
+            ManaPool pool = new ManaPool();
+            pool.addAbilityOnlyMana(ManaColor.COLORLESS, 1);
+
+            assertThat(new ManaCost("{1}").canPayResolutionCost(pool)).isFalse();
+            assertThat(new ManaCost("{X}").calculateMaxXForResolutionCost(pool)).isZero();
+        }
+
+        @Test
+        @DisplayName("A resolution-time {X} counts Powerstone mana and spends it before regular mana")
+        void xPaymentUsesPowerstoneMana() {
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.COLORLESS, 1);
+            pool.addPowerstoneOnlyColorless(2);
+            pool.addAbilityOnlyMana(ManaColor.COLORLESS, 1);
+            ManaCost cost = new ManaCost("{X}");
+
+            assertThat(cost.calculateMaxXForResolutionCost(pool)).isEqualTo(3);
+
+            cost.payResolutionCost(pool, 2);
+
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(pool.getPowerstoneOnlyColorless()).isZero();
+            assertThat(pool.getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(1);
+        }
+    }
+
+    @Nested
     @DisplayName("Special-action payment")
     class SpecialActionPayment {
 

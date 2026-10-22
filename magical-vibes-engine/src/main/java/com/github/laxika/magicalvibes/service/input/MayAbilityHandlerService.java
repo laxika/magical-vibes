@@ -348,7 +348,7 @@ public class MayAbilityHandlerService {
 
             if (cost.hasX()) {
                 // X cost: pay all available mana as X
-                int maxX = cost.calculateMaxX(pool);
+                int maxX = cost.calculateMaxXForResolutionCost(pool);
                 if (maxX <= 0) {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " has no mana to pay for ", ability.sourceCard(), "'s ability."));
@@ -358,7 +358,7 @@ public class MayAbilityHandlerService {
                     return;
                 }
                 xValuePaid = maxX;
-                cost.pay(pool, maxX);
+                cost.payResolutionCost(pool, maxX);
             } else {
                 if (!cost.canPayResolutionCost(pool)) {
                     gameLogService.append(gameData, GameLog.textCardText(

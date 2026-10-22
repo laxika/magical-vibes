@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.cards.a.AlbinoTroll;
 import com.github.laxika.magicalvibes.cards.a.AuguryRaven;
 import com.github.laxika.magicalvibes.cards.c.ChimericStaff;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.m.ManaLeak;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -176,6 +179,62 @@ class ThranTurbineTest extends BaseCardTest {
 
             harness.assertOnBattlefield(player1, "Albino Troll");
             assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyManaTotal()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    @CardUsed({ThranTurbine.class, Shock.class, ManaLeak.class})
+    @DisplayName("Turbine mana can pay Mana Leak's {3}, which is paid while Mana Leak resolves rather than to cast a spell")
+    void manaCanPayManaLeakCost() {
+        harness.addToBattlefield(player1, new ThranTurbine());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            acceptTurbineMana();
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castInstant(player1, 0, player2.getId());
+            Card shock = gd.stack.getFirst().getCard();
+
+            harness.setHand(player2, List.of(new ManaLeak()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, shock.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+
+            harness.assertLife(player2, 18);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        });
+    }
+
+    @Test
+    @CardUsed({ThranTurbine.class, Shock.class, ManaLeak.class})
+    @DisplayName("Turbine mana alone can't pay more than its two mana toward Mana Leak's {3}")
+    void manaLeakCountersWhenTurbineManaFallsShort() {
+        harness.addToBattlefield(player1, new ThranTurbine());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            acceptTurbineMana();
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castInstant(player1, 0, player2.getId());
+            Card shock = gd.stack.getFirst().getCard();
+
+            harness.setHand(player2, List.of(new ManaLeak()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, shock.getId());
+            harness.passBothPriorities();
+
+            harness.assertInGraveyard(player1, "Shock");
+            harness.assertLife(player2, 20);
+            assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(2);
         });
     }
 

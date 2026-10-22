@@ -67,7 +67,7 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
                 return;
             }
 
-            new ManaCost("{X}").pay(pool, chosenValue);
+            new ManaCost("{X}").payResolutionCost(pool, chosenValue);
             gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
             log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
 
@@ -117,7 +117,11 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
         return payableFromPool(gameData.playerManaPools.get(controllerId)) + untappedSources;
     }
 
+    /**
+     * Generic-payable mana in the pool right now. The {X} is paid while the ability resolves, so
+     * mana that only can't be spent to cast spells (Powerstone, Thran Turbine) pays it too.
+     */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal();
+        return new ManaCost("{X}").calculateMaxXForResolutionCost(pool);
     }
 }

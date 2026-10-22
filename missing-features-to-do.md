@@ -72,40 +72,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 29. Powerstone and Thran Turbine mana for resolution-time costs
-
-**Status:** open · **Found:** 2026-10-16, while adding Hydraulic Helper's restriction
-
-**Failing tests:**
-- None yet. Add one per card: Powerstone mana paying Mana Leak's {3}, and Thran Turbine mana paying it.
-
-**What the rules require.** A Powerstone token's mana "can't be spent to cast a nonartifact spell" (Karn
-and Jetfire make the same mana), and Thran Turbine's mana "can't be spent to cast spells." Neither
-restriction covers a cost paid while something resolves, so both kinds of mana can pay Mana Leak's {3},
-Rhystic Study's tax and similar costs. Hydraulic Helper's mana already can, through
-`ManaCost.canPayResolutionCost`/`payResolutionCost`, which promote only
-`ManaPool.promoteNonartifactSpellProhibitedMana()`. Powerstone mana sits in its own colorless bucket
-(`powerstoneOnlyColorless`), and Thran Turbine's mana is tagged `spellProhibitedMana` inside the
-ability-only bucket (`ManaRestriction.SpellsProhibited`). Neither is promoted for a resolution-time cost.
-
-**Why it's large.** Less than it was: `ManaPool.promoteSpecialActionMana()`/
-`restorePromotedSpecialActionMana()` already promote exactly these three kinds of mana for special
-actions, keeping Powerstone's persistent subset (Karn's mana lasts until end of turn) right. Switching
-`canPayResolutionCost`/`payResolutionCost` to it may be enough, but every "unless pays" / "may pay"
-handler that calls them needs a regression check, and plain ability-only mana must keep refusing them.
-
-**Prompt to start it:**
-
-```
-Let Powerstone mana (ManaRestriction.Powerstone, including Karn's persistent mana) and Thran Turbine's
-"can't be spent to cast spells" mana pay resolution-time costs like Mana Leak's, through
-ManaCost.canPayResolutionCost/payResolutionCost. Keep "spend this mana only to activate abilities" mana
-(ManaRestriction.Abilities) unable to pay them. Start by adding Mana Leak tests to ThranTurbineTest and a
-Powerstone card's test. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 30. Casting an Adventure from the top of the library
 
 **Status:** open · **Found:** 2026-10-16, while fixing J-card tests

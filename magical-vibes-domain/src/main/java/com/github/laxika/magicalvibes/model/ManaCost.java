@@ -1114,6 +1114,26 @@ public class ManaCost {
     }
 
     /**
+     * The largest X a resolution-time "pay {X}" cost can be paid with (Vigil for the Lost); see
+     * {@link #canPayResolutionCost(ManaPool)} for which restricted mana counts.
+     */
+    public int calculateMaxXForResolutionCost(ManaPool pool) {
+        ManaPool paymentPool = copyManaPool(pool);
+        paymentPool.promoteSpecialActionMana();
+        return calculateMaxX(paymentPool);
+    }
+
+    /** Pays a resolution-time cost with the given X; see {@link #canPayResolutionCost(ManaPool)}. */
+    public void payResolutionCost(ManaPool pool, int xValue) {
+        ManaPool.SpecialActionManaState state = pool.promoteSpecialActionMana();
+        try {
+            pay(pool, xValue);
+        } finally {
+            pool.restorePromotedSpecialActionMana(state);
+        }
+    }
+
+    /**
      * Checks a special action's cost (CR 116.2), such as a Room's unlock cost or Leonin Arbiter's
      * search tax. A special action isn't a spell, so mana that only can't be spent to cast spells or
      * nonartifact spells is usable too (Hydraulic Helper, Powerstone, Thran Turbine).

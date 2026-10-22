@@ -62,7 +62,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
                 beginXPrompt(gameData, controllerId, cardName);
                 return;
             }
-            new ManaCost("{X}").pay(pool, chosenValue);
+            new ManaCost("{X}").payResolutionCost(pool, chosenValue);
 
             gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
             log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
@@ -95,10 +95,10 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * Generic-payable mana in the pool right now. The ability is not an artifact ability, so
-     * artifact-only and Myr-only mana cannot pay it; X-cost-only mana can.
+     * Generic-payable mana in the pool right now. The {X} is paid while the ability resolves, so
+     * mana that only can't be spent to cast spells (Powerstone, Thran Turbine) pays it too.
      */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getXCostOnlyColorless();
+        return new ManaCost("{X}").calculateMaxXForResolutionCost(pool);
     }
 }

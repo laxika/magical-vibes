@@ -120,6 +120,30 @@ class VigilForTheLostTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Powerstone and Thran Turbine mana can pay {X}, since it's paid while the ability resolves")
+    void spellProhibitedManaPaysX() {
+        harness.addToBattlefield(player1, new VigilForTheLost());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(2);
+        gd.playerManaPools.get(player1.getId()).addSpellProhibitedMana(ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(((PendingInteraction.XValueChoice) gd.interaction.activeInteraction()).maxValue()).isEqualTo(3);
+        harness.handleXValueChosen(player1, 3);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
     @DisplayName("Choosing X=0 gains no life and pays no mana")
     void choosingZeroGainsNothing() {
         harness.addToBattlefield(player1, new VigilForTheLost());
