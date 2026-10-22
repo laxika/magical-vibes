@@ -21,7 +21,7 @@ public class SnowHound extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(ReturnToHandEffect.self(), ReturnToHandEffect.target()),
+                List.of(ReturnToHandEffect.targetAndSelf()),
                 "{1}, {T}: Return this creature and target green or blue creature you control to their owner's hand.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

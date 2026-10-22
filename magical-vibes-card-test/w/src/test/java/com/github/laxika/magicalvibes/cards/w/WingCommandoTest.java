@@ -78,6 +78,7 @@ class WingCommandoTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, commando)).isEqualTo(3);
         harness.passBothPriorities();
 
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();

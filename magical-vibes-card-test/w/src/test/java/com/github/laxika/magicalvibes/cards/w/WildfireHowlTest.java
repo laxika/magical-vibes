@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.ArtistsTalent;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
@@ -110,6 +111,7 @@ class WildfireHowlTest extends BaseCardTest {
         other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         prepareSpell();
+        harness.setHand(player1, List.of(new WildfireHowl(), new Forest()));
         harness.castSorceryWithGift(player1, 0, target.getId(), true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);

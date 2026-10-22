@@ -50,6 +50,7 @@ class WhitewaterNaiadsTest extends BaseCardTest {
     void enchantmentEnteringWithoutBeingCastTriggers() {
         Permanent naiads = harness.addToBattlefieldAndReturn(player1, new WhitewaterNaiads());
         harness.enterBattlefieldAndReturn(player1, new GloriousAnthem());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, naiads.getId());

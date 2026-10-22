@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplaceme
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstDrawStepDrawOnlyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsCreateTreasureEffect;
@@ -151,6 +152,13 @@ public class DrawService {
 
     private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
             "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
+    private static final String WORDS_OF_WORSHIP_NAME = "Words of Worship";
+    private static final String WORDS_OF_WILDING_NAME = "Words of Wilding";
+    private static final String WORDS_OF_WAR_NAME = "Words of War";
+    private static final String WORDS_OF_WIND_NAME = "Words of Wind";
+    private static final String WORDS_OF_WASTE_NAME = "Words of Waste";
+    private static final UUID WORDS_OF_WIND_CHOICE_ID = UUID.nameUUIDFromBytes(WORDS_OF_WIND_NAME.getBytes());
+    private static final UUID WORDS_OF_WASTE_CHOICE_ID = UUID.nameUUIDFromBytes(WORDS_OF_WASTE_NAME.getBytes());
     private static final CreateTokenEffect HULLBREACHER_TREASURE = CreateTokenEffect.ofTreasureToken(1);
     private static final String RING_OF_MARF_CHOICE_NAME = "Ring of Ma'r\u00fbf";
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
@@ -497,12 +505,20 @@ public class DrawService {
         boolean lookAtTopCompetesWithExile = lookAtTopSource != null
                 && (ubaMaskSource != null || !exileReplacementSources.isEmpty());
         boolean ringPending = gameData.pendingNextDrawFromOutsideGame.containsKey(playerId);
+        Permanent wordsOfWorshipSource = gameData.pendingNextDrawGainLife.containsKey(playerId)
+                ? findBattlefieldPermanentNamed(gameData, playerId, WORDS_OF_WORSHIP_NAME) : null;
+        Permanent wordsOfWildingSource = gameData.pendingNextDrawCreateBears.containsKey(playerId)
+                ? findBattlefieldPermanentNamed(gameData, playerId, WORDS_OF_WILDING_NAME) : null;
+        Map<String, UUID> nextDrawWordsOptions = collectNextDrawWordsOptions(
+                gameData, playerId, wordsOfWorshipSource, wordsOfWildingSource);
+        boolean wordsCompete = nextDrawWordsOptions.size() > 1;
         if (exileReplacementSources.size() > 1
                 || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)
                 || (!exileReplacementSources.isEmpty() && ringPending)
                 || sagesAndUbaMaskCompete
                 || lookAtTopCompetesWithDoubler
-                || lookAtTopCompetesWithExile) {
+                || lookAtTopCompetesWithExile
+                || wordsCompete) {
             Map<String, UUID> sourceIds = new LinkedHashMap<>();
             exileReplacementSources.forEach((name, source) -> sourceIds.put(name, source.getId()));
             if (maySkipDrawSource != null) {
@@ -521,6 +537,9 @@ public class DrawService {
                 if (ubaMaskSource != null) {
                     sourceIds.putIfAbsent(ubaMaskSource.getCard().getName(), ubaMaskSource.getId());
                 }
+            }
+            if (wordsCompete) {
+                nextDrawWordsOptions.forEach(sourceIds::putIfAbsent);
             }
             if (ringPending) {
                 // The Ring's exiled source is gone, so its replacement is keyed by the drawing player's id.
@@ -1860,6 +1879,120 @@ public class DrawService {
         return null;
     }
 
+    private Permanent findBattlefieldPermanentNamed(GameData gameData, UUID playerId, String cardName) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+        return battlefield.stream()
+                .filter(permanent -> permanent.getCard().getName().equals(cardName))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * The queued "next time you would draw a card this turn" replacements of the Words cycle that compete
+     * for the next draw (CR 616.1), keyed by option label. Words of War replacements are distinct by
+     * target; Words of Wind and Words of Waste use fixed ids because their replacements do not depend on
+     * the source staying on the battlefield.
+     */
+    private Map<String, UUID> collectNextDrawWordsOptions(GameData gameData, UUID playerId,
+                                                          Permanent wordsOfWorshipSource,
+                                                          Permanent wordsOfWildingSource) {
+        Map<String, UUID> options = new LinkedHashMap<>();
+        if (wordsOfWorshipSource != null) {
+            options.put(WORDS_OF_WORSHIP_NAME, wordsOfWorshipSource.getId());
+        }
+        if (wordsOfWildingSource != null) {
+            options.put(WORDS_OF_WILDING_NAME, wordsOfWildingSource.getId());
+        }
+        List<PendingNextDrawDamageReplacement> pendingDamage = gameData.pendingNextDrawDamage.get(playerId);
+        if (pendingDamage != null) {
+            Set<UUID> seenTargets = new java.util.HashSet<>();
+            for (PendingNextDrawDamageReplacement replacement : List.copyOf(pendingDamage)) {
+                if (!seenTargets.add(replacement.targetId())) {
+                    continue;
+                }
+                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, replacement.targetId());
+                String targetName = targetPermanent != null
+                        ? targetPermanent.getCard().getName()
+                        : gameData.playerIdToName.getOrDefault(replacement.targetId(), "target");
+                String label = WORDS_OF_WAR_NAME + " — " + targetName;
+                for (int suffix = 2; options.containsKey(label); suffix++) {
+                    label = WORDS_OF_WAR_NAME + " — " + targetName + " (" + suffix + ")";
+                }
+                options.put(label, replacement.targetId());
+            }
+        }
+        if (gameData.pendingNextDrawReturnPermanents.containsKey(playerId)) {
+            options.put(WORDS_OF_WIND_NAME, WORDS_OF_WIND_CHOICE_ID);
+        }
+        if (gameData.pendingNextDrawDiscardOpponents.containsKey(playerId)) {
+            options.put(WORDS_OF_WASTE_NAME, WORDS_OF_WASTE_CHOICE_ID);
+        }
+        return options;
+    }
+
+    /** Applies the chosen Words of War, Words of Wind or Words of Waste replacement, if the id names one. */
+    private boolean applyChosenNextDrawWordsReplacement(GameData gameData, UUID playerId, UUID choiceId) {
+        if (choiceId.equals(WORDS_OF_WIND_CHOICE_ID) && gameData.pendingNextDrawReturnPermanents.containsKey(playerId)) {
+            int pending = gameData.pendingNextDrawReturnPermanents.remove(playerId);
+            if (pending > 1) {
+                gameData.pendingNextDrawReturnPermanents.put(playerId, pending - 1);
+            }
+            eachPlayerReturnsPermanentToHandEffectHandler.beginReplacement(gameData, WORDS_OF_WIND_NAME);
+            return true;
+        }
+        if (choiceId.equals(WORDS_OF_WASTE_CHOICE_ID) && gameData.pendingNextDrawDiscardOpponents.containsKey(playerId)) {
+            int pending = gameData.pendingNextDrawDiscardOpponents.remove(playerId);
+            if (pending > 1) {
+                gameData.pendingNextDrawDiscardOpponents.put(playerId, pending - 1);
+            }
+            playerInteractionSupport.startNextEachPlayerDiscard(gameData,
+                    DiscardFollowUp.eachPlayer(opponentsInApnapOrder(gameData, playerId), playerId, 1));
+            return true;
+        }
+        List<PendingNextDrawDamageReplacement> pendingDamage = gameData.pendingNextDrawDamage.get(playerId);
+        if (pendingDamage != null) {
+            for (PendingNextDrawDamageReplacement replacement : pendingDamage) {
+                if (replacement.targetId().equals(choiceId)) {
+                    pendingDamage.remove(replacement);
+                    if (pendingDamage.isEmpty()) {
+                        gameData.pendingNextDrawDamage.remove(playerId);
+                    }
+                    resolveNextDrawDamage(gameData, playerId, replacement);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Applies one queued Words of Worship or Words of Wilding replacement chosen by the drawing player. */
+    private boolean applyChosenWordsReplacement(GameData gameData, UUID playerId, Permanent source) {
+        String sourceName = source.getCard().getName();
+        if (sourceName.equals(WORDS_OF_WORSHIP_NAME) && gameData.pendingNextDrawGainLife.containsKey(playerId)) {
+            int remaining = gameData.pendingNextDrawGainLife.get(playerId);
+            if (remaining > 1) {
+                gameData.pendingNextDrawGainLife.put(playerId, remaining - 1);
+            } else {
+                gameData.pendingNextDrawGainLife.remove(playerId);
+            }
+            lifeSupport.applyGainLife(gameData, playerId, 5, WORDS_OF_WORSHIP_NAME);
+            return true;
+        }
+        List<String> pendingBears = gameData.pendingNextDrawCreateBears.get(playerId);
+        if (sourceName.equals(WORDS_OF_WILDING_NAME) && pendingBears != null && !pendingBears.isEmpty()) {
+            String sourceSetCode = pendingBears.removeFirst();
+            if (pendingBears.isEmpty()) {
+                gameData.pendingNextDrawCreateBears.remove(playerId);
+            }
+            permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR, 1, sourceSetCode);
+            return true;
+        }
+        return false;
+    }
+
     private Card findAbundanceSourceCard(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -2192,9 +2325,15 @@ public class DrawService {
             resolveNextDrawFromOutsideGame(gameData, playerId);
             return;
         }
+        if (applyChosenNextDrawWordsReplacement(gameData, playerId, sourcePermanentId)) {
+            return;
+        }
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
             throw new IllegalStateException("That draw replacement is no longer available");
+        }
+        if (applyChosenWordsReplacement(gameData, playerId, source)) {
+            return;
         }
         MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (maySkipDrawSource != null && maySkipDrawSource.sourcePermanentId().equals(sourcePermanentId)) {
@@ -2620,6 +2759,10 @@ public class DrawService {
                         && Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
                     continue;
                 }
+                if (effect instanceof FirstDrawStepDrawOnlyTriggerEffect
+                        && !Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId))) {
+                    continue;
+                }
 
                 if (effect instanceof FirstDrawRevealTriggerEffect firstDraw) {
                     if (drawn == null
@@ -2771,13 +2914,16 @@ public class DrawService {
             for (CardEffect effect : card.getEffects(slot)) {
                 if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) continue;
 
-                gameData.enqueueTrigger(new StackEntry(
+                StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         drawingPlayerId,
                         card.getName() + "'s ability",
                         new ArrayList<>(List.of(effect))
-                ));
+                );
+                trigger.setTriggeringCardId(card.getId());
+                trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                gameData.enqueueTrigger(trigger);
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on second card draw",

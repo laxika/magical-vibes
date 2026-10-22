@@ -137,14 +137,16 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                                 ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.combat(), true),
                         ctx -> prevention.applyCreatureRedirectShields(ctx.gameData(), ctx.target().getId(),
                                 ctx.damageSourceKey(), ctx.amount(), ctx.combat(), true)).whole(),
-                redirect("CreatureRedirectShield", "Redirect the damage dealt to it",
-                        ctx -> prevention.hasCreatureRedirectShield(
-                                ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.combat()),
-                        ctx -> ctx.combat()
-                                ? prevention.applyCreatureRedirectShields(ctx.gameData(), ctx.target().getId(),
-                                ctx.damageSourceKey(), ctx.amount(), true)
-                                : prevention.applyCreatureRedirectShields(
-                                ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.amount())));
+                new Rule<PermanentDamageContext>("CreatureRedirectShield", REDIRECT, false,
+                        ctx -> redirectable(ctx)
+                                ? prevention.creatureRedirectShieldInstances(ctx.gameData(), ctx.target().getId(),
+                                ctx.damageSourceKey(), ctx.combat())
+                                : List.of(),
+                        (ctx, instance) -> "Redirect the damage dealt to it",
+                        (ctx, instance) -> ctx.event(),
+                        (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
+                                prevention.applyCreatureRedirectShieldInstance(ctx.gameData(), instance,
+                                        ctx.target().getId(), ctx.damageSourceKey(), ctx.amount(), ctx.combat())))));
     }
 
     @Override

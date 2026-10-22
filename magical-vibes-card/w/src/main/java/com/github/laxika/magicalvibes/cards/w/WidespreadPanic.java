@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHand
 public class WidespreadPanic extends Card {
 
     public WidespreadPanic() {
-        addEffect(EffectSlot.ON_OPPONENT_SHUFFLES_LIBRARY,
+        addEffect(EffectSlot.ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE,
                 new TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect(1));
     }
 }

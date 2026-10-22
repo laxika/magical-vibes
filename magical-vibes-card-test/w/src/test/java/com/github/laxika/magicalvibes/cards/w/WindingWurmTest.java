@@ -90,7 +90,6 @@ class WindingWurmTest extends BaseCardTest {
     private void castAndResolveWindingWurm() {
         harness.castFromHand(player1, new WindingWurm(), "{4}{G}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Winding Wurm");
     }
 }

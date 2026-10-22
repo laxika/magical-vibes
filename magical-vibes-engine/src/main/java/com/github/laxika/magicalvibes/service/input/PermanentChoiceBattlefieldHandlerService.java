@@ -3604,11 +3604,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         if (gameData.warpWorldOperation.sourceName != null) {
-            if (playerTarget) {
-                throw new IllegalStateException("Warp World Aura placement requires a permanent target");
-            }
             gameData.warpWorldOperation.pendingEnchantmentPlacements.add(
-                    new WarpWorldEnchantmentPlacement(auraControllerId, auraCard, enchantTarget.getId())
+                    new WarpWorldEnchantmentPlacement(auraControllerId, auraCard, permanentId)
             );
 
             if (!gameData.warpWorldOperation.pendingAuraChoices.isEmpty()) {

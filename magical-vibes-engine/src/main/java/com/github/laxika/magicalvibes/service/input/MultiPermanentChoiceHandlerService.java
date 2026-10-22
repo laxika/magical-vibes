@@ -98,6 +98,9 @@ public class MultiPermanentChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
 
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
@@ -1017,6 +1020,8 @@ public class MultiPermanentChoiceHandlerService {
             handleUntapChosenPermanents(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WardWaterbendPayment ctx) {
             handleWardWaterbendPayment(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ForcedCostWaterbendPayment ctx) {
+            handleForcedCostWaterbendPayment(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapPermanentsForAmount ctx) {
             handleUntapPermanentsForAmount(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand ctx) {
@@ -2088,6 +2093,21 @@ public class MultiPermanentChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
                 + " pays {" + ctx.amount() + "} using waterbend. The spell or ability is not countered."));
         log.info("Game {} - {} pays ward waterbend {}", gameData.id, playerId, ctx.amount());
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleForcedCostWaterbendPayment(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                  MultiPermanentChoiceContext.ForcedCostWaterbendPayment ctx) {
+        if (permanentIds.size() < ctx.minimumTaps()) {
+            throw new IllegalStateException("Must tap at least " + ctx.minimumTaps()
+                    + " permanents (the rest of the cost is paid with mana)");
+        }
+        waterbendPaymentService.pay(gameData, playerId, ctx.amount(), ctx.ability().sourceCard(), permanentIds);
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                + " pays {" + ctx.amount() + "} using waterbend."));
+        log.info("Game {} - {} pays waterbend {}", gameData.id, playerId, ctx.amount());
+        forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ctx.ability(), ctx.effect(), 0);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -3536,7 +3556,10 @@ public class MultiPermanentChoiceHandlerService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (entering != null) {
-            long timestamp = gameData.nextTimestamp();
+            // Oracle: "power and toughness are each equal to the number of Forests sacrificed" is a
+            // characteristic-defining ability (CR 613.4a, layer 7a), so any layer 7b setter wins;
+            // timestamp 0 orders this entry before every real 7b effect.
+            long timestamp = 0L;
             entering.setBasePowerOverriddenPermanently(true);
             entering.setPermanentBasePowerOverride(sacrificed);
             entering.setPermanentBasePowerOverrideTimestamp(timestamp);

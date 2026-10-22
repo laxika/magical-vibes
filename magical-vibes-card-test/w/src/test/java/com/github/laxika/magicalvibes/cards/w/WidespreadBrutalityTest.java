@@ -110,7 +110,8 @@ class WidespreadBrutalityTest extends BaseCardTest {
 
     @Test
     void armyLifelinkGainsLifeForDamageToEveryNonArmyCreature() {
-        harness.addToBattlefield(player1, new SorinVengefulBloodlord());
+        Permanent sorin = harness.addToBattlefieldAndReturn(player1, new SorinVengefulBloodlord());
+        sorin.setCounterCount(CounterType.LOYALTY, 4);
         harness.addToBattlefield(player1, new GoblinAssailant());
         harness.addToBattlefield(player2, new PrimordialWurm());
 

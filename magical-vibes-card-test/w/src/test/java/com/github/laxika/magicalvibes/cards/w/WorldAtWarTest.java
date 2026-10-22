@@ -93,6 +93,7 @@ class WorldAtWarTest extends BaseCardTest {
         WorldAtWar lateCast = new WorldAtWar();
         harness.setHand(player1, List.of(new WorldAtWar(), lateCast));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.postcombatMainPhasesBegunThisTurn = 1;
         harness.addMana(player1, ManaColor.RED, 5);
         harness.castAndResolveSorcery(player1, 0, 0);
 

@@ -83,6 +83,8 @@ class WandOfVertebraeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wand);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wand.getCard());
         harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

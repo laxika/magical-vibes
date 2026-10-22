@@ -121,9 +121,9 @@ class WrapInFlamesTest extends BaseCardTest {
         Permanent remaining = harness.addToBattlefieldAndReturn(player2, new NestInvader());
         harness.setHand(player1, List.of(new WrapInFlames(), new Vendetta()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castSorcery(player1, 0, List.of(removed.getId(), remaining.getId()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0, removed.getId());
         harness.passBothPriorities();
 
@@ -182,9 +182,9 @@ class WrapInFlamesTest extends BaseCardTest {
         Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new NestInvader());
         harness.setHand(player1, List.of(new WrapInFlames(), new Vendetta()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castSorcery(player1, 0, List.of(removed.getId()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0, removed.getId());
         harness.passBothPriorities();
 

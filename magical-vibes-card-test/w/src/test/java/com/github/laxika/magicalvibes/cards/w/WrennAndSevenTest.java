@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.v.ValakutTheMoltenPinnacle;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -213,7 +214,7 @@ class WrennAndSevenTest extends BaseCardTest {
 
             assertThat(gd.emblems).anySatisfy(emblem -> {
                 assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-                assertThat(emblem.sourceCard()).isSameAs(wrenn.getCard());
+                assertThat(emblem.staticEffects()).anyMatch(NoMaximumHandSizeEffect.class::isInstance);
             });
         }
 
@@ -233,7 +234,10 @@ class WrennAndSevenTest extends BaseCardTest {
             assertThat(wrenn.getCounterCount(CounterType.LOYALTY)).isEqualTo(0);
             assertThat(gd.playerHands.get(player1.getId())).contains(forest, bears);
             harness.assertInGraveyard(player1, "Shock");
-            assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
+            assertThat(gd.emblems).anySatisfy(emblem -> {
+                assertThat(emblem.controllerId()).isEqualTo(player1.getId());
+                assertThat(emblem.staticEffects()).anyMatch(NoMaximumHandSizeEffect.class::isInstance);
+            });
         }
     }
 

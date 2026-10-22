@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /** Resolves Wild Pair's trigger-bound creature search through the shared library-search handler. */
 @Component
@@ -43,6 +44,11 @@ public class SearchLibraryForCreatureWithSameTotalPowerToughnessEffectHandler
         if (enteringPermanent != null) {
             totalPowerAndToughness = gameQueryService.getEffectivePower(gameData, enteringPermanent)
                     + gameQueryService.getEffectiveToughness(gameData, enteringPermanent);
+        } else if (entry.getTriggeringPermanentId() != null
+                && entry.getLastKnownPermanentPowers().containsKey(entry.getTriggeringPermanentId())) {
+            UUID triggeringId = entry.getTriggeringPermanentId();
+            totalPowerAndToughness = entry.getLastKnownPermanentPowers().get(triggeringId)
+                    + entry.getLastKnownPermanentToughnesses().get(triggeringId);
         } else if (wildPairEffect.powerAtTrigger() != null && wildPairEffect.toughnessAtTrigger() != null) {
             totalPowerAndToughness = wildPairEffect.powerAtTrigger() + wildPairEffect.toughnessAtTrigger();
         } else {

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryMatchesPredicate;
-import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -28,7 +28,8 @@ public class WaterWeird extends Card {
                         new TopCardOfLibraryMatchesPredicate(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
                         new PutCountersOnSourceEffect(1, 1, 1)),
                 ConditionalEffect.unless(
-                        new TopCardOfLibraryType(CardType.LAND),
+                        new NotCondition(new TopCardOfLibraryMatchesPredicate(
+                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),
                         new MayEffect(new MillEffect(1, MillRecipient.CONTROLLER), "Mill a card?"))));
 
         addActivatedAbility(new ActivatedAbility(

@@ -164,6 +164,7 @@ class WildWastelandTest extends BaseCardTest {
         Card first = new Forest();
         Card second = new Mountain();
         harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new WildWasteland());
         advanceToUpkeep(player1);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

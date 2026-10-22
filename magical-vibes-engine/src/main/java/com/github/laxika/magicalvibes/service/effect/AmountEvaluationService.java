@@ -870,11 +870,8 @@ public class AmountEvaluationService {
                 if (ctx.controllerId() == null) {
                     yield 0;
                 }
-                Set<UUID> cards = new HashSet<>(gameData.cardsPutIntoGraveyardFromHandThisTurn
-                        .getOrDefault(ctx.controllerId(), java.util.Set.of()));
-                cards.addAll(gameData.cardsPutIntoGraveyardFromLibraryThisTurn
-                        .getOrDefault(ctx.controllerId(), java.util.Set.of()));
-                yield cards.size();
+                yield gameData.cardsPutIntoGraveyardFromHandOrLibraryThisTurn
+                        .getOrDefault(ctx.controllerId(), java.util.Set.of()).size();
             }
             case DescentsThisTurn ignored ->
                     ctx.controllerId() == null ? 0 : gameData.descentsThisTurn.getOrDefault(ctx.controllerId(), 0);
@@ -1678,6 +1675,12 @@ public class AmountEvaluationService {
                 ? FilterContext.empty()
                 : FilterContext.of(gameData);
         filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        if (ctx.stackEntry() != null) {
+            UUID defendingPlayerId = defendingPlayerId(gameData, ctx);
+            if (defendingPlayerId != null) {
+                filterContext = filterContext.withDefendingPlayerId(defendingPlayerId);
+            }
+        }
         // Source-relative predicates (e.g. PermanentHasSameNameAsSourcePredicate on
         // Powerstone Shard's "for each artifact you control named ~") need the source card.
         // PermanentIsHostOfSourceAuraPredicate also needs the live source permanent when

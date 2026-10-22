@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAllPermanentsEffectHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public class WorldsWithinWorldsEffectHandler implements NormalEffectHandlerBean 
 
     private final ExileAllPermanentsEffectHandler exileAllPermanentsEffectHandler;
     private final WorldsWithinWorldsSupport support;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,7 +49,7 @@ public class WorldsWithinWorldsEffectHandler implements NormalEffectHandlerBean 
     private List<UUID> creatureCardIds(GameData gameData) {
         List<UUID> cardIds = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> battlefield.stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE))
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .map(permanent -> permanent.getCard().getId())
                 .forEach(cardIds::add));
         return cardIds;

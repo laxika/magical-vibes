@@ -440,7 +440,10 @@ public class PermanentRemovalService {
             }
         }
 
-        boolean wasCreature = gameQueryService.isCreature(gameData, target);
+        // CR 603.10a: a permanent that dies in the same batch as the effect giving it its creature type
+        // (e.g. an Aura that animates the land it enchants) was still a creature when the batch began.
+        boolean wasCreature = gameData.simultaneousDyingCreatures.containsKey(target.getId())
+                || gameQueryService.isCreature(gameData, target);
         boolean modifiedAtDeath = wasCreature && gameQueryService.isModified(gameData, target);
         boolean wasLand = gameQueryService.isLand(gameData, target);
         int dyingPowerAtDeath = wasCreature
@@ -1086,7 +1089,9 @@ public class PermanentRemovalService {
         triggerCollectionService.checkControllerAnotherNonlandPermanentReturnedToHandTriggers(
                 gameData, target, controllerIdBeforeRemoval);
         triggerCollectionService.checkControllerPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval);
+            triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval, target);
         }
+        boolean werewhatTransformed = target.getWerewhatCompanionCard() != null;
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
@@ -1111,7 +1116,11 @@ public class PermanentRemovalService {
         for (Card leaving : target.cardsLeavingBattlefield()) {
             UUID handOwnerId = leaving.getId().equals(target.getOriginalCard().getId())
                     ? ownerId : ownerOfCard(gameData, leaving, ownerId);
-            gameData.addCardToHand(handOwnerId, leaving);
+            // A Werewhat that exiled a card carries that card as its back face only while it is on the
+            // battlefield; the card returns to hand as the printed creature.
+            Card toHand = werewhatTransformed && leaving.getId().equals(target.getOriginalCard().getId())
+                    ? printedWerewhatFace(target.getOriginalCard()) : leaving;
+            gameData.addCardToHand(handOwnerId, toHand);
         }
         if (!dynamicToken) {
             Card companion = detachWerewhatCompanion(gameData, target);
@@ -1124,7 +1133,6 @@ public class PermanentRemovalService {
         else gameData.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(ownerId);
         forgetDepartedPermanentState(gameData, target);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
-        if (!commanderChoice) triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId, target);
         target.setAttachedTo(null);
         return true;
     }
@@ -1201,6 +1209,29 @@ public class PermanentRemovalService {
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         target.setAttachedTo(null);
         return true;
+    }
+
+    /**
+     * Exiles a permanent whose entry was replaced by "exile it instead" while it was being placed
+     * (an Upgrade permanent with no artifact to cover). It never entered the battlefield, so no
+     * leaves-the-battlefield event happens and nothing counts it as exiled from the battlefield.
+     *
+     * @return {@code true} if the permanent was found on a battlefield and exiled
+     */
+    public boolean exileInsteadOfEntering(GameData gameData, Permanent target) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null || !battlefield.remove(target)) {
+                continue;
+            }
+            Card physicalCard = target.getOriginalCard();
+            if (!physicalCard.isToken()) {
+                exileService.exileCard(gameData, ownerOfCard(gameData, physicalCard, playerId), physicalCard);
+            }
+            forgetDepartedPermanentState(gameData, target);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1352,7 +1383,6 @@ public class PermanentRemovalService {
             }
             gameData.removeFromExile(leavingCard.getId());
             gameData.addCardToHand(exiled.ownerId(), exiled.card());
-            triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, exiled.ownerId());
         }
         return true;
     }
@@ -1410,7 +1440,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         if (!dynamicToken) {
-            if (target.isMergedByMutation()) {
+            if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                 putMutationComponentsInLibrary(gameData, target, ownerId, false, 0, !shuffle);
             } else {
                 for (Card leaving : target.cardsLeavingBattlefield()) {
@@ -1474,7 +1504,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         if (!dynamicToken) {
-            if (target.isMergedByMutation()) {
+            if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                 putMutationComponentsInLibrary(gameData, target, ownerId, true, null, true);
             } else {
                 // A token that leaves the battlefield ceases to exist; it never reaches the library.
@@ -1565,12 +1595,14 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         if (!dynamicToken) {
-            if (target.isMergedByMutation()) {
+            if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                 putMutationComponentsInLibrary(gameData, target, ownerId, false, position, true);
             } else {
                 List<Card> library = gameData.playerDecks.get(ownerId);
                 int insertIndex = Math.min(position, library.size());
+                // A token that leaves the battlefield ceases to exist; it never reaches the library.
                 for (Card leaving : target.cardsLeavingBattlefield()) {
+                    if (leaving.isToken()) continue;
                     library.add(Math.min(insertIndex, library.size()), leaving);
                     insertIndex++;
                 }
@@ -1584,9 +1616,8 @@ public class PermanentRemovalService {
             clearDynamicToken(gameData, target);
         }
         triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                gameData, ownerId, (target.isMergedByMutation()
-                        ? (int) target.cardsLeavingBattlefield().stream().filter(card -> !isToken(gameData, card)).count()
-                        : target.cardsLeavingBattlefield().size())
+                gameData, ownerId, (dynamicToken ? 0
+                        : (int) target.cardsLeavingBattlefield().stream().filter(card -> !isToken(gameData, card)).count())
                         + (werewhatCompanion == null ? 0 : 1));
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
@@ -2336,6 +2367,12 @@ public class PermanentRemovalService {
                     if (target.getId().equals(entry.getTargetId())
                             || entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.rememberRemovedPermanentController(target.getId(), playerId);
+                        entry.getLastKnownPermanentPowers().put(target.getId(),
+                                gameQueryService.getEffectivePower(gameData, target));
+                        entry.getLastKnownPermanentToughnesses().put(target.getId(),
+                                gameQueryService.getEffectiveToughness(gameData, target));
+                    }
+                    if (target.getId().equals(entry.getTriggeringPermanentId())) {
                         entry.getLastKnownPermanentPowers().put(target.getId(),
                                 gameQueryService.getEffectivePower(gameData, target));
                         entry.getLastKnownPermanentToughnesses().put(target.getId(),
@@ -3503,6 +3540,22 @@ public class PermanentRemovalService {
                         instanceof ExileTargetPermanentUntilSourceLeavesEffect leaveTriggerExile
                         && leaveTriggerExile.returnsOnSourceLeavesTrigger()
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect);
+        // Parallax Wave style: the exile is paid for by an activated ability, and the return is the
+        // source's leaves-the-battlefield triggered ability, so it goes on the stack.
+        boolean returnsThroughActivatedAbilityLeavesTrigger = removedPermanent.getCard().getActivatedAbilities().stream()
+                .flatMap(ability -> ability.getEffects().stream())
+                .anyMatch(effect -> (effect instanceof MayEffect may ? may.wrapped() : effect)
+                        instanceof ExileTargetPermanentUntilSourceLeavesEffect leaveTriggerExile
+                        && leaveTriggerExile.returnsOnSourceLeavesTrigger())
+                && !pendingReturns.isEmpty();
+        // Wall of Nets style: the exile is the source's end-of-combat triggered ability, and the return is its
+        // separate leaves-the-battlefield triggered ability, so it goes on the stack when cards were exiled.
+        boolean returnsThroughEndOfCombatLeavesTrigger = !pendingReturns.isEmpty()
+                && removedPermanent.getCard().getEffects(EffectSlot.END_OF_COMBAT_TRIGGERED).stream()
+                .anyMatch(effect -> effect instanceof ExileAllPermanentsUntilSourceLeavesEffect exileAll
+                        && exileAll.returnsOnSourceLeavesTrigger());
+        returnsThroughLeavesTrigger |= returnsThroughEndOfCombatLeavesTrigger;
+        returnsThroughLeavesTrigger |= returnsThroughActivatedAbilityLeavesTrigger;
         returnsThroughLeavesTrigger |= returnsOnSourceLeavesTrigger;
         returnsThroughLeavesTrigger |= hasLeavesTriggerHandExile;
         returnsThroughLeavesTrigger |= hasLeavesTriggerExileAll;
@@ -3514,6 +3567,7 @@ public class PermanentRemovalService {
                 return;
             }
             List<PendingExileReturn> returnBatches = returnsOnSourceLeavesTrigger || hasLeavesTriggerExileAll
+                    || returnsThroughEndOfCombatLeavesTrigger
                     ? mergeSameControllerReturns(pendingReturns)
                     : pendingReturns;
             List<CardEffect> effects = returnBatches.stream()
@@ -3798,6 +3852,14 @@ public class PermanentRemovalService {
         ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
         return exiledEntry == null ? (gameData.ownerOf(card) == null ? fallback : gameData.ownerOf(card))
                 : exiledEntry.ownerId();
+    }
+
+    /** A Werewhat's card without the dynamic back face that was linked to it while it was on the battlefield. */
+    private Card printedWerewhatFace(Card dynamicFrontFace) {
+        Card printed = dynamicFrontFace.createRuntimeCopy();
+        printed.setBackFaceCard(null);
+        printed.freeze();
+        return printed;
     }
 
     private Card detachWerewhatCompanion(GameData gameData, Permanent permanent) {

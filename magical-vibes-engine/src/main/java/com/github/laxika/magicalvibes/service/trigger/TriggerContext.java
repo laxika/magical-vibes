@@ -155,7 +155,7 @@ public sealed interface TriggerContext {
     record Investigate(UUID investigatingPlayerId) implements TriggerContext {}
 
     /** Context for controller-surveil triggers. */
-    record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
+    record Surveil(UUID surveilingPlayerId, boolean firstThisTurn) implements TriggerContext {}
 
     /** Context for controller manifest-dread triggers. */
     record ManifestDread(UUID manifestingPlayerId, Card cardPutIntoGraveyard) implements TriggerContext {}
@@ -407,8 +407,16 @@ public sealed interface TriggerContext {
     /** Context for counters being removed from a permanent controlled by the watcher. */
     record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
 
-    /** Context for removing a time counter from a suspended card in exile. */
-    record TimeCounterRemovedFromExile(int remainingCounters) implements TriggerContext {}
+    /**
+     * Context for removing a time counter from a suspended card in exile.
+     *
+     * @param removerId the player who removed the counter, or {@code null} when it is the card's owner
+     */
+    record TimeCounterRemovedFromExile(int remainingCounters, UUID removerId) implements TriggerContext {
+        public TimeCounterRemovedFromExile(int remainingCounters) {
+            this(remainingCounters, null);
+        }
+    }
 
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}

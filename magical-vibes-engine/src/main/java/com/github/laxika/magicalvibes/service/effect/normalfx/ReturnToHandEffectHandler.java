@@ -61,6 +61,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         var e = (ReturnToHandEffect) effect;
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, e);
+            case TARGET_AND_SELF -> resolveTargetAndSelf(gameData, entry, e);
             case TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD ->
                     resolveTargetNonlandPermanentOrSuspendedCard(gameData, entry, e);
             case TARGET_CHOSEN_CREATURE_TYPE -> resolveTargetChosenCreatureType(gameData, entry, e);
@@ -185,6 +186,26 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         if (e.lifeLoss() > 0) {
             gameOutcomeService.checkWinCondition(gameData);
         }
+    }
+
+    private void resolveTargetAndSelf(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        List<Permanent> toReturn = new ArrayList<>();
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source != null) {
+            toReturn.add(source);
+        }
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null && !toReturn.contains(target)) {
+                toReturn.add(target);
+            }
+        }
+        bounceAll(gameData, entry, toReturn);
     }
 
     private void resolveTargetNonlandPermanentOrSuspendedCard(

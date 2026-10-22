@@ -168,7 +168,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
         Card copy = ability.sourceCard();
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(copy);
         List<CardEffect> spellEffects = new ArrayList<>(copy.getEffects(EffectSlot.SPELL));
-        if (EffectResolution.needsTarget(copy)) {
+        if (EffectResolution.needsTarget(copy) || EffectResolution.needsSpellTarget(spellEffects)) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(
                     gameData, copy, player.getId());
             boolean hasLegalTargets = copy.getMaxTargets() > 1

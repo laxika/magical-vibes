@@ -96,7 +96,7 @@ class WardOfLightsTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFrom(gd, falcon, CardColor.BLACK)).isTrue();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Ward of Lights");
     }
@@ -116,7 +116,7 @@ class WardOfLightsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ward of Lights");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Ward of Lights");
         assertThat(gd.stack).hasSize(1);
@@ -177,7 +177,7 @@ class WardOfLightsTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         harness.assertOnBattlefield(player1, "Ward of Lights");
         harness.passBothPriorities();
 
@@ -201,7 +201,7 @@ class WardOfLightsTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gqs.hasProtectionFrom(gd, falcon, CardColor.RED)).isTrue();
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.CLEANUP);
         harness.assertOnBattlefield(player1, "Ward of Lights");
         harness.passBothPriorities();
 

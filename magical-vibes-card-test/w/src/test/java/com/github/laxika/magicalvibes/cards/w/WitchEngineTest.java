@@ -140,8 +140,10 @@ class WitchEngineTest extends BaseCardTest {
         witchEngine.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
-        harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.activateAbility(player1, 0, null, player2.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(witchEngine.isAttacking()).isFalse();
         assertThat(witchEngine.isTapped()).isTrue();

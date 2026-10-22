@@ -42,7 +42,6 @@ class WarbringerTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent warbringer = findPermanent(player1, "Warbringer");
         assertThat(warbringer.hasKeyword(Keyword.HASTE)).isTrue();

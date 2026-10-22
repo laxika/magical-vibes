@@ -156,11 +156,8 @@ class WanderwineProphetsTest extends BaseCardTest {
 
         castWanderwineProphets();
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player1, false);
-        } else {
-            harness.handlePermanentChosen(player1, null);
-        }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Wanderwine Prophets");
         harness.assertOnBattlefield(player1, "Deeptread Merrow");

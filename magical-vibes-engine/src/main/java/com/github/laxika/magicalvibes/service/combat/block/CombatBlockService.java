@@ -1465,7 +1465,8 @@ public class CombatBlockService {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         int pushed = 0;
         for (Permanent attacker : attackerBattlefield) {
-            if (!attacker.isAttacking() || isBlocked(defenderBattlefield, attacker)) {
+            if (!attacker.isAttacking() || isBlocked(defenderBattlefield, attacker)
+                    || gameQueryService.hasLostAllAbilities(gameData, attacker)) {
                 continue;
             }
             List<CardEffect> printedEffects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);

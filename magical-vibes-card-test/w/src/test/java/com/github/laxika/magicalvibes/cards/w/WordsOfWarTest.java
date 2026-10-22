@@ -82,6 +82,7 @@ class WordsOfWarTest extends BaseCardTest {
         activateWordsOfWar(permanentTarget.getId());
 
         draw(player1);
+        harness.handleListChoice(player1, "Words of War — " + player2.getUsername());
         draw(player1);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);

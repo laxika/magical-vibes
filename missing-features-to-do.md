@@ -725,6 +725,42 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
+## 49. Playing cards from the top of another player's library
+
+**Status:** open · **Found:** 2026-10-22, while fixing W-card test failures
+
+**Failing tests:**
+- `WindriddlePalacesTest.offersBothPlayersTopCardsWhenBothLibrariesAreNonempty()`
+
+**What the rules require.** Windriddle Palaces: "You may play lands and cast spells from the top of
+any player's library." Each player may play the top card of every library, not only their own. The
+engine assumes a single library: `CastingPermissionService.findLibraryTopOwner` returns one owner,
+the view's `playableLibraryTopCards` lists one card, and `PlayCardRequest` carries no library owner,
+so a cast from the library top always uses that one library.
+
+**Why it's large.** It is a protocol change across the stack: a list of library owners in the
+playable-top-card view and in `canPlayLandFromTopOfLibrary`; a new `libraryOwnerId` field on
+`PlayCardRequest` (many constructor overloads) threaded through `PlayCardRequestDispatchService` into
+`SpellCastingService.playCardFromLibraryTop`; and frontend changes (`game.component.ts`,
+`targeting-choice.service.ts`) so the UI sends which library the card comes from. Only showing both
+cards in the view would let the UI offer the opponent's card but cast the player's own.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 49: let a player play cards from the top of any player's
+library when an effect allows it (Windriddle Palaces). Make the playable-library-top view list every
+eligible library's top card with its owner, add a library-owner id to PlayCardRequest and thread it
+through PlayCardRequestDispatchService into SpellCastingService.playCardFromLibraryTop and the land
+path, and update the Angular client to send it. Make
+WindriddlePalacesTest.offersBothPlayersTopCardsWhenBothLibrariesAreNonempty pass and keep the other
+play-from-top-of-library card tests (e.g. Future Sight, Courser of Kruphix, Bolas's Citadel) passing.
+Verify every CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit until
+I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

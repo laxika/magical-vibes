@@ -90,7 +90,7 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
     void counterModeCanTargetWhiteWidowItself() {
         Permanent widow = harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
         harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
-        harness.handleMultiplePermanentsChosen(player1, List.of(widow.getId()));
+        harness.handlePermanentChosen(player1, widow.getId());
         harness.passBothPriorities();
 
         assertThat(widow.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -100,7 +100,7 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
     void counterModeCanChooseNoTargets() {
         Permanent widow = harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
         harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(widow.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

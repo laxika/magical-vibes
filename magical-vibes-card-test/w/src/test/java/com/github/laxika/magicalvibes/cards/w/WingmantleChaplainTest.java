@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBerserker;
 import com.github.laxika.magicalvibes.cards.c.CoralColony;
 import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -126,9 +128,28 @@ class WingmantleChaplainTest extends BaseCardTest {
     @Test
     void anotherChaplainTriggersExistingChaplainAndCountsBothDefenders() {
         castChaplain();
-        castChaplain();
+        harness.setHand(player1, List.of(new WingmantleChaplain()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveChaplainTriggers();
 
         assertThat(countPermanents(player1, "Bird")).isEqualTo(4);
+    }
+
+    private void resolveChaplainTriggers() {
+        while (!gd.stack.isEmpty()) {
+            PendingInteraction.ColorChoice order =
+                    gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            if (order != null && order.context() instanceof ChoiceContext.TriggerOrder) {
+                harness.handleListChoice(player1, order.options().getFirst());
+            } else if (gd.interaction.isAwaitingInput()) {
+                break;
+            } else {
+                harness.passBothPriorities();
+            }
+        }
     }
 
     private void castChaplain() {

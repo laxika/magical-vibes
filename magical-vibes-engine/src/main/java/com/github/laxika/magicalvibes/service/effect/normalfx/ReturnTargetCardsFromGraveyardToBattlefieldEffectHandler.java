@@ -139,7 +139,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                         enteringCounters(effect));
                 simultaneouslyEntered.add(permanent);
                 entry.rememberReturnedPermanent(permanent.getId());
-                applyReturnRiders(gameData, permanent, effect);
+                applyReturnRiders(gameData, entry, permanent, effect);
                 returnedCards.add(card);
             }
             simultaneouslyEntered.forEach(permanent ->
@@ -229,7 +229,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (e.enterTapped()) prepared.tap();
                 prepared.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
                 applyEntryAnimation(gameData, entry, prepared, e);
-                applyReturnRiders(gameData, prepared, e);
+                applyReturnRiders(gameData, entry, prepared, e);
                 preparedPermanents.add(prepared);
                 entry.rememberReturnedPermanent(prepared.getId());
             }
@@ -278,7 +278,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 if (e.attachToSourceHost() && !card.isAura()) {
                     equipmentToAttach.add(permanent);
                 }
-                applyReturnRiders(gameData, permanent, e);
+                applyReturnRiders(gameData, entry, permanent, e);
                 returnedCards.add(card);
             }
             simultaneouslyEntered.forEach(permanent ->
@@ -384,7 +384,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                         enteringCounters(effect));
                 simultaneouslyEntered.add(permanent);
                 entry.rememberReturnedPermanent(permanent.getId());
-                applyReturnRiders(gameData, permanent, effect);
+                applyReturnRiders(gameData, entry, permanent, effect);
                 returnedCards.add(card);
             }
             simultaneouslyEntered.forEach(permanent ->
@@ -434,14 +434,18 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private record GraveyardCard(UUID ownerId, Card card) {
     }
 
-    private void applyReturnRiders(GameData gameData, Permanent permanent,
+    private void applyReturnRiders(GameData gameData, StackEntry entry, Permanent permanent,
                                    ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         if (effect.grantHaste()) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            (effect.permanentHaste() ? permanent.getPersistentGrantedKeywords() : permanent.getGrantedKeywords())
+                    .add(Keyword.HASTE);
         }
         if (effect.sacrificeAtEndStep()) {
+            // One delayed trigger of the spell or ability sacrifices everything it returned, and only the
+            // player who controls that trigger can sacrifice a permanent (CR 701.21a).
             gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                    false, null, null, entry.getControllerId(), false, entry.getCard()));
         }
         if (effect.sacrificeAtEndStepIfManaValueAtLeast() > 0) {
             gameData.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast(

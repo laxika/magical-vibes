@@ -84,7 +84,8 @@ class WhiteMagesStaffTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        // The unblocked 3/3 equipped Bears (2/2 + 1/1) deals 3 combat damage to player1.
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 
     @Test

@@ -16,12 +16,10 @@ public class WeedStrangle extends Card {
         // Destroy target creature. Clash with an opponent. If you win, you gain life equal to that
         // creature's toughness.
         //
-        // The clash reward is listed before the destroy so that, on a clash win, the life gain
-        // snapshots the creature's toughness while it is still on the battlefield (its last-known
-        // toughness, per the official ruling). The two instructions are independent, so this
-        // ordering is rules-equivalent.
+        // The instructions are followed in the order written (CR 608.2c), so the destroy happens
+        // before the clash. On a clash win the life gain uses the creature's last-known toughness.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ClashEffect(new GainLifeEffect(new TargetToughness())))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new ClashEffect(new GainLifeEffect(new TargetToughness())));
     }
 }

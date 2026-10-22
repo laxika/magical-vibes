@@ -53,7 +53,8 @@ class WhisperingSnitchTest extends BaseCardTest {
     @DisplayName("Does not trigger after entering following the controller's first surveil")
     void doesNotTriggerAfterEnteringFollowingFirstSurveil() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BartizanBats());
-        harness.setLibrary(player1, List.of(new BartizanBats(), new BartizanBats()));
+        harness.setLibrary(player1, List.of(new BartizanBats(), new BartizanBats(),
+                new BartizanBats(), new BartizanBats()));
         harness.setHand(player1, List.of(new DazzlingLights(), new WhisperingSnitch(), new DazzlingLights()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         int controllerLife = gd.getLife(player1.getId());
@@ -141,7 +142,8 @@ class WhisperingSnitchTest extends BaseCardTest {
     void triggersAgainOnOpponentsTurn() {
         addCreatureReady(player1, new WhisperingSnitch());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BartizanBats());
-        harness.setLibrary(player1, List.of(new BartizanBats(), new BartizanBats()));
+        harness.setLibrary(player1, List.of(new BartizanBats(), new BartizanBats(),
+                new BartizanBats(), new BartizanBats()));
         harness.setHand(player1, List.of(new DazzlingLights(), new DazzlingLights()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         int controllerLife = gd.getLife(player1.getId());

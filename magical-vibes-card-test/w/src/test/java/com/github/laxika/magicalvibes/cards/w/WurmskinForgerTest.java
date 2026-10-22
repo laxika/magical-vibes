@@ -128,7 +128,6 @@ class WurmskinForgerTest extends BaseCardTest {
         Permanent forger = harness.enterBattlefieldAndReturn(player1, new WurmskinForger());
 
         harness.handlePermanentChosen(player1, forger.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.handleListChoice(player1, "3");
         harness.passBothPriorities();
 

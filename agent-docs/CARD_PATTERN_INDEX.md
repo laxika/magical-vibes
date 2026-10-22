@@ -363,7 +363,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | seek up to N random matching cards from the top of a library, then shuffle | `SeekFromTopOfLibraryEffect` |
 | seek a random matching card from the top of a library and perpetually reduce that exact card's generic cast cost | `SeekFromTopOfLibraryAndPerpetuallyReduceSoughtCardEffect` |
-| seek a random matching card from the full library into hand, then shuffle | `SeekFromLibraryToHandEffect` |
+| seek a random matching card from the full library into hand (no shuffle) | `SeekFromLibraryToHandEffect` |
 | seek a random matching card from the full library into the graveyard, then shuffle | `SeekFromLibraryToGraveyardEffect` |
 | discard a card, then seek and exile a random card with greater mana value that you may play until the end of your next turn | `DiscardCardThenEffect` + `SeekFromLibraryWithGreaterManaValueEffect` |
 | trigger from the card actually drawn without revealing it | `DrawnCardTriggerEffect` |

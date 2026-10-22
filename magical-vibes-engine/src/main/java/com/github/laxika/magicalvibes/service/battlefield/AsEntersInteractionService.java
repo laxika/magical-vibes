@@ -258,7 +258,7 @@ public class AsEntersInteractionService {
             List<UUID> validIds = upgradeSupport.validArtifactIds(gameData, controllerId, justEntered);
             if (validIds.isEmpty()) {
                 if (permanentRemovalService == null
-                        || !permanentRemovalService.removePermanentToExile(gameData, justEntered)) {
+                        || !permanentRemovalService.exileInsteadOfEntering(gameData, justEntered)) {
                     throw new IllegalStateException("Upgrade permanent could not be exiled");
                 }
                 return;

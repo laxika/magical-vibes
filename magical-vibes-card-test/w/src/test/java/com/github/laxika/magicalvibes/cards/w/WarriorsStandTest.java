@@ -93,6 +93,7 @@ class WarriorsStandTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
+        gs.declareBlockers(gd, player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
 
@@ -128,8 +129,9 @@ class WarriorsStandTest extends BaseCardTest {
         Permanent defender = addCreatureReady(player2, new WuInfantry());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        gd.recordAttackAgainstPlayer(attacker.getId(), player2.getId());
         attacker.setAttacking(false);
         attacker.setAttackTarget(null);
 

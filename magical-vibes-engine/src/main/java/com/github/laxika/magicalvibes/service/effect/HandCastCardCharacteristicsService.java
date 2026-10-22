@@ -86,7 +86,7 @@ public final class HandCastCardCharacteristicsService {
         if (offspringCost != null && effective.getEffects(EffectSlot.STATIC).stream()
                 .noneMatch(KickerEffect.class::isInstance)) {
             Card copy = effective.createRuntimeCopy();
-            copy.addEffect(EffectSlot.STATIC, new KickerEffect(offspringCost));
+            copy.addEffect(EffectSlot.STATIC, new KickerEffect(offspringCost, false));
             copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                     new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
             effective = copy;

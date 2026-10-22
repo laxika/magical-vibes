@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -67,14 +65,15 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
             Permanent anchor = gameQueryService.findPermanentById(gameData, alreadyChosen.getFirst());
             if (anchor == null) return List.of();
             return untappedCreatures.stream()
-                    .filter(p -> sharesCreatureType(anchor, p))
+                    .filter(p -> gameQueryService.shareCreatureType(gameData, anchor, p))
                     .map(Permanent::getId)
                     .toList();
         }
 
         // First pick: must be part of at least one sharing pair among untapped creatures.
         return untappedCreatures.stream()
-                .filter(p -> untappedCreatures.stream().anyMatch(o -> o != p && sharesCreatureType(p, o)))
+                .filter(p -> untappedCreatures.stream()
+                        .anyMatch(o -> o != p && gameQueryService.shareCreatureType(gameData, p, o)))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -92,13 +91,13 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
         }
         if (alreadyChosen.isEmpty()) {
             boolean pairExists = untappedCreatures(gameData, player.getId()).stream()
-                    .anyMatch(o -> o != chosen && sharesCreatureType(chosen, o));
+                    .anyMatch(o -> o != chosen && gameQueryService.shareCreatureType(gameData, chosen, o));
             if (!pairExists) {
                 throw new IllegalStateException("The two creatures must share a creature type");
             }
         } else {
             Permanent anchor = gameQueryService.findPermanentById(gameData, alreadyChosen.getFirst());
-            if (anchor == null || !sharesCreatureType(anchor, chosen)) {
+            if (anchor == null || !gameQueryService.shareCreatureType(gameData, anchor, chosen)) {
                 throw new IllegalStateException("The two creatures must share a creature type");
             }
         }
@@ -122,19 +121,5 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
                 .filter(p -> !p.isTapRestrictedUnlessAttacking())
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .toList();
-    }
-
-    private boolean sharesCreatureType(Permanent a, Permanent b) {
-        List<CardSubtype> typesA = new ArrayList<>(a.getCard().getSubtypes());
-        typesA.addAll(a.getTransientSubtypes());
-        boolean aIsChangeling = a.hasKeyword(Keyword.CHANGELING);
-
-        List<CardSubtype> typesB = new ArrayList<>(b.getCard().getSubtypes());
-        typesB.addAll(b.getTransientSubtypes());
-        boolean bIsChangeling = b.hasKeyword(Keyword.CHANGELING);
-
-        return (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
-                || (bIsChangeling && !typesA.isEmpty())
-                || typesA.stream().anyMatch(typesB::contains);
     }
 }

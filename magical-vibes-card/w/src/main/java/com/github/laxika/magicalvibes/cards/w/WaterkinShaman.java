@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class WaterkinShaman extends Card {
 
     public WaterkinShaman() {
-        // Whenever a creature you control with flying enters, this creature gets +1/+1 until end of turn.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new TriggeringPermanentConditionalEffect(
+        // Whenever a creature you control with flying enters (including this creature), this creature gets +1/+1 until end of turn.
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 new BoostSelfEffect(1, 1)));
     }

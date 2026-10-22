@@ -133,6 +133,7 @@ class WhipgrassEntanglerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> declareAttackers(player1, List.of(1)))

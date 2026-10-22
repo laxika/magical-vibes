@@ -26,7 +26,7 @@ public class WingSplicer extends Card {
 
         // Golem creatures you control have flying.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.OWN_CREATURES,
+                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -22,7 +23,8 @@ import java.util.List;
 public class WerefoxBodyguard extends Card {
 
     public WerefoxBodyguard() {
-        target(new PermanentPredicateTargetFilter(nonFoxCreature(), "Target must be a non-Fox creature"), 0, 1)
+        target(new PermanentPredicateTargetFilter(nonFoxCreature(),
+                "Target must be another non-Fox creature"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect());
 
         addActivatedAbility(new ActivatedAbility(
@@ -36,6 +38,7 @@ public class WerefoxBodyguard extends Card {
     private static PermanentPredicate nonFoxCreature() {
         return new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
+                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.FOX))
         ));
     }

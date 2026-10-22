@@ -18,7 +18,7 @@ public class WolverineBestThereIs extends Card {
 
     public WolverineBestThereIs() {
         addEffect(EffectSlot.STATIC, new DoubleDamageFromSelfEffect());
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new ConditionalEffect(new SelfDealtDamageToCreatureThisTurn(),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}",

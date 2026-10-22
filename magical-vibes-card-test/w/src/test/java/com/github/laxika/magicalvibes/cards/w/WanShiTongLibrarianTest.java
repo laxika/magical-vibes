@@ -101,10 +101,10 @@ class WanShiTongLibrarianTest extends BaseCardTest {
         GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(drawnCard));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, wan.getId());
         harness.passBothPriorities();
 

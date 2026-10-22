@@ -16,7 +16,7 @@ public class WizardMentor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(ReturnToHandEffect.self(), ReturnToHandEffect.target()),
+                List.of(ReturnToHandEffect.targetAndSelf()),
                 "{T}: Return Wizard Mentor and target creature you control to their owners' hands.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

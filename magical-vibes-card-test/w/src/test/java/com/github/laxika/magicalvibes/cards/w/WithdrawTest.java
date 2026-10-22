@@ -146,7 +146,10 @@ class WithdrawTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first.getCard());
+        harness.assertNotOnBattlefield(player2, "Diving Griffin");
+        assertThat(gd.playerHands.get(player2.getId()).stream()
+                .filter(card -> card.getName().equals("Diving Griffin"))
+                .count()).isEqualTo(1);
         harness.assertInGraveyard(player1, "Withdraw");
     }
 

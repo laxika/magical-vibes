@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -28,9 +29,10 @@ public class WhiteOrchidPhantom extends Card {
                 )),
                 "Target must be a nonbasic land"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentThenEffect(
-                        new SearchLibraryEffect(
+                        new MayEffect(new SearchLibraryEffect(
                                 CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                                "Search your library for a basic land card?"),
                         ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }

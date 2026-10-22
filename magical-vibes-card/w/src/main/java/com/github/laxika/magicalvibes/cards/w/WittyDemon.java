@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 public class WittyDemon extends Card {
 
     public WittyDemon() {
-        StartingDeckAtLeast startingDeckCondition = new StartingDeckAtLeast(40, 13);
+        StartingDeckAtLeast startingDeckCondition = new StartingDeckAtLeast(13);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 ConditionalEffect.unless(startingDeckCondition, new SearchLibraryEffect()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

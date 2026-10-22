@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -39,6 +40,7 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
     private final AmountEvaluationService amountEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,7 +67,7 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(card, e.filter(), null))
                 .count();
         entry.setEventValue(matchCount);
-        boolean matched = e.requireAllCardsMilled() ? milled.size() == count : matchCount > 0;
+        boolean matched = e.requireAllCardsMilled() ? milled.size() >= count : matchCount > 0;
 
         log.info("Game {} - {} milled {} card(s), condition {}",
                 gameData.id, entry.getCard().getName(), milled.size(), matched ? "met" : "not met");
@@ -93,6 +95,8 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
                     .flatMap(List::stream)
                     .filter(permanent -> targetPredicateEvaluationService.matchesPermanent(
                             targetPredicate, permanent, filterContext))
+                    .filter(permanent -> !validTargetService.isBlockedByHexproofOrGrantedEffect(
+                            gameData, permanent, entry.getControllerId()))
                     .map(Permanent::getId)
                     .forEach(validPermanents::add);
         }

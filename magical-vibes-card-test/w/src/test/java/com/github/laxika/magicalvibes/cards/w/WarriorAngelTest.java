@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ConstantMists;
 import com.github.laxika.magicalvibes.cards.d.Delirium;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -84,7 +85,7 @@ class WarriorAngelTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(angel);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);

@@ -21,7 +21,7 @@ public class WarrenInstigator extends Card {
         // Double strike is auto-loaded from Scryfall.
         // Whenever this creature deals damage to an opponent, you may put a Goblin creature card
         // from your hand onto the battlefield. The hand-card choice is declinable.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new PutCardToBattlefieldEffect(
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new PutCardToBattlefieldEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.GOBLIN))),

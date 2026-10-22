@@ -174,8 +174,8 @@ public class AnimationSupport {
         for (UUID targetId : targetIds) {
             switch (effect.duration()) {
                 case UNTIL_YOUR_NEXT_TURN -> animateOneUntilNextTurn(gameData, entry, effect, targetId);
-                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, UNTIL_CONTROLLERS_NEXT_UPKEEP,
-                        UNTIL_PLANESWALK ->
+                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_SOURCE_CONTROLLED,
+                        UNTIL_CONTROLLERS_NEXT_UPKEEP, UNTIL_PLANESWALK ->
                         animateOneWithFloatingDuration(gameData, entry, effect, targetId);
                 default -> animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
@@ -321,6 +321,15 @@ public class AnimationSupport {
         if (target == null || (entry.getSourcePermanentId() == null
                 && effect.duration() != EffectDuration.UNTIL_PLANESWALK)) {
             return;
+        }
+
+        if (effect.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED) {
+            // The duration is already over if the source left or is no longer controlled by the ability's
+            // controller as the ability resolves (CR 611.2b), so nothing happens.
+            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null || !entry.getControllerId().equals(gameData.findControllerOf(source))) {
+                return;
+            }
         }
 
         AmountContext ctx = animationAmountContext(gameData, entry);

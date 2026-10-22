@@ -30,15 +30,19 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -60,6 +64,9 @@ public class LibrarySearchSupport {
     private final GameQueryService gameQueryService;
     @Autowired
     private ReverseMiracleSupport reverseMiracleSupport;
+    @Autowired
+    @Lazy
+    private TriggerCollectionService triggerCollectionService;
 
     /**
      * Starts the next pending "each player searches for a basic land" search from the
@@ -142,7 +149,8 @@ public class LibrarySearchSupport {
      * searcher may take up to {@code followUp.eachPlayerToHandCount()} cards to hand, then shuffles;
      * when {@code followUp.eachPlayerToHandCreatureOnly()} the search is restricted to creature cards
      * and the taken cards are revealed. Returns true if a search was initiated, false if no searcher
-     * remains (empty library / no matching cards / Leonin Arbiter players are skipped). Used by
+     * remains (Leonin Arbiter players are skipped; a non-creature search with an empty library or no
+     * matching cards is skipped, while a creature-only search is always offered). Used by
      * Weird Harvest (creature-only) and Noble Benefactor (any card).
      */
     public boolean startNextEachPlayerToHandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
@@ -158,26 +166,25 @@ public class LibrarySearchSupport {
             }
 
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
-            if ((deck == null || deck.isEmpty()) && !creatureOnly) {
+            List<Card> library = deck == null ? List.of() : deck;
+            if (library.isEmpty() && !creatureOnly) {
                 // "May search": a player with nothing to find isn't made to search without choosing to.
-                continue;
-            }
-            if (deck == null || deck.isEmpty()) {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, nextPlayerId);
-                if (deck != null) {
-                    LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
-                }
-                gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
                 continue;
             }
 
             List<Card> choices = creatureOnly
-                    ? deck.stream().filter(card -> card.hasAllCardNames() || card.hasType(CardType.CREATURE)).toList()
-                    : deck;
+                    ? library.stream().filter(card -> card.hasAllCardNames() || card.hasType(CardType.CREATURE)).toList()
+                    : library;
             choices = restrictToTopCards(gameData, nextPlayerId, choices,
                     opponentSearchTopCardsLimit(gameData, nextPlayerId));
 
-            if (choices.isEmpty()) {
+            // A creature-only "may search" is always offered, even with nothing to find, because searching
+            // is the player's choice (it triggers opponents' search abilities and shuffles the library).
+            // With a count of zero the player may search for no cards, so nothing can be picked.
+            if (creatureOnly && count == 0) {
+                choices = List.of();
+            }
+            if (choices.isEmpty() && !creatureOnly) {
                 LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, nextPlayerId);
                 LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no creature cards. Library is shuffled."));
@@ -204,7 +211,48 @@ public class LibrarySearchSupport {
             sendLibrarySearchToPlayer(gameData, nextPlayerId, params, prompt, true);
             return true;
         }
+        revealDeferredEachPlayerToHandPicks(gameData);
         return false;
+    }
+
+    /**
+     * Once every player has made their choices, the cards they picked are revealed and put into their
+     * hands at the same time (CR 101.4), in APNAP order for the log.
+     */
+    private void revealDeferredEachPlayerToHandPicks(GameData gameData) {
+        if (gameData.eachPlayerSearchDeferredToHand.isEmpty()) {
+            return;
+        }
+        List<UUID> order = new ArrayList<>();
+        order.add(gameData.activePlayerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(gameData.activePlayerId)) {
+                order.add(playerId);
+            }
+        }
+        Map<UUID, List<Card>> picks = new LinkedHashMap<>();
+        for (UUID playerId : order) {
+            List<Card> cards = gameData.eachPlayerSearchDeferredToHand.remove(playerId);
+            if (cards != null && !cards.isEmpty()) {
+                picks.put(playerId, cards);
+            }
+        }
+        gameData.eachPlayerSearchDeferredToHand.clear();
+        picks.forEach((playerId, cards) -> {
+            GameLog.Builder reveal = GameLog.builder().text(gameData.playerIdToName.get(playerId) + " reveals ");
+            for (int i = 0; i < cards.size(); i++) {
+                if (i > 0) {
+                    reveal.text(", ");
+                }
+                reveal.card(cards.get(i));
+            }
+            gameLogService.append(gameData, reveal.text(" and puts "
+                    + (cards.size() == 1 ? "it" : "them") + " into their hand.").build());
+        });
+        picks.forEach((playerId, cards) -> cards.forEach(card -> {
+            gameData.addCardToHand(playerId, card);
+            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(gameData, playerId, card);
+        }));
     }
 
     /**
@@ -1070,7 +1118,7 @@ public class LibrarySearchSupport {
         if (topLimit != Integer.MAX_VALUE) {
             UUID libraryOwnerId = params.targetPlayerId() != null ? params.targetPlayerId() : params.playerId();
             List<Card> restricted = restrictToTopCards(gameData, libraryOwnerId, params.cards(), topLimit);
-            if (restricted.isEmpty()) {
+            if (restricted.isEmpty() && !params.cards().isEmpty()) {
                 // None of the top N cards match the search: the player searched but found nothing.
                 gameLogService.append(gameData, GameLog.text(logMessage));
                 if (params.shuffleAfterSelection()) {

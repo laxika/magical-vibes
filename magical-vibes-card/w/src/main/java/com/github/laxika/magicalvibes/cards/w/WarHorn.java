@@ -13,6 +13,6 @@ public class WarHorn extends Card {
     public WarHorn() {
         // Attacking creatures you control get +1/+0.
         addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
+                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES, new PermanentIsAttackingPredicate()));
     }
 }

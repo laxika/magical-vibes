@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.r.RixMaadiDungeonPalace;
 import com.github.laxika.magicalvibes.cards.s.StalkingVengeance;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WhiptailMoloch.class, MistralCharger.class, RixMaadiDungeonPalace.class,
-        StalkingVengeance.class})
+        StalkingVengeance.class, AirElemental.class})
 class WhiptailMolochTest extends BaseCardTest {
 
     @Test
@@ -115,7 +116,7 @@ class WhiptailMolochTest extends BaseCardTest {
     @Test
     @DisplayName("ETB still deals damage after Whiptail Moloch leaves the battlefield")
     void etbResolvesAfterSourceLeaves() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new StalkingVengeance());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         castWhiptailMoloch(target.getId());
         harness.passBothPriorities();
 

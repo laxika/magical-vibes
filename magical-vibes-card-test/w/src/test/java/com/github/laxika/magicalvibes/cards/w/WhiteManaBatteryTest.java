@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.s.ShadowTheHedgehog;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -184,7 +183,7 @@ class WhiteManaBatteryTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().hasKeyword(Keyword.SPLIT_SECOND)).isTrue();
+        assertThat(gqs.hasSplitSecond(gd, gd.stack.getFirst())).isTrue();
     }
 
     private Permanent addReadyBattery(Player player) {

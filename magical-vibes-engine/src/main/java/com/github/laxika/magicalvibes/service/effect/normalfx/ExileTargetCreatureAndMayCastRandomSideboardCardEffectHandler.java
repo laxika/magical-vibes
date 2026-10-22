@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -48,16 +50,22 @@ public class ExileTargetCreatureAndMayCastRandomSideboardCardEffectHandler imple
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        List<Card> nonlandCards = gameData.playerSideboards
-                .getOrDefault(targetControllerId, List.of())
-                .stream()
-                .filter(card -> !card.hasType(CardType.LAND))
-                .toList();
-        if (nonlandCards.isEmpty()) {
+        List<Card> sideboardInRandomOrder = new ArrayList<>(
+                gameData.playerSideboards.getOrDefault(targetControllerId, List.of()));
+        Collections.shuffle(sideboardInRandomOrder, ThreadLocalRandom.current());
+        String controllerName = gameData.playerIdToName.get(targetControllerId);
+        Card chosenCard = null;
+        for (Card revealed : sideboardInRandomOrder) {
+            gameLogService.append(gameData, GameLog.textCardText(controllerName + " reveals ", revealed, "."));
+            if (!revealed.hasType(CardType.LAND)) {
+                chosenCard = revealed;
+                break;
+            }
+        }
+        if (chosenCard == null) {
             return;
         }
 
-        Card chosenCard = nonlandCards.get(ThreadLocalRandom.current().nextInt(nonlandCards.size()));
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 chosenCard,
                 targetControllerId,

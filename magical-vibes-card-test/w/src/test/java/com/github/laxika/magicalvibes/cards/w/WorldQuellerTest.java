@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LuminarchAscension;
 import com.github.laxika.magicalvibes.cards.n.NissaRevane;
 import com.github.laxika.magicalvibes.cards.t.TrustyMachete;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -175,8 +176,8 @@ class WorldQuellerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new TrustyMachete());
         harness.addToBattlefield(player1, new LuminarchAscension());
         harness.addToBattlefield(player2, new LuminarchAscension());
-        harness.addToBattlefield(player1, new NissaRevane());
-        harness.addToBattlefield(player2, new NissaRevane());
+        harness.addToBattlefieldAndReturn(player1, new NissaRevane()).setCounterCount(CounterType.LOYALTY, 3);
+        harness.addToBattlefieldAndReturn(player2, new NissaRevane()).setCounterCount(CounterType.LOYALTY, 3);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

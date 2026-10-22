@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -42,7 +43,7 @@ public class Wistfulness extends Card {
                 "Target must be an artifact or enchantment an opponent controls"
         ), 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.GREEN, 2),
-                new ExileTargetPermanentEffect()));
+                new ExileTargetPermanentEffect()), TriggerMode.INDEPENDENT);
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLUE, 2),

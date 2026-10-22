@@ -21,7 +21,7 @@ public class WitherscaleWurm extends Card {
                 TriggerMode.PER_BLOCKER);
 
         // Whenever this creature deals damage to an opponent, remove all -1/-1 counters from it.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

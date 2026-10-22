@@ -133,8 +133,8 @@ class WolfbatTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, returned));
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Wolfbat");
         harness.assertInGraveyard(player1, "Wolfbat");
     }

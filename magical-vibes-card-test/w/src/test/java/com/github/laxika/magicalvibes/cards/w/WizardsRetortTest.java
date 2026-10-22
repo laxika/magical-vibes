@@ -222,13 +222,13 @@ class WizardsRetortTest extends BaseCardTest {
         WizardsRetort firstRetort = new WizardsRetort();
         harness.setHand(player1, List.of(creature, new WizardsRetort()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.setHand(player2, List.of(firstRetort));
         harness.addMana(player2, ManaColor.BLUE, 3);
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, creature.getId());
         harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castAndResolveInstant(player1, 0, firstRetort.getId());
 
         harness.assertInGraveyard(player2, "Wizard's Retort");

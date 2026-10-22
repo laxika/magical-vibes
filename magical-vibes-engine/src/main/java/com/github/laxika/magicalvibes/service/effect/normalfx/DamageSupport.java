@@ -426,7 +426,11 @@ public class DamageSupport {
         log.info("Game {} - {} deals {} damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
 
         if (damage > 0) {
-            checkSpellLifelink(gameData, entry, damage);
+            if (damageSource != null) {
+                checkPermanentLifelink(gameData, entry, damageSource, damage);
+            } else {
+                checkSpellLifelink(gameData, entry, damage);
+            }
             queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
         }
         processPendingRedirectDamage(gameData);
@@ -527,22 +531,41 @@ public class DamageSupport {
         if (controllerId == null) controllerId = entry.getDamageSourceControllerId();
         UUID gainingPlayerId = controllerId != null ? controllerId : entry.getControllerId();
         Card sourceCard = entry.getEffectiveDamageSourceCard();
-        UUID sourceControllerId = lifeSupport.resolveSpellOrAbilityControllerId(gameData);
         UUID sourceId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId()
                 : sourceCard != null ? sourceCard.getId() : null;
+        queueLifelinkGain(gameData, entry, gainingPlayerId, sourceId, sourceCard, effectiveDamage);
+    }
+
+    /**
+     * Applies lifelink for a permanent that dealt damage as an explicit damage source while the
+     * spell or ability {@code entry} resolves (CR 702.15b), such as a creature the spell chose to
+     * deal damage. The permanent's own keywords decide, and its controller gains the life.
+     */
+    private void checkPermanentLifelink(GameData gameData, StackEntry entry, Permanent damageSource, int damage) {
+        if (damage <= 0 || !gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.LIFELINK)) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
+        if (controllerId == null) return;
+        queueLifelinkGain(gameData, entry, controllerId, damageSource.getId(), damageSource.getCard(), damage);
+    }
+
+    private void queueLifelinkGain(GameData gameData, StackEntry entry, UUID gainingPlayerId, UUID sourceId,
+                                   Card sourceCard, int amount) {
+        UUID sourceControllerId = lifeSupport.resolveSpellOrAbilityControllerId(gameData);
         if (gameData.effectResolutionDepth == 0 || sourceId == null) {
-            lifeSupport.applyGainLife(gameData, gainingPlayerId, effectiveDamage, "lifelink",
+            lifeSupport.applyGainLife(gameData, gainingPlayerId, amount, "lifelink",
                     sourceCard, entry.getEntryType(), sourceControllerId);
             return;
         }
         List<PendingLifelinkGain> pending = gameData.pendingLifelinkGains;
         for (int i = 0; i < pending.size(); i++) {
             if (pending.get(i).isSameEvent(sourceId, gainingPlayerId)) {
-                pending.set(i, pending.get(i).plus(effectiveDamage));
+                pending.set(i, pending.get(i).plus(amount));
                 return;
             }
         }
-        pending.add(new PendingLifelinkGain(sourceId, gainingPlayerId, effectiveDamage, sourceCard,
+        pending.add(new PendingLifelinkGain(sourceId, gainingPlayerId, amount, sourceCard,
                 entry.getEntryType(), sourceControllerId));
     }
 

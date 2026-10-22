@@ -86,5 +86,7 @@ public enum MultiTargetConstraint {
     /** The chosen targets must have different names. */
     DIFFERENT_NAMES,
     /** Every chosen target must be a different object or player, including across modes. */
-    DISTINCT_TARGETS
+    DISTINCT_TARGETS,
+    /** Every chosen graveyard card must be in the same graveyard; non-card targets are ignored (Waste Management). */
+    SINGLE_GRAVEYARD
 }

@@ -117,7 +117,7 @@ class WallOfPutridFleshTest extends BaseCardTest {
         resolveCombat(player1);
 
         assertThat(wall.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1))
+        assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof BarbaryApes);
     }
 
@@ -133,7 +133,7 @@ class WallOfPutridFleshTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(wall.getMarkedDamage()).isZero();
-        assertThat(gd.playerGraveyards.get(player1))
+        assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof PsionicEntity);
     }
 

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -85,7 +86,8 @@ class WhiteWidowYelenaBelovaTest extends BaseCardTest {
         Permanent viper = addReady(new AmbushViper());
         viper.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+        assertThat(gd.stack).hasSize(1);
         assertThat(viper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         gd.playerBattlefields.get(player1.getId()).remove(whiteWidow);
         gd.playerGraveyards.get(player1.getId()).add(whiteWidow.getCard());

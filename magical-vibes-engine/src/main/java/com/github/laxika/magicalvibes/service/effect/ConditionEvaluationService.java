@@ -1054,7 +1054,8 @@ public class ConditionEvaluationService {
                             && countCardsInLibrary(gameData, ctx.controllerId())
                             > countCardsInLibrary(gameData, ctx.targetId());
             case StartingDeckAtLeast c ->
-                    startingDeckSize(gameData, ctx.controllerId()) >= c.minimumDeckSize() + c.cardsOverMinimum();
+                    startingDeckSize(gameData, ctx.controllerId())
+                            >= gameData.format.minimumDeckSize() + c.cardsOverMinimum();
             case AnyGraveyardAtLeast c ->
                     anyGraveyardAtLeast(gameData, c.threshold());
             case TotalCreatureCardsInGraveyardsAtLeast c ->
@@ -1480,13 +1481,14 @@ public class ConditionEvaluationService {
             case PutCounterOnCreatureThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoPutCountersOnCreaturesThisTurn.contains(ctx.controllerId());
-            case PutCounterOnSourceThisTurn ignored -> {
+            case PutCounterOnSourceThisTurn c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield ctx.controllerId() != null
-                        && source != null
+                yield source != null && (c.byAnyPlayer()
+                        ? gameData.permanentsWithCountersPutThisTurn.contains(source.getId())
+                        : ctx.controllerId() != null
                         && gameData.permanentsWithCountersPutByPlayerThisTurn
                                 .getOrDefault(ctx.controllerId(), Set.of())
-                                .contains(source.getId());
+                                .contains(source.getId()));
             }
             case PlusOnePlusOneCounterPutOnCreatureThisTurn ignored ->
                     ctx.controllerId() != null
@@ -2703,7 +2705,8 @@ public class ConditionEvaluationService {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceControllerId(ctx.controllerId())
                 .withSourcePermanentSnapshot(ctx.sourcePermanent())
-                .withXValue(ctx.xValue());
+                .withXValue(ctx.xValue())
+                .withMadness(ctx.madness());
         if (ctx.sourceCard() != null) {
             filterContext = filterContext.withSourceCardId(ctx.sourceCard().getId());
         } else if (ctx.sourcePermanent() != null) {
@@ -2956,7 +2959,13 @@ public class ConditionEvaluationService {
         UUID sourcePermanentId = ctx.sourcePermanentId();
         if (sourcePermanentId == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        return source != null && gameQueryService.isEquipped(gameData, source);
+        if (source == null) {
+            // CR 608.2h: a source that has left the battlefield is judged by its last-known information.
+            Permanent snapshot = ctx.sourcePermanent();
+            Integer lastKnownEquipment = snapshot == null ? null : snapshot.getLastKnownEquipmentCount();
+            return lastKnownEquipment != null && lastKnownEquipment > 0;
+        }
+        return gameQueryService.isEquipped(gameData, source);
     }
 
     private boolean equippedCreatureDidntDealCombatDamageToCreatureThisTurn(GameData gameData,

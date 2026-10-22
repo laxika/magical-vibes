@@ -4,13 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
@@ -19,10 +23,15 @@ import java.util.List;
 public class WoodlandWeavemaster extends Card {
 
     public WoodlandWeavemaster() {
+        CardSubtypePredicate elf = new CardSubtypePredicate(CardSubtype.ELF);
+        BoostSelfEffect boost = new BoostSelfEffect(1, 1);
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new TriggeringCardConditionalEffect(elf, boost));
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ELF),
-                        new BoostSelfEffect(1, 1)));
+                        new CardAllOfPredicate(List.of(elf,
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
+                        boost));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

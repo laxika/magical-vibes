@@ -155,6 +155,8 @@ public class ActivatedAbility {
      */
     private boolean cyclingTriggerTargets;
     private boolean cyclingTriggerTargetsChosenOnTriggerIfOmitted;
+    /** Whether the cycling trigger still goes on the stack when its announced "up to" targets are none. */
+    private boolean cyclingTriggerWithoutTargets;
     /** Counter type that supplies the target limit instead of a paid X value. */
     private CounterType sourceCounterScaledTargetsType;
     /** Dynamic amount that supplies the maximum number of targets at activation time. */
@@ -396,6 +398,7 @@ public class ActivatedAbility {
         copy.exactXTargets = this.exactXTargets;
         copy.cyclingTriggerTargets = this.cyclingTriggerTargets;
         copy.cyclingTriggerTargetsChosenOnTriggerIfOmitted = this.cyclingTriggerTargetsChosenOnTriggerIfOmitted;
+        copy.cyclingTriggerWithoutTargets = this.cyclingTriggerWithoutTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.dynamicMaxTargets = this.dynamicMaxTargets;
         copy.requiresXValue = this.requiresXValue;
@@ -824,6 +827,21 @@ public class ActivatedAbility {
         this.cyclingTriggerTargets = true;
         this.cyclingTriggerTargetsChosenOnTriggerIfOmitted = true;
         return this;
+    }
+
+    /**
+     * As {@link #withCyclingTriggerTargets()}, for a trigger that reads "up to N target ...": choosing
+     * no targets is legal, so the card's {@code ON_SELF_CYCLED} trigger still goes on the stack when
+     * none are announced (CR 601.2c, CR 603.3d).
+     */
+    public ActivatedAbility withCyclingTriggerUpToTargets() {
+        this.cyclingTriggerTargets = true;
+        this.cyclingTriggerWithoutTargets = true;
+        return this;
+    }
+
+    public boolean isCyclingTriggerWithoutTargets() {
+        return cyclingTriggerWithoutTargets;
     }
 
     public boolean isCyclingTriggerTargetsChosenOnTriggerIfOmitted() {

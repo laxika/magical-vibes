@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +53,9 @@ public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements Norma
         gameLogService.append(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library (" + sourceName + ")."));
         log.info("Game {} - {} looks at top of {}'s library: {} ({})",
                 gameData.id, controllerName, targetName, topCard.getName(), sourceName);
+
+        cardRevealService.revealToPlayer(gameData, targetPlayerId, GameEventFact.RevealZone.LIBRARY,
+                List.of(topCard), controllerId);
 
         LookAtTargetPlayerTopCardMayGraveyardEffect typed = (LookAtTargetPlayerTopCardMayGraveyardEffect) effect;
 

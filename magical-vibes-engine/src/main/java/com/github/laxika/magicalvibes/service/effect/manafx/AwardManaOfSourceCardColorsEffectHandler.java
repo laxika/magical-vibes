@@ -79,7 +79,7 @@ public class AwardManaOfSourceCardColorsEffectHandler implements ManaAbilityEffe
                 .filter(color -> gameQueryService.getEffectiveColors(gameData, permanent)
                         .contains(CardColor.valueOf(color.name())))
                 .toList();
-        return colors.isEmpty() ? List.of(ManaColor.COLORLESS) : colors;
+        return colors;
     }
 
     private static void addMana(GameData gameData, UUID playerId, Permanent permanent,

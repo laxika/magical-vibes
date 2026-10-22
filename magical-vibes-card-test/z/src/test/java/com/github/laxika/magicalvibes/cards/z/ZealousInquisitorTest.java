@@ -38,6 +38,8 @@ class ZealousInquisitorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SparkSpray(), new SparkSpray()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castAndResolveInstant(player2, 0, inquisitor.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "Redirect the damage dealt to it (1)");
         harness.castAndResolveInstant(player2, 0, inquisitor.getId());
 
         assertThat(inquisitor.getMarkedDamage()).isZero();

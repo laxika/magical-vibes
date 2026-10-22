@@ -125,8 +125,8 @@ class WalkInClosetForgottenCellarTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(bolt));
         castRoom(0, 3);
         harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.unlockRoomDoor(player1, 0, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -208,6 +208,8 @@ class WalkInClosetForgottenCellarTest extends BaseCardTest {
         LightningBolt bolt = new LightningBolt();
         harness.setGraveyard(player1, List.of(creature));
         castRoom(1, 5);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 3);

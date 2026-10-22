@@ -18,7 +18,7 @@ public class Weatherlight extends Card {
 
     public Weatherlight() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, new CardIsHistoricPredicate()));
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(5, new CardIsHistoricPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

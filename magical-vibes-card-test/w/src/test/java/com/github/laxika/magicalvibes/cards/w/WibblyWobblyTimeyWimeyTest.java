@@ -78,10 +78,13 @@ class WibblyWobblyTimeyWimeyTest extends BaseCardTest {
         harness.castFromHand(player1, new WibblyWobblyTimeyWimey(), "{1}{U}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "REMOVE");
-        assertThat(first.getCounterCount(CounterType.TIME)).isZero();
+        // CR 701.56a: time travel chooses the objects, then adds or removes a counter on each one; the
+        // first removal is applied only once the remaining choices for this event have been made.
+        assertThat(first.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.handleListChoice(player1, "ADD");
 
+        assertThat(first.getCounterCount(CounterType.TIME)).isZero();
         assertThat(second.getCounterCount(CounterType.TIME)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }

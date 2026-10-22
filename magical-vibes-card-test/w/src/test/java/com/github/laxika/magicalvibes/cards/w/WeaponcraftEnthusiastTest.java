@@ -21,8 +21,8 @@ class WeaponcraftEnthusiastTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode puts two +1/+1 counters on Weaponcraft Enthusiast")
     void fabricateCountersMode() {
-        castEnthusiast(0);
-        resolveCreatureAndEtb();
+        castEnthusiast();
+        resolveCreatureAndEtb(0);
 
         Permanent enthusiast = findPermanent(player1, "Weaponcraft Enthusiast");
         assertThat(enthusiast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -33,8 +33,8 @@ class WeaponcraftEnthusiastTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode creates two 1/1 colorless Servo artifact creature tokens")
     void fabricateServoMode() {
-        castEnthusiast(1);
-        resolveCreatureAndEtb();
+        castEnthusiast();
+        resolveCreatureAndEtb(1);
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -70,7 +70,7 @@ class WeaponcraftEnthusiastTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate creates two Servos if the creature dies before the trigger resolves")
     void createsServosWhenSourceDiesBeforeResolution() {
-        castEnthusiast(0);
+        castEnthusiast();
         harness.passBothPriorities();
         Permanent enthusiast = findPermanent(player1, "Weaponcraft Enthusiast");
 
@@ -89,14 +89,17 @@ class WeaponcraftEnthusiastTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
-    private void castEnthusiast(int mode) {
+    private void castEnthusiast() {
         harness.setHand(player1, List.of(new WeaponcraftEnthusiast()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
     }
 
-    private void resolveCreatureAndEtb() {
+    private void resolveCreatureAndEtb(int mode) {
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleListChoice(player1, mode == 0
+                ? "Put two +1/+1 counters on Weaponcraft Enthusiast"
+                : "Create two 1/1 colorless Servo artifact creature tokens");
     }
 }

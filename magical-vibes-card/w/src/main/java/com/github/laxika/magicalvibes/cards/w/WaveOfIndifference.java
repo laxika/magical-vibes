@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class WaveOfIndifference extends Card {
 
     public WaveOfIndifference() {
-        targetExactlyX(TargetFilters.creature(), 100)
+        targetExactlyX(TargetFilters.creature(), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
     }
 }

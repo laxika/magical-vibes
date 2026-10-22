@@ -32,11 +32,14 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
                 ? findBattlefieldSource(gameData, sourceCard)
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
-            if (gameData.findExiledCard(sourceCard.getId()) != null) {
+            // Perpetual changes stay with the card in any zone, so a source that already left the
+            // battlefield (e.g. returned to hand before this resolved) is remembered by card id. A card
+            // that has since re-entered the battlefield is a new object the ability can't change (CR 400.7).
+            if (isInGraveyard(gameData, sourceCard)) {
+                applyToGraveyardSource(gameData, sourceCard, boost);
+            } else if (findBattlefieldSource(gameData, sourceCard) == null) {
                 PerpetualCardPowerToughnessSupport.remember(
                         gameData, sourceCard, boost.powerBoost(), boost.toughnessBoost());
-            } else {
-                applyToGraveyardSource(gameData, sourceCard, boost);
             }
         } else {
             PerpetualCardPowerToughnessSupport.remember(
@@ -69,6 +72,12 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
             }
         }
         return null;
+    }
+
+    private boolean isInGraveyard(GameData gameData, Card sourceCard) {
+        return gameData.playerGraveyards.values().stream()
+                .anyMatch(graveyard -> graveyard.stream()
+                        .anyMatch(card -> card.getId().equals(sourceCard.getId())));
     }
 
     private void applyToGraveyardSource(GameData gameData, Card sourceCard,

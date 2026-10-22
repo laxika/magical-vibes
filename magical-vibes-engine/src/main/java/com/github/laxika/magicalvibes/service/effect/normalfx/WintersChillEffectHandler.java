@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.WintersChillState;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WintersChillEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -152,10 +155,12 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
     private List<String> availableOptions(GameData gameData, UUID playerId) {
         List<String> options = new ArrayList<>();
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        if (pool != null && new ManaCost("{2}").canPayResolutionCost(pool)) {
+        // Mana abilities may be activated while the choice is open, so untapped mana sources count.
+        VirtualManaPool virtualPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
+        if (new ManaCost("{2}").canPay(virtualPool) || (pool != null && new ManaCost("{2}").canPayResolutionCost(pool))) {
             options.add(ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
         }
-        if (pool != null && new ManaCost("{1}").canPayResolutionCost(pool)) {
+        if (new ManaCost("{1}").canPay(virtualPool) || (pool != null && new ManaCost("{1}").canPayResolutionCost(pool))) {
             options.add(ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
         }
         options.add(ChoiceContext.WintersChillPaymentChoice.PAY_NOTHING);

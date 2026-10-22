@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,17 @@ public class KeepCardsInHandSupport {
      * interaction was begun (resolution must pause), {@code false} when no player has cards to keep.
      */
     public boolean beginNextChoice(GameData gameData, List<UUID> orderedPlayerIds, int keepCount, String cardName) {
+        return beginNextChoice(gameData, orderedPlayerIds, keepCount, cardName, Map.of());
+    }
+
+    /**
+     * As {@link #beginNextChoice(GameData, List, int, String)}, carrying the choices already made by
+     * earlier players. When no player is left to choose, all recorded choices are applied together
+     * (CR 608.2c: the spell's instructions are followed in order, so every player chooses before any
+     * of the rest are shuffled away), and {@code false} is returned.
+     */
+    public boolean beginNextChoice(GameData gameData, List<UUID> orderedPlayerIds, int keepCount, String cardName,
+                                   Map<UUID, List<UUID>> keptByPlayer) {
         for (int i = 0; i < orderedPlayerIds.size(); i++) {
             UUID playerId = orderedPlayerIds.get(i);
             List<Card> hand = gameData.playerHands.get(playerId);
@@ -45,11 +57,13 @@ public class KeepCardsInHandSupport {
             List<UUID> validCardIds = hand.stream().map(Card::getId).toList();
             List<UUID> remaining = new ArrayList<>(orderedPlayerIds.subList(i + 1, orderedPlayerIds.size()));
             interactionHandlerRegistry.begin(gameData,
-                    new PendingInteraction.KeepCardsInHandChoice(playerId, validCardIds, keepCount, remaining, cardName));
+                    new PendingInteraction.KeepCardsInHandChoice(playerId, validCardIds, keepCount, remaining, cardName,
+                            keptByPlayer));
             log.info("Game {} - Awaiting {} to choose up to {} cards to keep ({})",
                     gameData.id, gameData.playerIdToName.get(playerId), Math.min(keepCount, validCardIds.size()), cardName);
             return true;
         }
+        keptByPlayer.forEach((playerId, keptIds) -> applyKeepChoice(gameData, playerId, keptIds, cardName));
         return false;
     }
 

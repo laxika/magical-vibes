@@ -119,7 +119,6 @@ class WhiskerquillScribeTest extends BaseCardTest {
         harness.castInstant(player1, 0, scribe.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);

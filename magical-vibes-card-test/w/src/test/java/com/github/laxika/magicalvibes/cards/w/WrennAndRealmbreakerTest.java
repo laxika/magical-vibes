@@ -220,7 +220,7 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
 
     @Test
     void emblemDoesNotAllowInstantsOrAdditionalLandPlays() {
-        addReadyWrenn(player1, 7);
+        Permanent wrenn = addReadyWrenn(player1, 7);
         Card firstLand = new Forest();
         Card secondLand = new Forest();
         Card shock = new Shock();
@@ -235,7 +235,7 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 0);
         assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(secondLand, shock);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(secondLand, shock, wrenn.getCard());
     }
 
     @Test
@@ -261,6 +261,8 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new WrennAndRealmbreaker());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
+        harness.setHand(player, List.of());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;

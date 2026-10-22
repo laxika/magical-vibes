@@ -49,14 +49,14 @@ class WeatheredRunestoneTest extends BaseCardTest {
     @Test
     @DisplayName("Blocks nonland permanents returning from graveyards")
     void blocksNonlandPermanentFromGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addToBattlefield(player1, new WeatheredRunestone());
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -215,10 +215,10 @@ class WeatheredRunestoneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SongOfTheDryads()));
         harness.setLibrary(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castEnchantment(player1, 0, runestone.getId());
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castFromLibraryTop(player1, player2.getId());
         harness.passBothPriorities();

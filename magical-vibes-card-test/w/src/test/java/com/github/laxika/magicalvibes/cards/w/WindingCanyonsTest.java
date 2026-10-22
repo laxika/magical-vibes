@@ -167,10 +167,12 @@ class WindingCanyonsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(2);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        });
     }
 
     @Test

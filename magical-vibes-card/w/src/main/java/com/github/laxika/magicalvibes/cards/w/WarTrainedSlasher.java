@@ -16,6 +16,6 @@ public class WarTrainedSlasher extends Card {
     public WarTrainedSlasher() {
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new AttackedTargetMatches(new PermanentIsBattlePredicate()),
-                new BoostSelfEffect(new SourcePower(), new Fixed(0))));
+                new BoostSelfEffect(new SourcePower(true), new Fixed(0))));
     }
 }

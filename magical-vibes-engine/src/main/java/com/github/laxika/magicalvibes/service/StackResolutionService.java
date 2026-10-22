@@ -173,6 +173,18 @@ public class StackResolutionService {
         StackEntry entry = gameQueryService.stackUsesFirstInFirstOut(gameData)
                 ? gameData.stack.getFirst()
                 : gameData.stack.getLast();
+        if (gameData.wordOfCommandAwaitingCardResolution && entry.getCard() != null
+                && gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(entry.getCard().getId())
+                && gameData.mindControllerPlayerId == null
+                && gameData.wordOfCommandControllerPlayerId != null
+                && gameData.wordOfCommandControlledPlayerId != null) {
+            // Word of Command: "If the chosen card is cast as a spell, you control the player while
+            // that spell is resolving."
+            gameData.mindControllerPlayerId = gameData.wordOfCommandControllerPlayerId;
+            gameData.mindControlledPlayerId = gameData.wordOfCommandControlledPlayerId;
+            gameData.mindControlUntilEndOfCombat = false;
+        }
         // CR 608.2n: an instant or sorcery stays on the stack until the final part of its resolution,
         // so spells cast while it resolves can still target it.
         if (!isInstantOrSorcerySpell(entry)) {
@@ -508,11 +520,6 @@ public class StackResolutionService {
                             com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
                     permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
-        boolean printedBlitzSacrifice = entry.isAlternateCost()
-                && entry.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect c
-                        && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.CastForAlternateCost
-                        && c.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect);
         // CR 702.152a: a blitzed permanent has haste as a static ability, not as an enters-the-battlefield
         // trigger, so Torpor Orb-style suppression of enters triggers doesn't remove it.
         boolean printedBlitzHaste = entry.isAlternateCost()
@@ -530,8 +537,9 @@ public class StackResolutionService {
                     permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         // CR 702.152a: the blitz end-step sacrifice is a delayed triggered ability created as the spell
-        // resolves, not an enters-the-battlefield trigger (see EtbEffectResolver).
-        if (entry.isGrantedBlitzOnEntry() || printedBlitzSacrifice) {
+        // resolves, not an enters-the-battlefield trigger. A printed blitz cost is handled by
+        // BattlefieldPlacementService; only a blitz cost granted by another source is queued here.
+        if (entry.isGrantedBlitzOnEntry()) {
             gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedPermanentAction(
                     permanent.getId(), com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
                     false, null, null, controllerId));

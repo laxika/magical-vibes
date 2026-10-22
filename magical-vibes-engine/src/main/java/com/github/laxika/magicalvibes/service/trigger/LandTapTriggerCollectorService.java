@@ -690,15 +690,19 @@ public class LandTapTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setNonTargeting(true);
-            match.gameData().stack.add(entry);
+            match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
         }
 
         ManaColor producedColor = null;
-        for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
-            if (tapEffect instanceof AwardManaEffect awardMana) {
-                producedColor = awardMana.color();
-                break;
+        if (lt.producedColors().size() == 1) {
+            producedColor = lt.producedColors().iterator().next();
+        } else {
+            for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
+                if (tapEffect instanceof AwardManaEffect awardMana) {
+                    producedColor = awardMana.color();
+                    break;
+                }
             }
         }
         if (producedColor == null) {
@@ -765,7 +769,7 @@ public class LandTapTriggerCollectorService {
         if (tappedLand == null) return false;
         if (!gameQueryService.hasEffectiveSupertype(match.gameData(), tappedLand, CardSupertype.SNOW)) return false;
 
-        tappedLand.setSkipUntapCount(tappedLand.getSkipUntapCount() + 1);
+        tappedLand.setSkipUntapCount(Math.max(tappedLand.getSkipUntapCount(), 1));
 
         gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
                 " triggers — ", tappedLand.getCard(), " doesn't untap during its controller's next untap step."));

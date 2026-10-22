@@ -28,9 +28,7 @@ class WoebearerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(target.getId()));
@@ -46,12 +44,10 @@ class WoebearerTest extends BaseCardTest {
         attackWithWoebearerDealingDamage();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of());
         resolveAllTriggers();
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMayAbilityChosen(player1, false);
-        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card.getId().equals(target.getId()));

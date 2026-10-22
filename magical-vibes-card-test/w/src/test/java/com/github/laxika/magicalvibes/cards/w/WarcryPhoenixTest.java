@@ -90,14 +90,14 @@ class WarcryPhoenixTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Phoenix should be on the battlefield â€” it entered tapped and attacking
-        // (auto-pass advances past END_OF_COMBAT, clearing isAttacking; use attackedThisTurn instead)
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(phoenix.getId()));
         Permanent phoenixPerm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getId().equals(phoenix.getId()))
                 .findFirst().orElseThrow();
         assertThat(phoenixPerm.isTapped()).isTrue();
-        assertThat(phoenixPerm.isAttackedThisTurn()).isTrue();
+        // CR 508.4: a creature put onto the battlefield attacking is attacking but never "attacked".
+        assertThat(phoenixPerm.isAttackedThisTurn()).isFalse();
 
         // Verify the game log recorded "tapped and attacking"
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Warcry Phoenix") && log.contains("tapped and attacking"));

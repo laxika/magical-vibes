@@ -190,7 +190,7 @@ class WallOfResurgenceTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, land.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

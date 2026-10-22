@@ -78,7 +78,8 @@ public class AddAnotherCounterOfEachKindToTargetEffectHandler implements NormalE
         }
 
         if (gameData.playerExperienceCounters.getOrDefault(playerId, 0) > 0) {
-            gameData.playerExperienceCounters.merge(playerId, 1, Integer::sum);
+            gameData.playerExperienceCounters.merge(playerId,
+                    gameQueryService.replaceExperienceCounters(gameData, playerId, 1), Integer::sum);
         }
 
         if (gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0) {

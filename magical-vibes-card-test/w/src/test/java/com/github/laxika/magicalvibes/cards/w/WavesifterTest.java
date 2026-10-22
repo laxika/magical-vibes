@@ -74,6 +74,7 @@ class WavesifterTest extends BaseCardTest {
     @DisplayName("Each investigation creates a separate token event for Marneus Calgar")
     void investigationsTriggerTokenEntrySeparately() {
         harness.addToBattlefield(player1, new MarneusCalgar());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Wavesifter(), new Wavesifter(), new Wavesifter()));
 
         harness.enterBattlefieldAndReturn(player1, new Wavesifter());
@@ -87,6 +88,7 @@ class WavesifterTest extends BaseCardTest {
     @Test
     @DisplayName("A Clue costs two mana and is sacrificed to draw one card")
     void clueCanBeSacrificedToDraw() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Wavesifter(), new Wavesifter()));
         harness.enterBattlefieldAndReturn(player1, new Wavesifter());
         resolveAllTriggers();

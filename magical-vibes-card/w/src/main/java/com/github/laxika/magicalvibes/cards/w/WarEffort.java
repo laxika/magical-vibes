@@ -16,7 +16,7 @@ import java.util.List;
 public class WarEffort extends Card {
 
     public WarEffort() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new CreateTokenEffect(
                 1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());

@@ -55,6 +55,7 @@ class WhirlwindOfThoughtTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WhirlwindOfThought());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new UnholyStrength()));
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.forceActivePlayer(player2);
         harness.addMana(player2, ManaColor.BLACK, 1);

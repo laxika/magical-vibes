@@ -37,7 +37,8 @@ public class ReturnSelfToHandAtEndOfCombatEffectHandler implements NormalEffectH
         }
 
         gameData.queueDelayedAction(new DelayedPermanentAction(self.getId(),
-                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT));
+                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT, false, null, null, null, false,
+                entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId()));
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
                 " will be returned to its owner's hand at end of combat."));
     }

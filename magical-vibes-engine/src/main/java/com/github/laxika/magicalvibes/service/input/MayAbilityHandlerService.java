@@ -187,6 +187,12 @@ public class MayAbilityHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
+        PendingMayAbility upcoming = gameData.pendingMayAbilities.isEmpty() ? null : gameData.pendingMayAbilities.getFirst();
+        if (!accepted && upcoming != null && upcoming.effects().stream()
+                .anyMatch(PlayCardFromHandByWordOfCommandEffect.class::isInstance)) {
+            mayCastHandlerService.requireWordOfCommandPlayIfAble(gameData, upcoming);
+        }
+
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
 

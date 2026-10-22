@@ -118,6 +118,7 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, wilhelt.getId());
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Wilhelt, the Rotcleaver");
         harness.assertInHand(player1, "Diregraf Ghoul");
@@ -139,6 +140,7 @@ class WilheltTheRotcleaverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, token.getId());
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Zombie")).isZero();
         harness.assertInHand(player1, "Diregraf Ghoul");

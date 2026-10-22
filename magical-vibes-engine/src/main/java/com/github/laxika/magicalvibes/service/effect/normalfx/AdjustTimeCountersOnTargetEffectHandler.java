@@ -68,9 +68,9 @@ public class AdjustTimeCountersOnTargetEffectHandler implements NormalEffectHand
             } else {
                 for (int i = 0; i < amount; i++) {
                     if (suspendedSpell) {
-                        removeSuspendCounterHandler.removeTimeCounter(gameData, targetId);
+                        removeSuspendCounterHandler.removeTimeCounter(gameData, targetId, entry.getControllerId());
                     } else {
-                        removeTimeCounterHandler.removeTimeCounter(gameData, targetId);
+                        removeTimeCounterHandler.removeTimeCounter(gameData, targetId, entry.getControllerId());
                     }
                 }
             }

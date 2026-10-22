@@ -63,9 +63,7 @@ public class ExchangeOutsideGameHandChoiceInteractionHandler
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(playerId) + " exchanges ")
                 .card(interaction.outsideCard())
-                .text(" for ")
-                .card(handCard)
-                .text(".")
+                .text(" for a card from their hand.")
                 .build());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

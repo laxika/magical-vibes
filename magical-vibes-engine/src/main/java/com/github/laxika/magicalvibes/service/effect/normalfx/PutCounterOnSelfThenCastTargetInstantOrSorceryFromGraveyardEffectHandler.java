@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenCastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +74,8 @@ public class PutCounterOnSelfThenCastTargetInstantOrSorceryFromGraveyardEffectHa
         CardEffect castEffect = new CastTargetInstantOrSorceryFromGraveyardEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                 true,
-                e.exileInsteadOfGraveyard());
+                e.exileInsteadOfGraveyard(),
+                new CardManaValueEqualsSourceCountersPredicate(e.counterType()));
         if (matchingCards.size() == 1) {
             putReflexiveTriggerOnStack(gameData, entry, castEffect, matchingCards.getFirst().getId(), source);
             return;

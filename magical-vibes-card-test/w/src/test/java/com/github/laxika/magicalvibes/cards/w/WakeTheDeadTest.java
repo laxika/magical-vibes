@@ -177,7 +177,7 @@ class WakeTheDeadTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, returned.getId());
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");

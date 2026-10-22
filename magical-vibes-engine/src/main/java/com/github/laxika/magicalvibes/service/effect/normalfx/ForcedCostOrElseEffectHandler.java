@@ -69,6 +69,9 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     private final CoinFlipCostSupport coinFlipCostSupport;
     private AwardManaEffectHandler awardManaEffectHandler;
     private com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
 
     @Autowired
     public ForcedCostOrElseEffectHandler(DestructionSupport destructionSupport,
@@ -451,6 +454,22 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             gameData.setPlayerEnergyCounters(payer, energy - energyCost.amount());
+            return;
+        }
+
+        if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.WaterbendCost waterbendCost) {
+            // "[Do X] unless you waterbend {N}" — waterbending is a choice made as the effect resolves, so
+            // the payer is asked only when the cost can actually be paid (CR 701.67a).
+            UUID payer = resolvePayer(gameData, entry, e);
+            if (payer == null || !waterbendPaymentService.canPay(gameData, payer, waterbendCost.amount())) {
+                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                return;
+            }
+            gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                    entry.getCard(), payer, List.of(e),
+                    entry.getCard().getName() + " - Waterbend {" + waterbendCost.amount() + "}?",
+                    entry.getTargetId(), null, entry.getSourcePermanentId(), null,
+                    0, 0, null, null, null, entry.getSourcePermanentSnapshot(), entry.getControllerId(), null));
             return;
         }
 

@@ -144,7 +144,7 @@ class WallOfDeceitTest extends BaseCardTest {
 
         assertThat(wall.isAttacking()).isTrue();
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.turnFaceUp(player1, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.turnFaceUp(player1, 0));
 
         assertThat(wall.isFaceDown()).isFalse();
         assertThat(wall.isAttacking()).isTrue();

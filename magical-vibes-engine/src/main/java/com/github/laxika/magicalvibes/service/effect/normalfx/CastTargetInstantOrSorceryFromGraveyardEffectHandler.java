@@ -83,7 +83,8 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                     graveyardOwnerId,
                     entry.getSourcePermanentId(),
                     entry.getTriggeringPermanentPowerAtTrigger(),
-                    entry.getXValue());
+                    entry.getXValue(),
+                    entry.getSourcePermanentSnapshot());
             if (!instantOrSorcery || !matchesFilter) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription()
                         + " fizzles (target is not an instant or sorcery)."));
@@ -95,8 +96,10 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                     + " without paying its mana cost?"
                     : entry.getCard().getName() + " — Cast " + targetCard.getName() + "?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    targetCard, controllerId, List.of(e), prompt,
-                    entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue()));
+                    targetCard, controllerId, List.of(e), prompt, null, null,
+                    entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                    entry.getSourcePermanentSnapshot(), null, null, 0, null,
+                    entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue(), null, -1L));
         }
     }
 }

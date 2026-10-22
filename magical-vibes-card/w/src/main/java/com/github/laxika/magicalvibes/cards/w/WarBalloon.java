@@ -10,12 +10,11 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "TLA", collectorNumber = "159")
 public class WarBalloon extends Card {
@@ -30,7 +29,7 @@ public class WarBalloon extends Card {
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.FIRE),
-                new SetCardTypesEffect(Set.of(CardType.ARTIFACT, CardType.CREATURE), GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

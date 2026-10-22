@@ -19,6 +19,6 @@ public class WolverineClawsOut extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.MUTANT),
-                        new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0))));
+                        new BoostTargetCreatureEffect(new TargetPower(true), new Fixed(0))));
     }
 }

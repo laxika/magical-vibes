@@ -82,6 +82,9 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
     /** Key marking an ability that triggers only for its controller's first discard event each turn. */
     public static final String FIRST_DISCARD_EVENT_KEY = "first-discard-event";
 
+    /** Key marking an ability that triggers only for its controller's first surveil each turn. */
+    public static final String FIRST_SURVEIL_KEY = "first-surveil";
+
     /** Key marking an ability that triggers only when its controller discards a nonland card for the first time each turn. */
     public static final String FIRST_NONLAND_DISCARD_KEY = "first-nonland-discard";
 
@@ -100,6 +103,14 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
      */
     public static OncePerTurnTriggerEffect firstDiscardEvent(CardEffect wrapped) {
         return new OncePerTurnTriggerEffect(wrapped, false, FIRST_DISCARD_EVENT_KEY);
+    }
+
+    /**
+     * Triggers only for the controller's first surveil each turn, counting surveils made before the
+     * source entered (Whispering Snitch). Valid on the controller-surveils slot.
+     */
+    public static OncePerTurnTriggerEffect firstSurveil(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, FIRST_SURVEIL_KEY);
     }
 
     /**

@@ -44,6 +44,12 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
             return;
         }
 
+        if (!entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " can't be sacrificed \u2014 its controller no longer controls it."));
+            return;
+        }
+
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, source);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
 

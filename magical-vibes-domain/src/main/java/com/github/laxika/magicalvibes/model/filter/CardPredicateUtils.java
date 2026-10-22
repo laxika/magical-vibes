@@ -150,6 +150,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueLessThanSourcePowerPredicate) {
             return "card with mana value less than this creature's power";
         }
+        if (predicate instanceof CardManaValueEqualsSourceCountersPredicate) {
+            return "card with mana value equal to this permanent's counters";
+        }
         if (predicate instanceof CardManaValueLessThanSourceCountersPredicate) {
             return "card with mana value less than this permanent's counters";
         }

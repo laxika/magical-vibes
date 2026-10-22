@@ -52,6 +52,7 @@ class WorstFearsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.mindControlledPlayerId).isNull();
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());

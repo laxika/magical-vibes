@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,10 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WoodfallPrimus.class, Forest.class, GloriousAnthem.class, GrizzlyBears.class, LeoninScimitar.class})
 class WoodfallPrimusTest extends BaseCardTest {
@@ -75,14 +76,17 @@ class WoodfallPrimusTest extends BaseCardTest {
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LeoninScimitar());
         harness.setHand(player1, List.of(new WoodfallPrimus()));
         harness.addMana(player1, ManaColor.GREEN, 8);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("noncreature permanent");
+        UUID scimitarId = harness.getPermanentId(player2, "Leonin Scimitar");
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.PermanentChoice.class, choice ->
+                        assertThat(choice.validPermanentIds()).containsExactly(scimitarId));
     }
 
     @Test
@@ -194,10 +198,12 @@ class WoodfallPrimusTest extends BaseCardTest {
     @Test
     void trampleDealsExcessDamageToDefendingPlayer() {
         addCreatureReady(player1, new WoodfallPrimus());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                bears.getId(), 2, player2.getId(), 4));
 
         harness.assertLife(player2, 16);
         harness.assertInGraveyard(player2, "Grizzly Bears");

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -99,7 +100,7 @@ class WanderingTroubadourTest extends BaseCardTest {
     @DisplayName("Venturing advances an existing dungeon once even if multiple lands entered")
     void advancesExistingDungeonOnceForMultipleLands() {
         harness.addToBattlefield(player1, new WanderingTroubadour());
-        gd.permanentsEnteredBattlefieldThisTurn.put(player1.getId(), List.of(new Forest(), new Forest()));
+        gd.permanentsEnteredBattlefieldThisTurn.put(player1.getId(), new ArrayList<>(List.of(new Forest(), new Forest())));
         gd.playerDungeonProgress.put(player1.getId(),
                 new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
 

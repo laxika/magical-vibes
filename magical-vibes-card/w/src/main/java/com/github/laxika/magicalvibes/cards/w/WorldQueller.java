@@ -29,13 +29,19 @@ public class WorldQueller extends Card {
                 new ChooseOneEffect(List.of(
                         sacrificeMode("Artifact", new PermanentIsArtifactPredicate()),
                         sacrificeMode("Battle", new PermanentIsBattlePredicate()),
+                        sacrificeMode("Conspiracy", noPermanentType()),
                         sacrificeMode("Creature", creatureType()),
+                        sacrificeMode("Dungeon", noPermanentType()),
                         sacrificeMode("Enchantment", new PermanentIsEnchantmentPredicate()),
                         sacrificeMode("Instant", noPermanentType()),
                         sacrificeMode("Kindred", new PermanentIsKindredPredicate()),
                         sacrificeMode("Land", new PermanentIsLandPredicate()),
+                        sacrificeMode("Phenomenon", noPermanentType()),
+                        sacrificeMode("Plane", noPermanentType()),
                         sacrificeMode("Planeswalker", new PermanentIsPlaneswalkerPredicate()),
-                        sacrificeMode("Sorcery", noPermanentType())
+                        sacrificeMode("Scheme", noPermanentType()),
+                        sacrificeMode("Sorcery", noPermanentType()),
+                        sacrificeMode("Vanguard", noPermanentType())
                 )),
                 "Choose a card type?"
         ));

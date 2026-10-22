@@ -39,7 +39,6 @@ class WorkshopWarchiefTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, warchief.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Workshop Warchief");
@@ -108,7 +107,7 @@ class WorkshopWarchiefTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(10);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Workshop Warchief");
@@ -127,13 +126,15 @@ class WorkshopWarchiefTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         resolveAllTriggers();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.addMana(player2, ManaColor.BLUE, 1);
         var sacrificeTriggerId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, sacrificeTriggerId);
-        resolveAllTriggers();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.castAndResolveInstant(player2, 0, sacrificeTriggerId);
+            resolveAllTriggers();
+            harness.passUntil(player2, TurnStep.UPKEEP);
+        });
 
         Permanent warchief = findPermanent(player1, "Workshop Warchief");
         assertThat(gqs.hasKeyword(gd, warchief, Keyword.HASTE)).isTrue();
@@ -154,9 +155,7 @@ class WorkshopWarchiefTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        Permanent warchief = findPermanent(player1, "Workshop Warchief");
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, warchief.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(13);
@@ -190,7 +189,6 @@ class WorkshopWarchiefTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Workshop Warchief").getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Workshop Warchief");

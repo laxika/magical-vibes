@@ -396,6 +396,17 @@ public class GameActionAvailabilityService {
     }
 
     private SpellPlayabilityContext buildSpellPlayabilityContext(GameData gameData, UUID playerId) {
+        if (gameData.wordOfCommandCastingCard && playerId.equals(gameData.wordOfCommandControlledPlayerId)) {
+            // The chosen card is played during Word of Command's resolution, ignoring timing (CR 608.2g).
+            return new SpellPlayabilityContext(
+                    true, true, true,
+                    gameData.landsPlayedThisTurn.getOrDefault(playerId, 0),
+                    castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId),
+                    castingPermissionService.getRestrictedSpellTypes(gameData, playerId),
+                    castingPermissionService.getForbiddenCardNames(gameData, playerId),
+                    castingCostService.buildCostModifierSnapshot(gameData, playerId),
+                    gameData.playerBattlefields.get(playerId));
+        }
         return new SpellPlayabilityContext(
                 playerId.equals(gameData.activePlayerId),
                 gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,

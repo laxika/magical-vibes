@@ -363,6 +363,14 @@ public class GraveyardChoiceHandlerService {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
 
+            // The cards of one multi-card exile leave the graveyard at the same time, so the batch opens
+            // before the first of them is removed.
+            if (destination == GraveyardChoiceDestination.EXILE && exileRemainingCount > 1
+                    && !gameData.graveyardExileChoiceLeaveBatchOpen) {
+                gameData.graveyardExileChoiceLeaveBatchOpen = true;
+                graveyardService.beginGraveyardLeaveBatch(gameData);
+            }
+
             Card card;
             // Owner of the graveyard the card is leaving — used to return it if a continuous effect
             // (e.g. Grafdigger's Cage) stops a creature card from entering the battlefield.
@@ -646,6 +654,10 @@ public class GraveyardChoiceHandlerService {
                                     .build());
                             return;
                         }
+                    }
+                    if (gameData.graveyardExileChoiceLeaveBatchOpen) {
+                        gameData.graveyardExileChoiceLeaveBatchOpen = false;
+                        graveyardService.endGraveyardLeaveBatch(gameData);
                     }
                 }
                 case RANDOM_PLAYER_GRAVEYARD_COPY -> {

@@ -13,6 +13,6 @@ public class WorldAtWar extends Card {
 
     public WorldAtWar() {
         addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(
-                1, new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)));
+                1, new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES), false, false, true));
     }
 }

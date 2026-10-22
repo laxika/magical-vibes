@@ -61,7 +61,14 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         if (e.scope() == com.github.laxika.magicalvibes.model.effect.LibraryScope.EACH_PLAYER
                 && e.playerId() == null) {
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
-            List<CardEffect> perPlayerEffects = gameData.orderedPlayerIds.stream()
+            List<UUID> apnapOrder = new ArrayList<>();
+            if (gameData.activePlayerId != null && gameData.orderedPlayerIds.contains(gameData.activePlayerId)) {
+                apnapOrder.add(gameData.activePlayerId);
+            }
+            gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !apnapOrder.contains(playerId))
+                    .forEach(apnapOrder::add);
+            List<CardEffect> perPlayerEffects = apnapOrder.stream()
                     .map(e::forPlayer)
                     .map(CardEffect.class::cast)
                     .toList();
@@ -103,15 +110,15 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         List<Card> secondEligible = topCards.stream()
                 .filter(c -> matches(c, e.secondType(), e.secondPredicate(), gameData, controllerId)).toList();
 
+        boolean randomBottom = e.randomRest()
+                || e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
+
         // Nothing eligible — dispose everything.
         if (firstEligible.isEmpty() && secondEligible.isEmpty()) {
-            disposeRest(gameData, controllerId, playerName, topCards, toGraveyard,
-                    e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM);
+            disposeRest(gameData, controllerId, playerName, topCards, toGraveyard, randomBottom);
             return;
         }
 
-        boolean randomBottom = e.randomRest()
-                || e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         if (!firstEligible.isEmpty()) {
             // First pick: the first type. The second pick runs (and disposes the rest) afterwards.
             beginPick(gameData, controllerId, firstEligible, topCards,

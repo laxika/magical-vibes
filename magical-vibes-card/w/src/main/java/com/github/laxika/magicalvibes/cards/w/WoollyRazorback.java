@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,6 +29,7 @@ public class WoollyRazorback extends Card {
         addEffect(EffectSlot.STATIC,
                 new ConditionalEffect(hasIceCounter, new PreventAllCombatDamageBySelfEffect()));
 
-        addEffect(EffectSlot.ON_BLOCK, new RemoveCounterFromSourceEffect(CounterType.ICE, 1));
+        addEffect(EffectSlot.ON_BLOCK, new RemoveCounterFromSourceEffect(CounterType.ICE, 1),
+                TriggerMode.ONCE_PER_BLOCK);
     }
 }

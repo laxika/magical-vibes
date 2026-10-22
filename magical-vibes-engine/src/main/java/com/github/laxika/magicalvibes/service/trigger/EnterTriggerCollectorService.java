@@ -1466,7 +1466,8 @@ public class EnterTriggerCollectorService {
                 ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         if (enteringPermanent == null
                 || !enteringPermanent.isCast()
-                || enteringPermanent.getCastFromZone() != Zone.HAND) {
+                || enteringPermanent.getCastFromZone() != Zone.HAND
+                || !match.controllerId().equals(pe.enteringControllerId())) {
             return false;
         }
 

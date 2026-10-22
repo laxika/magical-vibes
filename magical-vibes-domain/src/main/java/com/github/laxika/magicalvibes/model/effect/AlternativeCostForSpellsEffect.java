@@ -40,6 +40,11 @@ import java.util.Set;
  * A card-carried effect created by {@link #perpetualZeroCostForThisSpell()} applies only to that
  * card while it is cast and is ignored as a battlefield permission after the card enters.
  * Non-mana alternatives can use {@link #payEnergy(int, CardPredicate)} for a fixed energy payment.
+ *
+ * <p>{@code firstSpellOfCasterTurnOnly} restricts the alternative cost to the first spell its caster casts
+ * during the caster's own turn, counted per player rather than per source permanent: "The first spell each
+ * player casts during each of their turns may be cast without paying its mana cost" (Weftwalking). Several
+ * sources carrying this restriction still allow only one such spell per player each turn.
  */
 public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                              CounterType manaValueCapCounter, boolean oncePerTurn,
@@ -47,8 +52,20 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                                              boolean genericEqualToManaValue, boolean controllerTurnOnly,
                                              Set<Zone> allowedZones, CostEffect nonManaCost,
                                              DynamicAmount manaValueCapAmount, boolean castsWithWarp,
-                                             boolean appliesToSpellItself)
+                                             boolean appliesToSpellItself, boolean firstSpellOfCasterTurnOnly)
         implements CardEffect {
+
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
+                                          CounterType manaValueCapCounter, boolean oncePerTurn,
+                                          boolean fromHandOnly, boolean appliesToAllPlayers,
+                                          boolean genericEqualToManaValue, boolean controllerTurnOnly,
+                                          Set<Zone> allowedZones, CostEffect nonManaCost,
+                                          DynamicAmount manaValueCapAmount, boolean castsWithWarp,
+                                          boolean appliesToSpellItself) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
+                genericEqualToManaValue, controllerTurnOnly, allowedZones, nonManaCost,
+                manaValueCapAmount, castsWithWarp, appliesToSpellItself, false);
+    }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
@@ -167,6 +184,15 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
     public static AlternativeCostForSpellsEffect warp(String manaCost, CardPredicate filter) {
         return new AlternativeCostForSpellsEffect(manaCost, filter, null, false, true, false,
                 false, false, Set.of(Zone.HAND), null, null, true, false);
+    }
+
+    /**
+     * A zero alternative cost for the first spell each player casts during their own turn, counted per player
+     * (Weftwalking).
+     */
+    public static AlternativeCostForSpellsEffect firstSpellOfEachPlayersTurnForFree() {
+        return new AlternativeCostForSpellsEffect("{0}", null, null, false, false, true,
+                false, true, null, null, null, false, false, true);
     }
 
     /** A perpetual "you may pay {0} rather than pay this spell's mana cost" ability. */

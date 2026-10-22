@@ -10,7 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "138")
 @CardRegistration(set = "DBL", collectorNumber = "405")
@@ -19,7 +23,9 @@ public class WeddingSecurity extends Card {
     public WeddingSecurity() {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SacrificePermanentThenEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsTokenPredicate(),
+                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD))),
                         SequenceEffect.of(
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 new DrawCardEffect()),

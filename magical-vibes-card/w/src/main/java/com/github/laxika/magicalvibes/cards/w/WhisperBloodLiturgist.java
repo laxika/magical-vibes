@@ -25,6 +25,7 @@ public class WhisperBloodLiturgist extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
+                                .targetGraveyard(true)
                                 .build()
                 ),
                 "{T}, Sacrifice two creatures: Return target creature card from your graveyard to the battlefield."

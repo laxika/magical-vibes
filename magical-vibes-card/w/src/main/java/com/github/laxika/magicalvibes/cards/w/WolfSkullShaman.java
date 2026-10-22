@@ -18,7 +18,7 @@ public class WolfSkullShaman extends Card {
         // Kinship — At the beginning of your upkeep, you may look at the top card of your library.
         // If it shares a creature type with this creature, you may reveal it. If you do, create a
         // 2/2 green Wolf creature token.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new KinshipEffect(List.of(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, KinshipEffect.withLookChoice(List.of(
                 new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()))));
     }

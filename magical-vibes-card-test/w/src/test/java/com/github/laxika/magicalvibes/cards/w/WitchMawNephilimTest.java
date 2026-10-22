@@ -55,8 +55,7 @@ class WitchMawNephilimTest extends BaseCardTest {
         harness.castFromHand(player2, new Quicken(), "{U}");
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(nephilim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

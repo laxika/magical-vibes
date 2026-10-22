@@ -69,7 +69,7 @@ class WheelOfFateTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -92,7 +92,7 @@ class WheelOfFateTest extends BaseCardTest {
 
         for (int i = 0; i < 4; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -131,8 +131,7 @@ class WheelOfFateTest extends BaseCardTest {
 
             assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
             assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-            assertThat(gd.interaction.activeInteraction())
-                    .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
     }
 
@@ -145,7 +144,7 @@ class WheelOfFateTest extends BaseCardTest {
 
         for (int i = 0; i < 4; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -165,7 +164,7 @@ class WheelOfFateTest extends BaseCardTest {
 
         for (int i = 0; i < 4; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         harness.handleMayAbilityChosen(player1, false);
 
@@ -174,8 +173,7 @@ class WheelOfFateTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotInGraveyard(player1, "Wheel of Fate");
     }
     @Test

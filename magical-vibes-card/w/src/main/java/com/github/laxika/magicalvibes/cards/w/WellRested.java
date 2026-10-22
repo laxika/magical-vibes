@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PIP", collectorNumber = "88")
@@ -18,12 +18,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class WellRested extends Card {
 
     public WellRested() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ANY_PERMANENT_BECOMES_UNTAPPED,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsHostOfSourceAuraPredicate(),
-                        new OncePerTurnTriggerEffect(SequenceEffect.of(
-                                new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                                new GainLifeEffect(2),
-                                new DrawCardEffect(1)))));
+        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_SELF_BECOMES_UNTAPPED,
+                OncePerTurnTriggerEffect.perGrant(SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                        new GainLifeEffect(2),
+                        new DrawCardEffect(1))),
+                GrantScope.ENCHANTED_CREATURE));
     }
 }

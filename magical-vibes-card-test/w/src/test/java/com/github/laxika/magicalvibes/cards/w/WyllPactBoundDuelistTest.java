@@ -74,6 +74,7 @@ class WyllPactBoundDuelistTest extends BaseCardTest {
     void enteringStealsAnOpposingCreatureWithManaValueFour() {
         Permanent dragon = addCreatureReady(player2, new YoungRedDragon());
         harness.setHand(player1, List.of(new WyllPactBoundDuelist()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castCreature(player1, 0, dragon.getId());
@@ -134,7 +135,7 @@ class WyllPactBoundDuelistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, dragon.getId());
         harness.handleMultipleCardsChosen(player1, List.of(dragon.getCard().getId()));
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Young Red Dragon");
         assertThat(gd.stack).isNotEmpty();

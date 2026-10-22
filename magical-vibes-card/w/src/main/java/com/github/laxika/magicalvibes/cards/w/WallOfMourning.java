@@ -22,6 +22,6 @@ public class WallOfMourning extends Card {
                         new Sum(new PlayersInGame(), new Fixed(-1)),
                         true, false, LibraryScope.CONTROLLER, false));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new ConditionalEffect(new Coven(), new PutCardExiledWithSourceIntoHandEffect()));
+                new ConditionalEffect(new Coven(), PutCardExiledWithSourceIntoHandEffect.returningToOwner()));
     }
 }

@@ -32,10 +32,10 @@ public class WallCrawl extends Card {
                 Set.of(Keyword.REACH), Set.of()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GainLifeEffect(new PermanentCount(spiders, CountScope.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, spiders));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, spiders));
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER)),
-                GrantScope.OWN_CREATURES, spiders));
+                GrantScope.ALL_OWN_CREATURES, spiders));
     }
 }

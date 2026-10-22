@@ -30,7 +30,8 @@ public class ParallaxWave extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.FADE),
-                        ExileTargetPermanentUntilSourceLeavesEffect.evenIfSourceAlreadyLeft()
+                        // "When this enchantment leaves the battlefield, ... return" is a triggered ability.
+                        new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true, true)
                 ),
                 "Remove a fade counter from this enchantment: Exile target creature.",
                 TargetFilters.creature()

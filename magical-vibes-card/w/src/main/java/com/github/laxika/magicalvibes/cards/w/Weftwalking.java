@@ -15,12 +15,11 @@ public class Weftwalking extends Card {
 
     public Weftwalking() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new WasCast(),
+                new WasCast(true),
                 SequenceEffect.of(
                         new ShuffleControllerHandAndGraveyardIntoLibraryEffect(),
                         new DrawCardEffect(7))));
 
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect(
-                "{0}", null, null, true, false, true, false, true, null, null, null));
+        addEffect(EffectSlot.STATIC, AlternativeCostForSpellsEffect.firstSpellOfEachPlayersTurnForFree());
     }
 }

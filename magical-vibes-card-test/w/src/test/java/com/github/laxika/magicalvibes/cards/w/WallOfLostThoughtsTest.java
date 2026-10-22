@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WallOfLostThoughts.class, Forest.class, Island.class, Mountain.class, Plains.class})
 class WallOfLostThoughtsTest extends BaseCardTest {
@@ -140,7 +141,12 @@ class WallOfLostThoughtsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WallOfLostThoughts()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0, 0, player2.getId());
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, player2.getId(), null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Wall of Lost Thoughts");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Wall of Lost Thoughts");

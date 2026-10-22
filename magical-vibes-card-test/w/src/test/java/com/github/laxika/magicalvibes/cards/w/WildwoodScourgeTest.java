@@ -44,7 +44,9 @@ class WildwoodScourgeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
         assertThat(scourge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -59,14 +61,18 @@ class WildwoodScourgeTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        gs.playCard(gd, player1, 0, 0, hydra.getId(), null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hydra.getId());
         resolveAllTriggers();
         assertThat(scourge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        gs.playCard(gd, player1, 0, 0, opposingBear.getId(), null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opposingBear.getId());
         resolveAllTriggers();
 
         assertThat(scourge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

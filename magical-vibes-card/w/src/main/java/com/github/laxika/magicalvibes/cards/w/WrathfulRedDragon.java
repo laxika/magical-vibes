@@ -30,6 +30,7 @@ public class WrathfulRedDragon extends Card {
         )).addEffect(EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.DRAGON),
-                        new DealDamageToAnyTargetEffect(new XValue())));
+                        new DealDamageToAnyTargetEffect(new XValue(), false, false, -1, null,
+                                false, false, false, true)));
     }
 }

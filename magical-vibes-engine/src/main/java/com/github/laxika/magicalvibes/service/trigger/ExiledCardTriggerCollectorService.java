@@ -12,11 +12,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.YouRemoveTimeCounterFromExiledCardTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,15 @@ public class ExiledCardTriggerCollectorService {
         return handleTimeCounterRemoved(match, conditional, ctx);
     }
 
+    @CollectsTrigger(value = YouRemoveTimeCounterFromExiledCardTriggerEffect.class,
+            slot = EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
+    private boolean handleYouRemovedTimeCounter(TriggerMatchContext match,
+            YouRemoveTimeCounterFromExiledCardTriggerEffect youRemove, TriggerContext ctx) {
+        UUID removerId = ((TriggerContext.TimeCounterRemovedFromExile) ctx).removerId();
+        if (removerId != null && !removerId.equals(match.controllerId())) return false;
+        return handleTimeCounterRemoved(match, youRemove, ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
     private boolean handleTimeCounterRemoved(TriggerMatchContext match, CardEffect effect,
             TriggerContext ctx) {
@@ -61,6 +72,9 @@ public class ExiledCardTriggerCollectorService {
         }
         // The last-counter clause describes the event; adding a counter later does not undo it.
         triggeredEffects = triggeredEffects.stream().map(triggeredEffect ->
+                triggeredEffect instanceof YouRemoveTimeCounterFromExiledCardTriggerEffect youRemove
+                        ? youRemove.wrapped() : triggeredEffect)
+                .map(triggeredEffect ->
                 triggeredEffect instanceof ConditionalEffect conditional && isLastCounterEventCondition(conditional)
                         ? conditional.wrapped() : triggeredEffect).toList();
 

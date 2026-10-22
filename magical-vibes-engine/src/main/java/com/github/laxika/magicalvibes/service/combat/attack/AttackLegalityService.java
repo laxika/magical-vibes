@@ -228,6 +228,17 @@ public class AttackLegalityService {
                 }
             }
         }
+        // Until-end-of-turn grants to a player's matching creatures (Wakestone Gargoyle). Such a grant only
+        // modifies the rules of the game, so it also reaches creatures that enter later (CR 611.2c).
+        FilterContext controllerContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn.getOrDefault(controllerId, List.of())) {
+            if (effect instanceof NoDefenderAttackPermissionEffect grant
+                    && grant.noDefenderAttackMatcher() != null
+                    && predicateEvaluationService.matchesPermanentPredicate(
+                            creature, grant.noDefenderAttackMatcher(), controllerContext)) {
+                return true;
+            }
+        }
         // Global grants: any permanent (any controller) whose STATIC effects let matching
         // creatures attack despite defender (e.g. Rolling Stones for Wall creatures).
         for (UUID playerId : gameData.orderedPlayerIds) {

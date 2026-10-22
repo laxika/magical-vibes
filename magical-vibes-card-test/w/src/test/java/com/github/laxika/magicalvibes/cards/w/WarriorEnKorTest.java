@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.b.Bullwhip;
 import com.github.laxika.magicalvibes.cards.c.CalmingLicid;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WarriorEnKor.class, Shock.class, Bullwhip.class, CalmingLicid.class})
+@CardUsed({WarriorEnKor.class, HillGiant.class, Shock.class, Bullwhip.class, CalmingLicid.class})
 class WarriorEnKorTest extends BaseCardTest {
 
     @Test
@@ -42,7 +43,7 @@ class WarriorEnKorTest extends BaseCardTest {
     @DisplayName("Each activation redirects one damage")
     void multipleActivationsEachRedirectOneDamage() {
         Permanent warrior = addCreatureReady(player1, new WarriorEnKor());
-        Permanent destination = addCreatureReady(player1, new WarriorEnKor());
+        Permanent destination = addCreatureReady(player1, new HillGiant());
 
         harness.activateAbility(player1, indexOf(player1, warrior), null, destination.getId());
         harness.passBothPriorities();

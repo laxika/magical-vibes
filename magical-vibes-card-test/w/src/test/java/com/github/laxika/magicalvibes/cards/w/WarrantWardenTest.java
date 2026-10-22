@@ -183,7 +183,7 @@ class WarrantWardenTest extends BaseCardTest {
     @DisplayName("Warrant returns a stolen creature to its owner's library")
     void warrantUsesOwnerLibraryRatherThanControllerLibrary() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
-        gd.stolenCreatures.put(attacker.getId(), player1.getId());
+        setOwnerAndController(attacker, player1, player2);
         attacker.setAttacking(true);
         Plains ownerTop = new Plains();
         Plains controllerTop = new Plains();

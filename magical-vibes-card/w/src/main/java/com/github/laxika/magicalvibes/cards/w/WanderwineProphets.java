@@ -24,7 +24,7 @@ public class WanderwineProphets extends Card {
                         new SacrificePermanentThenEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
                                 new ControllerExtraTurnEffect(1),
-                                "a Merfolk"),
+                                "a Merfolk", false, false),
                         "You may sacrifice a Merfolk. If you do, take an extra turn after this one."));
     }
 }

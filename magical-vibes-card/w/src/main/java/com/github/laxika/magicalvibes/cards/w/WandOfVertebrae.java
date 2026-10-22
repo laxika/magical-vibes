@@ -17,8 +17,8 @@ public class WandOfVertebrae extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER)),
-                "{T}: Target player mills a card."
+                List.of(new MillEffect(1, MillRecipient.CONTROLLER)),
+                "{T}: Mill a card."
         ));
 
         addActivatedAbility(new ActivatedAbility(
@@ -26,7 +26,7 @@ public class WandOfVertebrae extends Card {
                 "{2}",
                 List.of(
                         new ExileSelfCost(),
-                        new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null, 5)
+                        new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null, 5, false, true)
                 ),
                 "{2}, {T}, Exile this artifact: Shuffle up to five target cards from your graveyard into your library."
         ));

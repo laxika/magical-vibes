@@ -570,6 +570,7 @@ public class CreatureControlService {
     private void expireStaleControlEffects(GameData gameData) {
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
             boolean sourceControllerDependent = fe.isControlEffect()
+                    || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED
                     || (fe.effect() instanceof CombatAttackRequirementEffect requirement
                     && requirement.endsWhenSourceControllerChanges())
                     || fe.effect() instanceof GoadStatusEffect
@@ -582,7 +583,8 @@ public class CreatureControlService {
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 stale = source == null || !source.isAttached()
                         || !source.getAttachedTo().equals(fe.affectedPermanentId());
-            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
+            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                    || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED) {
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 UUID sourceController = source == null ? null : gameData.findControllerOf(source);
@@ -648,7 +650,7 @@ public class CreatureControlService {
         UUID sourceController = gameData.findControllerOf(source);
         List<FloatingContinuousEffect> expired = new ArrayList<>();
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
-            if ((fe.isControlEffect()
+            if (((fe.isControlEffect()
                     || (fe.effect() instanceof CombatAttackRequirementEffect requirement
                     && requirement.endsWhenSourceControllerChanges())
                     || fe.effect() instanceof GrantKeywordEffect
@@ -656,6 +658,7 @@ public class CreatureControlService {
                     || (fe.effect() instanceof PermanentLockEffect lock
                     && lock.endsWhenSourceControllerChanges()))
                     && fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                    || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED)
                     && source.getId().equals(fe.sourcePermanentId())
                     && !fe.controllerId().equals(sourceController)) {
                 gameData.floatingEffects.remove(fe);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.WhirlwindDenialState;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ public class WhirlwindDenialSupport {
     private final CounterSupport counterSupport;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final PotentialManaService potentialManaService;
 
     public void begin(GameData gameData, StackEntry source,
                       CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect effect) {
@@ -45,7 +47,7 @@ public class WhirlwindDenialSupport {
         for (UUID playerId : opponentOrder(gameData, source.getControllerId())) {
             for (StackEntry candidate : candidates) {
                 if (playerId.equals(candidate.getControllerId()) && isSpellOrAbility(candidate)) {
-                    state.targetIds.add(candidate.getCard().getId());
+                    state.targetIds.add(candidate.getTargetableId());
                 }
             }
         }
@@ -99,7 +101,10 @@ public class WhirlwindDenialSupport {
 
             ManaCost cost = new ManaCost(manaCost(state.amount));
             ManaPool pool = gameData.playerManaPools.get(target.getControllerId());
-            if (pool == null || !cost.canPayResolutionCost(pool)) {
+            // Mana abilities may be activated while paying, so mana the player could still produce counts.
+            if (pool == null || !(cost.canPayResolutionCost(pool)
+                    || cost.canPayResolutionCost(potentialManaService.buildVirtualManaPool(
+                    gameData, target.getControllerId())))) {
                 state.unpaidTargetIds.add(targetId);
                 continue;
             }
@@ -111,7 +116,10 @@ public class WhirlwindDenialSupport {
                     "Pay " + manaCost(state.amount) + " to prevent "
                             + target.getCard().getName() + " from being countered?",
                     targetId,
-                    state.sourceControllerId));
+                    manaCost(state.amount),
+                    null, null, 0, 0, null, null, null, null,
+                    state.sourceControllerId,
+                    0));
             return;
         }
 

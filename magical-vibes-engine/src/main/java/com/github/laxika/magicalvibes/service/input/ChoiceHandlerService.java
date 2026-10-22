@@ -1219,6 +1219,7 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) throw new IllegalArgumentException("Invalid creature card name");
             handleChooseCreatureNameRevealTopCardsChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -3919,7 +3920,9 @@ public class ChoiceHandlerService {
                     gameData.exiledCardTimeCounters.put(ctx.targetId(), counters + 1);
                 }
             } else {
-                removeTimeCounterFromExiledCardEffectHandler.removeTimeCounter(gameData, ctx.targetId());
+                removeTimeCounterFromExiledCardEffectHandler.removeTimeCounter(gameData, ctx.targetId(),
+                        gameData.pendingEffectResolutionEntry == null
+                                ? null : gameData.pendingEffectResolutionEntry.getControllerId());
             }
         } else {
             Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
@@ -6379,6 +6382,10 @@ public class ChoiceHandlerService {
                 pool.add(color, mana);
                 if (ctx.fromCreature()) {
                     pool.addCreatureMana(color, mana);
+                }
+                if (gameQueryService.isArtifact(gameData, perm)
+                        && !GameQueryService.permanentHasSubtype(perm, CardSubtype.TREASURE)) {
+                    pool.addArtifactSourceManaTag(color, mana);
                 }
 
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " "

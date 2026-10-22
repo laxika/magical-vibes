@@ -15,7 +15,7 @@ import java.util.List;
 public class LilianasUndeadMinion extends Card {
 
     public LilianasUndeadMinion() {
-        addEffect(EffectSlot.STATIC, new CantLoseGameEffect());
+        addEffect(EffectSlot.STATIC, new CantLoseGameEffect(false));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

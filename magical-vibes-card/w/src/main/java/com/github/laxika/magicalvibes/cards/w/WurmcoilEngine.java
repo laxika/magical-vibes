@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -24,16 +25,16 @@ public class WurmcoilEngine extends Card {
     public WurmcoilEngine() {
         // When this creature dies, create a 3/3 colorless Phyrexian Wurm artifact creature token
         // with deathtouch and a 3/3 colorless Phyrexian Wurm artifact creature token with lifelink.
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
-                1, "Phyrexian Wurm", 3, 3, null,
-                List.of(CardSubtype.PHYREXIAN, CardSubtype.WURM),
-                Set.of(Keyword.DEATHTOUCH),
-                Set.of(CardType.ARTIFACT)));
-
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
-                1, "Phyrexian Wurm", 3, 3, null,
-                List.of(CardSubtype.PHYREXIAN, CardSubtype.WURM),
-                Set.of(Keyword.LIFELINK),
-                Set.of(CardType.ARTIFACT)));
+        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+                new CreateTokenEffect(
+                        1, "Phyrexian Wurm", 3, 3, null,
+                        List.of(CardSubtype.PHYREXIAN, CardSubtype.WURM),
+                        Set.of(Keyword.DEATHTOUCH),
+                        Set.of(CardType.ARTIFACT)),
+                new CreateTokenEffect(
+                        1, "Phyrexian Wurm", 3, 3, null,
+                        List.of(CardSubtype.PHYREXIAN, CardSubtype.WURM),
+                        Set.of(Keyword.LIFELINK),
+                        Set.of(CardType.ARTIFACT))));
     }
 }

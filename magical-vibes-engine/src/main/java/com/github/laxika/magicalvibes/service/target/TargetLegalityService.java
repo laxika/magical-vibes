@@ -2141,9 +2141,7 @@ public class TargetLegalityService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown spell target group"));
         int minTargets = kicked ? group.getKickedMinTargets() : group.getMinTargets();
-        if (group.isXScaled()) {
-            minTargets = Math.min(xValue, minTargets);
-        }
+        minTargets = xScaledMinTargets(group, minTargets, xValue);
         int maxTargets = effectiveGroupMaxTargets(gameData, controllerId, null, group, xValue, kicked);
         validateMultiTargetCount(targetIds, minTargets, maxTargets);
 
@@ -2236,7 +2234,7 @@ public class TargetLegalityService {
                     int min = giftPromised
                             ? group.getGiftPromisedMinTargets()
                             : kicked ? group.getKickedMinTargets() : group.getMinTargets();
-                    return group.isXScaled() ? Math.min(xValue, min) : min;
+                    return xScaledMinTargets(group, min, xValue);
                 })
                 .sum();
         int maxTargets = (int) Math.min(Integer.MAX_VALUE, targetGroups.stream()
@@ -2251,9 +2249,7 @@ public class TargetLegalityService {
                 int groupMinTargets = giftPromised
                         ? group.getGiftPromisedMinTargets()
                         : kicked ? group.getKickedMinTargets() : group.getMinTargets();
-                if (group.isXScaled()) {
-                    groupMinTargets = Math.min(xValue, groupMinTargets);
-                }
+                groupMinTargets = xScaledMinTargets(group, groupMinTargets, xValue);
                 int groupMaxTargets = effectiveGroupMaxTargets(
                         gameData, controllerId, null, group, xValue, kicked, giftPromised);
                 if (groupTargetCount < groupMinTargets || groupTargetCount > groupMaxTargets) {
@@ -2604,6 +2600,18 @@ public class TargetLegalityService {
         return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, xValue, false);
     }
 
+    /**
+     * The minimum target count of a group whose size scales with X. An exactly-X group
+     * ({@code targetExactlyX}, minimum equal to maximum) needs exactly X targets even when X exceeds its
+     * sanity ceiling; an up-to-X group needs at most its declared minimum.
+     */
+    private int xScaledMinTargets(SpellTarget group, int declaredMin, int xValue) {
+        if (!group.isXScaled()) {
+            return declaredMin;
+        }
+        return group.isExactlyXScaled() ? xValue : Math.min(xValue, declaredMin);
+    }
+
     private int effectiveGroupMaxTargets(GameData gameData, UUID controllerId, Permanent sourcePermanent,
                                          SpellTarget group, int xValue, boolean kicked) {
         return effectiveGroupMaxTargets(
@@ -2748,6 +2756,18 @@ public class TargetLegalityService {
             }
             return;
         }
+        if (constraint == MultiTargetConstraint.SINGLE_GRAVEYARD) {
+            Set<UUID> graveyardOwners = new HashSet<>();
+            for (UUID targetId : targetIds) {
+                if (gameQueryService.findCardInGraveyardById(gameData, targetId) != null) {
+                    graveyardOwners.add(gameQueryService.findGraveyardOwnerById(gameData, targetId));
+                }
+            }
+            if (graveyardOwners.size() > 1) {
+                throw new IllegalStateException("All targets must be in a single graveyard");
+            }
+            return;
+        }
         if (constraint == MultiTargetConstraint.DIFFERENT_NAMES) {
             Set<String> names = new HashSet<>();
             for (UUID targetId : targetIds) {
@@ -2883,7 +2903,7 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT, ONE_PER_OPPONENT_IF_ABLE,
                          ONE_PER_PLAYER, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
-                         DIFFERENT_MANA_VALUES, SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST -> {
+                         DIFFERENT_MANA_VALUES, SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST, SINGLE_GRAVEYARD -> {
                         // Handled by early returns above.
                     }
                 }
@@ -5391,8 +5411,10 @@ public class TargetLegalityService {
                     stackEntry.getControllerId());
         }
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
-            return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).stream()
-                    .anyMatch(colorInPredicate.colors()::contains);
+            Set<CardColor> spellColors = new HashSet<>(
+                    gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()));
+            spellColors.addAll(stackEntry.getGrantedColorsOnEntry());
+            return spellColors.stream().anyMatch(colorInPredicate.colors()::contains);
         }
         if (predicate instanceof StackEntrySourceIsColorlessPredicate) {
             if (stackEntry.getSourcePlanarObject() != null) {

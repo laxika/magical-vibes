@@ -249,7 +249,7 @@ class WritOfPassageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateHandAbility(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passBothPriorities());
         harness.clearMessages();
         harness.publishState();
 
@@ -258,7 +258,8 @@ class WritOfPassageTest extends BaseCardTest {
                 .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
         assertThat(state.opponentHand()).extracting(card -> card.id()).containsExactly(writ.getId());
 
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+        assertThat(gd.currentStep).isNotEqualTo(TurnStep.UPKEEP);
         harness.clearMessages();
         harness.publishState();
         GameStateMessage mainPhaseState = mapper.readValue(harness.getConn2()

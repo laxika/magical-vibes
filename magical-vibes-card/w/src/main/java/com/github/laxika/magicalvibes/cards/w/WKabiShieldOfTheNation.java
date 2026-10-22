@@ -26,7 +26,7 @@ public class WKabiShieldOfTheNation extends Card {
     public WKabiShieldOfTheNation() {
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
                 new AllConditions(List.of(
-                        new HasAttacker(new PermanentIsCommanderPredicate()),
+                        new HasAttacker(new PermanentIsCommanderPredicate(true)),
                         new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentMinManaValuePredicate(4))))

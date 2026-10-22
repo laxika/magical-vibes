@@ -85,13 +85,15 @@ class WoollyLoxodonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.turnFaceUp(player1, 0);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.turnFaceUp(player1, 0);
 
-        assertThat(loxodon.isFaceDown()).isFalse();
-        assertThat(loxodon.isTapped()).isTrue();
-        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(loxodon);
-        assertThat(gd.stack).isEmpty();
-        assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(6);
-        assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(7);
+            assertThat(loxodon.isFaceDown()).isFalse();
+            assertThat(loxodon.isTapped()).isTrue();
+            assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(loxodon);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(7);
+        });
     }
 }

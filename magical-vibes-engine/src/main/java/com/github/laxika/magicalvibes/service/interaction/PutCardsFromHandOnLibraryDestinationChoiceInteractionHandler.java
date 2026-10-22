@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,7 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice> handledType() {
@@ -73,6 +75,7 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
+        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moving.size());
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts " + moving.size()
                 + " card(s) on the " + (onTop ? "top" : "bottom") + " of their library."));

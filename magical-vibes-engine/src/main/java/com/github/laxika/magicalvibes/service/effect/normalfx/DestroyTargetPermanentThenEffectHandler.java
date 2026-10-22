@@ -208,8 +208,9 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                     search.onlyIfSacrificed(), search.battlefieldIfChosenBeholdType(), search.shuffleAfterSelection(),
                     search.battlefieldCounter(), search.enterWithCounters(), search.topLibraryPosition(),
                     search.battlefieldIfOpponentControlsMoreLands(), search.topLibraryFractionDenominator());
-            var boundMay = new MayEffect(boundSearch, may.prompt(), null,
-                    MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
+            // The destroyed permanent's controller makes the choice by identity: the entry's triggering
+            // permanent may be the source itself (an enters trigger), whose controller is the caster.
+            var boundMay = MayEffect.forPlayer(boundSearch, may.prompt(), thenControllerId);
             entry.setTriggeringPermanentControllerId(thenControllerId);
             entry.setEventValue(statValue);
             entry.replaceEffectToResolve(entry.getResolvingEffectIndex(), boundMay);

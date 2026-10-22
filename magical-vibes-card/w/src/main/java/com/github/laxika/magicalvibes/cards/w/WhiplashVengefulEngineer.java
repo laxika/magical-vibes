@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class WhiplashVengefulEngineer extends Card {
 
     public WhiplashVengefulEngineer() {
+        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
         AttachmentsOnSource equipmentCount = new AttachmentsOnSource(false, true);
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new Equipped(),
                 SequenceEffect.of(

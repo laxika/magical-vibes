@@ -89,6 +89,8 @@ class WillieLumpkinPostmanTest extends BaseCardTest {
         gd.queueExtraTurnFirst(player1.getId(), false, false);
 
         harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(player1, List.of());
         harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))

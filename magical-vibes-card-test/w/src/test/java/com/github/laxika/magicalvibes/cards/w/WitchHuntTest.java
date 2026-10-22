@@ -75,11 +75,14 @@ class WitchHuntTest extends BaseCardTest {
     @Test
     void damagesTheNewControllerOnTheirUpkeep() {
         harness.addToBattlefield(player1, new WitchHunt());
-        advanceToEndStep(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
-        advanceToUpkeep(player2);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         resolveAllTriggers();
 
+        harness.assertOnBattlefield(player2, "Witch Hunt");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
     }

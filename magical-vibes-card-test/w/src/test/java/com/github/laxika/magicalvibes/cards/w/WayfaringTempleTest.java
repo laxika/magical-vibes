@@ -85,15 +85,17 @@ class WayfaringTempleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            harness.passBothPriorities();
 
-        assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
 
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        assertThat(findPermanents(player1, "Soldier Token")).isEmpty();
-        assertThat(findPermanents(player2, "Soldier Token")).hasSize(1);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+            assertThat(findPermanents(player1, "Soldier Token")).isEmpty();
+            assertThat(findPermanents(player2, "Soldier Token")).hasSize(1);
+        });
     }
 
     @Test
@@ -105,15 +107,17 @@ class WayfaringTempleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            harness.passBothPriorities();
 
-        assertThat(gd.stack).hasSize(1);
-        gd.playerBattlefields.get(player1.getId()).remove(token);
-        harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(1);
+            gd.playerBattlefields.get(player1.getId()).remove(token);
+            harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Soldier Token")).isEmpty();
-        assertThat(gqs.getEffectivePower(gd, temple)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, temple)).isEqualTo(1);
+            assertThat(findPermanents(player1, "Soldier Token")).isEmpty();
+            assertThat(gqs.getEffectivePower(gd, temple)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, temple)).isEqualTo(1);
+        });
     }
 
     @Test

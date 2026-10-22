@@ -129,15 +129,17 @@ class WeftstalkerArdentTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Weftstalker Ardent");
-        assertThat(gd.findExiledCard(ardent.getId())).isNull();
+            harness.assertOnBattlefield(player1, "Weftstalker Ardent");
+            assertThat(gd.findExiledCard(ardent.getId())).isNull();
 
-        harness.passBothPriorities();
-        harness.assertNotOnBattlefield(player1, "Weftstalker Ardent");
-        assertThat(gd.findExiledCard(ardent.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(ardent.getId());
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player1, "Weftstalker Ardent");
+            assertThat(gd.findExiledCard(ardent.getId())).isNotNull();
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(ardent.getId());
+        });
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

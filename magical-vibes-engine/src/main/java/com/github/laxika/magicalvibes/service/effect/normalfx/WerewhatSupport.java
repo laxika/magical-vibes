@@ -72,9 +72,27 @@ public class WerewhatSupport {
         return true;
     }
 
+    /** The creature card in the controller's hand or graveyard that the player picked, or null. */
+    public Card findOfferedCard(GameData gameData, PendingInteraction.WerewhatOnEnterChoice interaction,
+                                UUID selectedCardId) {
+        Card inHand = gameData.playerHands.getOrDefault(interaction.controllerId(), List.of()).stream()
+                .filter(card -> card.getId().equals(selectedCardId)).findFirst().orElse(null);
+        return inHand != null ? inHand : gameQueryService.findCardInGraveyardById(gameData, selectedCardId);
+    }
+
     public ChoiceResult applyChoice(GameData gameData,
                                     PendingInteraction.WerewhatOnEnterChoice interaction,
                                     UUID selectedCardId) {
+        return applyChoice(gameData, interaction, selectedCardId, false);
+    }
+
+    /**
+     * Exiles the chosen card and links it as the back face. For an already double-faced card the controller
+     * picks which of its faces serves as the back face; the other face is treated as nonexistent.
+     */
+    public ChoiceResult applyChoice(GameData gameData,
+                                    PendingInteraction.WerewhatOnEnterChoice interaction,
+                                    UUID selectedCardId, boolean useOtherFace) {
         Permanent permanent = gameQueryService.findPermanentById(gameData,
                 interaction.enteringPermanentId());
         if (permanent == null) {
@@ -98,7 +116,8 @@ public class WerewhatSupport {
         }
         exileService.exileCard(gameData, interaction.controllerId(), selected, permanent.getId());
 
-        Card dynamicBackFace = selected.createRuntimeCopy();
+        Card dynamicBackFace = (useOtherFace && selected.getBackFaceCard() != null
+                ? selected.getBackFaceCard() : selected).createRuntimeCopy();
         Set<Keyword> backKeywords = dynamicBackFace.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)
                 : EnumSet.copyOf(dynamicBackFace.getKeywords());

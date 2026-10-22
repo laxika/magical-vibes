@@ -36,6 +36,7 @@ public class ExperienceCountersEffectHandler implements NormalEffectHandlerBean 
         if (amount > 0 && gameQueryService.playersCantGetCounters(gameData)) {
             return;
         }
+        amount = gameQueryService.replaceExperienceCounters(gameData, entry.getControllerId(), amount);
 
         int current = gameData.playerExperienceCounters.getOrDefault(entry.getControllerId(), 0);
         int updated = Math.max(0, current + amount);

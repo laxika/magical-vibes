@@ -194,6 +194,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPutCardFromHandOrGraveyardChoice);
         register(PendingInteraction.WerewhatOnEnterChoice.class,
                 this::projectWerewhatOnEnterChoice);
+        register(PendingInteraction.WerewhatBackFaceChoice.class,
+                this::projectWerewhatBackFaceChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
         register(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class,
@@ -1242,6 +1244,12 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "Choose up to one " + interaction.label()
                         + " card from your " + zones + " to put onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectWerewhatBackFaceChoice(
+            GameData gameData, PendingInteraction.WerewhatBackFaceChoice interaction) {
+        return InteractionPromptMessage.listPick(
+                interaction.options(), "Choose which face becomes Werewhat's back face.", false);
     }
 
     private InteractionPromptMessage projectWerewhatOnEnterChoice(

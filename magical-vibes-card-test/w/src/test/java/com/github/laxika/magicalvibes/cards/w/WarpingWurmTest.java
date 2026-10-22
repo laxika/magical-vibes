@@ -35,7 +35,7 @@ class WarpingWurmTest extends BaseCardTest {
         advanceTurn(); // player1's untap step phases it back in
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
 
-        harness.passBothPriorities(); // resolve the phase-in trigger
+        payUpkeepCostAndResolveTriggers();
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -47,13 +47,17 @@ class WarpingWurmTest extends BaseCardTest {
 
         advanceTurn();
         advanceTurn();
+        payUpkeepCostAndResolveTriggers();
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        advanceTurn();
+        advanceTurn(); // printed phasing phases it out again
         harness.passBothPriorities();
-        resolveUntilPayPrompt();
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(wurm);
 
         advanceTurn();
         advanceTurn();
-        harness.passBothPriorities();
+        payUpkeepCostAndResolveTriggers();
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -110,7 +114,7 @@ class WarpingWurmTest extends BaseCardTest {
         Permanent wurm = harness.addToBattlefieldAndReturn(player1, new WarpingWurm());
 
         advanceTurn();
-        advanceTurn();
+        harness.withAutoStop(TurnStep.UPKEEP, this::advanceTurn);
 
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
@@ -132,7 +136,7 @@ class WarpingWurmTest extends BaseCardTest {
         assertThat(wurm.isTapped()).isFalse();
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        harness.passBothPriorities();
+        payUpkeepCostAndResolveTriggers();
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -147,6 +151,19 @@ class WarpingWurmTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(wurm);
         return wurm;
+    }
+
+    /**
+     * Both the phase-in trigger and the upkeep payment trigger are on the stack; their order is the
+     * controller's choice, so pay for the upkeep trigger whenever it is reached and let the rest resolve.
+     */
+    private void payUpkeepCostAndResolveTriggers() {
+        resolveUntilPayPrompt();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
     }
 
     private void resolveUntilPayPrompt() {

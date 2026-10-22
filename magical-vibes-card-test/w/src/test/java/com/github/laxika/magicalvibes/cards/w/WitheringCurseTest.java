@@ -52,7 +52,7 @@ class WitheringCurseTest extends BaseCardTest {
     void opponentLifeGainDoesNotEnableInfusionAndBothPlayersCreaturesAreReduced() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1));
         harness.setHand(player1, List.of(new WitheringCurse()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -72,8 +72,10 @@ class WitheringCurseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castSorcery(player1, 0, 0);
 
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 2, "test");
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+            harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 2, "test");
+        });
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Hill Giant");
@@ -94,8 +96,9 @@ class WitheringCurseTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
@@ -106,7 +109,7 @@ class WitheringCurseTest extends BaseCardTest {
         Permanent skeletons = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
         harness.setHand(player1, List.of(new WitheringCurse()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.castSorcery(player1, 0, 0);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

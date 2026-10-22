@@ -85,12 +85,13 @@ public class GameOutcomeService {
      * if a spell or ability (such as the one from Helix Pinnacle) states that a player 'wins the
      * game.' If a player wins the game, the game ends immediately."
      *
-     * <p>The check covers both directions of game-outcome restrictions: an opponent's
-     * {@code CantLoseGameEffect} and the winner's or an opponent's {@code CantWinGameEffect}.
+     * <p>A win is stopped by the winner's own "can't win the game" ({@code CantWinGameEffect}) or by an
+     * opponent's "can't lose the game and your opponents can't win the game" (Platinum Angel). An
+     * opponent's plain "you can't lose the game" does not stop a win effect (CR 104.2b).
      */
     public boolean canPlayerWinGame(GameData gameData, UUID winnerId) {
         return !gameQueryService.playerHasCantWinGameEffect(gameData, winnerId)
-                && gameQueryService.canPlayerLoseGame(gameData, gameQueryService.getOpponentId(gameData, winnerId));
+                && !gameQueryService.opponentPreventsWinningGame(gameData, winnerId);
     }
 
     public boolean checkWinCondition(GameData gameData) {

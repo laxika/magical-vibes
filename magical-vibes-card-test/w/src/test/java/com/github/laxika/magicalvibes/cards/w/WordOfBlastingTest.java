@@ -99,7 +99,7 @@ class WordOfBlastingTest extends BaseCardTest {
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new CrenellatedWall());
         harness.setHand(player1, List.of(new WordOfBlasting(), new Unsummon()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, wall.getId());
         harness.castAndResolveInstant(player1, 0, wall.getId());

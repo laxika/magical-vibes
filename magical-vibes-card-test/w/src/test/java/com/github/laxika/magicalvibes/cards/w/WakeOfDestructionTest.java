@@ -92,6 +92,7 @@ class WakeOfDestructionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, renamedLand.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleListChoice(player1, "Goblin Berserker");
         harness.handleListChoice(player1, "GOBLIN");
         assertThat(gqs.getEffectiveName(gd, renamedLand)).isEqualTo("Goblin Berserker");

@@ -52,7 +52,7 @@ public class AdjustTimeCountersOnEachSuspendedCardEffectHandler implements Norma
                         GameLog.cardThen(exiledEntry.card(), " gets " + adjustment.amount() + " time counters."));
             } else {
                 for (int i = 0; i < adjustment.amount(); i++) {
-                    removeTimeCounterHandler.removeTimeCounter(gameData, cardId);
+                    removeTimeCounterHandler.removeTimeCounter(gameData, cardId, entry.getControllerId());
                 }
             }
         }
@@ -73,7 +73,7 @@ public class AdjustTimeCountersOnEachSuspendedCardEffectHandler implements Norma
                 }
             } else {
                 for (int i = 0; i < adjustment.amount(); i++) {
-                    removeSpellTimeCounterHandler.removeTimeCounter(gameData, suspended.cardId());
+                    removeSpellTimeCounterHandler.removeTimeCounter(gameData, suspended.cardId(), entry.getControllerId());
                 }
             }
         }

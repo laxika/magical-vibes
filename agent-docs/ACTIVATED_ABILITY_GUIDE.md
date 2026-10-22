@@ -1214,6 +1214,7 @@ new slot an ongoing scheme needs must add the same scan. `SacrificeSelfEffect` a
 | `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` | An opponent's creature enters |
 | `ON_OPPONENT_SHUFFLES_LIBRARY` | Opponent shuffles library |
 | `ON_ANY_PLAYER_SHUFFLES_LIBRARY` | Any player shuffles their library; the trigger remembers that player |
+| `ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE` | A spell or ability causes its controller to shuffle their library ("causes its controller to shuffle"): fires on every permanent only when the shuffling player is the controller of the resolving spell or ability (`LibraryShuffleHelper`). The shuffling player is the trigger's target. Used by Widespread Panic |
 | `ON_OPPONENT_SEARCHES_LIBRARY` | Opponent searches their own library; the searching player is baked in as `targetId` (Ob Nixilis, Unshackled) |
 | `ON_CONTROLLER_GAINS_LIFE` | Controller gains life |
 | `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE` | Opponent dealt noncombat damage |

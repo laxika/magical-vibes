@@ -585,19 +585,7 @@ public final class TokenCreationReplacementSupport {
     }
 
     private static int additionalMapTokenCount(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AddMapTokenToArtifactTokenCreationEffect) {
-                    count++;
-                }
-            }
-        }
-        return count;
+        return countActiveStaticEffects(gameData, controllerId, AddMapTokenToArtifactTokenCreationEffect.class);
     }
 
     private static int countActiveStaticEffects(GameData gameData, UUID controllerId,

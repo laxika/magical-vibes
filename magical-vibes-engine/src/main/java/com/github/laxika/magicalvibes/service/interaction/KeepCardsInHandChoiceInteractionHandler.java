@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.effect.normalfx.KeepCardsInHandSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,13 +61,14 @@ public class KeepCardsInHandChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        keepCardsInHandSupport.applyKeepChoice(gameData, player.getId(), keptCardIds, interaction.cardName());
-        inputCompletionService.publishStateAfterInput(gameData);
+        Map<UUID, List<UUID>> kept = new LinkedHashMap<>(interaction.keptByPlayer());
+        kept.put(player.getId(), List.copyOf(keptCardIds));
 
+        inputCompletionService.publishStateAfterInput(gameData);
         boolean begunNext = keepCardsInHandSupport.beginNextChoice(gameData,
-                interaction.remainingPlayerIds(), interaction.keepCount(), interaction.cardName());
+                interaction.remainingPlayerIds(), interaction.keepCount(), interaction.cardName(), kept);
         if (!begunNext) {
-            // All players have chosen — resume the rest of the spell (e.g. the mana-loss step).
+            // All players have chosen and the rest were shuffled — resume the rest of the spell.
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
     }

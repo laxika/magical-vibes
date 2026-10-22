@@ -90,7 +90,8 @@ public class WyllPactBoundDuelist extends Card {
         return new MayEffect(
                 new SacrificePermanentThenEffect(
                         anotherCreatureOrArtifact(), specializedThenEffect(color),
-                        "another creature or an artifact"),
+                        "another creature or an artifact", false,
+                        color != CardColor.RED && color != CardColor.GREEN),
                 "Sacrifice another creature or an artifact?");
     }
 
@@ -135,9 +136,11 @@ public class WyllPactBoundDuelist extends Card {
 
     private static PermanentPredicate anotherCreatureOrArtifact() {
         return new PermanentAllOfPredicate(List.of(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(), new PermanentIsArtifactPredicate())),
                 new PermanentControlledBySourceControllerPredicate(),
-                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                        new PermanentIsArtifactPredicate()))));
     }
 }

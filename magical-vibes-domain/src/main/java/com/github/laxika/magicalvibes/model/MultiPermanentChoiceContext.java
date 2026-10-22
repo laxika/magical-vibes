@@ -395,6 +395,17 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * The payer of a resolution-time waterbend cost ("… unless you waterbend {N}") chooses which untapped
+     * artifacts and creatures to tap for generic mana of {@code amount}; the rest is paid with mana. At
+     * least {@code minimumTaps} permanents must be chosen. Once paid, the paid effects of {@code effect}
+     * resolve instead of its else effects.
+     */
+    record ForcedCostWaterbendPayment(PendingMayAbility ability,
+                                      com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect,
+                                      int amount, int minimumTaps) implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * The affected player chooses the required number of permanents to untap, or fewer when
      * {@code upTo} is true.
      */

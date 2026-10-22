@@ -132,6 +132,7 @@ class WandOfTheWorldsoulTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.setLibrary(player2, List.of(new SolRing()));
         harness.setLibrary(player1, List.of(new SolRing()));
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

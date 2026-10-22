@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 public class Wargling extends Card {
 
     public Wargling() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new ControlsPermanent(new PermanentPowerAtLeastPredicate(4)), SequenceEffect.of(
                         new BoostSelfEffect(1, 0),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES))));

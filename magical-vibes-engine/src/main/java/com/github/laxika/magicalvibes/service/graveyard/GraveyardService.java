@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -210,6 +211,7 @@ public class GraveyardService {
                 }
             }
         }
+        queueSimultaneousBottomOfLibraryOrdering(gameData, targetPlayerId, milledCards, deck);
         cardsEnteredGraveyard.stream().filter(card -> card.hasType(CardType.LAND)).findFirst()
                 .ifPresent(card -> triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(
                         gameData, targetPlayerId, card, true));
@@ -294,6 +296,37 @@ public class GraveyardService {
                 .filter(card -> cardsEnteredGraveyard.contains(card)
                         || gameData.findExiledCard(card.getId()) != null)
                 .toList();
+    }
+
+    /**
+     * Cards a replacement effect (Wheel of Sun and Moon) put on the bottom of their owner's library during
+     * one mill event arrive at the same time, so their owner chooses their order (CR 401.4). They are held
+     * out of the library until that order is chosen.
+     */
+    private void queueSimultaneousBottomOfLibraryOrdering(GameData gameData, UUID ownerId,
+                                                          List<Card> milledCards, List<Card> deck) {
+        if (!enchantedPlayerHasBottomOfLibraryReplacement(gameData, ownerId, null)) {
+            return;
+        }
+        List<Card> bottomed = milledCards.stream()
+                .filter(card -> !isToken(gameData, card) && deck.contains(card))
+                .toList();
+        if (bottomed.size() < 2) {
+            return;
+        }
+        // Cards with the same name are indistinguishable, so their order is unobservable.
+        if (bottomed.stream().map(Card::getName).distinct().count() < 2) {
+            return;
+        }
+        deck.removeAll(bottomed);
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.pendingLibraryBottomReorders.addLast(
+                    new LibraryBottomReorderRequest(ownerId, new ArrayList<>(bottomed)));
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                ownerId, new ArrayList<>(bottomed), true, ownerId,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
     }
 
     /**
@@ -679,7 +712,8 @@ public class GraveyardService {
         // Wheel of Sun and Moon â€” if the graveyard's owner is enchanted by a player aura with this
         // replacement, cards headed to their graveyard from anywhere are revealed and put on the
         // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
-        if (!isToken(gameData, card) && enchantedPlayerHasBottomOfLibraryReplacement(gameData, ownerId)) {
+        if (!isToken(gameData, card)
+                && enchantedPlayerHasBottomOfLibraryReplacement(gameData, ownerId, battlefieldSnapshot)) {
             gameData.playerDecks.get(ownerId).add(card);
             gameLogService.append(gameData, GameLog.cardThen(card, " is revealed and put on the bottom of its owner's library instead."));
             log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard", gameData.id, card.getName());
@@ -1843,19 +1877,34 @@ public class GraveyardService {
                         && replacement.filter() == null && !replacement.excludeSource());
     }
 
-    private boolean enchantedPlayerHasBottomOfLibraryReplacement(GameData gameData, UUID ownerId) {
+    /**
+     * Whether an Aura like Wheel of Sun and Moon enchants {@code ownerId}. A Wheel that is itself leaving the
+     * battlefield (or leaving together with other permanents) still applies to its own card, since by the
+     * time the card reaches the graveyard it is no longer found on any battlefield.
+     */
+    private boolean enchantedPlayerHasBottomOfLibraryReplacement(GameData gameData, UUID ownerId,
+                                                                 Permanent leavingSnapshot) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (p.isAttached() && ownerId.equals(p.getAttachedTo())
-                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect.class::isInstance)) {
+                if (bottomOfLibraryReplacementApplies(p, ownerId)) {
                     return true;
                 }
             }
         }
-        return false;
+        if (leavingSnapshot != null && bottomOfLibraryReplacementApplies(leavingSnapshot, ownerId)) {
+            return true;
+        }
+        return gameData.simultaneousDyingPermanents.values().stream()
+                .anyMatch(p -> bottomOfLibraryReplacementApplies(p, ownerId));
+    }
+
+    private boolean bottomOfLibraryReplacementApplies(Permanent aura, UUID ownerId) {
+        return aura.isAttached() && ownerId.equals(aura.getAttachedTo())
+                && !aura.isLosesAllAbilitiesUntilEndOfTurn()
+                && aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect.class::isInstance);
     }
 
     /**
@@ -2080,6 +2129,11 @@ public class GraveyardService {
             }
             if (sourceZone == Zone.HAND) {
                 gameData.cardsPutIntoGraveyardFromHandThisTurn
+                        .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
+                        .add(card.getId());
+            }
+            if (sourceZone == Zone.HAND || sourceZone == Zone.LIBRARY) {
+                gameData.cardsPutIntoGraveyardFromHandOrLibraryThisTurn
                         .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
                         .add(card.getId());
             }
@@ -2310,6 +2364,9 @@ public class GraveyardService {
             // The dying creature's card id as last-known information, for effects that act on it
             // (e.g. Seraph returns "that card" at the next end step).
             triggerEntry.setTriggeringCardId(dyingCreatureCardId);
+            // The graveyard visit this trigger refers to (CR 400.7): a later effect that acts on "that card"
+            // must not act on the same card after it has left and returned to a graveyard again.
+            triggerEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dyingCreatureCardId));
             // "its controller loses N life" reads the dying creature's last-known controller from
             // the entry's targetId; the ability itself chooses no target. Other abilities in this
             // slot use targetId for their own purposes, so it is only bound for that recipient.
@@ -2473,6 +2530,8 @@ public class GraveyardService {
         cards.forEach(card -> gameData.graveyardCardCastPermissionsUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.cardsGrantedJumpStartUntilEndOfTurn.remove(card.getId()));
+        cards.forEach(card -> gameData.cardsGrantedFlashbackUntilEndOfTurn.remove(card.getId()));
+        cards.forEach(card -> gameData.cardsGrantedHarmonizeUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
         // A card that left the graveyard is a new object (CR 400.7), so a later return to the graveyard
         // is not a discard or cycling made this turn.

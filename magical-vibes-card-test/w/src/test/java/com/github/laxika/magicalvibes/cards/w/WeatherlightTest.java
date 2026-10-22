@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -165,11 +164,15 @@ class WeatherlightTest extends BaseCardTest {
         // The combat damage trigger is on the stack — resolve it
         harness.passBothPriorities();
 
-        // Trigger should have resolved — offering the legendary creature
-        GameData gdAfter = harness.getGameData();
-        assertThat(gdAfter.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gdAfter.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
-        assertThat(gdAfter.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Arvad the Cursed");
+        // The trigger resolved: all five looked-at cards are shown, and only the historic one can be chosen.
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).hasSize(5);
+        assertThat(choice.validCardIds()).hasSize(1);
+        assertThat(choice.allCards().stream()
+                .filter(card -> choice.validCardIds().contains(card.getId()))
+                .map(card -> card.getName()))
+                .containsExactly("Arvad the Cursed");
     }
 
     @Test

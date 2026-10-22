@@ -67,7 +67,6 @@ class WakeOfVulturesTest extends BaseCardTest {
         assertThat(vultures.getRegenerationShield()).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, vultures.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Wake of Vultures");

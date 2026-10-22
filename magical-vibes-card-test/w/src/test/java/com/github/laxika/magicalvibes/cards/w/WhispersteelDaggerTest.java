@@ -68,8 +68,9 @@ class WhispersteelDaggerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(firstCreature.getId()));
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, secondCreature.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("cast from graveyard");
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(secondCreature.getId()));
     }
 
     @Test

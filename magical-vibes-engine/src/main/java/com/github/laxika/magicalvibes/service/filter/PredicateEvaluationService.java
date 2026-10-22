@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCoun
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceIntensityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueGreaterThanSourceManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
@@ -909,6 +910,19 @@ public class PredicateEvaluationService {
                         ? sourcePermanentSnapshot.getEffectivePower()
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 yield sourcePower != null && card.getManaValue() <= sourcePower;
+            }
+            case CardManaValueEqualsSourceCountersPredicate p -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent sourcePermanent = sourcePermanentId == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (sourcePermanent == null) {
+                    sourcePermanent = sourcePermanentSnapshot;
+                }
+                yield sourcePermanent != null
+                        && card.getManaValue() == sourcePermanent.getCounterCount(p.counterType());
             }
             case CardManaValueAtMostSourceCountersPredicate p -> {
                 if (gameData == null || sourceCardId == null) {

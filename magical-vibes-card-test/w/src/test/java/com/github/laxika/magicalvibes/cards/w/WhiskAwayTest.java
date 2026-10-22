@@ -114,9 +114,13 @@ class WhiskAwayTest extends BaseCardTest {
     @Test
     @DisplayName("A borrowed attacker goes to its owner's library, even when owned by the caster")
     void borrowedAttackerGoesToOwnersLibrary() {
-        Permanent attacker = addAttacker(player2);
-        attacker.getCard().setOwnerId(player1.getId());
-        gd.stolenCreatures.put(attacker.getId(), player1.getId());
+        GrizzlyBears bear = new GrizzlyBears();
+        bear.setOwnerId(player1.getId());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, bear);
+        setOwnerAndController(attacker, player1, player2);
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
         Card targetCard = attacker.getCard();
         int controllerDeckSize = gd.playerDecks.get(player2.getId()).size();
         int ownerDeckSize = gd.playerDecks.get(player1.getId()).size();

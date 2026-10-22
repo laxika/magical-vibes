@@ -59,6 +59,7 @@ public class WitherbloomCommand extends Card {
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.HAND)
                                         .filter(new CardTypePredicate(CardType.LAND))
+                                        .mandatory(true)
                                         .build()),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(

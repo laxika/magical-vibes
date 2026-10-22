@@ -116,9 +116,9 @@ class WeatheredSentinelsTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        gs.declareBlockers(gd, player1, List.of());
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(als.canAttack(gd, sentinels, player1.getId())).isTrue();
         assertThat(als.canAttackDefender(gd, sentinels, player2.getId())).isTrue();

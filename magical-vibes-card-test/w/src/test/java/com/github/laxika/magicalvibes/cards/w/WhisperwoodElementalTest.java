@@ -82,7 +82,7 @@ class WhisperwoodElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);

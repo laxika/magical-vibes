@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 public class WatcherOfTheRoost extends Card {
 
     public WatcherOfTheRoost() {
-        addMorph("{2}{W}", new CardColorPredicate(CardColor.WHITE), "white");
+        addMorphWithRevealCost(new CardColorPredicate(CardColor.WHITE), "white");
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new GainLifeEffect(2));
     }
 }

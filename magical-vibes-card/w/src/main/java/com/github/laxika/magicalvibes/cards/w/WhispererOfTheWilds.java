@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 import java.util.List;
@@ -29,7 +31,9 @@ public class WhispererOfTheWilds extends Card {
                 List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                 "Ferocious — {T}: Add {G}{G}. Activate only if you control a creature with power 4 or greater."
         ).withActivationCondition(
-                new ControlsPermanent(new PermanentPowerAtLeastPredicate(4)),
+                new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentPowerAtLeastPredicate(4)))),
                 "Activate only if you control a creature with power 4 or greater."));
     }
 }

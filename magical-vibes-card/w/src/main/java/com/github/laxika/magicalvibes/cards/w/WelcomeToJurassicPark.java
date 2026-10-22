@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -46,8 +47,10 @@ public class WelcomeToJurassicPark extends Card {
                         new Fixed(0), new Fixed(4),
                         List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), null,
                         Set.of(CardType.CREATURE), GrantScope.TARGET,
-                        EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, chapterOneFilter));
+                        EffectDuration.WHILE_SOURCE_CONTROLLED, chapterOneFilter));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(chapterOneTarget));
+        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+                new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(

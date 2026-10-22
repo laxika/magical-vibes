@@ -17,7 +17,8 @@ import java.util.List;
 public class WithoutWeakness extends Card {
 
     public WithoutWeakness() {
-        // Target creature you control gains indestructible until end of turn. (Cycling {2} is auto-loaded from Scryfall.)
+        addCycling("{2}");
+        // Target creature you control gains indestructible until end of turn.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

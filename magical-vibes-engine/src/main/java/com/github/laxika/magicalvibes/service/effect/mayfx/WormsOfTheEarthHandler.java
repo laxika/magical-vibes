@@ -58,7 +58,7 @@ public class WormsOfTheEarthHandler implements MayEffectHandlerBean {
 
         if (!accepted || effectHandler.landIds(gameData, playerId).size() < 2) {
             effectHandler.promptNext(gameData, ability.sourceCard(), new WormsOfTheEarthEffect(
-                    List.of(playerId), effect.abilityControllerId(), effect.sourcePermanentId(), true));
+                    effect.remainingPlayerIds(), effect.abilityControllerId(), effect.sourcePermanentId(), true));
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }
     }

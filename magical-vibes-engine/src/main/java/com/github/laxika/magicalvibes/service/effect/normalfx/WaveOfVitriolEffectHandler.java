@@ -33,6 +33,7 @@ public class WaveOfVitriolEffectHandler implements NormalEffectHandlerBean {
     private static final PermanentPredicate NONBASIC_LAND = new PermanentAllOfPredicate(List.of(
             new PermanentIsLandPredicate(),
             new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))));
+    private static final PermanentPredicate LAND = new PermanentIsLandPredicate();
     private static final PermanentPredicate SACRIFICE_FILTER = new PermanentAnyOfPredicate(List.of(
             new PermanentIsArtifactPredicate(),
             new PermanentIsEnchantmentPredicate(),
@@ -51,7 +52,7 @@ public class WaveOfVitriolEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<UUID> sacrificeIds = new ArrayList<>();
-        Map<UUID, Integer> sacrificedNonbasicLands = new HashMap<>();
+        Map<UUID, Integer> sacrificedLands = new HashMap<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId())) {
@@ -67,10 +68,10 @@ public class WaveOfVitriolEffectHandler implements NormalEffectHandlerBean {
 
             int landCount = (int) matching.stream()
                     .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, permanent, NONBASIC_LAND))
+                            gameData, permanent, LAND))
                     .count();
             if (landCount > 0) {
-                sacrificedNonbasicLands.put(playerId, landCount);
+                sacrificedLands.put(playerId, landCount);
             }
         }
 
@@ -78,9 +79,9 @@ public class WaveOfVitriolEffectHandler implements NormalEffectHandlerBean {
 
         List<LibrarySearchFollowUp.BasicLandsPick> searches = basicLandSearchQueueSupport.apnapOrder(gameData)
                 .stream()
-                .filter(sacrificedNonbasicLands::containsKey)
+                .filter(sacrificedLands::containsKey)
                 .map(playerId -> new LibrarySearchFollowUp.BasicLandsPick(
-                        playerId, sacrificedNonbasicLands.get(playerId), true))
+                        playerId, sacrificedLands.get(playerId), true))
                 .toList();
         if (!searches.isEmpty()) {
             basicLandSearchQueueSupport.advance(

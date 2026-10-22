@@ -40,7 +40,10 @@ public class PutOrRemoveCounterIfBlockedSinceLastUpkeepEffectHandler implements 
             return;
         }
 
-        boolean blocked = self.isBlockedOrWasBlockedSinceLastUpkeep();
+        Permanent snapshot = entry.getSourcePermanentSnapshot();
+        boolean blocked = snapshot != null
+                ? snapshot.isBlockedOrWasBlockedSinceLastUpkeep()
+                : self.isBlockedOrWasBlockedSinceLastUpkeep();
         self.setBlockedOrWasBlockedSinceLastUpkeep(false);
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());

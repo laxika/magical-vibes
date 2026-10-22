@@ -125,6 +125,24 @@ public record PendingExileReturn(
                 returnControllerByCardId);
     }
 
+    /**
+     * Drops the primary card, whose exile entry changed so this delayed return no longer applies to it
+     * (CR 400.7), and promotes the first additional card to primary. Its controller comes from
+     * {@link #returnControllerByCardId()}.
+     */
+    public PendingExileReturn withoutPrimaryCard() {
+        Card next = additionalCards.getFirst();
+        return new PendingExileReturn(next, returnControllerByCardId.getOrDefault(next.getId(), controllerId),
+                returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards.subList(1, additionalCards.size()), onlyOnControllersTurn, grantHaste,
+                returnAttacking, returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
+                counterAmountOnReturn, countersOnReturn, returnLandsTapped,
+                returnCantBeBlockedUntilEndOfCombat, triggerSourceCard, triggerControllerId,
+                returnControllerByCardId);
+    }
+
     /** Remembers the spell or ability that created this delayed return independently of its recipient. */
     public PendingExileReturn withTriggerSource(Card sourceCard, UUID sourceControllerId) {
         return new PendingExileReturn(card, controllerId, returnTapped, returnToHand, returnStep,

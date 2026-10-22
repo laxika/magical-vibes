@@ -1983,7 +1983,8 @@ public class PermanentCounterSupport {
         Set<UUID> excludedSourceIds = excludedSources.stream().map(Permanent::getId)
                 .collect(java.util.stream.Collectors.toSet());
         for (Permanent watcher : new ArrayList<>(battlefield)) {
-            if (watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())) {
+            if (watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())
+                    || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
                 continue;
             }
             Card card = watcher.getCard();

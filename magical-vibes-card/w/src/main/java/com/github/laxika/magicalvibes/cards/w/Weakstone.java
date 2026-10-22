@@ -13,7 +13,7 @@ public class Weakstone extends Card {
 
     public Weakstone() {
         // Attacking creatures get -1/-0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentIsAttackingPredicate()));
     }
 }

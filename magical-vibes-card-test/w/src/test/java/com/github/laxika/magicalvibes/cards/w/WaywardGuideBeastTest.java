@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({WaywardGuideBeast.class, Forest.class, CanopyBaloth.class})
@@ -45,6 +48,7 @@ class WaywardGuideBeastTest extends BaseCardTest {
     @DisplayName("Controller chooses exactly one of multiple lands to return")
     void choosesOneLand() {
         Permanent attacker = addCreatureReady(player1, new WaywardGuideBeast());
+        harness.setHand(player1, List.of());
         Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         attacker.setAttacking(true);
@@ -70,6 +74,7 @@ class WaywardGuideBeastTest extends BaseCardTest {
     @DisplayName("Combat damage still happens when the controller has no land to return")
     void noLandsDoesNotReturnOpponentsLand() {
         Permanent attacker = addCreatureReady(player1, new WaywardGuideBeast());
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player2, new Forest());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
@@ -88,6 +93,7 @@ class WaywardGuideBeastTest extends BaseCardTest {
     @DisplayName("A controlled land owned by the opponent returns to the opponent's hand")
     void returnsLandToOwnerRatherThanController() {
         Permanent attacker = addCreatureReady(player1, new WaywardGuideBeast());
+        harness.setHand(player1, List.of());
         Forest borrowedLand = new Forest();
         borrowedLand.setOwnerId(player2.getId());
         Permanent land = harness.addToBattlefieldAndReturn(player1, borrowedLand);
@@ -113,6 +119,7 @@ class WaywardGuideBeastTest extends BaseCardTest {
     @DisplayName("Combat damage only to a blocker does not return a land")
     void damageToBlockerDoesNotTrigger() {
         Permanent attacker = addCreatureReady(player1, new WaywardGuideBeast());
+        harness.setHand(player1, List.of());
         Permanent blocker = addCreatureReady(player2, new CanopyBaloth());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         attacker.setAttacking(true);
@@ -122,6 +129,9 @@ class WaywardGuideBeastTest extends BaseCardTest {
         blocker.addBlockingTargetId(attacker.getId());
 
         resolveCombat();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2));
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);

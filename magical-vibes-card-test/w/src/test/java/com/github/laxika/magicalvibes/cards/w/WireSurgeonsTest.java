@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WireSurgeonsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Artifact creature cards in your graveyard gain encore for their mana value")
+    @DisplayName("Artifact creature cards in your graveyard gain encore for their mana cost")
     void grantsEncoreToArtifactCreaturesInGraveyard() {
         harness.addToBattlefield(player1, new WireSurgeons());
         harness.setGraveyard(player1, List.of(new VaultSkirge()));
@@ -36,9 +36,8 @@ class WireSurgeonsTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(token.isMustAttackThisTurn()).isTrue();
+        assertThat(token.getMustAttackTargetId()).isEqualTo(player2.getId());
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 

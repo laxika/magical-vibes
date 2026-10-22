@@ -57,7 +57,7 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeHandler
 
         int lifeCost = effectHandler.lifeCost(revealed);
         boolean canPay = lifeCost == 0
-                || (gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || (gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= lifeCost);
         if (accepted && canPay) {
             lifeSupport.applyLifePayment(gameData, playerId, lifeCost, ability.sourceCard().getName());

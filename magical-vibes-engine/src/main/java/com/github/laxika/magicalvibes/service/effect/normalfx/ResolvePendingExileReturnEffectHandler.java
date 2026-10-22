@@ -32,8 +32,16 @@ public class ResolvePendingExileReturnEffectHandler implements NormalEffectHandl
         long version = returnEffect.expectedExileEntryVersion() >= 0
                 ? returnEffect.expectedExileEntryVersion() : entry.getTriggeringCardExileEntryVersion();
         var cardId = returnEffect.pending().card().getId();
-        if (version >= 0 && version != gameData.exileEntryVersions.getOrDefault(
-                cardId, -1L)) return;
+        if (version >= 0 && version != gameData.exileEntryVersions.getOrDefault(cardId, -1L)) {
+            // The primary card left exile and re-entered (a new object, CR 400.7), so only it is skipped;
+            // the other cards of the same delayed return still come back.
+            var pending = returnEffect.pending();
+            if (!pending.additionalCards().isEmpty() && !pending.returnToHand()
+                    && pending.cardsToAttachToPrimary().isEmpty()) {
+                stepTriggerService.resolvePendingExileReturn(gameData, pending.withoutPrimaryCard());
+            }
+            return;
+        }
         if (returnEffect.pending().returnToHand()) {
             permanentRemovalService.resolvePendingExileReturn(
                     gameData, entry.getSourcePermanentId(), returnEffect.pending());

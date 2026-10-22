@@ -101,7 +101,7 @@ class WardscaleDragonTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
-        harness.castAndResolveInstant(player1, 0, dragon.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.castAndResolveInstant(player1, 0, dragon.getId()));
         assertThat(dragon.isAttacking()).isTrue();
         prepareOpponentToCast();
 
@@ -157,7 +157,7 @@ class WardscaleDragonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.castAndResolveInstant(player1, 0, planeswalker.getId()));
         harness.assertNotOnBattlefield(player2, "Jace Beleren");
         assertThat(dragon.isAttacking()).isTrue();
         prepareOpponentToCast();

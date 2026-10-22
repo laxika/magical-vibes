@@ -953,7 +953,7 @@ class AiTargetSelector {
                      AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
                      ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT, ONE_PER_OPPONENT_IF_ABLE, ONE_PER_PLAYER,
                      AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
-                     AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above
+                     AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR, SINGLE_GRAVEYARD -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->
                         isAnotherPermanentOfAuraHostType(gameData, other, candidate);
             };

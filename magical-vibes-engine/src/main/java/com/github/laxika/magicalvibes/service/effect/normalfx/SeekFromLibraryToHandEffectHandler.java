@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Resolves a random full-library seek that puts the found card into hand. */
+/** Resolves a random full-library seek that puts the found card into hand. Seek does not shuffle. */
 @Component
 @RequiredArgsConstructor
 public class SeekFromLibraryToHandEffectHandler implements NormalEffectHandlerBean {
@@ -49,7 +49,5 @@ public class SeekFromLibraryToHandEffectHandler implements NormalEffectHandlerBe
             library.remove(chosenCard);
             gameData.playerHands.get(controllerId).add(chosenCard);
         }
-
-        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
     }
 }

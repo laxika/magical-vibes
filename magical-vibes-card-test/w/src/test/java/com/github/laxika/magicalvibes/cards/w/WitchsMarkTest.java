@@ -109,7 +109,6 @@ class WitchsMarkTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
@@ -150,7 +149,6 @@ class WitchsMarkTest extends BaseCardTest {
 
         addMana();
         harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
-        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Wicked")).hasSize(1);
@@ -169,7 +167,6 @@ class WitchsMarkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WitchsMark()));
         addMana();
         harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
-        harness.handleMayAbilityChosen(player1, false);
 
         harness.setHand(player1, List.of(new FeedTheCauldron()));
         harness.addMana(player1, ManaColor.BLACK, 3);

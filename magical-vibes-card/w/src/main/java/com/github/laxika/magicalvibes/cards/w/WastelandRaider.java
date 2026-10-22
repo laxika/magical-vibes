@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesCreatureEffect;
@@ -18,8 +19,10 @@ public class WastelandRaider extends Card {
 
     public WastelandRaider() {
         addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachPlayerSacrificesCreatureEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachPlayerSacrificesCreatureEffect(),
+                TriggerMode.INDEPENDENT);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
+                new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")),
+                TriggerMode.INDEPENDENT);
     }
 }

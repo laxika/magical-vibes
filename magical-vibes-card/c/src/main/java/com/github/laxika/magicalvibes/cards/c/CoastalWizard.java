@@ -22,7 +22,7 @@ public class CoastalWizard extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(ReturnToHandEffect.self(), ReturnToHandEffect.target()),
+                List.of(ReturnToHandEffect.targetAndSelf()),
                 "{T}: Return this creature and another target creature to their owners' hands. "
                         + "Activate only during your turn, before attackers are declared.",
                 new PermanentPredicateTargetFilter(

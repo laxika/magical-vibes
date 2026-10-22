@@ -163,22 +163,24 @@ class WolfbittenCaptiveTest extends BaseCardTest {
     void bothFacesCanBeActivatedInSameTurnFrontFirst() {
         Permanent captive = addReadyWolfbittenCaptive(player1);
         gd.spellsCastLastTurn.clear();
-        harness.forceStep(TurnStep.UNTAP);
-        harness.passBothPriorities();
-        assertThat(gd.stack).hasSize(1);
-        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.forceStep(TurnStep.UNTAP);
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(1);
+            harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(3);
-        harness.passBothPriorities();
-        assertThat(captive.isTransformed()).isTrue();
-        assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(4);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(3);
+            harness.passBothPriorities();
+            assertThat(captive.isTransformed()).isTrue();
+            assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(4);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(8);
-        assertThat(gqs.getEffectiveToughness(gd, captive)).isEqualTo(8);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(8);
+            assertThat(gqs.getEffectiveToughness(gd, captive)).isEqualTo(8);
+        });
     }
 
     @Test
@@ -186,22 +188,24 @@ class WolfbittenCaptiveTest extends BaseCardTest {
     void bothFacesCanBeActivatedInSameTurnBackFirst() {
         Permanent captive = addReadyKrallenhordeKiller(player1);
         gd.spellsCastLastTurn.put(player2.getId(), 2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.passBothPriorities();
-        assertThat(gd.stack).hasSize(1);
-        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.forceStep(TurnStep.UNTAP);
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(1);
+            harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(6);
-        harness.passBothPriorities();
-        assertThat(captive.isTransformed()).isFalse();
-        assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(5);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(6);
+            harness.passBothPriorities();
+            assertThat(captive.isTransformed()).isFalse();
+            assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(5);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(7);
-        assertThat(gqs.getEffectiveToughness(gd, captive)).isEqualTo(7);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, captive)).isEqualTo(7);
+            assertThat(gqs.getEffectiveToughness(gd, captive)).isEqualTo(7);
+        });
     }
 
     @Test

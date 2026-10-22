@@ -14,7 +14,7 @@ public class WindbriskRaptor extends Card {
     public WindbriskRaptor() {
         // Flying auto-loads from Scryfall.
         // Attacking creatures you control have lifelink.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsAttackingPredicate()));
     }
 }

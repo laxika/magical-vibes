@@ -198,6 +198,7 @@ public class LibraryChoiceHandlerService {
         boolean restToExile = librarySearch.restToExile();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
         LibrarySearchFollowUp followUp = librarySearch.followUp();
+        boolean deferReveal = followUp.eachPlayerToHandCount() > 0 && reveals;
         LibrarySearchDestination destination = librarySearch.destination() != null
                 ? librarySearch.destination()
                 : LibrarySearchDestination.HAND;
@@ -1804,6 +1805,9 @@ public class LibraryChoiceHandlerService {
             } else if (isHeldOutForBattlefieldDecision(gameData, followUp, chosenCard, playerId)) {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " holds ", chosenCard, " for the battlefield decision."));
+            } else if (deferReveal) {
+                gameData.eachPlayerSearchDeferredToHand
+                        .computeIfAbsent(handOwnerId, ignored -> new ArrayList<>()).add(chosenCard);
             } else {
                 addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
             }
@@ -1927,7 +1931,7 @@ public class LibraryChoiceHandlerService {
             }
 
             if (newSearchCards.isEmpty()) {
-                if (reveals) {
+                if (reveals && !deferReveal) {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " reveals ", chosenCard, "."));
                 }
@@ -1941,14 +1945,20 @@ public class LibraryChoiceHandlerService {
                     graveyardService.addCardsFromLibraryToGraveyard(gameData, deckOwnerId, accumulatedCards);
                     accumulatedCards.clear();
                 }
-                // No more matching cards — shuffle and finish
-                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                // No more matching cards — shuffle and finish. A basic-land queue that shuffles after all
+                // its searches shuffles once for the whole queue instead.
+                boolean queueShufflesLater = !shuffleAfterSelection && followUp.basicLandSearchQueue() != null
+                        && followUp.basicLandSearchQueue().shuffleAfterQueue();
+                String shuffledText = queueShufflesLater ? "" : " Library is shuffled.";
+                if (!queueShufflesLater) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                }
                 String logMsg;
                 if (targetPlayerId != null) {
                     String targetName = gameData.playerIdToName.get(targetPlayerId);
-                    logMsg = player.getUsername() + " finds no more matching cards in " + targetName + "'s library. Library is shuffled.";
+                    logMsg = player.getUsername() + " finds no more matching cards in " + targetName + "'s library." + shuffledText;
                 } else {
-                    logMsg = player.getUsername() + " finds no more matching cards. Library is shuffled.";
+                    logMsg = player.getUsername() + " finds no more matching cards." + shuffledText;
                 }
                 gameLogService.append(gameData, GameLog.text(logMsg));
                 if (toBattlefield) {
@@ -1961,7 +1971,7 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
-            if (reveals) {
+            if (reveals && !deferReveal) {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", chosenCard, "."));
             }
@@ -2107,7 +2117,9 @@ public class LibraryChoiceHandlerService {
                         ? player.getUsername() + " puts a card " + destinationText + ". Library is shuffled."
                         : player.getUsername() + " puts a card " + destinationText + ".");
             }
-            gameLogService.append(gameData, logEntry);
+            if (!deferReveal) {
+                gameLogService.append(gameData, logEntry);
+            }
             log.info("Game {} - {} searches library and puts {} {}",
                     gameData.id, player.getUsername(), chosenCard.getName(), destinationText);
         }
@@ -2692,8 +2704,10 @@ public class LibraryChoiceHandlerService {
         }
 
         gameData.playerDecks.get(controllerId).addFirst(remainingCard);
+        // The other card was only looked at, so its name stays out of the public log (the choice's
+        // card name is what the destination log line prints).
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetLibraryDestinationChoice(
-                controllerId, remainingCard.getId(), remainingCard.getName()));
+                controllerId, remainingCard.getId(), "a card"));
     }
 
     /**
@@ -5198,7 +5212,29 @@ public class LibraryChoiceHandlerService {
             }
         }
 
+        if (allowedTargets.contains(TargetType.GRAVEYARD)) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                for (Card graveyardCard : gameData.playerGraveyards.getOrDefault(pid, List.of())) {
+                    try {
+                        targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card,
+                                card.getEffects(EffectSlot.SPELL), graveyardCard.getId(), 0, controllerId);
+                        validTargets.add(graveyardCard.getId());
+                    } catch (IllegalStateException ignored) {
+                        // The graveyard card does not satisfy the spell's target restriction.
+                    }
+                }
+            }
+        }
+
         return validTargets;
+    }
+
+    /**
+     * The legal targets for a spell cast without paying its mana cost from a non-library zone
+     * (Wild Evocation): permanents, players, spells on the stack and graveyard cards it can target.
+     */
+    public List<UUID> legalTargetsForCastWithoutPaying(GameData gameData, UUID controllerId, Card card) {
+        return computeCastWithoutPayingTargets(gameData, card, controllerId);
     }
 
     private List<UUID> computeCastWithoutPayingTargets(GameData gameData, Card card,
@@ -5434,6 +5470,20 @@ public class LibraryChoiceHandlerService {
      */
     private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit) {
         Zone sourceZone = gameData.findExiledCard(card.getId()) == null ? Zone.LIBRARY : Zone.EXILE;
+        return canCastWithoutPaying(gameData, controllerId, card, spellManaValueLimit, sourceZone);
+    }
+
+    /**
+     * Whether {@code card}, revealed from {@code controllerId}'s hand, can be cast without paying its
+     * mana cost (CR 601.2): the cast must be permitted (e.g. not silenced), every mandatory additional
+     * cost must be payable, and a required target must be legal. Used by Wild Evocation.
+     */
+    public boolean canCastRevealedFromHandWithoutPaying(GameData gameData, UUID controllerId, Card card) {
+        return canCastWithoutPaying(gameData, controllerId, card, Integer.MAX_VALUE, Zone.HAND);
+    }
+
+    private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
+                                         Zone sourceZone) {
         if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)) return false;
         if (!castingPermissionService.isSpellCastingAllowed(gameData, controllerId, card)) return false;
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, card)) {

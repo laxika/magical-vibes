@@ -95,6 +95,7 @@ public final class AiInteractionStrategies {
         register(new MirrorOfFateChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ReturnExiledCardsToHandChoice.class, 0));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.WerewhatOnEnterChoice.class, 0));
+        register(new WerewhatBackFaceChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice.class, 0));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SuspendedCardTimeCounterChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class, 1));

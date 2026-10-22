@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link GainControlOfEnchantedPermanentEffect} by re-deriving the enchanted permanent
  * from the source Aura's {@code attachedTo} and creating a floating layer-2 control effect
- * (CR 613.2/613.7) for the requested duration. Fizzles silently when the Aura has left the
- * battlefield or is no longer attached.
+ * (CR 613.2/613.7) for the requested duration. When the Aura has already left the battlefield, its
+ * last-known attachment is used (CR 608.2h). Fizzles silently when there is no attachment to use.
  */
 @Component
 @RequiredArgsConstructor
@@ -34,6 +34,9 @@ public class GainControlOfEnchantedPermanentEffectHandler implements NormalEffec
         var e = (GainControlOfEnchantedPermanentEffect) effect;
 
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || aura.getAttachedTo() == null) {
             return;
         }

@@ -88,7 +88,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PutLandsFromHandChoice, PendingInteraction.WorldsWithinWorldsChoice,
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
         PendingInteraction.PutCardFromHandOrGraveyardChoice,
-        PendingInteraction.WerewhatOnEnterChoice,
+        PendingInteraction.WerewhatOnEnterChoice, PendingInteraction.WerewhatBackFaceChoice,
         PendingInteraction.EachPlayerMayPutCardFromHandChoice,
         PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
@@ -1663,12 +1663,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * (for logging).
      */
     record KeepCardsInHandChoice(UUID playerId, java.util.List<UUID> validCardIds, int keepCount,
-                                 java.util.List<UUID> remainingPlayerIds, String cardName)
+                                 java.util.List<UUID> remainingPlayerIds, String cardName,
+                                 java.util.Map<UUID, java.util.List<UUID>> keptByPlayer)
             implements PendingInteraction {
 
         public KeepCardsInHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            keptByPlayer = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(keptByPlayer));
+        }
+
+        /** Creates a choice for the first chooser, with no earlier players' choices recorded. */
+        public KeepCardsInHandChoice(UUID playerId, java.util.List<UUID> validCardIds, int keepCount,
+                                     java.util.List<UUID> remainingPlayerIds, String cardName) {
+            this(playerId, validCardIds, keepCount, remainingPlayerIds, cardName, java.util.Map.of());
         }
 
         /** The maximum number of cards this player may keep (bounded by their hand size). */
@@ -6358,6 +6366,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    /**
+     * The exiled card is already a double-faced card, so the controller chooses which of its two faces
+     * serves as the back face of the entering Werewhat. {@code origin} is the choice this one resumes.
+     */
+    record WerewhatBackFaceChoice(UUID playerId, WerewhatOnEnterChoice origin, UUID selectedCardId,
+                                  java.util.List<String> options) implements PendingInteraction {
+        public WerewhatBackFaceChoice {
+            options = java.util.List.copyOf(options);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.ListPick(options);
         }
     }
 

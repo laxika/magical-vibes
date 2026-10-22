@@ -19,6 +19,9 @@ public class WebShooters extends Card {
     public WebShooters() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        // The attack trigger is granted to the equipped creature, so that creature is its source and
+        // its controller controls it.
+        setAttackTriggerGrantedByEquipment(true);
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(TapUntapScope.TARGET));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

@@ -45,11 +45,20 @@ public final class LibraryShuffleHelper {
     }
 
     private static void checkShuffleTriggers(GameData gameData, UUID shufflingPlayerId) {
+        UUID causingControllerId = gameData.currentlyResolvingControllerId != null
+                ? gameData.currentlyResolvingControllerId
+                : gameData.pendingEffectResolutionEntry != null
+                ? gameData.pendingEffectResolutionEntry.getControllerId()
+                : null;
+        boolean causedByOwnSpellOrAbility = shufflingPlayerId.equals(causingControllerId);
         gameData.forEachPermanent((controllerId, perm) -> {
             List<CardEffect> effects = new ArrayList<>(
                     perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_SHUFFLES_LIBRARY));
             if (!controllerId.equals(shufflingPlayerId)) {
                 effects.addAll(perm.getCard().getEffects(EffectSlot.ON_OPPONENT_SHUFFLES_LIBRARY));
+            }
+            if (causedByOwnSpellOrAbility) {
+                effects.addAll(perm.getCard().getEffects(EffectSlot.ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE));
             }
             for (CardEffect effect : effects) {
                 StackEntry trigger = new StackEntry(

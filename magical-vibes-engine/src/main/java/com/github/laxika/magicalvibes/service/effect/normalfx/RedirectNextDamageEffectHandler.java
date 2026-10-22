@@ -132,14 +132,24 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
         };
     }
 
-    /** The permanent the Aura source is attached to, or {@code null} when it is not attached. */
+    /**
+     * The permanent the Aura source is attached to, or {@code null} when it is not attached. If the
+     * Aura has already left the battlefield, its last known attachment is used (CR 113.7a).
+     */
     private UUID enchantedPermanentId(GameData gameData, StackEntry entry) {
         UUID sourceId = entry.getSourcePermanentId();
         if (sourceId == null) {
             return null;
         }
         Permanent aura = gameQueryService.findPermanentById(gameData, sourceId);
-        return aura == null ? null : aura.getAttachedTo();
+        if (aura != null) {
+            return aura.getAttachedTo();
+        }
+        Permanent snapshot = entry.getSourcePermanentSnapshot();
+        if (snapshot == null) {
+            return null;
+        }
+        return snapshot.getAttachedTo() != null ? snapshot.getAttachedTo() : snapshot.getLastAttachedTo();
     }
 
     /** The permanent behind an id, or {@code null} when the id is a player's (or it has left play). */

@@ -18,6 +18,6 @@ public class WildbornPreserver extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)),
-                        new PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                        new PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, false, true)));
     }
 }

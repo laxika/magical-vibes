@@ -188,9 +188,9 @@ class WilfredMottTest extends BaseCardTest {
         Card untouched = new Forest();
         harness.setLibrary(player1, List.of(eligible, land, untouched));
         harness.setHand(player2, List.of(new Shock(), new Shock()));
-        harness.addMana(player2, ManaColor.RED, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.RED, 2);
         harness.castAndResolveInstant(player2, 0, wilfred.getId());
         harness.castAndResolveInstant(player2, 0, wilfred.getId());
         harness.assertInGraveyard(player1, "Wilfred Mott");

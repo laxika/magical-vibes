@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -40,9 +43,17 @@ public class PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler
                 continue;
             }
 
-            var copy = target.getCard().createRuntimeCopy();
-            copy.addEffect(EffectSlot.STATIC, grant.staticEffect());
-            target.exchangeCard(copy);
+            if (grant.staticEffect() instanceof EnterWithCountersEffect) {
+                var copy = target.getCard().createRuntimeCopy();
+                copy.addEffect(EffectSlot.STATIC, grant.staticEffect());
+                target.exchangeCard(copy);
+                continue;
+            }
+
+            List<CardEffect> granted = List.of(new GrantEffectEffect(grant.staticEffect(), GrantScope.TARGET));
+            PerpetualCardBattlefieldEffectSupport.remember(gameData, target.getCard(), granted);
+            PerpetualCardBattlefieldEffectSupport.apply(gameData,
+                    gameQueryService.findPermanentController(gameData, targetId), target, granted);
         }
     }
 }

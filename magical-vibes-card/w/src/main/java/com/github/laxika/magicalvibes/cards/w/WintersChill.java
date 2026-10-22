@@ -33,7 +33,7 @@ public class WintersChill extends Card {
                 CountScope.CONTROLLER));
 
         // Choose X target attacking creatures. For each, its controller may pay {1} or {2}…
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate()

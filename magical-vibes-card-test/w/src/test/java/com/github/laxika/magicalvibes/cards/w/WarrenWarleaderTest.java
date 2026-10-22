@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.RoostOfDrakes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -44,15 +45,18 @@ class WarrenWarleaderTest extends BaseCardTest {
         addCreatureReady(player1, new WarrenWarleader());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, TOKEN_MODE);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.handleListChoice(player1, TOKEN_MODE);
+            resolveAllTriggers();
+        });
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isTrue();
+        assertThat(token.isAttacking()).isTrue();
+        assertThat(token.isAttackedThisTurn()).isFalse();
     }
 
     @Test
@@ -63,8 +67,8 @@ class WarrenWarleaderTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
-        harness.passBothPriorities();
         harness.handleListChoice(player1, BOOST_MODE);
+        resolveAllTriggers();
 
         assertThat(attacker.getEffectivePower()).isEqualTo(3);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
@@ -98,8 +102,8 @@ class WarrenWarleaderTest extends BaseCardTest {
         Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(1, 2));
-        resolveAllTriggers();
         harness.handleListChoice(player1, BOOST_MODE);
+        resolveAllTriggers();
 
         assertThat(firstAttacker.getEffectivePower()).isEqualTo(3);
         assertThat(secondAttacker.getEffectivePower()).isEqualTo(3);
@@ -118,10 +122,9 @@ class WarrenWarleaderTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(2));
-        resolveAllTriggers();
+        harness.handleListChoice(player1, BOOST_MODE);
         harness.handleListChoice(player1, BOOST_MODE);
         resolveAllTriggers();
-        harness.handleListChoice(player1, BOOST_MODE);
 
         assertThat(attacker.getEffectivePower()).isEqualTo(4);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(4);

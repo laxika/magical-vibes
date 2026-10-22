@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -19,7 +20,9 @@ public class Wavesifter extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{G}{U}"))));
 
         // When this creature enters, investigate twice.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(2));
+        // Each investigation is a separate token creation event (Marneus Calgar triggers once per event).
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+                CreateTokenEffect.ofClueToken(1), CreateTokenEffect.ofClueToken(1)));
 
         // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());

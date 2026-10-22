@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +37,8 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AuraAttachmentService auraAttachmentService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,46 +48,40 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Map<UUID, Integer> permanentsOwnedByPlayer = new HashMap<>();
-        Map<UUID, List<Card>> permanentsToShuffleByOwner = new HashMap<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             permanentsOwnedByPlayer.put(playerId, 0);
-            permanentsToShuffleByOwner.put(playerId, new ArrayList<>());
         }
 
+        // Every permanent leaves the battlefield in one simultaneous event (its leave-the-battlefield
+        // abilities still see it, CR 603.10a), and each one goes into its owner's library unshuffled.
+        List<Permanent> departing = new ArrayList<>();
         for (UUID controllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) {
                 continue;
             }
 
-            Iterator<Permanent> iterator = battlefield.iterator();
-            while (iterator.hasNext()) {
-                Permanent permanent = iterator.next();
+            for (Permanent permanent : battlefield) {
                 UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), controllerId);
                 if (!permanentsOwnedByPlayer.containsKey(ownerId)) {
                     continue;
                 }
 
                 permanentsOwnedByPlayer.merge(ownerId, 1, Integer::sum);
-                if (!permanent.getOriginalCard().isToken()) {
-                    permanentsToShuffleByOwner.get(ownerId).add(permanent.getOriginalCard());
-                }
-                gameData.stolenCreatures.remove(permanent.getId());
-                gameData.expireControlEffectsForDepartedPermanent(permanent.getId());
-                gameData.expireFloatingEffectsForDepartedSource(permanent.getId());
-                iterator.remove();
+                departing.add(permanent);
             }
         }
+        permanentRemovalService.performSimultaneousRemovals(gameData, departing, () -> {
+            for (Permanent permanent : departing) {
+                permanentRemovalService.removePermanentToLibraryUnshuffled(gameData, permanent);
+            }
+        });
 
         for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> ownedPermanents = permanentsToShuffleByOwner.get(playerId);
-            if (ownedPermanents.isEmpty()) {
+            if (permanentsOwnedByPlayer.getOrDefault(playerId, 0) == 0) {
                 continue;
             }
-
-            List<Card> deck = gameData.playerDecks.get(playerId);
-            deck.addAll(ownedPermanents);
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
         }
 
@@ -126,6 +123,16 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
                             gameData, playerId, permanent, enterTappedTypesSnapshot, permanentGroupBatch);
                     permanentGroupBatch.add(permanent);
                     putOntoBattlefieldByPlayer.get(playerId).add(card);
+                }
+            }
+        }
+
+        // The creature group is its own event, so its enters-the-battlefield triggers are collected
+        // now, before the enchantment group arrives (CR 603.6a).
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Card card : putOntoBattlefieldByPlayer.get(playerId)) {
+                if (card.hasType(CardType.CREATURE)) {
+                    battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
                 }
             }
         }
@@ -195,15 +202,8 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
         }
 
         // Save post-resolution work until bottom-order choices are complete.
-        gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
         gameData.warpWorldOperation.enterTappedTypesSnapshot.clear();
         gameData.warpWorldOperation.enterTappedTypesSnapshot.addAll(enterTappedTypesSnapshot);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> creatures = putOntoBattlefieldByPlayer.get(playerId).stream()
-                    .filter(card -> card.hasType(CardType.CREATURE))
-                    .toList();
-            gameData.warpWorldOperation.pendingCreaturesByPlayer.put(playerId, new ArrayList<>(creatures));
-        }
         gameData.warpWorldOperation.needsLegendChecks = true;
         gameData.warpWorldOperation.sourceName = entry.getCard().getName();
 
@@ -248,6 +248,13 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
             }
             validTargets.add(candidate.getId());
         });
+        if (auraCard.isEnchantPlayer()) {
+            for (UUID playerId : gameData.playerIds) {
+                if (auraAttachmentService.canEnchantPlayer(gameData, auraCard, auraControllerId, playerId)) {
+                    validTargets.add(playerId);
+                }
+            }
+        }
 
         return validTargets;
     }

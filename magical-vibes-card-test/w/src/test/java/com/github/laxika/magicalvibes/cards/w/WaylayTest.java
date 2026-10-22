@@ -102,6 +102,7 @@ class WaylayTest extends BaseCardTest {
     @Test
     @DisplayName("Waylay cast during cleanup loses its tokens in another cleanup before the next turn")
     void tokensCreatedDuringCleanupAreExiledBeforeNextTurn() {
+        harness.setHand(player2, List.of());
         castWaylay();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);

@@ -27,7 +27,7 @@ class WallOfDustTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(nextActivePlayer, TurnStep.UPKEEP);
     }
 
     @Test

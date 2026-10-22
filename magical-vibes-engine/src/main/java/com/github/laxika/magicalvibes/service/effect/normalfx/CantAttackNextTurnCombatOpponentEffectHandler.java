@@ -38,7 +38,9 @@ public class CantAttackNextTurnCombatOpponentEffectHandler implements NormalEffe
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+        // "That creature" is the object Wall of Dust blocked; the restriction stays with that permanent even if
+        // it stopped being a creature before this resolved, since it can't attack during that turn either way.
+        if (target == null) {
             return;
         }
 

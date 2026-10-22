@@ -354,6 +354,18 @@ public class GameService {
                 gameData, battlefield.get(permanentIndex).getId()))) {
             throw new IllegalStateException("Only mana abilities of lands you control may be activated");
         }
+        Card chosen = gameData.playerHands.getOrDefault(player.getId(), List.of()).stream()
+                .filter(card -> card.getId().equals(gameData.wordOfCommandCardId))
+                .findFirst().orElse(null);
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        if (chosen != null && chosen.getManaCost() != null && pool != null) {
+            com.github.laxika.magicalvibes.model.ManaCost cost =
+                    new com.github.laxika.magicalvibes.model.ManaCost(chosen.getManaCost());
+            if (!cost.hasX() && cost.canPay(pool)) {
+                throw new IllegalStateException(
+                        "Mana can only be produced to be spent on " + chosen.getName());
+            }
+        }
     }
 
     /**

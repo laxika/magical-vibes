@@ -40,14 +40,14 @@ public class DamagedPlayerMayDrawAndCantAttackControllerUntilNextTurnHandler
                     UUID.randomUUID(),
                     ability.sourceCard().getName(),
                     ability.sourcePermanentId(),
-                    effect.protectedPlayerId(),
+                    effect.damagedPlayerId(),
                     new CreaturesCantAttackControllerUnlessPredicateEffect(
                             new PermanentNotPredicate(new PermanentTruePredicate()), true,
-                            effect.damagedPlayerId()),
+                            effect.damagedPlayerId(), true),
                     null,
                     effect.protectedPlayerId(),
                     null,
-                    EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                    EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN,
                     0));
         }
 

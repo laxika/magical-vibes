@@ -39,6 +39,11 @@ public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalE
     }
 
     public void removeTimeCounter(GameData gameData, UUID cardId) {
+        removeTimeCounter(gameData, cardId, null);
+    }
+
+    /** Removes a time counter on behalf of {@code removerId} ({@code null} when its owner removes it). */
+    public void removeTimeCounter(GameData gameData, UUID cardId, UUID removerId) {
         int index = indexOf(gameData, cardId);
         if (index < 0) return;
 
@@ -62,7 +67,7 @@ public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalE
         // "When the last time counter is removed from this card while it's exiled" fires whether or not
         // the owner goes on to cast the card.
         triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
-                gameData, exiled.card(), exiled.ownerId(), 0);
+                gameData, exiled.card(), exiled.ownerId(), 0, removerId);
         removeTimeCounterHandler.queueCastTrigger(gameData, exiled, true);
         gameLogService.append(gameData, GameLog.cardThen(exiled.card(),
                 " loses its last time counter. Its owner may cast it without paying its mana cost."));

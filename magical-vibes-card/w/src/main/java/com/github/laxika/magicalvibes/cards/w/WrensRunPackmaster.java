@@ -34,7 +34,7 @@ public class WrensRunPackmaster extends Card {
                 "{2}{G}: Create a 2/2 green Wolf creature token."));
 
         // Wolves you control have deathtouch.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.WOLF)));
     }
 }

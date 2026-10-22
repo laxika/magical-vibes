@@ -160,6 +160,7 @@ Revealed creature cards used for a power-based casting cost are retained by iden
 Stack entries retain the cards milled as an activation cost and the player offered a subsequent mana-payment choice. These snapshots are copied with the entry, so pending activations and optional copy choices cannot read a later activation's global state. Multi-creature connive uses the existing parked resolution entry to choose each next creature, then resumes the same effect after its discard choice. Channel Harm's damage choice resolves directly as part of prevention and does not create another stack ability or recheck targeting.
 
 `MultiTargetConstraint.DISTINCT_TARGETS` preserves explicit cross-mode target distinctions when a triggered modal ability builds its runtime target groups.
+`MultiTargetConstraint.SINGLE_GRAVEYARD` requires every chosen graveyard card to share one graveyard (non-card targets are ignored); used by Waste Management.
 
 Chaotic Transformation records immutable controller and card-type snapshots before simultaneous exile. Its replacement continuations remain individual resolving stack effects, so each controller chooses their order and completes battlefield entry and library shuffle choices before the next reveal begins.
 

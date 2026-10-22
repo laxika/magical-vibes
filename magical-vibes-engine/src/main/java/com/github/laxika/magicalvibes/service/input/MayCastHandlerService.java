@@ -118,6 +118,24 @@ public class MayCastHandlerService {
     private final CopySupport copySupport;
     private final ValidTargetService validTargetService;
     private final LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.GameActionAvailabilityService gameActionAvailabilityService;
+
+    /**
+     * "The player plays that card if able": declining is not allowed while the chosen card can be
+     * played with the mana of lands the controlled player controls.
+     */
+    public void requireWordOfCommandPlayIfAble(GameData gameData, PendingMayAbility ability) {
+        Card card = ability.sourceCard();
+        UUID playerId = ability.controllerId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || indexOfCard(hand, card.getId()) < 0 || card.isCastOnlyFromGraveyard()) {
+            return;
+        }
+        if (gameActionAvailabilityService.isCardPlayable(gameData, playerId, card,
+                potentialManaService.buildLandOnlyVirtualManaPool(gameData, playerId), 0)) {
+            throw new IllegalStateException(card.getName() + " must be played if able");
+        }
+    }
 
     /** Resolves Word of Command's accepted card choice using the targeted player's normal cast/play rules. */
     public void handleWordOfCommandPlay(GameData gameData, Player player, boolean accepted,
@@ -937,7 +955,8 @@ public class MayCastHandlerService {
                         graveyardOwnerId,
                         ability.sourcePermanentId(),
                         ability.sourcePowerAtTrigger(),
-                        ability.xValue());
+                        ability.xValue(),
+                        ability.sourcePermanentSnapshot());
                 if (!validScope || !matchesFilter || (!allowPermanentSpell && !instantOrSorcery)
                         || (allowPermanentSpell && cardToCast.hasType(CardType.LAND))) {
                     
@@ -1088,7 +1107,8 @@ public class MayCastHandlerService {
         boolean matchesFilter = graveyardCard != null
                 && predicateEvaluationService.matchesCardPredicate(
                 graveyardCard, castEffect.filter(), abilitySourceCardId, gameData, graveyardOwnerId,
-                ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue());
+                ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue(),
+                ability.sourcePermanentSnapshot());
         boolean matchesAdventureFilter = graveyardCard != null && adventureFace != null
                 && predicateEvaluationService.matchesCardPredicate(
                 adventureFace, castEffect.filter(), abilitySourceCardId, gameData, graveyardOwnerId,

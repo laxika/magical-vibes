@@ -28,6 +28,9 @@ public class PlayerWithMostLifeGainsControlOfSourceCreatureEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // The ability refers to the object that triggered it, so a card that left and returned to the
+        // battlefield since then (a new object, CR 400.7) is not affected by the old ability.
+        UUID sourceId = entry.getSourcePermanentId();
         Permanent source = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -35,7 +38,10 @@ public class PlayerWithMostLifeGainsControlOfSourceCreatureEffectHandler impleme
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getId().equals(entry.getCard().getId())) {
+                boolean sameObject = sourceId != null
+                        ? permanent.getId().equals(sourceId)
+                        : permanent.getCard().getId().equals(entry.getCard().getId());
+                if (sameObject) {
                     source = permanent;
                     break;
                 }

@@ -36,6 +36,7 @@ public class WelcomeToSweettooth extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_III, new PutCounterOnTargetPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Sum(new Fixed(1), foodsYouControl)));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
     }
 
     private static CreateTokenEffect foodToken() {

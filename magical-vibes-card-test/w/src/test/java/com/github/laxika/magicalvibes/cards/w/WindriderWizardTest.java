@@ -49,6 +49,7 @@ class WindriderWizardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -71,6 +72,7 @@ class WindriderWizardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
@@ -110,6 +112,7 @@ class WindriderWizardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -129,6 +132,7 @@ class WindriderWizardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(com.github.laxika.magicalvibes.model.Card::getName)

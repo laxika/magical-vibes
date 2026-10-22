@@ -83,6 +83,7 @@ class WydwenTheBitingGaleTest extends BaseCardTest {
     @DisplayName("Repeated activations pay separately and return only one card")
     void repeatedActivationsDoNotDuplicateCard() {
         harness.addToBattlefield(player1, new WydwenTheBitingGale());
+        harness.setHand(player1, List.of());
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);

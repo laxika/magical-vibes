@@ -99,7 +99,7 @@ public class SpecializeWyllEffectHandler implements NormalEffectHandlerBean {
                 card.setName("Wyll of the Blade Pact");
                 card.setManaCost("{3}{R}{R}{R}");
                 card.setCardText("When this creature specializes, you may sacrifice another creature or an artifact. "
-                        + "When you do, untap Wyll of the Blade Pact. After this main phase, there is an additional "
+                        + "If you do, untap Wyll of the Blade Pact. After this main phase, there is an additional "
                         + "combat phase followed by an additional main phase.");
             }
             case GREEN -> {
@@ -109,7 +109,7 @@ public class SpecializeWyllEffectHandler implements NormalEffectHandlerBean {
                 card.setColorIdentity(List.of(CardColor.RED, CardColor.GREEN));
                 card.setColor(CardColor.GREEN);
                 card.setCardText("When this creature specializes, you may sacrifice another creature or an artifact. "
-                        + "When you do, Wyll of the Fey Pact perpetually gets +3/+3 and gains trample.");
+                        + "If you do, Wyll of the Fey Pact perpetually gets +3/+3 and gains trample.");
             }
         }
     }

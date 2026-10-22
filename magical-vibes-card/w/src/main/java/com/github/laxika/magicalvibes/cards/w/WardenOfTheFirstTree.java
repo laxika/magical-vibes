@@ -29,8 +29,8 @@ public class WardenOfTheFirstTree extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}{W/B}{W/B}",
                 List.of(new ConditionalEffect(new SourceHasSubtype(CardSubtype.WARRIOR),
                         SequenceEffect.of(
-                                new BecomeCreatureTypeWithBasePowerToughnessEffect(3, 3, CardSubtype.SPIRIT,
-                                        CardSubtype.WARRIOR),
+                                new BecomeCreatureTypeWithBasePowerToughnessEffect(null, null, CardSubtype.SPIRIT,
+                                        CardSubtype.WARRIOR, false, false, null),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF, GrantDuration.INDEFINITE),
                                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF, GrantDuration.INDEFINITE)))),
                 "{2}{W/B}{W/B}: If this creature is a Warrior, it becomes a Human Spirit Warrior with trample and lifelink."));

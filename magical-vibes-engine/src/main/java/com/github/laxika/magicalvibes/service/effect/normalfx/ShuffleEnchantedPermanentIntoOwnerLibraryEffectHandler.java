@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /** Resolves a Watery Grasp-style shuffle of the permanent enchanted by an Aura. */
 @Slf4j
 @Component
@@ -30,11 +32,19 @@ public class ShuffleEnchantedPermanentIntoOwnerLibraryEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTargetId() == null) {
+        // "Enchanted creature" is read as the ability resolves: the Aura's current attachment, falling back to the
+        // creature it was attached to when activated once the Aura has left the battlefield (CR 608.2h, 113.7a).
+        UUID enchantedId = entry.getTargetId();
+        Permanent aura = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
+        if (aura != null && aura.getAttachedTo() != null) {
+            enchantedId = aura.getAttachedTo();
+        }
+        if (enchantedId == null) {
             return;
         }
 
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
         if (enchanted == null) {
             return;
         }

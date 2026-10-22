@@ -6,6 +6,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * <ul>
  *   <li>{@link #TARGET} — the effect's chosen target permanent(s) (reads the stack entry's
  *       {@code targetId}/{@code targetIds}).</li>
+ *   <li>{@link #TARGET_AND_SELF} — the chosen target permanent(s) and the source permanent, returned
+ *       as one simultaneous event ("Return this creature and target creature to their owners' hands").</li>
  *   <li>{@link #SELF} — the source permanent itself (reads {@code sourcePermanentId}).</li>
  *   <li>{@link #SELF_SPELL} — the resolving spell card itself: instead of moving to the graveyard
  *       after resolution it returns to its owner's hand (sets {@code returnToHandAfterResolving}).
@@ -29,6 +31,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum BounceScope {
     TARGET,
+    TARGET_AND_SELF,
     TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD,
     TARGET_CHOSEN_CREATURE_TYPE,
     SELF,

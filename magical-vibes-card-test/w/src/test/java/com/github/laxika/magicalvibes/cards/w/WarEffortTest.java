@@ -46,8 +46,10 @@ class WarEffortTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(1, 2));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(1, 2));
+            resolveAllTriggers();
+        });
 
         assertThat(countPermanents(player1, "Warrior")).isEqualTo(1);
         Permanent token = findPermanent(player1, "Warrior");
@@ -85,8 +87,10 @@ class WarEffortTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WarEffort());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(1));
+            resolveAllTriggers();
+        });
 
         Permanent token = findPermanent(player1, "Warrior");
         assertThat(token.isTapped()).isTrue();

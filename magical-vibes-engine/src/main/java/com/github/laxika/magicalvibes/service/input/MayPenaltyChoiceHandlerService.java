@@ -2001,6 +2001,29 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.WaterbendCost waterbendCost
+                && waterbendPaymentService.canPay(gameData, decidingPlayerId, waterbendCost.amount())) {
+            int amount = waterbendCost.amount();
+            List<UUID> choosable = waterbendPaymentService.untappedArtifactsAndCreatures(gameData, decidingPlayerId);
+            int minimumTaps = waterbendPaymentService.minimumTaps(gameData, decidingPlayerId, amount);
+            if (choosable.size() > minimumTaps) {
+                // The payer decides which permanents to tap (CR 701.67a); the cost is paid once they choose.
+                playerInputService.beginMultiPermanentChoice(gameData, decidingPlayerId, choosable,
+                        Math.min(amount, choosable.size()),
+                        new MultiPermanentChoiceContext.ForcedCostWaterbendPayment(
+                                ability, effect, amount, minimumTaps),
+                        ability.sourceCard().getName() + " — Choose artifacts and creatures to tap for waterbend {"
+                                + amount + "}; the rest is paid with mana.");
+                return;
+            }
+            waterbendPaymentService.pay(gameData, decidingPlayerId, amount, ability.sourceCard());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays {" + amount + "} using waterbend. (", ability.sourceCard(), ")"));
+            forcedCostOrElseEffectHandler.resolvePaidEffects(gameData, ability, effect, 0);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // Use the cost stored on the pending ability — it already reflects any dynamic
             // reduction (Draco's Domain) resolved when the prompt was created.

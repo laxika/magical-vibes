@@ -474,6 +474,16 @@ public class GraveyardReturnSupport {
         if (effect.loseLifeEqualToManaValue()) {
             applyLifeLossEqualToManaValue(gameData, entry, controllerId, targetCard);
         }
+        if (effect.grantSourceHasteIfSubtype() != null && entry.getSourcePermanentId() != null
+                && (gameQueryService.cardHasSubtype(targetCard, effect.grantSourceHasteIfSubtype(), gameData,
+                controllerId) || targetCard.hasKeyword(Keyword.CHANGELING))) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (sourcePermanent != null) {
+                sourcePermanent.getGrantedKeywords().add(Keyword.HASTE);
+                gameLogService.append(gameData, GameLog.cardThen(sourcePermanent.getCard(),
+                        " gains haste until end of turn."));
+            }
+        }
         if (returnedPermanent != null && effect.enterAttacking()
                 && attacksSameOpponentAsAbilitySource(gameData, entry, effect, targetOwnerId)) {
             // CR 508.4: the effect already specified what the creature attacks ("attacking that player").
@@ -1199,7 +1209,7 @@ public class GraveyardReturnSupport {
                             returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
                                     effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
                                     effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
-                                    effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect), entry.getCard());
+                                    effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect), entry.getCard(), deferredEtbs);
                             limitHasteToThisTurn(effect, returnedPermanent);
                         } else {
                             returnedPermanent = putCardOntoBattlefield(gameData, targetPlayerId, card,
@@ -2602,6 +2612,24 @@ public class GraveyardReturnSupport {
                                                               boolean exileAtYourNextEndStep,
                                                               boolean losesAllAbilities,
                                                               Card delayedTriggerSource) {
+        return putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, card, grantHaste, exileAtEndStep,
+                sacrificeAtEndStep, exileIfLeavesBattlefield, enterTapped, enterAttacking,
+                exileAtYourNextEndStep, losesAllAbilities, delayedTriggerSource, null);
+    }
+
+    /**
+     * When {@code deferredEtbs} is non-null the enter-the-battlefield handling is left to the caller so
+     * every card of one return-all batch enters simultaneously (CR 603.6a).
+     */
+    private Permanent putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
+                                                              boolean grantHaste, boolean exileAtEndStep,
+                                                              boolean sacrificeAtEndStep,
+                                                              boolean exileIfLeavesBattlefield,
+                                                              boolean enterTapped, boolean enterAttacking,
+                                                              boolean exileAtYourNextEndStep,
+                                                              boolean losesAllAbilities,
+                                                              Card delayedTriggerSource,
+                                                              List<ReturnedPermanent> deferredEtbs) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
@@ -2637,8 +2665,9 @@ public class GraveyardReturnSupport {
         if (exileAtEndStep || exileAtYourNextEndStep) {
             gameData.queueDelayedAction(exileAtYourNextEndStep
                     ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
-                    controllerId)
-                    : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                    false, null, controllerId, null, false, delayedTriggerSource)
+                    : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
+                    false, null, null, null, false, delayedTriggerSource));
         }
         if (sacrificeAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
@@ -2651,7 +2680,11 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", card,
                 " to the battlefield" + hasteText + "."));
 
-        handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        if (deferredEtbs != null) {
+            deferredEtbs.add(new ReturnedPermanent(controllerId, permanent, card));
+        } else {
+            handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        }
         return permanent;
     }
 

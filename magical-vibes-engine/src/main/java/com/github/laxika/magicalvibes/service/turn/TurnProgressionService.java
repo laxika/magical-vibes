@@ -205,9 +205,12 @@ public class TurnProgressionService {
             }
         }
 
+        if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN) {
+            gameData.additionalCombatMainPhasePairsAfterSecondMain = 0;
+        }
         if ((gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
-                && gameData.additionalCombatMainPhasePairs > 0) {
+                && gameData.additionalCombatMainPhasePairs > gameData.additionalCombatMainPhasePairsAfterSecondMain) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatMainPhasePairs--;
             additionalCombatPhase = true;
@@ -1170,6 +1173,7 @@ public class TurnProgressionService {
         gameData.cardsSurveilledThisTurn.clear();
         gameData.cardsPutIntoHandThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromHandThisTurn.clear();
+        gameData.cardsPutIntoGraveyardFromHandOrLibraryThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureCardGraveyardEntriesThisTurn.clear();
         gameData.landCardGraveyardEntriesThisTurn.clear();
@@ -1336,6 +1340,7 @@ public class TurnProgressionService {
         gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatMainPhasePairsReturnStep = null;
+        gameData.additionalCombatMainPhasePairsAfterSecondMain = 0;
         gameData.additionalCombatPhasesOnly = 0;
         gameData.aggressiveCombatPhasesOnly = 0;
         gameData.additionalCombatReturnActivePlayerId = null;

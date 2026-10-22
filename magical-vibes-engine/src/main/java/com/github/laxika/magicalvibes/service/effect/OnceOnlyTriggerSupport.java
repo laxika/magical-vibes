@@ -24,7 +24,7 @@ public final class OnceOnlyTriggerSupport {
         if (effect instanceof ConditionalEffect conditional) {
             CardEffect wrapped = unwrapIfAvailable(gameData, source, conditional.wrapped());
             return wrapped == null ? null : new ConditionalEffect(
-                    conditional.condition(), wrapped, conditional.interveningIf());
+                    conditional.condition(), wrapped, conditional.interveningIf(), conditional.triggerTimeOnly());
         }
         if (!(effect instanceof OnceOnlyTriggerEffect once)) {
             return effect;

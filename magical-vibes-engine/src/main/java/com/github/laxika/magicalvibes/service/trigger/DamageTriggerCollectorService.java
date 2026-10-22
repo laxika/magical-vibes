@@ -938,10 +938,19 @@ public class DamageTriggerCollectorService {
 
         Permanent sourcePermanent = match.permanent();
         Card sourceCard = sourcePermanent.getCard();
+        // "It deals that much damage" (Wrathful Raptors / Wrathful Red Dragon): the damaged permanent is
+        // the damage source, so its last-known information feeds lifelink and other source keywords once
+        // it has left the battlefield.
+        boolean damagedPermanentDeals = trigger instanceof DealDamageToAnyTargetEffect damage
+                && damage.sourceIsTriggeringPermanent();
+        UUID damageSourceId = damagedPermanentDeals ? dc.damagedPermanent().getId() : sourcePermanent.getId();
+        Permanent damageSourceSnapshot = damagedPermanentDeals
+                ? lastKnownDamageSource(match.gameData(), dc.damagedPermanent())
+                : new Permanent(sourcePermanent);
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), false,
                 targetFilterForTriggeredEffect(sourceCard, trigger), dc.damageDealt(),
-                sourcePermanent.getId(), new Permanent(sourcePermanent)));
+                damageSourceId, damageSourceSnapshot));
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ON_ANY_PERMANENT_DEALT_DAMAGE deal-damage-to-any-target trigger fires",

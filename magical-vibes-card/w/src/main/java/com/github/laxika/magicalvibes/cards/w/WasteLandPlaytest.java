@@ -49,7 +49,8 @@ public class WasteLandPlaytest extends Card {
                 false,
                 false,
                 0,
-                Set.of());
+                Set.of(),
+                Set.of(CardSupertype.BASIC));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "",

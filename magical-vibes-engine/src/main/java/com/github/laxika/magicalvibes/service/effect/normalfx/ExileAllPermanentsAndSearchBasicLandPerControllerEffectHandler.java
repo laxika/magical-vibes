@@ -30,7 +30,7 @@ public class ExileAllPermanentsAndSearchBasicLandPerControllerEffectHandler
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
-    private final LibrarySearchSupport librarySearchSupport;
+    private final BasicLandSearchQueueSupport basicLandSearchQueueSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -70,15 +70,17 @@ public class ExileAllPermanentsAndSearchBasicLandPerControllerEffectHandler
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        List<UUID> searchers = new ArrayList<>();
+        List<LibrarySearchFollowUp.BasicLandsPick> picks = new ArrayList<>();
         for (UUID playerId : apnapOrder(gameData)) {
-            for (int i = 0; i < exiledByController.getOrDefault(playerId, 0); i++) {
-                searchers.add(playerId);
+            int exiledCount = exiledByController.getOrDefault(playerId, 0);
+            if (exiledCount > 0) {
+                picks.add(new LibrarySearchFollowUp.BasicLandsPick(playerId, exiledCount, true));
             }
         }
-        if (!searchers.isEmpty()) {
-            librarySearchSupport.startNextEachPlayerBasicLandSearch(gameData,
-                    LibrarySearchFollowUp.eachPlayerBasicLand(searchers, true), false);
+        if (!picks.isEmpty()) {
+            LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of(), true);
+            basicLandSearchQueueSupport.advance(gameData, followUp.withBasicLandSearchQueue(
+                    followUp.basicLandSearchQueue().withOptionalSearch(false).deferBattlefieldEntry()));
         }
     }
 

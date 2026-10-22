@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +23,9 @@ public class WingmantleChaplain extends Card {
 
     public WingmantleChaplain() {
         PermanentCount defendersYouControl = new PermanentCount(
-                new PermanentHasKeywordPredicate(Keyword.DEFENDER), CountScope.CONTROLLER);
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasKeywordPredicate(Keyword.DEFENDER))), CountScope.CONTROLLER);
         CreateTokenEffect birdToken = new CreateTokenEffect(
                 "Bird", 1, 1, CardColor.WHITE, List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of());
 

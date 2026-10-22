@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEf
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapChosenPermanentEffect;
@@ -2052,6 +2053,29 @@ public class CombatDamageService {
                     continue;
                 }
 
+                // One ability whose steps include a target chosen from the damaged player's permanents ("destroy
+                // up to one target artifact that player controls and put a +1/+1 counter on this creature"):
+                // the damaged player is bound into those steps before the target is chosen, and the whole
+                // sequence stays a single triggered ability.
+                if (effect instanceof SequenceEffect boundSequence
+                        && boundSequence.steps().stream().anyMatch(DamagedPlayerControlsTargetEffect.class::isInstance)) {
+                    DamagedPlayerControlsTargetEffect damagedPlayerStep = (DamagedPlayerControlsTargetEffect)
+                            boundSequence.steps().stream()
+                                    .filter(DamagedPlayerControlsTargetEffect.class::isInstance)
+                                    .findFirst().orElseThrow();
+                    if (damageDealt >= damagedPlayerStep.minimumDamage()) {
+                        CardEffect targeted = boundSequence.withSteps(boundSequence.steps().stream()
+                                .map(step -> step instanceof DamagedPlayerControlsTargetEffect damagedPlayerControls
+                                        ? damagedPlayerControls.forDamagedPlayer(defenderId, damageDealt)
+                                        : step)
+                                .toList());
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                creature.getCard(), attackerId, List.of(targeted), creature.getId(),
+                                damagedPlayerStep.targetChooserId(defenderId, attackerId), defenderId));
+                    }
+                    continue;
+                }
+
                 if (effect instanceof ConditionalEffect metalcraft && metalcraft.condition() instanceof Metalcraft) {
                     StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             creature.getCard().getName() + "'s triggered ability",
@@ -2123,6 +2147,20 @@ public class CombatDamageService {
                     continue;
                 }
 
+                // The "you may" of a combat damage trigger is decided as the ability resolves (CR 603.5),
+                // so this trigger goes on the stack and its MayEffect prompts at resolution.
+                if (effect instanceof MayEffect may
+                        && may.wrapped() instanceof SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect) {
+                    StackEntry discardEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(),
+                            attackerId, creature.getCard().getName() + "'s triggered ability", List.of(effect),
+                            defenderId, creature.getId());
+                    discardEntry.setSourcePermanentSnapshot(new Permanent(creature));
+                    discardEntry.setNonTargeting(true);
+                    gameData.stack.add(discardEntry);
+                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
+                            "'s combat damage trigger goes on the stack."));
+                    continue;
+                }
                 if (effect instanceof MayEffect may) {
                     if (may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                         // An opponent-graveyard scope on a combat damage trigger means the damaged
@@ -4064,7 +4102,7 @@ public class CombatDamageService {
                             ? data.card().getTargetFilter() : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)), false,
-                            targetFilter, data.damageDealt(), data.permanentId()));
+                            targetFilter, data.damageDealt(), data.permanentId(), data.sourceSnapshot()));
                     gameLogService.append(gameData,
                             GameLog.cardThen(data.card(), "'s combat-damage trigger fires — choose a target."));
                     continue;

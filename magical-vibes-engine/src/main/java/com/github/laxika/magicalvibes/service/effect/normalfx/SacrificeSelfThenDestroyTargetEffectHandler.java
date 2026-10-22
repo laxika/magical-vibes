@@ -39,7 +39,11 @@ public class SacrificeSelfThenDestroyTargetEffectHandler implements NormalEffect
         }
 
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self == null || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
+        // Sacrifice is performed by the permanent's controller, so "you may sacrifice this creature"
+        // only applies while the ability's controller still controls it (CR 701.21a).
+        if (self == null
+                || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, self.getId()))
+                || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
             // "If you do" — no sacrifice, no destroy.
             return;
         }

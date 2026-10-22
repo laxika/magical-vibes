@@ -64,6 +64,7 @@ class WrennsResolveTest extends BaseCardTest {
     void playPermissionExpiresAtEndOfNextTurn() {
         Card top = new FurnaceGremlin();
         harness.setLibrary(player1, List.of(top, new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new WrennsResolve(), "{1}{R}");
 
         harness.passBothPriorities();
@@ -125,6 +126,7 @@ class WrennsResolveTest extends BaseCardTest {
     void normalTimingRestrictionsStillApply() {
         Card creature = new FurnaceGremlin();
         harness.setLibrary(player1, List.of(creature, new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new WrennsResolve(), "{1}{R}");
         harness.passBothPriorities();
 
@@ -163,6 +165,7 @@ class WrennsResolveTest extends BaseCardTest {
     void opponentCannotUsePlayPermission() {
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land, new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new WrennsResolve(), "{1}{R}");
         harness.passBothPriorities();
 

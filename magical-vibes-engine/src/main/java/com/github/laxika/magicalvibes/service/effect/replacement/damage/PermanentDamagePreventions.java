@@ -208,15 +208,17 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         && prevention.isCombatDamageFromCreatureBlockedByTargetPrevented(
                         ctx.gameData(), ctx.target(), ctx.damageSource())));
         all.add(effect("PreventCombatDamageAndShuffle", PREVENTION,
-                ctx -> ctx.combat() && !ctx.targetProtectedFromPrevention() && ctx.damageSource() != null
-                        && gameQueryService.isDamagePreventable(ctx.gameData(), true)
-                        && !gameQueryService.damageCantBePreventedFromSource(ctx.gameData(), ctx.damageSource(), true)
+                ctx -> ctx.combat() && ctx.damageSource() != null
                         && gameQueryService.shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
                         ctx.gameData(), ctx.damageSource(), ctx.target()),
                 ctx -> "Prevent the damage and shuffle " + ctx.target().getCard().getName() + " into its owner's library",
                 ctx -> {
                     combatDamageService.getObject().queueShuffleAfterCombatDamage(ctx.gameData(), ctx.target());
-                    return prevented(ctx);
+                    boolean preventable = !ctx.targetProtectedFromPrevention()
+                            && gameQueryService.isDamagePreventable(ctx.gameData(), true)
+                            && !gameQueryService.damageCantBePreventedFromSource(
+                            ctx.gameData(), ctx.damageSource(), true);
+                    return preventable ? prevented(ctx) : ctx.event();
                 }));
         all.add(preventAll("ColorPreventedForTarget", "Prevent damage from sources of this color",
                 ctx -> prevention.isColorDamagePreventedForTarget(
@@ -226,7 +228,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         ctx.gameData(), ctx.target(), ctx.damageSourceColors(), ctx.combat())));
         all.add(preventAll("SharedColorPrevented", "Prevent damage between creatures that share a color",
                 ctx -> gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(
-                        ctx.gameData(), ctx.target(), ctx.damageSource(), ctx.combat())));
+                        ctx.gameData(), ctx.target(), preventionSource(ctx), ctx.combat())));
         all.add(preventAll("ChosenNamePrevented", "Prevent damage from sources with the chosen name",
                 ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
                         && gameQueryService.isDamageFromChosenNamePreventedForController(

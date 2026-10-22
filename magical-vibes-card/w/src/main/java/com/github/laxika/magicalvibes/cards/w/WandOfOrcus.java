@@ -32,7 +32,7 @@ public class WandOfOrcus extends Card {
 
     private SequenceEffect deathtouchGrant() {
         return SequenceEffect.of(
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.EQUIPPED_CREATURE),
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TRIGGERING_PERMANENT),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
     }

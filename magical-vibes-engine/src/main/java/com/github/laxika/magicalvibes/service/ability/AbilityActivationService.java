@@ -6916,12 +6916,14 @@ public class AbilityActivationService {
         if (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
                 || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                boolean paysPositiveLife = (effect instanceof PayLifeCost
+                boolean paysPositiveLife = ((effect instanceof PayLifeCost
                         || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
                         ? lifePaymentAmount(gameData, playerId, permanent, effect) > 0
                         : effect instanceof PayLifeForEachCardInHandCost
                         ? !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()
-                        : effect instanceof PayXLifeCost && xValue > 0;
+                        : effect instanceof PayXLifeCost && xValue > 0)
+                        || (effect instanceof CostEffect cost && cost.paysLifeForEachCommanderColorIdentity()
+                        && !ManaProductionSupport.commanderColorIdentity(gameData, playerId).isEmpty());
                 if (paysPositiveLife
                         && !gameQueryService.canPayLifeForCosts(gameData, manaAbility)) {
                     throw new IllegalStateException("Players can't pay life to activate abilities");
@@ -9004,19 +9006,23 @@ public class AbilityActivationService {
             int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
             phyrexianLifeCost = cost.payPhyrexianManaAuto(pool, restDemand);
         }
+        // Phyrexian symbols were settled just above (mana taken from the pool or life owed), so the
+        // restricted checks below must only demand the rest of the cost.
+        ManaCost settledCost = cost.hasPhyrexianMana()
+                ? cost.withoutPhyrexianSymbols(cost.getPhyrexianManaCount()) : cost;
 
         if (cost.hasX()) {
             if (effectiveXValue < 0) {
                 throw new IllegalStateException("X value cannot be negative");
             }
             if (hasRestricted) {
-                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
+                if (!settledCost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
                         subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
                         colorlessPermanentContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
+                settledCost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null,
                         subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
                         subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext,
                         colorlessPermanentContext);
@@ -9027,12 +9033,12 @@ public class AbilityActivationService {
                 cost.pay(pool, effectiveXValue + additionalCost);
             }
         } else if (hasRestricted) {
-            if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
+            if (!settledCost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
                     subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
                     subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext, colorlessPermanentContext)) {
                 throw new IllegalStateException("Not enough mana to activate ability");
             }
-            cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
+            settledCost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null,
                     subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
                     subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext, colorlessPermanentContext);
         } else {
@@ -10269,7 +10275,8 @@ public class AbilityActivationService {
         }
 
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(permanent.getId());
-        int currentCount = perAbilityCounts != null ? perAbilityCounts.getOrDefault(abilityIndex, 0) : 0;
+        int currentCount = perAbilityCounts != null
+                ? perAbilityCounts.getOrDefault(perTurnUseKey(permanent, abilityIndex), 0) : 0;
         if (ability.getEffects().stream().anyMatch(
                 com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class::isInstance)) {
             // "Ignore this effect" is granted per player (Volrath's Curse), so a new controller of the
@@ -10340,6 +10347,13 @@ public class AbilityActivationService {
         return ability.getAcquisitionId() != null ? 0 : abilityIndex;
     }
 
+    /** Offsets the per-turn use key of a transformed permanent's abilities so each face counts apart. */
+    private static final int TRANSFORMED_FACE_USE_KEY_OFFSET = 1000;
+
+    private static int perTurnUseKey(Permanent permanent, int abilityIndex) {
+        return permanent.isTransformed() ? abilityIndex + TRANSFORMED_FACE_USE_KEY_OFFSET : abilityIndex;
+    }
+
     private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex,
                                             ActivatedAbility ability, int xValue) {
         if (gameData.pendingAbilityActivation != null
@@ -10350,7 +10364,7 @@ public class AbilityActivationService {
 
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
-        perAbilityCounts.merge(abilityIndex, 1, Integer::sum);
+        perAbilityCounts.merge(perTurnUseKey(permanent, abilityIndex), 1, Integer::sum);
 
         gameData.activatedAbilityUsesThisGame
                 .computeIfAbsent(wholeGameUsesKey(permanent, ability), ignored -> new ConcurrentHashMap<>())

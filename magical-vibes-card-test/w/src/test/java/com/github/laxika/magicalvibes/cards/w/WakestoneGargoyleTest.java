@@ -99,7 +99,7 @@ class WakestoneGargoyleTest extends BaseCardTest {
         Permanent defender = addCreatureReady(player1, new WakestoneGargoyle());
 
         activateAbility();
-        declareAttackers(List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
 
         assertThat(defender.isAttacking()).isTrue();
         assertThat(source.isTapped()).isTrue();

@@ -39,12 +39,19 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         if (e.onlyDuringMainPhase() && !mainPhase) {
             return;
         }
+        if (e.afterSecondMainPhase() && gameData.postcombatMainPhasesBegunThisTurn > 1) {
+            return;
+        }
+        boolean deferredToSecondMain = e.afterSecondMainPhase() && gameData.currentStep == TurnStep.PRECOMBAT_MAIN;
         if (mainPhase && gameData.additionalCombatMainPhasePairsReturnStep == null) {
             gameData.additionalCombatMainPhasePairsReturnStep = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
-                    ? TurnStep.BEGINNING_OF_COMBAT : TurnStep.END_STEP;
+                    && !e.afterSecondMainPhase() ? TurnStep.BEGINNING_OF_COMBAT : TurnStep.END_STEP;
         }
 
         gameData.additionalCombatMainPhasePairs += e.count();
+        if (deferredToSecondMain) {
+            gameData.additionalCombatMainPhasePairsAfterSecondMain += e.count();
+        }
         CardEffect additionalCombatBeginningEffect = e.additionalCombatBeginningEffect();
         if (e.onlyTargetCreaturesCanAttack()) {
             CardEffect attackRestriction = new OnlyTargetCreaturesCanAttackThisCombatEffect(
@@ -62,10 +69,11 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         }
 
         String logEntry;
+        String afterPhase = e.afterSecondMainPhase() ? "After the second main phase this turn, there" : "After this main phase, there";
         if (e.count() == 1) {
-            logEntry = "After this main phase, there is an additional combat phase followed by an additional main phase.";
+            logEntry = afterPhase + " is an additional combat phase followed by an additional main phase.";
         } else {
-            logEntry = "After this main phase, there are " + e.count()
+            logEntry = afterPhase + " are " + e.count()
                     + " additional combat " + TurnSupport.pluralize("phase", e.count())
                     + " followed by additional main " + TurnSupport.pluralize("phase", e.count()) + ".";
         }

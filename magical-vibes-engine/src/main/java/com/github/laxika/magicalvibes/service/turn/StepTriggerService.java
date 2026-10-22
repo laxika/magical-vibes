@@ -111,7 +111,9 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -198,6 +200,8 @@ import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
@@ -265,6 +269,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnUntapLockedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -291,6 +296,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTransformedReturnService;
@@ -303,6 +309,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -350,6 +357,9 @@ public class StepTriggerService {
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
     private final AuraAttachmentService auraAttachmentService;
+    @Autowired
+    @Lazy
+    private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final LifeSupport lifeSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardTransformedReturnService graveyardTransformedReturnService;
@@ -1573,6 +1583,11 @@ public class StepTriggerService {
                         }
                     }
                     gameData.stack.add(entry);
+                    // "since your last upkeep" ends when the upkeep begins (CR 603.2), not when this ability
+                    // resolves, so the window is closed here and the snapshot keeps what it saw.
+                    if (effect instanceof PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect) {
+                        perm.setBlockedOrWasBlockedSinceLastUpkeep(false);
+                    }
 
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                     log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
@@ -1874,7 +1889,17 @@ public class StepTriggerService {
             int enchantedPermanentPowerAtTrigger = enchantedPermanent == null
                     ? 0 : gameQueryService.getEffectivePower(gameData, enchantedPermanent);
 
+            // A granted "unless you sacrifice this creature" upkeep ability is removed by a later
+            // "loses all abilities" effect on the enchanted creature (CR 613.7).
+            boolean grantedAbilityRemoved = enchantedPermanent != null
+                    && !gameQueryService.grantedAbilitySurvivesRemoval(gameData, enchantedPermanent, perm.getTimestamp());
+
             for (CardEffect effect : enchantedControllerUpkeepEffects) {
+                if (grantedAbilityRemoved && effect instanceof ForcedCostOrElseEffect granted
+                        && granted.forcedCost() instanceof SacrificePermanentCost sacrificeHost
+                        && sacrificeHost.filter() instanceof PermanentIsHostOfSourceAuraPredicate) {
+                    continue;
+                }
                 if (effect instanceof ForcedCostOrElseEffect forcedCost
                         && (forcedCost.elseEffects().stream().anyMatch(
                                 TargetPlayerGainsControlOfEnchantedPermanentEffect.class::isInstance)
@@ -3986,6 +4011,9 @@ public class StepTriggerService {
             if (effects == null || effects.isEmpty()) {
                 return;
             }
+            if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                return;
+            }
             List<CardEffect> triggeredEffects = effects.stream()
                     .filter(effect -> !(effect instanceof ConditionalEffect conditional)
                             || !conditional.interveningIf()
@@ -4355,6 +4383,26 @@ public class StepTriggerService {
         List<Card> cards = new ArrayList<>();
         cards.add(pending.card());
         cards.addAll(pending.additionalCards());
+
+        if (pending.cardsToAttachToPrimary().isEmpty()) {
+            // CR 303.4f/303.4g: an Aura returning without an attachment chosen by the effect picks a host
+            // among the permanents already on the battlefield (not those returning with it) and stays
+            // in exile when none can be enchanted.
+            List<BattlefieldEntryCard> returningAuras = new ArrayList<>();
+            for (Card card : cards) {
+                ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+                if (exiled != null && card.isAura() && !card.isEnchantZone() && !card.hasType(CardType.CREATURE)) {
+                    returningAuras.add(new BattlefieldEntryCard(
+                            pending.returnControllerByCardId().getOrDefault(card.getId(), controllerId),
+                            exiled.ownerId(), card, Zone.EXILE, null).withTapped(pending.returnTapped()));
+                }
+            }
+            if (!returningAuras.isEmpty()) {
+                List<UUID> auraIds = returningAuras.stream().map(entry -> entry.card().getId()).toList();
+                cards.removeIf(card -> auraIds.contains(card.getId()));
+                battlefieldEntryBatchSupport.begin(gameData, returningAuras);
+            }
+        }
 
         List<Card> returningCards;
         if (pending.cardsToAttachToPrimary().isEmpty()) {
@@ -5131,16 +5179,16 @@ public class StepTriggerService {
                     continue;
                 }
 
-                UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-                if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                    continue;
-                }
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                        gameData, sacrificingPlayerId, permanent.getCard());
-                gameLogService.append(gameData, GameLog.isSacrificed(permanent.getCard()));
-                log.info("Game {} - {} sacrificed by a mana-value-conditional delayed trigger",
-                        gameData.id, permanent.getCard().getName());
-                permanentRemovalService.removeOrphanedAuras(gameData);
+                CardEffect sacrifice = new SacrificePermanentsEffect(1,
+                        new PermanentIsSpecificPermanentPredicate(action.permanentId()),
+                        SacrificeRecipient.CONTROLLER);
+                StackEntry delayedTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        permanent.getCard(), action.controllerId(), "Delayed conditional sacrifice",
+                        List.of(sacrifice), 0, (UUID) null);
+                delayedTrigger.setNonTargeting(true);
+                gameData.stack.add(delayedTrigger);
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                        "'s delayed sacrifice triggers."));
             }
         }
 

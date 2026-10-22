@@ -97,12 +97,13 @@ class WitchsOvenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WitchsOven());
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         harness.addToBattlefield(player1, new EsixFractalBloom());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
         assertThat(countPermanents(player1, "Food")).isZero();

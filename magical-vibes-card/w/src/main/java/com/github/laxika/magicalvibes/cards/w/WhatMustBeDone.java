@@ -34,6 +34,7 @@ public class WhatMustBeDone extends Card {
                 .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                 .filter(historicPermanent)
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .plusOneCountersIfCardType(CardType.CREATURE)
                 .plusOneCounterCount(2)
                 .build();

@@ -4387,14 +4387,14 @@ public class ManaCost {
                                              List<HybridSymbol> remainingHybrids,
                                              Set<ConvokePaymentState> failedStates) {
         List<HybridSymbol> canonicalHybrids = canonicalHybridCosts(remainingHybrids);
-        EnumMap<ManaColor, Integer> noPhyrexianCosts = new EnumMap<>(ManaColor.class);
-        ManaCost remainingCost = new ManaCost(
-                remainingGeneric, remainingColored, noPhyrexianCosts, canonicalHybrids, 0,
-                legendarySourceCost, 0, cumulativeUpkeepPayment);
-        if (remainingCost.canPay(pool)) {
-            return remainingCost;
-        }
         if (index == contributions.size()) {
+            EnumMap<ManaColor, Integer> noPhyrexianCosts = new EnumMap<>(ManaColor.class);
+            ManaCost remainingCost = new ManaCost(
+                    remainingGeneric, remainingColored, noPhyrexianCosts, canonicalHybrids, 0,
+                    legendarySourceCost, 0, cumulativeUpkeepPayment);
+            if (remainingCost.canPay(pool)) {
+                return remainingCost;
+            }
             failedStates.add(new ConvokePaymentState(
                     index, remainingGeneric, remainingColored, canonicalHybrids));
             return null;
@@ -4406,74 +4406,31 @@ public class ManaCost {
         }
 
         ManaColor contribution = contributions.get(index);
-        ManaCost plan = findConvokePaymentPlan(pool, contributions, index + 1,
-                remainingGeneric, remainingColored, canonicalHybrids, failedStates);
-        if (plan != null) {
-            return plan;
-        }
-        if (contribution == null || contribution == ManaColor.COLORLESS) {
-            if (remainingGeneric == 0) {
-                for (int i = 0; i < canonicalHybrids.size(); i++) {
-                    HybridSymbol hybrid = canonicalHybrids.get(i);
-                    if (hybrid.genericAlternative() <= 0) {
-                        continue;
-                    }
-                    List<HybridSymbol> nextHybrids = new ArrayList<>(canonicalHybrids);
-                    nextHybrids.set(i, new HybridSymbol(
-                            hybrid.colors(), hybrid.genericAlternative() - 1, hybrid.phyrexianAlternative()));
-                    plan = findConvokePaymentPlan(pool, contributions, index + 1,
-                            remainingGeneric, remainingColored, nextHybrids, failedStates);
-                    if (plan != null) {
-                        return plan;
-                    }
+        ManaCost plan;
+        if (contribution != null && contribution != ManaColor.COLORLESS) {
+            int coloredRemaining = remainingColored.getOrDefault(contribution, 0);
+            if (coloredRemaining > 0) {
+                Map<ManaColor, Integer> nextColored = new EnumMap<>(remainingColored);
+                nextColored.put(contribution, coloredRemaining - 1);
+                plan = findConvokePaymentPlan(pool, contributions, index + 1,
+                        remainingGeneric, nextColored, canonicalHybrids, failedStates);
+                if (plan != null) {
+                    return plan;
                 }
-                return null;
             }
-            plan = findConvokePaymentPlan(pool, contributions, index + 1,
-                    remainingGeneric - 1, remainingColored, canonicalHybrids, failedStates);
-            if (plan != null) {
-                return plan;
-            }
+
             for (int i = 0; i < canonicalHybrids.size(); i++) {
                 HybridSymbol hybrid = canonicalHybrids.get(i);
-                if (hybrid.genericAlternative() <= 0) {
+                if (!hybrid.colors().contains(contribution)) {
                     continue;
                 }
                 List<HybridSymbol> nextHybrids = new ArrayList<>(canonicalHybrids);
-                nextHybrids.set(i, new HybridSymbol(
-                        hybrid.colors(), hybrid.genericAlternative() - 1, hybrid.phyrexianAlternative()));
+                nextHybrids.remove(i);
                 plan = findConvokePaymentPlan(pool, contributions, index + 1,
                         remainingGeneric, remainingColored, nextHybrids, failedStates);
                 if (plan != null) {
                     return plan;
                 }
-            }
-            failedStates.add(state);
-            return null;
-        }
-
-        int coloredRemaining = remainingColored.getOrDefault(contribution, 0);
-        if (coloredRemaining > 0) {
-            Map<ManaColor, Integer> nextColored = new EnumMap<>(remainingColored);
-            nextColored.put(contribution, coloredRemaining - 1);
-            plan = findConvokePaymentPlan(pool, contributions, index + 1,
-                    remainingGeneric, nextColored, canonicalHybrids, failedStates);
-            if (plan != null) {
-                return plan;
-            }
-        }
-
-        for (int i = 0; i < canonicalHybrids.size(); i++) {
-            HybridSymbol hybrid = canonicalHybrids.get(i);
-            if (!hybrid.colors().contains(contribution)) {
-                continue;
-            }
-            List<HybridSymbol> nextHybrids = new ArrayList<>(canonicalHybrids);
-            nextHybrids.remove(i);
-            plan = findConvokePaymentPlan(pool, contributions, index + 1,
-                    remainingGeneric, remainingColored, nextHybrids, failedStates);
-            if (plan != null) {
-                return plan;
             }
         }
 
@@ -4499,6 +4456,7 @@ public class ManaCost {
                 return plan;
             }
         }
+
         failedStates.add(state);
         return null;
     }

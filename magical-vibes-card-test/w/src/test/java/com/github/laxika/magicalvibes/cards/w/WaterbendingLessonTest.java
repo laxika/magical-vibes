@@ -68,6 +68,52 @@ class WaterbendingLessonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 
+    @Test
+    void waterbendingWithManaSkipsTheDiscard() {
+        harness.setLibrary(player1, List.of(new CatOwl(), new CatOwl(), new CatOwl()));
+        harness.castFromHand(player1, new WaterbendingLesson(), "{3}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void decliningWaterbendDiscardsACard() {
+        harness.setLibrary(player1, List.of(new CatOwl(), new CatOwl(), new CatOwl()));
+        harness.castFromHand(player1, new WaterbendingLesson(), "{3}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void waterbendingByTappingChosenCreaturesSkipsTheDiscard() {
+        Permanent firstSource = harness.addToBattlefieldAndReturn(player1, new CatOwl());
+        Permanent secondSource = harness.addToBattlefieldAndReturn(player1, new CatOwl());
+        Permanent thirdSource = harness.addToBattlefieldAndReturn(player1, new CatOwl());
+        harness.setLibrary(player1, List.of(new CatOwl(), new CatOwl(), new CatOwl()));
+        harness.castFromHand(player1, new WaterbendingLesson(), "{3}{U}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstSource.getId(), thirdSource.getId()));
+
+        assertThat(firstSource.isTapped()).isTrue();
+        assertThat(secondSource.isTapped()).isFalse();
+        assertThat(thirdSource.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

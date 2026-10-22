@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class WhisperingSnitch extends Card {
 
     public WhisperingSnitch() {
-        addEffect(EffectSlot.ON_CONTROLLER_SURVEILS, new OncePerTurnTriggerEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_SURVEILS, OncePerTurnTriggerEffect.firstSurveil(
                 SequenceEffect.of(
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1))));

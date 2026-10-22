@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 public class WeatheredBodyguards extends Card {
 
     public WeatheredBodyguards() {
+        addMorph("{3}{W}");
         addEffect(EffectSlot.STATIC, new RedirectUnblockedCombatDamageToSelfEffect());
     }
 }

@@ -299,6 +299,8 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (!permanent.isAttacking()
+                        || permanent.isFaceDown()
+                        || gameQueryService.hasLostAllAbilities(gameData, permanent)
                         || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .noneMatch(DefendingPlayerCantCastSpellsWhileAttackingEffect.class::isInstance)) {
                     continue;
@@ -309,7 +311,7 @@ public class CastingPermissionService {
                         : attackedTargetId == null
                                 ? gameData.orderedPlayerIds.stream()
                                 .filter(id -> !id.equals(controllerId)).findFirst().orElse(null)
-                                : gameData.findControllerOf(gameQueryService.findPermanentById(gameData, attackedTargetId));
+                                : findAttackedPlaneswalkerController(gameData, attackedTargetId);
                 if (playerId.equals(defendingPlayerId)) return true;
             }
         }
@@ -357,6 +359,15 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /**
+     * The controller of the planeswalker an attacker is attacking, or {@code null} when that
+     * planeswalker has left the battlefield (the attacker then has no defending player).
+     */
+    private UUID findAttackedPlaneswalkerController(GameData gameData, UUID planeswalkerId) {
+        Permanent planeswalker = gameQueryService.findPermanentById(gameData, planeswalkerId);
+        return planeswalker == null ? null : gameData.findControllerOf(planeswalker);
     }
 
     public Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
@@ -575,6 +586,7 @@ public class CastingPermissionService {
             case CREATURE -> gameQueryService.isCreature(gameData, perm);
             case ARTIFACT -> gameQueryService.isArtifact(gameData, perm);
             case ENCHANTMENT -> gameQueryService.isEnchantment(gameData, perm);
+            case LAND -> gameQueryService.isLand(gameData, perm);
             default -> perm.getCard().hasType(type);
         }).count();
     }

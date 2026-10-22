@@ -34,12 +34,14 @@ class WineOfBloodAndIronTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wine);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(player1, TurnStep.END_STEP);
+            harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Wine of Blood and Iron");
-        harness.assertInGraveyard(player1, "Wine of Blood and Iron");
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+            harness.assertNotOnBattlefield(player1, "Wine of Blood and Iron");
+            harness.assertInGraveyard(player1, "Wine of Blood and Iron");
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        });
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -147,9 +149,11 @@ class WineOfBloodAndIronTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.activateAbility(player1, 0, null, creature.getId());
-        harness.passBothPriorities();
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, creature.getId());
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        });
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.assertOnBattlefield(player1, "Wine of Blood and Iron");
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);

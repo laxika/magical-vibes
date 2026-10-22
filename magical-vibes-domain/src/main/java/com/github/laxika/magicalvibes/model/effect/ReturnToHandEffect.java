@@ -85,6 +85,14 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
                 null, 0, 0);
     }
 
+    /**
+     * Returns the chosen target permanent(s) together with the source permanent as a single
+     * simultaneous event ("Return Wizard Mentor and target creature you control to their owners' hands").
+     */
+    public static ReturnToHandEffect targetAndSelf() {
+        return new ReturnToHandEffect(BounceScope.TARGET_AND_SELF, null, 0, 0);
+    }
+
     public static ReturnToHandEffect target(PermanentPredicate filter) {
         return new ReturnToHandEffect(BounceScope.TARGET, filter, 0, 0);
     }
@@ -262,7 +270,8 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
                     TargetPredicates.permanents(new PermanentNotPredicate(new PermanentIsLandPredicate())),
                     TargetPredicates.exileCard()));
         }
-        if (scope == BounceScope.TARGET || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
+        if (scope == BounceScope.TARGET || scope == BounceScope.TARGET_AND_SELF
+                || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
                 || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
             if (scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE) {
                 return TargetSpec.benign(TargetPredicates.creature());
@@ -290,6 +299,7 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         // Only a single-target bounce is targeted removal; the mass/self scopes are board
         // sweeps or self-return, not single-target removal.
         return scope == BounceScope.TARGET
+                || scope == BounceScope.TARGET_AND_SELF
                 || scope == BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD
                 || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
                 ? RemovalKind.BOUNCE : null;

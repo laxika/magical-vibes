@@ -34,7 +34,7 @@ public class WailOfTheForgotten extends Card {
                                 "Target must be an opponent.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top three cards of your library. Put one of them into your hand and the rest into your graveyard",
-                        LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1))
+                        LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1))
         ), new GraveyardCardThreshold(8, new CardIsPermanentPredicate())));
     }
 }

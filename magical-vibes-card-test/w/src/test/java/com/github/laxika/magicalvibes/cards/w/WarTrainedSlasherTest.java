@@ -52,10 +52,11 @@ class WarTrainedSlasherTest extends BaseCardTest {
         declareAttackersAt(battle);
         resolveAllTriggers();
         assertThat(slasher.getPowerModifier()).isEqualTo(4);
+        harness.handleMayAbilityChosen(player1, false); // the defeated battle's cast-transformed offer
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(slasher.getPowerModifier()).isZero();
         assertThat(slasher.getToughnessModifier()).isZero();

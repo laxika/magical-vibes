@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -98,6 +100,7 @@ class WoodwraithCorrupterTest extends BaseCardTest {
         Permanent corrupter = addCreatureReady(player1, new WoodwraithCorrupter());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         addActivationMana(player1);
+        harness.setHand(player1, List.of());
 
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()

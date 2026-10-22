@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TajuruPreserver;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -109,7 +110,10 @@ class WasitoraNekoruQueenTest extends BaseCardTest {
     void checksCreaturesAtResolution() {
         addAttackingWasitora();
 
-        resolveCombat();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> harness.passBothPriorities());
         assertThat(gd.stack).hasSize(1);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.passBothPriorities();

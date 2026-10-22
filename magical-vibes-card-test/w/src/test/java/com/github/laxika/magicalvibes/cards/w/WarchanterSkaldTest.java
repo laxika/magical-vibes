@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({WarchanterSkald.class, Rancor.class, DwarvenHammer.class})
@@ -49,7 +51,7 @@ class WarchanterSkaldTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Rancor());
         aura.setAttachedTo(skald.getId());
 
-        harness.tapPermanent(player1, battlefieldIndex(skald));
+        declareAttackers(List.of(0));
         aura.setAttachedTo(null);
         harness.passBothPriorities();
 
@@ -57,11 +59,7 @@ class WarchanterSkaldTest extends BaseCardTest {
     }
 
     private void tapAndResolve(Permanent permanent) {
-        harness.tapPermanent(player1, battlefieldIndex(permanent));
+        declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
-    }
-
-    private int battlefieldIndex(Permanent permanent) {
-        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
 }

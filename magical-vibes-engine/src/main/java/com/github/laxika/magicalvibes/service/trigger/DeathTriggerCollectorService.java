@@ -1097,7 +1097,11 @@ public class DeathTriggerCollectorService {
             triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(dyingPermanent));
         }
         if (triggerEffect instanceof DyingCreatureCardAwareEffect aware) {
-            triggerEffect = aware.boundToDyingCard(dyingPermanent.getOriginalCard().getId());
+            UUID dyingCardId = dyingPermanent.getOriginalCard().getId();
+            CardEffect bound = aware.boundToDyingCard(dyingCardId);
+            triggerEffect = bound instanceof DyingCreatureCardAwareEffect versioned
+                    ? versioned.boundToDyingCardEntryVersion(match.gameData().graveyardEntryVersion(dyingCardId))
+                    : bound;
         }
 
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)

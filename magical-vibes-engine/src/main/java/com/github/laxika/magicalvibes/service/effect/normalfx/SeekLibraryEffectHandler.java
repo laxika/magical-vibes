@@ -113,6 +113,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                         gameData, controllerId, chosen);
             } else if (seek.destination() == LibrarySearchDestination.BATTLEFIELD
                     || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
+                // Seek puts the card into the hand first and then onto the battlefield, so hand-from-library triggers see it.
+                triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                        gameData, controllerId, chosen);
                 Permanent permanent = new Permanent(chosen, Zone.LIBRARY);
                 if (seek.battlefieldCloaked()) {
                     permanent.setFaceDownAsCloaked();

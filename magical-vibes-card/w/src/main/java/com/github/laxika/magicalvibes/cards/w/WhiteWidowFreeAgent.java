@@ -27,7 +27,8 @@ public class WhiteWidowFreeAgent extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on each of up to two target creatures",
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE), creatureTarget),
+                        List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        creatureTarget, null, 0, 2, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target artifact or enchantment card from your graveyard to your hand",
                         ReturnCardFromGraveyardEffect.builder()

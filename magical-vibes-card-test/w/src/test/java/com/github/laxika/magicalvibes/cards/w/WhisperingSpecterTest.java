@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.s.SpireMonitor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,7 +22,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         Permanent specter = addCreatureReady(player1, new WhisperingSpecter());
         specter.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
@@ -44,11 +45,10 @@ class WhisperingSpecterTest extends BaseCardTest {
                 new SpireMonitor(), new SpireMonitor()));
 
         resolveCombat();
-
-        // Accept the may ability
-        harness.handleMayAbilityChosen(player1, true);
-        // Resolve the triggered ability from the stack
+        // The may choice is made as the trigger resolves (CR 603.5)
         harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
 
         // Whispering Specter should be sacrificed
         harness.assertNotOnBattlefield(player1, "Whispering Specter");
@@ -69,6 +69,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
         resolveCombat();
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -104,10 +105,9 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SpireMonitor(), new SpireMonitor()));
 
         resolveCombat();
-
-        // Accept the may ability
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
 
         // Specter is sacrificed
         harness.assertNotOnBattlefield(player1, "Whispering Specter");
@@ -126,9 +126,9 @@ class WhisperingSpecterTest extends BaseCardTest {
         specter.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         // Specter should be sacrificed even though opponent has no cards
         harness.assertNotOnBattlefield(player1, "Whispering Specter");
@@ -145,8 +145,8 @@ class WhisperingSpecterTest extends BaseCardTest {
 
         resolveCombat();
         gd.playerPoisonCounters.put(player2.getId(), 3);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         for (int i = 0; i < 3; i++) {
             assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -169,8 +169,8 @@ class WhisperingSpecterTest extends BaseCardTest {
         resolveCombat();
         gd.playerBattlefields.get(player1.getId()).remove(specter);
         gd.playerBattlefields.get(player2.getId()).add(specter);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player2, "Whispering Specter");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -187,8 +187,8 @@ class WhisperingSpecterTest extends BaseCardTest {
         resolveCombat();
         gd.playerBattlefields.get(player1.getId()).remove(specter);
         gd.playerGraveyards.get(player1.getId()).add(specter.getCard());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
@@ -202,8 +202,8 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SpireMonitor(), new SpireMonitor()));
 
         resolveCombat();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
@@ -222,8 +222,8 @@ class WhisperingSpecterTest extends BaseCardTest {
 
         resolveCombat();
         gd.playerPoisonCounters.put(player2.getId(), 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Whispering Specter");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

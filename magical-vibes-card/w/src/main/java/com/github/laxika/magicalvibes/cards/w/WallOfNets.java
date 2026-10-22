@@ -18,6 +18,6 @@ public class WallOfNets extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentBlockedBySourceThisTurnPredicate())),
-                false));
+                false, false, true));
     }
 }

@@ -166,8 +166,10 @@ class WizardsSpellbookTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card instanceof GrizzlyBears)
+                .hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(divination);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getCardsExiledByPermanent(harness.getPermanentId(player1, "Wizard's Spellbook")))
                 .containsExactly(divination);

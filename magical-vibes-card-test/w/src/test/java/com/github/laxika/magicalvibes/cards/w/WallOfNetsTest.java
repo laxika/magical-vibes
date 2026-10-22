@@ -218,9 +218,9 @@ class WallOfNetsTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new RagingGoblin());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> gs.declareBlockers(gd, player2, List.of()));
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
     }

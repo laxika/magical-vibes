@@ -22,12 +22,12 @@ public class WickedPact extends Card {
 
     public WickedPact() {
         // Destroy two target nonblack creatures. You lose 5 life.
-        // Two distinct target groups (shared targets not allowed) so the two
-        // nonblack creatures must differ, each destroyed by its own effect.
+        // Two distinct target groups (shared targets not allowed) so the two nonblack creatures must
+        // differ. One effect bound to both groups destroys them at the same time.
+        DestroyTargetPermanentEffect destroy = new DestroyTargetPermanentEffect();
         target(nonblackCreatureFilter("First target must be a nonblack creature"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        target(nonblackCreatureFilter("Second target must be a nonblack creature"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, destroy);
+        target(nonblackCreatureFilter("Second target must be a nonblack creature")).bindEffect(destroy);
 
         addEffect(EffectSlot.SPELL, new LoseLifeEffect(5));
     }

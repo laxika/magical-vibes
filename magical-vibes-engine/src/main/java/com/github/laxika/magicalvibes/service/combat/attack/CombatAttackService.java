@@ -1936,7 +1936,7 @@ public class CombatAttackService {
                                 gameData.id, perm.getCard().getName());
                         continue;
                     }
-                    filteredEffects.add(ce.wrapped());
+                    filteredEffects.add(residualAfterAttackerGate(ce));
                 } else if (effect instanceof ConditionalEffect ce
                         && ce.condition() instanceof AllMatchingCreaturesAttack) {
                     boolean allMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -4044,6 +4044,11 @@ public class CombatAttackService {
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        // CR 508.1d: a creature that can only attack alone can't be attacking with the others, so the
+        // "attacks if able" requirements of the other creatures can't all be obeyed without disobeying it.
+        if (declaredAttackerIndices.stream().anyMatch(idx -> canOnlyAttackAlone(gameData, battlefield.get(idx)))) {
+            return;
+        }
         for (int idx : attackableIndices) {
             if (!declaredAttackerIndices.contains(idx)
                     && !canOnlyAttackAlone(gameData, battlefield.get(idx))) {
@@ -4294,6 +4299,20 @@ public class CombatAttackService {
             result.add(members);
         }
         return result;
+    }
+
+    /**
+     * Drops the attacker gates of a compound condition, which were already checked when the attack
+     * event occurred, and keeps the remaining conditions to be re-checked as the trigger resolves (CR 603.4).
+     */
+    private CardEffect residualAfterAttackerGate(ConditionalEffect ce) {
+        if (!(ce.condition() instanceof AllConditions all)) return ce.wrapped();
+        List<Condition> remaining = all.conditions().stream()
+                .filter(c -> !containsHasAttackerCondition(c))
+                .toList();
+        if (remaining.isEmpty()) return ce.wrapped();
+        Condition residual = remaining.size() == 1 ? remaining.getFirst() : new AllConditions(remaining);
+        return new ConditionalEffect(residual, ce.wrapped(), ce.interveningIf(), ce.triggerTimeOnly());
     }
 
     private boolean containsHasAttackerCondition(Condition condition) {

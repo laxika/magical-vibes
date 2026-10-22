@@ -79,14 +79,15 @@ class WanderingChampionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with an empty hand does not draw a card")
+    @DisplayName("With an empty hand there is nothing to discard, so no choice is offered and no card is drawn")
     void emptyHandDoesNotDraw() {
         harness.addToBattlefield(player1, new GoblinHeelcutter());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new ArashinCleric()));
 
         attackWithChampionDealingDamage();
-        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

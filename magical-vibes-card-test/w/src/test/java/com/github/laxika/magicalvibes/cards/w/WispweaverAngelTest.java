@@ -5,6 +5,12 @@ import com.github.laxika.magicalvibes.cards.s.ServoExhibition;
 import com.github.laxika.magicalvibes.cards.t.ThrivingIbex;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,9 +79,7 @@ class WispweaverAngelTest extends BaseCardTest {
     @DisplayName("A borrowed creature returns under its owner's control")
     void borrowedCreatureReturnsToOwner() {
         Permanent mastodon = harness.addToBattlefieldAndReturn(player2, new BastionMastodon());
-        gd.playerBattlefields.get(player2.getId()).remove(mastodon);
-        gd.playerBattlefields.get(player1.getId()).add(mastodon);
-        gd.stolenCreatures.put(mastodon.getId(), player2.getId());
+        gainControl(player1, mastodon);
 
         castAngel();
         harness.passBothPriorities();
@@ -113,9 +117,7 @@ class WispweaverAngelTest extends BaseCardTest {
         castAngel();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, mastodon.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(mastodon);
-        gd.playerBattlefields.get(player2.getId()).add(mastodon);
-        gd.stolenCreatures.put(mastodon.getId(), player1.getId());
+        gainControl(player2, mastodon);
 
         harness.passBothPriorities();
 
@@ -179,6 +181,13 @@ class WispweaverAngelTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Thriving Ibex").getId()).isNotEqualTo(ibex.getId());
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
+    }
+
+    private void gainControl(Player newController, Permanent permanent) {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, newController.getId(), permanent,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
     }
 
     private void castAngel() {

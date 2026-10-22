@@ -24,6 +24,6 @@ public class WorldgorgerDragon extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileAllPermanentsUntilSourceLeavesEffect(otherPermanentsYouControl, false));
+                new ExileAllPermanentsUntilSourceLeavesEffect(otherPermanentsYouControl, false, false, true));
     }
 }

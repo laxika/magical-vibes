@@ -28,7 +28,7 @@ public class WitherbloomCharm extends Card {
                         "You may sacrifice a permanent. If you do, draw two cards",
                         new MayEffect(
                                 new SacrificePermanentThenEffect(
-                                        new PermanentTruePredicate(), new DrawCardEffect(2), "a permanent"),
+                                        new PermanentTruePredicate(), new DrawCardEffect(2), "a permanent", false, false),
                                 "You may sacrifice a permanent to draw two cards")),
                 new ChooseOneEffect.ChooseOneOption(
                         "You gain 5 life",

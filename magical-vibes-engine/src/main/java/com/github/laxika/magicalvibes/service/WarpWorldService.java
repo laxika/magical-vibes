@@ -88,7 +88,8 @@ public class WarpWorldService {
         // artifact/creature/land group: these enchantments do see that group, but not each other
         // (CR 614.12).
         List<Permanent> batch = new ArrayList<>();
-        for (WarpWorldEnchantmentPlacement placement : gameData.warpWorldOperation.pendingEnchantmentPlacements) {
+        List<WarpWorldEnchantmentPlacement> placements = List.copyOf(gameData.warpWorldOperation.pendingEnchantmentPlacements);
+        for (WarpWorldEnchantmentPlacement placement : placements) {
             UUID controllerId = placement.controllerId();
             Card card = placement.card();
             Permanent permanent = new Permanent(card);
@@ -115,18 +116,14 @@ public class WarpWorldService {
             }
         }
         gameData.warpWorldOperation.pendingEnchantmentPlacements.clear();
+        for (WarpWorldEnchantmentPlacement placement : placements) {
+            battlefieldEntryService.processCreatureETBEffects(gameData, placement.controllerId(), placement.card(), null, false);
+        }
     }
 
     public void finalizePendingWarpWorld(GameData gameData) {
         if (gameData.warpWorldOperation.sourceName == null) {
             return;
-        }
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> creatures = gameData.warpWorldOperation.pendingCreaturesByPlayer.getOrDefault(playerId, List.of());
-            for (Card card : creatures) {
-                battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
-            }
         }
 
         if (!gameData.interaction.isAwaitingInput() && gameData.warpWorldOperation.needsLegendChecks) {
@@ -137,7 +134,6 @@ public class WarpWorldService {
 
         gameLogService.append(gameData, GameLog.text(gameData.warpWorldOperation.sourceName + " shuffles all permanents into libraries and warps the world."));
 
-        gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
         gameData.warpWorldOperation.pendingAuraChoices.clear();
         gameData.warpWorldOperation.pendingEnchantmentPlacements.clear();
         gameData.warpWorldOperation.enterTappedTypesSnapshot.clear();

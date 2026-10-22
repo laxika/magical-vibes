@@ -625,13 +625,17 @@ public class GameQueryService {
     }
 
     private boolean playerBattlefieldHasStaticEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectType) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, (Predicate<CardEffect>) effectType::isInstance);
+    }
+
+    private boolean playerBattlefieldHasStaticEffect(GameData gameData, UUID playerId, Predicate<CardEffect> matcher) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         for (Permanent perm : bf) {
             if (!perm.isFaceDown()
                     && !perm.isLosesAllAbilitiesUntilEndOfTurn()
                     && staticEffectsIncludingTemporary(gameData, perm, playerId).stream()
-                    .anyMatch(effectType::isInstance)) {
+                    .anyMatch(matcher)) {
                 return true;
             }
         }
@@ -693,9 +697,14 @@ public class GameQueryService {
 
     private boolean playerBattlefieldHasGrantedEffect(GameData gameData, UUID playerId,
                                                       Class<? extends CardEffect> effectType) {
+        return playerBattlefieldHasGrantedEffect(gameData, playerId, (Predicate<CardEffect>) effectType::isInstance);
+    }
+
+    private boolean playerBattlefieldHasGrantedEffect(GameData gameData, UUID playerId, Predicate<CardEffect> matcher) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
-        return bf.stream().anyMatch(perm -> hasGrantedEffect(gameData, perm, effectType));
+        return bf.stream().anyMatch(perm -> computeStaticBonus(gameData, perm).grantedEffects().stream()
+                .anyMatch(matcher));
     }
 
     public String findAlternativeEchoCost(GameData gameData, UUID playerId) {
@@ -713,14 +722,18 @@ public class GameQueryService {
 
     private boolean playerHasTemporaryStaticEffect(GameData gameData, UUID playerId,
                                                    Class<? extends CardEffect> effectType) {
+        return playerHasTemporaryStaticEffect(gameData, playerId, (Predicate<CardEffect>) effectType::isInstance);
+    }
+
+    private boolean playerHasTemporaryStaticEffect(GameData gameData, UUID playerId, Predicate<CardEffect> matcher) {
         List<CardEffect> effects = gameData.playerStaticEffectsUntilEndOfTurn.get(playerId);
-        if (effects != null && effects.stream().anyMatch(effectType::isInstance)) {
+        if (effects != null && effects.stream().anyMatch(matcher)) {
             return true;
         }
         synchronized (gameData.floatingEffects) {
             return gameData.floatingEffects.stream().anyMatch(floating ->
                     playerId.equals(floating.affectedPlayerId())
-                            && effectType.isInstance(floating.effect()));
+                            && matcher.test(floating.effect()));
         }
     }
 
@@ -3038,12 +3051,7 @@ public class GameQueryService {
      * {@link CantWinGameEffect}).
      */
     public boolean canPlayerLoseGame(GameData gameData, UUID playerId) {
-        if (playerBattlefieldHasStaticEffect(gameData, playerId, CantLoseGameEffect.class)
-                || playerBattlefieldHasGrantedEffect(gameData, playerId, CantLoseGameEffect.class)
-                || playerHasTemporaryStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
-            return false;
-        }
-        if (playerEmblemHasActiveStaticEffect(gameData, playerId, CantLoseGameEffect.class)) {
+        if (playerHasCantLoseGameEffect(gameData, playerId, effect -> effect instanceof CantLoseGameEffect)) {
             return false;
         }
         for (UUID opponentId : gameData.playerBattlefields.keySet()) {
@@ -3052,6 +3060,28 @@ public class GameQueryService {
             }
         }
         return true;
+    }
+
+    /**
+     * Whether an opponent of {@code winnerId} has a "can't lose the game" effect that also says its
+     * controller's opponents can't win the game (Platinum Angel). A plain "you can't lose the game"
+     * (Liliana's Undead Minion) does not stop a player from winning (CR 104.2b).
+     */
+    public boolean opponentPreventsWinningGame(GameData gameData, UUID winnerId) {
+        for (UUID opponentId : gameData.playerBattlefields.keySet()) {
+            if (!winnerId.equals(opponentId) && playerHasCantLoseGameEffect(gameData, opponentId,
+                    effect -> effect instanceof CantLoseGameEffect cantLose && cantLose.opponentsCantWin())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean playerHasCantLoseGameEffect(GameData gameData, UUID playerId, Predicate<CardEffect> matcher) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, matcher)
+                || playerBattlefieldHasGrantedEffect(gameData, playerId, matcher)
+                || playerHasTemporaryStaticEffect(gameData, playerId, matcher)
+                || playerEmblemHasActiveStaticEffect(gameData, playerId, matcher);
     }
 
     /**
@@ -3069,14 +3099,19 @@ public class GameQueryService {
 
     private boolean playerEmblemHasActiveStaticEffect(GameData gameData, UUID playerId,
                                                        Class<? extends CardEffect> effectType) {
+        return playerEmblemHasActiveStaticEffect(gameData, playerId, (Predicate<CardEffect>) effectType::isInstance);
+    }
+
+    private boolean playerEmblemHasActiveStaticEffect(GameData gameData, UUID playerId,
+                                                       Predicate<CardEffect> matcher) {
         for (Emblem emblem : gameData.emblems) {
             if (!playerId.equals(emblem.controllerId())) continue;
             for (CardEffect effect : emblem.staticEffects()) {
-                if (effectType.isInstance(effect)) {
+                if (matcher.test(effect)) {
                     return true;
                 }
                 if (effect instanceof ConditionalEffect conditional
-                        && effectType.isInstance(conditional.wrapped())
+                        && matcher.test(conditional.wrapped())
                         && conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forCasting(playerId))) {
                     return true;
@@ -5415,6 +5450,11 @@ public class GameQueryService {
     public int replacePoisonCounters(GameData gameData, UUID playerId, int count,
                                      UUID placingPlayerId) {
         return replacePlayerCountersPlacedBy(gameData, playerId, count, placingPlayerId);
+    }
+
+    /** Applies experience-counter replacements (e.g. Winding Constrictor) for a player getting counters. */
+    public int replaceExperienceCounters(GameData gameData, UUID playerId, int count) {
+        return replacePlayerCounters(gameData, playerId, count);
     }
 
     /** Applies rad-counter replacements for a player receiving counters placed by {@code placingPlayerId}. */
@@ -10015,7 +10055,10 @@ public class GameQueryService {
                             || additional.allyCreatureBecomesTarget()
                             || (additional.combatDamageToPlayerOnly()
                             && !matchesCombatDamageToPlayerTrigger(gameData, controllerId, triggerContext))
-                            || (additional.attackOnly() && !attackTrigger)
+                            || (additional.attackOnly()
+                            && (!attackTrigger
+                            || (additional.controllerAttackersOnly()
+                            && !staticControllerId.equals(gameData.activePlayerId))))
                             || (additional.instantSorceryCastOrCopyOnly()
                             && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
                             || (additional.permanentTurnsFaceUpOnly()
@@ -12710,15 +12753,20 @@ public class GameQueryService {
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
                 .filter(DamagePreventionBySelfEffect.class::isInstance)
                 .map(DamagePreventionBySelfEffect.class::cast)
+                .filter(effect -> !effect.shuffleTargetIntoOwnersLibrary())
                 .anyMatch(effect -> (!effect.combatOnly() || isCombatDamage)
                         && (effect.targetFilter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.targetFilter())));
     }
 
-    /** Returns whether the source's combat-damage prevention also shuffles the damaged creature away. */
+    /**
+     * Returns whether the source's combat-damage prevention also shuffles the damaged creature away.
+     * The shuffle is an additional effect of the prevention effect, so it still happens when the damage
+     * can't be prevented (CR 615.12); callers decide separately whether the damage is actually prevented.
+     */
     public boolean shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
             GameData gameData, Permanent source, Permanent target) {
-        if (!isDamagePreventable(gameData, true) || source == null || target == null
+        if (source == null || target == null
                 || !isCreature(gameData, source) || !isCreature(gameData, target)) {
             return false;
         }

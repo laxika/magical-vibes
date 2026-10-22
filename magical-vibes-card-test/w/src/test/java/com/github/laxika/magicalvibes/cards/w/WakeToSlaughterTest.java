@@ -136,7 +136,8 @@ class WakeToSlaughterTest extends BaseCardTest {
         addMana();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0, List.of(handCard.getId(), battlefieldCard.getId()));
+        harness.castFlashback(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard.getId(), battlefieldCard.getId()));
         harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player2, 0);
 

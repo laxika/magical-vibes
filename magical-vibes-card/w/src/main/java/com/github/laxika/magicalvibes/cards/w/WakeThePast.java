@@ -22,6 +22,7 @@ public class WakeThePast extends Card {
                 .filter(new CardTypePredicate(CardType.ARTIFACT))
                 .returnAll(true)
                 .grantHaste(true)
+                .hasteUntilEndOfTurn(true)
                 .build());
     }
 }

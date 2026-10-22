@@ -111,6 +111,7 @@ class WintermoorCommanderTest extends BaseCardTest {
         addCreatureReady(player2, new KnightOfTheKeep());
 
         declareAttackers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

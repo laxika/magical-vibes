@@ -117,7 +117,6 @@ class WreckAndRebuildTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castFlashback(player1, 0, 0, findPermanent(player2, "Millstone").getId());
-        harness.handleListChoice(player1, "Destroy target artifact or enchantment");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Millstone");
@@ -184,9 +183,7 @@ class WreckAndRebuildTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castFlashback(player1, 0);
-        harness.handleListChoice(player1,
-                "Mill five cards, then you may put a land card from your graveyard onto the battlefield tapped.");
+        harness.castFlashback(player1, 0, 1, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
+import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -225,6 +226,11 @@ public class EtbEffectResolver {
                 case SourceIsCreature creatureGate -> (ctx.sourcePermanent() != null
                         ? conditionEvaluationService.isMet(ctx.gameData(), creatureGate, conditionContext)
                         : ctx.card().hasType(CardType.CREATURE)) ? effect : null;
+                // An enters trigger that only matches when the entering permanent itself has some characteristic
+                // (CR 603.6a, e.g. Weldfast Wingsmith entering as an artifact) never triggers otherwise.
+                case SourceMatchesPermanentPredicate sourceMatches when ctx.sourcePermanent() != null ->
+                        conditionEvaluationService.isMet(ctx.gameData(), sourceMatches, conditionContext)
+                                ? effect : null;
                 case SourceUntapped ignored ->
                         conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
                                 ? conditional.wrapped() : null;

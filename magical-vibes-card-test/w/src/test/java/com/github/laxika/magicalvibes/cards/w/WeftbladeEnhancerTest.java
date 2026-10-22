@@ -176,6 +176,8 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, enhancer.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -120,6 +120,15 @@ public class SpellTarget {
         return declaredMaximum >= 99 ? ANY_NUMBER_OF_TARGETS : declaredMaximum;
     }
 
+    /**
+     * Whether this group needs exactly X targets ({@link Card#targetExactlyX}): an X-scaled group whose
+     * declared minimum equals its declared maximum, including a maximum lifted to
+     * {@link #ANY_NUMBER_OF_TARGETS}.
+     */
+    public boolean isExactlyXScaled() {
+        return xScaled && minTargets > 0 && unboundedIfAnyNumber(minTargets) == maxTargets;
+    }
+
     /** Marks this group as part of the mode {@code scope}, whose targets must all be different objects. */
     public SpellTarget inDistinctScope(int scope) {
         this.distinctScope = scope;

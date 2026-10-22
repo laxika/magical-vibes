@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * dealt to and by that creature this combat. Pay {2} → no further effect on that creature.
  *
  * <p>Resolved by {@code WintersChillEffectHandler} one target at a time via a three-way list pick.
- * Bound to an X-scaled attacking-creature target group ({@code targetX(...)}).
+ * Bound to an exactly-X attacking-creature target group ({@code targetExactlyX(...)}).
  */
 public record WintersChillEffect() implements CardEffect {
 

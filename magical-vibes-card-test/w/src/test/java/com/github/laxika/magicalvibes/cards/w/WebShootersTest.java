@@ -158,8 +158,7 @@ class WebShootersTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

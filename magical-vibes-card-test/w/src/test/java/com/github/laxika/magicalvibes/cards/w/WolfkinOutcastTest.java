@@ -184,6 +184,7 @@ class WolfkinOutcastTest extends BaseCardTest {
         List<Card> draws = List.of(new WolfkinOutcast(), new WolfkinOutcast(),
                 new WolfkinOutcast(), new WolfkinOutcast());
         harness.setLibrary(player1, draws);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         first.setMarkedDamage(5);
         second.setMarkedDamage(5);
@@ -194,7 +195,8 @@ class WolfkinOutcastTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(draws);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 4)
+                .containsAll(draws);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

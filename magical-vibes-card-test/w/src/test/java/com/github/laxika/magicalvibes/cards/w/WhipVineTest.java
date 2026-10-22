@@ -204,17 +204,21 @@ class WhipVineTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
+        advanceToStepOfNextTurn(currentActivePlayer, TurnStep.UPKEEP);
+    }
+
+    private void advanceToStepOfNextTurn(Player currentActivePlayer, TurnStep step) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.passUntil(newActivePlayer, step);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
-        advanceToNextTurn(currentActivePlayer);
+        advanceToStepOfNextTurn(currentActivePlayer, TurnStep.UNTAP);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }

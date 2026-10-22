@@ -126,6 +126,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -293,7 +294,9 @@ public class DamagePreventionService {
                                                                        Permanent source) {
         if (!gameQueryService.isDamagePreventable(gameData, true)) return false;
         boolean hasEffect = target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventAllDamageToSelfFromCreaturesItBlocksEffect.class::isInstance);
+                .anyMatch(PreventAllDamageToSelfFromCreaturesItBlocksEffect.class::isInstance)
+                && gameQueryService.hasActiveStaticEffect(
+                gameData, target, PreventAllDamageToSelfFromCreaturesItBlocksEffect.class);
         return hasEffect && gameQueryService.isCreature(gameData, source)
                 && target.isBlocking() && target.getBlockingTargetIds().contains(source.getId());
     }
@@ -2305,6 +2308,78 @@ public class DamagePreventionService {
     }
 
     /**
+     * One instance per distinct amount-limited or next-event creature redirect shield that covers the
+     * damage (CR 616.1): each shield is a separate replacement effect the affected creature's controller
+     * can order against the others. Shields with identical contents are interchangeable, so they share one
+     * instance (offering the same choice twice would be meaningless); the instance also names how many
+     * identical shields remain, so it stays distinct once one of them has been consumed. Pass it back to
+     * {@link #applyCreatureRedirectShieldInstance}.
+     */
+    public List<String> creatureRedirectShieldInstances(GameData gameData, UUID protectedPermanentId,
+                                                        UUID sourcePermanentId, boolean combatDamage) {
+        List<String> instances = new ArrayList<>();
+        if (protectedPermanentId == null) return instances;
+        List<CreatureDamageRedirectShield> shields = gameData.creatureDamageRedirectShields;
+        Set<CreatureDamageRedirectShield> offered = new LinkedHashSet<>();
+        for (CreatureDamageRedirectShield shield : shields) {
+            if (matchesCreatureRedirectShield(gameData, shield, protectedPermanentId, sourcePermanentId,
+                    combatDamage, false) && offered.add(shield)) {
+                instances.add(shield + "#" + Collections.frequency(shields, shield));
+            }
+        }
+        return instances;
+    }
+
+    /**
+     * Applies the single creature redirect shield named by {@code instance} (from
+     * {@link #creatureRedirectShieldInstances}) to the damage, consuming or reducing it as its kind
+     * requires. Returns the damage left after redirection, which is unchanged when the shield no longer
+     * covers the damage.
+     */
+    public int applyCreatureRedirectShieldInstance(GameData gameData, String instance, UUID protectedPermanentId,
+                                                   UUID sourcePermanentId, int damage, boolean combatDamage) {
+        if (damage <= 0 || protectedPermanentId == null) return damage;
+        List<CreatureDamageRedirectShield> shields = gameData.creatureDamageRedirectShields;
+        int index = -1;
+        String shieldName = instance.substring(0, instance.lastIndexOf('#'));
+        for (int i = 0; i < shields.size(); i++) {
+            if (shields.get(i).toString().equals(shieldName)) {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0) return damage;
+        CreatureDamageRedirectShield shield = shields.get(index);
+        if (!matchesCreatureRedirectShield(gameData, shield, protectedPermanentId, sourcePermanentId,
+                combatDamage, false)) {
+            return damage;
+        }
+        if (shield.isUnlimited()) {
+            // Unlimited (Oracle's Attendants): redirect all remaining damage; the shield persists.
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    protectedPermanentId, sourcePermanentId, damage, shield.redirectTargetId()));
+            return 0;
+        }
+        shields.remove(index);
+        if (shield.isNextEvent()) {
+            // Next-event: redirect all of this one damage event, then consume the shield.
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    protectedPermanentId, sourcePermanentId, damage, shield.redirectTargetId()));
+            return 0;
+        }
+        // Amount-limited: redirect up to the remaining amount, then consume or reduce the shield.
+        int redirected = Math.min(shield.remainingAmount(), damage);
+        if (redirected < shield.remainingAmount()) {
+            shields.add(index, shield.withReducedAmount(redirected));
+        }
+        if (redirected > 0) {
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    protectedPermanentId, sourcePermanentId, redirected, shield.redirectTargetId()));
+        }
+        return damage - redirected;
+    }
+
+    /**
      * Applies Glarecaster's shared one-shot redirect shield to damage dealt to its source permanent.
      */
     public int applySourcePermanentAndControllerNextDamageRedirectToPermanent(
@@ -3736,16 +3811,24 @@ public class DamagePreventionService {
                                              boolean anySourceNextEvent) {
         if (permanentId == null) return false;
         return gameData.creatureDamageRedirectShields.stream()
-                .anyMatch(shield -> shield.protectedPermanentId().equals(permanentId)
-                        && !permanentId.equals(shield.redirectTargetId())
-                        && isAnySourceNextEvent(shield) == anySourceNextEvent
-                        && (!shield.combatOnly() || combatDamage)
-                        && (shield.damageSourceId() == null || shield.damageSourceId().equals(sourceId))
-                        && isRedirectDestination(gameData, shield.redirectTargetId())
-                        && (gameData.playerIds.contains(shield.redirectTargetId())
-                        ? true
-                        : (!shield.isUnlimited() || gameQueryService.isCreature(gameData,
-                        gameQueryService.findPermanentById(gameData, shield.redirectTargetId())))));
+                .anyMatch(shield -> matchesCreatureRedirectShield(gameData, shield, permanentId, sourceId,
+                        combatDamage, anySourceNextEvent));
+    }
+
+    /** Whether one creature redirect shield covers the damage; see {@link #hasCreatureRedirectShield(GameData, UUID, UUID, boolean, boolean)}. */
+    private boolean matchesCreatureRedirectShield(GameData gameData, CreatureDamageRedirectShield shield,
+                                                  UUID permanentId, UUID sourceId, boolean combatDamage,
+                                                  boolean anySourceNextEvent) {
+        return shield.protectedPermanentId().equals(permanentId)
+                && !permanentId.equals(shield.redirectTargetId())
+                && isAnySourceNextEvent(shield) == anySourceNextEvent
+                && (!shield.combatOnly() || combatDamage)
+                && (shield.damageSourceId() == null || shield.damageSourceId().equals(sourceId))
+                && isRedirectDestination(gameData, shield.redirectTargetId())
+                && (gameData.playerIds.contains(shield.redirectTargetId())
+                ? true
+                : (!shield.isUnlimited() || gameQueryService.isCreature(gameData,
+                gameQueryService.findPermanentById(gameData, shield.redirectTargetId()))));
     }
 
     /** Whether Shadowbane's shield covers the next damage from {@code sourceId} to this controller's creature. */

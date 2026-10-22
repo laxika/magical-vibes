@@ -19,18 +19,20 @@ public class WaterveilCavern extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         // {T}: Add {U} or {B}. This land doesn't untap during your next untap step.
+        // The restriction is about the ability controller's untap step only, so it does not carry over to a new
+        // controller's untap step (controllerStepOnly).
         // "Add A or B" is modeled as two separate mana abilities; the SELF skip-untap rider
         // resolves inline with the mana in ActivatedAbilityExecutionService.doResolveManaAbility.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLUE), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new AwardManaEffect(ManaColor.BLUE), new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
                 "{T}: Add {U}. Waterveil Cavern doesn't untap during your next untap step."
         ));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLACK), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new AwardManaEffect(ManaColor.BLACK), new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
                 "{T}: Add {B}. Waterveil Cavern doesn't untap during your next untap step."
         ));
     }

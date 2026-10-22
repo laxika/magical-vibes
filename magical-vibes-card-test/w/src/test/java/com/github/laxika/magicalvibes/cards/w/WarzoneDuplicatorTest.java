@@ -77,7 +77,7 @@ class WarzoneDuplicatorTest extends BaseCardTest {
     void doesNotConjureADuplicateForAToken() {
         Permanent original = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new CacklingCounterpart()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, original.getId());
         harness.passBothPriorities();

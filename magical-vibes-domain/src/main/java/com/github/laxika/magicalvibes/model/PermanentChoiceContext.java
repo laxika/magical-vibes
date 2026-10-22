@@ -914,6 +914,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record RemoveCounterFromControlledCreatureThenDraw(StackEntry resolvingEntry)
             implements PermanentChoiceContext {}
 
+    /** The controller chooses the creature that is dealt {@code damage} by the resolving ability (Wicked Guardian). */
+    record DealDamageToChosenCreature(StackEntry resolvingEntry, int damage) implements PermanentChoiceContext {}
+
     /**
      * Hand of Vecna: the controller chooses between the equipped creature and a creature they control
      * with the matching name; the chosen creature gets the boost.

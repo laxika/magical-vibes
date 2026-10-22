@@ -2343,6 +2343,17 @@ public class SpellCastingService {
         }
     }
 
+    /**
+     * Word of Command makes the controlled player cast the chosen card during its resolution, which
+     * ignores the usual timing restrictions of that card (CR 608.2g).
+     */
+    private boolean isCastDuringWordOfCommandResolution(GameData gameData, UUID playerId, Card card) {
+        return gameData.wordOfCommandCastingCard
+                && playerId.equals(gameData.wordOfCommandControlledPlayerId)
+                && gameData.wordOfCommandCardId != null
+                && gameData.wordOfCommandCardId.equals(card.getId());
+    }
+
     private void playAdventureCardLegacy(GameData gameData, Player player, int cardIndex, Integer xValue,
                                          UUID targetId, List<UUID> targetIds) {
         if (gameData.status != GameStatus.RUNNING) {
@@ -4026,7 +4037,8 @@ public class SpellCastingService {
         validateXValueCap(gameData, card, playerId, effectiveXValue, !xOnlyInUnpaidKicker);
         // A split card's chosen half decides the timing (e.g. an instant half of a sorcery // instant card).
         Card timingCharacteristics = selectedModeTimingCharacteristics(card, effectiveXValue);
-        if (!castingFaceDown && !castingPermissionService.canCastWithTiming(
+        if (!castingFaceDown && !isCastDuringWordOfCommandResolution(gameData, playerId, card)
+                && !castingPermissionService.canCastWithTiming(
                 gameData, playerId, timingCharacteristics, playerId.equals(gameData.activePlayerId),
                 gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                         || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
@@ -4169,7 +4181,8 @@ public class SpellCastingService {
                 && !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
             throw new IllegalStateException("Card is not playable");
         }
-        if (!castingFaceDown && !castingPermissionService.canCastWithTiming(
+        if (!castingFaceDown && !isCastDuringWordOfCommandResolution(gameData, playerId, card)
+                && !castingPermissionService.canCastWithTiming(
                 gameData, playerId, card, playerId.equals(gameData.activePlayerId),
                 gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                         || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
@@ -9912,6 +9925,12 @@ public class SpellCastingService {
                 && flashbackOpt.get().getCost(DiscardXCardsCastingCost.class).isPresent()) {
             flashbackOpt = Optional.empty();
         }
+        // Choosing retrace (granted by an emblem, e.g. Wrenn and Six) over a printed flashback cost is
+        // the caster's choice of one alternative cost from the graveyard (CR 601.2b).
+        if (flashbackOpt.isPresent() && retraceDiscardHandCardIndex != null
+                && hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.RETRACE, Zone.GRAVEYARD)) {
+            flashbackOpt = Optional.empty();
+        }
         Card castHalf = flashbackOpt.isPresent() ? card.graveyardCastHalf() : card;
         var disturbOpt = graveyardAbilitiesSuppressed
                 ? Optional.<DisturbCast>empty()
@@ -10933,6 +10952,28 @@ public class SpellCastingService {
                 graveyardTargetingService.handleUpToNGraveyardSpellTargeting(
                         gameData, playerId, card, entryType, returnToBattlefieldEffect,
                         maxTargets, targetXValue, spellEffects);
+                gameData.graveyardTargetOperation.flashback = true;
+                return;
+            }
+        }
+
+        ReturnTargetCardsFromGraveyardToHandEffect returnToHandEffect = spellEffects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (returnToHandEffect != null && !returnToHandEffect.xScaled() && !returnToHandEffect.exactTargets()
+                && !returnToHandEffect.upToXTargets() && returnToHandEffect.dynamicMaxTargets() == null
+                && returnToHandEffect.targetGroups().isEmpty() && returnToHandEffect.maxTargets() > 0
+                && gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(candidate -> predicateEvaluationService.matchesCardPredicate(
+                            candidate, returnToHandEffect.filter(), card.getId(), gameData, playerId))
+                    .count();
+            if (matchingCount > 0) {
+                graveyardTargetingService.handleUpToNGraveyardSpellTargeting(
+                        gameData, playerId, card, entryType, returnToHandEffect,
+                        returnToHandEffect.maxTargets(), spellEffects);
                 gameData.graveyardTargetOperation.flashback = true;
                 return;
             }
@@ -14129,6 +14170,7 @@ public class SpellCastingService {
             additionalCosts.payWithAdditionalGenericCost(pool, 0, additionalCost);
             return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
         }
+        castingCostService.discardNextSpellFreeCastPermission(gameData, playerId, card);
 
         // Phyrexian symbols the player chose to pay with life are no longer mana the reductions can
         // remove (CR 601.2b fixes the choice before CR 601.2f totals the cost), so set them aside first.
@@ -14508,7 +14550,10 @@ public class SpellCastingService {
                     int min = giftPromised
                             ? target.getGiftPromisedMinTargets()
                             : kicked ? target.getKickedMinTargets() : target.getMinTargets();
-                    return target.isXScaled() ? Math.min(xValue, min) : min;
+                    if (!target.isXScaled()) {
+                        return min;
+                    }
+                    return target.isExactlyXScaled() ? xValue : Math.min(xValue, min);
                 })
                 .sum();
     }
@@ -17381,6 +17426,16 @@ public class SpellCastingService {
                 && gameData.wordOfCommandCardId.equals(card.getId())) {
             gameData.wordOfCommandCastingCard = false;
             gameData.wordOfCommandAwaitingCardResolution = true;
+            // Word of Command finishes resolving once the card is cast, which ends the control; the
+            // controller regains it while the cast spell itself resolves (StackResolutionService).
+            if (gameData.wordOfCommandControllerPlayerId != null
+                    && gameData.wordOfCommandControllerPlayerId.equals(gameData.mindControllerPlayerId)
+                    && gameData.wordOfCommandControlledPlayerId != null
+                    && gameData.wordOfCommandControlledPlayerId.equals(gameData.mindControlledPlayerId)) {
+                gameData.mindControllerPlayerId = null;
+                gameData.mindControlledPlayerId = null;
+                gameData.mindControlUntilEndOfCombat = false;
+            }
         }
 
         for (CardEffect staticEffect : castCharacteristics.getEffects(EffectSlot.STATIC)) {

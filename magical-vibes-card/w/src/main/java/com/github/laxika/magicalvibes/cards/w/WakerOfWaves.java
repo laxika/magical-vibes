@@ -16,7 +16,7 @@ public class WakerOfWaves extends Card {
     public WakerOfWaves() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.OPPONENT_CREATURES));
         addHandActivatedAbility(new ActivatedAbility(false, "{1}{U}",
-                List.of(LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1)),
+                List.of(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1)),
                 "{1}{U}, Discard this card: Look at the top two cards of your library. Put one of them into your hand and the other into your graveyard."));
     }
 }

@@ -1908,6 +1908,27 @@ public class CastingCostService {
         return true;
     }
 
+    /**
+     * "The next [matching] spell you cast this turn can be cast without paying its mana cost" applies
+     * only to the next matching spell: casting it while paying its mana cost anyway (a nonzero X) still
+     * uses the permission up.
+     */
+    public void discardNextSpellFreeCastPermission(GameData gameData, UUID playerId, Card card) {
+        List<CardPredicate> permissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);
+        if (permissions == null) return;
+        synchronized (permissions) {
+            for (CardPredicate predicate : permissions) {
+                if (predicateEvaluationService.matchesCardPredicate(card, predicate, null)) {
+                    permissions.remove(predicate);
+                    break;
+                }
+            }
+            if (permissions.isEmpty()) {
+                gameData.nextSpellFreeCastPermissionsThisTurn.remove(playerId, permissions);
+            }
+        }
+    }
+
     private record FreeCastSource(Permanent permanent, AlternativeCostForSpellsEffect effect,
                                   CardPredicate nextSpellPredicate) {
     }
@@ -2004,6 +2025,7 @@ public class CastingCostService {
     private boolean isApplicableZeroAlternative(GameData gameData, UUID playerId, Card card, Zone sourceZone,
                                                 AlternativeCostForSpellsEffect altCost, Permanent sourcePermanent) {
         if ((!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
+                && (!altCost.firstSpellOfCasterTurnOnly() || gameData.getSpellsCastThisTurn(playerId).isEmpty())
                 && altCost.nonManaCost() == null
                 && new ManaCost(altCost.manaCostFor(card.getManaValue())).getManaValue() == 0
                 && (sourceZone == Zone.HAND || !altCost.fromHandOnly())

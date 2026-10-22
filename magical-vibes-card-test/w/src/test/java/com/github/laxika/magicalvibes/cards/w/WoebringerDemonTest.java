@@ -135,9 +135,9 @@ class WoebringerDemonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WoebringerDemon());
         Permanent wolf = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
         harness.setHand(player2, List.of(new LastGasp()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castAndResolveInstant(player2, 0, wolf.getId());
         harness.assertInGraveyard(player2, "Watchwolf");
         harness.passBothPriorities();

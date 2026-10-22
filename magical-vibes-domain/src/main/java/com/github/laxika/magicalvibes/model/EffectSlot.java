@@ -639,6 +639,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     ON_ANY_PLAYER_SHUFFLES_LIBRARY,
+    /** Triggers whenever a spell or ability causes its controller to shuffle their library (Widespread
+     *  Panic). Fires on every permanent regardless of who controls it, and only when the player shuffling
+     *  is the controller of the spell or ability that is resolving. The shuffling player is the trigger's
+     *  target. */
+    ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE,
     /** Triggers whenever an opponent of this permanent's controller searches their own library
      *  ("Whenever an opponent searches their library"). Fired from the unified library-search choke
      *  point ({@code LibrarySearchSupport.performLibrarySearch}) by

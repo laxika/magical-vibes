@@ -570,6 +570,8 @@ public class EffectResolutionService {
         while (true) {
             if (unwrapped instanceof MayEffect may) {
                 unwrapped = may.wrapped();
+            } else if (unwrapped instanceof MayPayManaEffect mayPay) {
+                unwrapped = mayPay.wrapped();
             } else if (unwrapped instanceof ConditionalEffect conditional) {
                 unwrapped = conditional.wrapped();
             } else {

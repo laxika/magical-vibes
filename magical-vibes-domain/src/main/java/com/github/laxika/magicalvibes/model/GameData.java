@@ -723,6 +723,12 @@ public class GameData {
     public final Map<UUID, Set<UUID>> cardsPutIntoHandThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token card IDs put into each player's graveyard from hand this turn. */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromHandThisTurn = new ConcurrentHashMap<>();
+    /**
+     * Tracks non-token card IDs put into each player's graveyard from their hand or library this turn.
+     * Unlike {@link #cardsPutIntoGraveyardFromLibraryThisTurn}, entries are never pruned when a card later
+     * leaves the graveyard, because the count is of events that happened this turn (Welcome the Dead).
+     */
+    public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromHandOrLibraryThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token creature card IDs put into graveyards from any zone this turn. */
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
     /** Number of times creature cards were put into each owner's graveyard this turn (repeats count). */
@@ -1488,6 +1494,8 @@ public class GameData {
     public int additionalCombatMainPhasePairs;
     /** The ordinary phase to resume after the inserted combat/main phase pairs. */
     public TurnStep additionalCombatMainPhasePairsReturnStep;
+    /** Pairs in {@link #additionalCombatMainPhasePairs} that wait for the turn's second main phase to end. */
+    public int additionalCombatMainPhasePairsAfterSecondMain;
     /** Additional beginning phases queued after the current postcombat main phase. */
     public int additionalBeginningPhasesAfterPostcombatMain;
     /** How many of the queued postcombat-main beginning phases were created after the queued
@@ -1868,6 +1876,12 @@ public class GameData {
      * them (Grave Sifter). The batch ends when the queue runs out.
      */
     public boolean graveyardReturnQueueLeaveBatchOpen;
+    /**
+     * Set while a multi-card graveyard exile choice (a count above one) runs as a single graveyard-leave
+     * batch, so "one or more cards leave your graveyard" triggers once for all cards it exiles (Watchers
+     * of the Dead). The batch ends when the choice chain runs out.
+     */
+    public boolean graveyardExileChoiceLeaveBatchOpen;
     /**
      * Set while the {@link #pendingGraveyardReturnQueue} choices of an "each player returns cards from
      * their graveyard to their hand" effect are being made: the chosen cards stay in their graveyards
@@ -2682,7 +2696,7 @@ public class GameData {
     /** Spell type choices already used by permissions allowing one spell of each card type. */
     public final Map<UUID, List<Set<CardType>>> exileSpellTypePermissionHistory = new ConcurrentHashMap<>();
     /** Card UUIDs the controller may play from their outside-the-game card pool this turn. */
-    public final Set<UUID> outsideGamePlayPermissions = ConcurrentHashMap.newKeySet();
+    public final OutsideGamePlayPermissionSet outsideGamePlayPermissions = new OutsideGamePlayPermissionSet();
     /** One-shot permission for the additional modal mode granted by Your Wish Is My Command. */
     public final Set<UUID> outsideGameAdditionalModalModePermissions = ConcurrentHashMap.newKeySet();
     /** Optional condition that must remain true for an exiled card's play permission to be active. */
@@ -2900,6 +2914,13 @@ public class GameData {
 
     /** Counts colored mana symbols on the most recently milled card. */
     public final Map<ManaColor, Integer> lastMilledCardColorSymbols = new ConcurrentHashMap<>();
+
+    /**
+     * Cards that players picked during an "each player searches ... reveal ... put into hand" instruction
+     * (Weird Harvest), held out per player until every player has chosen: the choices are made in APNAP
+     * order but the cards are revealed and put into hands at the same time (CR 101.4).
+     */
+    public final Map<UUID, List<Card>> eachPlayerSearchDeferredToHand = new ConcurrentHashMap<>();
 
     /** Revealed hand cards waiting to be stamped onto the spell whose additional cost they paid. */
     public final Map<UUID, Card> pendingRevealedPowerCostCards = new ConcurrentHashMap<>();
@@ -4305,6 +4326,7 @@ public class GameData {
     public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
         return expireFloatingEffects(fe ->
                 (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                        || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED
                         || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS
                         || fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
                         || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
@@ -8019,6 +8041,7 @@ public class GameData {
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatMainPhasePairsReturnStep = this.additionalCombatMainPhasePairsReturnStep;
+        copy.additionalCombatMainPhasePairsAfterSecondMain = this.additionalCombatMainPhasePairsAfterSecondMain;
         copy.additionalBeginningPhasesAfterPostcombatMain = this.additionalBeginningPhasesAfterPostcombatMain;
         copy.additionalBeginningPhasesBeforeQueuedCombat = this.additionalBeginningPhasesBeforeQueuedCombat;
         copy.additionalBeginningPhaseReturnStep = this.additionalBeginningPhaseReturnStep;
@@ -8063,6 +8086,7 @@ public class GameData {
         copy.deferredGraveyardCastCopies.addAll(this.deferredGraveyardCastCopies);
         copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
         copy.graveyardReturnQueueLeaveBatchOpen = this.graveyardReturnQueueLeaveBatchOpen;
+        copy.graveyardExileChoiceLeaveBatchOpen = this.graveyardExileChoiceLeaveBatchOpen;
         copy.holdGraveyardHandReturns = this.holdGraveyardHandReturns;
         copy.heldGraveyardHandReturns.putAll(this.heldGraveyardHandReturns);
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
@@ -8536,6 +8560,8 @@ public class GameData {
         copy.greatestDiscardedCardManaValue = this.greatestDiscardedCardManaValue;
         copy.lastDiscardedCardTypes = Set.copyOf(this.lastDiscardedCardTypes);
         copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
+        this.eachPlayerSearchDeferredToHand.forEach((playerId, cards) ->
+                copy.eachPlayerSearchDeferredToHand.put(playerId, new ArrayList<>(cards)));
         copy.pendingRevealedPowerCostCards.putAll(this.pendingRevealedPowerCostCards);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
@@ -8817,6 +8843,8 @@ public class GameData {
                 copy.cardsPutIntoHandThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardFromHandThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromHandThisTurn.put(k, new HashSet<>(v)));
+        this.cardsPutIntoGraveyardFromHandOrLibraryThisTurn.forEach((k, v) ->
+                copy.cardsPutIntoGraveyardFromHandOrLibraryThisTurn.put(k, new HashSet<>(v)));
         this.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
                 copy.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
         copy.creatureCardGraveyardEntriesThisTurn.putAll(this.creatureCardGraveyardEntriesThisTurn);
@@ -9153,8 +9181,6 @@ public class GameData {
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);
         copy.warpWorldOperation.pendingEnchantmentPlacements.addAll(this.warpWorldOperation.pendingEnchantmentPlacements);
-        this.warpWorldOperation.pendingCreaturesByPlayer.forEach((k, v) ->
-                copy.warpWorldOperation.pendingCreaturesByPlayer.put(k, new ArrayList<>(v)));
         copy.warpWorldOperation.enterTappedTypesSnapshot.addAll(this.warpWorldOperation.enterTappedTypesSnapshot);
         copy.warpWorldOperation.needsLegendChecks = this.warpWorldOperation.needsLegendChecks;
         copy.warpWorldOperation.sourceName = this.warpWorldOperation.sourceName;
@@ -9375,7 +9401,7 @@ public class GameData {
         copy.exileLookPermissions.putAll(this.exileLookPermissions);
         this.additionalExileLookPermissions.forEach((cardId, viewers) ->
                 copy.additionalExileLookPermissions.put(cardId, new HashSet<>(viewers)));
-        copy.outsideGamePlayPermissions.addAll(this.outsideGamePlayPermissions);
+        copy.outsideGamePlayPermissions.copyFrom(this.outsideGamePlayPermissions);
         copy.outsideGameAdditionalModalModePermissions.addAll(this.outsideGameAdditionalModalModePermissions);
         copy.playersAllowedToPlayFromLibraryTopUntilEndOfTurn
                 .addAll(this.playersAllowedToPlayFromLibraryTopUntilEndOfTurn);

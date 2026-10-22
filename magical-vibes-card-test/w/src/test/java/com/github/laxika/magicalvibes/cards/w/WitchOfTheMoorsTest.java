@@ -194,9 +194,9 @@ class WitchOfTheMoorsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.handleMultiplePermanentsChosen(player2, List.of(gd.playerBattlefields.get(player2.getId()).stream()
+        harness.handlePermanentChosen(player2, gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(sacrificed.getId()))
-                .findFirst().orElseThrow().getId()));
+                .findFirst().orElseThrow().getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(sacrificed);
         assertThat(gd.playerBattlefields.get(player2.getId()))

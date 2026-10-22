@@ -234,6 +234,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setLibrary(player1, List.of(new WildMagicSorcerer(), new WildMagicSorcerer()));
         harness.setLibrary(player2, List.of(new WildMagicSorcerer(), new WildMagicSorcerer()));
+        harness.setHand(player2, List.of());
         harness.castFromExile(player1, firstSpell.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

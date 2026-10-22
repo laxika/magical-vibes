@@ -12,21 +12,17 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomHandCardAndPlayEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -43,14 +39,15 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
     private final BattlefieldEntryService battlefieldEntryService;
     private final CardRevealService cardRevealService;
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final TriggerCollectionService triggerCollectionService;
     @Autowired
     @Lazy
     private SplitCardCastSupport splitCardCastSupport;
+    @Autowired
+    @Lazy
+    private LibraryChoiceHandlerService libraryChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -106,31 +103,19 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
             }
         } else {
             // Non-land — cast without paying mana cost if able
+            if (!libraryChoiceHandlerService.canCastRevealedFromHandWithoutPaying(gameData, targetPlayerId, revealed)) {
+                gameLogService.append(gameData, GameLog.builder().card(revealed)
+                        .text(" can't be cast and stays in " + playerName + "'s hand.").build());
+                log.info("Game {} - {} can't be cast (Wild Evocation), stays in hand", gameData.id, revealed.getName());
+                return;
+            }
             StackEntryType spellType = playerInteractionSupport.mapCardTypeToSpellType(revealed);
             List<CardEffect> spellEffects = new ArrayList<>(revealed.getEffects(EffectSlot.SPELL));
 
             if (EffectResolution.needsTarget(revealed)) {
                 // Targeted spell — check for valid targets
-                Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(revealed);
-                List<UUID> validTargets = new ArrayList<>();
-                if (allowedTargets.contains(TargetType.PERMANENT)) {
-                    for (UUID pid : gameData.orderedPlayerIds) {
-                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                        if (battlefield == null) continue;
-                        for (Permanent p : battlefield) {
-                            if (revealed.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                                if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                                    validTargets.add(p.getId());
-                                }
-                            } else if (gameQueryService.isCreature(gameData, p)) {
-                                validTargets.add(p.getId());
-                            }
-                        }
-                    }
-                }
-                if (allowedTargets.contains(TargetType.PLAYER)) {
-                    validTargets.addAll(gameData.orderedPlayerIds);
-                }
+                List<UUID> validTargets = libraryChoiceHandlerService.legalTargetsForCastWithoutPaying(
+                        gameData, targetPlayerId, revealed);
 
                 if (validTargets.isEmpty()) {
                     // Can't cast — card stays in hand

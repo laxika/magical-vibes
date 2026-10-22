@@ -107,9 +107,9 @@ class WretchedAnuridTest extends BaseCardTest {
         var anurid = harness.addToBattlefieldAndReturn(player1, new WretchedAnurid());
         harness.setHand(player1, List.of(new GlorySeeker(), new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
 

@@ -77,6 +77,7 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
             permanentCounterSupport.notifyCountersPlaced(
                     gameData, entry, source, amount, CounterType.MINUS_ONE_MINUS_ONE);
         }
+        gameData.permanentsWithCountersPutThisTurn.add(source.getId());
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets " + amount + " " + counterLabel + " counter(s).").build());
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), amount, counterLabel);
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, source, entry.getControllerId());

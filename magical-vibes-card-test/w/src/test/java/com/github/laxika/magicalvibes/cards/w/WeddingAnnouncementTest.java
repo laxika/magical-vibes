@@ -127,12 +127,14 @@ class WeddingAnnouncementTest extends BaseCardTest {
         Permanent announcement = harness.addToBattlefieldAndReturn(player1, new WeddingAnnouncement());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveEndStepTrigger();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            resolveEndStepTrigger();
 
-        assertThat(announcement.getCounterCount(CounterType.INVITATION)).isEqualTo(1);
-        assertThat(countPermanents(player1, "Human")).isEqualTo(1);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.creaturesAttackedWithThisTurn.get(player1.getId())).containsExactly(attacker.getId());
+            assertThat(announcement.getCounterCount(CounterType.INVITATION)).isEqualTo(1);
+            assertThat(countPermanents(player1, "Human")).isEqualTo(1);
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+            assertThat(gd.creaturesAttackedWithThisTurn.get(player1.getId())).containsExactly(attacker.getId());
+        });
     }
 
     @Test

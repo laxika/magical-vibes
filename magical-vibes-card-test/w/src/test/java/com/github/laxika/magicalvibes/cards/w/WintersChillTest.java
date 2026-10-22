@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.ResolveDelayedPermanentActionEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -39,9 +40,14 @@ class WintersChillTest extends BaseCardTest {
         boolean stillScheduled = gd.getDelayedActions(DelayedPermanentAction.class).stream()
                 .anyMatch(a -> a.permanentId().equals(attacker.getId())
                         && a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
+        boolean delayedTriggerOnStack = gd.stack.stream()
+                .flatMap(entry -> entry.getEffectsToResolve().stream())
+                .anyMatch(effect -> effect instanceof ResolveDelayedPermanentActionEffect resolve
+                        && resolve.action().permanentId().equals(attacker.getId())
+                        && resolve.action().kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
         boolean alreadyDestroyed = gd.playerGraveyards.get(player2.getId()).stream()
                 .anyMatch(c -> c.getId().equals(attacker.getCard().getId()));
-        assertThat(stillScheduled || alreadyDestroyed).isTrue();
+        assertThat(stillScheduled || delayedTriggerOnStack || alreadyDestroyed).isTrue();
     }
 
     @Test

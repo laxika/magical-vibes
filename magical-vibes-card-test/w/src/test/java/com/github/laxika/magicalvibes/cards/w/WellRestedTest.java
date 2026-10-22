@@ -201,6 +201,8 @@ class WellRestedTest extends BaseCardTest {
         harness.performUntapStep(player1);
         resolveAllTriggers();
         creature.tap();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         resolveAllTriggers();

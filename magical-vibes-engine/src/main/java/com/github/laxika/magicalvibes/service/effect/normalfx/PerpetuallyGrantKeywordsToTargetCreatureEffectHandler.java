@@ -60,11 +60,8 @@ public class PerpetuallyGrantKeywordsToTargetCreatureEffectHandler implements No
             if (grant.triggeredAbilitySlot() != null) {
                 addPerpetualTriggeredAbility(gameData, cardId, grant.triggeredAbilitySlot(),
                         grant.triggeredAbility());
-                if (!target.getPersistentTriggeredEffects(grant.triggeredAbilitySlot())
-                        .contains(grant.triggeredAbility())) {
-                    target.addPersistentTriggeredEffect(grant.triggeredAbilitySlot(),
-                            grant.triggeredAbility());
-                }
+                target.addPersistentTriggeredEffect(grant.triggeredAbilitySlot(),
+                        grant.triggeredAbility());
             }
         }
     }
@@ -78,9 +75,7 @@ public class PerpetuallyGrantKeywordsToTargetCreatureEffectHandler implements No
                         updated.put(existingSlot, new ArrayList<>(effects)));
             }
             List<CardEffect> effects = updated.computeIfAbsent(slot, ignoredSlot -> new ArrayList<>());
-            if (!effects.contains(triggeredAbility)) {
-                effects.add(triggeredAbility);
-            }
+            effects.add(triggeredAbility);
             updated.replaceAll((existingSlot, slotEffects) -> List.copyOf(slotEffects));
             return Map.copyOf(updated);
         });

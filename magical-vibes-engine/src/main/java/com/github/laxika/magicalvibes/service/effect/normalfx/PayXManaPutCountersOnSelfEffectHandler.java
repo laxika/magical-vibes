@@ -74,7 +74,7 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
             UUID selfId = e.useTriggeringPermanent() && entry.getTriggeringPermanentId() != null
                     ? entry.getTriggeringPermanentId()
                     : entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-            if (e.useTriggeringPermanent()) {
+            if (e.reflexive()) {
                 if (selfId != null) {
                     gameData.enqueueTrigger(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,

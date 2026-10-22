@@ -21,7 +21,7 @@ public class WidowsBite extends Card {
         addEffect(EffectSlot.SPELL, new TeamworkCost(3));
 
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
+        addEffect(EffectSlot.SPELL, ChooseOneEffect.allWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains deathtouch until end of turn",
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),

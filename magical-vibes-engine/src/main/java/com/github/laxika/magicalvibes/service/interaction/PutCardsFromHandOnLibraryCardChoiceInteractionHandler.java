@@ -195,6 +195,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         log.info("Game {} - {} swapped {} hand card(s) for {} library card(s)",
                 gameData.id, player.getUsername(), setAside.size(), moved);
 
+        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, setAside.size());
         if (setAside.size() > 1) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(playerId,
                     List.copyOf(setAside), false, playerId,
@@ -222,6 +223,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             }
         }
         LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moved);
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " shuffles "
                 + moved + " card(s) from their hand into their library."));
@@ -253,6 +255,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         } else {
             deck.addAll(moving);
         }
+        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moving.size());
 
         String end = onTop ? "top" : "bottom";
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts "

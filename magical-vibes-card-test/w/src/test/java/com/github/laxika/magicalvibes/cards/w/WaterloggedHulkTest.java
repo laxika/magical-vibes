@@ -268,7 +268,7 @@ class WaterloggedHulkTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(gondola.isAttacking()).isTrue();
         assertThat(gondola.isTapped()).isFalse();

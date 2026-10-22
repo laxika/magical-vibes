@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.KinshipEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class KinshipHandler implements MayEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
+    private final KinshipEffectHandler kinshipEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +45,19 @@ public class KinshipHandler implements MayEffectHandlerBean {
                 .filter(e -> e instanceof KinshipEffect)
                 .map(e -> (KinshipEffect) e)
                 .findFirst().orElse(null);
+        if (kinship != null && kinship.lookStep()) {
+            if (accepted) {
+                kinshipEffectHandler.lookAtTopCard(gameData, ability.controllerId(), ability.sourceCard(),
+                        ability.sourcePermanentId(), ability.sourcePermanentSnapshot(), kinship);
+            } else {
+                gameLogService.append(gameData, GameLog.text(player.getUsername()
+                        + " chooses not to look at the top card of their library."));
+            }
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (kinship != null) {
             if (accepted) {
                 List<Card> deck = gameData.playerDecks.get(ability.controllerId());

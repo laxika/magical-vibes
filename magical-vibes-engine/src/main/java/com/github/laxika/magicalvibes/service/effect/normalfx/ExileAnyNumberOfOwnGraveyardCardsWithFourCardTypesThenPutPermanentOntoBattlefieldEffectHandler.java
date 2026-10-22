@@ -121,10 +121,7 @@ public class ExileAnyNumberOfOwnGraveyardCardsWithFourCardTypesThenPutPermanentO
         if (graveyard == null) {
             return List.of();
         }
-        UUID sourceCardId = entry.getCard().getId();
-        return graveyard.stream()
-                .filter(card -> !card.getId().equals(sourceCardId))
-                .toList();
+        return List.copyOf(graveyard);
     }
 
     private List<Card> cardsStillInGraveyard(GameData gameData, UUID controllerId, List<UUID> cardIds) {

@@ -37,7 +37,7 @@ public class EachPlayerMaySearchLibraryForCardsToHandEffectHandler implements No
         EachPlayerMaySearchLibraryForCardsToHandEffect search = (EachPlayerMaySearchLibraryForCardsToHandEffect) effect;
         int count = amountEvaluationService.evaluate(gameData, search.count(),
                 AmountContext.forStackEntry(entry, null));
-        if (count <= 0) {
+        if (count < 0) {
             return;
         }
 

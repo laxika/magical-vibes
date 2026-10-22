@@ -37,11 +37,6 @@ public class ExchangeCardFromOutsideGameWithHandEffectHandler implements NormalE
         ExchangeCardFromOutsideGameWithHandEffect exchange =
                 (ExchangeCardFromOutsideGameWithHandEffect) effect;
         UUID controllerId = entry.getControllerId();
-        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
-        if (hand.isEmpty()) {
-            return;
-        }
-
         List<Card> matchingCards = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId).stream()
                 .filter(card -> exchange.filter() == null
                         || predicateEvaluationService.matchesCardPredicate(

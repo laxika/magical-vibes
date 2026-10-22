@@ -166,12 +166,12 @@ class WildDefianceTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new NaturalAffinity(), new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0);
         resolveAllTriggers();
         assertThat(gqs.isCreature(gd, land)).isTrue();
 
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, land.getId());
 
         assertThat(gd.stack).hasSize(2);

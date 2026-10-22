@@ -40,8 +40,24 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         boolean underOwnersControl,
         boolean randomlyReturnTwoAndPutRestOnBottom,
         AnimatePermanentsEffect entryAnimation,
-        Condition entryAnimationCondition
+        Condition entryAnimationCondition,
+        boolean permanentHaste
 ) implements AggregateManaValueTargetEffect {
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+            boolean fromBattlefieldThisTurn, boolean enterTapped, DynamicAmount dynamicMaxTargets,
+            int maxTotalManaValue, DynamicAmount dynamicMaxTotalManaValue, CardColor grantColor,
+            CardSubtype grantSubtype, CounterType counterType, int counterCount, GraveyardSearchScope source,
+            boolean singleGraveyard, boolean grantHaste, boolean sacrificeAtEndStep, int minTargets,
+            int sacrificeAtEndStepIfManaValueAtLeast, boolean attachToSourceHost, boolean underOwnersControl,
+            boolean randomlyReturnTwoAndPutRestOnBottom, AnimatePermanentsEffect entryAnimation,
+            Condition entryAnimationCondition) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets, maxTotalManaValue,
+                dynamicMaxTotalManaValue, grantColor, grantSubtype, counterType, counterCount, source,
+                singleGraveyard, grantHaste, sacrificeAtEndStep, minTargets, sacrificeAtEndStepIfManaValueAtLeast,
+                attachToSourceHost, underOwnersControl, randomlyReturnTwoAndPutRestOnBottom, entryAnimation,
+                entryAnimationCondition, false);
+    }
 
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
             boolean fromBattlefieldThisTurn, boolean enterTapped, DynamicAmount dynamicMaxTargets,
@@ -63,7 +79,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 enterTapped, dynamicMaxTargets, maxTotalManaValue, dynamicMaxTotalManaValue, grantColor,
                 grantSubtype, counterType, counterCount, source, singleGraveyard, grantHaste, sacrificeAtEndStep,
                 minTargets, sacrificeAtEndStepIfManaValueAtLeast, attachToSourceHost, underOwnersControl,
-                randomlyReturnTwoAndPutRestOnBottom, animation, condition);
+                randomlyReturnTwoAndPutRestOnBottom, animation, condition, permanentHaste);
     }
 
     /** Creates the X-scaled form used by Return to the Ranks. */
@@ -237,7 +253,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean underOwnersControl,
                                                               boolean randomlyReturnTwoAndPutRestOnBottom,
                                                               AnimatePermanentsEffect entryAnimation,
-                                                              Condition entryAnimationCondition) {
+                                                              Condition entryAnimationCondition,
+                                                              boolean permanentHaste) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -272,6 +289,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.randomlyReturnTwoAndPutRestOnBottom = randomlyReturnTwoAndPutRestOnBottom;
         this.entryAnimation = entryAnimation;
         this.entryAnimationCondition = entryAnimationCondition;
+        this.permanentHaste = permanentHaste;
     }
 
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
@@ -408,12 +426,16 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.ALL_GRAVEYARDS, true, grantHaste, sacrificeAtEndStep);
     }
 
-    /** Creates a mandatory single-card return from your graveyard with haste and a conditional end-step sacrifice. */
+    /**
+     * Creates a mandatory single-card return from your graveyard where the card gains haste with no stated
+     * duration (so it keeps it, CR 611.2a) and is sacrificed at the end step when its mana value is high enough.
+     */
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromControllerGraveyardWithHasteAndConditionalSacrifice(
             CardPredicate filter, int minimumManaValue) {
         return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 filter, 1, false, false, null, 0, null, null, null, null, 0,
-                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, true, true, false, 1, minimumManaValue);
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, true, true, false, 1, minimumManaValue,
+                false, false, false, null, null, true);
     }
 
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect withinTotalManaValue(CardPredicate filter, DynamicAmount maxTotalManaValue, boolean grantHasteUntilEndOfTurn) {

@@ -56,10 +56,11 @@ class WillbenderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0, onlyLand.getId());
-        harness.passPriority(player1);
+        harness.passBothPriorities();
+        var triggerId = gd.stack.getLast().getTargetableId();
 
         turnFaceUp(willbender);
-        harness.handlePermanentChosen(player2, riders.getId());
+        harness.handlePermanentChosen(player2, triggerId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -96,9 +97,10 @@ class WillbenderTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sorcerer),
                 null, player2.getId());
         harness.passPriority(player1);
+        var abilityId = gd.stack.getLast().getTargetableId();
 
         turnFaceUp(willbender);
-        resolveRetargetingTo(sorcerer.getCard().getId(), player1.getId());
+        resolveRetargetingTo(abilityId, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -115,10 +117,11 @@ class WillbenderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0, originalLand.getId());
-        harness.passPriority(player1);
+        harness.passBothPriorities();
+        var triggerId = gd.stack.getLast().getTargetableId();
 
         turnFaceUp(willbender);
-        resolveRetargetingTo(avalancheRiders.getId(), newLand.getId());
+        resolveRetargetingTo(triggerId, newLand.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(newLand);

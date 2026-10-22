@@ -40,8 +40,6 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffectHandler
             return;
         }
 
-        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -53,6 +51,9 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffectHandler
         if (validIndices.isEmpty()) {
             return;
         }
+
+        List<Card> revealed = validIndices.stream().map(hand::get).toList();
+        cardRevealService.revealMatchingHandCardsToAllPlayers(gameData, targetPlayerId, revealed);
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualTargetCardChoice(
                 entry.getControllerId(), targetPlayerId, validIndices,

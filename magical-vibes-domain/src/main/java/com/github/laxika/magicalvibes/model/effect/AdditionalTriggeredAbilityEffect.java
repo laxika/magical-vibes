@@ -18,8 +18,20 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                                boolean combatDamageToPlayerOnly,
                                                boolean controlledCreatureDealtDamageOnly,
                                                boolean permanentTurnsFaceUpOnly,
-                                               boolean drawCauseOnly)
+                                               boolean drawCauseOnly,
+                                               boolean controllerAttackersOnly)
         implements CardEffect {
+
+    public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
+                                             boolean attackOnly, boolean includeSourcePermanent,
+                                             boolean allControllers, boolean instantSorceryCastOrCopyOnly,
+                                             boolean allyCreatureBecomesTarget, boolean combatDamageToPlayerOnly,
+                                             boolean controlledCreatureDealtDamageOnly,
+                                             boolean permanentTurnsFaceUpOnly, boolean drawCauseOnly) {
+        this(sourcePredicate, condition, attackOnly, includeSourcePermanent, allControllers,
+                instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget, combatDamageToPlayerOnly,
+                controlledCreatureDealtDamageOnly, permanentTurnsFaceUpOnly, drawCauseOnly, false);
+    }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                              boolean attackOnly, boolean includeSourcePermanent,
@@ -68,9 +80,11 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
         this(sourcePredicate, condition, false, includeSourcePermanent, allControllers, false);
     }
 
+    /** Attack triggers caused only by a creature the effect's controller controls attacking (Wulfgar of Icewind Dale). */
     public static AdditionalTriggeredAbilityEffect forAttackTriggers(
             PermanentPredicate sourcePredicate, Condition condition) {
-        return new AdditionalTriggeredAbilityEffect(sourcePredicate, condition, true, false, false, false);
+        return new AdditionalTriggeredAbilityEffect(sourcePredicate, condition, true, true, false, false,
+                false, false, false, false, false, true);
     }
 
     public static AdditionalTriggeredAbilityEffect forInstantOrSorceryCastOrCopy() {

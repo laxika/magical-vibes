@@ -15,7 +15,7 @@ import java.util.Set;
 public class WeaponsManufacturing extends Card {
 
     public WeaponsManufacturing() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
                 new CreateTokenEffect(
                         CardType.ARTIFACT, 1, "Munitions", 0, 0, null, null,
                         List.of(), Set.of(), Set.of(), false, false,
