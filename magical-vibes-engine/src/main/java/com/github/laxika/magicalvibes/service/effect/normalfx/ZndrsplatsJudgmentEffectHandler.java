@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /** Resolves the per-player choices of Zndrsplt's Judgment. */
 @Component
@@ -26,6 +27,7 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ZndrsplatsJudgmentActionEffectHandler actionEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,8 +36,8 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginModeChoice(gameData, apnapPlayers(gameData), List.of(), List.of(), List.of(),
-                entry.getCard().getName());
+        beginModeChoice(gameData, entry.getControllerId(), apnapPlayers(gameData), List.of(), List.of(),
+                List.of(), entry.getCard().getName());
     }
 
     public void completeModeChoice(GameData gameData, String choice,
@@ -45,18 +47,19 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
         }
 
         List<UUID> remaining = new ArrayList<>(context.remainingPlayerIds());
+        UUID designatedPlayerId = remaining.removeFirst();
         List<UUID> chosen = new ArrayList<>(context.chosenPlayerIds());
         List<UUID> friends = new ArrayList<>(context.friendPlayerIds());
         List<UUID> foes = new ArrayList<>(context.foePlayerIds());
-        UUID choosingPlayerId = context.choosingPlayerId();
-        chosen.add(choosingPlayerId);
+        chosen.add(designatedPlayerId);
         if (ChoiceContext.ZndrsplatsJudgmentChoice.FRIEND.equals(choice)) {
-            friends.add(choosingPlayerId);
+            friends.add(designatedPlayerId);
         } else {
-            foes.add(choosingPlayerId);
+            foes.add(designatedPlayerId);
         }
 
-        beginModeChoice(gameData, remaining, chosen, friends, foes, context.sourceName());
+        beginModeChoice(gameData, context.choosingPlayerId(), remaining, chosen, friends, foes,
+                context.sourceName());
     }
 
     public void completeCreatureChoice(GameData gameData, UUID creatureId,
@@ -83,11 +86,13 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
         beginCreatureChoice(gameData, remaining, chosen, context.sourceCardName());
     }
 
-    private void beginModeChoice(GameData gameData, List<UUID> remainingPlayerIds,
+    private void beginModeChoice(GameData gameData, UUID controllerId, List<UUID> remainingPlayerIds,
                                  List<UUID> chosenPlayerIds, List<UUID> friendPlayerIds,
                                  List<UUID> foePlayerIds, String sourceName) {
         if (remainingPlayerIds.isEmpty()) {
-            List<PermanentChoiceContext.ZndrsplatsJudgmentSelection> selections = chosenPlayerIds.stream()
+            List<PermanentChoiceContext.ZndrsplatsJudgmentSelection> selections = Stream.concat(
+                            chosenPlayerIds.stream().filter(friendPlayerIds::contains),
+                            chosenPlayerIds.stream().filter(playerId -> !friendPlayerIds.contains(playerId)))
                     .map(playerId -> new PermanentChoiceContext.ZndrsplatsJudgmentSelection(
                             playerId, friendPlayerIds.contains(playerId), null))
                     .toList();
@@ -95,14 +100,10 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        UUID choosingPlayerId = remainingPlayerIds.getFirst();
-        List<UUID> nextRemaining = remainingPlayerIds.size() == 1
-                ? List.of()
-                : List.copyOf(remainingPlayerIds.subList(1, remainingPlayerIds.size()));
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
-                choosingPlayerId, null, null,
+                controllerId, null, null,
                 new ChoiceContext.ZndrsplatsJudgmentChoice(
-                        choosingPlayerId, nextRemaining, chosenPlayerIds,
+                        controllerId, remainingPlayerIds, chosenPlayerIds,
                         friendPlayerIds, foePlayerIds, sourceName),
                 ChoiceContext.ZndrsplatsJudgmentChoice.OPTIONS,
                 sourceName + " - Choose friend or foe."));
@@ -115,6 +116,9 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
         if (remainingSelections.isEmpty()) {
             finish(gameData, chosenSelections);
             return;
+        }
+        if (!remainingSelections.getFirst().friend()) {
+            chosenSelections = performFriendActions(gameData, chosenSelections);
         }
 
         PermanentChoiceContext.ZndrsplatsJudgmentSelection selection = remainingSelections.getFirst();
@@ -139,6 +143,28 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
             playerInputService.beginPermanentChoice(gameData, selection.playerId(), creatureIds,
                     sourceName + " - Choose a creature you control.");
         }
+    }
+
+    /**
+     * Each friend's sentence is completed before any foe chooses a creature, so the friends' token copies are
+     * created as soon as every friend has chosen. Returns the selections that are still pending.
+     */
+    private List<PermanentChoiceContext.ZndrsplatsJudgmentSelection> performFriendActions(
+            GameData gameData, List<PermanentChoiceContext.ZndrsplatsJudgmentSelection> selections) {
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry == null) {
+            throw new IllegalStateException("Zndrsplt's Judgment resolution is not resumable");
+        }
+        List<PermanentChoiceContext.ZndrsplatsJudgmentSelection> pending = new ArrayList<>();
+        for (PermanentChoiceContext.ZndrsplatsJudgmentSelection selection : selections) {
+            if (selection.friend() && selection.creatureId() != null) {
+                actionEffectHandler.resolve(gameData, pendingEntry, new ZndrsplatsJudgmentActionEffect(
+                        selection.playerId(), selection.creatureId(), true));
+            } else {
+                pending.add(selection);
+            }
+        }
+        return pending;
     }
 
     private void finish(GameData gameData,

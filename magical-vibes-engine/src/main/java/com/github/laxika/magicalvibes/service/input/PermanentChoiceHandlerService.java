@@ -890,8 +890,8 @@ public class PermanentChoiceHandlerService {
             avenCourierEffectHandler.completeReferenceChoice(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.RemoveCounterFromChosenOwnPermanent removeCounter) {
             removeCounterFromChosenOwnPermanentEffectHandler.completeChoice(gameData, permanentId, removeCounter);
-        } else if (context instanceof PermanentChoiceContext.TurnOwnCreatureFaceUp) {
-            turnOwnCreatureFaceUpEffectHandler.completeChoice(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.TurnOwnCreatureFaceUp faceUp) {
+            turnOwnCreatureFaceUpEffectHandler.completeChoice(gameData, permanentId, faceUp.creaturesOnly());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);

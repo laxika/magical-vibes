@@ -25,15 +25,19 @@ class ZurgoStormrenderTest extends BaseCardTest {
     void attackingCreatesMobilizedToken() {
         addZurgoReady(player1);
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         Permanent token = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isTrue();
+        assertThat(token.isAttacking()).isTrue();
+        // CR 508.4: a creature put onto the battlefield attacking is "attacking" but never "attacked".
+        assertThat(token.isAttackedThisTurn()).isFalse();
     }
 
     @Test

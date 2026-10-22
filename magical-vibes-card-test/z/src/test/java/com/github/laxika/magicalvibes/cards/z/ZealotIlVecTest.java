@@ -152,10 +152,10 @@ class ZealotIlVecTest extends BaseCardTest {
         Permanent victim = addDefenderCreature();
         harness.setLife(player2, 20);
 
-        advanceToUnblockedMay(victim);
-        harness.handleMayAbilityChosen(player1, true);
         harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
         harness.passBothPriorities();
+        advanceToUnblockedMay(victim);
+        harness.handleMayAbilityChosen(player1, true);
         harness.resolveCombatDamage();
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);

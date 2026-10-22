@@ -127,9 +127,11 @@ class ZulaportDuelistTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castCreature(player1, 0, target.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);

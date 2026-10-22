@@ -127,7 +127,9 @@ class ZodiarkUmbralGodTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GaiusVanBaelsar()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "Each player sacrifices a nontoken creature");
         resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player2, List.of(zodiark.getId()));
 

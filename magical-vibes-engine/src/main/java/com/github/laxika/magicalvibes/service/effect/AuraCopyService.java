@@ -178,6 +178,20 @@ public class AuraCopyService {
                 Permanent copy = gameQueryService.findPermanentById(gameData, floating.affectedPermanentId());
                 if (copy != null && copy.isCopyUntilEndOfTurn()) {
                     String copyName = copy.getCard().getName();
+                    Permanent newerTarget = gameData.floatingEffects.stream()
+                            .filter(other -> other.effect() instanceof BecomeCopyOfTargetCreatureWhileTargetTappedEffect)
+                            .filter(other -> copy.getId().equals(other.affectedPermanentId()))
+                            .filter(other -> other.sourcePermanentId() != null)
+                            .max(Comparator.comparingLong(FloatingContinuousEffect::timestamp))
+                            .map(other -> gameQueryService.findPermanentById(gameData, other.sourcePermanentId()))
+                            .filter(Permanent::isTapped)
+                            .orElse(null);
+                    if (newerTarget != null) {
+                        permanentCopierService.applyCloneCopy(copy, newerTarget, null, null);
+                        log.info("Game {} - {} keeps copying {} while that creature remains tapped",
+                                gameData.id, copyName, newerTarget.getCard().getName());
+                        continue;
+                    }
                     copy.revertEndOfTurnCopy();
                     gameLogService.append(gameData, GameLog.text(
                             copyName + " is no longer a copy and reverts to " + copy.getCard().getName() + "."));

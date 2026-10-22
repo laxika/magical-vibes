@@ -154,13 +154,13 @@ class ZurgoSVanguardTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             resolveAllTriggers();
-        });
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).contains(battle.getId());
-        harness.handlePermanentChosen(player1, battle.getId());
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.validPermanentIds()).contains(battle.getId());
+            harness.handlePermanentChosen(player1, battle.getId());
+        });
 
         Permanent token = findPermanent(player1, "Warrior");
         assertThat(token.isAttacking()).isTrue();

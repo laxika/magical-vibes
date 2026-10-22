@@ -18,6 +18,6 @@ public class ZimoneMysteryUnraveler extends Card {
                 new NthAbilityResolutionThisTurn(1), ManifestDreadEffect.forController()));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ConditionalEffect.unless(
                 new NotCondition(new NthAbilityResolutionThisTurn(1)),
-                new MayEffect(new TurnOwnCreatureFaceUpEffect(), "Turn a permanent you control face up?")));
+                new MayEffect(TurnOwnCreatureFaceUpEffect.anyPermanent(), "Turn a permanent you control face up?")));
     }
 }

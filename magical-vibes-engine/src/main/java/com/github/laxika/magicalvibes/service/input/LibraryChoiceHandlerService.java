@@ -633,15 +633,7 @@ public class LibraryChoiceHandlerService {
                         } else {
                             // The delayed trigger belongs to the ability that searched (e.g. Nahiri, the
                             // Harbinger's -8), not to the fetched permanent, even after control changes.
-                            Permanent searchSource = librarySearch.sourcePermanentId() == null ? null
-                                    : gameQueryService.findPermanentById(gameData, librarySearch.sourcePermanentId());
-                            Card searchSourceCard = searchSource != null ? searchSource.getCard() : null;
-                            if (searchSourceCard == null && librarySearch.sourcePermanentId() != null
-                                    && gameData.pendingEffectResolutionEntry != null) {
-                                // The source already left the battlefield (Nahiri's -8 at 8 loyalty): the
-                                // delayed trigger still belongs to its ability.
-                                searchSourceCard = gameData.pendingEffectResolutionEntry.getCard();
-                            }
+                            Card searchSourceCard = delayedTriggerSourceCard(gameData, librarySearch);
                             gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
                                 DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
                                 false, null, librarySearch.returnToHandAtControllerEndStepId(), null,
@@ -651,7 +643,15 @@ public class LibraryChoiceHandlerService {
                                 searchSourceCard != null ? librarySearch.sourcePermanentId() : null));
                         }
                     } else if (exileAtEndStep) {
-                        gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                        // CR 603.7e: the delayed exile is controlled by the searching ability's controller as it
+                        // resolved and keeps that ability's source, even if the fetched permanent changes control.
+                        Card searchSourceCard = delayedTriggerSourceCard(gameData, librarySearch);
+                        gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                                DelayedPermanentActionKind.EXILE_AT_END_STEP,
+                                false, null, null, null, false,
+                                searchSourceCard,
+                                searchSourceCard != null ? playerId : null,
+                                searchSourceCard != null ? librarySearch.sourcePermanentId() : null));
                     }
 
                     if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER && librarySearch.attachToPlayerId() != null) {
@@ -2743,6 +2743,21 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
+    /**
+     * The card of the ability that searched the library, which keeps the source of any delayed trigger it creates.
+     * If that source has already left the battlefield, the card of the resolving entry is used instead.
+     */
+    private Card delayedTriggerSourceCard(GameData gameData, LibrarySearchParams librarySearch) {
+        if (librarySearch.sourcePermanentId() == null) {
+            return null;
+        }
+        Permanent searchSource = gameQueryService.findPermanentById(gameData, librarySearch.sourcePermanentId());
+        if (searchSource != null) {
+            return searchSource.getCard();
+        }
+        return gameData.pendingEffectResolutionEntry != null ? gameData.pendingEffectResolutionEntry.getCard() : null;
+    }
+
     private void finishSearchAndResume(GameData gameData) {
         if (finishPortentOfCalamity(gameData)) {
             return;
@@ -2947,17 +2962,22 @@ public class LibraryChoiceHandlerService {
             landEquilibriumSupport.applyPlan(gameData, puttingPlayerId, perm, landEquilibriumPlan, null);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);
+            StackEntry creatingEntry = gameData.pendingEffectResolutionEntry;
             if (returnToHandAtEndStep) {
                 // The delayed return belongs to the ability that searched (Nahiri, the Harbinger's -8),
                 // not to the fetched permanent, even after control changes or the source has left.
-                StackEntry creatingEntry = gameData.pendingEffectResolutionEntry;
                 gameData.queueDelayedAction(creatingEntry == null || creatingEntry.getSourcePermanentId() == null
                         ? new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
                         : new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
                                 false, null, null, null, false, creatingEntry.getCard(),
                                 creatingEntry.getControllerId(), creatingEntry.getSourcePermanentId()));
             } else if (exileAtEndStep) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                // CR 603.7e: the delayed exile keeps the searching ability's source and controller.
+                gameData.queueDelayedAction(creatingEntry == null || creatingEntry.getSourcePermanentId() == null
+                        ? new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP)
+                        : new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
+                                false, null, null, null, false, creatingEntry.getCard(),
+                                creatingEntry.getControllerId(), creatingEntry.getSourcePermanentId()));
             }
             permanents.add(perm);
             placedCards.add(card);
@@ -3904,12 +3924,21 @@ public class LibraryChoiceHandlerService {
     private void resolveRevealChoiceSplitByType(GameData gameData, UUID controllerId, String playerName,
                                                 List<Card> selectedCards, List<Card> remainingCards,
                                                 CardType battlefieldType, boolean battlefieldTapped) {
+        // A land card that can't enter from the library (Grafdigger's Cage on a creature land) never leaves it,
+        // so the "creature cards go to your hand" instruction still finds it there.
+        List<Card> blockedCards = selectedCards.stream()
+                .filter(card -> card.hasType(battlefieldType))
+                .filter(card -> gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY))
+                .toList();
         List<Card> battlefieldCards = selectedCards.stream()
                 .filter(card -> card.hasType(battlefieldType))
+                .filter(card -> !blockedCards.contains(card))
                 .toList();
         List<Card> handCards = selectedCards.stream()
-                .filter(card -> !card.hasType(battlefieldType))
+                .filter(card -> !card.hasType(battlefieldType)
+                        || (blockedCards.contains(card) && card.hasType(CardType.CREATURE)))
                 .toList();
+        remainingCards.addAll(blockedCards.stream().filter(card -> !handCards.contains(card)).toList());
 
         // The rest go to the bottom before the revealed lands enter, so a land's "enter as a copy"
         // choice (CR 614.1c) is the last thing left when it opens.

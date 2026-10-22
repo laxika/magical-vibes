@@ -32,7 +32,7 @@ class ZoralineCosmosCallerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MultiGraveyardChoice).isFalse();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.assertLife(player1, 18);
@@ -61,7 +61,7 @@ class ZoralineCosmosCallerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MultiGraveyardChoice).isFalse();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -92,20 +92,21 @@ class ZoralineCosmosCallerTest extends BaseCardTest {
         addReturnMana();
 
         declareAttackers(player1, List.of(0));
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.passBothPriorities();
+        while (gd.interaction.activeInteraction() == null && !gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.assertInGraveyard(player1, "Barkform Harvester");
         assertThat(gd.stack).isNotEmpty();
-        harness.passBothPriorities();
-
-        assertThat(findPermanent(player1, "Barkform Harvester").getCounterCount(CounterType.FINALITY)).isEqualTo(1);
         for (int i = 0; i < 4 && !gd.stack.isEmpty(); i++) {
             harness.passBothPriorities();
         }
         assertThat(gd.stack).isEmpty();
+
+        assertThat(findPermanent(player1, "Barkform Harvester").getCounterCount(CounterType.FINALITY)).isEqualTo(1);
         harness.assertLife(player1, 19);
     }
 

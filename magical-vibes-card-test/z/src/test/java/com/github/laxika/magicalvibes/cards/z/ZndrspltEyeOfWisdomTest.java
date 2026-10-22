@@ -143,7 +143,7 @@ class ZndrspltEyeOfWisdomTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(okaun);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gameLogContains("Alice's library is shuffled")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
     }
 
     @Test

@@ -3187,7 +3187,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ContractualSafeguardReference() implements PermanentChoiceContext {}
     record ChooseCounterTypeOnControlledPermanentReference() implements PermanentChoiceContext {}
 
-    record TurnOwnCreatureFaceUp() implements PermanentChoiceContext {}
+    record TurnOwnCreatureFaceUp(boolean creaturesOnly) implements PermanentChoiceContext {}
 
     record PlotTriggerAnyTarget(Card plottedCard, UUID controllerId, List<CardEffect> effects)
             implements PermanentChoiceContext {}

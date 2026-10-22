@@ -107,7 +107,7 @@ class ZuranEnchanterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertNotInHand(player2, "Balduvian Bears");
         harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 

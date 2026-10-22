@@ -6188,11 +6188,31 @@ public class GameQueryService {
 
     private boolean usesPowerForLethalDamage(GameData gameData, Permanent creature) {
         StaticBonus bonus = computeStaticBonus(gameData, creature);
-        return !bonus.losesAllAbilities()
+        if (!bonus.losesAllAbilities()
                 && bonus.grantedEffects().stream()
                 .filter(LethalDamageModifierEffect.class::isInstance)
                 .map(LethalDamageModifierEffect.class::cast)
-                .anyMatch(LethalDamageModifierEffect::usesPowerForLethalDamage);
+                .anyMatch(LethalDamageModifierEffect::usesPowerForLethalDamage)) {
+            return true;
+        }
+        // A creature that loses all abilities loses its own abilities, not the static abilities of other
+        // permanents that affect it. A controller's "creatures you control" lethal-damage effect (Zilortha)
+        // therefore still applies to a creature enchanted by an Aura that removes its abilities.
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        if (controllerId == null || !isCreature(gameData, creature, controllerId)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .flatMap(source -> getActiveStaticEffects(gameData, source).stream())
+                .anyMatch(effect -> effect instanceof GrantEffectEffect grant
+                        && grant.scope() == GrantScope.ALL_OWN_CREATURES
+                        && grant.filter() == null
+                        && grant.effect() instanceof LethalDamageModifierEffect modifier
+                        && modifier.usesPowerForLethalDamage());
     }
 
     /**

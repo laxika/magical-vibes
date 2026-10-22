@@ -27,11 +27,11 @@ class ZealousGuardianTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.assertNotOnBattlefield(player1, "Zealous Guardian");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Zealous Guardian");
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

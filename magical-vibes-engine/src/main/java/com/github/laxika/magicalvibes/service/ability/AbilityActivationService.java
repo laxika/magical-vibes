@@ -2443,6 +2443,12 @@ public class AbilityActivationService {
         if (ability.isDiscardSourceAsSpecialAction()) return additionalGenericCost;
         additionalGenericCost += castingCostService.getActivatedAbilityActivationTax(
                 gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
+        int totalManaCost = manaCost.getManaValue() + xValue * manaCost.getXSymbolCount();
+        int battlefieldReduction = castingCostService.getActivatedAbilityCostReduction(
+                gameData, playerId, new Permanent(card), ability, null, List.of(),
+                Math.max(0, totalManaCost + additionalGenericCost - 1));
+        additionalGenericCost -= Math.min(battlefieldReduction,
+                Math.max(0, genericCost + xValue * manaCost.getXSymbolCount() + additionalGenericCost));
         AmountContext activationCostContext = new AmountContext(
                 playerId, null, null, xValue, 0, false, null, List.of(), card);
         for (CardEffect effect : ability.getEffects()) {
@@ -6620,7 +6626,7 @@ public class AbilityActivationService {
                 castingCostService.getActivatedAbilityCostReduction(
                         gameData, playerId, permanent, ability, targetId, targetIds,
                         Math.max(0, totalManaCost + additionalGenericCost - 1)),
-                genericCost);
+                genericCost + effectiveXValue * manaCost.getXSymbolCount());
         additionalGenericCost -= equipReduction;
         int battlefieldReduction = castingCostService.getActivatedAbilityActivationCostReduction(
                 gameData, permanent, ability,

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -50,13 +51,13 @@ public class ChooseOpponentCreatureThenBoostOthersEffectHandler implements Norma
             }
         }
 
-        if (creatureIds.isEmpty()) {
-            return;
-        }
-
         var context = new PermanentChoiceContext.ChooseOpponentCreatureThenBoostOthers(
                 entry.getSourcePermanentId(), entry.getCard(), controllerId,
                 choiceEffect.powerBoost(), choiceEffect.toughnessBoost());
+        if (creatureIds.isEmpty()) {
+            completeChoice(gameData, null, context);
+            return;
+        }
         if (creatureIds.size() == 1) {
             completeChoice(gameData, creatureIds.getFirst(), context);
             return;
@@ -67,20 +68,24 @@ public class ChooseOpponentCreatureThenBoostOthersEffectHandler implements Norma
                 entry.getCard().getName() + " — Choose a creature an opponent controls.");
     }
 
+    /**
+     * Applies the boost to every other creature, excluding the source card and, when one was
+     * chosen, the chosen creature. The ability resolves even if its source has already left the
+     * battlefield, and with no chosen creature (none an opponent controls) the boost still applies.
+     */
     public void completeChoice(GameData gameData, UUID chosenPermanentId,
                                PermanentChoiceContext.ChooseOpponentCreatureThenBoostOthers context) {
         Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
-        if (source == null || chosen == null) {
-            return;
+        if (source != null && chosenPermanentId != null) {
+            source.setChosenPermanentId(chosenPermanentId);
         }
-
-        source.setChosenPermanentId(chosenPermanentId);
-        var filter = new PermanentAllOfPredicate(List.of(
+        List<PermanentPredicate> predicates = new ArrayList<>(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
-                new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(chosenPermanentId))
-        ));
+                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
+        if (chosenPermanentId != null) {
+            predicates.add(new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(chosenPermanentId)));
+        }
+        var filter = new PermanentAllOfPredicate(predicates);
         boostAllCreaturesEffectHandler.resolve(gameData, new StackEntry(context.sourceCard(), context.controllerId()),
                 new BoostAllCreaturesEffect(context.powerBoost(), context.toughnessBoost(), filter));
     }

@@ -100,12 +100,11 @@ class ZahurGlorysPastTest extends BaseCardTest {
     @Test
     void canKeepTheSurveilledCardOnTop() {
         harness.addToBattlefield(player1, new ZahurGlorysPast());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Forest topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -151,13 +150,11 @@ class ZahurGlorysPastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZahurGlorysPast());
         harness.addToBattlefield(player1, new GrizzlyBears());
         killWithShock(player1, "Grizzly Bears");
-        Permanent zombie = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst().orElseThrow();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().isToken());
         harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, zombie.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

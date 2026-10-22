@@ -157,6 +157,9 @@ class ZagothMambaTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, mamba.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "TOP");
+
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, elemental.getId());
         resolveAllTriggers();

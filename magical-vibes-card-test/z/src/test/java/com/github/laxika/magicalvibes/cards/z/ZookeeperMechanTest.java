@@ -96,7 +96,7 @@ class ZookeeperMechanTest extends BaseCardTest {
         assertThat(mechan.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(mechan.getEffectivePower()).isEqualTo(1);
         assertThat(mechan.getEffectiveToughness()).isEqualTo(3);

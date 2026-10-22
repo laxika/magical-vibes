@@ -23,14 +23,18 @@ class ZurgoThundersDecreeTest extends BaseCardTest {
     void attackingCreatesTwoMobilizedTokens() {
         addCreatureReady(player1, new ZurgoThundersDecree());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = warriorTokens(player1);
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
+            // CR 508.4: a creature put onto the battlefield attacking is "attacking" but never "attacked".
+            assertThat(token.isAttackedThisTurn()).isFalse();
         });
     }
 
@@ -137,7 +141,9 @@ class ZurgoThundersDecreeTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
     }
 }

@@ -43,8 +43,8 @@ public class ZurzothChaosRider extends Card {
                         new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DEVIL)),
                         SequenceEffect.of(
                                 new DrawCardEffect(),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER, true),
                                 new DrawCardForDefendingPlayerEffect(),
+                                new DiscardEffect(1, DiscardRecipient.CONTROLLER, true),
                                 new DiscardEffect(1, DiscardRecipient.DEFENDING_PLAYER, true))));
     }
 }

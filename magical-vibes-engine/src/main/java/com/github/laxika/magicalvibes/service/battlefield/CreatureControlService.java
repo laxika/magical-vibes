@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -149,6 +150,34 @@ public class CreatureControlService {
     }
 
     /**
+     * Gives {@code newControllerId} control of each of the given permanents as one simultaneous
+     * event: every control effect is stamped before any permanent moves, then control is recomputed
+     * for all of them together (see {@link #recomputeControls}). Permanents that cannot be controlled
+     * by other players are skipped.
+     */
+    public void applyControlEffectSimultaneously(GameData gameData, UUID newControllerId,
+                                                 List<Permanent> targets, CardEffect wrappedEffect,
+                                                 EffectDuration duration, String sourceCardName) {
+        List<Permanent> stamped = new ArrayList<>();
+        for (Permanent target : targets) {
+            UUID currentControllerId = gameData.findControllerOf(target);
+            if (currentControllerId != null && !currentControllerId.equals(newControllerId)
+                    && gameQueryService.cantBeControlledByOtherPlayers(gameData, target)) {
+                continue;
+            }
+            FloatingContinuousEffect effect = gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), sourceCardName, null, newControllerId,
+                    wrappedEffect, target.getId(), null, null, duration, 0));
+            if (duration == EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN) {
+                gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
+                        effect.id(), newControllerId, gameData.turnNumber));
+            }
+            stamped.add(target);
+        }
+        recomputeControls(gameData, stamped);
+    }
+
+    /**
      * Exchanges control of two permanents as one simultaneous event (CR 701.12a). The caller has
      * already checked that both permanents may change controllers; both control effects are stamped
      * before either is recomputed, so a "can't be controlled by other players" ability that the first
@@ -231,22 +260,47 @@ public class CreatureControlService {
      * <p>No-ops if the permanent is not on any battlefield or control is unchanged.
      */
     public void recomputeControl(GameData gameData, Permanent permanent) {
-        UUID current = gameData.findControllerOf(permanent);
-        if (current == null) {
-            return;
+        recomputeControls(gameData, List.of(permanent));
+    }
+
+    /**
+     * Recomputes control of several permanents as one simultaneous event. Control-change triggers
+     * are collected for every changing permanent while all of them still sit on their previous
+     * controller's battlefield, so a permanent that is itself changing control still sees the other
+     * changes (Insurrection stealing Zidane and another creature at once makes Zidane trigger twice).
+     */
+    public void recomputeControls(GameData gameData, Collection<Permanent> permanents) {
+        List<ControlChange> changes = new ArrayList<>();
+        for (Permanent permanent : permanents) {
+            UUID current = gameData.findControllerOf(permanent);
+            if (current == null) {
+                continue;
+            }
+            UUID derived = gameData.deriveControllerOf(permanent.getId());
+            if (derived == null || derived.equals(current)) {
+                continue;
+            }
+            changes.add(new ControlChange(permanent, current, derived));
         }
-        UUID derived = gameData.deriveControllerOf(permanent.getId());
-        if (derived == null || derived.equals(current)) {
-            return;
+        if (triggerCollectionService != null) {
+            for (ControlChange change : changes) {
+                triggerCollectionService.checkOpponentGainsControlTriggers(
+                        gameData, change.permanent(), change.previousControllerId(), change.newControllerId());
+            }
         }
+        for (ControlChange change : changes) {
+            moveControl(gameData, change.permanent(), change.previousControllerId(), change.newControllerId());
+        }
+    }
+
+    private record ControlChange(Permanent permanent, UUID previousControllerId, UUID newControllerId) {
+    }
+
+    private void moveControl(GameData gameData, Permanent permanent, UUID current, UUID derived) {
         gameData.ringStates.replaceAll((playerId, ringState) ->
                 permanent.getId().equals(ringState.bearerId())
                         ? new RingState(ringState.level(), null)
                         : ringState);
-        if (triggerCollectionService != null) {
-            triggerCollectionService.checkOpponentGainsControlTriggers(
-                    gameData, permanent, current, derived);
-        }
         queueSelfControlLossTriggers(gameData, permanent, current);
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
         queueControlLossUnattachTriggers(gameData, permanent, current);

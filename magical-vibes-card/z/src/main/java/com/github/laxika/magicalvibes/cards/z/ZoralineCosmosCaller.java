@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -36,13 +37,14 @@ public class ZoralineCosmosCaller extends Card {
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .enterWithCounter(CounterType.FINALITY)
                 .enterWithCounterCount(1)
                 .build();
         var mayReturnPermanent = new MayPayManaEffect(
                 "{W}{B}",
                 2,
-                returnPermanent,
+                new QueueReflexiveAbilityEffect(returnPermanent),
                 "Pay {W}{B} and 2 life to return target nonland permanent card with mana value 3 or less from your graveyard to the battlefield with a finality counter on it?");
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mayReturnPermanent);
         addEffect(EffectSlot.ON_ATTACK, mayReturnPermanent);

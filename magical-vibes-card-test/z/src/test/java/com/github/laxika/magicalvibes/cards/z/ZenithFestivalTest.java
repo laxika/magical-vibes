@@ -136,6 +136,7 @@ class ZenithFestivalTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(exiled, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new ZenithFestival()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveSorcery(player1, 0, 1);
 

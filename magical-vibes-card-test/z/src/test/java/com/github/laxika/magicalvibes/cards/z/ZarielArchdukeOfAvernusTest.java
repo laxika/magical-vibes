@@ -252,14 +252,14 @@ class ZarielArchdukeOfAvernusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
         harness.setHand(player1, List.of(new BurningHands()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         gd.combatPhasesThisTurn = 1;
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             harness.handlePermanentChosen(player1, target.getId());
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
             harness.castInstant(player1, 0, target.getId());
             harness.passBothPriorities();
             harness.passBothPriorities();

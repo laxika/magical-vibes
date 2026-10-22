@@ -39,7 +39,7 @@ public class ZarielArchdukeOfAvernus extends Card {
                 +1,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
                 "+1: Creatures you control get +1/+0 and gain haste until end of turn."));
 
         Map<EffectSlot, CardEffect> tokenEffects =

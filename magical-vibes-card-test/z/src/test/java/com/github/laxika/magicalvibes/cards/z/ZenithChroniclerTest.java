@@ -120,6 +120,7 @@ class ZenithChroniclerTest extends BaseCardTest {
     @DisplayName("The same player can trigger again on a later turn")
     void resetsFirstMulticoloredSpellOnNewTurn() {
         harness.addToBattlefield(player1, new ZenithChronicler());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         int opponentHandBefore = gd.playerHands.get(player2.getId()).size();

@@ -5432,9 +5432,22 @@ public class TriggerCollectionService {
             }
 
             for (Permanent perm : watchers) {
+                if (watcherExcludesSacrificedSelf(sacrificedCard)
+                        && perm.getCard().getId().equals(sacrificedCard.getId())) {
+                    continue;
+                }
                 dispatchSlot(gameData, perm, controllerId, EffectSlot.ON_ANY_CREATURE_SACRIFICED, ctx);
             }
         }
+    }
+
+    /**
+     * "Whenever a player sacrifices another creature" (Zodiark, Umbral God) never sees the sacrifice
+     * of its own source, including the CR 603.10a look-back copy of a source that has already left.
+     */
+    private static boolean watcherExcludesSacrificedSelf(Card sacrificedCard) {
+        return sacrificedCard.getCardText() != null
+                && sacrificedCard.getCardText().toLowerCase(java.util.Locale.ROOT).contains("sacrifices another");
     }
 
     /**
@@ -5467,8 +5480,7 @@ public class TriggerCollectionService {
         // watcher triggers too (Carmen, Cruel Skymarcher sacrificing herself). Only its controller
         // could sacrifice it. "Sacrifices another permanent" watchers (Mazirek) exclude themselves.
         List<CardEffect> ownEffects = sacrificedCard.getEffects(EffectSlot.ON_ANY_PERMANENT_SACRIFICED);
-        boolean excludesSelf = sacrificedCard.getCardText() != null
-                && sacrificedCard.getCardText().toLowerCase(java.util.Locale.ROOT).contains("sacrifices another");
+        boolean excludesSelf = watcherExcludesSacrificedSelf(sacrificedCard);
         if (ownEffects != null && !ownEffects.isEmpty() && sacrificingPlayerId != null && !excludesSelf
                 && !gameData.anyPermanentMatches(p -> p.getCard().getId().equals(sacrificedCard.getId())
                         || p.getOriginalCard().getId().equals(sacrificedCard.getId()))) {
@@ -16182,13 +16194,26 @@ public class TriggerCollectionService {
             // Each effect in this slot is its own triggered ability (Nature's Wrath has two), so a
             // card whose entry matches both conditions is dispatched separately.
             for (CardEffect effect : effects) {
+                // "Whenever one or more permanents enter": a permanent entering in the same event as one
+                // this source's ability already triggered for joins that trigger instead of triggering again.
+                boolean batched = gameData.collectingSimultaneousCreatureEntryTriggers
+                        && isOncePerBatchRegistration(perm, EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, effect);
+                if (batched && gameData.simultaneousCreatureEntryTriggers
+                        .computeIfAbsent(perm.getId(), ignored -> new HashSet<>()).contains(effect)) {
+                    addEnteringPermanentIdToBatchedEntryGroup(gameData, perm, effect, resolvedEnteringPermanentId);
+                    continue;
+                }
                 int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
                         gameData, playerId, enteringControllerId, enteringCard);
                 var effectContext = new TriggerContext.PermanentEnters(
                         enteringCard, enteringControllerId, resolvedPuttingPlayerId,
                         triggerCount, resolvedEnteringPermanentId);
-                dispatchEnter(gameData, perm, playerId,
+                boolean dispatched = dispatchEnter(gameData, perm, playerId,
                         EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, effect, effectContext);
+                if (batched && dispatched) {
+                    gameData.simultaneousCreatureEntryTriggers
+                            .computeIfAbsent(perm.getId(), ignored -> new HashSet<>()).add(effect);
+                }
             }
         });
 
@@ -18431,6 +18456,36 @@ public class TriggerCollectionService {
                 }
             }
         });
+    }
+
+    private boolean isOncePerBatchRegistration(Permanent source, EffectSlot slot, CardEffect effect) {
+        return source.getCard().getEffectRegistrations(slot).stream()
+                .anyMatch(registration -> registration.effect().equals(effect)
+                        && registration.triggerMode() == TriggerMode.ONCE_PER_BATCH);
+    }
+
+    /**
+     * Adds a permanent that entered simultaneously with one already covered by this source's
+     * "one or more permanents enter" trigger to that trigger's group.
+     */
+    private void addEnteringPermanentIdToBatchedEntryGroup(GameData gameData, Permanent source, CardEffect effect,
+                                                           UUID enteringPermanentId) {
+        if (enteringPermanentId == null) {
+            return;
+        }
+        CardEffect unwrapped = effect instanceof TriggeringCardConditionalEffect conditional
+                ? conditional.wrapped() : effect;
+        for (StackEntry existing : gameData.stack) {
+            if (existing.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                    && source.getId().equals(existing.getSourcePermanentId())
+                    && (existing.getEffectsToResolve().contains(effect)
+                    || existing.getEffectsToResolve().contains(unwrapped))
+                    && !existing.getTriggeringPermanentIds().contains(enteringPermanentId)) {
+                List<UUID> group = new ArrayList<>(existing.getTriggeringPermanentIds());
+                group.add(enteringPermanentId);
+                existing.setTriggeringPermanentIds(group);
+            }
+        }
     }
 
     private boolean isOncePerBatchAllyLandTrigger(Permanent source, CardEffect effect) {

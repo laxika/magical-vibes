@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "TSP", collectorNumber = "47")
@@ -17,7 +17,7 @@ public class ZealotIlVec extends Card {
         addEffect(EffectSlot.ON_ATTACKS_UNBLOCKED,
                 new MayEffect(SequenceEffect.of(
                         new DealDamageToTargetCreatureEffect(1),
-                        new AssignNoCombatDamageEffect()),
+                        PreventDamageEffect.allCombatBySelf()),
                         "have it deal 1 damage to a target creature?"));
     }
 }

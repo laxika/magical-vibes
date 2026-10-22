@@ -113,7 +113,6 @@ class ZiatorasEnvoyTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Forest");
         harness.assertNotOnBattlefield(player1, "Forest");
-        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

@@ -76,7 +76,6 @@ class ZurgoBellstrikerTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent zurgo = findPermanent(player1, "Zurgo Bellstriker");
         assertThat(zurgo.hasKeyword(Keyword.HASTE)).isTrue();

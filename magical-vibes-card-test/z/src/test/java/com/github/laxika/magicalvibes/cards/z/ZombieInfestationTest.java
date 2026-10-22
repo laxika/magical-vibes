@@ -145,13 +145,14 @@ class ZombieInfestationTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Forest");
+
         harness.passBothPriorities();
 
         assertThat(countPermanents(player2, "Zombie")).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Zombie");
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Mountain");
-        harness.assertInGraveyard(player2, "Forest");
     }
 
     @Test

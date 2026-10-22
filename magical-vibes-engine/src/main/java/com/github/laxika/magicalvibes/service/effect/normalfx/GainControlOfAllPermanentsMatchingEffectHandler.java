@@ -62,6 +62,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
 
         ControlDuration duration = e.duration();
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
+        List<Permanent> simultaneous = new ArrayList<>();
         for (Permanent permanent : toSeize) {
             if (duration.isSourceLinked()) {
                 StackEntry individual = new StackEntry(entry.getEntryType(), entry.getCard(), controllerId,
@@ -72,10 +73,10 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
                 gainControlOfTargetEffectHandler.resolve(gameData, individual, controlEffect);
                 continue;
             }
-            creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    controlEffect, duration.toEffectDuration(), null,
-                    entry.getCard().getName());
+            simultaneous.add(permanent);
         }
+        creatureControlService.applyControlEffectSimultaneously(gameData, controllerId, simultaneous,
+                controlEffect, duration.toEffectDuration(), entry.getCard().getName());
 
         for (CardEffect thenEffect : e.thenEffects()) {
             EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);

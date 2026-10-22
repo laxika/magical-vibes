@@ -184,7 +184,7 @@ class ZirilanOfTheClawTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleCardChosen(player1, 0));
         Permanent dragon = findPermanent(player1, "Catacomb Dragon");
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.HASTE)).isTrue();
 

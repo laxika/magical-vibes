@@ -61,9 +61,9 @@ class ZurgoAndOjutaiTest extends BaseCardTest {
         harness.resolveCombatDamage();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.HandTopBottom(0, 1));
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, dragon.getId());
         harness.passBothPriorities();
@@ -81,12 +81,14 @@ class ZurgoAndOjutaiTest extends BaseCardTest {
         Card second = new ZurgoAndOjutai();
         Card third = new ZurgoAndOjutai();
         Card untouched = new ZurgoAndOjutai();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, second, third, untouched));
         harness.forceActivePlayer(player1);
         harness.resolveCombatDamage();
         harness.passBothPriorities();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.HandTopBottom(0, 1));
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
@@ -100,6 +102,7 @@ class ZurgoAndOjutaiTest extends BaseCardTest {
         Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
         dragon.setAttacking(true);
         Card onlyCard = new ZurgoAndOjutai();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(onlyCard));
         harness.forceActivePlayer(player1);
         harness.resolveCombatDamage();
@@ -118,6 +121,7 @@ class ZurgoAndOjutaiTest extends BaseCardTest {
     void emptyLibraryStillAllowsReturningSource() {
         Permanent dragon = addCreatureReady(player1, new ZurgoAndOjutai());
         dragon.setAttacking(true);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.forceActivePlayer(player1);
         harness.resolveCombatDamage();

@@ -108,7 +108,6 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new Murder()));
-        harness.addMana(player2, ManaColor.BLACK, 3);
 
         resolveEndStepTrigger(player1);
         harness.handleMayAbilityChosen(player1, true);
@@ -117,6 +116,7 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.addMana(player2, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player2, 0, target.getId());
         harness.passBothPriorities();
 

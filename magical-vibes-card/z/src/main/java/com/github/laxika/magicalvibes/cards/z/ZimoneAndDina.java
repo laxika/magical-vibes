@@ -18,6 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -26,8 +29,11 @@ import java.util.List;
 public class ZimoneAndDina extends Card {
 
     public ZimoneAndDina() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, SequenceEffect.of(
-                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, SequenceEffect.of(
+                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
                 new GainLifeEffect(2)));
 
         CardTypePredicate landCard = new CardTypePredicate(CardType.LAND);

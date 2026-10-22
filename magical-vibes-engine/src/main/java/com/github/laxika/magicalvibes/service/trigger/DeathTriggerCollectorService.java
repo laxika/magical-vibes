@@ -4021,6 +4021,17 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
+    boolean handleAllyNontokenInterveningIfConditional(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (conditional.interveningIf()
+                && !conditionEvaluationService.isInterveningIfMet(match.gameData(), conditional,
+                match.permanent(), match.controllerId())) {
+            return false;
+        }
+        return handleAllyNontokenDefault(match, conditional, ctx);
+    }
+
     @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
             slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenConditional(TriggerMatchContext match,

@@ -36,6 +36,7 @@ public class ZeroPointBallad extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                        .mandatory(true)
                         .eventCardIdsOnly(true)
                         .build()));
     }

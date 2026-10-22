@@ -178,10 +178,10 @@ public record ExileGraveyardCardsEffect(
                 null, null, false, true, false, null, false, true);
     }
 
-    /** Exiles source-tracked controller-graveyard cards and marks each with a kick counter. */
+    /** Exiles up to any number of source-tracked controller-graveyard cards and marks each with a kick counter. */
     public static ExileGraveyardCardsEffect upToControllerGraveyardWithKickCounters(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(100, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
-                filter, null, false, true, false, null, false, false, true);
+                filter, null, false, true, false, null, false, true, true);
     }
 
     @Override

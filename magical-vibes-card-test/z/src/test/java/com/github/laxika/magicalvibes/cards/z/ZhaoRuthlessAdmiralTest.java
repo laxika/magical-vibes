@@ -129,7 +129,9 @@ class ZhaoRuthlessAdmiralTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveInstant(player1, 0, player.getId());
-        harness.handlePermanentChosen(player, sacrificed.getId());
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player, sacrificed.getId());
+        }
         harness.passBothPriorities();
     }
 }

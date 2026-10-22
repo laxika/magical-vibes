@@ -42,17 +42,19 @@ public class CopyCardsExiledWithSourceAndMayCastCopiesEffectHandler
         CopyCardsExiledWithSourceAndMayCastCopiesEffect copyEffect =
                 (CopyCardsExiledWithSourceAndMayCastCopiesEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        List<Card> trackedCards = sourcePermanentId == null
-                ? List.of()
-                : gameData.getCardsExiledByPermanent(sourcePermanentId);
+        List<Card> trackedCards;
         if (copyEffect.onlyOwnKickCounterCards()) {
-            trackedCards = trackedCards.stream()
+            // "copy each exiled card you own with a kick counter on it" is not limited to cards this
+            // permanent exiled, so every exile zone entry the controller owns is considered.
+            trackedCards = gameData.exiledCards.stream()
+                    .filter(exiledCard -> entry.getControllerId().equals(exiledCard.ownerId()))
+                    .map(ExiledCardEntry::card)
                     .filter(card -> gameData.exiledCardsWithKickCounters.contains(card.getId()))
-                    .filter(card -> {
-                        ExiledCardEntry exiledCard = gameData.findExiledCard(card.getId());
-                        return exiledCard != null && entry.getControllerId().equals(exiledCard.ownerId());
-                    })
                     .toList();
+        } else {
+            trackedCards = sourcePermanentId == null
+                    ? List.of()
+                    : gameData.getCardsExiledByPermanent(sourcePermanentId);
         }
         if (!copyEffect.copyAll() && copyEffect.castCost() == CopyCastCost.FREE
                 && targetCardId(entry) == null && trackedCards.size() > 1) {

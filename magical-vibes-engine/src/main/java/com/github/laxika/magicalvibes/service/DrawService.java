@@ -504,6 +504,11 @@ public class DrawService {
         boolean lookAtTopCompetesWithDoubler = lookAtTopSource != null && drawDoublerSource != null;
         boolean lookAtTopCompetesWithExile = lookAtTopSource != null
                 && (ubaMaskSource != null || !exileReplacementSources.isEmpty());
+        Permanent zursWeirdingSource = findZursWeirdingSource(gameData, playerId);
+        // Zur's Weirding only competes when its pay-2-life offer can actually be taken; otherwise the
+        // order of the two replacements cannot change the outcome.
+        boolean zursWeirdingCompetesWithDoubler = zursWeirdingSource != null && drawDoublerSource != null
+                && zursWeirdingPayable(gameData, playerId);
         boolean ringPending = gameData.pendingNextDrawFromOutsideGame.containsKey(playerId);
         Permanent wordsOfWorshipSource = gameData.pendingNextDrawGainLife.containsKey(playerId)
                 ? findBattlefieldPermanentNamed(gameData, playerId, WORDS_OF_WORSHIP_NAME) : null;
@@ -518,6 +523,7 @@ public class DrawService {
                 || sagesAndUbaMaskCompete
                 || lookAtTopCompetesWithDoubler
                 || lookAtTopCompetesWithExile
+                || zursWeirdingCompetesWithDoubler
                 || wordsCompete) {
             Map<String, UUID> sourceIds = new LinkedHashMap<>();
             exileReplacementSources.forEach((name, source) -> sourceIds.put(name, source.getId()));
@@ -537,6 +543,10 @@ public class DrawService {
                 if (ubaMaskSource != null) {
                     sourceIds.putIfAbsent(ubaMaskSource.getCard().getName(), ubaMaskSource.getId());
                 }
+            }
+            if (zursWeirdingCompetesWithDoubler) {
+                sourceIds.putIfAbsent(zursWeirdingSource.getCard().getName(), zursWeirdingSource.getId());
+                sourceIds.putIfAbsent(drawDoublerSource.getCard().getName(), drawDoublerSource.getId());
             }
             if (wordsCompete) {
                 nextDrawWordsOptions.forEach(sourceIds::putIfAbsent);
@@ -761,37 +771,17 @@ public class DrawService {
             return;
         }
 
-        Card zursWeirdingSource = findZursWeirdingSourceCard(gameData, playerId);
         if (zursWeirdingSource != null) {
-            List<Card> deck = gameData.playerDecks.get(playerId);
-            UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
-            String playerName = gameData.playerIdToName.get(playerId);
-            if (deck != null && !deck.isEmpty()) {
-                Card revealed = deck.getFirst();
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " reveals ")
-                        .card(revealed)
-                        .text(" with ")
-                        .card(zursWeirdingSource)
-                        .text(".")
-                        .build());
-
-            }
-            if (gameData.getLife(otherPlayerId) >= 2
-                    && gameQueryService.canPlayerLifeChange(gameData, otherPlayerId)) {
-                String prompt = deck != null && !deck.isEmpty()
-                        ? "Pay 2 life to put " + playerName + "'s revealed "
-                                + deck.getFirst().getName() + " into their graveyard?"
-                        : "Pay 2 life to replace " + playerName + "'s draw?";
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        zursWeirdingSource,
-                        otherPlayerId,
-                        List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ZURS_WEIRDING)),
-                        prompt
-                ));
+            logZursWeirdingReveal(gameData, playerId, zursWeirdingSource.getCard());
+            if (zursWeirdingPayable(gameData, playerId)) {
+                beginZursWeirdingOffer(gameData, playerId, zursWeirdingSource);
                 return;
             }
-            performDrawCard(gameData, playerId);
+            // Nobody can pay, so the replacement is declined for this draw and the rest of the draw proceeds.
+            gameData.declinedDrawReplacementSources
+                    .computeIfAbsent(playerId, ignored -> new java.util.HashSet<>())
+                    .add(zursWeirdingSource.getCard().getId());
+            resolveCurrentDrawCard(gameData, playerId, firstDrawStepDraw, cycledCard, true);
             return;
         }
 
@@ -887,6 +877,12 @@ public class DrawService {
         int doubledDrawCount = gameData.currentDrawDoublingApplied.contains(playerId)
                 ? 0 : doubledDrawCount(gameData, playerId, firstDrawStepDraw);
         if (doubledDrawCount > 0) {
+            if (zursWeirdingDeclinedForThisDraw(gameData, playerId)) {
+                // Each doubled draw is a new draw that Zur's Weirding may replace again, so it re-enters the chain.
+                gameData.drawsFromAppliedDoubling.merge(playerId, doubledDrawCount, Integer::sum);
+                resolveDrawCards(gameData, playerId, doubledDrawCount);
+                return;
+            }
             applyDrawDoubling(gameData, playerId, doubledDrawCount);
             return;
         }
@@ -1446,21 +1442,78 @@ public class DrawService {
                 gameData.id, playerName, exiled.getName());
     }
 
-    private Card findZursWeirdingSourceCard(GameData gameData, UUID drawingPlayerId) {
+    private Permanent findZursWeirdingSource(GameData gameData, UUID drawingPlayerId) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (drawReplacementDeclined(gameData, drawingPlayerId, permanent.getCard())) continue;
-                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
-                if (hasEffect) {
-                    return permanent.getCard();
+                if (isZursWeirding(permanent)) {
+                    return permanent;
                 }
             }
         }
         return null;
+    }
+
+    private boolean isZursWeirding(Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
+    }
+
+    private boolean zursWeirdingPayable(GameData gameData, UUID drawingPlayerId) {
+        UUID otherPlayerId = gameQueryService.getOpponentId(gameData, drawingPlayerId);
+        return gameData.getLife(otherPlayerId) >= 2
+                && gameQueryService.canPlayerLifeChange(gameData, otherPlayerId);
+    }
+
+    /** Whether Zur's Weirding has already been declined for the draw currently being resolved. */
+    private boolean zursWeirdingDeclinedForThisDraw(GameData gameData, UUID drawingPlayerId) {
+        java.util.Set<UUID> declined = gameData.declinedDrawReplacementSources.getOrDefault(drawingPlayerId, java.util.Set.of());
+        if (declined.isEmpty()) {
+            return false;
+        }
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (declined.contains(permanent.getCard().getId()) && isZursWeirding(permanent)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void logZursWeirdingReveal(GameData gameData, UUID drawingPlayerId, Card zursWeirding) {
+        List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
+        if (deck == null || deck.isEmpty()) {
+            return;
+        }
+        gameLogService.append(gameData, GameLog.builder()
+                .text(gameData.playerIdToName.get(drawingPlayerId) + " reveals ")
+                .card(deck.getFirst())
+                .text(" with ")
+                .card(zursWeirding)
+                .text(".")
+                .build());
+    }
+
+    private void beginZursWeirdingOffer(GameData gameData, UUID drawingPlayerId, Permanent zursWeirding) {
+        List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
+        UUID otherPlayerId = gameQueryService.getOpponentId(gameData, drawingPlayerId);
+        String playerName = gameData.playerIdToName.get(drawingPlayerId);
+        String prompt = deck != null && !deck.isEmpty()
+                ? "Pay 2 life to put " + playerName + "'s revealed "
+                        + deck.getFirst().getName() + " into their graveyard?"
+                : "Pay 2 life to replace " + playerName + "'s draw?";
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                zursWeirding.getCard(),
+                otherPlayerId,
+                List.of(new ReplaceSingleDrawEffect(drawingPlayerId, DrawReplacementKind.ZURS_WEIRDING)),
+                prompt
+        ));
     }
 
     private boolean isHandEmpty(GameData gameData, UUID playerId) {
@@ -2358,6 +2411,12 @@ public class DrawService {
         Permanent ubaMaskSource = findUbaMaskSource(gameData);
         if (ubaMaskSource != null && ubaMaskSource.getId().equals(sourcePermanentId)) {
             resolveUbaMaskDrawReplacement(gameData, playerId, ubaMaskSource);
+            return;
+        }
+        Permanent zursWeirdingSource = findZursWeirdingSource(gameData, playerId);
+        if (zursWeirdingSource != null && zursWeirdingSource.getId().equals(sourcePermanentId)) {
+            logZursWeirdingReveal(gameData, playerId, zursWeirdingSource.getCard());
+            beginZursWeirdingOffer(gameData, playerId, zursWeirdingSource);
             return;
         }
         boolean firstDrawStepDraw = Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(playerId));

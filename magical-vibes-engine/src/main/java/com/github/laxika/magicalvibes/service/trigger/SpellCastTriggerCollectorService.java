@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
 import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.model.effect.CastSameNameCardFromGraveyardOnSpellCastEffect;
@@ -3066,6 +3067,25 @@ public class SpellCastTriggerCollectorService {
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId,
                                                     UUID exiledSourcePermanentId) {
+        if (trigger.resolvedEffects().size() > 1
+                && trigger.resolvedEffects().stream().allMatch(CascadeEffect.class::isInstance)) {
+            boolean queued = false;
+            TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), match.permanent(),
+                    match.controllerId(), match.rawEffect(), spellCard, match.sourcePlanarObject(),
+                    match.markSourceOncePerTurnOnAcceptance());
+            for (CardEffect cascade : trigger.resolvedEffects()) {
+                queued |= handleGenericSpellCastTrigger(spellSourced, new SpellCastTriggerEffect(
+                        trigger.spellFilter(), List.of(cascade), trigger.manaCost(), trigger.targetFilter(),
+                        trigger.castSpellTargetCondition(), trigger.onlyDuringOpponentTurn(),
+                        trigger.onlyDuringControllerTurn(), trigger.intervening(), trigger.nthSpellNumber(),
+                        trigger.minimumSpellNumber(), trigger.triggersOnAnyPlayer(),
+                        trigger.requiresManaProducedBySource(), trigger.expendThreshold(),
+                        trigger.requiresTreasureMana(), trigger.requiresTwoOrMoreCardTypes(),
+                        trigger.onlyWhenCasterNotActiveTurn(), trigger.onlyDuringCombat()),
+                        spellCard, castingPlayerId, exiledSourcePermanentId);
+            }
+            return queued;
+        }
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
         UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
         UUID sourceOriginalCardId = match.permanent() == null

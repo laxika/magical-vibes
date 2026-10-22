@@ -101,6 +101,7 @@ class ZapTest extends BaseCardTest {
     @Test
     @DisplayName("Can target its controller, who still draws the card")
     void damagesControllerAndDrawsCard() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Zap()));
         harness.setLibrary(player1, List.of(new KavuScout()));
         harness.addMana(player1, ManaColor.RED, 3);

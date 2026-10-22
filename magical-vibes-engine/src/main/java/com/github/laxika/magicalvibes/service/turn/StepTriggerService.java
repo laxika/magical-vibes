@@ -460,6 +460,9 @@ public class StepTriggerService {
             if (!everyTurn && ((opponentStep && isControllerStep) || (!opponentStep && !isControllerStep))) {
                 continue;
             }
+            if (step == EmblemTriggerStep.END_OF_FIRST_COMBAT && gameData.combatPhasesThisTurn != 1) {
+                continue;
+            }
             for (CardEffect effect : emblem.staticEffects()) {
                 if (!(effect instanceof EmblemStepTriggerEffect upkeepTrigger) || upkeepTrigger.step() != step) {
                     continue;
@@ -7741,7 +7744,7 @@ public class StepTriggerService {
                     triggerCard.getName() + "'s delayed ability",
                     new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
                     permanent.getId(),
-                    permanent.getId());
+                    action.triggerSourcePermanentId() != null ? action.triggerSourcePermanentId() : permanent.getId());
             entry.setNonTargeting(true);
             gameData.stack.add(entry);
             gameLogService.append(gameData,

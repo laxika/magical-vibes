@@ -6,21 +6,22 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.ZyymRevealHandEffect;
-import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.effect.mayfx.ZyymRevealHandEffectMayHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Applies the target player's hand order and starts Zyym's reveal prompts. */
+/** Applies the target player's hand order, reveals the first card, and starts Zyym's stop-or-continue prompts. */
 @Component
 @RequiredArgsConstructor
 public class TargetPlayerHandOrderChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.TargetPlayerHandOrderChoice> {
 
-    private final InputCompletionService inputCompletionService;
+    @Lazy private final ZyymRevealHandEffectMayHandler zyymRevealHandEffectMayHandler;
 
     @Override
     public Class<PendingInteraction.TargetPlayerHandOrderChoice> handledType() {
@@ -64,9 +65,8 @@ public class TargetPlayerHandOrderChoiceInteractionHandler
                 interaction.playerId(), orderedCardIds, List.of(), 0);
 
         gameData.interaction.clearAwaitingInput();
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+        zyymRevealHandEffectMayHandler.handle(gameData, player, true, new PendingMayAbility(
                 interaction.sourceCard(), interaction.controllerId(), List.of(effect),
                 "Reveal another card?", interaction.playerId(), null, interaction.sourcePermanentId()));
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

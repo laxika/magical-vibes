@@ -28,7 +28,7 @@ import java.util.List;
 public class ZacamaPrimalCalamity extends Card {
 
     public ZacamaPrimalCalamity() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate())));
 
         addActivatedAbility(new ActivatedAbility(

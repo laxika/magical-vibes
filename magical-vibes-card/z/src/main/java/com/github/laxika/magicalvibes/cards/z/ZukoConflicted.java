@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnUnderOpponentControlEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
@@ -18,12 +19,14 @@ public class ZukoConflicted extends Card {
 
     public ZukoConflicted() {
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect()),
+                new ChooseOneEffect.ChooseOneOption("Draw a card",
+                        List.of(new DrawCardEffect(), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on Zuko",
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                new ChooseOneEffect.ChooseOneOption("Add {R}", new AwardManaEffect(ManaColor.RED)),
+                        List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), new LoseLifeEffect(2))),
+                new ChooseOneEffect.ChooseOneOption("Add {R}",
+                        List.of(new AwardManaEffect(ManaColor.RED), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile Zuko, then return him to the battlefield under an opponent's control",
-                        new ExileSelfAndReturnUnderOpponentControlEffect()))));
+                        List.of(new ExileSelfAndReturnUnderOpponentControlEffect(), new LoseLifeEffect(2))))));
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -51,6 +52,13 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());
         entry.getCreatedPermanentIds().addAll(createdIds);
+        if (createdIds.isEmpty() && gameData.interaction.isAwaitingInput()) {
+            // Creation paused for a replacement choice (Jinnie Fay, Parallel Lives ordering). Whatever
+            // token is created once it is answered receives the counters (they are never part of entering).
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                    new PutCountersOnCreatedPermanentsEffect(e.counterType(), e.counterAmount())));
+            return;
+        }
         // The token is created before X is counted, so a count of the controller's permanents
         // includes the new token (e.g. Gimbal, Gremlin Prodigy counts itself).
         int counterAmount = Math.max(0, amountEvaluationService.evaluate(

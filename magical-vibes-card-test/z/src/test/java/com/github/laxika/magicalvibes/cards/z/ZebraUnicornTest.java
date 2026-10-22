@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Delirium;
 import com.github.laxika.magicalvibes.cards.j.JungleWurm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -83,7 +84,7 @@ class ZebraUnicornTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
 
         harness.assertInGraveyard(player2, "Zebra Unicorn");
         harness.assertLife(player2, 20);
@@ -102,7 +103,7 @@ class ZebraUnicornTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);

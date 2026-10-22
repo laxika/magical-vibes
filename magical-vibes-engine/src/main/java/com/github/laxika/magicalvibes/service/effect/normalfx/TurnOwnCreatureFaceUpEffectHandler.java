@@ -32,21 +32,25 @@ public class TurnOwnCreatureFaceUpEffectHandler implements NormalEffectHandlerBe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> eligibleIds = eligibleIds(gameData, entry.getControllerId());
+        TurnOwnCreatureFaceUpEffect turnFaceUp = (TurnOwnCreatureFaceUpEffect) effect;
+        List<UUID> eligibleIds = eligibleIds(gameData, entry.getControllerId(), turnFaceUp.creaturesOnly());
         if (eligibleIds.isEmpty()) {
             return;
         }
         if (eligibleIds.size() == 1) {
-            turnFaceUp(gameData, eligibleIds.getFirst());
+            turnFaceUp(gameData, eligibleIds.getFirst(), turnFaceUp.creaturesOnly());
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.TurnOwnCreatureFaceUp());
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.TurnOwnCreatureFaceUp(turnFaceUp.creaturesOnly()));
         playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), eligibleIds,
-                "Choose a creature you control to turn face up.");
+                turnFaceUp.creaturesOnly()
+                        ? "Choose a creature you control to turn face up."
+                        : "Choose a face-down permanent you control to turn face up.");
     }
 
-    public void completeChoice(GameData gameData, UUID chosenPermanentId) {
+    public void completeChoice(GameData gameData, UUID chosenPermanentId, boolean creaturesOnly) {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
         if (entry == null) {
             throw new IllegalStateException("No effect is waiting for a creature choice");
@@ -55,17 +59,18 @@ public class TurnOwnCreatureFaceUpEffectHandler implements NormalEffectHandlerBe
         Permanent target = gameQueryService.findPermanentById(gameData, chosenPermanentId);
         if (target == null
                 || !target.isFaceDown()
-                || !gameQueryService.isCreature(gameData, target)
+                || (creaturesOnly && !gameQueryService.isCreature(gameData, target))
                 || !entry.getControllerId().equals(
                         gameQueryService.findPermanentController(gameData, chosenPermanentId))) {
-            throw new IllegalStateException("Choose a face-down creature you control");
+            throw new IllegalStateException("Choose a face-down permanent you control");
         }
-        gameServiceProvider.getObject().turnPermanentFaceUpWithoutPayingManaCost(gameData, target);
+        turnFaceUp(gameData, target, creaturesOnly);
     }
 
-    private List<UUID> eligibleIds(GameData gameData, UUID controllerId) {
+    private List<UUID> eligibleIds(GameData gameData, UUID controllerId, boolean creaturesOnly) {
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .filter(permanent -> permanent.isFaceDown() && gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> permanent.isFaceDown()
+                        && (!creaturesOnly || gameQueryService.isCreature(gameData, permanent)))
                 .filter(permanent -> !isInstantOrSorceryFaceDownCard(permanent))
                 .map(Permanent::getId)
                 .toList();
@@ -81,10 +86,18 @@ public class TurnOwnCreatureFaceUpEffectHandler implements NormalEffectHandlerBe
                 && (permanent.getCard().hasType(CardType.INSTANT) || permanent.getCard().hasType(CardType.SORCERY));
     }
 
-    private void turnFaceUp(GameData gameData, UUID permanentId) {
+    private void turnFaceUp(GameData gameData, UUID permanentId, boolean creaturesOnly) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
         if (permanent != null) {
+            turnFaceUp(gameData, permanent, creaturesOnly);
+        }
+    }
+
+    private void turnFaceUp(GameData gameData, Permanent permanent, boolean creaturesOnly) {
+        if (creaturesOnly) {
             gameServiceProvider.getObject().turnPermanentFaceUpWithoutPayingManaCost(gameData, permanent);
+        } else {
+            gameServiceProvider.getObject().turnPermanentFaceUpWithoutPayingManaCostOfAnyType(gameData, permanent);
         }
     }
 }

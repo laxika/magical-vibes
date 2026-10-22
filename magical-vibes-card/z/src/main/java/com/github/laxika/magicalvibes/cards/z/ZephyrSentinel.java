@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,10 +33,12 @@ public class ZephyrSentinel extends Card {
                 targetFilter,
                 "Target must be another creature you control"
         ), 0, 1)
-                // Check the subtype before returning the target to its owner's hand.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                        new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.SOLDIER)),
-                        new PutCountersOnSourceEffect(1, 1, 1)))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target());
+                // The Soldier check reads the target before it leaves; the counter is placed after the bounce,
+                // so replacement effects from the returned creature no longer apply.
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetPermanentToHandThenEffect(
+                        new PutCountersOnSourceEffect(1, 1, 1),
+                        ThenEffectRecipient.CONTROLLER,
+                        null,
+                        new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.SOLDIER))));
     }
 }

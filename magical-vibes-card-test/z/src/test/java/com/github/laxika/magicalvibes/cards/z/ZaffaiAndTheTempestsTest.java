@@ -141,6 +141,7 @@ class ZaffaiAndTheTempestsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Divination()));
         harness.setLibrary(player1, List.of(new Opt(), new Opt(), new Opt(), new Opt(), new Opt()));
         harness.setLibrary(player2, List.of(new Opt(), new Opt(), new Opt()));
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castAndResolveSorcery(player1, 0, 0);

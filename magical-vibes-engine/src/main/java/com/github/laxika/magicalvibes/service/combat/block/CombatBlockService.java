@@ -1138,6 +1138,7 @@ public class CombatBlockService {
 
         if (!blockerSpecificEffects.isEmpty()) {
             List<CardEffect> filteredEffects = new ArrayList<>();
+            List<CardEffect> separateInstanceEffects = new ArrayList<>();
             for (CardEffect effect : blockerSpecificEffects) {
                 if (effect instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                     if (hasEquipmentAttached(gameData, blocker)) {
@@ -1145,7 +1146,7 @@ public class CombatBlockService {
                     }
                 } else if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
                     if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, conditional.predicate())) {
-                        filteredEffects.add(conditional.wrapped());
+                        separateInstanceEffects.add(conditional.wrapped());
                     }
                 } else if (effect instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
                     addResolvedCombatOpponentBoost(gameData, filteredEffects, conditional, List.of(blocker));
@@ -1158,13 +1159,20 @@ public class CombatBlockService {
                     filteredEffects.add(effect);
                 }
             }
+            List<List<CardEffect>> abilityGroups = new ArrayList<>();
             if (!filteredEffects.isEmpty()) {
+                abilityGroups.add(filteredEffects);
+            }
+            for (CardEffect separateInstance : separateInstanceEffects) {
+                abilityGroups.add(new ArrayList<>(List.of(separateInstance)));
+            }
+            for (List<CardEffect> abilityEffects : abilityGroups) {
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         attacker.getCard(),
                         activeId,
                         attacker.getCard().getName() + "'s becomes-blocked trigger",
-                        filteredEffects,
+                        abilityEffects,
                         blocker.getId(),
                         attacker.getId());
                 trigger.setNonTargeting(true);
@@ -2179,6 +2187,7 @@ public class CombatBlockService {
                 for (Permanent blocker : blockers) {
                     // Filter conditional per-blocker effects (e.g. "becomes blocked by an equipped creature")
                     List<CardEffect> filteredEffects = new ArrayList<>();
+                    List<CardEffect> separateInstanceEffects = new ArrayList<>();
                     for (CardEffect e : blockerSpecificEffects) {
                         if (e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) {
                             if (hasEquipmentAttached(gameData, blocker)) {
@@ -2188,7 +2197,7 @@ public class CombatBlockService {
                             // "becomes blocked by a [filter] creature" — the blocker is the event subject
                             // (e.g. Catacomb Dragon's nonartifact, non-Dragon blocker).
                             if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, permConditional.predicate())) {
-                                filteredEffects.add(permConditional.wrapped());
+                                separateInstanceEffects.add(permConditional.wrapped());
                             }
                         } else if (e instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
                             // "becomes blocked by a white creature" (Ghost Hounds): the blocker's color is
@@ -2203,27 +2212,35 @@ public class CombatBlockService {
                             filteredEffects.add(e);
                         }
                     }
-                    if (filteredEffects.isEmpty()) continue;
-
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            attacker.getCard(),
-                            activeId,
-                            attacker.getCard().getName() + "'s becomes-blocked trigger",
-                            new ArrayList<>(filteredEffects),
-                            blocker.getId(),
-                            attacker.getId()
-                    );
-                    // "That creature" wording references a blocker without targeting it.
-                    trigger.setNonTargeting(true);
-                    trigger.setTriggeringPermanentId(blocker.getId());
-                    trigger.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(gameData, blocker.getId()));
-                    trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
-                    trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
-                    gameData.stack.add(trigger);
-                    gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
-                            "'s becomes-blocked ability triggers."));
-                    log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                    // Each conditional granted ability is its own trigger instance, even when identical.
+                    List<List<CardEffect>> abilityGroups = new ArrayList<>();
+                    if (!filteredEffects.isEmpty()) {
+                        abilityGroups.add(filteredEffects);
+                    }
+                    for (CardEffect separateInstance : separateInstanceEffects) {
+                        abilityGroups.add(new ArrayList<>(List.of(separateInstance)));
+                    }
+                    for (List<CardEffect> abilityEffects : abilityGroups) {
+                        StackEntry trigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                attacker.getCard(),
+                                activeId,
+                                attacker.getCard().getName() + "'s becomes-blocked trigger",
+                                abilityEffects,
+                                blocker.getId(),
+                                attacker.getId()
+                        );
+                        // "That creature" wording references a blocker without targeting it.
+                        trigger.setNonTargeting(true);
+                        trigger.setTriggeringPermanentId(blocker.getId());
+                        trigger.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(gameData, blocker.getId()));
+                        trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
+                        trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
+                        gameData.stack.add(trigger);
+                        gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                                "'s becomes-blocked ability triggers."));
+                        log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                    }
                 }
             }
         }
