@@ -748,6 +748,133 @@ I say so.
 
 ---
 
+## 50. "If you do" discards that resolve as reflexive triggers (and one the other way round)
+
+**Status:** open · **Found:** 2026-10-23, auditing `DiscardCardThenEffect` users after the G-card fixes
+
+**Failing tests:** possibly `PatientInstructorTest.tokenCreationIsPartOfRecruitResolution` (already fails at HEAD) and
+`InvasionOfErgamonTest` (Truga Cliffcharger); the others' tests may assert the wrong (reflexive) flow.
+
+**What the rules require.** CR 603.12: only "When you do" / "when ... this way" creates a reflexive triggered ability.
+"Discard a card. If you do, X" does X during the same resolution. `DiscardCardThenEffect` pushes `thenEffect` as a
+reflexive trigger unless `resolveThenDuringSameResolution` is set (`DiscardCardThenEffect.continuing(...)` or the
+9/10-arg constructor). Great Gilded Boat and Gristle Glutton were fixed this way; an audit of all 70 users found:
+- Reflexive but should be same-resolution ("If you do"):
+  - `ChandraSparkHunter` (DFT 116) — "+2: You may sacrifice an artifact or discard a card. If you do, draw a card."
+    (discard branch only; `VisionOfLove` shows the right shape)
+  - `CruciasTitanOfTheWaves` (YBRO 18) — "you may discard a card. If you do, create a Treasure token and choose
+    ambitious or expedient ..." (then-effect is a `SequenceEffect` with a `ChooseOneEffect`; check it works inline)
+  - `FormidableSpeaker` (ECL 176) — "you may discard a card. If you do, search your library for a creature card ..."
+  - `RankOfficer` (MH1 102) — "you may discard a card. If you do, create a 2/2 black Zombie creature token."
+  - `PatientInstructor` (HOB 162) — recruit; the other recruit cards (Bard's Company, Great Gilded Boat, ...) already
+    pass `resolveThenDuringSameResolution=true`
+  - `TrugaCliffcharger` (shared module, back face of Invasion of Ergamon, MOM 233) — "you may discard a card. If you
+    do, search your library for a land or battle card ..."
+- Same-resolution but should be reflexive ("When you do"):
+  - `DokuchiSilencer` (NEO 95) — "you may discard a creature card. When you do, destroy target creature or
+    planeswalker that player controls." The target must be chosen when the reflexive trigger is put on the stack,
+    after the discard. `DiscardCardThenEffectHandler` binds the damaged player for
+    `DamagedPlayerControlsTargetEffect`; keep that binding working on the reflexive path.
+
+**Why it's large.** It isn't large — seven card changes — but each card's tests may encode the wrong stack flow
+(extra `passBothPriorities`/`resolveAllTriggers`), so every test class needs reading against the Oracle text.
+
+**Prompt to start it:**
+
+```
+Fix the seven DiscardCardThenEffect cards in missing-features-to-do.md entry 50: make the "If you do" ones resolve
+in the same resolution (DiscardCardThenEffect.continuing / resolveThenDuringSameResolution) and make Dokuchi
+Silencer's "When you do" a reflexive trigger that targets after the discard. Verify each Oracle text first, read
+every test of each card, fix tests only where they encode the wrong stack flow, and add a test per card for the
+corrected timing. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 51. Aura and Equipment restrictions modelled as abilities granted to the creature
+
+**Status:** open · **Found:** 2026-10-23, auditing `GrantEffectEffect` attached scopes after the Gutter Shortcut fix
+
+**Failing tests:** none known; the bug shows only when the creature loses its abilities (Dress Down, Humility,
+Turn to Frog) or when "has" text is wrongly kept.
+
+**What the rules require.** "Enchanted creature can't ..." / "Equipped creature can't ..." is a static ability of the
+Aura or Equipment itself; removing the creature's abilities (layer 6, CR 613.1f) can't touch it. Only "has"/"gains"
+text grants an ability to the creature. Wrapping the effect in `GrantEffectEffect(..., ENCHANTED_CREATURE /
+EQUIPPED_CREATURE / ENCHANTED_PERMANENT)` models a granted ability. Gutter Shortcut was fixed (effect directly in
+STATIC; `BlockLegalityService` now reads attached restrictions even after ability loss). Remaining cases:
+- Card-only fixes (the engine already reads the effect from an attached permanent — `BlockLegalityService`
+  restriction kinds and `GameQueryService.hasCantBeBlocked`/`hasAuraWithEffect`, which unwraps `ConditionalEffect`
+  and `EnchantedPermanentConditionalEffect`):
+  - `SecurityBypass` (SNC 59) — "As long as enchanted creature is attacking alone, it can't be blocked." Keep the
+    granted connive trigger, which is a quoted ability.
+  - `WayOfTheThief` (GTC 56) — "Enchanted creature can't be blocked as long as you control a Gate." Use
+    `ConditionalEffect(cond, new CantBeBlockedEffect())`.
+  - `ThievesTools` (AFR 122) — "Equipped creature can't be blocked as long as its power is 3 or less." Likely
+    `EnchantedPermanentConditionalEffect(PermanentPowerAtMostPredicate(3), new CantBeBlockedEffect(), null)`; verify
+    it works for Equipment.
+  - `PsychicPaper` (WHO 181) and `BrotherhoodRegalia` (ACR 71) — "Equipped creature has ward ... and can't be
+    blocked": only the ward is granted; "can't be blocked" is the Equipment's own restriction.
+- Engine changes needed (these restriction kinds are only read from the creature's own or granted effects, see
+  `GameQueryService` and `AuraAttachmentService`):
+  - `TargetingRestrictionEffect` — `ArtifactWard` (ATQ 3, "can't be the target of abilities from artifact sources"),
+    `AntiMagicAura` (5ED 72, "can't be the target of spells"), `SpectralShield` (ICE 302, "can't be the target of
+    spells").
+  - `CantBeEnchantedByOtherAurasEffect` — `AntiMagicAura`, `ConsecrateLand` (2ED 15; its indestructible is correctly
+    granted).
+  - `CantBeSacrificedEffect` — `AssaultSuit` (CMM 369).
+  - `CantBecomeSuspectedEffect` — `AirtightAlibi` (MKM 149).
+- The reverse mistake (granted keyword modelled as the attached permanent's own effect, so it survives ability
+  loss): `TravelersCloak` (INV 83, "Enchanted creature has landwalk of the chosen type") and `VectisGloves` (MH2 241,
+  "has artifact landwalk") put `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` directly in STATIC. Landwalk
+  is a keyword (CR 702.14c); wrap it in `GrantEffectEffect` like `TrailblazersBoots`.
+
+**Why it's large.** Four restriction kinds need their attached-permanent lookups added in `GameQueryService`
+(targeting legality is heavily shared), plus eleven card changes, each with a "loses all abilities" test.
+
+**Prompt to start it:**
+
+```
+Fix the Aura/Equipment restriction modelling in missing-features-to-do.md entry 51. First the card-only fixes
+(Security Bypass, Way of the Thief, Thieves' Tools, Psychic Paper, Brotherhood Regalia, Traveler's Cloak, Vectis
+Gloves), then make GameQueryService/AuraAttachmentService read TargetingRestrictionEffect,
+CantBeEnchantedByOtherAurasEffect, CantBeSacrificedEffect and CantBecomeSuspectedEffect from attached Auras and
+Equipment, and convert Artifact Ward, Anti-Magic Aura, Spectral Shield, Consecrate Land, Assault Suit and Airtight
+Alibi. Verify every Oracle text, and add a Dress Down (loses all abilities) test per card.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 52. "Loses this ability": client listing and copy effects
+
+**Status:** open · **Found:** 2026-10-23, after adding `LoseThisActivatedAbilityEffect` for Great Fang Chroniclers
+
+**Failing tests:** none yet.
+
+**What the rules require.** After "then this creature loses this ability" the permanent no longer has that
+activated ability. The engine records it by printed-ability index in `Permanent.lostPrintedActivatedAbilityIndices`,
+and activation and `PredicateEvaluationService.hasAnyPrintedAbility` honour it. Two gaps remain:
+- `PermanentViewFactory` strips activated abilities only for `losesAllAbilities`/`losesAllNonManaAbilities`, so the
+  client (and anything listing abilities from the view) still offers the lost ability until activation is refused.
+- The record is an index into the card's printed abilities. If the permanent later becomes a copy of something else
+  or changes face, the index would hide the new object's ability at that position. Only the removed ability itself
+  should stay gone, so the record should be tied to the ability, or cleared or reinterpreted when the copiable
+  values change. Not verified with a test yet.
+
+**Why it's large.** Small, but it touches the view layer and copy and transform handling.
+
+**Prompt to start it:**
+
+```
+Finish "loses this ability" (missing-features-to-do.md entry 52): hide lost printed activated abilities in
+PermanentViewFactory, and make the lost-ability record survive copy and transform correctly. Write tests first:
+Great Fang Chroniclers after using its ability, then becoming a copy of a creature with an activated ability.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
