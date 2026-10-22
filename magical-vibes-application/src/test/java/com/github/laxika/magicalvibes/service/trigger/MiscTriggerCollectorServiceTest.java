@@ -103,7 +103,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -351,7 +353,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new OncePerTurnTriggerEffect(SequenceEffect.of(
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1)));
-        var ctx = new TriggerContext.Surveil(player1Id);
+        var ctx = new TriggerContext.Surveil(player1Id, true);
 
         assertThat(registry.dispatch(
                 match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isTrue();
@@ -367,7 +369,7 @@ class MiscTriggerCollectorServiceTest {
     void surveilDefaultTriggerQueuesOriginalEffect() {
         Permanent perm = createPermanent("Disinformation Campaign");
         var effect = ReturnToHandEffect.self();
-        var ctx = new TriggerContext.Surveil(player1Id);
+        var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx);
@@ -452,7 +454,7 @@ class MiscTriggerCollectorServiceTest {
     void surveilMarkOnAcceptanceTriggerKeepsMarker() {
         Permanent perm = createPermanent("Planetarium of Wan Shi Tong");
         var effect = OncePerTurnTriggerEffect.markOnAcceptance(new DrawCardEffect(1));
-        var ctx = new TriggerContext.Surveil(player1Id);
+        var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS,
@@ -522,6 +524,7 @@ class MiscTriggerCollectorServiceTest {
         Permanent perm = createPermanent("Fabrication Module");
         var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
         var ctx = new TriggerContext.EnergyGain(player1Id, 1);
+        when(conditionEvaluationService.isInterveningIfMet(any(), any(), any(), any())).thenReturn(true);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GETS_ENERGY, effect, ctx);
@@ -1021,6 +1024,15 @@ class MiscTriggerCollectorServiceTest {
     @DisplayName("ON_OPPONENT_LOSES_LIFE — MillOpponentOnLifeLossEffect")
     class LifeLossMill {
 
+        private void assertMillTriggerQueued(UUID millingPlayerId, int amount) {
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getLast();
+            assertThat(entry.getEffectsToResolve())
+                    .containsExactly(new MillEffect(amount, MillRecipient.TARGET_PLAYER));
+            assertThat(entry.getTargetId()).isEqualTo(millingPlayerId);
+            verify(graveyardService, never()).resolveMillPlayer(any(), any(), anyInt());
+        }
+
         @Test
         @DisplayName("mills the controller when dispatched from the controller life-loss slot")
         void millsControllerForLifeLost() {
@@ -1035,7 +1047,7 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
-            verify(graveyardService).resolveMillPlayer(gd, player1Id, 2);
+            assertMillTriggerQueued(player1Id, 2);
         }
 
         @Test
@@ -1052,7 +1064,7 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
-            verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
+            assertMillTriggerQueued(player2Id, 3);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
@@ -1069,7 +1081,7 @@ class MiscTriggerCollectorServiceTest {
                     match(mindcrank, player1Id, effect),
                     EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
-            verify(graveyardService).resolveMillPlayer(gd, player2Id, 1);
+            assertMillTriggerQueued(player2Id, 1);
         }
 
         @Test

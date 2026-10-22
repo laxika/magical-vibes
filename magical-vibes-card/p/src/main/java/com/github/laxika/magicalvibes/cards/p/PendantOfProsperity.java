@@ -21,7 +21,7 @@ import java.util.List;
 public class PendantOfProsperity extends Card {
 
     public PendantOfProsperity() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentGainsControlOfSourceEffect());
+        addEffect(EffectSlot.STATIC, new ChooseOpponentGainsControlOfSourceEffect());
 
         CardTypePredicate land = new CardTypePredicate(CardType.LAND);
         addActivatedAbility(new ActivatedAbility(

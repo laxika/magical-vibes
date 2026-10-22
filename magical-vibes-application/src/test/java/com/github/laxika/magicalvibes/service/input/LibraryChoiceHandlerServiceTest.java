@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
@@ -112,6 +111,7 @@ class LibraryChoiceHandlerServiceTest {
         registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
                 mock(LibraryChoiceHandlerService.class)));
         service = new LibraryChoiceHandlerService(battlefieldEntryBatchSupport, gameQueryService,
+                mock(com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService.class),
                 castingCostService,
                 predicateEvaluationService,
                 graveyardService, battlefieldEntryService, legendRuleService,
@@ -583,8 +583,7 @@ class LibraryChoiceHandlerServiceTest {
         service.handleLibraryCardChosen(gd, player1, 1);
 
         verify(exileService).exileCardFaceDown(gd, player2Id, chosen, sourcePermanentId, player1Id);
-        verify(graveyardService).addCardToGraveyard(gd, player2Id, first, Zone.LIBRARY);
-        verify(graveyardService).addCardToGraveyard(gd, player2Id, third, Zone.LIBRARY);
+        verify(graveyardService).addCardsFromLibraryToGraveyard(gd, player2Id, List.of(first, third));
         assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
@@ -651,7 +650,7 @@ class LibraryChoiceHandlerServiceTest {
         service.handleLibraryCardChosen(gd, player1, 0);
 
         assertThat(gd.playerDecks.get(player1Id)).containsExactly(second, first);
-        verify(graveyardService).addCardToGraveyard(gd, player1Id, third, Zone.LIBRARY);
+        verify(graveyardService).addCardsFromLibraryToGraveyard(gd, player1Id, List.of(third));
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
