@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -137,6 +143,39 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, WrathOfGod.class})
+    @DisplayName("Accepting the sacrifice asks for the lone Zombie's death replacement before it is sacrificed")
+    void acceptedSacrificeAsksForTheDeathReplacementBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent indoraptor = harness.addToBattlefieldAndReturn(player1, new IndoraptorThePerfectHybrid());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        shockIndoraptor(indoraptor);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(zombie);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(zombie);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castIndoraptor() {

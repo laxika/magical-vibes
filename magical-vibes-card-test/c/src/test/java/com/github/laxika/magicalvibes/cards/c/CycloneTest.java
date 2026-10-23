@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.Solemnity;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -169,5 +173,74 @@ class CycloneTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Cyclone");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Declining asks for an animated Cyclone's death replacement before it is sacrificed")
+    void decliningAsksForTheDeathReplacementBeforeCycloneIsSacrificed() {
+        Permanent cyclone = animatedCycloneWithMagemarkAgainstKalitas();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertDeathReplacementAskedWhileCycloneStays(cyclone);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertCycloneReturnedToHandWithoutZombie(cyclone);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Accepting without enough green mana asks for an animated Cyclone's death replacement before it is sacrificed")
+    void unpayableAcceptAsksForTheDeathReplacementBeforeCycloneIsSacrificed() {
+        Permanent cyclone = animatedCycloneWithMagemarkAgainstKalitas();
+        cyclone.setCounterCount(CounterType.WIND, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertDeathReplacementAskedWhileCycloneStays(cyclone);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertCycloneReturnedToHandWithoutZombie(cyclone);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private Permanent animatedCycloneWithMagemarkAgainstKalitas() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent cyclone = harness.addToBattlefieldAndReturn(player1, new Cyclone());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(cyclone.getId());
+        return cyclone;
+    }
+
+    private void assertDeathReplacementAskedWhileCycloneStays(Permanent cyclone) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cyclone);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+    }
+
+    private void assertCycloneReturnedToHandWithoutZombie(Permanent cyclone) {
+        assertThat(gd.playerHands.get(player1.getId())).contains(cyclone.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cyclone);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

@@ -642,6 +642,24 @@ deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandE
 remaining mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick first), the "any
 opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-eighth pass).** Indoraptor, the Perfect Hybrid's accepted "sacrifice a nontoken
+creature" (`DealDamageToRandomOpponentUnlessSacrificeChoiceHandler`) now runs through
+`PermanentChoiceHandlerService.answerAskingDeathReplacementsFirst`: the random opponent is picked when the prompt is
+made, so the answer only reads before the marked `SacrificePermanentsEffectHandler` (a lone candidate is sacrificed at
+once, several open the already covered `ForcedSacrifice` multi-choice); a decline, or an acceptance with nothing left to
+sacrifice, only deals the damage, outside the window. `DealDamageToRandomOpponentUnlessSacrificeEffectHandler.resolveChoice`
+is split into `hasLegalSacrifice`, `sacrifice` and `dealDamageInstead`. `CycloneUpkeep` turned out to be dead code: Cyclone
+uses `PayPerCounterOrElseEffect`, whose unpaid `SacrificeSelfEffect` already resolves inside the rerun window of the
+resolution-time may path, so `CycloneUpkeepEffect`, `CycloneUpkeepEffectHandler` and `CycloneUpkeepHandler` were deleted.
+Tests: `IndoraptorThePerfectHybridTest.acceptedSacrificeAsksForTheDeathReplacementBeforeTheZombieIsSacrificed` (Kalitas,
+Traitor of Ghet against a lone Gravebane Zombie: no sacrifice log line while asked; after the library answer the Zombie
+is on top of its owner's library, no damage and no Kalitas token) and `CycloneTest`
+`decliningAsksForTheDeathReplacementBeforeCycloneIsSacrificed` / `unpayableAcceptAsksForTheDeathReplacementBeforeCycloneIsSacrificed`
+(Cyclone animated by Opalescence and enchanted with Necromancer's Magemark against Kalitas; regression coverage, they
+already passed). Still not covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`,
+Voter's Dilemma, `LandEquilibriumSacrifice`, the remaining mayfx handlers whose answer sacrifices (the "any opponent may
+sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

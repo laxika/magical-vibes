@@ -71,23 +71,38 @@ public class DealDamageToRandomOpponentUnlessSacrificeEffectHandler implements N
                 entry.getEventValue()));
     }
 
-    public void resolveChoice(GameData gameData, PendingMayAbility ability,
-            boolean accepted, DealDamageToRandomOpponentUnlessSacrificeEffect effect) {
+    /** Whether the prompted opponent can still sacrifice a matching permanent. */
+    public boolean hasLegalSacrifice(GameData gameData, PendingMayAbility ability,
+            DealDamageToRandomOpponentUnlessSacrificeEffect effect) {
+        SacrificePermanentsEffect sacrifice = sacrificeEffect(effect);
+        return sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
+                gameData, sacrificeEntry(ability, sacrifice), sacrifice, ability.controllerId());
+    }
+
+    /**
+     * The prompted opponent's sacrifice: a lone candidate is sacrificed at once, several open a
+     * choice. Nothing changes before it.
+     */
+    public void sacrifice(GameData gameData, PendingMayAbility ability,
+            DealDamageToRandomOpponentUnlessSacrificeEffect effect) {
+        SacrificePermanentsEffect sacrifice = sacrificeEffect(effect);
+        sacrificePermanentsEffectHandler.resolve(gameData, sacrificeEntry(ability, sacrifice), sacrifice);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    /** The prompted opponent declined, or can no longer sacrifice: the source deals its damage to them. */
+    public void dealDamageInstead(GameData gameData, PendingMayAbility ability,
+            DealDamageToRandomOpponentUnlessSacrificeEffect effect) {
+        dealDamage(gameData, sacrificeEntry(ability, sacrificeEffect(effect)), effect, ability.controllerId());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private StackEntry sacrificeEntry(PendingMayAbility ability, SacrificePermanentsEffect sacrifice) {
         UUID sourceControllerId = ability.sourceControllerId() != null
                 ? ability.sourceControllerId() : ability.controllerId();
-        SacrificePermanentsEffect sacrifice = sacrificeEffect(effect);
-        StackEntry sacrificeEntry = syntheticEntry(ability, sacrifice, sourceControllerId, ability.controllerId());
-        if (accepted && sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
-                gameData, sacrificeEntry, sacrifice, ability.controllerId())) {
-            sacrificePermanentsEffectHandler.resolve(gameData, sacrificeEntry, sacrifice);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-
-        dealDamage(gameData, sacrificeEntry, effect, ability.controllerId());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        return syntheticEntry(ability, sacrifice, sourceControllerId, ability.controllerId());
     }
 
     private SacrificePermanentsEffect sacrificeEffect(DealDamageToRandomOpponentUnlessSacrificeEffect effect) {
