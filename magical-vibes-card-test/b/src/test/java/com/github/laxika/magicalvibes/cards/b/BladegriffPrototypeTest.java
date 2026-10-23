@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SilhanaLedgewalker;
@@ -114,6 +116,34 @@ class BladegriffPrototypeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Silhana Ledgewalker");
         harness.assertInGraveyard(player2, "Sol Ring");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Asks for the chosen Gravebane Zombie's death replacement before it is destroyed")
+    void asksForTheDeathReplacementBeforeTheChosenZombieIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent bladegriff = addCreatureReady(player1, new BladegriffPrototype());
+        bladegriff.setAttacking(true);
+        Permanent gravebane = addCreatureReady(player2, new GravebaneZombie());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player2, gravebane.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

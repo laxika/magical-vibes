@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyPermanentChosenByDamag
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves the fallback form of a damaged-player opponent-permanent destruction trigger. */
+/**
+ * Resolves the fallback form of a damaged-player opponent-permanent destruction trigger. It only
+ * reads before it destroys a lone candidate or opens the damaged player's choice, so a creature with
+ * competing death replacements is asked about before it leaves (CR 616.1).
+ */
 @Component
 @RequiredArgsConstructor
 public class DestroyPermanentChosenByDamagedPlayerAmongOpponentsEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;

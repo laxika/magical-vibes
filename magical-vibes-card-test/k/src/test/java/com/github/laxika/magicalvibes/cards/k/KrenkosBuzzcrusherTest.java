@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.e.EscapeTunnel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -134,6 +136,39 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
         }
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof Island);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Asks for an enchanted Dryad Arbor's death replacement before any chosen land is destroyed")
+    void asksForTheDeathReplacementBeforeAnyChosenLandIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent tunnel = harness.addToBattlefieldAndReturn(player1, new EscapeTunnel());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        setLibrary(player1, new Forest());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(tunnel.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(arbor.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Return it to its owner's hand (Necromancer's Magemark)",
+                        "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tunnel);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+
+        harness.handleListChoice(player2, "Return it to its owner's hand (Necromancer's Magemark)");
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tunnel);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(tunnel.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
+                .isEqualTo(player1.getId());
     }
 
     private void cast() {

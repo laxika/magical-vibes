@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToOneNonbasicLandPerPlayerThenSearchEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,11 +20,16 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Krenko's Buzzcrusher's non-targeting per-player land choices. */
+/**
+ * Resolves Krenko's Buzzcrusher's non-targeting per-player land choices. Resolution and each
+ * choice completion only prompt for the next player's land, with the picks so far kept in the
+ * immutable context, before the batch is destroyed, so a land creature with competing death
+ * replacements is asked about before anything leaves (CR 616.1).
+ */
 @Component
 @RequiredArgsConstructor
 public class DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;

@@ -453,6 +453,23 @@ creature can have a death replacement) and `DestroyUpToOneNonbasicLandPerPlayerT
 covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's
 Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, twenty-eighth pass).** `DestroyUpToOneNonbasicLandPerPlayerChoice` (Krenko's Buzzcrusher)
+joined `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` and runs through `completeAskingDeathReplacementsFirst`
+(keeping its old epilogue); it keeps the picks so far in the immutable context and only prompts for the next player's
+land before its `destroyBatchCollecting` batch, and the basic land searches come after. `DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler`
+and `DestroyPermanentChosenByDamagedPlayerAmongOpponentsEffectHandler` (Bladegriff Prototype's fallback form; it only
+reads before it destroys a lone candidate or opens a `DestroyChosenCreature` choice, which is already covered) are now
+marked `AsksDeathReplacementsFirst`. Bladegriff's usual path converts the trigger to a `DestroyTargetPermanentEffect`,
+already covered. Tests: `KrenkosBuzzcrusherTest.asksForTheDeathReplacementBeforeAnyChosenLandIsDestroyed` (Dryad Arbor
+with Necromancer's Magemark against Kalitas: both chosen lands stay while asked; after, the Arbor is in its owner's hand,
+the Escape Tunnel is destroyed and its controller searches) and `BladegriffPrototypeTest.asksForTheDeathReplacementBeforeTheChosenZombieIsDestroyed`.
+Open rules question: Buzzcrusher only offers a search for lands that went to a graveyard (`destroyBatchCollecting`),
+so the returned Arbor's controller gets no search; whether a destroyed land moved elsewhere by a replacement counts as
+"destroyed this way" is unverified. Not yet reviewed: `DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler` (Erosion;
+its `EnchantedPermanentManaOrLifePaymentChoice` decline in `ChoiceHandlerService` would need the same decline window as
+Essence Vortex). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
+`WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
