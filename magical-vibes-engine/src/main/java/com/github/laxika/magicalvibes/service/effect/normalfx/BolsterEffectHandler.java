@@ -65,7 +65,11 @@ public class BolsterEffectHandler implements NormalEffectHandlerBean {
                 .orElseThrow();
         List<Permanent> leastToughnessCreatures = creatures.stream()
                 .filter(permanent -> gameQueryService.getEffectiveToughness(gameData, permanent) == leastToughness)
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
+        if (leastToughnessCreatures.isEmpty()) {
+            return;
+        }
 
         if (leastToughnessCreatures.size() == 1) {
             if (bolster.recordChoice()) {

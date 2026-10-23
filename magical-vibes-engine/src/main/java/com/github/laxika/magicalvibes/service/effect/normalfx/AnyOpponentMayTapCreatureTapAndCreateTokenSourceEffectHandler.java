@@ -81,6 +81,7 @@ public class AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler
         return battlefield.stream()
                 .filter(permanent -> !permanent.isTapped())
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

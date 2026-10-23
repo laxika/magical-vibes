@@ -67,7 +67,8 @@ public class DefendingPlayerChoosesCreatureToBlockEffectHandler implements Norma
     private List<UUID> untappedCreatureIds(GameData gameData, UUID playerId) {
         List<UUID> creatureIds = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-            if (!permanent.isTapped() && gameQueryService.isCreature(gameData, permanent)) {
+            if (!permanent.isTapped() && gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 creatureIds.add(permanent.getId());
             }
         }

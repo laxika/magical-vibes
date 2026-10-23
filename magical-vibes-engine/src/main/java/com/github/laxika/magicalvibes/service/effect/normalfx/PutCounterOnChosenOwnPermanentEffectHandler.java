@@ -54,7 +54,8 @@ public class PutCounterOnChosenOwnPermanentEffectHandler implements NormalEffect
                 .withXValue(entry.getXValue());
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent permanent : battlefield) {
-            if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.predicate(), filterContext)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.predicate(), filterContext)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 eligibleIds.add(permanent.getId());
             }
         }

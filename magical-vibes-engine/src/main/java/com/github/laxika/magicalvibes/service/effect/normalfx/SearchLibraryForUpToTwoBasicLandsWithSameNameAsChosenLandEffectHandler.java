@@ -45,7 +45,8 @@ public class SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHand
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.isLand(gameData, permanent)) {
+                if (gameQueryService.isLand(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     lands.add(permanent);
                 }
             }

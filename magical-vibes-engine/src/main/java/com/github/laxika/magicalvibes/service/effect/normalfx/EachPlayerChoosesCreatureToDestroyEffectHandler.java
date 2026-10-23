@@ -88,7 +88,8 @@ public class EachPlayerChoosesCreatureToDestroyEffectHandler implements NormalEf
     private List<UUID> creaturesOnBattlefield(GameData gameData) {
         List<UUID> creatureIds = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
-            creatureIds.addAll(destructionSupport.collectCreatureIds(gameData, playerId, p -> true));
+            creatureIds.addAll(destructionSupport.collectCreatureIds(gameData, playerId,
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent)));
         }
         return creatureIds;
     }

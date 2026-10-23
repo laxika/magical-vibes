@@ -43,6 +43,7 @@ public class ChooseControlledArtifactOrCreatureTokenCopyEffectHandler implements
         List<UUID> candidates = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
                         || gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
 

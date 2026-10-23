@@ -82,7 +82,8 @@ public class AttackingPlayerChoosesCreatureToBoostEffectHandler implements Norma
     private List<UUID> attackingCreatureIds(GameData gameData, UUID attackingPlayerId) {
         List<UUID> ids = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of())) {
-            if (permanent.isAttacking() && gameQueryService.isCreature(gameData, permanent)) {
+            if (permanent.isAttacking() && gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 ids.add(permanent.getId());
             }
         }

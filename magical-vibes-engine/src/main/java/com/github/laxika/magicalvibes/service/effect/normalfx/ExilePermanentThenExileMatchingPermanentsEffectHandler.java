@@ -44,6 +44,7 @@ public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements N
                 .getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> matches(gameData, permanent, entry.getCard(), controllerId,
                         entry.getSourcePermanentId(), exileEffect.choiceFilter()))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
         if (matchingIds.isEmpty()) {

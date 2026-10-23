@@ -61,6 +61,10 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
         if (exileEffect.greatestPowerOnly()) {
             eligibleIds = creaturesWithGreatestPower(gameData, eligibleIds);
         }
+        eligibleIds = eligibleIds.stream()
+                .filter(id -> !gameQueryService.cantBeChosen(
+                        gameData, gameQueryService.findPermanentById(gameData, id)))
+                .toList();
 
         if (eligibleIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);

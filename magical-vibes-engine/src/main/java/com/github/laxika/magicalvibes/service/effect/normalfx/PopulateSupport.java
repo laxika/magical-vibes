@@ -34,7 +34,7 @@ public class PopulateSupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
-    /** The creature tokens {@code controllerId} controls — the legal populate choices. */
+    /** The creature tokens {@code controllerId} controls that can be chosen — the legal populate choices. */
     public List<Permanent> creatureTokensControlledBy(GameData gameData, UUID controllerId) {
         List<Permanent> tokens = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -42,7 +42,8 @@ public class PopulateSupport {
             return tokens;
         }
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.isToken(gameData, permanent) && gameQueryService.isCreature(gameData, permanent)) {
+            if (gameQueryService.isToken(gameData, permanent) && gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 tokens.add(permanent);
             }
         }

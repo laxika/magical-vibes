@@ -47,7 +47,8 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
         List<UUID> creatureIds = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p)) {
+                if (gameQueryService.isCreature(gameData, p)
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, p)) {
                     creatureIds.add(p.getId());
                 }
             }

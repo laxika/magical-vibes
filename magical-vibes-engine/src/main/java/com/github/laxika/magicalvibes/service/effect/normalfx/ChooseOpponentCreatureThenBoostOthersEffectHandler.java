@@ -45,7 +45,8 @@ public class ChooseOpponentCreatureThenBoostOthersEffectHandler implements Norma
                 continue;
             }
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     creatureIds.add(permanent.getId());
                 }
             }

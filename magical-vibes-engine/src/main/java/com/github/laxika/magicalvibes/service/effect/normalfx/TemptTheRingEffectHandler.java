@@ -54,6 +54,7 @@ public class TemptTheRingEffectHandler implements NormalEffectHandlerBean {
 
         List<UUID> eligibleIds = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
         if (eligibleIds.isEmpty()) {

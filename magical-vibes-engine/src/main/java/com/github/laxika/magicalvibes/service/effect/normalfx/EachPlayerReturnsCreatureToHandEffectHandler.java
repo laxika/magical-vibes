@@ -81,6 +81,7 @@ public class EachPlayerReturnsCreatureToHandEffectHandler implements NormalEffec
         }
         return battlefield.stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

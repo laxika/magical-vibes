@@ -31,12 +31,18 @@ public class MaySacrificeForCounterSupport {
     private final PermanentCounterSupport permanentCounterSupport;
     private final DestructionSupport destructionSupport;
 
-    /** The permanents {@code controllerId} controls that may be sacrificed. */
+    /**
+     * The matching permanents {@code controllerId} controls that they may choose to sacrifice: ones
+     * that can't be sacrificed or can't be chosen (Glimpse, the Unthinkable) are left out.
+     */
     public List<UUID> matchingPermanentIds(GameData gameData, UUID controllerId, PermanentPredicate filter) {
         return matchingPermanentIds(gameData, controllerId, null, filter);
     }
 
-    /** The matching permanents, evaluated with the source identity available to relative predicates. */
+    /**
+     * As {@link #matchingPermanentIds(GameData, UUID, PermanentPredicate)}, evaluated with the source
+     * identity available to relative predicates.
+     */
     public List<UUID> matchingPermanentIds(GameData gameData, UUID controllerId,
                                            UUID sourcePermanentId, PermanentPredicate filter) {
         List<UUID> ids = new ArrayList<>();
@@ -49,7 +55,8 @@ public class MaySacrificeForCounterSupport {
                 .withSourceCardId(source == null ? null : source.getCard().getId());
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent, filter)) {
                     ids.add(permanent.getId());
                 }
             }

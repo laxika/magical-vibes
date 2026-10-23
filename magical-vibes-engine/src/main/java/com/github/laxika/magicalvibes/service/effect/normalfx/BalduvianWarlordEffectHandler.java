@@ -131,7 +131,8 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
             if (attacker.isAttacking()
                     && gameQueryService.isCreature(gameData, attacker)
                     && attacks(gameData, defenderId, attacker)
-                    && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+                    && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)
+                    && !gameQueryService.cantBeChosen(gameData, attacker)) {
                 result.add(attacker.getId());
             }
         });

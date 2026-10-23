@@ -1,17 +1,24 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AbzanAdvantage;
 import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDepravity;
 import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.a.AshnodsAltar;
 import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
+import com.github.laxika.magicalvibes.cards.c.Curfew;
+import com.github.laxika.magicalvibes.cards.d.DesecrationDemon;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.d.DivineReckoning;
 import com.github.laxika.magicalvibes.cards.d.Duneblast;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.ImperialEdict;
 import com.github.laxika.magicalvibes.cards.i.InnocentBlood;
 import com.github.laxika.magicalvibes.cards.n.Nevermore;
+import com.github.laxika.magicalvibes.cards.n.NulltreadGargantuan;
 import com.github.laxika.magicalvibes.cards.p.PathOfPeace;
 import com.github.laxika.magicalvibes.cards.p.PromiseOfLoyalty;
+import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
+import com.github.laxika.magicalvibes.cards.s.SlipOnTheRing;
 import com.github.laxika.magicalvibes.cards.t.TheDiningCar;
 import com.github.laxika.magicalvibes.cards.t.TurfWar;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -38,7 +45,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({GlimpseTheUnthinkablePlaytest.class, PathOfPeace.class, DivineReckoning.class, Nevermore.class,
         DiabolicEdict.class, InnocentBlood.class, GrizzlyBears.class, PromiseOfLoyalty.class, Duneblast.class,
         ArchfiendOfDepravity.class, AshnodsAltar.class, BoneSplinters.class, TurfWar.class,
-        AshayaSoulOfTheWild.class, Forest.class, TheDiningCar.class})
+        AshayaSoulOfTheWild.class, Forest.class, TheDiningCar.class, ImperialEdict.class, Curfew.class,
+        NulltreadGargantuan.class, DesecrationDemon.class, RavenousVampire.class, AbzanAdvantage.class,
+        SlipOnTheRing.class})
 class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
 
     @Test
@@ -350,6 +359,146 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Imperial Edict can't make its target choose Glimpse when it is their only creature")
+    void imperialEdictCannotChooseGlimpseAsOnlyCreature() {
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+
+        harness.setHand(player1, List.of(new ImperialEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Glimpse, the Unthinkable");
+    }
+
+    @Test
+    @DisplayName("Imperial Edict destroys the other creature without a prompt when Glimpse is the alternative")
+    void imperialEdictTakesOtherCreatureAutomatically() {
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new ImperialEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Glimpse, the Unthinkable");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Curfew can't make a player return Glimpse when it is their only creature")
+    void curfewCannotChooseGlimpse() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+
+        harness.castFromHand(player1, new Curfew(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Glimpse, the Unthinkable");
+    }
+
+    @Test
+    @DisplayName("Nulltread Gargantuan tops itself without a prompt when Glimpse is the only other creature")
+    void nulltreadGargantuanCannotChooseGlimpse() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+
+        harness.castFromHand(player1, new NulltreadGargantuan(), "{1}{G}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+        harness.assertNotOnBattlefield(player1, "Nulltread Gargantuan");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Nulltread Gargantuan");
+    }
+
+    @Test
+    @DisplayName("Desecration Demon can't be fed Glimpse when it is the opponent's only creature")
+    void desecrationDemonCannotSacrificeGlimpse() {
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, new DesecrationDemon());
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Glimpse, the Unthinkable");
+        assertThat(demon.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ravenous Vampire sacrifices itself without a prompt when Glimpse is the other nonartifact creature")
+    void ravenousVampireCannotSacrificeGlimpse() {
+        harness.addToBattlefield(player1, new RavenousVampire());
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+        harness.assertInGraveyard(player1, "Ravenous Vampire");
+    }
+
+    @Test
+    @DisplayName("Bolster can't choose Glimpse when it alone has the least toughness")
+    void bolsterCannotChooseGlimpseWithLeastToughness() {
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        castAbzanAdvantage();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(glimpse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Bolster picks the creature tied with Glimpse for least toughness without a prompt")
+    void bolsterTakesTiedCreatureAutomatically() {
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        castAbzanAdvantage();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(glimpse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The Ring can't choose Glimpse as Ring-bearer, so the other creature is chosen without a prompt")
+    void ringCannotChooseGlimpseAsRingBearer() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new SlipOnTheRing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.ringStates.get(player1.getId()).bearerId())
+                .isEqualTo(findPermanent(player1, "Grizzly Bears").getId());
+    }
+
+    private void castAbzanAdvantage() {
+        harness.setHand(player1, List.of(new AbzanAdvantage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 
     private void resolveDiningCarUpkeep() {

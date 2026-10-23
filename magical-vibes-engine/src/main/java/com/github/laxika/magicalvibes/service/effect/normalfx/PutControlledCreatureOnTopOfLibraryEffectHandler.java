@@ -50,7 +50,7 @@ public class PutControlledCreatureOnTopOfLibraryEffectHandler implements NormalE
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p)) {
+                if (gameQueryService.isCreature(gameData, p) && !gameQueryService.cantBeChosen(gameData, p)) {
                     creatures.add(p);
                 }
             }
@@ -63,7 +63,7 @@ public class PutControlledCreatureOnTopOfLibraryEffectHandler implements NormalE
         }
 
         if (creatures.size() == 1) {
-            // Forced choice — the controller's only creature (the source itself when nothing else is out).
+            // Forced choice — the controller's only choosable creature (the source itself when nothing else is out).
             putOnTopOfLibrary(gameData, creatures.getFirst());
             permanentRemovalService.removeOrphanedAuras(gameData);
             return;

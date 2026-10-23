@@ -55,7 +55,8 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
 
         while (!remaining.isEmpty()) {
             UUID opponentId = remaining.removeFirst();
-            List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, opponentId, ignored -> true);
+            List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, opponentId,
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (creatureIds.isEmpty()) {
                 continue;
             }

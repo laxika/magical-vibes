@@ -98,6 +98,7 @@ public class EachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler
                 .orElseThrow();
         return creatures.stream()
                 .filter(permanent -> gameQueryService.getEffectivePower(gameData, permanent) == greatestPower)
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
     }
 

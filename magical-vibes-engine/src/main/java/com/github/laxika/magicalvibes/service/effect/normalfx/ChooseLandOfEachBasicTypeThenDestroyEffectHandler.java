@@ -88,7 +88,8 @@ public class ChooseLandOfEachBasicTypeThenDestroyEffectHandler implements Normal
         for (UUID playerId : gameData.orderedPlayerIds) {
             candidates.addAll(destructionSupport.collectPermanentIds(gameData, playerId,
                     permanent -> gameQueryService.isLand(gameData, permanent)
-                            && gameQueryService.effectiveBasicLandTypes(gameData, permanent).contains(type)));
+                            && gameQueryService.effectiveBasicLandTypes(gameData, permanent).contains(type)
+                            && !gameQueryService.cantBeChosen(gameData, permanent)));
         }
         return candidates;
     }

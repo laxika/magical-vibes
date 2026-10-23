@@ -10,44 +10,38 @@ Remove an entry once the feature has landed and its tests pass.
 ---
 
 
-## 21. "Can't be chosen" on remaining auto-resolved choices (Glimpse, the Unthinkable)
+## 21. "Can't be chosen" for blight and votes (Glimpse, the Unthinkable)
 
-**Status:** open (partly done) · **Found:** 2026-10-14, while fixing G-card tests
+**Status:** open (only the questions below remain) · **Found:** 2026-10-14, while fixing G-card tests
 
-**Failing tests:** none yet. `GlimpseTheUnthinkablePlaytestTest` passes, but its support is partial.
+**Failing tests:** none. `GlimpseTheUnthinkablePlaytestTest` passes.
 
-**What the rules require.** Glimpse, the Unthinkable has "Glimpse, the Unthinkable can't be chosen" and
-"The name Glimpse, the Unthinkable can't be chosen." Already done: permanent-choice prompts, Divine
-Reckoning, card-name answers and name-suggestion lists (`InteractionPromptProjectionRegistry`), and the
-candidate lists of resolution-time "sacrifice a/N permanent(s)" effects (`GameQueryService.cantBeChosenToSacrifice`,
-used by `SacrificePermanentsEffectHandler`, `DestructionSupport.performSacrificeCreatureForPlayer`, the
-each-player/each-opponent/target-player sacrifice handlers, devour), AI name choices
-(`ColorChoiceAiStrategy.answerWith` swaps an unchoosable name for a choosable one), and the keep
-candidates of every "choose N to keep, then sacrifice/destroy/return/phase out the rest" handler (Glimpse
-can't be kept, so it goes with the rest), and sacrifice costs that involve a choice
-(`GameQueryService.canChooseToSacrificeForCosts`, used by the activated-ability sacrifice cost handlers,
-spell additional/alternative/flashback/graveyard/kicker sacrifice costs and free-cast sacrifice costs; "sacrifice
-this" and "sacrifice all" costs still use `canSacrificePermanentForCosts`), plus Turf War (both the enter trigger's
-land choice and the combat-damage control change), `TransformChosenPermanentEffectHandler` and The Dining
-Car's least-toughness sacrifice (`SacrificeCreatureWithLeastToughnessEffectHandler`). Make an Example needs
-nothing: separating creatures into piles isn't choosing a creature (the official rulings limit the ability to
-spells and abilities that ask a player to "choose" among permanents). Still ignoring it:
-- the remaining handlers that auto-pick a single candidate before falling back to a
-  `beginPermanentChoice`/`beginMultiPermanentChoice` prompt. The prompt itself filters out Glimpse, but the
-  auto-pick shortcut doesn't. About 160 handlers in `service/effect` have that shape and haven't been audited
-  (find them with `grep -lE "size\(\) == 1"`, keep the files that call a choice prompt, and drop the ones that already
-  mention `cantBeChosen`).
+**What the rules require.** Glimpse, the Unthinkable has "Glimpse, the Unthinkable can't be chosen." The
+official rulings apply it to spells and abilities that ask a player to "choose" or make a "choice" among
+permanents (Call to the Void, Divine Reckoning, Vesuvan Shapeshifter), but not to choices made under game
+rules (attackers, blockers). Every handler that builds its own "choose a permanent" candidate list now drops
+it at the source of the list (`GameQueryService.cantBeChosen`, or `cantBeChosenToSacrifice` for
+sacrifices). Still ignoring it, because it's unclear whether they count as a "choice":
+- blight (CR 701.68a: "put N -1/-1 counters on a creature you control", but 701.68c calls it the creature
+  the player "chose"). Blight runs through `BlightEffectHandler`, `EachOpponentBlightsEffectHandler`,
+  `TargetPlayerBlightsEffectHandler`, `CounterUnlessBlightsEffectHandler`, `BlightXCostHandler` and the
+  spell/ability blight costs, so they all need to change together.
+- votes for a permanent (Will of the council, Secret council, Expropriate).
+- Pattern Matcher's "same name as another creature you control" and the exchange in
+  `RedHerringExchangeEffectHandler`.
 
-**Why it's large.** Every auto-resolving "choose a permanent" path builds its own candidate list, so each one
-has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when Glimpse was the only candidate).
+`PromiseOfLoyaltyEffectHandler` still auto-keeps Glimpse, but no card uses `PromiseOfLoyaltyEffect`
+(Promise of Loyalty itself uses `EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffect`), so
+it's probably dead code.
+
+**Why it's large.** Blight is spread across effects, costs and may-ability checks.
 
 **Prompt to start it:**
 
 ```
-Finish "can't be chosen" support for Glimpse, the Unthinkable (missing-features-to-do.md entry 21): audit
-the remaining handlers whose single-candidate auto-pick skips the (already filtered) choice prompt and make
-them honour CantBeChosenEffect. Add tests to
-GlimpseTheUnthinkablePlaytestTest first.
+Decide whether Glimpse, the Unthinkable's "can't be chosen" applies to blight and to votes
+(missing-features-to-do.md entry 21), search for an official ruling, and if it does make every blight
+path and vote honour CantBeChosenEffect. Add tests to GlimpseTheUnthinkablePlaytestTest first.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

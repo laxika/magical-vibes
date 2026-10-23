@@ -124,6 +124,7 @@ public class ZndrsplatsJudgmentEffectHandler implements NormalEffectHandlerBean 
         PermanentChoiceContext.ZndrsplatsJudgmentSelection selection = remainingSelections.getFirst();
         List<UUID> creatureIds = gameData.playerBattlefields.getOrDefault(selection.playerId(), List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
         List<PermanentChoiceContext.ZndrsplatsJudgmentSelection> nextRemaining = remainingSelections.size() == 1

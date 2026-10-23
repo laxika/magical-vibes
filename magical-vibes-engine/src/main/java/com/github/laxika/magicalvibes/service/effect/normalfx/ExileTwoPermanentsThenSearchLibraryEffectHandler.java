@@ -136,6 +136,7 @@ public class ExileTwoPermanentsThenSearchLibraryEffectHandler implements NormalE
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         permanent, filter, filterContext))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

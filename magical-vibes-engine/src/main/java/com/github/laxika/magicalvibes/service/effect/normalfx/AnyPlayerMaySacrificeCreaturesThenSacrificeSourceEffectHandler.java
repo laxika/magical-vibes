@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -59,13 +58,7 @@ public class AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffectHandler
             return List.of();
         }
         return maySacrificeForCounterSupport.matchingPermanentIds(
-                        gameData, playerId, new PermanentIsCreaturePredicate())
-                .stream()
-                .filter(permanentId -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-                    return permanent != null && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent);
-                })
-                .toList();
+                gameData, playerId, new PermanentIsCreaturePredicate());
     }
 
     /** Enqueues the choice for the first remaining player. */

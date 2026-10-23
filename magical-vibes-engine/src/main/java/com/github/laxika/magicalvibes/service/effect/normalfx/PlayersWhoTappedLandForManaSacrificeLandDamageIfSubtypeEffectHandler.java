@@ -72,6 +72,7 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
             List<Permanent> lands = battlefield.stream()
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                             gameData, p, new PermanentIsLandPredicate()))
+                    .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                     .toList();
 
             if (lands.isEmpty()) {

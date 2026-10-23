@@ -43,6 +43,7 @@ public class TargetPlayerPutsCounterOnCreatureEffectHandler implements NormalEff
         }
         List<UUID> creatureIds = battlefield.stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
         if (creatureIds.isEmpty()) {

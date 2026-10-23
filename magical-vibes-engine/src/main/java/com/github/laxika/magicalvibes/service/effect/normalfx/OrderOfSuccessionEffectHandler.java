@@ -69,7 +69,8 @@ public class OrderOfSuccessionEffectHandler implements NormalEffectHandlerBean {
         while (!remaining.isEmpty()) {
             UUID choosingPlayerId = remaining.removeFirst();
             UUID chosenFromPlayerId = nextPlayer(orderedPlayerIds, choosingPlayerId, direction);
-            List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, chosenFromPlayerId, p -> true);
+            List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, chosenFromPlayerId,
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (creatureIds.isEmpty()) {
                 String playerName = gameData.playerIdToName.get(chosenFromPlayerId);
                 gameLogService.append(gameData, GameLog.text(

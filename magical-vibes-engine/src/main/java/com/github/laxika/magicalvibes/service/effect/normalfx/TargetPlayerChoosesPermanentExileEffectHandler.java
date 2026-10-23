@@ -47,7 +47,8 @@ public class TargetPlayerChoosesPermanentExileEffectHandler implements NormalEff
                 (TargetPlayerChoosesPermanentExileEffect) effect;
         List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, targetPlayerId,
                 permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, exileEffect.filter()));
+                        gameData, permanent, exileEffect.filter())
+                        && !gameQueryService.cantBeChosen(gameData, permanent));
 
         if (matchingIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);

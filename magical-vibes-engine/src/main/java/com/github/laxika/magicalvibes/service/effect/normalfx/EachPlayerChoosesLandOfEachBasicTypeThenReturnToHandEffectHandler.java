@@ -100,6 +100,7 @@ public class EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandEffectHandler
         return battlefield.stream()
                 .filter(permanent -> gameQueryService.isLand(gameData, permanent)
                         && gameQueryService.effectiveBasicLandTypes(gameData, permanent).contains(type))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

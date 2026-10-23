@@ -48,7 +48,8 @@ public class EachOpponentSacrificesCreatureOrVehicleOrDiscardsEffectHandler
 
         List<UUID> eligibleIds = destructionSupport.collectPermanentIds(gameData, opponentId,
                 permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, CREATURE_OR_VEHICLE));
+                        gameData, permanent, CREATURE_OR_VEHICLE)
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
         if (!eligibleIds.isEmpty()
                 && gameQueryService.canEffectCauseSacrifice(gameData, opponentId, entry.getControllerId())) {
             if (eligibleIds.size() == 1) {

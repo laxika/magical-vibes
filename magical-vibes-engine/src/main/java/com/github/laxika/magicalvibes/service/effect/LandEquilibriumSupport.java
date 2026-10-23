@@ -88,7 +88,9 @@ public class LandEquilibriumSupport {
             return false;
         }
 
-        List<Permanent> lands = controlledLands(gameData, sacrificingPlayerId);
+        List<Permanent> lands = controlledLands(gameData, sacrificingPlayerId).stream()
+                .filter(land -> !gameQueryService.cantBeChosenToSacrifice(gameData, land))
+                .toList();
         if (lands.isEmpty()) {
             return false;
         }

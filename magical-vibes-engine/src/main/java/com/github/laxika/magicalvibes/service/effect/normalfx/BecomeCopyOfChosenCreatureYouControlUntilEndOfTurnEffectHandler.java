@@ -40,7 +40,8 @@ public class BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (!permanent.getId().equals(sourcePermanentId)
-                        && gameQueryService.isCreature(gameData, permanent)) {
+                        && gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     otherCreatures.add(permanent);
                 }
             }

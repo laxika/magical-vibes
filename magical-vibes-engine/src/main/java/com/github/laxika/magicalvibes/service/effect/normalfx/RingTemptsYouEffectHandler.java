@@ -51,6 +51,7 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
                 .getOrDefault(controllerId, List.of())
                 .stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
         if (creatureIds.isEmpty()) {

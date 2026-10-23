@@ -59,14 +59,13 @@ public class CelestialJudgmentEffectHandler implements NormalEffectHandlerBean {
                                 Map<Integer, List<UUID>> creatureIdsByPower, int powerIndex,
                                 List<UUID> chosenIds, String sourceName) {
         int power = powers.get(powerIndex);
-        List<UUID> candidates = creatureIdsByPower.getOrDefault(power, List.of());
-        if (candidates.isEmpty()) {
-            destructionSupport.performDestroyAllCreaturesExcept(gameData, sourceName, chosenIds);
-            return;
-        }
-        if (candidates.size() == 1) {
+        List<UUID> candidates = creatureIdsByPower.getOrDefault(power, List.of()).stream()
+                .filter(id -> !gameQueryService.cantBeChosen(
+                        gameData, gameQueryService.findPermanentById(gameData, id)))
+                .toList();
+        if (candidates.size() <= 1) {
             List<UUID> updatedChosenIds = new ArrayList<>(chosenIds);
-            updatedChosenIds.add(candidates.getFirst());
+            updatedChosenIds.addAll(candidates);
             if (powerIndex + 1 >= powers.size()) {
                 destructionSupport.performDestroyAllCreaturesExcept(gameData, sourceName, updatedChosenIds);
             } else {

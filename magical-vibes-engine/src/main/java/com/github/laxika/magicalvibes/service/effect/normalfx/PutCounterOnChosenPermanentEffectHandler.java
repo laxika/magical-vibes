@@ -49,8 +49,9 @@ public class PutCounterOnChosenPermanentEffectHandler implements NormalEffectHan
 
         List<UUID> eligibleIds = new ArrayList<>();
         gameData.forEachPermanent((ownerId, permanent) -> {
-            if (e.predicate() == null
-                    || predicateEvaluationService.matchesPermanentPredicate(permanent, e.predicate(), filterContext)) {
+            if ((e.predicate() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(permanent, e.predicate(), filterContext))
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 eligibleIds.add(permanent.getId());
             }
         });

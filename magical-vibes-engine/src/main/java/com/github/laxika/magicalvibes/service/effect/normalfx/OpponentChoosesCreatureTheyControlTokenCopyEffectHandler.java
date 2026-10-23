@@ -66,7 +66,7 @@ public class OpponentChoosesCreatureTheyControlTokenCopyEffectHandler implements
 
         List<UUID> creatureIds = new ArrayList<>();
         for (Permanent perm : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
-            if (gameQueryService.isCreature(gameData, perm)) {
+            if (gameQueryService.isCreature(gameData, perm) && !gameQueryService.cantBeChosen(gameData, perm)) {
                 creatureIds.add(perm.getId());
             }
         }

@@ -90,6 +90,7 @@ public class EachOpponentChoosesPermanentToDestroyEffectHandler implements Norma
     private List<Permanent> matchingPermanents(GameData gameData, UUID playerId, PermanentPredicate filter) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
     }
 

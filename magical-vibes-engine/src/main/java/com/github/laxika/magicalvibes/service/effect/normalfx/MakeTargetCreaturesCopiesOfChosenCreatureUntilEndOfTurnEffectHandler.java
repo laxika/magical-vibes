@@ -120,7 +120,8 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
     private List<UUID> creatureIds(GameData gameData, PermanentPredicate predicate) {
         List<UUID> ids = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 ids.add(permanent.getId());
             }
         });

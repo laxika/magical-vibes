@@ -54,6 +54,7 @@ public class ExilePermanentYouControlAndTrackWithSourceEffectHandler
         List<UUID> matchingIds = battlefield.stream()
                 .filter(permanent -> matches(gameData, permanent, entry.getCard(), controllerId,
                         sourcePermanentId, exileEffect.filter()))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
         if (matchingIds.isEmpty()) {

@@ -62,9 +62,13 @@ public class TargetPlayerExilesGreatestManaValueCreatureOrPlaneswalkerEffectHand
         List<UUID> greatestIds = eligibleIds.stream()
                 .filter(id -> {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent != null && permanent.getCard().getManaValue() == greatestManaValue;
+                    return permanent != null && permanent.getCard().getManaValue() == greatestManaValue
+                            && !gameQueryService.cantBeChosen(gameData, permanent);
                 })
                 .toList();
+        if (greatestIds.isEmpty()) {
+            return;
+        }
 
         String cardName = entry.getCard().getName();
         if (greatestIds.size() == 1) {

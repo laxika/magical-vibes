@@ -47,6 +47,7 @@ public class OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHan
         UUID controllerId = entry.getControllerId();
         List<Permanent> tokens = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
 
         if (tokens.isEmpty()) {

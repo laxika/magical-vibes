@@ -118,6 +118,7 @@ public class ExileAnotherCreatureAndConjureRandomCreatureEffectHandler
         return battlefield.stream()
                 .filter(permanent -> !permanent.getId().equals(sourcePermanentId))
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

@@ -52,6 +52,7 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
     public List<UUID> creatureIds(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

@@ -88,6 +88,7 @@ public class OpponentChoosesPermanentToSacrificeEffectHandler implements NormalE
         }
         List<UUID> matchingIds = battlefield.stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter))
+                .filter(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent, filter))
                 .map(Permanent::getId)
                 .toList();
         if (matchingIds.isEmpty()) {

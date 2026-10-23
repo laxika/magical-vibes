@@ -119,7 +119,8 @@ public class ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffectHandler
             }
             for (Permanent permanent : battlefield) {
                 if (ownerId.equals(gameData.defaultControllerOf(permanent.getId()))
-                        && gameQueryService.isCreature(gameData, permanent)) {
+                        && gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     ids.add(permanent.getId());
                 }
             }

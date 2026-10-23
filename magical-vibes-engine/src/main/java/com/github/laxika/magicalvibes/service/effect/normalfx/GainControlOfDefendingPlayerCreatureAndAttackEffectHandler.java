@@ -92,7 +92,8 @@ public class GainControlOfDefendingPlayerCreatureAndAttackEffectHandler implemen
     private List<UUID> creatureIdsControlledBy(GameData gameData, UUID controllerId) {
         List<UUID> ids = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 ids.add(permanent.getId());
             }
         }

@@ -47,6 +47,7 @@ public class AnimateChosenOwnPermanentEffectHandler implements NormalEffectHandl
         List<UUID> candidates = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         permanent, animate.filter(), filterContext))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
 

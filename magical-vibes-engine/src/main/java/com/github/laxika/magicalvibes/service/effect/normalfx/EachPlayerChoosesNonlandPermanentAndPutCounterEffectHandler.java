@@ -88,6 +88,7 @@ public class EachPlayerChoosesNonlandPermanentAndPutCounterEffectHandler
         return gameData.orderedPlayerIds.stream()
                 .flatMap(ownerId -> gameData.playerBattlefields.getOrDefault(ownerId, List.of()).stream())
                 .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

@@ -110,6 +110,7 @@ public class EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHan
                 .orElseThrow();
         return creatures.stream()
                 .filter(permanent -> permanent.getCard().getManaValue() == greatestManaValue)
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
     }
 

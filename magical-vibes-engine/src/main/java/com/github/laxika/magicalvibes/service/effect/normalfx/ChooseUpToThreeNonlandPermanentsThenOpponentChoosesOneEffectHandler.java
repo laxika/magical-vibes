@@ -89,7 +89,8 @@ public class ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler
     private List<UUID> nonlandPermanentsNotControlledBy(GameData gameData, UUID controllerId) {
         List<UUID> eligibleIds = new ArrayList<>();
         gameData.forEachPermanent((currentControllerId, permanent) -> {
-            if (!controllerId.equals(currentControllerId) && !gameQueryService.isLand(gameData, permanent)) {
+            if (!controllerId.equals(currentControllerId) && !gameQueryService.isLand(gameData, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 eligibleIds.add(permanent.getId());
             }
         });

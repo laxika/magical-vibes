@@ -33,7 +33,10 @@ public class PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanent
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<Permanent> controlledPermanents = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
+        List<Permanent> controlledPermanents = gameData.playerBattlefields.getOrDefault(controllerId, List.of())
+                .stream()
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
+                .toList();
         if (controlledPermanents.isEmpty()) {
             return;
         }

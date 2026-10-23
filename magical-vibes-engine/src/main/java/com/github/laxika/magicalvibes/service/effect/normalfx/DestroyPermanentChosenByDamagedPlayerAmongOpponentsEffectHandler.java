@@ -55,7 +55,8 @@ public class DestroyPermanentChosenByDamagedPlayerAmongOpponentsEffectHandler
             }
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, destroyEffect.predicate(), filterContext)) {
+                        permanent, destroyEffect.predicate(), filterContext)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     validIds.add(permanent.getId());
                 }
             }

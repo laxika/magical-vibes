@@ -42,13 +42,14 @@ public class GargantuanGorillaUpkeepSupport {
     private final DestructionSupport destructionSupport;
     private final GameOutcomeService gameOutcomeService;
 
-    /** The Forests {@code controllerId} controls — snow or not, both are legal sacrifices. */
+    /** The Forests {@code controllerId} can choose to sacrifice — snow or not, both are legal. */
     public List<UUID> forestIds(GameData gameData, UUID controllerId) {
         List<UUID> ids = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, FOREST)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, FOREST)
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)) {
                     ids.add(permanent.getId());
                 }
             }

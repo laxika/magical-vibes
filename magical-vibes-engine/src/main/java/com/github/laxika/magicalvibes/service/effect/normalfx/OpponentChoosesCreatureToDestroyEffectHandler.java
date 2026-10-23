@@ -60,7 +60,7 @@ public class OpponentChoosesCreatureToDestroyEffectHandler implements NormalEffe
         List<UUID> creatureIds = new ArrayList<>();
         for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
             for (Permanent perm : bf.getValue()) {
-                if (gameQueryService.isCreature(gameData, perm)) {
+                if (gameQueryService.isCreature(gameData, perm) && !gameQueryService.cantBeChosen(gameData, perm)) {
                     creatureIds.add(perm.getId());
                 }
             }

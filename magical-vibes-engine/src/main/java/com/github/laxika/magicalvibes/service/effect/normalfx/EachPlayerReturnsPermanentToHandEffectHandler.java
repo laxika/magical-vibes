@@ -84,7 +84,10 @@ public class EachPlayerReturnsPermanentToHandEffectHandler implements NormalEffe
         if (battlefield == null) {
             return List.of();
         }
-        return battlefield.stream().map(Permanent::getId).toList();
+        return battlefield.stream()
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
+                .map(Permanent::getId)
+                .toList();
     }
 
     private void returnChosenPermanents(GameData gameData, List<UUID> chosenIds, String sourceName) {

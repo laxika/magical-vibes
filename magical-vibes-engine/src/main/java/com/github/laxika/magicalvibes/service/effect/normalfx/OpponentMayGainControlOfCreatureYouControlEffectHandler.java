@@ -121,7 +121,7 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
             return ids;
         }
         for (Permanent perm : battlefield) {
-            if (gameQueryService.isCreature(gameData, perm)) {
+            if (gameQueryService.isCreature(gameData, perm) && !gameQueryService.cantBeChosen(gameData, perm)) {
                 ids.add(perm.getId());
             }
         }

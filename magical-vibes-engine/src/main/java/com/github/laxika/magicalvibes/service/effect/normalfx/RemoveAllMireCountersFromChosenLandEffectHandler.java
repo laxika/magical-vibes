@@ -108,7 +108,8 @@ public class RemoveAllMireCountersFromChosenLandEffectHandler implements NormalE
         List<UUID> eligibleIds = new ArrayList<>();
         gameData.forEachPermanent((ignored, permanent) -> {
             if (gameQueryService.isLand(gameData, permanent)
-                    && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)) {
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 eligibleIds.add(permanent.getId());
             }
         });

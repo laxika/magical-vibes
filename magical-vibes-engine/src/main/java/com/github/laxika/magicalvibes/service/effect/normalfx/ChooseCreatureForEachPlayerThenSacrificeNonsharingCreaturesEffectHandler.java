@@ -64,7 +64,7 @@ public class ChooseCreatureForEachPlayerThenSacrificeNonsharingCreaturesEffectHa
             }
 
             List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, playerId,
-                    ignored -> true);
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (candidates.isEmpty()) {
                 continue;
             }

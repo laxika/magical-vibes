@@ -65,6 +65,7 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
         return gameData.playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .filter(permanent -> dealerIds.contains(permanent.getId()))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

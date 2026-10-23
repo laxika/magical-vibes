@@ -47,6 +47,7 @@ public class ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler implements N
             }
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
                 if (gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)
                         && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
                         permanent, boost.filter(), filterContext))) {

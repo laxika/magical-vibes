@@ -92,7 +92,7 @@ public class EachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler
             UUID choosingPlayerId = remaining.removeFirst();
             UUID chosenFromPlayerId = playerToLeft(orderedPlayerIds, choosingPlayerId);
             List<UUID> creatureIds = destructionSupport.collectCreatureIds(
-                    gameData, chosenFromPlayerId, ignored -> true);
+                    gameData, chosenFromPlayerId, permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (creatureIds.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(chosenFromPlayerId) + " has no creatures to choose ("

@@ -54,6 +54,13 @@ public class DestroyCreatureWithLeastPowerEffectHandler implements NormalEffectH
         List<Permanent> tied = creatures.stream()
                 .filter(permanent -> gameQueryService.getEffectivePower(gameData, permanent) == leastPower)
                 .toList();
+        // Only a tie asks for a choice, so a creature that can't be chosen drops out of a tie but is
+        // still destroyed when it alone has the least power.
+        if (tied.size() > 1) {
+            tied = tied.stream()
+                    .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
+                    .toList();
+        }
 
         // Ruling (Drop of Honey, 2021): an indestructible creature tied for least power can't be chosen
         // while a destroyable tied creature exists; if every tied creature is indestructible, none is destroyed.

@@ -130,6 +130,7 @@ public class PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSour
     private List<UUID> controlledCreatureIds(GameData gameData, UUID controllerId) {
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

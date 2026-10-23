@@ -113,7 +113,7 @@ public class SeizeTheSpotlightEffectHandler implements NormalEffectHandlerBean {
         while (!remaining.isEmpty()) {
             UUID opponentId = remaining.removeFirst();
             List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, opponentId,
-                    ignored -> true);
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (candidates.isEmpty()) {
                 continue;
             }

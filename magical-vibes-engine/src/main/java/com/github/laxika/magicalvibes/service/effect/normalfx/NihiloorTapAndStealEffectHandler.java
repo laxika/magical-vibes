@@ -89,7 +89,8 @@ public class NihiloorTapAndStealEffectHandler implements NormalEffectHandlerBean
     private List<UUID> untappedCreatures(GameData gameData, UUID controllerId) {
         List<UUID> result = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            if (!permanent.isTapped() && gameQueryService.isCreature(gameData, permanent)) {
+            if (!permanent.isTapped() && gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 result.add(permanent.getId());
             }
         }

@@ -712,7 +712,8 @@ public class PermanentCounterSupport {
 
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent p : battlefield) {
-            if (predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext)
+                    && !gameQueryService.cantBeChosen(gameData, p)) {
                 eligibleIds.add(p.getId());
             }
         }

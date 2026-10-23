@@ -49,7 +49,8 @@ public class RemoveCounterFromChosenOwnPermanentEffectHandler implements NormalE
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent permanent : battlefield) {
             if (predicateEvaluationService.matchesPermanentPredicate(
-                    permanent, removeEffect.permanentFilter(), filterContext)) {
+                    permanent, removeEffect.permanentFilter(), filterContext)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 eligibleIds.add(permanent.getId());
             }
         }

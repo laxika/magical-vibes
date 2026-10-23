@@ -91,8 +91,9 @@ public class EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPerma
 
     private List<UUID> eligiblePermanentIds(GameData gameData, UUID playerId) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> gameQueryService.isCreature(gameData, permanent)
-                        || gameQueryService.isPlaneswalker(gameData, permanent));
+                permanent -> (gameQueryService.isCreature(gameData, permanent)
+                        || gameQueryService.isPlaneswalker(gameData, permanent))
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent));
     }
 
     private void sacrificeAndQueueReturns(GameData gameData, UUID effectControllerId, List<UUID> playerIds,

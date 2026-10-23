@@ -50,7 +50,8 @@ public class EachOpponentChoosesCreatureToExileWithSourceEffectHandler implement
         List<UUID> remaining = new ArrayList<>(remainingOpponentIds);
         while (!remaining.isEmpty()) {
             UUID opponentId = remaining.removeFirst();
-            List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, opponentId, p -> true);
+            List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, opponentId,
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (creatureIds.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(opponentId) + " has no creatures to choose ("

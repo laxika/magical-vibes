@@ -98,6 +98,7 @@ public class OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler
         List<UUID> matchingIds = battlefield.stream()
                 .filter(permanent -> matches(gameData, permanent, sourceCard, controllerId,
                         sourcePermanentId, filter))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
         if (matchingIds.isEmpty()) {

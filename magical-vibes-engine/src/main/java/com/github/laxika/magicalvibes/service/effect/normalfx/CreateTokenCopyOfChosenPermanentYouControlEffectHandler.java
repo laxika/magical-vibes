@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
@@ -29,6 +30,7 @@ public class CreateTokenCopyOfChosenPermanentYouControlEffectHandler implements 
 
     private final CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -66,6 +68,7 @@ public class CreateTokenCopyOfChosenPermanentYouControlEffectHandler implements 
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> filter == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }
