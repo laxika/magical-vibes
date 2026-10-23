@@ -94,6 +94,25 @@ starts a choice and sacrifices in its completion (the completion gap below). Eve
 under `normalfx/` is now reviewed; the unreviewed ones are the `EachPlayer/EachOpponent/AnyOpponent/TargetPlayer...`
 mixed handlers in the grep below.
 
+**Also landed (2026-10-23, sixth pass).** Single-permanent sacrifice choice completions now get the window too.
+`PermanentChoiceHandlerService.completeAskingDeathReplacementsFirst` opens `deathReplacementsCanRerunEffect` around
+the completions that change nothing before the sacrifice (`PermanentChoiceContext.SacrificeCreature`, used by every
+edict through `DestructionSupport.performSacrificeCreatureForPlayer`, plus `SacrificeCreatureOpponentsLoseLife`,
+`SacrificeCreatureControllerGainsLifeEqualToToughness`, `SacrificeCreatureThenSearchLibrary` and the five
+`TargetPlayerSacrifices...` contexts whose helpers the marked handlers share). A stop stores the answered prompt in
+`GameData.pendingDeathReplacementChoiceReplay`; once the last rerun answer is in, `ChoiceHandlerService` completes the
+same answer again (`completeChoiceAgainAfterDeathReplacements`) and the parked effect is left alone
+(`resolveDeathExileReplacementChoice` no longer clears `rerunCurrentEffectAfterInteraction` for it). The
+`InputCompletionService` epilogues close the window, so nothing after the completion's own sacrifice can stop it.
+Tests: `KalitasTraitorOfGhetTest.edictChoiceAsksForTheDeathReplacementBeforeTheChosenZombieIsSacrificed` (Diabolic
+Edict, Zombie chosen over Grizzly Bears: no sacrifice log line while asked, one after) and
+`GravebaneZombieTest.chosenSacrificeThenGainLifeAsksBeforeTheZombieIsSacrificed` (Devour Flesh: no life gained while
+asked). Still open among completions: multi-choices (`MultiPermanentChoiceContext.ForcedSacrifice`, "sacrifice, then"
+multi-selects), the "each player chooses ... then destroy" completions (`EachPlayerChoosesCreatureToDestroy`,
+`DestroyChosenCreature`, ...), the remaining single-sacrifice contexts (`SacrificeOneOfTwo*`, `ForcedCostOrElse`,
+`LandEquilibriumSacrifice`, `TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate`, ...; each needs the same
+"nothing before the sacrifice" review before it joins `sacrificesBeforeChangingAnything`), and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -107,11 +126,10 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
   also runs for exiles and bounces).
 - Deaths after an earlier change of the same handler (a second removal, damage, a regeneration or
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
-- Deaths in an interaction's completion rather than in the handler (an edict whose player picks one
-  of several creatures: `PermanentChoiceBattlefieldHandlerService.handleSacrificeCreature` logs the
-  sacrifice and collects "whenever you sacrifice" triggers while the Zombie is still waiting on its
-  answer; "sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`), and
-  sacrifices paid as costs.
+- Deaths in an interaction's completion other than the single-sacrifice contexts done in the sixth
+  pass ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`, the
+  "choose ... then destroy" completions, the unreviewed single-sacrifice contexts), and sacrifices
+  paid as costs.
 - Pulmonic Sliver's lone "may" (one option, asked through the may prompt) outside state-based actions.
 
 **Why it's large.** Approaches looked at:
@@ -121,15 +139,18 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
 - Simulate the effect on a copy of `GameData` first: needs engine services to run on a copy
   mid-resolution, and still misses deaths that come after another prompt inside the effect.
 - Stop and rerun (what landed): only safe for handlers proven to change nothing first. Extending it
-  to choice completions would need the completion re-dispatched with the same answer after the death
-  choice, and to costs a rerun of the activation's cost payment.
+  to choice completions re-dispatches the completion with the same answer after the death choice
+  (done for single sacrifices; a multi-choice needs its accumulated selections replayed too), and
+  to costs would need a rerun of the activation's cost payment.
 
 **Prompt to start it:**
 
 ```
 Continue missing-features-to-do.md entry 34: extend the CR 616.1 "ask before the creature leaves"
 rerun window (AsksDeathReplacementsFirst, PermanentRemovalService.askDeathReplacementsBeforeRemoval,
-GameData.chosenDeathReplacementsForRerun) to sacrifice choice completions and the remaining handlers,
+GameData.chosenDeathReplacementsForRerun; for choice completions
+PermanentChoiceHandlerService.completeAskingDeathReplacementsFirst) to the remaining choice completions
+(multi-choice ForcedSacrifice, "choose ... then destroy") and the remaining handlers,
 reviewing each handler for changes before its first removal. Write a failing Kalitas + Gravebane
 Zombie test per case first. Don't run the full test suite; ask me. Don't commit until I say so.
 ```

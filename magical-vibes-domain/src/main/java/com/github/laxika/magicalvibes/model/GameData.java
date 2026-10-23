@@ -2899,6 +2899,17 @@ public class GameData {
      */
     public final Map<UUID, ChoiceContext.DeathExileReplacement> chosenDeathReplacementsForRerun =
             new ConcurrentHashMap<>();
+    /**
+     * A permanent choice whose completion was stopped before its first removal so that a creature it
+     * would kill could have its death replacement chosen first (CR 616.1). Once every such answer is
+     * in, the same answer is completed again and its deaths consume
+     * {@link #chosenDeathReplacementsForRerun}. {@code null} when no completion is waiting.
+     */
+    public PermanentChoiceReplay pendingDeathReplacementChoiceReplay;
+
+    /** A permanent choice answer to complete again: the prompt that was answered and the chosen permanent. */
+    public record PermanentChoiceReplay(PendingInteraction.PermanentChoice choice, UUID permanentId) {
+    }
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
@@ -4052,7 +4063,8 @@ public class GameData {
                     "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect",
-                    "chosenDeathReplacementsForRerun", "deferPlayerLossCheck",
+                    "chosenDeathReplacementsForRerun", "pendingDeathReplacementChoiceReplay",
+                    "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
                     "alwaysOfferPriorityWindows" -> true;
             default -> false;
@@ -9545,6 +9557,7 @@ public class GameData {
         copy.stateBasedMayLibraryChoices.addAll(this.stateBasedMayLibraryChoices);
         copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;
         copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
+        copy.pendingDeathReplacementChoiceReplay = this.pendingDeathReplacementChoiceReplay;
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->

@@ -330,6 +330,42 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({GravebaneZombie.class, DiabolicEdict.class, GrizzlyBears.class})
+    @DisplayName("Diabolic Edict asks library-or-Kalitas after the Zombie is chosen, before it is sacrificed")
+    void edictChoiceAsksForTheDeathReplacementBeforeTheChosenZombieIsSacrificed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card edict = new DiabolicEdict();
+        harness.setHand(player1, List.of(edict));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player2, gravebane.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gameLogContains("sacrifices Gravebane Zombie")).isFalse();
+        assertThat(gd.playersWhoSacrificedPermanentsThisTurn).doesNotContain(player2.getId());
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getId)
+                .contains(gravebane.getCard().getId());
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        assertThat(gd.playersWhoSacrificedPermanentsThisTurn).contains(player2.getId());
+        harness.assertInGraveyard(player1, "Diabolic Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     void canSacrificeARealVampireWithoutTappingKalitas() {
         Permanent kalitas = harness.addToBattlefieldAndReturn(player1, new KalitasTraitorOfGhet());
         harness.addToBattlefield(player1, new VampireEnvoy());

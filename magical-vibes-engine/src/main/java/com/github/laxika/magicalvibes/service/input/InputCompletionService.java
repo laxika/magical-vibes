@@ -108,6 +108,9 @@ public class InputCompletionService {
     }
 
     private void processMayAbilitiesThenAutoPass(GameData gameData, boolean clearPriorityPasses) {
+        // A stopped choice completion can be redone only up to its own removal (CR 616.1); whatever
+        // this epilogue goes on to do is not part of it.
+        gameData.deathReplacementsCanRerunEffect = false;
         if (gameData.waitingForSubgame) return;
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
@@ -309,6 +312,7 @@ public class InputCompletionService {
      * (life totals, permanents destroyed, etc.) requiring SBA before continuation.
      */
     public void sbaProcessMayAbilitiesThenAutoPass(GameData gameData) {
+        gameData.deathReplacementsCanRerunEffect = false;
         if (resumeSuspendedInteraction(gameData)) return;
         if (gameData.pendingEffectResolutionEntry == null) {
             stateBasedActionService.performStateBasedActions(gameData);
@@ -327,6 +331,7 @@ public class InputCompletionService {
      * battlefield handlers during mid-resolution processing.
      */
     public void sbaProcessMayAbilitiesThenAutoPassPreservingPriority(GameData gameData) {
+        gameData.deathReplacementsCanRerunEffect = false;
         if (resumeSuspendedInteraction(gameData)) return;
         if (gameData.pendingEffectResolutionEntry == null) {
             stateBasedActionService.performStateBasedActions(gameData);

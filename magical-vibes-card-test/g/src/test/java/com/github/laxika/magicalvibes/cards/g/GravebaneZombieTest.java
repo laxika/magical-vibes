@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.Abduction;
 import com.github.laxika.magicalvibes.cards.a.AllIsDust;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DevourFlesh;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.i.InnocentBlood;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
@@ -322,6 +323,38 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.handleListChoice(player2, "Put it into its owner's library");
 
         harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DevourFlesh.class, GrizzlyBears.class})
+    @DisplayName("Under Devour Flesh, a chosen Zombie's replacement is chosen before the sacrifice and the life gain happens once")
+    void chosenSacrificeThenGainLifeAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.setHand(player1, List.of(new DevourFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player2, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore + 2);
         assertThat(gd.stack).isEmpty();

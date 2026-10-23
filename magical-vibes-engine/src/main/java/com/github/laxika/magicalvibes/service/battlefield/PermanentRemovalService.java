@@ -776,6 +776,24 @@ public class PermanentRemovalService {
         }
     }
 
+    /**
+     * Returns {@code true} while a death replacement asked ahead of a stopped effect or choice
+     * completion (see {@link #askDeathReplacementsBeforeRemoval}) is still waiting for its answer.
+     */
+    public boolean awaitsDeathReplacementChoiceBeforeRerun(GameData gameData) {
+        PendingInteraction.ColorChoice active = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        return isRerunDeathReplacementChoice(active)
+                || gameData.pendingInteractions.stream().anyMatch(PermanentRemovalService::isRerunDeathReplacementChoice)
+                || gameData.deferredDeathReplacementChoices.stream()
+                        .anyMatch(PermanentRemovalService::isRerunDeathReplacementChoice);
+    }
+
+    private static boolean isRerunDeathReplacementChoice(PendingInteraction interaction) {
+        return interaction instanceof PendingInteraction.ColorChoice choice
+                && choice.context() instanceof ChoiceContext.DeathExileReplacementChoice context
+                && context.rerunsEffect();
+    }
+
     private List<Permanent> inApnapOrder(GameData gameData, List<Permanent> permanents) {
         int playerCount = gameData.orderedPlayerIds.size();
         int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
@@ -811,8 +829,9 @@ public class PermanentRemovalService {
                                                    ChoiceContext.DeathExileReplacementChoice choice,
                                                    String label) {
         DeathExileReplacement chosen = chosenOption(choice.options(), label);
-        if (choice.rerunsEffect()) {
+        if (choice.rerunsEffect() && gameData.pendingDeathReplacementChoiceReplay == null) {
             // The effect waiting on this answer was parked to resolve again; it must not rerun twice.
+            // A stopped choice completion is completed again instead and leaves the parked effect alone.
             gameData.rerunCurrentEffectAfterInteraction = false;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, choice.permanentId());

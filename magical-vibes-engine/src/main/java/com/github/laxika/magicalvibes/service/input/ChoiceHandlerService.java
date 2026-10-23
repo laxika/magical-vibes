@@ -139,6 +139,8 @@ public class ChoiceHandlerService {
     @Autowired @Lazy
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
     @Autowired @Lazy
+    private PermanentChoiceHandlerService permanentChoiceHandlerService;
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.StackResolutionService stackResolutionService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
@@ -504,6 +506,11 @@ public class ChoiceHandlerService {
             }
             gameData.interaction.clearAwaitingInput();
             permanentRemovalService.resolveDeathExileReplacementChoice(gameData, choice, colorName);
+            if (gameData.pendingDeathReplacementChoiceReplay != null
+                    && !permanentRemovalService.awaitsDeathReplacementChoiceBeforeRerun(gameData)) {
+                permanentChoiceHandlerService.completeChoiceAgainAfterDeathReplacements(gameData);
+                return;
+            }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }
