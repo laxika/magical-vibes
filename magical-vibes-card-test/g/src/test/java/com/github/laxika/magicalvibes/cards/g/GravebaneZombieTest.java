@@ -12,12 +12,14 @@ import com.github.laxika.magicalvibes.cards.d.DiscipleOfBolas;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartPiercerManticore;
 import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.i.IndulgentTormentor;
 import com.github.laxika.magicalvibes.cards.i.InnocentBlood;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.k.KethekCrucibleGoliath;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MercyKilling;
 import com.github.laxika.magicalvibes.cards.p.ParasiticImplant;
+import com.github.laxika.magicalvibes.cards.p.PillarTombsOfAku;
 import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
 import com.github.laxika.magicalvibes.cards.r.Retribution;
 import com.github.laxika.magicalvibes.cards.r.Rupture;
@@ -28,6 +30,7 @@ import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WarrenWeirding;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -880,6 +883,78 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Brain Gorgers");
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
                 .hasSize(1);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, PillarTombsOfAku.class})
+    @DisplayName("Under Pillar Tombs of Aku, a chosen Zombie's replacement is chosen before the sacrifice and no life is lost")
+    void forcedCostSacrificeAsksBeforeTheChosenZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player1, List.of(filler));
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new PillarTombsOfAku());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handlePermanentChosen(player1, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .isEmpty();
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Pillar Tombs of Aku");
+        harness.assertLife(player1, 20);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, IndulgentTormentor.class})
+    @DisplayName("Under Indulgent Tormentor, a chosen Zombie's replacement is chosen before the sacrifice and no card is drawn")
+    void tormentSacrificeAsksBeforeTheChosenZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        Card tormentorDraw = new WrathOfGod();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(tormentorDraw));
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new IndulgentTormentor());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, ChoiceContext.IndulgentTormentorChoice.SACRIFICE);
+
+        harness.handlePermanentChosen(player2, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .isEmpty();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(tormentorDraw);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void destroyWithWrathOfGod(Player caster) {

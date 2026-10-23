@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler;
@@ -256,7 +257,10 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform
                 || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw
                 || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop
-                || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell;
+                || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell
+                || context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCost
+                        && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
+                || context instanceof PermanentChoiceContext.TormentSacrifice;
     }
 
     private void completeKillingChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
@@ -366,6 +370,10 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleAnyPlayerMaySacrificeLandPutSourceOnTop(gameData, permanentId, ams);
             case PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell ams ->
                     battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
+            case PermanentChoiceContext.ForcedCostOrElse forcedCostOrElse ->
+                    battlefieldHandler.handleForcedCostOrElse(gameData, permanentId, forcedCostOrElse);
+            case PermanentChoiceContext.TormentSacrifice tormentSacrifice ->
+                    battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
             default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
         }
     }

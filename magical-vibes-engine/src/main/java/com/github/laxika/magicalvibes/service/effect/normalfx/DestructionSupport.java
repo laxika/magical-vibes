@@ -717,6 +717,8 @@ public class DestructionSupport {
                                          PermanentChoiceContext.ForcedCostOrElse context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target == null) {
+            // The fallback effects may change the game before they kill, so they can't stop and be redone.
+            gameData.deathReplacementsCanRerunEffect = false;
             StackEntry syntheticEntry = new StackEntry(
                     com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
                     context.sourceCard(),

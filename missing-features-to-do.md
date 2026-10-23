@@ -196,6 +196,20 @@ and the collected-picks batches (Innocent Traveler, Brain Gorgers) when the last
 `performSimultaneousSacrifice` then runs in the may completion. Still unreviewed single-sacrifice contexts:
 `LandEquilibriumSacrifice`, `TormentSacrifice` and `ForcedCostOrElse`.
 
+**Also landed (2026-10-23, twelfth pass).** Two more single-choice completions joined
+`PermanentChoiceHandlerService.killsBeforeChangingAnything`. `ForcedCostOrElse` joins only when its forced cost is a
+`SacrificePermanentCost` (the gain-control and remove-a-counter costs kill nothing); its completion sacrifices first
+and only then clears the forced-cost state, and its defensive "chosen permanent is gone" branch, which resolves the
+fallback effects, now closes the window first. `TormentSacrifice` sacrifices first and only then lets the paused
+effect resume; its deferred branches (Torment of Hailfire, the each-player "unless discard" batches) only record the
+pick and kill nothing, so they can't stop. Tests in `GravebaneZombieTest`: `forcedCostSacrificeAsksBeforeTheChosenZombieIsSacrificed`
+(Pillar Tombs of Aku: no sacrifice log line while asked, no life lost after) and
+`tormentSacrificeAsksBeforeTheChosenZombieIsSacrificed` (Indulgent Tormentor: no card drawn after). Still unreviewed
+single-sacrifice context: `LandEquilibriumSacrifice` (runs inside a land-entering replacement, not an effect). Not
+covered: `ForcedCostOrElseEffectHandler` itself (unmarked, so its lone-candidate mandatory sacrifice and the
+lone-candidate sacrifice on the may prompt's "yes" still don't ask first), and the deferred Torment picks, which are
+sacrificed later by their unmarked starting handlers.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -211,8 +225,7 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
-  the unreviewed single-sacrifice contexts and destroy completions listed in the seventh and eleventh
-  passes), and sacrifices paid as costs.
+  `LandEquilibriumSacrifice` and the destroy completions listed in the seventh pass), and sacrifices paid as costs.
 - Sacrifices made straight from a may prompt's "yes" (Pulmonic Sliver's lone "may", the eleventh pass's
   "may sacrifice" handlers with a single candidate, a collected-picks batch ended by the last player's
   decline) outside state-based actions.
