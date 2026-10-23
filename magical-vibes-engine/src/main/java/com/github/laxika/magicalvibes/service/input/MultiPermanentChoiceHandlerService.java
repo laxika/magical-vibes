@@ -1233,15 +1233,6 @@ public class MultiPermanentChoiceHandlerService {
             handleFadeAwaySacrifice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice ctx) {
             handleKeepOneOfEachTypeChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice ctx) {
-            eachPlayerChoosesPartyHandler.completeChoice(gameData, permanentIds, ctx);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.WinnowingChoice ctx) {
-            handleWinnowingChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice ctx) {
             handleDestroyUpToOneNonbasicLandPerPlayerChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
@@ -2221,7 +2212,9 @@ public class MultiPermanentChoiceHandlerService {
      * {@link MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice} and
      * {@link MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice}
      * also keep their picks in the immutable context; the latter queues its graveyard return only
-     * after the sacrifice.
+     * after the sacrifice. {@link MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice}
+     * and {@link MultiPermanentChoiceContext.WinnowingChoice} keep their kept or chosen creatures in
+     * the immutable context and only work out the rest before that sacrifice.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2240,7 +2233,9 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls
                 || context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures
                 || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
-                || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice;
+                || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice
+                || context instanceof MultiPermanentChoiceContext.WinnowingChoice;
     }
 
     /**
@@ -2329,6 +2324,22 @@ public class MultiPermanentChoiceHandlerService {
             case MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice ctx ->
                     eachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnHandler.completeChoice(
                             gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice ctx -> {
+                eachPlayerChoosesPartyHandler.completeChoice(gameData, permanentIds, ctx);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            case MultiPermanentChoiceContext.WinnowingChoice ctx -> {
+                winnowingHandler.completeChoice(gameData, permanentIds, ctx);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
             default -> throw new IllegalStateException("Not a sacrifice choice: " + context);
         }
         if (!gameData.interaction.isAwaitingInput()) {
@@ -3810,18 +3821,6 @@ public class MultiPermanentChoiceHandlerService {
     private void handleKeepOneOfEachTypeChoice(GameData gameData, List<UUID> permanentIds,
                                                MultiPermanentChoiceContext.KeepOneOfEachTypeChoice context) {
         keepOneOfEachTypeHandler.completeKeepChoice(gameData, permanentIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleWinnowingChoice(GameData gameData, List<UUID> permanentIds,
-                                       MultiPermanentChoiceContext.WinnowingChoice context) {
-        winnowingHandler.completeChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

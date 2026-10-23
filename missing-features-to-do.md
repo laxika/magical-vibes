@@ -336,6 +336,21 @@ before its sacrifice). Still not covered: the fallback effects' own deaths, the 
 `WormsOfTheEarthSacrificeLands`, the other "sacrifice, then" multi-choice contexts (each needing review),
 `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, twenty-first pass).** Two "keep the chosen, sacrifice the rest" multi-choice completions
+joined `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`: `EachPlayerChoosesPartyThenSacrificesRestChoice`
+(Stick Together) and `WinnowingChoice` (Winnowing). Each keeps its picks so far in the immutable context, only prompts
+the next role or player, and works out the rest before `performSimultaneousSacrifice` (their starting handlers were
+already marked). Tests in `GravebaneZombieTest`: `winnowingAsksBeforeAnyNonsharingCreatureIsSacrificed` (the Elves
+stay while asked; after, the Zombie is on top of the library and Kalitas exiles the Elves) and
+`stickTogetherAsksBeforeAnyCreatureOutsideThePartyIsSacrificed` (the same with the Bears outside the party). Reviewed
+and left out: `KeepOneOfEachTypeChoice` (Tragic Arrogance; its completion logs each "keeps" pick before the
+sacrifice, so a replay would log it twice; moving that log after the sacrifice would make it safe). Still not
+covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`,
+`KeepOneOfEachTypeChoice`, the remaining "sacrifice/destroy the rest" multi-choices (`KillingWaveKeep`,
+`FadeAwaySacrifice`, `DestroyRestChoice`, `EachPlayerChoosesLandsThenSacrifice/DestroyRestChoice`,
+`ChooseCreaturesWithDifferentManaValuesDestroy`, ...; each needing review), `LandEquilibriumSacrifice` and
+sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
