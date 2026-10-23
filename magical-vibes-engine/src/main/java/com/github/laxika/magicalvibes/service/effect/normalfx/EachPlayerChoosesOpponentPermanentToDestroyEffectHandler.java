@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +23,7 @@ import java.util.UUID;
 /** Resolves sequential choices before destroying all chosen permanents together. */
 @Component
 @RequiredArgsConstructor
-public class EachPlayerChoosesOpponentPermanentToDestroyEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerChoosesOpponentPermanentToDestroyEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

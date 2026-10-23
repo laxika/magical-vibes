@@ -385,6 +385,23 @@ the remaining "sacrifice/destroy the rest" multi-choices (`KillingWaveKeep`, `Fa
 `EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest`, `ChooseCreaturesWithDifferentManaValuesDestroy`, ...;
 each needing review), `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, twenty-fourth pass).** The "each player chooses ..., then destroy" and "choose creatures,
+destroy them" multi-choice completions joined `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` and run
+through `completeAskingDeathReplacementsFirst` (each keeps its old epilogue): `EachPlayerChoosesOpponentPermanentToDestroy`
+(Sadistic Shell Game, Druid of Purification) and `EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest` (Fortunate
+Few) only prompt the next chooser with the picks so far in the immutable context before their `destroyBatch`, and
+`ChooseCreaturesWithDifferentManaValuesDestroy` (Running Is Useless) only checks the chosen mana values before it.
+Their starting handlers only read before they prompt or destroy, so they are now marked `AsksDeathReplacementsFirst`
+too: `EachPlayerChoosesOpponentPermanentToDestroyEffectHandler`, `EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffectHandler`
+and `ChooseCreaturesWithDifferentManaValuesDestroyEffectHandler`. Tests in `GravebaneZombieTest`:
+`eachPlayerChoosesOpponentPermanentToDestroyAsksBeforeAnyChosenCreatureIsDestroyed`,
+`chooseDifferentOpponentPermanentThenDestroyRestAsksBeforeAnyUnchosenPermanentIsDestroyed` (the caster's own unkept
+Bears stays while asked) and `chooseCreaturesWithDifferentManaValuesAsksBeforeAnyChosenCreatureIsDestroyed`.
+Still not covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`,
+the remaining "sacrifice/destroy" multi-choices (`KillingWaveKeep`, `FadeAwaySacrifice`, `VoteForCreatureThenDestroyMostVotedChoice`,
+`ChooseLandOfEachBasicTypeThenDestroyChoice`, ...; each needing review), `LandEquilibriumSacrifice` and sacrifices paid
+as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

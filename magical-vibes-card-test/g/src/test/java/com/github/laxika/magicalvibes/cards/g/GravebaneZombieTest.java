@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.d.Duneblast;
 import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
 import com.github.laxika.magicalvibes.cards.f.FallenCleric;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FortunateFew;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartPiercerManticore;
 import com.github.laxika.magicalvibes.cards.h.HighSocietyHunter;
@@ -37,7 +38,9 @@ import com.github.laxika.magicalvibes.cards.p.PillarTombsOfAku;
 import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
 import com.github.laxika.magicalvibes.cards.r.ReignOfThePit;
 import com.github.laxika.magicalvibes.cards.r.Retribution;
+import com.github.laxika.magicalvibes.cards.r.RunningIsUseless;
 import com.github.laxika.magicalvibes.cards.r.Rupture;
+import com.github.laxika.magicalvibes.cards.s.SadisticShellGame;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StickTogether;
 import com.github.laxika.magicalvibes.cards.s.SyphonFlesh;
@@ -53,10 +56,12 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -1647,6 +1652,103 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
                 .containsExactlyElementsOf(keptForests);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kalitas);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, SadisticShellGame.class, GrizzlyBears.class})
+    @DisplayName("Sadistic Shell Game asks for the Zombie's death replacement before any chosen creature is destroyed")
+    void eachPlayerChoosesOpponentPermanentToDestroyAsksBeforeAnyChosenCreatureIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new SadisticShellGame(), "{4}{B}");
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(zombie.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(zombie.getId(), bears.getId());
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Kalitas, Traitor of Ghet", "Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, FortunateFew.class, GrizzlyBears.class})
+    @DisplayName("Fortunate Few asks for the Zombie's death replacement before any unchosen permanent is destroyed")
+    void chooseDifferentOpponentPermanentThenDestroyRestAsksBeforeAnyUnchosenPermanentIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent kalitas = harness.addToBattlefieldAndReturn(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new FortunateFew(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(kalitas.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(zombie.getId(), bears.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownBears);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(kalitas);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownBears.getCard());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, RunningIsUseless.class, GrizzlyBears.class})
+    @DisplayName("Running Is Useless asks for the Zombie's death replacement before any chosen creature is destroyed")
+    void chooseCreaturesWithDifferentManaValuesAsksBeforeAnyChosenCreatureIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card scheme = new RunningIsUseless();
+        gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, scheme, player1.getId(),
+                scheme.getName(), scheme.getEffects(EffectSlot.SPELL)));
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(zombie.getId(), bears.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(zombie.getId(), bears.getId());
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Kalitas, Traitor of Ghet", "Zombie");
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

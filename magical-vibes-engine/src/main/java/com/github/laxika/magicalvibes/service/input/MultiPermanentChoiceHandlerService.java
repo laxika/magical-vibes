@@ -1123,10 +1123,6 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerReturnsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToExile ctx) {
             handleEachPlayerChoosesOpponentPermanentToExile(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy ctx) {
-            handleEachPlayerChoosesOpponentPermanentToDestroy(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest ctx) {
-            handleEachPlayerChoosesDifferentOpponentPermanentThenDestroyRest(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice ctx) {
             handleWillOfTheCouncilChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice ctx) {
@@ -1259,8 +1255,6 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseCreaturesWithDifferentPowersGrantDoubleStrike(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesWithDifferentPowersBoostAndGrantVigilance) {
             handleChooseCreaturesWithDifferentPowersBoostAndGrantVigilance(gameData, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy) {
-            handleChooseCreaturesWithDifferentManaValuesDestroy(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseAnotherAttackingCreatureWithLesserPower) {
             handleChooseAnotherAttackingCreatureWithLesserPower(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfChosenDistinctControlledTokens) {
@@ -2214,6 +2208,12 @@ public class MultiPermanentChoiceHandlerService {
      * permanents in the immutable context and end in a {@link DestructionSupport#destroyBatch} batch, which
      * asks the whole batch first, as {@link MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice}
      * does through its simultaneous sacrifice.
+     * {@link MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy} and
+     * {@link MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest} only
+     * prompt the next chooser with the picks so far in the immutable context before their
+     * {@link DestructionSupport#destroyBatch} batch, and
+     * {@link MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy} only checks the
+     * chosen mana values before it.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2238,7 +2238,10 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice
                 || context instanceof MultiPermanentChoiceContext.DestroyRestChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice
-                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice;
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest
+                || context instanceof MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy;
     }
 
     /**
@@ -2361,6 +2364,18 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice ctx -> {
                 handleEachPlayerChoosesLandsThenSacrificeRestChoice(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy ctx -> {
+                handleEachPlayerChoosesOpponentPermanentToDestroy(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest ctx -> {
+                handleEachPlayerChoosesDifferentOpponentPermanentThenDestroyRest(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy ignored -> {
+                handleChooseCreaturesWithDifferentManaValuesDestroy(gameData, permanentIds);
                 return;
             }
             default -> throw new IllegalStateException("Not a killing choice: " + context);
