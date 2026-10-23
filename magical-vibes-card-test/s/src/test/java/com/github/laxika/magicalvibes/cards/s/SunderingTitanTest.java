@@ -2,8 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -201,5 +205,66 @@ class SunderingTitanTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Asks for an enchanted Dryad Arbor's death replacement before any lone land is destroyed")
+    void asksForTheDeathReplacementBeforeAnyLoneLandIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.castFromHand(player1, new SunderingTitan(), "{8}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertDeathReplacementAskedWhileBothLandsStay(arbor, mountain);
+
+        harness.handleListChoice(player2, "Return it to its owner's hand (Necromancer's Magemark)");
+
+        assertArborReturnedAndMountainDestroyed(arbor, mountain);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class, Forest.class})
+    @DisplayName("Asks for a chosen Dryad Arbor's death replacement before any chosen land is destroyed")
+    void asksForTheDeathReplacementBeforeAnyChosenLandIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.castFromHand(player1, new SunderingTitan(), "{8}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(arbor.getId()));
+
+        assertDeathReplacementAskedWhileBothLandsStay(arbor, mountain);
+
+        harness.handleListChoice(player2, "Return it to its owner's hand (Necromancer's Magemark)");
+
+        assertArborReturnedAndMountainDestroyed(arbor, mountain);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+    }
+
+    private void assertDeathReplacementAskedWhileBothLandsStay(Permanent arbor, Permanent mountain) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Return it to its owner's hand (Necromancer's Magemark)",
+                        "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor, mountain);
+    }
+
+    private void assertArborReturnedAndMountainDestroyed(Permanent arbor, Permanent mountain) {
+        assertThat(gd.playerHands.get(player2.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor, mountain);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(mountain.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

@@ -1235,8 +1235,6 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesLandAndPutCounter(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TurfWarLandChoice ctx) {
             handleTurfWarLandChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice ctx) {
-            handleChooseLandOfEachBasicTypeThenDestroyChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyTapChoice ctx) {
             handleRaidingPartyTapChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyPlainsChoice ctx) {
@@ -2212,6 +2210,9 @@ public class MultiPermanentChoiceHandlerService {
      * keep their picks in the immutable context and only prompt the next player before their
      * {@link DestructionSupport#performSimultaneousSacrifice}; their life or mana payments and
      * decision log lines come only after the batch's death replacements have been asked.
+     * {@link MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice} keeps the lands
+     * chosen so far in the immutable context and only prompts for the next basic land type before its
+     * {@link DestructionSupport#destroyBatch} batch.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2242,7 +2243,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy
                 || context instanceof MultiPermanentChoiceContext.KillingWaveKeep
                 || context instanceof MultiPermanentChoiceContext.FadeAwayKeep
-                || context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice;
+                || context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice
+                || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice;
     }
 
     /**
@@ -2389,6 +2391,10 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.FadeAwaySacrifice ctx -> {
                 handleFadeAwaySacrifice(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice ctx -> {
+                handleChooseLandOfEachBasicTypeThenDestroyChoice(gameData, permanentIds, ctx);
                 return;
             }
             default -> throw new IllegalStateException("Not a killing choice: " + context);

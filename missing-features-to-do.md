@@ -421,6 +421,18 @@ triggers before the destroy, so a replay would lose or repeat them). Not yet joi
 it still needs a test setup). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
 `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, twenty-sixth pass).** `ChooseLandOfEachBasicTypeThenDestroyChoice` (Sundering Titan) joined
+`MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` and runs through `completeAskingDeathReplacementsFirst`
+(keeping its old epilogue); it keeps the lands chosen so far in the immutable context and only prompts for the next
+basic land type before its `destroyBatch`. `ChooseLandOfEachBasicTypeThenDestroyEffectHandler` is now marked
+`AsksDeathReplacementsFirst` too (it only reads before it prompts or destroys; its "no lands are destroyed" log is on
+a path that destroys nothing). Tests in `SunderingTitanTest` use an opponent's Dryad Arbor enchanted with Necromancer's
+Magemark against Kalitas, Traitor of Ghet: `asksForTheDeathReplacementBeforeAnyLoneLandIsDestroyed` (lone Forest and
+Mountain picked automatically: both stay while asked) and `asksForTheDeathReplacementBeforeAnyChosenLandIsDestroyed`
+(the Arbor chosen over the caster's Forest); after the return-to-hand answer the Arbor is in its owner's hand, the
+Mountain is destroyed and Kalitas makes no Zombie. Still not covered: the fallback effects' own deaths, the deferred
+Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

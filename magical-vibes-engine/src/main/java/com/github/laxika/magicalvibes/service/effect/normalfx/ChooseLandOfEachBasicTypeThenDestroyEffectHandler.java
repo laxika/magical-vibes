@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseLandOfEachBasicTypeThenDestroyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +22,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/** Resolves Sundering Titan's resolution-time land choices. */
+/**
+ * Resolves Sundering Titan's resolution-time land choices. It only reads before it prompts or
+ * destroys (a path that destroys nothing only logs that), so it asks a dying land creature's
+ * competing death replacements before anything happens.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ChooseLandOfEachBasicTypeThenDestroyEffectHandler implements NormalEffectHandlerBean {
+public class ChooseLandOfEachBasicTypeThenDestroyEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private static final List<CardSubtype> BASIC_LAND_TYPES = List.of(
             CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
