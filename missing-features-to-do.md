@@ -599,6 +599,22 @@ Tariff, the remaining mayfx handlers whose answer sacrifices (`DealDamageToRando
 first), `AnyPlayerMaySacrificeCreaturesThenSacrificeSource`, the "any opponent may sacrifice" handlers' other paths, ...;
 each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-fifth pass).** `AnyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler`
+(Prowling Pangolin): an accepting player who controls exactly the required number of creatures now sacrifices them
+through `PermanentChoiceHandlerService.answerAskingDeathReplacementsFirst`, calling the marked `SacrificePermanentsEffectHandler`
+directly (the old nested `resolveEffects` couldn't open the window, since the Pangolin trigger is still the parked
+resolution), then closes the window before the source's sacrifice and the next player's prompt. One who controls more
+still opens the already covered `ForcedSacrifice` multi-choice. Tests in `GravebaneZombieTest` (Kalitas, Traitor of Ghet
+against the opponent's Zombie and Grizzly Bears; while asked neither creature nor the Pangolin is sacrificed; after the
+library answer the Zombie is on its owner's library, the Bears exiled for one Kalitas token and the Pangolin sacrificed):
+`acceptedSacrificeCreaturesThenSourceAsksBeforeAnyCreatureIsSacrificed` and `chosenSacrificeCreaturesThenSourceAsksBeforeAnyCreatureIsSacrificed`
+(the multi-choice path, which already asked). Noticed: `ProwlingPangolinTest.sacrificesWaitForAllPlayerChoices` already
+fails on main (an earlier player's chosen creatures are sacrificed before the next player answers). Still not covered:
+the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma,
+`LandEquilibriumSacrifice`, the accepted-but-unpayable fall-through of the sacrifice-unless prompts, `CycloneUpkeep`,
+Tariff, the remaining mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick
+first), the "any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

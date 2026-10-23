@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.p.PanickedAltisaur;
 import com.github.laxika.magicalvibes.cards.p.PerilousPredicament;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PillarTombsOfAku;
+import com.github.laxika.magicalvibes.cards.p.ProwlingPangolin;
 import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
 import com.github.laxika.magicalvibes.cards.r.ReignOfThePit;
 import com.github.laxika.magicalvibes.cards.r.RishadanCutpurse;
@@ -2327,6 +2328,74 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
                 .hasSize(1);
         assertThat(gd.stack).extracting(entry -> entry.getCard().getName()).containsExactly("Shock");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, ProwlingPangolin.class})
+    @DisplayName("Accepting Prowling Pangolin's sacrifice asks for the Zombie's death replacement before either creature is sacrificed")
+    void acceptedSacrificeCreaturesThenSourceAsksBeforeAnyCreatureIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.castFromHand(player1, new ProwlingPangolin(), "{3}{B}{B}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        harness.assertOnBattlefield(player1, "Prowling Pangolin");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertPangolinSacrificesTookTheZombieOntoLibrary(zombie, bears, filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, ProwlingPangolin.class})
+    @DisplayName("Choosing the Zombie for Prowling Pangolin's sacrifice asks for its death replacement before either creature is sacrificed")
+    void chosenSacrificeCreaturesThenSourceAsksBeforeAnyCreatureIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.castFromHand(player1, new ProwlingPangolin(), "{3}{B}{B}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId(), zombie.getId()));
+
+        assertMayAnswerAskedWhileTheZombieStays();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears, otherBears);
+        harness.assertOnBattlefield(player1, "Prowling Pangolin");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertPangolinSacrificesTookTheZombieOntoLibrary(zombie, bears, filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(otherBears);
+    }
+
+    /**
+     * The Zombie went on top of its owner's library, the sacrificed Bears was exiled by Kalitas for
+     * its one Zombie token, and Prowling Pangolin was sacrificed after them.
+     */
+    private void assertPangolinSacrificesTookTheZombieOntoLibrary(Permanent zombie, Permanent bears, Card filler) {
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bears.getCard());
+        harness.assertNotInGraveyard(player2, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        harness.assertInGraveyard(player1, "Prowling Pangolin");
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Kalitas, Traitor of Ghet", "Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void resolveBeginningOfCombatTriggers() {
