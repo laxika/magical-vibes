@@ -696,6 +696,19 @@ Zombie goes on top of its owner's library). Still not covered: the fallback effe
 picks, `LandEquilibriumSacrifice`, the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent
 may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-first pass).** Land Equilibrium's chosen land is now asked before it is sacrificed.
+`PermanentChoiceContext.LandEquilibriumSacrifice` joined `PermanentChoiceHandlerService.killsBeforeChangingAnything`
+(and `completeKillingChoice`): `handleLandEquilibriumSacrifice` only checks the choice before its `sacrificeAndLog`,
+and the replay re-checks the same state. Everything after the sacrifice (a further copy's sacrifice, the land play's
+ETB and "plays a land" triggers) runs with the window already closed by the removal. The lone-land sacrifice in
+`LandEquilibriumSupport.beginNext` stays outside the window: it happens after the land has entered, so a rerun would
+put it onto the battlefield again. Test: `LandEquilibriumTest.chosenArborAsksForTheDeathReplacementBeforeItIsSacrificed`
+(Dryad Arbor enchanted with Necromancer's Magemark against Kalitas, Traitor of Ghet: while asked the Arbor stays and
+nothing is logged as sacrificed; after the return-to-hand answer it is in its owner's hand, the Island and Forest
+stay, one sacrifice log line and no Zombie). Still not covered: the fallback effects' own deaths, the deferred Torment
+picks, Land Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the
+"any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -711,8 +724,8 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices other than those in
-  `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`,
-  `LandEquilibriumSacrifice` and the destroy completions listed in the seventh pass), and sacrifices paid as costs.
+  `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` and the destroy completions listed in the
+  seventh pass), and sacrifices paid as costs.
 
 **Why it's large.** Approaches looked at:
 - Leave the battlefield now and choose the destination later: the hand, library and graveyard

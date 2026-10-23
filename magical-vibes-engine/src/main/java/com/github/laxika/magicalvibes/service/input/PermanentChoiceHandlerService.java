@@ -339,6 +339,7 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCost
                         && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
                 || context instanceof PermanentChoiceContext.TormentSacrifice
+                || context instanceof PermanentChoiceContext.LandEquilibriumSacrifice
                 || context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature;
     }
 
@@ -346,6 +347,8 @@ public class PermanentChoiceHandlerService {
         switch (context) {
             case PermanentChoiceContext.SacrificeCreature sacrificeCreature ->
                     battlefieldHandler.handleSacrificeCreature(gameData, permanentId, sacrificeCreature);
+            case PermanentChoiceContext.LandEquilibriumSacrifice landEquilibrium ->
+                    battlefieldHandler.handleLandEquilibriumSacrifice(gameData, permanentId, landEquilibrium);
             case PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature ->
                     battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
             case PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy ->

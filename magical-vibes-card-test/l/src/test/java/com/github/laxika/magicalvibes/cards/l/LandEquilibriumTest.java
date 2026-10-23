@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.y.YavimayaDryad;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -180,4 +183,41 @@ class LandEquilibriumTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Choosing a Dryad Arbor asks for its death replacement before it is sacrificed")
+    void chosenArborAsksForTheDeathReplacementBeforeItIsSacrificed() {
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player2, List.of(new Island()));
+        harness.forceActivePlayer(player2);
+
+        harness.playLand(player2, 0);
+        harness.handlePermanentChosen(player2, arbor.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices")).isEmpty();
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor);
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices")).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 }
