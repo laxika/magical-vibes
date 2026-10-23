@@ -346,7 +346,20 @@ stay while asked; after, the Zombie is on top of the library and Kalitas exiles 
 and left out: `KeepOneOfEachTypeChoice` (Tragic Arrogance; its completion logs each "keeps" pick before the
 sacrifice, so a replay would log it twice; moving that log after the sacrifice would make it safe). Still not
 covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`,
-`KeepOneOfEachTypeChoice`, the remaining "sacrifice/destroy the rest" multi-choices (`KillingWaveKeep`,
+the remaining "sacrifice/destroy the rest" multi-choices (`KillingWaveKeep`,
+`FadeAwaySacrifice`, `DestroyRestChoice`, `EachPlayerChoosesLandsThenSacrifice/DestroyRestChoice`,
+`ChooseCreaturesWithDifferentManaValuesDestroy`, ...; each needing review), `LandEquilibriumSacrifice` and
+sacrifices paid as costs.
+
+**Also landed (2026-10-23, twenty-second pass).** `KeepOneOfEachTypeChoice` (Tragic Arrogance) joined
+`MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`. `ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler`
+no longer logs a pick's "keeps" line before the sacrifice: it holds the line until the next prompt opens, or until
+`DestructionSupport.askDeathReplacementsBeforeSacrifice` has asked the batch, so a replayed answer logs it once. Its
+picks so far live in the immutable context, and the handler is now marked `AsksDeathReplacementsFirst` too (its
+resolution only reads before it prompts or sacrifices). Test: `GravebaneZombieTest.keepOneOfEachTypeAsksBeforeTheUnkeptZombieIsSacrificed`
+(Bears kept: the Zombie stays and no "keeps" line while asked; after, the Zombie is on top of the library, one
+"keeps" line and no Kalitas token). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
+`WormsOfTheEarthSacrificeLands`, the remaining "sacrifice/destroy the rest" multi-choices (`KillingWaveKeep`,
 `FadeAwaySacrifice`, `DestroyRestChoice`, `EachPlayerChoosesLandsThenSacrifice/DestroyRestChoice`,
 `ChooseCreaturesWithDifferentManaValuesDestroy`, ...; each needing review), `LandEquilibriumSacrifice` and
 sacrifices paid as costs.

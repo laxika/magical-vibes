@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseKeptPermanentOfEachType
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,11 +32,16 @@ import org.springframework.stereotype.Component;
  * several listed types can be picked again in a later pass, so kept permanents stay in the candidate
  * lists. Once every pass is done, the applicable permanents that were not kept are sacrificed
  * simultaneously.
+ *
+ * <p>Nothing changes before that sacrifice: a pick's "keeps" log line is written only once the next
+ * prompt opens or once the batch's death replacements have been asked (CR 616.1), so a resolution or
+ * choice completion stopped by that question and run again logs each pick once.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler implements NormalEffectHandlerBean {
+public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -53,20 +60,21 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
         List<UUID> affectedPlayerIds = affectedPlayers(gameData, entry, keepEffect.recipient());
         step(gameData, entry.getControllerId(), affectedPlayerIds, affectedPlayerIds, 0, List.of(),
                 keepEffect.types(), keepEffect.sacrificeAllPermanents(), keepEffect.eachPlayerChooses(),
-                entry.getCard().getName());
+                entry.getCard().getName(), List.of());
     }
 
     /** Choice completion: record the pick, then continue with that player's next type pass. */
     public void completeKeepChoice(GameData gameData, List<UUID> chosenIds,
             MultiPermanentChoiceContext.KeepOneOfEachTypeChoice context) {
         List<UUID> kept = new ArrayList<>(context.keptIds());
+        List<GameLogEntry> keepLogs = new ArrayList<>();
         for (UUID chosen : chosenIds) {
             if (!kept.contains(chosen)) {
                 kept.add(chosen);
             }
             Permanent permanent = gameQueryService.findPermanentById(gameData, chosen);
             if (permanent != null) {
-                gameLogService.append(gameData, GameLog.textCardText(
+                keepLogs.add(GameLog.textCardText(
                         gameData.playerIdToName.get(context.subjectPlayerId()) + " keeps ",
                         permanent.getCard(), " (" + context.sourceName() + ")."));
             }
@@ -74,17 +82,18 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
 
         step(gameData, context.controllerId(), context.affectedPlayerIds(), context.remainingPlayerIds(),
                 context.types().indexOf(context.typePhase()) + 1, kept, context.types(),
-                context.sacrificeAllPermanents(), context.eachPlayerChooses(), context.sourceName());
+                context.sacrificeAllPermanents(), context.eachPlayerChooses(), context.sourceName(), keepLogs);
     }
 
     /**
      * Run passes from {@code phaseIndex} of the first player in {@code playerIds} onwards, stopping
      * at the first pass that needs a choice; when no pass is left, apply the sacrifices.
+     * {@code keepLogs} are the log lines of the pick just made, written once nothing can stop it.
      */
     private void step(GameData gameData, UUID controllerId, List<UUID> affectedPlayerIds,
             List<UUID> playerIds, int phaseIndex,
             List<UUID> keptIds, List<CardType> types, boolean sacrificeAllPermanents,
-            boolean eachPlayerChooses, String sourceName) {
+            boolean eachPlayerChooses, String sourceName, List<GameLogEntry> keepLogs) {
         List<UUID> remaining = new ArrayList<>(playerIds);
         List<UUID> kept = new ArrayList<>(keptIds);
         int index = phaseIndex;
@@ -108,6 +117,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
                 }
 
                 UUID chooserId = eachPlayerChooses ? subjectPlayerId : controllerId;
+                appendAll(gameData, keepLogs);
                 playerInputService.beginMultiPermanentChoice(gameData, chooserId, candidates, 1,
                         new MultiPermanentChoiceContext.KeepOneOfEachTypeChoice(controllerId,
                                 subjectPlayerId, type, List.copyOf(affectedPlayerIds),
@@ -121,15 +131,15 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             index = 0;
         }
 
-        sacrificeRest(gameData, affectedPlayerIds, kept, sacrificeAllPermanents, sourceName);
+        sacrificeRest(gameData, affectedPlayerIds, kept, sacrificeAllPermanents, sourceName, keepLogs);
     }
 
     /** Every affected permanent that was not kept, or every affected nonland permanent for Tragic Arrogance, is sacrificed together. */
     private void sacrificeRest(GameData gameData, List<UUID> affectedPlayerIds, List<UUID> keptIds,
             boolean sacrificeAllPermanents,
-            String sourceName) {
+            String sourceName, List<GameLogEntry> keepLogs) {
         Set<UUID> keptSet = new HashSet<>(keptIds);
-        List<UUID> toSacrifice = new ArrayList<>();
+        List<Permanent> toSacrificePermanents = new ArrayList<>();
         for (UUID playerId : affectedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) {
@@ -138,17 +148,27 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             for (Permanent permanent : battlefield) {
                 if ((sacrificeAllPermanents || !gameQueryService.isLand(gameData, permanent))
                         && !keptSet.contains(permanent.getId())) {
-                    toSacrifice.add(permanent.getId());
+                    toSacrificePermanents.add(permanent);
                 }
             }
         }
+        List<UUID> toSacrifice = toSacrificePermanents.stream().map(Permanent::getId).toList();
 
+        // CR 616.1: ask the batch's death replacements before the pick is logged, so a rerun logs it once.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, toSacrificePermanents);
+        appendAll(gameData, keepLogs);
         if (toSacrifice.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(sourceName + " resolves but nothing is sacrificed."));
             return;
         }
         destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
         log.info("Game {} - {} sacrifices {} permanents", gameData.id, sourceName, toSacrifice.size());
+    }
+
+    private void appendAll(GameData gameData, List<GameLogEntry> logs) {
+        for (GameLogEntry logEntry : logs) {
+            gameLogService.append(gameData, logEntry);
+        }
     }
 
     private List<UUID> candidates(GameData gameData, UUID playerId, CardType type, boolean includeLands) {

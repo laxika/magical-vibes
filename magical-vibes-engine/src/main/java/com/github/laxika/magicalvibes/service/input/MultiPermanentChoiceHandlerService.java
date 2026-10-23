@@ -1231,8 +1231,6 @@ public class MultiPermanentChoiceHandlerService {
             handleFadeAwayKeep(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice ctx) {
             handleFadeAwaySacrifice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice ctx) {
-            handleKeepOneOfEachTypeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice ctx) {
             handleDestroyUpToOneNonbasicLandPerPlayerChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
@@ -2214,7 +2212,9 @@ public class MultiPermanentChoiceHandlerService {
      * also keep their picks in the immutable context; the latter queues its graveyard return only
      * after the sacrifice. {@link MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice}
      * and {@link MultiPermanentChoiceContext.WinnowingChoice} keep their kept or chosen creatures in
-     * the immutable context and only work out the rest before that sacrifice.
+     * the immutable context and only work out the rest before that sacrifice, as does
+     * {@link MultiPermanentChoiceContext.KeepOneOfEachTypeChoice}, which logs its "keeps" pick only
+     * after the batch's death replacements have been asked.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2235,7 +2235,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice
-                || context instanceof MultiPermanentChoiceContext.WinnowingChoice;
+                || context instanceof MultiPermanentChoiceContext.WinnowingChoice
+                || context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice;
     }
 
     /**
@@ -2334,6 +2335,14 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.WinnowingChoice ctx -> {
                 winnowingHandler.completeChoice(gameData, permanentIds, ctx);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            case MultiPermanentChoiceContext.KeepOneOfEachTypeChoice ctx -> {
+                keepOneOfEachTypeHandler.completeKeepChoice(gameData, permanentIds, ctx);
                 if (!gameData.interaction.isAwaitingInput()) {
                     permanentRemovalService.removeOrphanedAuras(gameData);
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -3809,18 +3818,6 @@ public class MultiPermanentChoiceHandlerService {
     private void handleFadeAwaySacrifice(GameData gameData, List<UUID> permanentIds,
                                          MultiPermanentChoiceContext.FadeAwaySacrifice context) {
         fadeAwayEffectHandler.completeSacrificeChoice(gameData, permanentIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleKeepOneOfEachTypeChoice(GameData gameData, List<UUID> permanentIds,
-                                               MultiPermanentChoiceContext.KeepOneOfEachTypeChoice context) {
-        keepOneOfEachTypeHandler.completeKeepChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;
