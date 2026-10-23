@@ -50,6 +50,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         return battlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> canReceiveCounters(gameData, p))
+                .filter(p -> !gameQueryService.cantBeChosen(gameData, p))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -61,6 +62,9 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         }
         if (!canReceiveCounters(gameData, chosen)) {
             throw new IllegalStateException("The chosen creature cannot receive these counters");
+        }
+        if (gameQueryService.cantBeChosen(gameData, chosen)) {
+            throw new IllegalStateException(chosen.getCard().getName() + " can't be chosen");
         }
         CounterType type = cost.counterType();
         int count = cost.count();

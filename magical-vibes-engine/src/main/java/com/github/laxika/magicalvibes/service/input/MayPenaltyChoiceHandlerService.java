@@ -684,6 +684,7 @@ public class MayPenaltyChoiceHandlerService {
                             .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                             .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
                             .filter(permanent -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                            .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                             .map(Permanent::getId)
                             .toList();
             if (!validIds.isEmpty()) {
@@ -2200,7 +2201,8 @@ public class MayPenaltyChoiceHandlerService {
                             && (counterCost.counterType() != CounterType.MINUS_ONE_MINUS_ONE
                             || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
                             && (counterCost.counterType() != CounterType.PLUS_ONE_PLUS_ONE
-                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)));
+                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))
+                            && !gameQueryService.cantBeChosen(gameData, permanent));
             if (!candidates.isEmpty()) {
                 StackEntry counterEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,

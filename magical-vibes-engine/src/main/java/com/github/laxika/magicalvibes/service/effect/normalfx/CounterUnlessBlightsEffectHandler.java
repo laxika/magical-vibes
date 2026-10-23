@@ -57,6 +57,7 @@ public class CounterUnlessBlightsEffectHandler implements NormalEffectHandlerBea
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
                 .filter(permanent -> !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

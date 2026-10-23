@@ -339,7 +339,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         return battlefield.stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .anyMatch(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
-                        && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent));
+                        && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent));
     }
 
     private boolean canSacrificeEnchantedPermanent(GameData gameData, StackEntry entry, UUID choicePlayerId) {

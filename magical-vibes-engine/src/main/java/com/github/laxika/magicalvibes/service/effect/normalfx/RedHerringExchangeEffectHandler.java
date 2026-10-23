@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedHerringExchangeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @Slf4j
 public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean {
 
+    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
@@ -72,7 +74,9 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
     private List<UUID> collectChoices(GameData gameData, UUID controllerId) {
         List<UUID> choices = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            choices.add(permanent.getId());
+            if (!gameQueryService.cantBeChosen(gameData, permanent)) {
+                choices.add(permanent.getId());
+            }
         }
         for (StackEntry stackEntry : gameData.stack) {
             if (isControlledSpell(stackEntry, controllerId) && stackEntry.getTargetableId() != null) {

@@ -827,7 +827,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             List<UUID> candidates = payerId == null
                     ? List.of()
                     : destructionSupport.collectCreatureIds(gameData, payerId,
-                            permanent -> canPutCounterOnPermanent(gameData, permanent, counterCost));
+                            permanent -> canPutCounterOnPermanent(gameData, permanent, counterCost)
+                                    && !gameQueryService.cantBeChosen(gameData, permanent));
             if (candidates.isEmpty()) {
                 destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                 return;

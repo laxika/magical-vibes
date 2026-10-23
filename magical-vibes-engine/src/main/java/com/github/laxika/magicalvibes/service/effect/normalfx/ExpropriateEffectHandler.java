@@ -155,7 +155,8 @@ public class ExpropriateEffectHandler implements NormalEffectHandlerBean {
         List<UUID> candidates = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (ownerId.equals(gameData.defaultControllerOf(permanent.getId()))) {
+                if (ownerId.equals(gameData.defaultControllerOf(permanent.getId()))
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     candidates.add(permanent.getId());
                 }
             }

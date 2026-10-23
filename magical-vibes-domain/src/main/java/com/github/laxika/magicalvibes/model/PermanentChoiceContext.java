@@ -1924,9 +1924,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  creatures (the source itself is a legal choice) as the effect resolves. (Nulltread Gargantuan.) */
     record PutControlledCreatureOnTopOfLibrary(UUID controllerId) implements PermanentChoiceContext {}
 
-    /** Pattern Matcher: choose another controlled creature whose name bounds the library search. */
-    record PatternMatcherCreatureChoice(UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
-
     /** Canoptek Wraith: choose a land before searching for same-name basic lands. */
     record SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand(UUID controllerId)
             implements PermanentChoiceContext {}

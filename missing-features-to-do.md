@@ -9,40 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-
-## 21. "Can't be chosen" for blight and votes (Glimpse, the Unthinkable)
-
-**Status:** open (only the questions below remain) · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:** none. `GlimpseTheUnthinkablePlaytestTest` passes.
-
-**What the rules require.** Glimpse, the Unthinkable has "Glimpse, the Unthinkable can't be chosen." The
-official rulings apply it to spells and abilities that ask a player to "choose" or make a "choice" among
-permanents (Call to the Void, Divine Reckoning, Vesuvan Shapeshifter), but not to choices made under game
-rules (attackers, blockers). Every handler that builds its own "choose a permanent" candidate list now drops
-it at the source of the list (`GameQueryService.cantBeChosen`, or `cantBeChosenToSacrifice` for
-sacrifices). Still ignoring it, because it's unclear whether they count as a "choice":
-- blight (CR 701.68a: "put N -1/-1 counters on a creature you control", but 701.68c calls it the creature
-  the player "chose"). Blight runs through `BlightEffectHandler`, `EachOpponentBlightsEffectHandler`,
-  `TargetPlayerBlightsEffectHandler`, `CounterUnlessBlightsEffectHandler`, `BlightXCostHandler` and the
-  spell/ability blight costs, so they all need to change together.
-- votes for a permanent (Will of the council, Secret council, Expropriate).
-- Pattern Matcher's "same name as another creature you control" and the exchange in
-  `RedHerringExchangeEffectHandler`.
-
-**Why it's large.** Blight is spread across effects, costs and may-ability checks.
-
-**Prompt to start it:**
-
-```
-Decide whether Glimpse, the Unthinkable's "can't be chosen" applies to blight and to votes
-(missing-features-to-do.md entry 21), search for an official ruling, and if it does make every blight
-path and vote honour CantBeChosenEffect. Add tests to GlimpseTheUnthinkablePlaytestTest first.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 30. Casting an Adventure from the top of the library
 
 **Status:** open · **Found:** 2026-10-16, while fixing J-card tests

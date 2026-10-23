@@ -3055,6 +3055,7 @@ public abstract class AiDecisionEngine {
             if (filter != null) {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                        .filter(p -> !gameQueryService.cantBeChosen(gameData, p))
                         .findFirst()
                         .map(Permanent::getId)
                         .orElse(null);

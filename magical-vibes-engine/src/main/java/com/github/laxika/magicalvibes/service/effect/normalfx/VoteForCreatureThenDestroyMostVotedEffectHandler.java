@@ -100,7 +100,8 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
         List<UUID> creatureIds = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     creatureIds.add(permanent.getId());
                 }
             }

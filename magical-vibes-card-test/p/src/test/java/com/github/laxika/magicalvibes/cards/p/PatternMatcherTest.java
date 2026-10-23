@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -36,22 +35,21 @@ class PatternMatcherTest extends BaseCardTest {
     }
 
     @Test
-    void choosingAnotherCreatureUsesThatCreatureName() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+    void searchesForAnyOtherCreatureNameWithoutChoosingACreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new HillGiant(), new Forest()));
 
         castPatternMatcher();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(bears.getId(), giant.getId());
-
-        harness.handlePermanentChosen(player1, bears.getId());
-
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
-        assertThat(offered).hasSize(1);
-        assertThat(offered.getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(offered).extracting(Card::getName).containsExactlyInAnyOrder("Grizzly Bears", "Hill Giant");
+
+        harness.handleCardChosen(player1, offered.indexOf(offered.stream()
+                .filter(card -> card.getName().equals("Hill Giant")).findFirst().orElseThrow()));
+
+        harness.assertInHand(player1, "Hill Giant");
     }
 
     @Test

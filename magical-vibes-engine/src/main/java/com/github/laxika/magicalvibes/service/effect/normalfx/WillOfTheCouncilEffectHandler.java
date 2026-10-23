@@ -115,6 +115,9 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+                if (gameQueryService.cantBeChosen(gameData, permanent)) {
+                    continue;
+                }
                 if ((!creaturesOnly && !gameQueryService.isLand(gameData, permanent))
                         || (creaturesOnly && gameQueryService.isCreature(gameData, permanent))) {
                     candidates.add(permanent.getId());

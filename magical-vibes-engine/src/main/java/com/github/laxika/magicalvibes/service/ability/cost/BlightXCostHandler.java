@@ -65,6 +65,7 @@ public class BlightXCostHandler implements PermanentChoiceCostHandler {
     public List<UUID> getValidChoiceIds(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -73,6 +74,9 @@ public class BlightXCostHandler implements PermanentChoiceCostHandler {
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must choose a creature to blight");
+        }
+        if (gameQueryService.cantBeChosen(gameData, chosen)) {
+            throw new IllegalStateException(chosen.getCard().getName() + " can't be chosen");
         }
         int amount = cost.fixedAmount() != null ? cost.fixedAmount() : xValue;
         int count = gameQueryService.replaceCounters(

@@ -86,7 +86,8 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     candidates.add(permanent.getId());
                 }
             }

@@ -1379,6 +1379,7 @@ public class GameSimulator {
                 if (filter != null) {
                     return battlefield.stream()
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, filter))
+                            .filter(p -> !gameQueryService.cantBeChosen(gd, p))
                             .findFirst().map(Permanent::getId).orElse(null);
                 }
             }

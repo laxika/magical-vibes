@@ -868,16 +868,16 @@ public class AdditionalSpellCostService {
                     }
                 }
                 case BlightCost ignored -> {
-                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
+                    if (battlefield.stream().noneMatch(p -> isChoosableCreature(gameData, p))) return false;
                 }
                 case PutCounterOnControlledCreatureCost cost -> {
                     if (!cost.optional()
-                            && battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) {
+                            && battlefield.stream().noneMatch(p -> isChoosableCreature(gameData, p))) {
                         return false;
                     }
                 }
                 case PutCountersOnControlledCreatureOrPayManaCost cost -> {
-                    boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                    boolean hasCreature = battlefield.stream().anyMatch(p -> isChoosableCreature(gameData, p));
                     if (!hasCreature && !canAffordPutCountersOrPayManaOption(gameData, playerId, card, cost)) {
                         return false;
                     }
@@ -2783,7 +2783,15 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Creature cannot have " + counterType + " counters put on it to cast "
                     + card.getName());
         }
+        if (gameQueryService.cantBeChosen(gameData, creature)) {
+            throw new IllegalStateException(creature.getCard().getName() + " can't be chosen");
+        }
         return creature;
+    }
+
+    /** Whether {@code permanent} is a creature a player can choose to put counters on to pay a cost. */
+    private boolean isChoosableCreature(GameData gameData, Permanent permanent) {
+        return gameQueryService.isCreature(gameData, permanent) && !gameQueryService.cantBeChosen(gameData, permanent);
     }
 
     private boolean canReceiveCounters(GameData gameData, Permanent creature, CounterType counterType) {

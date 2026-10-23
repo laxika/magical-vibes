@@ -101,7 +101,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler;
@@ -229,7 +228,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseControlledArtifactOrCreatureTokenCopyEffectHandler chooseControlledArtifactOrCreatureTokenCopyEffectHandler;
     private final AnimationSupport animationSupport;
-    private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
     private final SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler sameNameBasicLandSearchHandler;
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
     private final OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler brudicladTokenHandler;
@@ -2014,25 +2012,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handlePatternMatcherCreatureChoice(GameData gameData, UUID chosenPermanentId,
-                                                   PermanentChoiceContext.PatternMatcherCreatureChoice context) {
-        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
-        if (chosen == null
-                || !context.controllerId().equals(gameQueryService.findPermanentController(gameData, chosenPermanentId))
-                || !gameQueryService.isCreature(gameData, chosen)
-                || chosenPermanentId.equals(context.sourcePermanentId())) {
-            throw new IllegalStateException("Chosen permanent is not another creature you control");
-        }
-
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry == null) {
-            throw new IllegalStateException("Pattern Matcher resolution is no longer pending");
-        }
-
-        patternMatcherHandler.search(gameData, pendingEntry, chosen.getCard().getName());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

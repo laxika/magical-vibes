@@ -547,8 +547,6 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary putOnTop) {
             battlefieldHandler.handlePutControlledCreatureOnTopOfLibrary(gameData, permanentId, putOnTop);
-        } else if (context instanceof PermanentChoiceContext.PatternMatcherCreatureChoice patternMatcher) {
-            battlefieldHandler.handlePatternMatcherCreatureChoice(gameData, permanentId, patternMatcher);
         } else if (context instanceof PermanentChoiceContext.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand chosenLand) {
             battlefieldHandler.handleSearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLand(
                     gameData, permanentId, chosenLand);
