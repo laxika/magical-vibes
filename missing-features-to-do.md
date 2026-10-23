@@ -210,6 +210,17 @@ covered: `ForcedCostOrElseEffectHandler` itself (unmarked, so its lone-candidate
 lone-candidate sacrifice on the may prompt's "yes" still don't ask first), and the deferred Torment picks, which are
 sacrificed later by their unmarked starting handlers.
 
+**Also landed (2026-10-23, thirteenth pass).** `ForcedCostOrElseEffectHandler` is now marked `AsksDeathReplacementsFirst`,
+but it closes the rerun window as it starts and reopens it only around the mandatory sacrifice of a lone candidate
+for a `SacrificePermanentCost` (not a villainous choice, which records its extra choices first). Every step before
+that sacrifice only reads (the payer, the candidates; re-pointing the stack entry at the enchanted creature's
+current controller sets the same value again on the rerun), and every other path (other forced costs, the may
+prompt, the fallback effects, the multi-candidate choice) resolves with the window closed. Test:
+`GravebaneZombieTest.forcedCostLoneCandidateSacrificeAsksBeforeTheZombieIsSacrificed` (Eldrazi Monument with a
+lone Zombie: no sacrifice log line while asked, the Monument stays and Kalitas makes no Vampire after). Still not
+covered: the fallback effects' own deaths (e.g. "sacrifice this unless ..." when no candidate exists), the
+lone-candidate sacrifice on the may prompt's "yes", and the deferred Torment picks.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.d.DevourFlesh;
 import com.github.laxika.magicalvibes.cards.d.DescendantsFury;
 import com.github.laxika.magicalvibes.cards.d.DesecrationDemon;
 import com.github.laxika.magicalvibes.cards.d.DiscipleOfBolas;
+import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartPiercerManticore;
 import com.github.laxika.magicalvibes.cards.h.Humble;
@@ -952,6 +953,36 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(tormentorDraw);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, EldraziMonument.class})
+    @DisplayName("Under Eldrazi Monument, a lone Zombie's replacement is chosen before it is sacrificed and the Monument stays")
+    void forcedCostLoneCandidateSacrificeAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player1, List.of(filler));
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new EldraziMonument());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        advanceToUpkeep(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .isEmpty();
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertOnBattlefield(player1, "Eldrazi Monument");
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
                 .hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

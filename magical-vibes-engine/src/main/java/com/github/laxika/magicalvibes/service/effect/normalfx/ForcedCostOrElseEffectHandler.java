@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureC
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -52,7 +53,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
+public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
@@ -304,6 +305,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ForcedCostOrElseEffect) effect;
+        // CR 616.1: only the mandatory sacrifice of a lone candidate kills before anything else
+        // changes, so every other path resolves with the rerun window closed.
+        boolean deathReplacementRerunWindow = gameData.deathReplacementsCanRerunEffect;
+        gameData.deathReplacementsCanRerunEffect = false;
 
         if (e.payerIsEnchantedController() && entry.getTriggeringPermanentId() != null) {
             // "That creature's controller" is the controller as the ability resolves, so a control
@@ -970,7 +975,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 if (matchingPermanentIds.size() == 1) {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, matchingPermanentIds.getFirst());
                     if (permanent != null) {
+                        gameData.deathReplacementsCanRerunEffect =
+                                deathReplacementRerunWindow && !e.villainousChoice();
                         destructionSupport.sacrificeAndLog(gameData, permanent, payerId);
+                        gameData.deathReplacementsCanRerunEffect = false;
                     } else {
                         destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                     }
