@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -168,5 +170,36 @@ class KalitasBloodchiefOfGhetTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(vampireTokenCount(player1)).isZero();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Asks for Gravebane Zombie's death replacement before destroying it, and makes no Vampire when it goes to the library")
+    void asksForTheDeathReplacementBeforeTheZombieIsDestroyed() {
+        Permanent kalitas = addCreatureReady(player1, new KalitasBloodchiefOfGhet());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = addCreatureReady(player2, new GravebaneZombie());
+
+        activate(kalitas, gravebane.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.pendingEffectResolutionEntry.getCard().getId()).isEqualTo(kalitas.getCard().getId());
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(vampireTokenCount(player1)).isZero();
+        assertThat(zombieTokenCount()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private long zombieTokenCount() {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && p.getCard().getSubtypes().contains(CardSubtype.ZOMBIE))
+                .count();
     }
 }

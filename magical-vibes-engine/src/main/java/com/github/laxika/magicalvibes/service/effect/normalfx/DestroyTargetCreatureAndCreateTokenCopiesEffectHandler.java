@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 /** Resolves Saw in Half's destroy-and-create-two-copies effect. */
 @Component
 @RequiredArgsConstructor
-public class DestroyTargetCreatureAndCreateTokenCopiesEffectHandler implements NormalEffectHandlerBean {
+public class DestroyTargetCreatureAndCreateTokenCopiesEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

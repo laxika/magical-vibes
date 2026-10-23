@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 /** Resolves Leave No Trace's targeted Radiance destruction. */
 @Component
 @RequiredArgsConstructor
-public class DestroyTargetAndOtherEnchantmentsSharingColorEffectHandler implements NormalEffectHandlerBean {
+public class DestroyTargetAndOtherEnchantmentsSharingColorEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;

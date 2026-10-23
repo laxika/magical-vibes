@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 /** Resolves Endemic Plague using the creature sacrificed to cast it. */
 @Component
 @RequiredArgsConstructor
-public class DestroyAllCreaturesSharingSacrificedCreatureTypeEffectHandler implements NormalEffectHandlerBean {
+public class DestroyAllCreaturesSharingSacrificedCreatureTypeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;

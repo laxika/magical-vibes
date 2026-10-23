@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
@@ -28,7 +29,7 @@ import org.springframework.stereotype.Component;
 /** Resolves Wave of Vitriol's simultaneous sacrifice and per-land search. */
 @Component
 @RequiredArgsConstructor
-public class WaveOfVitriolEffectHandler implements NormalEffectHandlerBean {
+public class WaveOfVitriolEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private static final PermanentPredicate NONBASIC_LAND = new PermanentAllOfPredicate(List.of(
             new PermanentIsLandPredicate(),

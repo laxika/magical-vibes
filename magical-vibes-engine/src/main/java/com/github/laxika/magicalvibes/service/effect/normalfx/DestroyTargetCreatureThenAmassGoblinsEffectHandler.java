@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -24,7 +25,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class DestroyTargetCreatureThenAmassGoblinsEffectHandler implements NormalEffectHandlerBean {
+public class DestroyTargetCreatureThenAmassGoblinsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

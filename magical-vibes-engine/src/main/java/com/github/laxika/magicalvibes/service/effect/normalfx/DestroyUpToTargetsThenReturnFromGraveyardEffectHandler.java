@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,7 +29,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements NormalEffectHandlerBean {
+public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final PermanentRemovalService permanentRemovalService;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 /** Resolves Red Sun's Twilight's artifact destruction and its X=5 token-copy rider. */
 @Component
 @RequiredArgsConstructor
-public class DestroyEachTargetArtifactThenCreateTokenCopyEffectHandler implements NormalEffectHandlerBean {
+public class DestroyEachTargetArtifactThenCreateTokenCopyEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private static final int TOKEN_COPY_THRESHOLD = 5;
 

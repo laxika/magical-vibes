@@ -39,11 +39,36 @@ whole batch before anything is sacrificed. Tests: `KalitasTraitorOfGhetTest.edic
 (Innocent Blood: Kalitas is still on the battlefield while asked) and
 `GravebaneZombieTest.sacrificeEachMatchingAsksBeforeAnyPermanentIsSacrificed` (All Is Dust).
 
+**Also landed (2026-10-23, third pass).** Reviewed and marked 46 more destroy handlers whose first change
+is the destruction (recording last-known info on the stack entry doesn't count), among them every
+single-target and batch destroy with a rider afterwards (`DestroyTargetCreatureThenCreateTokenEqualToPowerToughnessEffectHandler`,
+`DestroyAllCreaturesSharingSacrificedCreatureTypeEffectHandler`, `DestroyReferencedPermanentEffectHandler`,
+`DestroySourceEffectHandler`, `DestroyCombatOpponentEffectHandler`, `DismantleEffectHandler`, `SeasonOfTheWitchEffectHandler`,
+`WaveOfVitriolEffectHandler`, ...; `grep -rl AsksDeathReplacementsFirst` lists them). Activated and triggered
+abilities leave the stack before they resolve, so while asked they sit only in `GameData.pendingEffectResolutionEntry`.
+Tests: `KalitasBloodchiefOfGhetTest.asksForTheDeathReplacementBeforeTheZombieIsDestroyed` (an activated
+ability; the library answer means no Vampire) and `EndemicPlagueTest.asksForTheDeathReplacementBeforeAnyCreatureIsDestroyed`.
+Destroy handlers reviewed and deliberately left unmarked:
+- They clear a chosen value before destroying, so a rerun would lose or re-ask it: `DestroyAllCreaturesOfChosenParityEffectHandler`
+  and `DestroyOtherCreaturesOfChosenManaValueParityEffectHandler` (`chosenSpellManaValueParity`),
+  `DestroyAllCreaturesOfChosenTypeEffectHandler`, `DestroyAllCreaturesExceptChosenTypeEffectHandler` and
+  `DestroyAllCreaturesExceptChosenTypesEffectHandler` (`chosenSpellSubtype`). Moving the clear after the
+  destruction would make them safe, but check that nothing reads the value during the death choice.
+- They pick at random before destroying, so a rerun would pick again: `DestroyRandomAttackingCreatureEffectHandler`,
+  `DestroyOneOfTargetsAtRandomEffectHandler`, `DestroyRandomOpponentPermanentWithCounterEffectHandler`,
+  `FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler`, `ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHandler`.
+- They deal damage or counter something first: `DealDamageToAnyTargetThenDestroyIfDamagedEffectHandler`,
+  `DealDamageToTargetCreatureThenDestroyIfDamagedEffectHandler`, `CounterSpellOrAbilityAndDestroySourceEffectHandler`.
+- They only start a choice or payment and destroy in its completion (`DestroyTargetPermanentUnlessControllerTakesDamageEffectHandler`,
+  `DestroyUpToOneAttachedPermanentEffectHandler`, the "each player chooses ... then destroy" handlers): the
+  completion gap below.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
 neither `stateBased` nor `rerunsEffect`) while the effect carries on:
-- Handlers not marked `AsksDeathReplacementsFirst`: the remaining ~70 destroy and sacrifice handlers
+- Handlers not marked `AsksDeathReplacementsFirst`: the remaining sacrifice handlers (most of the ~110
+  unmarked ones; the plain destroy handlers are done apart from the ones listed above) and the larger mixed handlers
   that use `DestructionSupport` (list them with `grep -rlE "destructionSupport\.(destroyBatch|tryDestroyAndLog|performSimultaneousSacrifice|sacrificeAndLog)"`
   under `service/effect/`). Each needs review for "nothing before the first removal" before it is
   marked; a handler that removes through `performSimultaneousRemovals` must also call
