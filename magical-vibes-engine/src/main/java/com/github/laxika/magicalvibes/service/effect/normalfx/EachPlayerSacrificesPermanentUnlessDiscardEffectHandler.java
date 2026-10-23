@@ -29,7 +29,8 @@ import org.springframework.stereotype.Component;
  * removal is the final simultaneous sacrifice, whose competing death replacements (CR 616.1) are
  * asked while the progress on {@link EachPlayerSacrificeOrDiscardState} is still recorded, so the
  * rerun resumes at the same batch and repeats nothing. The per-card-drawn form (Read the Runes)
- * sacrifices as it goes and resolves with the rerun window closed.
+ * sacrifices as it goes: a lone candidate is asked about while the progress still points at its
+ * sacrifice, and a chosen one in the {@link PermanentChoiceContext.TormentSacrifice} completion.
  */
 @Component
 @RequiredArgsConstructor
@@ -53,11 +54,6 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
                 (EachPlayerSacrificesPermanentUnlessDiscardEffect) effect;
         EachPlayerSacrificeOrDiscardState state = gameData.eachPlayerSacrificeOrDiscard;
         String sourceName = entry.getCard().getName();
-        if (sacrificeEffect.repeatForEachCardDrawn()) {
-            // Each sacrifice happens as it is chosen, after the progress has moved on, so a rerun
-            // would skip it.
-            gameData.deathReplacementsCanRerunEffect = false;
-        }
 
         if (!state.active) {
             state.reset();
@@ -138,6 +134,20 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
         }
     }
 
+    /**
+     * CR 616.1: the lone candidate's competing death replacements are asked while the progress
+     * points back at this sacrifice (the current player with the sacrifice mode chosen), so the rerun
+     * sacrifices the same permanent and repeats no earlier pick or discard.
+     */
+    private void sacrificeLoneCandidate(GameData gameData, Permanent permanent, UUID playerId) {
+        EachPlayerSacrificeOrDiscardState state = gameData.eachPlayerSacrificeOrDiscard;
+        state.chosenMode = ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE;
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, List.of(permanent));
+        state.chosenMode = null;
+        gameData.deathReplacementsCanRerunEffect = false;
+        destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+    }
+
     private static boolean repeatsPerCardDrawn(StackEntry entry) {
         return entry.getEffectsToResolve().stream().anyMatch(effect ->
                 effect instanceof EachPlayerSacrificesPermanentUnlessDiscardEffect sacrifice
@@ -162,7 +172,7 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
                 if (permanent != null && state.deferSacrifices) {
                     state.chosenSacrifices.add(permanent.getId());
                 } else if (permanent != null) {
-                    destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+                    sacrificeLoneCandidate(gameData, permanent, playerId);
                 }
                 advance(gameData, entry, sourceName);
                 return;

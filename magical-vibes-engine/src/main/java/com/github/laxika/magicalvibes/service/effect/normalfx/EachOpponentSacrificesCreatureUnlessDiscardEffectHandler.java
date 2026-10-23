@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -22,10 +23,19 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the Long Reach of Night's opponent-only creature-or-discard choice in APNAP order. */
+/**
+ * Resolves the Long Reach of Night's opponent-only creature-or-discard choice in APNAP order.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: its progress lives on
+ * {@link EachPlayerSacrificeOrDiscardState}, and a lone candidate's competing death replacements
+ * (CR 616.1) are asked while that progress still points at its sacrifice, so the rerun sacrifices the
+ * same creature and repeats no earlier sacrifice or discard. A chosen creature is sacrificed in the
+ * {@link PermanentChoiceContext.TormentSacrifice} completion.
+ */
 @Component
 @RequiredArgsConstructor
-public class EachOpponentSacrificesCreatureUnlessDiscardEffectHandler implements NormalEffectHandlerBean {
+public class EachOpponentSacrificesCreatureUnlessDiscardEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private static final PermanentIsCreaturePredicate CREATURE = new PermanentIsCreaturePredicate();
 
@@ -116,6 +126,11 @@ public class EachOpponentSacrificesCreatureUnlessDiscardEffectHandler implements
             if (ids.size() == 1) {
                 Permanent permanent = gameQueryService.findPermanentById(gameData, ids.getFirst());
                 if (permanent != null) {
+                    // CR 616.1: asked while the progress points back at this sacrifice.
+                    state.chosenMode = ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE;
+                    destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, List.of(permanent));
+                    state.chosenMode = null;
+                    gameData.deathReplacementsCanRerunEffect = false;
                     destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
                 }
                 advance(gameData, entry, sourceName);

@@ -800,6 +800,21 @@ unmarked; both sacrifice after their progress has moved on), Land Equilibrium's 
 mayfx handlers whose answer sacrifices or destroys (the "any opponent may sacrifice" handlers' other paths, ...; each
 needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-seventh pass).** Read the Runes' and The Long Reach of Night's lone-candidate
+sacrifices now ask before the permanent leaves. `EachOpponentSacrificesCreatureUnlessDiscardEffectHandler` (The Long
+Reach of Night, Lurking Spinecrawler's incorporated effect) is marked `AsksDeathReplacementsFirst`, and
+`EachPlayerSacrificesPermanentUnlessDiscardEffectHandler` no longer closes the window for the per-card-drawn form.
+Before a lone candidate is sacrificed, both point the progress on `GameData.eachPlayerSacrificeOrDiscard` back at
+that sacrifice (`chosenMode` set to the sacrifice for the current player) while asking, so the rerun goes straight to
+the same sacrifice and repeats no earlier pick, discard or sacrifice; the window closes once the sacrifice starts.
+A chosen candidate (two or more) was already covered by the `TormentSacrifice` completion. Tests in
+`GravebaneZombieTest` (Kalitas, Traitor of Ghet against Gravebane Zombie; while asked the choice is a rerun one and
+nothing is sacrificed; after the library answer the Zombie is on top of its owner's library, one sacrifice log line
+and no Kalitas Zombie): `longReachOfNightAsksBeforeTheLoneZombieIsSacrificed` (chapter I, empty hand) and
+`readTheRunesAsksBeforeTheLoneZombieIsSacrificed` (X=2: the first pick's discard isn't repeated). Still not covered:
+Land Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the "any
+opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.cards.p.PillarTombsOfAku;
 import com.github.laxika.magicalvibes.cards.p.PossessedPortal;
 import com.github.laxika.magicalvibes.cards.p.ProwlingPangolin;
 import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
+import com.github.laxika.magicalvibes.cards.r.ReadTheRunes;
 import com.github.laxika.magicalvibes.cards.r.ReignOfThePit;
 import com.github.laxika.magicalvibes.cards.r.RishadanCutpurse;
 import com.github.laxika.magicalvibes.cards.r.Retribution;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.cards.s.StarAthlete;
 import com.github.laxika.magicalvibes.cards.s.StickTogether;
 import com.github.laxika.magicalvibes.cards.s.SyphonFlesh;
 import com.github.laxika.magicalvibes.cards.t.TheDalekEmperor;
+import com.github.laxika.magicalvibes.cards.t.TheLongReachOfNight;
 import com.github.laxika.magicalvibes.cards.t.TipTheScales;
 import com.github.laxika.magicalvibes.cards.t.TormentOfHailfire;
 import com.github.laxika.magicalvibes.cards.t.ToTheSlaughter;
@@ -1829,6 +1831,68 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Possessed Portal");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, TheLongReachOfNight.class})
+    @DisplayName("The Long Reach of Night asks for a lone Zombie's replacement before it is sacrificed")
+    void longReachOfNightAsksBeforeTheLoneZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player1, new TheLongReachOfNight());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, ReadTheRunes.class})
+    @DisplayName("Read the Runes asks for the lone Zombie's replacement before it is sacrificed, after an earlier discard")
+    void readTheRunesAsksBeforeTheLoneZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        Card firstDraw = new GrizzlyBears();
+        Card secondDraw = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(firstDraw, secondDraw, filler));
+        harness.setHand(player2, List.of(new ReadTheRunes()));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player2, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
+        harness.handleCardChosen(player2, 0);
+        harness.handleListChoice(player2, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertMayAnswerAskedWhileTheZombieStays();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Grizzly Bears", "Read the Runes");
     }
 
     private void destroyWithWrathOfGod(Player caster) {
