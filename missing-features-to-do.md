@@ -748,6 +748,23 @@ the last decline of an "any player may pay" prompt (Icy Prison) and after a vill
 picks, Land Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the
 "any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-fourth pass).** An accepted forced-cost may prompt whose mana cost the pool can't pay
+(Phantasmal Forces accepted without blue mana) now asks before its first fallback effect's death. The mayfx
+`ForcedCostOrElseHandler` runs such an answer through `PermanentChoiceHandlerService.answerAskingDeathReplacementsFirst`
+under the same conditions as a decline (no villainous choice, no "any player may pay", a source controller on the
+ability, a killing first fallback effect) when the new `MayPenaltyChoiceHandlerService.acceptedCostFallsThroughUnpaid`
+says the accept falls through: the `PayManaCost` branch only reads (its check is now the shared `canPayManaCost`),
+and every other cost branch before the fall-through is guarded by its own cost type. Other cost types are left
+outside the window: their unpayable checks were already made when the prompt was created and nothing can change
+them before the answer, apart from the mana pool. Test (Phantasmal Forces enchanted with Necromancer's Magemark against
+Kalitas, Traitor of Ghet, accepted with only red mana; while asked the choice is a rerun one, the Forces stay and
+nothing is logged as sacrificed; after the return-to-hand answer it is in its owner's hand, one sacrifice log line and
+no Zombie): `PhantasmalForcesTest.acceptingWithoutBlueManaAsksForTheDeathReplacementBeforePhantasmalForcesIsSacrificed`.
+Still not covered: the fallback effects' deaths after the last decline of an "any player may pay" prompt (Icy Prison)
+and after a villainous decline, the deferred Torment picks, Land Equilibrium's lone-land sacrifice, the remaining mayfx
+handlers whose answer sacrifices or destroys (the "any opponent may sacrifice" handlers' other paths, ...; each needing
+review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

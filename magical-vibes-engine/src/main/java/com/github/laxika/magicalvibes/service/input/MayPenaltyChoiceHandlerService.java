@@ -2034,15 +2034,10 @@ public class MayPenaltyChoiceHandlerService {
             ManaCost cost = new ManaCost(costString, payCost.forCumulativeUpkeep());
             ManaPool pool = gameData.playerManaPools.get(decidingPlayerId);
             int lifeAmount = payCost.lifeAmount();
-            ManaPool simulatedPool = new ManaPool(pool);
             int phyrexianLifeAmount = cost.hasPhyrexianMana()
-                    ? cost.payPhyrexianManaAuto(simulatedPool, 0)
+                    ? cost.payPhyrexianManaAuto(new ManaPool(pool), 0)
                     : 0;
-            int totalLifeAmount = lifeAmount + phyrexianLifeAmount;
-            boolean canPayLife = totalLifeAmount <= 0
-                    || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
-                            && gameData.getLife(decidingPlayerId) >= totalLifeAmount);
-            if (cost.canPayResolutionCost(simulatedPool) && canPayLife) {
+            if (canPayManaCost(gameData, decidingPlayerId, ability, payCost)) {
                 var manaBefore = pool.getAllManaTotals();
                 if (cost.hasPhyrexianMana()) {
                     cost.payPhyrexianManaAuto(pool, 0);
@@ -2395,6 +2390,37 @@ public class MayPenaltyChoiceHandlerService {
         }
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Whether {@code player} accepting {@code ability}, a non-villainous {@link ForcedCostOrElseEffect} prompt
+     * that only its controller may pay, falls through to the fallback effects without changing anything first:
+     * a mana cost the pool can't pay (Phantasmal Forces accepted without blue mana). The cost-specific branches
+     * of {@link #handleForcedCostOrElseOptionalChoice} that run before such a fall-through only read.
+     */
+    public boolean acceptedCostFallsThroughUnpaid(GameData gameData, PendingMayAbility ability,
+                                                  ForcedCostOrElseEffect effect) {
+        return effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost
+                && !canPayManaCost(gameData, ability.controllerId(), ability, payCost);
+    }
+
+    /**
+     * Whether {@code payerId} can pay the mana cost stored on {@code ability} (it already reflects any dynamic
+     * reduction resolved when the prompt was created) from their mana pool, plus {@code payCost}'s life and any
+     * Phyrexian mana paid with life.
+     */
+    private boolean canPayManaCost(GameData gameData, UUID payerId, PendingMayAbility ability,
+                                   com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
+        ManaCost cost = new ManaCost(ability.manaCost(), payCost.forCumulativeUpkeep());
+        ManaPool simulatedPool = new ManaPool(gameData.playerManaPools.get(payerId));
+        int phyrexianLifeAmount = cost.hasPhyrexianMana()
+                ? cost.payPhyrexianManaAuto(simulatedPool, 0)
+                : 0;
+        int totalLifeAmount = payCost.lifeAmount() + phyrexianLifeAmount;
+        boolean canPayLife = totalLifeAmount <= 0
+                || (gameQueryService.canPlayerLifeChange(gameData, payerId)
+                        && gameData.getLife(payerId) >= totalLifeAmount);
+        return cost.canPayResolutionCost(simulatedPool) && canPayLife;
     }
 
     private int effectiveLifeAmount(GameData gameData, UUID payerId, PendingMayAbility ability,

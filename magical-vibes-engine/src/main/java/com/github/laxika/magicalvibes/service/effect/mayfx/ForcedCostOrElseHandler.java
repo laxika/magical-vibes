@@ -14,9 +14,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Optional "you may pay [cost]; if you don't, [penalty]" (e.g. Yawgmoth Demon).
- * A decline whose first fallback effect kills (Phantasmal Forces' "sacrifice this creature") changes
- * nothing before that death, so a creature with competing death replacements is asked about before it
- * leaves (CR 616.1) and the same decline is completed again with that choice.
+ * A decline, or an accepted mana cost the pool can't pay, whose first fallback effect kills (Phantasmal
+ * Forces' "sacrifice this creature") changes nothing before that death, so a creature with competing death
+ * replacements is asked about before it leaves (CR 616.1) and the same answer is completed again with that
+ * choice.
  */
 @Component
 @RequiredArgsConstructor
@@ -34,26 +35,29 @@ public class ForcedCostOrElseHandler implements MayEffectHandlerBean {
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Runnable answer = () -> mayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice(
                 gameData, player, accepted, ability);
-        if (!accepted && declineKillsBeforeChangingAnything(ability)) {
-            permanentChoiceHandlerServiceProvider.getObject().declineAskingDeathReplacementsFirst(
-                    gameData, player, ability, answer);
+        ForcedCostOrElseEffect effect = ability.effects().stream()
+                .filter(ForcedCostOrElseEffect.class::isInstance)
+                .map(ForcedCostOrElseEffect.class::cast)
+                .findFirst().orElseThrow();
+        if (fallbackKillsBeforeChangingAnything(ability, effect)
+                && (!accepted || mayPenaltyChoiceHandlerService.acceptedCostFallsThroughUnpaid(
+                        gameData, ability, effect))) {
+            permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, accepted, answer);
         } else {
             answer.run();
         }
     }
 
     /**
-     * Whether declining {@code ability} goes straight to a fallback effect that kills first. A villainous
+     * Whether an unpaid {@code ability} goes straight to a fallback effect that kills first. A villainous
      * choice counts its remaining choices and an "any player may pay" prompt offers the next player before
      * the fallback, and an enchanted or defending player's prompt without a recorded source controller reads
-     * it from {@link GameData#forcedCostOrElseSourceControllerId}, which the decline clears; a replay would
+     * it from {@link GameData#forcedCostOrElseSourceControllerId}, which the answer clears; a replay would
      * repeat or lose those, so they stay outside the window.
      */
-    private static boolean declineKillsBeforeChangingAnything(PendingMayAbility ability) {
-        ForcedCostOrElseEffect effect = ability.effects().stream()
-                .filter(ForcedCostOrElseEffect.class::isInstance)
-                .map(ForcedCostOrElseEffect.class::cast)
-                .findFirst().orElseThrow();
+    private static boolean fallbackKillsBeforeChangingAnything(PendingMayAbility ability,
+                                                               ForcedCostOrElseEffect effect) {
         boolean sourceControllerFromGameState = ability.sourceControllerId() == null
                 && (effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer());
         return !effect.villainousChoice()
