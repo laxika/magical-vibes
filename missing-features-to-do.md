@@ -321,6 +321,21 @@ multi-choices (`WormsOfTheEarthSacrificeLands`, which sacrifices lands one by on
 `EachPlayerChoosesCreatureThenSacrificesRestChoice`, `SacrificePermanentsThen` and the other "sacrifice, then"
 contexts, each needing review), `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, twentieth pass).** Two more sacrifice multi-choice completions joined
+`MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`: `EachPlayerSacrificeOneOfEachTypeChoice` (Release
+of Catch // Release; it keeps the picks so far in the immutable context and ends in `performSimultaneousSacrifice`)
+and `EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice` (Deadly Brew; it queues its graveyard return
+only after the sacrifice). `EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPermanentEffectHandler`
+is now marked too (it only reads before the sacrifice). Deadly Brew's chosen path now also runs the completion
+epilogue, so it no longer stays on the stack when nobody gets a return prompt. Tests:
+`GravebaneZombieTest.sacrificeOneOfEachTypeAsksBeforeAnyChosenCreatureIsSacrificed` and
+`eachPlayerSacrificeThenMayReturnAsksBeforeAnyChosenCreatureIsSacrificed` (nothing sacrificed while asked; the
+return prompt only after), and `DeadlyBrewTest.finishesResolvingAfterAChosenSacrificeThatLeavesNothingToReturn`.
+Reviewed and left out: `EachPlayerChoosesCreatureThenSacrificesRestChoice` (places counters and floating effects
+before its sacrifice). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
+`WormsOfTheEarthSacrificeLands`, the other "sacrifice, then" multi-choice contexts (each needing review),
+`LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

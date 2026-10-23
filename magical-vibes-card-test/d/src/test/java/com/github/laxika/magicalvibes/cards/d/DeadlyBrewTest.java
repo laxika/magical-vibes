@@ -151,6 +151,21 @@ class DeadlyBrewTest extends BaseCardTest {
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void finishesResolvingAfterAChosenSacrificeThatLeavesNothingToReturn() {
+        harness.addToBattlefield(player2, new BayouGroff());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new BayouGroff());
+        castDeadlyBrew();
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(chosen.getId()));
+        harness.assertInGraveyard(player1, "Deadly Brew");
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
     private void castDeadlyBrew() {
         harness.setHand(player1, List.of(new DeadlyBrew()));
         harness.addMana(player1, ManaColor.BLACK, 1);
