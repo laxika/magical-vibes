@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -132,5 +136,51 @@ class LithophageTest extends BaseCardTest {
                 .containsExactly(mountains.get(0).getId());
         harness.assertInGraveyard(player1, "Mountain");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Declining to sacrifice a Mountain asks for Lithophage's death replacement before it is sacrificed")
+    void decliningAsksForTheDeathReplacementBeforeLithophageIsSacrificed() {
+        Permanent lithophage = harness.addToBattlefieldAndReturn(player1, new Lithophage());
+        enchantWithMagemarkAgainstKalitas(lithophage);
+        harness.addToBattlefield(player1, new Mountain());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertDeathReplacementAskedWhileLithophageStays(lithophage);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertLithophageReturnedToHandWithoutZombie(lithophage);
+        harness.assertOnBattlefield(player1, "Mountain");
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private void assertDeathReplacementAskedWhileLithophageStays(Permanent creature) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+    }
+
+    private void assertLithophageReturnedToHandWithoutZombie(Permanent creature) {
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void enchantWithMagemarkAgainstKalitas(Permanent creature) {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(creature.getId());
     }
 }

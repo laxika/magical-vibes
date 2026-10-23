@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.p.PeelFromReality;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -130,5 +134,50 @@ class DrakeFamiliarTest extends BaseCardTest {
     private void castDrakeFamiliar() {
         harness.castFromHand(player1, new DrakeFamiliar(), "{1}{U}");
         resolveAllTriggers();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Declining to return an enchantment asks for Drake Familiar's death replacement before it is sacrificed")
+    void decliningAsksForTheDeathReplacementBeforeDrakeFamiliarIsSacrificed() {
+        harness.castFromHand(player1, new DrakeFamiliar(), "{1}{U}");
+        harness.passBothPriorities();
+        Permanent drake = findPermanent(player1, "Drake Familiar");
+        enchantWithMagemarkAgainstKalitas(drake);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertDeathReplacementAskedWhileDrakeFamiliarStays(drake);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertDrakeFamiliarReturnedToHandWithoutZombie(drake);
+        harness.assertInGraveyard(player1, "Necromancer's Magemark");
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private void assertDeathReplacementAskedWhileDrakeFamiliarStays(Permanent creature) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+    }
+
+    private void assertDrakeFamiliarReturnedToHandWithoutZombie(Permanent creature) {
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void enchantWithMagemarkAgainstKalitas(Permanent creature) {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(creature.getId());
     }
 }

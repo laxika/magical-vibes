@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CanyonWildcat;
 import com.github.laxika.magicalvibes.cards.c.Capsize;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.l.Lifelink;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.s.SpinalGraft;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -183,5 +186,70 @@ class MagmasaurTest extends BaseCardTest {
         Permanent magmasaur = harness.addToBattlefieldAndReturn(player, new Magmasaur());
         magmasaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
         return magmasaur;
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Declining asks for Magmasaur's death replacement before it is sacrificed or deals damage")
+    void decliningAsksForTheDeathReplacementBeforeMagmasaurIsSacrificed() {
+        Permanent magmasaur = addMagmasaur(player1, 2);
+        enchantWithMagemarkAgainstKalitas(magmasaur);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertDeathReplacementAskedWhileMagmasaurStays(magmasaur);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertMagmasaurReturnedToHandWithoutZombie(magmasaur);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("With no +1/+1 counter, asks for Magmasaur's death replacement before it is sacrificed")
+    void noCountersAsksForTheDeathReplacementBeforeMagmasaurIsSacrificed() {
+        Permanent magmasaur = addMagmasaur(player1, 0);
+        enchantWithMagemarkAgainstKalitas(magmasaur);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertDeathReplacementAskedWhileMagmasaurStays(magmasaur);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertMagmasaurReturnedToHandWithoutZombie(magmasaur);
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private void assertDeathReplacementAskedWhileMagmasaurStays(Permanent creature) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+    }
+
+    private void assertMagmasaurReturnedToHandWithoutZombie(Permanent creature) {
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void enchantWithMagemarkAgainstKalitas(Permanent creature) {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(creature.getId());
     }
 }

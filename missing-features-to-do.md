@@ -509,6 +509,27 @@ Voter's Dilemma, `LandEquilibriumSacrifice`, the other mayfx handlers whose answ
 `EachOpponentMay...OrSacrifice...`, `CounterUnlessSacrifices`, `TariffPayOrSacrifice`, `CycloneUpkeep`,
 `MagmasaurUpkeep`, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-first pass).** The "sacrifice this unless ..." may prompts whose decline only
+sacrifices the source now run the decline through `PermanentChoiceHandlerService.declineAskingDeathReplacementsFirst`:
+`SacrificeUnlessDiscardHandler` (Masticore, Thundering Wurm, Lim-Dul's Paladin, ...; the draw for "if you don't"
+comes after the sacrifice), `SacrificeUnlessSacrificeOwnPermanentHandler` (Lithophage, Rogue Elephant, ...),
+`SacrificeUnlessReturnOwnPermanentHandler` (Glint Hawk, Quickling, ...), `SacrificeUnlessReturnPermanentHandler`
+(Drake Familiar) and `MagmasaurUpkeepHandler` (the blast comes after the sacrifice and uses last-known counters).
+Their starting handlers were already marked, apart from `MagmasaurUpkeepEffectHandler`, which only reads before it
+prompts or applies the no-counter penalty and is now marked `AsksDeathReplacementsFirst`. Only the decline is
+wrapped: an accepted prompt that finds nothing left to pay falls through to the same sacrifice unasked. Tests (the
+creature enchanted with Necromancer's Magemark against an opponent's Kalitas, Traitor of Ghet; while asked the choice
+is a rerun one, the creature stays and nothing is logged as sacrificed; after the return-to-hand answer it is in its
+owner's hand and Kalitas makes no Zombie): `MagmasaurTest.decliningAsksForTheDeathReplacementBeforeMagmasaurIsSacrificed`
+(no blast while asked, the blast after) and `noCountersAsksForTheDeathReplacementBeforeMagmasaurIsSacrificed`,
+`MasticoreTest`, `LithophageTest`, `GlintHawkTest` and `DrakeFamiliarTest` `decliningAsksForTheDeathReplacementBefore...IsSacrificed`.
+Still not covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`,
+Voter's Dilemma, `LandEquilibriumSacrifice`, the accepted-but-unpayable fall-through above, `CycloneUpkeep` (its source
+is only a creature when animated; its starting handler adds a counter first), the remaining mayfx handlers whose answer
+sacrifices (`EachOpponentMay...OrSacrifice...`, `EachOpponentSacrificesPermanentUnlessPays`, `CounterUnlessSacrifices`,
+`TariffPayOrSacrifice`, `MayPayManaAndSacrificePermanent`, `SacrificeOtherCreatureOrDamage`, the "any opponent may
+sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
