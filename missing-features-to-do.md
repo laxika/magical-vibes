@@ -831,6 +831,28 @@ death replacements with today's cards (none can enchant or grant one to it as it
 Still not covered: the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent may
 sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-ninth pass).** Reviewed the remaining mayfx handlers whose answer sacrifices or
+destroys and closed the last gaps among them. The mayfx `ForcedCostOrElseHandler` now also runs an accepted sacrifice
+cost that needs no choice through `PermanentChoiceHandlerService.answerAskingDeathReplacementsFirst`: a lone candidate
+for a `SacrificePermanentCost` (Pillar Tombs of Aku) or exactly as many as a `SacrificeMultiplePermanentsCost` needs
+(Hecatomb; its `performSimultaneousSacrifice` asks the whole batch), decided by the new
+`MayPenaltyChoiceHandlerService.acceptedCostSacrificesWithoutChoice` (the cost-type-guarded branches before those
+sacrifices only read; the source-controller and candidate lookups are now shared helpers). A villainous choice joins
+too unless it still has additional choices to count down (The Valeyard): the last choice only marks the villainous
+choice done, which a replay repeats harmlessly. Erosion's `DestroyEnchantedPermanentUnlessPaysManaOrLifeHandler` now
+wraps the whole answer, so an acceptance that can no longer pay either resource asks before it falls through to the
+destruction (a payable acceptance kills nothing). Reviewed and left as they are: the "any opponent may sacrifice"
+handlers' decline paths only tap, add counters, transform or prompt the next opponent; `SacrificeArtifactForDividedDamageHandler`
+only opens the already covered `SacrificeArtifactForDividedDamage` choice; `DestroyTargetPermanentThenMayCopyEffectHandler`
+only copies the spell. Tests: `GravebaneZombieTest.acceptedForcedCostLoneCandidateSacrificeAsksBeforeTheZombieIsSacrificed`
+(Pillar Tombs of Aku: no sacrifice log line while asked; no life lost and the Tombs stay after) and
+`acceptedForcedCostExactMultiSacrificeAsksBeforeAnyCreatureIsSacrificed` (Hecatomb with the Zombie and three Bears: all
+four stay while asked; after, the Zombie is on its owner's library and Kalitas, Traitor of Ghet exiles the Bears for
+three Zombies), `MidnightCrusaderShuttleTest.acceptedLoneSacrificeAsksForTheDeathReplacementBeforeTheZombieIsSacrificed`
+and `ErosionTest.acceptingWithNothingLeftAsksForTheDeathReplacementBeforeTheArborIsDestroyed` (Platinum Emperion added
+between the prompt and the "yes"). Still not covered: an accepted villainous sacrifice with additional choices left,
+Vexing Devil's sacrifice after an accepting last opponent (both change the game first) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

@@ -280,6 +280,25 @@ class ErosionTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class, PlatinumEmperion.class})
+    @DisplayName("Accepting when nothing can be paid any more asks for a Dryad Arbor's death replacement before it is destroyed")
+    void acceptingWithNothingLeftAsksForTheDeathReplacementBeforeTheArborIsDestroyed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertDeathReplacementAskedWhileArborStays(arbor);
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertArborReturnedToHand(arbor);
+        harness.assertLife(player2, 20);
+    }
+
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 
     private Permanent setUpEnchantedArborAgainstKalitas() {

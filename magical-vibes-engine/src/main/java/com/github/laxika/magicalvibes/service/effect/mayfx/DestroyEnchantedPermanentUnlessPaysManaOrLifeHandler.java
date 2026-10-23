@@ -14,8 +14,10 @@ import org.springframework.stereotype.Component;
 /**
  * "Destroy the enchanted permanent unless you pay {M} or N life" (Erosion). Accepting spends the
  * cheaper resource available (floating mana, otherwise life); declining destroys the permanent.
- * A decline only destroys, so a creature land with competing death replacements is asked about
- * before it leaves (CR 616.1) and the decline is completed again with that answer.
+ * A decline only destroys, and an acceptance either pays (killing nothing) or, when neither resource
+ * can be paid any more, only reads before it falls through to the same destruction. So a creature land
+ * with competing death replacements is asked about before it leaves (CR 616.1) and the answer is
+ * completed again with that choice.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,13 +33,9 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeHandler implements May
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        if (accepted) {
-            mayPenaltyChoiceHandlerService.handleDestroyEnchantedPermanentUnlessPaysChoice(gameData, player, true, ability);
-            return;
-        }
-        permanentChoiceHandlerServiceProvider.getObject().declineAskingDeathReplacementsFirst(
-                gameData, player, ability,
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted,
                 () -> mayPenaltyChoiceHandlerService.handleDestroyEnchantedPermanentUnlessPaysChoice(
-                        gameData, player, false, ability));
+                        gameData, player, accepted, ability));
     }
 }

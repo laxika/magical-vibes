@@ -1926,17 +1926,8 @@ public class MayPenaltyChoiceHandlerService {
                 .map(e -> (ForcedCostOrElseEffect) e)
                 .findFirst().orElseThrow();
 
-        // For normal ForcedCostOrElse the deciding player is the source controller. For
-        // anyPlayerMayPay / payerIsEnchantedController, ability.controllerId is the payer being
-        // asked and forcedCostOrElseSourceControllerId holds the real source controller.
         UUID decidingPlayerId = ability.controllerId();
-        UUID sourceControllerId = ability.sourceControllerId() != null
-                ? ability.sourceControllerId()
-                : (effect.anyPlayerMayPay() || effect.payerIsEnchantedController()
-                || effect.payerIsDefendingPlayer())
-                && gameData.forcedCostOrElseSourceControllerId != null
-                ? gameData.forcedCostOrElseSourceControllerId
-                : decidingPlayerId;
+        UUID sourceControllerId = forcedCostSourceControllerId(gameData, ability, effect);
 
         if (effect.villainousChoice()) {
             var villainousState = gameData.villainousChoice;
@@ -2330,20 +2321,9 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
-            // payerIsEnchantedController: deciding player is the stack-target payer, not the source
-            // controller (Pillar Tombs of Aku / Mind Whip-shaped each-upkeep sacrifice).
-            UUID sacrificingPlayerId = effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer()
-                    ? decidingPlayerId : sourceControllerId;
-            UUID sourcePermanentId = ability.sourcePermanentId();
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(ability.sourceCard().getId())
-                    .withSourceControllerId(sourceControllerId)
-                    .withSourcePermanentSnapshot(ability.sourcePermanentSnapshot())
-                    .withSourcePermanentId(sourcePermanentId);
-            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, sacrificingPlayerId,
-                    p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))
-                            && predicateEvaluationService.matchesPermanentPredicate(p, sacrificeCost.filter(),
-                            filterContext));
+            UUID sacrificingPlayerId = sacrificingPlayerId(effect, decidingPlayerId, sourceControllerId);
+            List<UUID> matchingIds = sacrificeCostCandidates(gameData, ability, sacrificeCost,
+                    sacrificingPlayerId, sourceControllerId);
 
             if (matchingIds.size() == 1) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
@@ -2390,6 +2370,72 @@ public class MayPenaltyChoiceHandlerService {
         }
         destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Whether accepting {@code ability}, a non-villainous {@link ForcedCostOrElseEffect} prompt, goes straight to
+     * sacrificing what its sacrifice cost names without changing anything first: the payer controls exactly one
+     * permanent a {@link SacrificePermanentCost} can take, or exactly as many as a
+     * {@link com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost} needs. The cost-specific
+     * branches of {@link #handleForcedCostOrElseOptionalChoice} that run before those sacrifices are guarded by
+     * their own cost types, so they only read.
+     */
+    public boolean acceptedCostSacrificesWithoutChoice(GameData gameData, PendingMayAbility ability,
+                                                       ForcedCostOrElseEffect effect) {
+        UUID sourceControllerId = forcedCostSourceControllerId(gameData, ability, effect);
+        if (effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
+            UUID sacrificingPlayerId = sacrificingPlayerId(effect, ability.controllerId(), sourceControllerId);
+            return sacrificeCostCandidates(gameData, ability, sacrificeCost, sacrificingPlayerId, sourceControllerId)
+                    .size() == 1;
+        }
+        if (effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost multiCost) {
+            return destructionSupport.collectPermanentIds(gameData, sourceControllerId,
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, multiCost.filter()))
+                    .size() == multiCost.count();
+        }
+        return false;
+    }
+
+    /**
+     * The controller of {@code ability}'s source. For a normal {@link ForcedCostOrElseEffect} it is the deciding
+     * player; for an "any player may pay", enchanted-controller or defending-player prompt the deciding player is
+     * the payer being asked and {@link GameData#forcedCostOrElseSourceControllerId} holds the source controller.
+     */
+    private static UUID forcedCostSourceControllerId(GameData gameData, PendingMayAbility ability,
+                                                     ForcedCostOrElseEffect effect) {
+        if (ability.sourceControllerId() != null) {
+            return ability.sourceControllerId();
+        }
+        boolean payerIsNotSourceController = effect.anyPlayerMayPay() || effect.payerIsEnchantedController()
+                || effect.payerIsDefendingPlayer();
+        return payerIsNotSourceController && gameData.forcedCostOrElseSourceControllerId != null
+                ? gameData.forcedCostOrElseSourceControllerId
+                : ability.controllerId();
+    }
+
+    /**
+     * Who sacrifices for a {@link SacrificePermanentCost}: the deciding player when they are the stack-target
+     * payer (Pillar Tombs of Aku / Mind Whip-shaped each-upkeep sacrifice), otherwise the source controller.
+     */
+    private static UUID sacrificingPlayerId(ForcedCostOrElseEffect effect, UUID decidingPlayerId,
+                                            UUID sourceControllerId) {
+        return effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer()
+                ? decidingPlayerId : sourceControllerId;
+    }
+
+    private List<UUID> sacrificeCostCandidates(GameData gameData, PendingMayAbility ability,
+                                               SacrificePermanentCost sacrificeCost, UUID sacrificingPlayerId,
+                                               UUID sourceControllerId) {
+        UUID sourcePermanentId = ability.sourcePermanentId();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(ability.sourceCard().getId())
+                .withSourceControllerId(sourceControllerId)
+                .withSourcePermanentSnapshot(ability.sourcePermanentSnapshot())
+                .withSourcePermanentId(sourcePermanentId);
+        return destructionSupport.collectPermanentIds(gameData, sacrificingPlayerId,
+                p -> (!sacrificeCost.excludeSource() || !p.getId().equals(sourcePermanentId))
+                        && predicateEvaluationService.matchesPermanentPredicate(p, sacrificeCost.filter(),
+                        filterContext));
     }
 
     /**

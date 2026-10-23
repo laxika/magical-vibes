@@ -16,7 +16,9 @@ import org.springframework.stereotype.Component;
  * Optional "you may pay [cost]; if you don't, [penalty]" (e.g. Yawgmoth Demon).
  * A decline, or an accepted mana cost the pool can't pay, whose first fallback effect kills (Phantasmal
  * Forces' "sacrifice this creature", or Icy Prison's after the last player of "unless any player pays" declines)
- * changes nothing before that death, so a creature with competing death
+ * changes nothing before that death, and neither does an accepted sacrifice cost that needs no choice (Pillar
+ * Tombs of Aku or Midnight Crusader Shuttle's villainous choice with a lone creature, Hecatomb with exactly
+ * four), so a creature with competing death
  * replacements is asked about before it leaves (CR 616.1) and the same answer is completed again with that
  * choice.
  */
@@ -38,9 +40,12 @@ public class ForcedCostOrElseHandler implements MayEffectHandlerBean {
                 .filter(ForcedCostOrElseEffect.class::isInstance)
                 .map(ForcedCostOrElseEffect.class::cast)
                 .findFirst().orElseThrow();
-        if (fallbackKillsBeforeChangingAnything(gameData, effect)
+        boolean unpaidAnswerKills = fallbackKillsBeforeChangingAnything(gameData, effect)
                 && (!accepted || mayPenaltyChoiceHandlerService.acceptedCostFallsThroughUnpaid(
-                        gameData, ability, effect))) {
+                        gameData, ability, effect));
+        boolean acceptedAnswerSacrifices = accepted && !countsDownVillainousChoices(gameData, effect)
+                && mayPenaltyChoiceHandlerService.acceptedCostSacrificesWithoutChoice(gameData, ability, effect);
+        if (unpaidAnswerKills || acceptedAnswerSacrifices) {
             PendingMayAbility replayable = withRecordedSourceController(gameData, ability, effect);
             permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
                     gameData, player, replayable, accepted,
@@ -61,6 +66,14 @@ public class ForcedCostOrElseHandler implements MayEffectHandlerBean {
                 && (!effect.anyPlayerMayPay() || gameData.forcedCostOrElseRemainingPlayers.isEmpty())
                 && !effect.elseEffects().isEmpty()
                 && ForcedCostOrElseEffectHandler.killsBeforeChangingAnything(effect.elseEffects().getFirst());
+    }
+
+    /**
+     * Whether answering a villainous choice queues it again for an additional choice (The Valeyard) before it
+     * pays. The last (or only) choice just marks the villainous choice done, which a replay repeats harmlessly.
+     */
+    private static boolean countsDownVillainousChoices(GameData gameData, ForcedCostOrElseEffect effect) {
+        return effect.villainousChoice() && gameData.villainousChoice.additionalChoicesRemaining > 0;
     }
 
     /**
