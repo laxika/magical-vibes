@@ -11,10 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachCreatureControllerSacrificesPermanentUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +26,17 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves the APNAP choices for Fade Away-style pay-or-sacrifice effects.
+ *
+ * <p>Nothing changes before the sacrifice: the choices are kept in the immutable contexts, and the
+ * payments are worked out on copies of the mana pools and only made once the batch's death
+ * replacements have been asked (CR 616.1), so a resolution or choice completion stopped by that
+ * question and run again pays once.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -155,29 +163,46 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
             List<UUID> sacrificeIds, String manaCost, String sourceName, UUID sourceControllerId) {
         Set<UUID> finalKeepIds = new HashSet<>(keepIds);
         List<UUID> finalSacrificeIds = new ArrayList<>(sacrificeIds);
+        Map<UUID, Integer> paymentCounts = new LinkedHashMap<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             if (pool == null) {
                 continue;
             }
+            ManaPool simulatedPool = new ManaPool(pool);
             for (UUID keepId : new ArrayList<>(finalKeepIds)) {
                 Permanent keep = gameQueryService.findPermanentById(gameData, keepId);
                 if (keep == null || !playerId.equals(gameQueryService.findPermanentController(gameData, keepId))) {
                     continue;
                 }
                 ManaCost cost = new ManaCost(manaCost);
-                if (cost.canPayResolutionCost(pool)) {
-                    cost.payResolutionCost(pool);
-                    gameLogService.append(gameData, GameLog.text(
-                            gameData.playerIdToName.get(playerId) + " pays " + manaCost + " for "
-                                    + sourceName + "."));
+                if (cost.canPayResolutionCost(simulatedPool)) {
+                    cost.payResolutionCost(simulatedPool);
+                    paymentCounts.merge(playerId, 1, Integer::sum);
                 } else {
                     finalKeepIds.remove(keepId);
                     if (gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
                         finalSacrificeIds.add(keepId);
                     }
                 }
+            }
+        }
+
+        // CR 616.1: ask the batch's death replacements before any mana is paid, so a rerun pays once.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, finalSacrificeIds.stream()
+                .distinct()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .toList());
+        for (Map.Entry<UUID, Integer> payments : paymentCounts.entrySet()) {
+            UUID playerId = payments.getKey();
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            for (int i = 0; i < payments.getValue(); i++) {
+                new ManaCost(manaCost).payResolutionCost(pool);
+                gameLogService.append(gameData, GameLog.text(
+                        gameData.playerIdToName.get(playerId) + " pays " + manaCost + " for "
+                                + sourceName + "."));
             }
         }
 

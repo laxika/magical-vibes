@@ -1219,12 +1219,6 @@ public class MultiPermanentChoiceHandlerService {
             handleStaticOrbUntap(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExileTetraviteTokensPutCountersOnSource ctx) {
             handleExileTetraviteTokensPutCountersOnSource(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.KillingWaveKeep ctx) {
-            handleKillingWaveKeep(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.FadeAwayKeep ctx) {
-            handleFadeAwayKeep(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice ctx) {
-            handleFadeAwaySacrifice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice ctx) {
             handleDestroyUpToOneNonbasicLandPerPlayerChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
@@ -2213,7 +2207,11 @@ public class MultiPermanentChoiceHandlerService {
      * prompt the next chooser with the picks so far in the immutable context before their
      * {@link DestructionSupport#destroyBatch} batch, and
      * {@link MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy} only checks the
-     * chosen mana values before it.
+     * chosen mana values before it. {@link MultiPermanentChoiceContext.KillingWaveKeep},
+     * {@link MultiPermanentChoiceContext.FadeAwayKeep} and {@link MultiPermanentChoiceContext.FadeAwaySacrifice}
+     * keep their picks in the immutable context and only prompt the next player before their
+     * {@link DestructionSupport#performSimultaneousSacrifice}; their life or mana payments and
+     * decision log lines come only after the batch's death replacements have been asked.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2241,7 +2239,10 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest
-                || context instanceof MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy;
+                || context instanceof MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy
+                || context instanceof MultiPermanentChoiceContext.KillingWaveKeep
+                || context instanceof MultiPermanentChoiceContext.FadeAwayKeep
+                || context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice;
     }
 
     /**
@@ -2376,6 +2377,18 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.ChooseCreaturesWithDifferentManaValuesDestroy ignored -> {
                 handleChooseCreaturesWithDifferentManaValuesDestroy(gameData, permanentIds);
+                return;
+            }
+            case MultiPermanentChoiceContext.KillingWaveKeep ctx -> {
+                handleKillingWaveKeep(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.FadeAwayKeep ctx -> {
+                handleFadeAwayKeep(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.FadeAwaySacrifice ctx -> {
+                handleFadeAwaySacrifice(gameData, permanentIds, ctx);
                 return;
             }
             default -> throw new IllegalStateException("Not a killing choice: " + context);

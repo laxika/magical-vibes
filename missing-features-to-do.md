@@ -402,6 +402,25 @@ the remaining "sacrifice/destroy" multi-choices (`KillingWaveKeep`, `FadeAwaySac
 `ChooseLandOfEachBasicTypeThenDestroyChoice`, ...; each needing review), `LandEquilibriumSacrifice` and sacrifices paid
 as costs.
 
+**Also landed (2026-10-23, twenty-fifth pass).** The "pay or sacrifice" multi-choice completions joined
+`MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` and run through `completeAskingDeathReplacementsFirst`
+(each keeps its old epilogue): `KillingWaveKeep` (Killing Wave), `FadeAwayKeep` and `FadeAwaySacrifice` (Fade Away).
+Each keeps its picks so far in the immutable context and only prompts the next player before its
+`performSimultaneousSacrifice`. `KillingWaveEffectHandler` no longer logs a player's "will pay" / "pays no life" /
+"can't pay" line before the sacrifice (it holds the lines until the next prompt opens or the batch has been asked
+through `DestructionSupport.askDeathReplacementsBeforeSacrifice`) and pays the life only after that ask;
+`EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler` works its payments out on copies of the mana pools
+and pays only after the ask. Both handlers are now marked `AsksDeathReplacementsFirst` (their resolution only reads
+before it prompts or sacrifices). Tests in `GravebaneZombieTest`: `killingWaveAsksBeforeAnyLifeIsPaidOrCreatureSacrificed`
+(no life paid and only the first player's "will pay" line while asked; both pay 2 life once after) and
+`fadeAwayAsksBeforeAnyManaIsPaidOrPermanentSacrificed` (both mana pools untouched while asked, one payment each after).
+Reviewed and left out: `VoteForCreatureThenDestroyMostVotedChoice` (Voter's Dilemma; its prompt records the vote
+before the completion runs, and `VotingFinishedSupport.finishVoting` clears the votes and fires "finish voting"
+triggers before the destroy, so a replay would lose or repeat them). Not yet joined: `ChooseLandOfEachBasicTypeThenDestroyChoice`
+(Sundering Titan; it only reads before its `destroyBatch`, but only land creatures can have death replacements, so
+it still needs a test setup). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
+`WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

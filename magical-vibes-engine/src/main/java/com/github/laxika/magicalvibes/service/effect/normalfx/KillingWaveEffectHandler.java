@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -9,11 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KillingWaveEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +34,16 @@ import org.springframework.stereotype.Component;
  * afford. Choices accumulate; after the last player, life is paid and non-kept creatures are
  * sacrificed together. At X=0 the choice is still offered: paying 0 life is free (CR 119.4), but
  * the controller may still decline to pay and sacrifice the creature.
+ *
+ * <p>Nothing changes before that sacrifice: the "will pay" and "can't pay" log lines are written
+ * only once the next prompt opens or once the batch's death replacements have been asked
+ * (CR 616.1), and life is paid only after that, so a resolution or choice completion stopped by
+ * that question and run again logs and pays once.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
+public class KillingWaveEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -71,6 +80,15 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
      */
     public void beginNextPlayer(GameData gameData, List<UUID> remainingPlayerIds,
             List<UUID> accumulatedKeepIds, int xValue, String sourceName, UUID sourceControllerId) {
+        beginNextPlayer(gameData, remainingPlayerIds, accumulatedKeepIds, xValue, sourceName,
+                sourceControllerId, List.of());
+    }
+
+    /** {@code heldLogs} are log lines of earlier decisions, written once nothing can stop them. */
+    private void beginNextPlayer(GameData gameData, List<UUID> remainingPlayerIds,
+            List<UUID> accumulatedKeepIds, int xValue, String sourceName, UUID sourceControllerId,
+            List<GameLogEntry> heldLogs) {
+        List<GameLogEntry> logs = new ArrayList<>(heldLogs);
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         while (!remaining.isEmpty()) {
             UUID playerId = remaining.removeFirst();
@@ -83,13 +101,14 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
             if (maxKeep <= 0) {
                 // Can't pay for any — all will be sacrificed; no choice to make.
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameLogService.append(gameData, GameLog.text(
+                logs.add(GameLog.text(
                         playerName + " can't pay " + xValue + " life for any creature (" + sourceName + ")."));
                 log.info("Game {} - {} can't afford any Killing Wave payments", gameData.id, playerName);
                 continue;
             }
 
             List<UUID> rest = List.copyOf(remaining);
+            appendAll(gameData, logs);
             playerInputService.beginMultiPermanentChoice(gameData, playerId, creatureIds, maxKeep,
                     new MultiPermanentChoiceContext.KillingWaveKeep(
                             playerId, xValue, sourceName, rest, List.copyOf(accumulatedKeepIds),
@@ -98,7 +117,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        applyDecisions(gameData, accumulatedKeepIds, xValue, sourceName, sourceControllerId);
+        applyDecisions(gameData, accumulatedKeepIds, xValue, sourceName, sourceControllerId, logs);
     }
 
     /** Choice completion: record keeps, then prompt the next player or apply. */
@@ -108,19 +127,19 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
         allKeeps.addAll(chosenKeepIds);
 
         String playerName = gameData.playerIdToName.get(context.choosingPlayerId());
+        GameLogEntry decisionLog;
         if (chosenKeepIds.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " pays no life (" + context.sourceName() + ")."));
+            decisionLog = GameLog.text(playerName + " pays no life (" + context.sourceName() + ").");
         } else {
-            gameLogService.append(gameData, GameLog.text(
+            decisionLog = GameLog.text(
                     playerName + " will pay " + (chosenKeepIds.size() * context.xValue())
                             + " life to keep " + chosenKeepIds.size() + " creature"
                             + (chosenKeepIds.size() == 1 ? "" : "s")
-                            + " (" + context.sourceName() + ")."));
+                            + " (" + context.sourceName() + ").");
         }
 
         beginNextPlayer(gameData, context.remainingPlayerIds(), allKeeps,
-                context.xValue(), context.sourceName(), context.sourceControllerId());
+                context.xValue(), context.sourceName(), context.sourceControllerId(), List.of(decisionLog));
     }
 
     /**
@@ -128,11 +147,10 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
      * non-kept creature is sacrificed.
      */
     private void applyDecisions(GameData gameData, List<UUID> keepIds, int xValue, String sourceName,
-            UUID sourceControllerId) {
+            UUID sourceControllerId, List<GameLogEntry> heldLogs) {
         Set<UUID> keepSet = new HashSet<>(keepIds);
+        Map<UUID, Integer> lifeCosts = new LinkedHashMap<>();
 
-        // Pay life first (all players), then sacrifice — both are simultaneous; order is
-        // outcome-equivalent for triggers that wait until the spell finishes.
         for (UUID playerId : gameData.orderedPlayerIds) {
             int kept = 0;
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -157,6 +175,28 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
                 }
                 continue;
             }
+            lifeCosts.put(playerId, lifeCost);
+        }
+
+        List<Permanent> toSacrifice = new ArrayList<>();
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm) && !keepSet.contains(perm.getId())
+                        && gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
+                    toSacrifice.add(perm);
+                }
+            }
+        });
+
+        // CR 616.1: ask the batch's death replacements before anything is logged or paid, so a rerun does it once.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, toSacrifice);
+        appendAll(gameData, heldLogs);
+
+        // Pay life first (all players), then sacrifice — both are simultaneous; order is
+        // outcome-equivalent for triggers that wait until the spell finishes.
+        for (Map.Entry<UUID, Integer> payment : lifeCosts.entrySet()) {
+            UUID playerId = payment.getKey();
+            int lifeCost = payment.getValue();
             lifeSupport.applyLifePayment(gameData, playerId, lifeCost, sourceName);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(
@@ -164,16 +204,14 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
             log.info("Game {} - {} pays {} life for Killing Wave", gameData.id, playerName, lifeCost);
         }
 
-        List<UUID> toSacrifice = new ArrayList<>();
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm) && !keepSet.contains(perm.getId())
-                        && gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
-                    toSacrifice.add(perm.getId());
-                }
-            }
-        });
-        destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
+        destructionSupport.performSimultaneousSacrifice(gameData,
+                toSacrifice.stream().map(Permanent::getId).toList());
+    }
+
+    private void appendAll(GameData gameData, List<GameLogEntry> logs) {
+        for (GameLogEntry logEntry : logs) {
+            gameLogService.append(gameData, logEntry);
+        }
     }
 
     private int maxAffordableKeeps(GameData gameData, UUID playerId, int xValue, int creatureCount) {

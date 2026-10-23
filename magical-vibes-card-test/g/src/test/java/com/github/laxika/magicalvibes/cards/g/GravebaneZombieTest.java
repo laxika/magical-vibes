@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.d.DispenseJustice;
 import com.github.laxika.magicalvibes.cards.d.DualShot;
 import com.github.laxika.magicalvibes.cards.d.Duneblast;
 import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
+import com.github.laxika.magicalvibes.cards.f.FadeAway;
 import com.github.laxika.magicalvibes.cards.f.FallenCleric;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FortunateFew;
@@ -29,6 +30,7 @@ import com.github.laxika.magicalvibes.cards.i.IndulgentTormentor;
 import com.github.laxika.magicalvibes.cards.i.InnocentBlood;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.k.KethekCrucibleGoliath;
+import com.github.laxika.magicalvibes.cards.k.KillingWave;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MagnifyingGlass;
 import com.github.laxika.magicalvibes.cards.m.MercyKilling;
@@ -1756,5 +1758,87 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.forceActivePlayer(caster);
         harness.castFromHand(caster, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, KillingWave.class, GrizzlyBears.class})
+    @DisplayName("Killing Wave asks for the unkept Zombie's death replacement before any life is paid or creature sacrificed")
+    void killingWaveAsksBeforeAnyLifeIsPaidOrCreatureSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent kalitas = harness.addToBattlefieldAndReturn(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new KillingWave()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(kalitas.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(zombie.getId(), bears.getId());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("will pay 2 life")).hasSize(1);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(bears.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .containsExactly(kalitas.getId());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("will pay 2 life")).hasSize(2);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("pays 2 life (")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, FadeAway.class, GrizzlyBears.class})
+    @DisplayName("Fade Away asks for the chosen Zombie's death replacement before any mana is paid or permanent sacrificed")
+    void fadeAwayAsksBeforeAnyManaIsPaidOrPermanentSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent kalitas = harness.addToBattlefieldAndReturn(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new FadeAway(), "{2}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(kalitas.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(zombie.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(zombie.getId(), bears.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("pays {1} for Fade Away")).isEmpty();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(bears.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .containsExactly(kalitas.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("pays {1} for Fade Away")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
