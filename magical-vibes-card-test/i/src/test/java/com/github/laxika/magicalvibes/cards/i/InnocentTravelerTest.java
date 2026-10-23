@@ -1,17 +1,26 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.SnarlingWolf;
 import com.github.laxika.magicalvibes.cards.s.StrionicResonator;
 import com.github.laxika.magicalvibes.cards.m.MaliciousInvader;
 import com.github.laxika.magicalvibes.cards.t.TravelingMinister;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -164,6 +173,54 @@ class InnocentTravelerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(traveler.isTransformed()).isTrue();
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, KalitasTraitorOfGhet.class})
+    @DisplayName("The last opponent's decline asks the picked Zombie's death replacement before it is sacrificed")
+    void lastDeclineAsksBeforeThePickedZombieIsSacrificed() {
+        Player player3 = addThirdPlayer();
+        Card filler = new SnarlingWolf();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent traveler = harness.addToBattlefieldAndReturn(player1, new InnocentTraveler());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player3, new KalitasTraitorOfGhet());
+        triggerUpkeep(player1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.handleMayAbilityChosen(player3, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getId)
+                .contains(zombie.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player3.getId())).hasSize(2);
+        assertThat(traveler.isTransformed()).isFalse();
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private void triggerUpkeep(Player activePlayer) {

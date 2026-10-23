@@ -57,7 +57,16 @@ public class AnyOpponentMaySacrificeCreatureOrTransformSourceHandler implements 
             // Accepted but no creature remains legally available: treat it as a decline.
         }
 
-        effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, null);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        Runnable decline = () -> {
+            effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, null);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        };
+        if (effect.chosenCreatureIds().isEmpty()) {
+            decline.run();
+            return;
+        }
+        // The last opponent's decline sacrifices the earlier opponents' picks, so their death replacements come first.
+        permanentChoiceHandlerServiceProvider.getObject().declineAskingDeathReplacementsFirst(
+                gameData, player, ability, decline);
     }
 }

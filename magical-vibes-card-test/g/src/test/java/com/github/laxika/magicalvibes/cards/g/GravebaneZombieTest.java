@@ -1079,6 +1079,35 @@ class GravebaneZombieTest extends BaseCardTest {
                 .hasSize(1);
     }
 
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, BrainGorgers.class})
+    @DisplayName("Under Brain Gorgers, the last player's decline asks the picked Zombie's replacement before the sacrifice and counter")
+    void anyPlayerLastDeclineAsksBeforeThePickedZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player1, List.of(filler));
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.castFromHand(player1, new BrainGorgers(), "{3}{B}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertNotInGraveyard(player1, "Brain Gorgers");
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertInGraveyard(player1, "Brain Gorgers");
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+    }
+
     private void destroyWithWrathOfGod(Player caster) {
         harness.forceActivePlayer(caster);
         harness.castFromHand(caster, new WrathOfGod(), "{2}{W}{W}");

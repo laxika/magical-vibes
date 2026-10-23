@@ -2906,15 +2906,24 @@ public class GameData {
      */
     public final Set<UUID> rerunMayLibraryChoices = ConcurrentHashMap.newKeySet();
     /**
-     * A permanent choice whose completion was stopped before its first removal so that a creature it
-     * would kill could have its death replacement chosen first (CR 616.1). Once every such answer is
-     * in, the same answer is completed again and its deaths consume
+     * A permanent choice or "you may" answer whose completion was stopped before its first removal so
+     * that a creature it would kill could have its death replacement chosen first (CR 616.1). Once
+     * every such answer is in, the same answer is completed again and its deaths consume
      * {@link #chosenDeathReplacementsForRerun}. {@code null} when no completion is waiting.
      */
-    public PermanentChoiceReplay pendingDeathReplacementChoiceReplay;
+    public DeathReplacementChoiceReplay pendingDeathReplacementChoiceReplay;
+
+    /** A player's answer to complete again once the death replacements it asked about are chosen. */
+    public sealed interface DeathReplacementChoiceReplay permits PermanentChoiceReplay, MayDeclineReplay {
+    }
 
     /** A permanent choice answer to complete again: the prompt that was answered and the chosen permanent. */
-    public record PermanentChoiceReplay(PendingInteraction.PermanentChoice choice, UUID permanentId) {
+    public record PermanentChoiceReplay(PendingInteraction.PermanentChoice choice, UUID permanentId)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /** A declined "you may" prompt to complete again: the player who declined it and the prompt. */
+    public record MayDeclineReplay(Player player, PendingMayAbility ability) implements DeathReplacementChoiceReplay {
     }
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when

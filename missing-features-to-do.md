@@ -250,6 +250,19 @@ asked). Still not covered: the fallback effects' own deaths, the deferred Tormen
 ended by the last player's decline, multi-choice `ForcedSacrifice`, `LandEquilibriumSacrifice` and sacrifices
 paid as costs.
 
+**Also landed (2026-10-23, sixteenth pass).** A collected-picks batch ended by the last player's decline is now
+asked inside the rerun window too. When the declined prompt already carries earlier players' picks, the mayfx
+handlers `AnyOpponentMaySacrificeCreatureOrTransformSourceHandler` (Innocent Traveler) and
+`AnyPlayerMaySacrificeCreatureToCounterSpellHandler` (Brain Gorgers) run their decline through
+`PermanentChoiceHandlerService.declineAskingDeathReplacementsFirst`: the decline changes nothing before its
+`performSimultaneousSacrifice`, a stop stores a `GameData.MayDeclineReplay` (the replay field is now the sealed
+`DeathReplacementChoiceReplay`), and once every answer is in the same decline is dispatched again through the
+may handler. Tests: `GravebaneZombieTest.anyPlayerLastDeclineAsksBeforeThePickedZombieIsSacrificed` (Brain Gorgers:
+not countered while asked, countered once after) and `InnocentTravelerTest.lastDeclineAsksBeforeThePickedZombieIsSacrificed`
+(three players; covers the replay, though nothing observable followed the sacrifice before either). Still not
+covered: the fallback effects' own deaths, the deferred Torment picks, multi-choice `ForcedSacrifice`,
+`LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -266,8 +279,6 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
   `LandEquilibriumSacrifice` and the destroy completions listed in the seventh pass), and sacrifices paid as costs.
-- A collected-picks batch (Innocent Traveler, Brain Gorgers) ended by the last player's decline, whose
-  `performSimultaneousSacrifice` runs in the may completion outside the window.
 
 **Why it's large.** Approaches looked at:
 - Leave the battlefield now and choose the destination later: the hand, library and graveyard

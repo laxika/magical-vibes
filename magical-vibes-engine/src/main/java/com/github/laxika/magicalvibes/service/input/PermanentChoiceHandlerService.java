@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentEffectHandler;
@@ -132,6 +134,7 @@ public class PermanentChoiceHandlerService {
     private final ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler gutmornEffectHandler;
     private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler descendantsFuryEffectHandler;
     private final InfernalOfferingEffectHandler infernalOfferingEffectHandler;
+    private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final ToymakersTrapEffectHandler toymakersTrapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.InventoryManagementEffectHandler
             inventoryManagementEffectHandler;
@@ -182,16 +185,38 @@ public class PermanentChoiceHandlerService {
         if (!killsBeforeChangingAnything(choice.context())) {
             return false;
         }
+        runAskingDeathReplacementsFirst(gameData,
+                () -> completeKillingChoice(gameData, permanentId, choice.context()),
+                new GameData.PermanentChoiceReplay(choice, permanentId));
+        return true;
+    }
+
+    /**
+     * Runs {@code decline}, the completion of {@code player} declining {@code ability}, a "you may
+     * sacrifice" prompt whose decline changes nothing before it sacrifices the picks collected from
+     * the players before (Innocent Traveler, Brain Gorgers). A creature it would kill that has
+     * competing death replacements is then asked about before it leaves (CR 616.1), and the decline
+     * is completed again through {@code ability}'s may handler once its controller has chosen.
+     * {@code decline} must close the window (an {@link InputCompletionService} epilogue does) before
+     * anything that isn't part of that sacrifice.
+     */
+    public void declineAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
+                                                    Runnable decline) {
+        runAskingDeathReplacementsFirst(gameData, decline, new GameData.MayDeclineReplay(player, ability));
+    }
+
+    private void runAskingDeathReplacementsFirst(GameData gameData, Runnable completion,
+                                                 GameData.DeathReplacementChoiceReplay replay) {
         boolean rerunCurrentEffect = gameData.rerunCurrentEffectAfterInteraction;
         gameData.deathReplacementsCanRerunEffect = true;
         boolean stopped = false;
         try {
-            completeKillingChoice(gameData, permanentId, choice.context());
+            completion.run();
         } catch (DeathReplacementChoicePending pending) {
             stopped = true;
             // The stack object's parked resolution stays as it is; only this completion is redone.
             gameData.rerunCurrentEffectAfterInteraction = rerunCurrentEffect;
-            gameData.pendingDeathReplacementChoiceReplay = new GameData.PermanentChoiceReplay(choice, permanentId);
+            gameData.pendingDeathReplacementChoiceReplay = replay;
             inputCompletionService.publishStateAfterInput(gameData);
         } finally {
             gameData.deathReplacementsCanRerunEffect = false;
@@ -199,18 +224,24 @@ public class PermanentChoiceHandlerService {
                 gameData.chosenDeathReplacementsForRerun.clear();
             }
         }
-        return true;
     }
 
     /**
-     * Completes the permanent choice stopped by {@link #completeAskingDeathReplacementsFirst} again
-     * with the same answer, once every death replacement it asked about has been chosen; its deaths
-     * consume {@link GameData#chosenDeathReplacementsForRerun}.
+     * Completes the permanent choice or declined may prompt stopped by
+     * {@link #runAskingDeathReplacementsFirst} again with the same answer, once every death
+     * replacement it asked about has been chosen; its deaths consume
+     * {@link GameData#chosenDeathReplacementsForRerun}.
      */
     public void completeChoiceAgainAfterDeathReplacements(GameData gameData) {
-        GameData.PermanentChoiceReplay replay = gameData.pendingDeathReplacementChoiceReplay;
+        GameData.DeathReplacementChoiceReplay replay = gameData.pendingDeathReplacementChoiceReplay;
         gameData.pendingDeathReplacementChoiceReplay = null;
-        completeAskingDeathReplacementsFirst(gameData, replay.choice(), replay.permanentId());
+        switch (replay) {
+            case GameData.PermanentChoiceReplay choiceReplay ->
+                    completeAskingDeathReplacementsFirst(gameData, choiceReplay.choice(), choiceReplay.permanentId());
+            case GameData.MayDeclineReplay declineReplay ->
+                    mayEffectHandlerRegistry.getHandler(declineReplay.ability().effects().getFirst())
+                            .handle(gameData, declineReplay.player(), false, declineReplay.ability());
+        }
     }
 
     /**

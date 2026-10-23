@@ -55,7 +55,16 @@ public class AnyPlayerMaySacrificeCreatureToCounterSpellHandler implements MayEf
             }
         }
 
-        effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, effect.anyAccepted());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        Runnable decline = () -> {
+            effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, effect.anyAccepted());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        };
+        if (effect.chosenSacrificePermanentIds().isEmpty()) {
+            decline.run();
+            return;
+        }
+        // The last player's decline sacrifices the earlier players' picks, so their death replacements come first.
+        permanentChoiceHandlerServiceProvider.getObject().declineAskingDeathReplacementsFirst(
+                gameData, player, ability, decline);
     }
 }
