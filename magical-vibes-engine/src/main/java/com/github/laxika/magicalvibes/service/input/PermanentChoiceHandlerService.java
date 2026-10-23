@@ -154,6 +154,8 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentChoosesCreatureToTapAndGoadEffectHandler fellBeastsShriekEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedirectAllDamageToChosenCreatureUntilNextTurnEffectHandler
             redirectCreatureDamageHandler;
+    private final org.springframework.beans.factory.ObjectProvider<MultiPermanentChoiceHandlerService>
+            multiPermanentChoiceHandlerServiceProvider;
 
     /** Declines a champion choice, so the permanent is sacrificed instead of exiling another one (CR 702.72a). */
     public void handleChampionDeclined(GameData gameData, Player player, boolean accepted) {
@@ -205,8 +207,15 @@ public class PermanentChoiceHandlerService {
         runAskingDeathReplacementsFirst(gameData, decline, new GameData.MayDeclineReplay(player, ability));
     }
 
-    private void runAskingDeathReplacementsFirst(GameData gameData, Runnable completion,
-                                                 GameData.DeathReplacementChoiceReplay replay) {
+    /**
+     * Runs {@code completion}, the completion of an answered choice that changes nothing before it
+     * kills, with the death replacement window open. A creature it would kill that has competing
+     * death replacements is then asked about before it leaves (CR 616.1): the completion stops,
+     * {@code replay} is stored, and {@link #completeChoiceAgainAfterDeathReplacements} completes the
+     * same answer again once every replacement is chosen. The window is closed when this returns.
+     */
+    public void runAskingDeathReplacementsFirst(GameData gameData, Runnable completion,
+                                                GameData.DeathReplacementChoiceReplay replay) {
         boolean rerunCurrentEffect = gameData.rerunCurrentEffectAfterInteraction;
         gameData.deathReplacementsCanRerunEffect = true;
         boolean stopped = false;
@@ -227,7 +236,7 @@ public class PermanentChoiceHandlerService {
     }
 
     /**
-     * Completes the permanent choice or declined may prompt stopped by
+     * Completes the permanent choice, multi-permanent choice or declined may prompt stopped by
      * {@link #runAskingDeathReplacementsFirst} again with the same answer, once every death
      * replacement it asked about has been chosen; its deaths consume
      * {@link GameData#chosenDeathReplacementsForRerun}.
@@ -238,6 +247,10 @@ public class PermanentChoiceHandlerService {
         switch (replay) {
             case GameData.PermanentChoiceReplay choiceReplay ->
                     completeAskingDeathReplacementsFirst(gameData, choiceReplay.choice(), choiceReplay.permanentId());
+            case GameData.MultiPermanentChoiceReplay multiReplay ->
+                    multiPermanentChoiceHandlerServiceProvider.getObject()
+                            .completeForcedSacrificeAskingDeathReplacementsFirst(
+                                    gameData, multiReplay.choice(), multiReplay.permanentIds());
             case GameData.MayDeclineReplay declineReplay ->
                     mayEffectHandlerRegistry.getHandler(declineReplay.ability().effects().getFirst())
                             .handle(gameData, declineReplay.player(), false, declineReplay.ability());

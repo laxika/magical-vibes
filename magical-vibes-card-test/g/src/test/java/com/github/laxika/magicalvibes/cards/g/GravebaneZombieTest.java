@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.a.Abduction;
 import com.github.laxika.magicalvibes.cards.a.AllIsDust;
 import com.github.laxika.magicalvibes.cards.b.BarrinsSpite;
+import com.github.laxika.magicalvibes.cards.b.BarterInBlood;
 import com.github.laxika.magicalvibes.cards.b.BrainGorgers;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DevourFlesh;
@@ -1106,6 +1107,47 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
                 .hasSize(1);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, BarterInBlood.class, GrizzlyBears.class})
+    @DisplayName("Under Barter in Blood, the chosen Zombie's replacement is asked before any of the chosen creatures is sacrificed")
+    void forcedMultiSacrificeAsksBeforeAnyChosenCreatureIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent ownBears1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownBears2 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BarterInBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownBears1.getId(), ownBears2.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(zombie.getId(), bears.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(3);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .doesNotContain(bears.getId())
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Kalitas, Traitor of Ghet", "Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void destroyWithWrathOfGod(Player caster) {

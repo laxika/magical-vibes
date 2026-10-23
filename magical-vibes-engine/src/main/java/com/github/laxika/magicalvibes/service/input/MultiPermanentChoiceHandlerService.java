@@ -321,6 +321,8 @@ public class MultiPermanentChoiceHandlerService {
             chooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileForEachLifeLostEffectHandler
             exileForEachLifeLostEffectHandler;
+    private final org.springframework.beans.factory.ObjectProvider<PermanentChoiceHandlerService>
+            permanentChoiceHandlerServiceProvider;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -1113,8 +1115,8 @@ public class MultiPermanentChoiceHandlerService {
                 permanentRemovalService.removeOrphanedAuras(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
-        } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
-            handleForcedSacrifice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice) {
+            completeForcedSacrificeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx) {
             wormsOfTheEarthEffectHandler.sacrificeAndDestroy(
                     gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
@@ -2286,6 +2288,23 @@ public class MultiPermanentChoiceHandlerService {
         }
         phaseOutPermanentsThatReceivedCountersThisWayEffectHandler.completeChoice(gameData, permanentIds, entry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * Completes {@code permanentIds} as the answer to {@code choice}, a
+     * {@link MultiPermanentChoiceContext.ForcedSacrifice} prompt. Its completion changes nothing
+     * before it sacrifices (it only reads power, or prompts the next player with the picks kept in
+     * the immutable context), so a creature it would sacrifice that has competing death replacements
+     * is asked about before anything leaves (CR 616.1), and the same answer is completed again once
+     * its controller has chosen.
+     */
+    public void completeForcedSacrificeAskingDeathReplacementsFirst(GameData gameData,
+                                                                    PendingInteraction.MultiPermanentChoice choice,
+                                                                    List<UUID> permanentIds) {
+        var context = (MultiPermanentChoiceContext.ForcedSacrifice) choice.context();
+        permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData,
+                () -> handleForcedSacrifice(gameData, permanentIds, context),
+                new GameData.MultiPermanentChoiceReplay(choice, List.copyOf(permanentIds)));
     }
 
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,

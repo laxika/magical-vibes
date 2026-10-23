@@ -263,6 +263,21 @@ not countered while asked, countered once after) and `InnocentTravelerTest.lastD
 covered: the fallback effects' own deaths, the deferred Torment picks, multi-choice `ForcedSacrifice`,
 `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, seventeenth pass).** Multi-choice `MultiPermanentChoiceContext.ForcedSacrifice` completions
+are now asked inside the rerun window too. Their completion only reads (the sacrificed power for `recordSacrificedPower`)
+or prompts the next chooser, with the earlier picks kept in the immutable context, before it ends in
+`performSimultaneousSacrifice`, which asks the whole batch first. `MultiPermanentChoiceHandlerService.completeForcedSacrificeAskingDeathReplacementsFirst`
+runs it through `PermanentChoiceHandlerService.runAskingDeathReplacementsFirst` (now public); a stop stores a
+`GameData.MultiPermanentChoiceReplay`, and once every answer is in the same answer is completed again. This covers
+every `ForcedSacrifice` prompt (`SacrificePermanentsEffect` with a multi-select filter, the each-player fraction /
+down-to / two-distinct-permanents handlers, `DestructionSupport.sacrificePlayerMatchingPermanents`, ...). Test:
+`GravebaneZombieTest.forcedMultiSacrificeAsksBeforeAnyChosenCreatureIsSacrificed` (Barter in Blood: both players'
+chosen creatures stay while asked; after, the Zombie is on top of the library, Kalitas exiles the Bears and makes one
+Zombie, one sacrifice log line). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
+the other "sacrifice, then" multi-choices (the `EachPlayerSacrifices...`/`EachOpponentSacrifices...` multi contexts,
+`SacrificeAttackingCreatures`, ...; `ForcedSacrificeThenDamageIfSubtype` only sacrifices lands),
+`LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -277,7 +292,7 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
 - Deaths after an earlier change of the same handler (a second removal, damage, a regeneration or
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
-  and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
+  and seventh passes ("sacrifice, then" multi-choices other than `MultiPermanentChoiceContext.ForcedSacrifice`,
   `LandEquilibriumSacrifice` and the destroy completions listed in the seventh pass), and sacrifices paid as costs.
 
 **Why it's large.** Approaches looked at:
@@ -298,7 +313,7 @@ Continue missing-features-to-do.md entry 34: extend the CR 616.1 "ask before the
 rerun window (AsksDeathReplacementsFirst, PermanentRemovalService.askDeathReplacementsBeforeRemoval,
 GameData.chosenDeathReplacementsForRerun; for choice completions
 PermanentChoiceHandlerService.completeAskingDeathReplacementsFirst) to the remaining choice completions
-(multi-choice ForcedSacrifice, the unreviewed single-sacrifice contexts) and the remaining handlers,
+(the other "sacrifice, then" multi-choices, the unreviewed single-sacrifice contexts) and the remaining handlers,
 reviewing each handler for changes before its first removal. Write a failing Kalitas + Gravebane
 Zombie test per case first. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
