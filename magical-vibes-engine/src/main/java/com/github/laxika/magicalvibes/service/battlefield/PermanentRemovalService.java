@@ -416,6 +416,9 @@ public class PermanentRemovalService {
                             wasSacrificed, destinationPlayerId, false, false);
                     return false;
                 }
+            } else if (!ignoreMayLibraryReplacement) {
+                // A lone "may" (Pulmonic Sliver) is asked before the creature leaves too, if the effect can be rerun.
+                askDeathReplacementsBeforeRemoval(gameData, List.of(target));
             }
         }
 
@@ -743,7 +746,8 @@ public class PermanentRemovalService {
      * CR 616.1 for deaths a resolving effect causes: while that effect has changed nothing yet
      * ({@link GameData#deathReplacementsCanRerunEffect}), asks each controller of a creature in
      * {@code dying} whose competing death replacements include one that keeps the card which one
-     * applies, in APNAP order, then stops the effect with {@link DeathReplacementChoicePending} so
+     * applies (or, when its only replacement is a granted "may" such as Pulmonic Sliver's, whether to
+     * apply it), in APNAP order, then stops the effect with {@link DeathReplacementChoicePending} so
      * it is resolved again once every answer is in. The creatures stay on the battlefield until
      * then, and the rerun's deaths consume the answers. Does nothing when no such choice is needed
      * or the effect has already changed the game.
@@ -760,9 +764,19 @@ public class PermanentRemovalService {
                         || isDeathExileReplacementChoicePending(gameData, permanent.getId())) {
                     continue;
                 }
+                if (gameData.rerunMayLibraryChoices.contains(permanent.getId())) {
+                    continue;
+                }
                 List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, permanent);
-                if (options.size() > 1 && !options.stream().allMatch(option -> option.kind().exiles())) {
-                    promptDeathExileReplacement(gameData, permanent, options, false, false, null, false, true);
+                if (options.size() > 1) {
+                    if (!options.stream().allMatch(option -> option.kind().exiles())) {
+                        promptDeathExileReplacement(gameData, permanent, options, false, false, null, false, true);
+                        prompted = true;
+                    }
+                } else if (findMayLibraryReplacement(gameData, permanent) != null) {
+                    // Its only replacement is a "may": asked through the usual prompt, recorded for the rerun.
+                    gameData.rerunMayLibraryChoices.add(permanent.getId());
+                    offerMayLibraryReplacement(gameData, permanent);
                     prompted = true;
                 }
             }
@@ -782,7 +796,8 @@ public class PermanentRemovalService {
      */
     public boolean awaitsDeathReplacementChoiceBeforeRerun(GameData gameData) {
         PendingInteraction.ColorChoice active = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        return isRerunDeathReplacementChoice(active)
+        return !gameData.rerunMayLibraryChoices.isEmpty()
+                || isRerunDeathReplacementChoice(active)
                 || gameData.pendingInteractions.stream().anyMatch(PermanentRemovalService::isRerunDeathReplacementChoice)
                 || gameData.deferredDeathReplacementChoices.stream()
                         .anyMatch(PermanentRemovalService::isRerunDeathReplacementChoice);
@@ -806,6 +821,32 @@ public class PermanentRemovalService {
 
     /**
      * Records the answer to a "you may put it on top of its owner's library instead" asked ahead of
+     * a stopped effect or choice completion (see {@link #askDeathReplacementsBeforeRemoval}), for its
+     * rerun to consume. Returns {@code false} when the choice for {@code permanentId} was not asked
+     * that way.
+     */
+    public boolean recordRerunMayLibraryChoice(GameData gameData, UUID permanentId, boolean accepted) {
+        if (!gameData.rerunMayLibraryChoices.remove(permanentId)) {
+            return false;
+        }
+        if (gameData.pendingDeathReplacementChoiceReplay == null) {
+            // The effect waiting on this answer was parked to resolve again; it must not rerun twice.
+            gameData.rerunCurrentEffectAfterInteraction = false;
+        }
+        gameData.chosenDeathReplacementsForRerun.put(permanentId, mayLibraryAnswer(accepted));
+        return true;
+    }
+
+    private static DeathExileReplacement mayLibraryAnswer(boolean accepted) {
+        return accepted
+                ? new DeathExileReplacement("Put it into its owner's library",
+                        DeathExileReplacement.Kind.LIBRARY, null, null, null, null)
+                : new DeathExileReplacement("Put it into its owner's graveyard",
+                        DeathExileReplacement.Kind.NO_REPLACEMENT, null, null, null, null);
+    }
+
+    /**
+     * Records the answer to a "you may put it on top of its owner's library instead" asked ahead of
      * a state-based-action batch. Returns {@code false} when {@code target}'s choice was not asked
      * that way, so the caller moves it at once.
      */
@@ -813,11 +854,7 @@ public class PermanentRemovalService {
         if (!gameData.stateBasedMayLibraryChoices.remove(target.getId())) {
             return false;
         }
-        gameData.chosenStateBasedDeathReplacements.put(target.getId(), accepted
-                ? new DeathExileReplacement("Put it into its owner's library",
-                        DeathExileReplacement.Kind.LIBRARY, null, null, null, null)
-                : new DeathExileReplacement("Put it into its owner's graveyard",
-                        DeathExileReplacement.Kind.NO_REPLACEMENT, null, null, null, null));
+        gameData.chosenStateBasedDeathReplacements.put(target.getId(), mayLibraryAnswer(accepted));
         return true;
     }
 

@@ -2900,6 +2900,12 @@ public class GameData {
     public final Map<UUID, ChoiceContext.DeathExileReplacement> chosenDeathReplacementsForRerun =
             new ConcurrentHashMap<>();
     /**
+     * Permanents whose only death replacement, a "you may put it on top of its owner's library
+     * instead", is being asked ahead of a stopped effect or choice completion; the answer is recorded
+     * in {@link #chosenDeathReplacementsForRerun}.
+     */
+    public final Set<UUID> rerunMayLibraryChoices = ConcurrentHashMap.newKeySet();
+    /**
      * A permanent choice whose completion was stopped before its first removal so that a creature it
      * would kill could have its death replacement chosen first (CR 616.1). Once every such answer is
      * in, the same answer is completed again and its deaths consume
@@ -4063,7 +4069,7 @@ public class GameData {
                     "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect",
-                    "chosenDeathReplacementsForRerun", "pendingDeathReplacementChoiceReplay",
+                    "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
                     "alwaysOfferPriorityWindows" -> true;
@@ -9557,6 +9563,7 @@ public class GameData {
         copy.stateBasedMayLibraryChoices.addAll(this.stateBasedMayLibraryChoices);
         copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;
         copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
+        copy.rerunMayLibraryChoices.addAll(this.rerunMayLibraryChoices);
         copy.pendingDeathReplacementChoiceReplay = this.pendingDeathReplacementChoiceReplay;
 
         // --- Search tax payments (Leonin Arbiter) ---

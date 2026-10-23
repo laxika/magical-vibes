@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.b.BonesplitterSliver;
+import com.github.laxika.magicalvibes.cards.d.DevourFlesh;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SquallLine;
 import com.github.laxika.magicalvibes.cards.s.SuddenDeath;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PulmonicSliver.class, BonesplitterSliver.class, AshcoatBear.class, SuddenDeath.class, Forest.class,
-        SquallLine.class})
+        SquallLine.class, DevourFlesh.class, WrathOfGod.class})
 class PulmonicSliverTest extends BaseCardTest {
 
     @Test
@@ -138,6 +140,98 @@ class PulmonicSliverTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bear.getCard());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+    @Test
+    @DisplayName("Devour Flesh on a lone Sliver asks the library replacement before the sacrifice and the life gain")
+    void sacrificeThenGainLifeAsksBeforeTheLoneSliverIsSacrificed() {
+        Card filler = new Forest();
+        harness.setLibrary(player2, List.of(filler));
+        addCreatureReady(player1, new PulmonicSliver());
+        Permanent sliver = addCreatureReady(player2, new BonesplitterSliver());
+        int toughness = gqs.getEffectiveToughness(gd, sliver);
+        int lifeBefore = gd.getLife(player2.getId());
+        castDevourFlesh();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertOnBattlefield(player2, "Bonesplitter Sliver");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertNotOnBattlefield(player2, "Bonesplitter Sliver");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(sliver.getCard(), filler);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore + toughness);
+        harness.assertInGraveyard(player1, "Devour Flesh");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Under Devour Flesh, a chosen Sliver's library replacement is asked before the sacrifice and the life gain happens once")
+    void chosenSacrificeThenGainLifeAsksBeforeTheSliverIsSacrificed() {
+        addCreatureReady(player1, new PulmonicSliver());
+        Permanent sliver = addCreatureReady(player2, new BonesplitterSliver());
+        addCreatureReady(player2, new AshcoatBear());
+        int toughness = gqs.getEffectiveToughness(gd, sliver);
+        int lifeBefore = gd.getLife(player2.getId());
+        castDevourFlesh();
+        harness.handlePermanentChosen(player2, sliver.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertOnBattlefield(player2, "Bonesplitter Sliver");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Bonesplitter Sliver");
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(sliver.getCard());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore + toughness);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wrath of God asks each Sliver's library replacement before any creature is destroyed")
+    void wrathAsksBeforeAnyCreatureIsDestroyed() {
+        Card filler = new Forest();
+        harness.setLibrary(player1, List.of(filler));
+        Permanent pulmonic = addCreatureReady(player1, new PulmonicSliver());
+        Permanent sliver = addCreatureReady(player1, new BonesplitterSliver());
+        Permanent bear = addCreatureReady(player1, new AshcoatBear());
+
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(pulmonic, sliver, bear);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(pulmonic, sliver, bear);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(pulmonic, sliver, bear);
+        Card libraryBound = gd.playerDecks.get(player1.getId()).getFirst();
+        Card graveyardBound = libraryBound == pulmonic.getCard() ? sliver.getCard() : pulmonic.getCard();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryBound, filler);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(bear.getCard(), graveyardBound);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void castDevourFlesh() {
+        harness.setHand(player1, List.of(new DevourFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+    }
+
     private void killWithSuddenDeath(Permanent target) {
         harness.setHand(player2, List.of(new SuddenDeath()));
         harness.addMana(player2, ManaColor.BLACK, 3);

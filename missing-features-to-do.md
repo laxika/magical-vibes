@@ -221,6 +221,18 @@ lone Zombie: no sacrifice log line while asked, the Monument stays and Kalitas m
 covered: the fallback effects' own deaths (e.g. "sacrifice this unless ..." when no candidate exists), the
 lone-candidate sacrifice on the may prompt's "yes", and the deferred Torment picks.
 
+**Also landed (2026-10-23, fourteenth pass).** Pulmonic Sliver's lone "may" is now asked inside the rerun window
+too. `PermanentRemovalService.askDeathReplacementsBeforeRemoval` offers a creature whose only death replacement is a
+granted "you may put it on top of its owner's library instead" through the usual may prompt (tracked in
+`GameData.rerunMayLibraryChoices`) and stops the effect or choice completion, and `removePermanentToGraveyard` calls it
+for a lone dying creature with that "may" (not only for competing replacements). `PutOnTopOfLibraryInsteadOfDyingHandler`
+records the answer (`LIBRARY` or `NO_REPLACEMENT`) in `chosenDeathReplacementsForRerun` for the rerun, or completes
+a stopped choice again once every answer is in. Tests in `PulmonicSliverTest`: `wrathAsksBeforeAnyCreatureIsDestroyed`
+(both Slivers and a Bear stay until both answers are in, then leave together),
+`sacrificeThenGainLifeAsksBeforeTheLoneSliverIsSacrificed` (Devour Flesh: no life gained while asked) and
+`chosenSacrificeThenGainLifeAsksBeforeTheSliverIsSacrificed` (the replayed edict choice). Still not covered: the
+fallback effects' own deaths, the lone-candidate sacrifice on a mayfx prompt's "yes", and the deferred Torment picks.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -237,9 +249,8 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
   `LandEquilibriumSacrifice` and the destroy completions listed in the seventh pass), and sacrifices paid as costs.
-- Sacrifices made straight from a may prompt's "yes" (Pulmonic Sliver's lone "may", the eleventh pass's
-  "may sacrifice" handlers with a single candidate, a collected-picks batch ended by the last player's
-  decline) outside state-based actions.
+- Sacrifices made straight from a may prompt's "yes" (the eleventh pass's "may sacrifice" handlers with a
+  single candidate, a collected-picks batch ended by the last player's decline) outside state-based actions.
 
 **Why it's large.** Approaches looked at:
 - Leave the battlefield now and choose the destination later: the hand, library and graveyard
