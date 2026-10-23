@@ -8,21 +8,22 @@ import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatu
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /** Handles one opponent's accept/decline choice for Innocent Traveler's upkeep trigger. */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AnyOpponentMaySacrificeCreatureOrTransformSourceHandler implements MayEffectHandlerBean {
 
     private final AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler effectHandler;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -47,10 +48,10 @@ public class AnyOpponentMaySacrificeCreatureOrTransformSourceHandler implements 
                 return;
             }
             if (creatures.size() == 1) {
-                log.info("Game {} - {} chooses a creature to sacrifice to {}", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
-                effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, creatures.getFirst());
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                permanentChoiceHandlerServiceProvider.getObject().completeLoneCandidateAskingDeathReplacementsFirst(
+                        gameData, chooserId, creatures.getFirst(),
+                        new PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform(
+                                chooserId, ability.sourceCard(), effect));
                 return;
             }
             // Accepted but no creature remains legally available: treat it as a decline.

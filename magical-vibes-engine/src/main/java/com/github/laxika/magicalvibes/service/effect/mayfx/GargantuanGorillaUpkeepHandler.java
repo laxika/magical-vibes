@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GargantuanGorillaUpkeepEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,6 +28,7 @@ public class GargantuanGorillaUpkeepHandler implements MayEffectHandlerBean {
     private final GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,16 +42,15 @@ public class GargantuanGorillaUpkeepHandler implements MayEffectHandlerBean {
 
         if (accepted) {
             List<UUID> forestIds = gargantuanGorillaUpkeepSupport.forestIds(gameData, controllerId);
-            if (forestIds.size() == 1) {
-                gargantuanGorillaUpkeepSupport.sacrificeForest(
-                        gameData, controllerId, forestIds.getFirst(), sourcePermanentId);
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-                return;
-            }
-            if (forestIds.size() > 1) {
-                gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.GargantuanGorillaSacrificeForest(
-                                controllerId, sourcePermanentId, ability.sourceCard()));
+            if (!forestIds.isEmpty()) {
+                var context = new PermanentChoiceContext.GargantuanGorillaSacrificeForest(
+                        controllerId, sourcePermanentId, ability.sourceCard());
+                if (forestIds.size() == 1) {
+                    permanentChoiceHandlerServiceProvider.getObject().completeLoneCandidateAskingDeathReplacementsFirst(
+                            gameData, controllerId, forestIds.getFirst(), context);
+                    return;
+                }
+                gameData.interaction.setPermanentChoiceContext(context);
                 playerInputService.beginPermanentChoice(gameData, controllerId, forestIds,
                         "Choose a Forest to sacrifice.");
                 return;

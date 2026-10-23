@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeLandPutS
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,7 @@ public class AnyPlayerMaySacrificeLandPutSourceOnTopHandler implements MayEffect
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler effectHandler;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,10 +49,10 @@ public class AnyPlayerMaySacrificeLandPutSourceOnTopHandler implements MayEffect
                 return;
             }
             if (lands.size() == 1) {
-                effectHandler.sacrificeLand(gameData, chooserId, lands.getFirst());
-                effectHandler.putSourceOnTop(gameData, ability.sourceCard(), effect);
-                effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId);
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                permanentChoiceHandlerServiceProvider.getObject().completeLoneCandidateAskingDeathReplacementsFirst(
+                        gameData, chooserId, lands.getFirst(),
+                        new PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop(
+                                chooserId, ability.sourceCard(), effect));
                 return;
             }
         }

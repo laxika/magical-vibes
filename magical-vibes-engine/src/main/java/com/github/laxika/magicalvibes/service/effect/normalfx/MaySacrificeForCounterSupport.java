@@ -64,21 +64,6 @@ public class MaySacrificeForCounterSupport {
         return ids;
     }
 
-    /**
-     * "If you do, put a +1/+1 counter on this creature" — sacrifices {@code permanentId} and puts the
-     * counter on the source. Sacrificing the source itself leaves nothing to put a counter on.
-     */
-    public void sacrificeThenAddCounter(GameData gameData, UUID controllerId, UUID permanentId, UUID sourcePermanentId) {
-        sacrificeThenAddCounter(gameData, controllerId, permanentId, sourcePermanentId,
-                CounterType.PLUS_ONE_PLUS_ONE);
-    }
-
-    /** Sacrifices {@code permanentId} and puts one counter of {@code counterType} on the source. */
-    public void sacrificeThenAddCounter(GameData gameData, UUID controllerId, UUID permanentId,
-                                        UUID sourcePermanentId, CounterType counterType) {
-        sacrificeThenAddCounters(gameData, controllerId, permanentId, sourcePermanentId, counterType, 1);
-    }
-
     /** Sacrifices a permanent and puts {@code count} counters of {@code counterType} on the source. */
     public void sacrificeThenAddCounters(GameData gameData, UUID controllerId, UUID permanentId,
                                          UUID sourcePermanentId, CounterType counterType, int count) {

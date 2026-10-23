@@ -8,15 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatu
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /** Handles one opponent's accept/decline choice for Clackbridge Troll. */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceHandler
@@ -25,6 +25,7 @@ public class AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceHandler
     private final AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffectHandler effectHandler;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,11 +48,10 @@ public class AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceHandler
                 return;
             }
             if (creatures.size() == 1) {
-                log.info("Game {} - {} sacrifices a creature to {}", gameData.id, player.getUsername(),
-                        ability.sourceCard().getName());
-                effectHandler.sacrifice(gameData, chooserId, creatures.getFirst());
-                effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, true);
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                permanentChoiceHandlerServiceProvider.getObject().completeLoneCandidateAskingDeathReplacementsFirst(
+                        gameData, chooserId, creatures.getFirst(),
+                        new PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(
+                                chooserId, ability.sourceCard(), effect));
                 return;
             }
         }

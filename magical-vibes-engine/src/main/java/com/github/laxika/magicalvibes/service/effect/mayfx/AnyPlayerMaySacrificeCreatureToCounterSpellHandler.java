@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreature
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /** Handles one player's Brain Gorgers creature-sacrifice choice. */
@@ -22,6 +24,7 @@ public class AnyPlayerMaySacrificeCreatureToCounterSpellHandler implements MayEf
     private final AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler effectHandler;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,8 +47,10 @@ public class AnyPlayerMaySacrificeCreatureToCounterSpellHandler implements MayEf
                 return;
             }
             if (creatures.size() == 1) {
-                effectHandler.acceptSacrifice(gameData, ability.sourceCard(), effect, chooserId, creatures.getFirst());
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                permanentChoiceHandlerServiceProvider.getObject().completeLoneCandidateAskingDeathReplacementsFirst(
+                        gameData, chooserId, creatures.getFirst(),
+                        new PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell(
+                                chooserId, ability.sourceCard(), effect));
                 return;
             }
         }

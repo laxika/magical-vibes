@@ -8,11 +8,12 @@ import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatu
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Component;
  * creature of their choice (a pick is only asked for when they control more than one); either way
  * the next opponent that still controls a creature is offered the same choice.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AnyOpponentMaySacrificeCreatureTapAndCounterSourceHandler implements MayEffectHandlerBean {
@@ -28,6 +28,7 @@ public class AnyOpponentMaySacrificeCreatureTapAndCounterSourceHandler implement
     private final AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler effectHandler;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,11 +51,10 @@ public class AnyOpponentMaySacrificeCreatureTapAndCounterSourceHandler implement
                 return;
             }
             if (creatures.size() == 1) {
-                log.info("Game {} - {} sacrifices a creature to {}", gameData.id, player.getUsername(),
-                        ability.sourceCard().getName());
-                effectHandler.sacrifice(gameData, chooserId, creatures.getFirst());
-                effectHandler.advance(gameData, ability.sourceCard(), effect, chooserId, true);
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                permanentChoiceHandlerServiceProvider.getObject().completeLoneCandidateAskingDeathReplacementsFirst(
+                        gameData, chooserId, creatures.getFirst(),
+                        new PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter(
+                                chooserId, ability.sourceCard(), effect));
                 return;
             }
             // Accepted but no creature left to sacrifice — treated as a decline.

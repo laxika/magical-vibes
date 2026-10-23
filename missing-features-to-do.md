@@ -233,6 +233,23 @@ a stopped choice again once every answer is in. Tests in `PulmonicSliverTest`: `
 `chosenSacrificeThenGainLifeAsksBeforeTheSliverIsSacrificed` (the replayed edict choice). Still not covered: the
 fallback effects' own deaths, the lone-candidate sacrifice on a mayfx prompt's "yes", and the deferred Torment picks.
 
+**Also landed (2026-10-23, fifteenth pass).** The lone-candidate sacrifice on a "you may sacrifice" prompt's "yes"
+is now asked inside the rerun window too. The ten mayfx handlers whose multi-candidate choice already joined
+`killsBeforeChangingAnything` (`MaySacrificePermanentForCounterSource/OrTapSource/OrRemoveSourceCounter`,
+`GargantuanGorillaUpkeep`, `AnyOpponentMaySacrificeCreatureTapAndCounter/NontokenCreatureTapAndSeekLand/CreatureTapAndGainLifeAndDraw/CreatureOrTransform`,
+`AnyPlayerMaySacrificeLandPutSourceOnTop` and `AnyPlayerMaySacrificeCreatureToCounterSpell`) no longer sacrifice
+the lone candidate themselves: they build the same `PermanentChoiceContext` and hand it to
+`PermanentChoiceHandlerService.completeLoneCandidateAskingDeathReplacementsFirst`, which runs the choice
+completion with the window open and replays it after the answer, exactly as for a chosen candidate (each lone
+path was the same sequence as its completion; the now-unused `MaySacrificeForCounterSupport.sacrificeThenAddCounter`
+overloads are gone). Tests in `GravebaneZombieTest`: `anyOpponentLoneCandidateSacrificeAsksBeforeTheZombieIsSacrificed`
+(Desecration Demon: untapped with no counter while asked, tapped with one after),
+`maySacrificeForCounterLoneCandidateAsksBeforeTheZombieIsSacrificed` (High-Society Hunter: no counter while asked)
+and `anyPlayerLoneCandidateSacrificeToCounterAsksBeforeTheZombieIsSacrificed` (Brain Gorgers: not countered while
+asked). Still not covered: the fallback effects' own deaths, the deferred Torment picks, a collected-picks batch
+ended by the last player's decline, multi-choice `ForcedSacrifice`, `LandEquilibriumSacrifice` and sacrifices
+paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -249,8 +266,8 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
   `LandEquilibriumSacrifice` and the destroy completions listed in the seventh pass), and sacrifices paid as costs.
-- Sacrifices made straight from a may prompt's "yes" (the eleventh pass's "may sacrifice" handlers with a
-  single candidate, a collected-picks batch ended by the last player's decline) outside state-based actions.
+- A collected-picks batch (Innocent Traveler, Brain Gorgers) ended by the last player's decline, whose
+  `performSimultaneousSacrifice` runs in the may completion outside the window.
 
 **Why it's large.** Approaches looked at:
 - Leave the battlefield now and choose the destination later: the hand, library and graveyard

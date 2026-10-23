@@ -213,6 +213,22 @@ public class PermanentChoiceHandlerService {
         completeAskingDeathReplacementsFirst(gameData, replay.choice(), replay.permanentId());
     }
 
+    /**
+     * Sacrifices {@code permanentId}, the only candidate {@code playerId} has after answering "yes" to
+     * a "you may sacrifice" prompt, through the same completion as choosing it in {@code context}'s
+     * permanent choice. A creature with competing death replacements is then asked about before it
+     * leaves (CR 616.1), and the completion is redone with that answer, exactly as for a chosen one.
+     */
+    public void completeLoneCandidateAskingDeathReplacementsFirst(GameData gameData, UUID playerId,
+                                                                  UUID permanentId,
+                                                                  PermanentChoiceContext context) {
+        PendingInteraction.PermanentChoice choice = new PendingInteraction.PermanentChoice(
+                playerId, java.util.List.of(permanentId), java.util.List.of(), context, "");
+        if (!completeAskingDeathReplacementsFirst(gameData, choice, permanentId)) {
+            throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
+        }
+    }
+
     private static boolean killsBeforeChangingAnything(PermanentChoiceContext context) {
         return context instanceof PermanentChoiceContext.SacrificeCreature
                 || context instanceof PermanentChoiceContext.DestroyChosenCreature destroy
