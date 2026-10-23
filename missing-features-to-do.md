@@ -530,6 +530,33 @@ sacrifices (`EachOpponentMay...OrSacrifice...`, `EachOpponentSacrificesPermanent
 `TariffPayOrSacrifice`, `MayPayManaAndSacrificePermanent`, `SacrificeOtherCreatureOrDamage`, the "any opponent may
 sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-second pass).** The "each opponent may sacrifice ... or" may prompts whose
+sacrificing answer changes nothing before it delegates to the marked `SacrificePermanentsEffectHandler` (a lone
+candidate goes through `performSimultaneousSacrifice`, several open the already covered `ForcedSacrifice` multi-choice)
+now run that answer through the new `PermanentChoiceHandlerService.answerAskingDeathReplacementsFirst`. Its replay,
+`GameData.MayAnswerReplay` (renamed from `MayDeclineReplay`, now carrying `accepted`), re-dispatches the same answer
+through the may handler. Covered: `EachOpponentSacrificesPermanentUnlessPaysHandler` (Rishadan Cutpurse, Rishadan
+Brigand, Rishadan Footpad, Spelltithe Enforcer; the whole answer is wrapped, since a paid answer kills nothing and a
+declined or unpayable one only reads before the sacrifice), and the accepted sacrifice of
+`EachOpponentMaySacrificeNontokenCreatureOrLoseLifeHandler` (Fandaniel), `EachOpponentMayDiscardOrSacrificePermanentChoiceHandler`'s
+sacrifice stage (Zoyowa, Osseous Sticktwister) and `EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsChoiceHandler`
+(Braids, Arisen Nightmare). Reviewed: `MayPayManaAndSacrificePermanentHandler` and the single-sacrifice form of
+`CounterUnlessSacrificesHandler` only open a `SacrificePermanentThen` choice (already covered), and their declines kill
+nothing; the multi-sacrifice form of `CounterUnlessSacrificesHandler` opens a `MultiPermanentChoiceContext.SacrificePermanentsOrElse`
+choice, which is not yet in `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`. Tests in `GravebaneZombieTest` (a lone
+opponent's Zombie against Kalitas, Traitor of Ghet; while asked the Zombie stays, no life is lost and nothing is logged
+as sacrificed; after the library answer it is sacrificed once onto its owner's library and Kalitas makes no Zombie):
+`unpaidSacrificeUnlessPaysAsksBeforeTheZombieIsSacrificed`, `acceptedSacrificeOrLoseLifeAsksBeforeTheZombieIsSacrificed`,
+`acceptedDiscardOrSacrificeAsksBeforeTheZombieIsSacrificed` and `acceptedMatchingSacrificeOrLoseLifeAsksBeforeTheZombieIsSacrificed`
+(no card drawn for Braids's controller). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
+`WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice`, the accepted-but-unpayable fall-through of
+the sacrifice-unless prompts, `CycloneUpkeep`, Tariff (`TariffPayOrSacrificeHandler`: its queue in
+`GameData.tariffRemainingPlayers` / `tariffPendingSacrificeIds` is consumed before the final sacrifice, so a rerun would
+lose it), the remaining mayfx handlers whose answer sacrifices (`EachOpponentCreatesTokenUnlessSacrificesCreature`,
+`SacrificeOtherCreatureOrDamage`, `TargetPermanentControllerMaySacrificeOrDamage`, `DealDamageToRandomOpponentUnlessSacrifice`
+(random pick first), `AnyOpponentMayTakeDamageSacrificeSource`, `AnyPlayerMaySacrificeCreaturesThenSacrificeSource`, the
+"any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

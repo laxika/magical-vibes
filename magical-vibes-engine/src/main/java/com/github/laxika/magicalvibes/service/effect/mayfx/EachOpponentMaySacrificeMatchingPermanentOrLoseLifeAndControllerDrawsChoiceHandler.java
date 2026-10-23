@@ -19,13 +19,19 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
-/** Handles one opponent's choice for Braids's sacrifice-or-life-loss-and-draw clause. */
+/**
+ * Handles one opponent's choice for Braids's sacrifice-or-life-loss-and-draw clause. An accepted
+ * sacrifice changes nothing before it, so a creature with competing death replacements is asked
+ * about before it leaves (CR 616.1) and the answer is completed again with that choice.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsChoiceHandler
@@ -38,6 +44,7 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
     private final LifeSupport lifeSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,23 +57,8 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
                 ability.effects().getFirst();
         UUID sourceControllerId = sourceControllerId(gameData, ability);
         if (accepted && hasLegalSacrifice(gameData, ability, sourceControllerId)) {
-            var sacrifice = new SacrificePermanentsEffect(
-                    1,
-                    new PermanentSharesCardTypeWithSourcePermanentPredicate(),
-                    SacrificeRecipient.TARGET_PLAYER);
-            var sacrificeEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
-                    sourceControllerId,
-                    ability.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(sacrifice)),
-                    ability.controllerId(),
-                    (UUID) null);
-            sacrificeEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-            sacrificePermanentsEffectHandler.resolve(gameData, sacrificeEntry, sacrifice);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
+            permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> sacrifice(gameData, ability, sourceControllerId));
             return;
         }
 
@@ -74,6 +66,26 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
                 ability.sourceCard().getName());
         drawCardEffectHandler.resolve(gameData, drawEntry(ability, sourceControllerId), new DrawCardEffect(1));
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void sacrifice(GameData gameData, PendingMayAbility ability, UUID sourceControllerId) {
+        var sacrifice = new SacrificePermanentsEffect(
+                1,
+                new PermanentSharesCardTypeWithSourcePermanentPredicate(),
+                SacrificeRecipient.TARGET_PLAYER);
+        var sacrificeEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ability.sourceCard(),
+                sourceControllerId,
+                ability.sourceCard().getName() + "'s ability",
+                new ArrayList<>(List.of(sacrifice)),
+                ability.controllerId(),
+                (UUID) null);
+        sacrificeEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+        sacrificePermanentsEffectHandler.resolve(gameData, sacrificeEntry, sacrifice);
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private boolean hasLegalSacrifice(GameData gameData, PendingMayAbility ability,

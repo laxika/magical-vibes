@@ -6,14 +6,23 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermanentUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentSacrificesPermanentUnlessPaysEffectHandler;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
+/**
+ * "Each opponent sacrifices a permanent unless they pay" (Rishadan Cutpurse, Spelltithe Enforcer, ...).
+ * An unpaid answer, declined or unpayable, changes nothing before the sacrifice, so a creature with
+ * competing death replacements is asked about before it leaves (CR 616.1) and the same answer is
+ * completed again with that choice; a paid answer kills nothing.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachOpponentSacrificesPermanentUnlessPaysHandler implements MayEffectHandlerBean {
 
     private final EachOpponentSacrificesPermanentUnlessPaysEffectHandler effectHandler;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,6 +36,8 @@ public class EachOpponentSacrificesPermanentUnlessPaysHandler implements MayEffe
                 .map(EachOpponentSacrificesPermanentUnlessPaysEffect.class::cast)
                 .findFirst()
                 .orElseThrow();
-        effectHandler.handleChoice(gameData, player, accepted, ability, effect);
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted,
+                () -> effectHandler.handleChoice(gameData, player, accepted, ability, effect));
     }
 }

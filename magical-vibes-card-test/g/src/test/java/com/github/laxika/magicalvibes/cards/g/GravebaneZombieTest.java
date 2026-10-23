@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDepravity;
 import com.github.laxika.magicalvibes.cards.b.BarrinsSpite;
 import com.github.laxika.magicalvibes.cards.b.BarterInBlood;
 import com.github.laxika.magicalvibes.cards.b.BrainGorgers;
+import com.github.laxika.magicalvibes.cards.b.BraidsArisenNightmare;
 import com.github.laxika.magicalvibes.cards.b.BreakingPoint;
 import com.github.laxika.magicalvibes.cards.c.CatchRelease;
 import com.github.laxika.magicalvibes.cards.c.CombustionMan;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.cards.d.Duneblast;
 import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
 import com.github.laxika.magicalvibes.cards.e.EssenceVortex;
 import com.github.laxika.magicalvibes.cards.f.FadeAway;
+import com.github.laxika.magicalvibes.cards.f.FandanielTelophoroiAscian;
 import com.github.laxika.magicalvibes.cards.f.FallenCleric;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FortunateFew;
@@ -38,11 +40,13 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MagnifyingGlass;
 import com.github.laxika.magicalvibes.cards.m.MercyKilling;
 import com.github.laxika.magicalvibes.cards.p.ParasiticImplant;
+import com.github.laxika.magicalvibes.cards.p.PanickedAltisaur;
 import com.github.laxika.magicalvibes.cards.p.PerilousPredicament;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PillarTombsOfAku;
 import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
 import com.github.laxika.magicalvibes.cards.r.ReignOfThePit;
+import com.github.laxika.magicalvibes.cards.r.RishadanCutpurse;
 import com.github.laxika.magicalvibes.cards.r.Retribution;
 import com.github.laxika.magicalvibes.cards.r.RunningIsUseless;
 import com.github.laxika.magicalvibes.cards.r.Rupture;
@@ -60,6 +64,7 @@ import com.github.laxika.magicalvibes.cards.u.UrzasSylex;
 import com.github.laxika.magicalvibes.cards.w.WarrenWeirding;
 import com.github.laxika.magicalvibes.cards.w.Winnowing;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.z.ZoyowaLavaTongue;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -2087,6 +2092,137 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
         harness.assertLife(player2, 20);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, RishadanCutpurse.class})
+    @DisplayName("Declining to pay for Rishadan Cutpurse asks for the lone Zombie's death replacement before it is sacrificed")
+    void unpaidSacrificeUnlessPaysAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.castFromHand(player1, new RishadanCutpurse(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, FandanielTelophoroiAscian.class, Shock.class})
+    @DisplayName("Accepting Fandaniel's sacrifice asks for the lone Zombie's death replacement before it is sacrificed")
+    void acceptedSacrificeOrLoseLifeAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new FandanielTelophoroiAscian());
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock()));
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        resolveEndStepTriggers();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, true);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, ZoyowaLavaTongue.class, PanickedAltisaur.class})
+    @DisplayName("Accepting Zoyowa's sacrifice asks for the lone Zombie's death replacement before it is sacrificed")
+    void acceptedDiscardOrSacrificeAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new ZoyowaLavaTongue());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, fodder));
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        resolveEndStepTriggers();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, true);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, BraidsArisenNightmare.class})
+    @DisplayName("Accepting Braids's matching sacrifice asks for the lone Zombie's death replacement before it is sacrificed")
+    void acceptedMatchingSacrificeOrLoseLifeAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.setLibrary(player1, List.of(new WrathOfGod()));
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new BraidsArisenNightmare());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        resolveEndStepTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, true);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    private void resolveEndStepTriggers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+    }
+
+    private void assertMayAnswerAskedWhileTheZombieStays() {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertLife(player2, 20);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .isEmpty();
+    }
+
+    /**
+     * The Zombie went on top of its owner's library; after an end step trigger the game moves on to
+     * its owner's turn, whose draw takes it back off the top.
+     */
+    private void assertZombieSacrificedOntoLibrary(Permanent zombie, Card filler, boolean drawnSince) {
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertNotInGraveyard(player2, "Gravebane Zombie");
+        if (drawnSince) {
+            assertThat(gd.playerDecks.get(player2.getId())).containsExactly(filler);
+            assertThat(gd.playerHands.get(player2.getId()).getLast()).isSameAs(zombie.getCard());
+        } else {
+            assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        }
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
                 .hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
                 .doesNotContain("Zombie");

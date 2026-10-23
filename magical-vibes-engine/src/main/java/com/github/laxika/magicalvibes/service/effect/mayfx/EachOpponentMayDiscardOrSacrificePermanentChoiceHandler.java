@@ -22,13 +22,19 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
-/** Resolves each opponent's optional discard-or-sacrifice choice for Zoyowa. */
+/**
+ * Resolves each opponent's optional discard-or-sacrifice choice for Zoyowa. An accepted sacrifice
+ * changes nothing before it, so a creature with competing death replacements is asked about before
+ * it leaves (CR 616.1) and the answer is completed again with that choice.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements MayEffectHandlerBean {
@@ -40,6 +46,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -94,7 +101,9 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
 
         if (accepted && hasSacrificeOption(gameData, ability.controllerId(), sourceControllerId,
                 effect.sacrificeFilter(), ability)) {
-            resolveSacrifice(gameData, ability, sourceControllerId, effect.sacrificeFilter());
+            permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true,
+                    () -> resolveSacrifice(gameData, ability, sourceControllerId, effect.sacrificeFilter()));
             return;
         }
 

@@ -2915,7 +2915,7 @@ public class GameData {
 
     /** A player's answer to complete again once the death replacements it asked about are chosen. */
     public sealed interface DeathReplacementChoiceReplay
-            permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayDeclineReplay, ListChoiceReplay {
+            permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay {
     }
 
     /** A permanent choice answer to complete again: the prompt that was answered and the chosen permanent. */
@@ -2932,8 +2932,12 @@ public class GameData {
             implements DeathReplacementChoiceReplay {
     }
 
-    /** A declined "you may" prompt to complete again: the player who declined it and the prompt. */
-    public record MayDeclineReplay(Player player, PendingMayAbility ability) implements DeathReplacementChoiceReplay {
+    /**
+     * A "you may" prompt answer to complete again: the player who answered it, the prompt and whether
+     * it was accepted.
+     */
+    public record MayAnswerReplay(Player player, PendingMayAbility ability, boolean accepted)
+            implements DeathReplacementChoiceReplay {
     }
 
     /**

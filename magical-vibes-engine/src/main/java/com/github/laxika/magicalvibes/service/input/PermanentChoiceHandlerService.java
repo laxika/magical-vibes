@@ -205,7 +205,21 @@ public class PermanentChoiceHandlerService {
      */
     public void declineAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
                                                     Runnable decline) {
-        runAskingDeathReplacementsFirst(gameData, decline, new GameData.MayDeclineReplay(player, ability));
+        answerAskingDeathReplacementsFirst(gameData, player, ability, false, decline);
+    }
+
+    /**
+     * Runs {@code answer}, the completion of {@code player} answering {@code ability} with
+     * {@code accepted}, a "you may" prompt whose answer changes nothing before it sacrifices or
+     * destroys (Rishadan Cutpurse's unpaid "or sacrifice", Fandaniel's accepted sacrifice, ...). A
+     * creature it would kill that has competing death replacements is then asked about before it
+     * leaves (CR 616.1), and the same answer is completed again through {@code ability}'s may handler
+     * once its controller has chosen. {@code answer} must close the window (an
+     * {@link InputCompletionService} epilogue does) before anything that isn't part of that removal.
+     */
+    public void answerAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
+                                                   boolean accepted, Runnable answer) {
+        runAskingDeathReplacementsFirst(gameData, answer, new GameData.MayAnswerReplay(player, ability, accepted));
     }
 
     /**
@@ -237,7 +251,7 @@ public class PermanentChoiceHandlerService {
     }
 
     /**
-     * Completes the permanent choice, multi-permanent choice, list choice or declined may prompt stopped by
+     * Completes the permanent choice, multi-permanent choice, list choice or answered may prompt stopped by
      * {@link #runAskingDeathReplacementsFirst} again with the same answer, once every death
      * replacement it asked about has been chosen; its deaths consume
      * {@link GameData#chosenDeathReplacementsForRerun}.
@@ -252,9 +266,9 @@ public class PermanentChoiceHandlerService {
                     multiPermanentChoiceHandlerServiceProvider.getObject()
                             .completeAskingDeathReplacementsFirst(
                                     gameData, multiReplay.choice(), multiReplay.permanentIds());
-            case GameData.MayDeclineReplay declineReplay ->
-                    mayEffectHandlerRegistry.getHandler(declineReplay.ability().effects().getFirst())
-                            .handle(gameData, declineReplay.player(), false, declineReplay.ability());
+            case GameData.MayAnswerReplay answerReplay ->
+                    mayEffectHandlerRegistry.getHandler(answerReplay.ability().effects().getFirst())
+                            .handle(gameData, answerReplay.player(), answerReplay.accepted(), answerReplay.ability());
             case GameData.ListChoiceReplay listReplay ->
                     choiceHandlerServiceProvider.getObject().completeListChoiceAgainAfterDeathReplacements(
                             gameData, listReplay);
