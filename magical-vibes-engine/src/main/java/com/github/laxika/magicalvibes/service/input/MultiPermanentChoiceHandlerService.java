@@ -204,8 +204,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseCreatureForEachPlayerThenSacrificeNonsharingCreaturesEffectHandler winnowingHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .PromiseOfLoyaltyEffectHandler promiseOfLoyaltyHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler
             destroyUpToOneNonbasicLandPerPlayerThenSearchHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -1300,8 +1298,6 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.WinnowingChoice ctx) {
             handleWinnowingChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.PromiseOfLoyaltyChoice ctx) {
-            handlePromiseOfLoyaltyChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice ctx) {
             handleDestroyUpToOneNonbasicLandPerPlayerChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice ctx) {
@@ -3785,17 +3781,6 @@ public class MultiPermanentChoiceHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handlePromiseOfLoyaltyChoice(GameData gameData, List<UUID> permanentIds,
-                                              MultiPermanentChoiceContext.PromiseOfLoyaltyChoice context) {
-        promiseOfLoyaltyHandler.completeChoice(gameData, permanentIds, context);
-
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleEachPlayerReturnsCreature(GameData gameData, List<UUID> permanentIds,

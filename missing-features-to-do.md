@@ -30,10 +30,6 @@ sacrifices). Still ignoring it, because it's unclear whether they count as a "ch
 - Pattern Matcher's "same name as another creature you control" and the exchange in
   `RedHerringExchangeEffectHandler`.
 
-`PromiseOfLoyaltyEffectHandler` still auto-keeps Glimpse, but no card uses `PromiseOfLoyaltyEffect`
-(Promise of Loyalty itself uses `EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffect`), so
-it's probably dead code.
-
 **Why it's large.** Blight is spread across effects, costs and may-ability checks.
 
 **Prompt to start it:**

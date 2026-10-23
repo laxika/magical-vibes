@@ -1347,17 +1347,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Promise of Loyalty: each player chooses the creature that receives a vow counter. */
-    record PromiseOfLoyaltyChoice(List<UUID> playerIds, int playerIndex,
-                                  Map<UUID, UUID> chosenByPlayer, StackEntry resolvingEntry)
-            implements MultiPermanentChoiceContext {
-
-        public PromiseOfLoyaltyChoice {
-            playerIds = List.copyOf(playerIds);
-            chosenByPlayer = Map.copyOf(chosenByPlayer);
-        }
-    }
-
     /** Krenko's Buzzcrusher: the controller chooses up to one nonbasic land for each player. */
     record DestroyUpToOneNonbasicLandPerPlayerChoice(UUID controllerId, List<UUID> playerIds,
                                                      int playerIndex, List<UUID> selectedIds,
