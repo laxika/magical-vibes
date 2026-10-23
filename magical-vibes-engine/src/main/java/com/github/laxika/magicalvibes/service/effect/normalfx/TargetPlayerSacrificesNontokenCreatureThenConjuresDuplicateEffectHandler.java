@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -26,7 +27,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;

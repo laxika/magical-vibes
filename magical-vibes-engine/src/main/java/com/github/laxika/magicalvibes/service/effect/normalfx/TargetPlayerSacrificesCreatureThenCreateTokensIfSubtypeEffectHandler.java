@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,7 +36,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler implements NormalEffectHandlerBean {
+public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;

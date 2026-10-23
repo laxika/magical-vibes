@@ -129,6 +129,25 @@ destroy log line while asked, one after) and `eachOpponentChoosesDestroyAsksBefo
 `ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom` (random pick, so it stays out) and the
 `DestroyTargetPermanentUnlessControllerTakesDamage` / `DestroyUpToOneAttachedPermanent` completions.
 
+**Also landed (2026-10-23, eighth pass).** Seven more single-choice sacrifice completions joined
+`PermanentChoiceHandlerService.killsBeforeChangingAnything`, each reviewed for "nothing before the sacrifice":
+`SacrificeOneOfTwo` (Incriminate), `SacrificeOneOfTwoThenCounterOnOther` (Retribution),
+`SacrificeOneOfTwoThenReturnOtherToHand` (Barrin's Spite), `TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate`
+(Grave Choice), `SacrificeCreatureCreateTokensIfSubtype` (Warren Weirding), `OpponentChoosesPermanentToSacrifice`
+and `EachTargetPlayerLosesLifeAndSacrificesCreature` (its accumulated picks live in the immutable context, and any
+life loss before the sacrifice already happened in the starting handler). Their starting handlers
+`TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler` and
+`TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler` are now marked too.
+`EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler` stays unmarked, since without `sacrificeBeforeLifeLoss`
+its targets lose life first. Tests in `GravebaneZombieTest`: `sacrificeOneOfTwoThenReturnOtherAsksBeforeTheZombieIsSacrificed`
+(the other creature stays until answered, then returns once), `sacrificeOneOfTwoThenCounterAsksBeforeTheZombieIsSacrificed`
+(no -1/-1 counter while asked, one after), `targetPlayerSacrificeIfSubtypeAsksBeforeTheChosenZombieIsSacrificed`
+and `targetPlayerSacrificeIfSubtypeAsksBeforeTheLoneZombieIsSacrificed`. Still unreviewed single-sacrifice contexts:
+`LandEquilibriumSacrifice` (runs inside a land-entering replacement, not an effect), `TormentSacrifice` (shared
+`GameData.torment` state), `ForcedCostOrElse`, the `AnyOpponent...`/`MaySacrifice...` "unless" contexts and the
+"sacrifice another creature, then ..." contexts (`SacrificeAnotherCreature*`, `SacrificeCreatureCreate*`,
+`SacrificeArtifactForDividedDamage`, `ExploitSacrifice`, `SacrificePermanentAnd*`, ...).
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -144,8 +163,8 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
-  the unreviewed single-sacrifice contexts and destroy completions listed above), and sacrifices
-  paid as costs.
+  the unreviewed single-sacrifice contexts and destroy completions listed in the seventh and eighth
+  passes), and sacrifices paid as costs.
 - Pulmonic Sliver's lone "may" (one option, asked through the may prompt) outside state-based actions.
 
 **Why it's large.** Approaches looked at:
