@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class SacrificeGrantingPermanentAndControllerDrawsEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeGrantingPermanentAndControllerDrawsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;

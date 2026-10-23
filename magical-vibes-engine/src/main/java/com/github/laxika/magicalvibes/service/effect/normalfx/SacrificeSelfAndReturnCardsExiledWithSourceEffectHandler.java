@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;

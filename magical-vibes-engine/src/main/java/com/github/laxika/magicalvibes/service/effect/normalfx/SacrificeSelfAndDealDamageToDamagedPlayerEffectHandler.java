@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;

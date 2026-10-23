@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 /** Resolves an ally-enter trigger that replaces its entering permanent with a fresh copy. */
 @Component
 @RequiredArgsConstructor
-public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;

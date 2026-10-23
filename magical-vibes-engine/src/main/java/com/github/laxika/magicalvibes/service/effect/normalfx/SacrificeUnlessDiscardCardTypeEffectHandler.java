@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DrawService drawService;
     private final GameLogService gameLogService;

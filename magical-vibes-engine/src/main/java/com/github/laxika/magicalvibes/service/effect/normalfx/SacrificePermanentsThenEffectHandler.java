@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -31,7 +32,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificePermanentsThenEffectHandler implements NormalEffectHandlerBean {
+public class SacrificePermanentsThenEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
@@ -117,14 +118,16 @@ public class SacrificePermanentsThenEffectHandler implements NormalEffectHandler
                                       int requiredCount, CardEffect thenEffect,
                                       com.github.laxika.magicalvibes.model.Card sourceCard, UUID controllerId,
                                       UUID sourcePermanentId) {
-        int sacrificed = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && controllerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
-                destructionSupport.sacrificeAndLog(gameData, permanent, controllerId);
-                sacrificed++;
-            }
+        List<Permanent> toSacrifice = permanentIds.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(permanent -> permanent != null
+                        && controllerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                .toList();
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, toSacrifice);
+        for (Permanent permanent : toSacrifice) {
+            destructionSupport.sacrificeAndLog(gameData, permanent, controllerId);
         }
+        int sacrificed = toSacrifice.size();
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (sacrificed != requiredCount) {

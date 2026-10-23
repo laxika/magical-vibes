@@ -81,6 +81,19 @@ graveyards), `EachPlayerSacrificesPermanentOrDiscardsEffectHandler` (sets `gameD
 unreviewed: the remaining larger sacrifice handlers (list them with the grep below; `AnyOpponentMay...`,
 `...UnlessDiscard/PaysLife/LosesLife`, `ForcedCostOrElse`, `TormentOfHailfire`, `KillingWave`, `InfernalOffering`, ...).
 
+**Also landed (2026-10-23, fifth pass).** Reviewed and marked the 32 `Sacrifice*EffectHandler`s that sacrifice
+one permanent (themselves, an enchanted or equipped creature, a target, the triggering permanent, an
+"unless" source) or delegate to a marked handler (`SacrificeSelf...`, `SacrificeEnchanted...`, `SacrificeTarget...`,
+`SacrificeTriggering...`, `SacrificeUnless...`, `SacrificeGranting...`, `SacrificePermanentsThen`, `SacrificePermanentsOrLoseGame`,
+`SacrificeOtherCreaturesThenReturnCreatureCards`, ...). `SacrificeEnchantedCreatureAndCreateToken`, `SacrificeEnchantedCreatureOnLeave`
+and `SacrificeTriggeringPermanent` now log the sacrifice after it rather than before, and `SacrificePermanentsThen`
+asks its whole group before the first sacrifice. Tests: `GravebaneZombieTest.sacrificeTargetThenCreateTokensAsksBeforeTheZombieIsSacrificed`
+(Mercy Killing: no Elf Warriors while asked, three after) and `GravebaneZombieTest.enchantedCreatureSacrificeAsksBeforeTheZombieIsSacrificed`
+(Parasitic Implant: one Myr and one sacrifice log line). `SacrificeCreatureThenMassDamageEqualToPowerEffectHandler` only
+starts a choice and sacrifices in its completion (the completion gap below). Every `Sacrifice*EffectHandler`
+under `normalfx/` is now reviewed; the unreviewed ones are the `EachPlayer/EachOpponent/AnyOpponent/TargetPlayer...`
+mixed handlers in the grep below.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

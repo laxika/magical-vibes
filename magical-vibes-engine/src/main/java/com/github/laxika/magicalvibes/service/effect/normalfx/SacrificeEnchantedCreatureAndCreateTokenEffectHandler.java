@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
@@ -57,12 +58,10 @@ public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements No
                 }
 
                 // Sacrifice the enchanted creature (its controller sacrifices it)
-                
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature);
                 gameLogService.append(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is sacrificed (", entry.getCard(), ")."));
                 log.info("Game {} - {} sacrificed by {}", gameData.id,
                         enchantedCreature.getCard().getName(), entry.getCard().getName());
-
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature);
                 permanentRemovalService.removeOrphanedAuras(gameData);
 
                 // Create token for the aura's controller
