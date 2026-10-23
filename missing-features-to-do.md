@@ -278,6 +278,28 @@ the other "sacrifice, then" multi-choices (the `EachPlayerSacrifices...`/`EachOp
 `SacrificeAttackingCreatures`, ...; `ForcedSacrificeThenDamageIfSubtype` only sacrifices lands),
 `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, eighteenth pass).** The "each player/opponent sacrifices ..., then" multi-choice
+completions joined the window. `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` lists the contexts
+whose completion only reads (power, toughness, the chosen cards) or prompts the next chooser with the picks kept in
+the immutable context before it sacrifices the whole batch through `performSimultaneousSacrifice`:
+`ForcedSacrifice`, `EachPlayerSacrificesCreature` (Wasteland Raider, Rankle), `EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower`
+(Reign of the Pit), `DanseMacabreSacrifice`, `EachOpponentSacrificesCreatureCreateTokens` (Syphon Flesh),
+`EachOpponentSacrificesPermanentCreateTokens` (Visions of Ruin), `EachOpponentSacrificesNontokenCreatureConjuresDuplicates`
+(Replicating Terror), `ControllerAndTargetPlayerChooseCreaturesThenSacrifice` (Malik) and
+`TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen` (Speedbrood Stalker; it sacrifices one at a time,
+so only its first sacrifice can ask). `completeAskingDeathReplacementsFirst` (renamed from
+`completeForcedSacrificeAskingDeathReplacementsFirst`) runs each completion and its epilogue in the window and is
+also the replay target. Their starting handlers `DanseMacabreEffectHandler` and
+`EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandler` are now marked too (each only reads before
+its sacrifice; Danse Macabre's return phase kills nothing). Tests in `GravebaneZombieTest`:
+`eachOpponentSacrificeThenTokensAsksBeforeTheChosenZombieIsSacrificed` (Syphon Flesh: no Zombie token while asked,
+one after) and `eachPlayerSacrificeThenTotalPowerTokenAsksBeforeAnyChosenCreatureIsSacrificed` (Reign of the Pit:
+the caster's Bears stays and nothing is sacrificed while asked; a 5/5 Demon after). Still not covered: the fallback
+effects' own deaths, the deferred Torment picks, the remaining sacrifice multi-choices (`SacrificeAttackingCreatures`,
+`TargetPlayerSacrificesCreatureAndPlaneswalker`, `EachOpponentSacrificesArtifactAndNonartifactCreature`,
+`KeepForEachPlayerThenSacrificeRest`, `PlayerChoosesUpToPermanentsThenSacrificesRestChoice`, `SacrificeDamagedPlayerControls`,
+`WormsOfTheEarthSacrificeLands`, ...), `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -292,7 +314,8 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
 - Deaths after an earlier change of the same handler (a second removal, damage, a regeneration or
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
-  and seventh passes ("sacrifice, then" multi-choices other than `MultiPermanentChoiceContext.ForcedSacrifice`,
+  and seventh passes ("sacrifice, then" multi-choices other than those in
+  `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`,
   `LandEquilibriumSacrifice` and the destroy completions listed in the seventh pass), and sacrifices paid as costs.
 
 **Why it's large.** Approaches looked at:

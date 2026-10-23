@@ -249,7 +249,7 @@ public class PermanentChoiceHandlerService {
                     completeAskingDeathReplacementsFirst(gameData, choiceReplay.choice(), choiceReplay.permanentId());
             case GameData.MultiPermanentChoiceReplay multiReplay ->
                     multiPermanentChoiceHandlerServiceProvider.getObject()
-                            .completeForcedSacrificeAskingDeathReplacementsFirst(
+                            .completeAskingDeathReplacementsFirst(
                                     gameData, multiReplay.choice(), multiReplay.permanentIds());
             case GameData.MayDeclineReplay declineReplay ->
                     mayEffectHandlerRegistry.getHandler(declineReplay.ability().effects().getFirst())

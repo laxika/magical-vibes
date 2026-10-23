@@ -1115,8 +1115,8 @@ public class MultiPermanentChoiceHandlerService {
                 permanentRemovalService.removeOrphanedAuras(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
-        } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice) {
-            completeForcedSacrificeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
+        } else if (killsBeforeChangingAnything(context)) {
+            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx) {
             wormsOfTheEarthEffectHandler.sacrificeAndDestroy(
                     gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
@@ -1124,52 +1124,9 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrificeThenDamageIfSubtype ctx) {
             handleForcedSacrificeThenDamageIfSubtype(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx) {
-            eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler.completeChoice(
-                    gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
         } else if (context instanceof MultiPermanentChoiceContext
                 .EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyChoice ctx) {
             humanTimeLordMetaCrisisHandler.completeChoice(gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
-        } else if (context instanceof MultiPermanentChoiceContext.DanseMacabreSacrifice ctx) {
-            danseMacabreEffectHandler.completeChoice(gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreature ctx) {
-            eachPlayerSacrificesCreatureHandler.completeChoice(gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
-        } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens ctx) {
-            eachOpponentSacrificesCreatureCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
-        } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesPermanentCreateTokens ctx) {
-            eachOpponentSacrificesPermanentCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
-        } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesNontokenCreatureConjuresDuplicates ctx) {
-            eachOpponentSacrificesNontokenCreatureConjuresDuplicatesHandler.completeChoice(
-                    gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
-        } else if (context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice ctx) {
-            controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler.completeChoice(gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
-        } else if (context instanceof MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen ctx) {
-            targetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentHandler.completeChoice(
-                    gameData, permanentIds, ctx);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
@@ -2291,20 +2248,71 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     /**
-     * Completes {@code permanentIds} as the answer to {@code choice}, a
-     * {@link MultiPermanentChoiceContext.ForcedSacrifice} prompt. Its completion changes nothing
-     * before it sacrifices (it only reads power, or prompts the next player with the picks kept in
-     * the immutable context), so a creature it would sacrifice that has competing death replacements
-     * is asked about before anything leaves (CR 616.1), and the same answer is completed again once
-     * its controller has chosen.
+     * Returns {@code true} for the multi-permanent choice contexts whose completion changes nothing
+     * before it sacrifices: it only reads (power, toughness, the chosen cards) or prompts the next
+     * chooser with the picks so far kept in the immutable context, then sacrifices the whole batch
+     * through {@link DestructionSupport#performSimultaneousSacrifice}, which asks every member first
+     * ({@link MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen}
+     * sacrifices one at a time, so only its first sacrifice can still ask).
      */
-    public void completeForcedSacrificeAskingDeathReplacementsFirst(GameData gameData,
-                                                                    PendingInteraction.MultiPermanentChoice choice,
-                                                                    List<UUID> permanentIds) {
-        var context = (MultiPermanentChoiceContext.ForcedSacrifice) choice.context();
+    private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
+        return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreature
+                || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower
+                || context instanceof MultiPermanentChoiceContext.DanseMacabreSacrifice
+                || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens
+                || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesPermanentCreateTokens
+                || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesNontokenCreatureConjuresDuplicates
+                || context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice
+                || context instanceof MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen;
+    }
+
+    /**
+     * Completes {@code permanentIds} as the answer to {@code choice}, a prompt whose completion
+     * changes nothing before it sacrifices (see {@link #killsBeforeChangingAnything}). A creature it
+     * would sacrifice that has competing death replacements is asked about before anything leaves
+     * (CR 616.1), and the same answer is completed again once its controller has chosen.
+     */
+    public void completeAskingDeathReplacementsFirst(GameData gameData,
+                                                     PendingInteraction.MultiPermanentChoice choice,
+                                                     List<UUID> permanentIds) {
         permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData,
-                () -> handleForcedSacrifice(gameData, permanentIds, context),
+                () -> completeKillingChoice(gameData, permanentIds, choice.context()),
                 new GameData.MultiPermanentChoiceReplay(choice, List.copyOf(permanentIds)));
+    }
+
+    private void completeKillingChoice(GameData gameData, List<UUID> permanentIds,
+                                       MultiPermanentChoiceContext context) {
+        switch (context) {
+            case MultiPermanentChoiceContext.ForcedSacrifice ctx -> {
+                handleForcedSacrifice(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.EachPlayerSacrificesCreature ctx ->
+                    eachPlayerSacrificesCreatureHandler.completeChoice(gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx ->
+                    eachPlayerSacrificesCreatureCreateTokenEqualToTotalPowerHandler.completeChoice(
+                            gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.DanseMacabreSacrifice ctx ->
+                    danseMacabreEffectHandler.completeChoice(gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.EachOpponentSacrificesCreatureCreateTokens ctx ->
+                    eachOpponentSacrificesCreatureCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.EachOpponentSacrificesPermanentCreateTokens ctx ->
+                    eachOpponentSacrificesPermanentCreateTokensHandler.completeChoice(gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.EachOpponentSacrificesNontokenCreatureConjuresDuplicates ctx ->
+                    eachOpponentSacrificesNontokenCreatureConjuresDuplicatesHandler.completeChoice(
+                            gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice ctx ->
+                    controllerAndTargetPlayerChooseCreaturesThenSacrificeHandler.completeChoice(
+                            gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen ctx ->
+                    targetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentHandler.completeChoice(
+                            gameData, permanentIds, ctx);
+            default -> throw new IllegalStateException("Not a sacrifice choice: " + context);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
     }
 
     private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,
