@@ -629,6 +629,19 @@ deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandE
 Tariff, the remaining mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick
 first), the "any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-seventh pass).** Tariff (`EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffectHandler`,
+now marked) asks before its simultaneous sacrifice. Without a prompt the handler only reads before
+`performSimultaneousSacrifice`, so the effect is stopped and rerun. After a prompt (the pay-or-sacrifice may answer or the tie
+break) payments may already have been made, so `TariffSupport.finish` wraps only the final sacrifice in
+`answerAskingDeathReplacementsFirst`, replayed through a creatureless Tariff may answer that just finishes the drained queue;
+`tariffPendingSacrificeIds` is now cleared only after the sacrifice. Tests in `TariffTest` (Kalitas, Traitor of Ghet against
+Gravebane Zombie): `asksForTheDeathReplacementBeforeAnyCreatureIsSacrificed` (no prompt: Craw Wurm stays while asked),
+`paidAnswerAsksForTheDeathReplacementBeforeTheZombieIsSacrificed` (Kalitas paid for once, still on the battlefield after) and
+`tieBreakAsksForTheDeathReplacementBeforeAnyCreatureIsSacrificed`. Still not covered: the fallback effects' own deaths, the
+deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice`, `CycloneUpkeep`, the
+remaining mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick first), the "any
+opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

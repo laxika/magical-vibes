@@ -2,11 +2,16 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +19,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -271,5 +278,96 @@ class TariffTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Ornithopter");
         harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, CrawWurm.class, WrathOfGod.class})
+    @DisplayName("Without a prompt, the Zombie's death replacement is asked before any creature is sacrificed")
+    void asksForTheDeathReplacementBeforeAnyCreatureIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new CrawWurm());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+
+        harness.passBothPriorities();
+
+        assertDeathReplacementAskedWhileTheZombieStays();
+        harness.assertOnBattlefield(player1, "Craw Wurm");
+
+        harness.handleListChoice(player2, LIBRARY);
+
+        assertZombieOnTopOfLibraryWithoutKalitasToken(zombie, filler);
+        harness.assertInGraveyard(player1, "Craw Wurm");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, WrathOfGod.class})
+    @DisplayName("After paying for Kalitas, the Zombie's death replacement is asked before it is sacrificed and nothing is paid again")
+    void paidAnswerAsksForTheDeathReplacementBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertDeathReplacementAskedWhileTheZombieStays();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.handleListChoice(player2, LIBRARY);
+
+        assertZombieOnTopOfLibraryWithoutKalitasToken(zombie, filler);
+        harness.assertOnBattlefield(player1, "Kalitas, Traitor of Ghet");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, CrawWurm.class, WrathOfGod.class})
+    @DisplayName("Choosing the Zombie on a tie asks for its death replacement before any creature is sacrificed")
+    void tieBreakAsksForTheDeathReplacementBeforeAnyCreatureIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new CrawWurm());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player2, zombie.getId());
+
+        assertDeathReplacementAskedWhileTheZombieStays();
+        harness.assertOnBattlefield(player1, "Craw Wurm");
+
+        harness.handleListChoice(player2, LIBRARY);
+
+        assertZombieOnTopOfLibraryWithoutKalitasToken(zombie, filler);
+        harness.assertInGraveyard(player1, "Craw Wurm");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+    }
+
+    private static final String LIBRARY = "Put it into its owner's library";
+
+    private void assertDeathReplacementAskedWhileTheZombieStays() {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly(LIBRARY, "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices"))
+                .isEmpty();
+    }
+
+    private void assertZombieOnTopOfLibraryWithoutKalitasToken(Permanent zombie, Card filler) {
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        harness.assertInGraveyard(player1, "Tariff");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

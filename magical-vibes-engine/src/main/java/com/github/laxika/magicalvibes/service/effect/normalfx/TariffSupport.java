@@ -14,12 +14,14 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -30,7 +32,13 @@ import org.springframework.stereotype.Component;
  * <p>Each affected player is handled one at a time via {@code gameData.tariffRemainingPlayers}. For
  * a player, the creature with the greatest mana value is identified (a tie prompts that player to
  * choose one). If the player can pay that creature's mana cost, a may-ability prompt asks whether to
- * pay; declining — or being unable to pay — sacrifices the creature.
+ * pay; declining — or being unable to pay — marks the creature, and every marked creature is
+ * sacrificed at once after the last player.
+ *
+ * <p>Nothing changes before that sacrifice while the effect resolves without a prompt, so a creature
+ * with competing death replacements stops and reruns the effect (CR 616.1). After a prompt the
+ * payments already made can't be redone, so the final sacrifice alone is asked about first and
+ * redone through a may answer without a creature, which only finishes the sequence.
  */
 @Slf4j
 @Component
@@ -42,6 +50,7 @@ public class TariffSupport {
     private final DestructionSupport destructionSupport;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired
     @Lazy
@@ -58,11 +67,15 @@ public class TariffSupport {
                 gameData.tariffRemainingPlayers.add(playerId);
             }
         }
-        processNextPlayer(gameData, sourceCard);
+        processNextPlayer(gameData, sourceCard, null);
     }
 
-    /** Advance to the next player in the queue, or finish the effect when the queue is drained. */
-    public void processNextPlayer(GameData gameData, Card sourceCard) {
+    /**
+     * Advance to the next player in the queue, or finish the effect when the queue is drained.
+     * {@code answeringPlayerId} is the player whose answer to a prompt got here, or {@code null}
+     * while the effect is still resolving.
+     */
+    private void processNextPlayer(GameData gameData, Card sourceCard, UUID answeringPlayerId) {
         while (!gameData.tariffRemainingPlayers.isEmpty()) {
             UUID playerId = gameData.tariffRemainingPlayers.removeFirst();
             List<Permanent> creatures = collectCreatures(gameData, playerId);
@@ -93,7 +106,7 @@ public class TariffSupport {
             }
         }
 
-        finish(gameData);
+        finish(gameData, sourceCard, answeringPlayerId);
     }
 
     /** Resolve the choice for a single chosen creature. Returns true when a prompt is now pending. */
@@ -126,11 +139,11 @@ public class TariffSupport {
             PermanentChoiceContext.TariffTieBreak context) {
         Permanent creature = gameQueryService.findPermanentById(gameData, permanentId);
         if (creature == null) {
-            processNextPlayer(gameData, context.sourceCard());
+            processNextPlayer(gameData, context.sourceCard(), context.playerId());
             return;
         }
         if (!resolveForCreature(gameData, context.sourceCard(), context.playerId(), creature)) {
-            processNextPlayer(gameData, context.sourceCard());
+            processNextPlayer(gameData, context.sourceCard(), context.playerId());
         }
     }
 
@@ -139,11 +152,13 @@ public class TariffSupport {
             PendingMayAbility ability) {
         Card sourceCard = ability.sourceCard();
         UUID playerId = player.getId();
-        Permanent creature = gameQueryService.findPermanentById(gameData, ability.targetCardId());
+        Permanent creature = ability.targetCardId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, ability.targetCardId());
 
         if (creature == null) {
-            // Creature is gone — nothing to pay for or sacrifice.
-            processNextPlayer(gameData, sourceCard);
+            // Creature is gone (or this only redoes the final sacrifice) — nothing to pay for or sacrifice.
+            processNextPlayer(gameData, sourceCard, playerId);
             return;
         }
 
@@ -162,21 +177,35 @@ public class TariffSupport {
                     creature.getCard().getName(), sourceCard.getName());
         }
 
-        processNextPlayer(gameData, sourceCard);
+        processNextPlayer(gameData, sourceCard, playerId);
     }
 
-    private void finish(GameData gameData) {
+    private void finish(GameData gameData, Card sourceCard, UUID answeringPlayerId) {
+        if (answeringPlayerId == null) {
+            // Still inside the effect's own resolution, whose rerun window covers the sacrifice;
+            // returning lets EffectResolutionService finalize the spell.
+            sacrificeMarkedCreatures(gameData);
+            return;
+        }
+        // Reached via a completed prompt: the final sacrifice is asked about first and redone by
+        // answering a creatureless prompt, then the spell is finalized (SBA, graveyard).
+        PendingMayAbility finishOnly = new PendingMayAbility(sourceCard, answeringPlayerId,
+                List.of(new EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect()),
+                "", null, (String) null);
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(gameData,
+                new Player(answeringPlayerId, gameData.playerIdToName.get(answeringPlayerId)), finishOnly, false,
+                () -> {
+                    sacrificeMarkedCreatures(gameData);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                });
+    }
+
+    /** Kept until the sacrifice is done, so a stop for a death replacement can sacrifice them again. */
+    private void sacrificeMarkedCreatures(GameData gameData) {
         if (!gameData.tariffPendingSacrificeIds.isEmpty()) {
-            List<UUID> toSacrifice = List.copyOf(gameData.tariffPendingSacrificeIds);
+            destructionSupport.performSimultaneousSacrifice(gameData, List.copyOf(gameData.tariffPendingSacrificeIds));
             gameData.tariffPendingSacrificeIds.clear();
-            destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
         }
-        if (gameData.pendingEffectResolutionEntry != null) {
-            // Reached asynchronously via a completed prompt — finalize the spell (SBA, graveyard).
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        }
-        // Otherwise we are still inside the initial synchronous effect resolution; returning lets
-        // EffectResolutionService finalize the spell.
     }
 
     private List<Permanent> collectCreatures(GameData gameData, UUID playerId) {
