@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -21,7 +22,7 @@ import java.util.UUID;
  */
 @Component
 @RequiredArgsConstructor
-public class OpponentChoosesPermanentToSacrificeEffectHandler implements NormalEffectHandlerBean {
+public class OpponentChoosesPermanentToSacrificeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

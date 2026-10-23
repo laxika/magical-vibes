@@ -594,6 +594,17 @@ public class DestructionSupport {
         return true;
     }
 
+    /**
+     * CR 616.1 for permanents an effect sacrifices one after another as part of the same event:
+     * asks every death replacement choice among them before the first is sacrificed, while the
+     * resolving effect can still be stopped and resolved again.
+     */
+    public void askDeathReplacementsBeforeSacrifice(GameData gameData, List<Permanent> permanents) {
+        permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, permanents.stream()
+                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                .toList());
+    }
+
     public void performSimultaneousSacrifice(GameData gameData, List<UUID> ids) {
         List<Permanent> permanents = ids.stream()
                 .distinct()

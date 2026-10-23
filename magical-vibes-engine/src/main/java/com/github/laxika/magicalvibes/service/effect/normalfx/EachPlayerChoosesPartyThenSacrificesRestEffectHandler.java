@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Component;
 /** Resolves Stick Together's party choices and sacrifice sweep. */
 @Component
 @RequiredArgsConstructor
-public class EachPlayerChoosesPartyThenSacrificesRestEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerChoosesPartyThenSacrificesRestEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private static final List<CardSubtype> PARTY_ROLES = List.of(
             CardSubtype.CLERIC, CardSubtype.ROGUE, CardSubtype.WARRIOR, CardSubtype.WIZARD);

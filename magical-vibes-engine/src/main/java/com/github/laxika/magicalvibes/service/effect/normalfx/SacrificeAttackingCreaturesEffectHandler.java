@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class SacrificeAttackingCreaturesEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeAttackingCreaturesEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
@@ -57,11 +59,13 @@ public class SacrificeAttackingCreaturesEffectHandler implements NormalEffectHan
 
                 if (attackingCreatureIds.size() <= count) {
                     // Auto-sacrifice all attacking creatures
-                    for (UUID creatureId : attackingCreatureIds) {
-                        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-                        if (creature != null) {
-                            destructionSupport.sacrificeAndLog(gameData, creature, targetPlayerId);
-                        }
+                    List<Permanent> creatures = attackingCreatureIds.stream()
+                            .map(creatureId -> gameQueryService.findPermanentById(gameData, creatureId))
+                            .filter(Objects::nonNull)
+                            .toList();
+                    destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, creatures);
+                    for (Permanent creature : creatures) {
+                        destructionSupport.sacrificeAndLog(gameData, creature, targetPlayerId);
                     }
                     return;
                 }

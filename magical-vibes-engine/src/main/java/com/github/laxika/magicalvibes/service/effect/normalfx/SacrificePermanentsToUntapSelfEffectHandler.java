@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +25,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificePermanentsToUntapSelfEffectHandler implements NormalEffectHandlerBean {
+public class SacrificePermanentsToUntapSelfEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final TapUntapSupport tapUntapSupport;
@@ -62,8 +63,10 @@ public class SacrificePermanentsToUntapSelfEffectHandler implements NormalEffect
             return;
         }
 
-        for (int i = 0; i < e.count(); i++) {
-            destructionSupport.sacrificeAndLog(gameData, matching.get(i), controllerId);
+        List<Permanent> toSacrifice = List.copyOf(matching.subList(0, e.count()));
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, toSacrifice);
+        for (Permanent permanent : toSacrifice) {
+            destructionSupport.sacrificeAndLog(gameData, permanent, controllerId);
         }
 
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

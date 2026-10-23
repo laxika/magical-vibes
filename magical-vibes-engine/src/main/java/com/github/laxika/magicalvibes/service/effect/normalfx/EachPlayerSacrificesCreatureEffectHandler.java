@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
@@ -19,7 +20,7 @@ import java.util.UUID;
 /** Resolves an each-player creature sacrifice with simultaneous sacrifice after all choices. */
 @Component
 @RequiredArgsConstructor
-public class EachPlayerSacrificesCreatureEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerSacrificesCreatureEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

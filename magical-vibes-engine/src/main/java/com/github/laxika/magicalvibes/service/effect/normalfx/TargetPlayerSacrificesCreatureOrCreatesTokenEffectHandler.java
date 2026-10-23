@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -17,7 +18,7 @@ import java.util.UUID;
 /** Resolves Wasitora's damaged-player sacrifice-or-Cat-Dragon trigger. */
 @Component
 @RequiredArgsConstructor
-public class TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler implements NormalEffectHandlerBean {
+public class TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final CreateTokenEffectHandler createTokenEffectHandler;
     private final DestructionSupport destructionSupport;

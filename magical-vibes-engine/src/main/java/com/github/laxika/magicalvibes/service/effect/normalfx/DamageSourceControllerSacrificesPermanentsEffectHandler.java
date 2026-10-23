@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DamageSourceControllerSacrificesPermanentsEffectHandler implements NormalEffectHandlerBean {
+public class DamageSourceControllerSacrificesPermanentsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
@@ -53,7 +54,9 @@ public class DamageSourceControllerSacrificesPermanentsEffectHandler implements 
 
                 if (permanentIds.size() <= count) {
                     // Sacrifice all — no choice needed
-                    for (Permanent perm : new ArrayList<>(battlefield)) {
+                    List<Permanent> toSacrifice = new ArrayList<>(battlefield);
+                    destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, toSacrifice);
+                    for (Permanent perm : toSacrifice) {
                         destructionSupport.sacrificeAndLog(gameData, perm, sacrificingPlayerId);
                     }
                     return;

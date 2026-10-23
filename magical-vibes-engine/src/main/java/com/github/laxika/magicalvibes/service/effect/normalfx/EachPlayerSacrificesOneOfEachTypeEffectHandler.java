@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -23,7 +24,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EachPlayerSacrificesOneOfEachTypeEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerSacrificesOneOfEachTypeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private static final List<CardType> TYPES = List.of(
             CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT, CardType.LAND,

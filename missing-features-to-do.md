@@ -63,12 +63,30 @@ Destroy handlers reviewed and deliberately left unmarked:
   `DestroyUpToOneAttachedPermanentEffectHandler`, the "each player chooses ... then destroy" handlers): the
   completion gap below.
 
+**Also landed (2026-10-23, fourth pass).** Reviewed and marked 46 sacrifice handlers whose first change
+is the sacrifice (or that only start a choice), among them every edict whose lone candidate is sacrificed
+in the handler (`TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler`, `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffectHandler`,
+`SacrificePermanentOrElseEffectHandler`, the "sacrifice one of two targets" family, ...) and the each-player
+batches that end in `performSimultaneousSacrifice` (`EachPlayerSacrificesCreatureEffectHandler`, the "choose
+... then sacrifice the rest" handlers, `EachPlayerSacrificesDownToCount/Fewest`, the fraction handlers, ...).
+Handlers that sacrifice several permanents one by one in one event (`SacrificeAttackingCreaturesEffectHandler`,
+`DamageSourceControllerSacrificesPermanentsEffectHandler`, `SacrificePermanentsToUntapSelfEffectHandler`) now
+ask the whole group first through `DestructionSupport.askDeathReplacementsBeforeSacrifice`. Tests:
+`GravebaneZombieTest.sacrificeThenDrawAsksBeforeTheZombieIsSacrificed` (Twisted Justice: no card drawn while
+asked, three after) and `GravebaneZombieTest.sacrificeThenGainLifeAsksBeforeTheZombieIsSacrificed` (Devour Flesh).
+Sacrifice handlers reviewed and deliberately left unmarked, since they change the game first:
+`EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler` (coin flips), `LivingDeathEffectHandler` (exiles
+graveyards), `EachPlayerSacrificesPermanentOrDiscardsEffectHandler` (sets `gameData.plaguecrafter` state),
+`EachPlayerChoosesCreatureThenSacrificesRestEffectHandler` (places counters and floating effects). Still
+unreviewed: the remaining larger sacrifice handlers (list them with the grep below; `AnyOpponentMay...`,
+`...UnlessDiscard/PaysLife/LosesLife`, `ForcedCostOrElse`, `TormentOfHailfire`, `KillingWave`, `InfernalOffering`, ...).
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
 neither `stateBased` nor `rerunsEffect`) while the effect carries on:
-- Handlers not marked `AsksDeathReplacementsFirst`: the remaining sacrifice handlers (most of the ~110
-  unmarked ones; the plain destroy handlers are done apart from the ones listed above) and the larger mixed handlers
+- Handlers not marked `AsksDeathReplacementsFirst`: the remaining larger sacrifice handlers (the plain destroy
+  and sacrifice handlers are done apart from the ones listed above) and the larger mixed handlers
   that use `DestructionSupport` (list them with `grep -rlE "destructionSupport\.(destroyBatch|tryDestroyAndLog|performSimultaneousSacrifice|sacrificeAndLog)"`
   under `service/effect/`). Each needs review for "nothing before the first removal" before it is
   marked; a handler that removes through `performSimultaneousRemovals` must also call

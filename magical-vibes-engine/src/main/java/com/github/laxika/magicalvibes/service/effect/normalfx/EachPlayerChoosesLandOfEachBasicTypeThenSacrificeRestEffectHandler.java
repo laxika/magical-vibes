@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -26,7 +27,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private static final List<CardSubtype> BASIC_LAND_TYPES = List.of(
             CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
