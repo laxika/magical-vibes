@@ -1093,8 +1093,6 @@ public class MultiPermanentChoiceHandlerService {
             }
         } else if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable ctx) {
             handleTapOtherCreaturesForUnblockable(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice ctx) {
-            handleDestroyRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext
                 .ChooseUpToNMatchingCreaturesThenMayExileRest ctx) {
             chooseUpToNMatchingCreaturesThenMayExileRestEffectHandler.completeChoice(
@@ -1249,10 +1247,6 @@ public class MultiPermanentChoiceHandlerService {
             handleTurfWarLandChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice ctx) {
             handleChooseLandOfEachBasicTypeThenDestroyChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice ctx) {
-            handleEachPlayerChoosesLandsThenDestroyRestChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice ctx) {
-            handleEachPlayerChoosesLandsThenSacrificeRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyTapChoice ctx) {
             handleRaidingPartyTapChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RaidingPartyPlainsChoice ctx) {
@@ -2214,7 +2208,12 @@ public class MultiPermanentChoiceHandlerService {
      * and {@link MultiPermanentChoiceContext.WinnowingChoice} keep their kept or chosen creatures in
      * the immutable context and only work out the rest before that sacrifice, as does
      * {@link MultiPermanentChoiceContext.KeepOneOfEachTypeChoice}, which logs its "keeps" pick only
-     * after the batch's death replacements have been asked.
+     * after the batch's death replacements have been asked. The "keep the chosen, destroy the rest"
+     * contexts {@link MultiPermanentChoiceContext.DestroyRestChoice} and
+     * {@link MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice} keep their kept
+     * permanents in the immutable context and end in a {@link DestructionSupport#destroyBatch} batch, which
+     * asks the whole batch first, as {@link MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice}
+     * does through its simultaneous sacrifice.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2236,7 +2235,10 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice
                 || context instanceof MultiPermanentChoiceContext.WinnowingChoice
-                || context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice;
+                || context instanceof MultiPermanentChoiceContext.KeepOneOfEachTypeChoice
+                || context instanceof MultiPermanentChoiceContext.DestroyRestChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice;
     }
 
     /**
@@ -2349,7 +2351,19 @@ public class MultiPermanentChoiceHandlerService {
                 }
                 return;
             }
-            default -> throw new IllegalStateException("Not a sacrifice choice: " + context);
+            case MultiPermanentChoiceContext.DestroyRestChoice ctx -> {
+                handleDestroyRestChoice(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.EachPlayerChoosesLandsThenDestroyRestChoice ctx -> {
+                handleEachPlayerChoosesLandsThenDestroyRestChoice(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.EachPlayerChoosesLandsThenSacrificeRestChoice ctx -> {
+                handleEachPlayerChoosesLandsThenSacrificeRestChoice(gameData, permanentIds, ctx);
+                return;
+            }
+            default -> throw new IllegalStateException("Not a killing choice: " + context);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

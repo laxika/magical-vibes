@@ -364,6 +364,27 @@ resolution only reads before it prompts or sacrifices). Test: `GravebaneZombieTe
 `ChooseCreaturesWithDifferentManaValuesDestroy`, ...; each needing review), `LandEquilibriumSacrifice` and
 sacrifices paid as costs.
 
+**Also landed (2026-10-23, twenty-third pass).** The "keep the chosen, destroy the rest" multi-choice completions
+joined `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` and run through `completeAskingDeathReplacementsFirst`
+(each keeps its old epilogue): `DestroyRestChoice` (Duneblast, Divine Reckoning, Mount Doom, Fall of the First Civilization,
+...; `DestructionSupport.completeDestroyRestChoice` only prompts the next chooser with the kept ids in the immutable
+context, then ends in `destroyBatch`, which asks the whole batch first), `EachPlayerChoosesLandsThenDestroyRestChoice`
+(Urza's Sylex) and `EachPlayerChoosesLandsThenSacrificeRestChoice` (Planetary Annihilation; it ends in
+`performSimultaneousSacrifice`). Their starting handlers only read before they prompt or destroy, so they are now marked
+`AsksDeathReplacementsFirst` too: `ChooseUpToOneCreatureDestroyRestEffectHandler`, `ChooseUpToTwoCreaturesDestroyRestEffectHandler`, `ChooseCreatureForEachPlayerDestroyRestEffectHandler`,
+`ChooseCreatureOrPlaneswalkerDestroyRestEffectHandler`, `EachPlayerChoosesPermanentsThenDestroyRestEffectHandler` and
+`EachPlayerChoosesLandsThenDestroyRestEffectHandler`. Tests in `GravebaneZombieTest`:
+`destroyRestAsksBeforeAnyUnkeptCreatureIsDestroyed` (Duneblast keeping Kalitas: the Bears stays while asked; after, the
+Zombie is on top of the library, Kalitas exiles the Bears and makes one Zombie) and
+`chooseLandsThenDestroyRestAsksBeforeAnyOtherPermanentIsDestroyed` (Urza's Sylex: Kalitas and the Bears stay while asked).
+Reviewed and left unmarked: `EachPlayerChoosesCreatureDestroyRestEffectHandler` (Divine Reckoning, Mount Doom; it logs
+each auto-kept lone creature before it prompts or destroys, so a rerun would log it twice; its `DestroyRestChoice`
+completion is covered).
+Still not covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`,
+the remaining "sacrifice/destroy the rest" multi-choices (`KillingWaveKeep`, `FadeAwaySacrifice`,
+`EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest`, `ChooseCreaturesWithDifferentManaValuesDestroy`, ...;
+each needing review), `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
