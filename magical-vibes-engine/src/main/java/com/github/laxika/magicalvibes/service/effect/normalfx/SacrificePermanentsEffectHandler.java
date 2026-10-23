@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -26,11 +27,13 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves filtered sacrifices. A single affected player uses the appropriate creature or
  * permanent selection; multiple players choose in turn order before their simultaneous sacrifices.
+ * Nothing changes before the first sacrifice (log lines about players with nothing to sacrifice
+ * are written after it), so a competing death replacement can be chosen first.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean {
+public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
@@ -278,6 +281,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         FilterContext filterContext = filterContextFor(gameData, entry);
         List<UUID> autoSacrificeIds = new ArrayList<>();
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
+        List<String> playersWithNothingToSacrifice = new ArrayList<>();
 
         for (UUID playerId : playerIds) {
             if (isSacrificeProtected(gameData, entry, playerId)) {
@@ -301,10 +305,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                     .toList();
 
             if (matching.isEmpty()) {
-                String playerName = gameData.playerIdToName.get(playerId);
-                String logEntry = playerName + " has no matching permanents to sacrifice.";
-                gameLogService.append(gameData, GameLog.text(logEntry));
-                log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
+                playersWithNothingToSacrifice.add(gameData.playerIdToName.get(playerId));
                 continue;
             }
 
@@ -337,6 +338,10 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             destructionSupport.beginNextForcedSacrificeFromQueue(
                     gameData, choosers, autoSacrificeIds, e.simultaneousChoices(), null,
                     e.recordSacrificedCount(), e.recordSacrificedPower());
+        }
+        for (String playerName : playersWithNothingToSacrifice) {
+            gameLogService.append(gameData, GameLog.text(playerName + " has no matching permanents to sacrifice."));
+            log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
         }
     }
 

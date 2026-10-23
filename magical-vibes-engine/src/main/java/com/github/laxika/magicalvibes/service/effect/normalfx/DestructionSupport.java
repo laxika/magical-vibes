@@ -601,6 +601,9 @@ public class DestructionSupport {
                 .filter(java.util.Objects::nonNull)
                 .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                 .toList();
+        // CR 616.1: the whole batch's death replacement choices come before any of it is sacrificed.
+        permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, permanents);
+        gameData.deathReplacementsCanRerunEffect = false;
         beginSimultaneousCreatureDeaths(gameData, permanents);
         // Sacrificed at the same time, so "another creature leaves" watchers that are also sacrificed still see the others leave.
         permanentRemovalService.beginPermanentLeaveBatch(gameData);

@@ -300,6 +300,36 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({GravebaneZombie.class, DiabolicEdict.class})
+    @DisplayName("Diabolic Edict on a lone Gravebane Zombie asks library-or-Kalitas before the sacrifice")
+    void edictAsksForTheDeathReplacementBeforeTheZombieIsSacrificed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Card edict = new DiabolicEdict();
+        harness.setHand(player1, List.of(edict));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(edict.getId());
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playersWhoSacrificedPermanentsThisTurn).doesNotContain(player2.getId());
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playersWhoSacrificedPermanentsThisTurn).contains(player2.getId());
+        harness.assertInGraveyard(player1, "Diabolic Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(countTokens(player1, "Zombie")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     void canSacrificeARealVampireWithoutTappingKalitas() {
         Permanent kalitas = harness.addToBattlefieldAndReturn(player1, new KalitasTraitorOfGhet());
         harness.addToBattlefield(player1, new VampireEnvoy());

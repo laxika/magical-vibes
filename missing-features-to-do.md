@@ -29,17 +29,33 @@ and `DestroyAllPermanentsEffectHandler`. Tests: `GravebaneZombieTest` (Grisly Sp
 Zombie on top of the library; Wrath of God asks before any creature is destroyed) and
 `KalitasTraitorOfGhetTest.murderAsksForTheDeathReplacementBeforeTheZombieLeaves`.
 
+**Also landed (2026-10-23, second pass).** Reviewed and marked `SacrificePermanentsEffectHandler` (its
+"has no matching permanents" log lines for multi-player sacrifices now come after the sacrifice, so
+nothing changes first), `SacrificeEachMatchingPermanentEffectHandler`, `SacrificeTargetCreatureEffectHandler`,
+`DestroyUpToOneTargetPermanentEffectHandler` and `DestroyTargetPermanentsThenEffectHandler`.
+`DestructionSupport.performSimultaneousSacrifice` and `SacrificeEachMatchingPermanentEffectHandler` ask the
+whole batch before anything is sacrificed. Tests: `KalitasTraitorOfGhetTest.edictAsksForTheDeathReplacementBeforeTheZombieIsSacrificed`
+(Diabolic Edict on a lone Zombie), `GravebaneZombieTest.eachPlayerSacrificeAsksBeforeAnyCreatureIsSacrificed`
+(Innocent Blood: Kalitas is still on the battlefield while asked) and
+`GravebaneZombieTest.sacrificeEachMatchingAsksBeforeAnyPermanentIsSacrificed` (All Is Dust).
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
 neither `stateBased` nor `rerunsEffect`) while the effect carries on:
-- Handlers not marked `AsksDeathReplacementsFirst`, notably `SacrificePermanentsEffectHandler` (431
-  lines, many paths, not yet reviewed for "nothing before the first removal") and the other ~40
-  destroy handlers that use `DestructionSupport`. Each needs review before it is marked.
+- Handlers not marked `AsksDeathReplacementsFirst`: the remaining ~70 destroy and sacrifice handlers
+  that use `DestructionSupport` (list them with `grep -rlE "destructionSupport\.(destroyBatch|tryDestroyAndLog|performSimultaneousSacrifice|sacrificeAndLog)"`
+  under `service/effect/`). Each needs review for "nothing before the first removal" before it is
+  marked; a handler that removes through `performSimultaneousRemovals` must also call
+  `askDeathReplacementsBeforeRemoval` for the batch first (that method can't do it itself, since it
+  also runs for exiles and bounces).
 - Deaths after an earlier change of the same handler (a second removal, damage, a regeneration or
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion rather than in the handler (an edict whose player picks one
-  of several creatures, "sacrifice, then" multi-choices), and sacrifices paid as costs.
+  of several creatures: `PermanentChoiceBattlefieldHandlerService.handleSacrificeCreature` logs the
+  sacrifice and collects "whenever you sacrifice" triggers while the Zombie is still waiting on its
+  answer; "sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`), and
+  sacrifices paid as costs.
 - Pulmonic Sliver's lone "may" (one option, asked through the may prompt) outside state-based actions.
 
 **Why it's large.** Approaches looked at:
@@ -57,7 +73,7 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
 ```
 Continue missing-features-to-do.md entry 34: extend the CR 616.1 "ask before the creature leaves"
 rerun window (AsksDeathReplacementsFirst, PermanentRemovalService.askDeathReplacementsBeforeRemoval,
-GameData.chosenDeathReplacementsForRerun) to sacrifice effects and the remaining destroy handlers,
+GameData.chosenDeathReplacementsForRerun) to sacrifice choice completions and the remaining handlers,
 reviewing each handler for changes before its first removal. Write a failing Kalitas + Gravebane
 Zombie test per case first. Don't run the full test suite; ask me. Don't commit until I say so.
 ```

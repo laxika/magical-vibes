@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffectHandlerBean {
+public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
@@ -57,6 +58,8 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
             }
         });
 
+        // CR 616.1: the whole batch's death replacement choices come before any of it is sacrificed.
+        permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, toSacrifice);
         permanentRemovalService.performSimultaneousRemovals(gameData, toSacrifice, () -> {
             for (int i = 0; i < toSacrifice.size(); i++) {
                 destructionSupport.sacrificeAndLog(gameData, toSacrifice.get(i), controllerIds.get(i));

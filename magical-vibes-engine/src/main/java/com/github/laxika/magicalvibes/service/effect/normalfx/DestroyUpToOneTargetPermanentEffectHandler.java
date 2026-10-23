@@ -8,12 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.DestroyUpToOneTargetPermanent
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class DestroyUpToOneTargetPermanentEffectHandler implements NormalEffectHandlerBean {
+public class DestroyUpToOneTargetPermanentEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
