@@ -338,7 +338,8 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell
                 || context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCost
                         && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
-                || context instanceof PermanentChoiceContext.TormentSacrifice;
+                || context instanceof PermanentChoiceContext.TormentSacrifice
+                || context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature;
     }
 
     private void completeKillingChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
@@ -452,6 +453,9 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleForcedCostOrElse(gameData, permanentId, forcedCostOrElse);
             case PermanentChoiceContext.TormentSacrifice tormentSacrifice ->
                     battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
+            case PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken ->
+                    battlefieldHandler.handleEachOpponentCreatesTokenUnlessSacrificesCreature(gameData, permanentId,
+                            sacrificeOrToken);
             default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
         }
     }
@@ -1058,9 +1062,6 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom destroy) {
             battlefieldHandler.handleChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom(
                     gameData, permanentId, destroy);
-        } else if (context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken) {
-            battlefieldHandler.handleEachOpponentCreatesTokenUnlessSacrificesCreature(gameData, permanentId,
-                    sacrificeOrToken);
         } else if (context instanceof PermanentChoiceContext.ManaAbilityAddToChosenPlayer manaChosen) {
             battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
         } else if (context instanceof PermanentChoiceContext.BendOrBreakOpponentChoice) {

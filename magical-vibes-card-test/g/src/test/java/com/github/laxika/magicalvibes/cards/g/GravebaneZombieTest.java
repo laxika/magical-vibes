@@ -53,12 +53,15 @@ import com.github.laxika.magicalvibes.cards.r.Rupture;
 import com.github.laxika.magicalvibes.cards.s.SadisticShellGame;
 import com.github.laxika.magicalvibes.cards.s.ShiftingShadow;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.StarAthlete;
 import com.github.laxika.magicalvibes.cards.s.StickTogether;
 import com.github.laxika.magicalvibes.cards.s.SyphonFlesh;
+import com.github.laxika.magicalvibes.cards.t.TheDalekEmperor;
 import com.github.laxika.magicalvibes.cards.t.TipTheScales;
 import com.github.laxika.magicalvibes.cards.t.ToTheSlaughter;
 import com.github.laxika.magicalvibes.cards.t.TragicArrogance;
 import com.github.laxika.magicalvibes.cards.t.TwistedJustice;
+import com.github.laxika.magicalvibes.cards.u.UnnaturalHunger;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.u.UrzasSylex;
 import com.github.laxika.magicalvibes.cards.w.WarrenWeirding;
@@ -2190,6 +2193,108 @@ class GravebaneZombieTest extends BaseCardTest {
         assertZombieSacrificedOntoLibrary(zombie, filler, true);
         harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, TheDalekEmperor.class})
+    @DisplayName("Accepting The Dalek Emperor's sacrifice asks for the lone Zombie's death replacement before it is sacrificed")
+    void acceptedSacrificeOrTokenAsksBeforeTheLoneZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new TheDalekEmperor());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        resolveBeginningOfCombatTriggers();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, TheDalekEmperor.class})
+    @DisplayName("Choosing the Zombie for The Dalek Emperor's sacrifice asks for its death replacement before it is sacrificed")
+    void chosenSacrificeOrTokenAsksBeforeTheChosenZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new TheDalekEmperor());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        resolveBeginningOfCombatTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.handlePermanentChosen(player2, zombie.getId());
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, StarAthlete.class})
+    @DisplayName("Accepting Star Athlete's sacrifice asks for the targeted Zombie's death replacement before it is sacrificed")
+    void acceptedSacrificeOrDamageAsksBeforeTheTargetedZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        addCreatureReady(player1, new StarAthlete());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = addCreatureReady(player2, new GravebaneZombie());
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, zombie.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, UnnaturalHunger.class})
+    @DisplayName("Accepting Unnatural Hunger's sacrifice asks for the lone other Zombie's death replacement before it is sacrificed")
+    void acceptedSacrificeOtherOrDamageAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent zombie = addCreatureReady(player2, new GravebaneZombie());
+        harness.setHand(player1, List.of(new UnnaturalHunger()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
+    }
+
+    private void resolveBeginningOfCombatTriggers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
     }
 
     private void resolveEndStepTriggers() {

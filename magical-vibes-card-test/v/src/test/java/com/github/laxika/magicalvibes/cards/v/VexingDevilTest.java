@@ -1,11 +1,21 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -104,5 +114,58 @@ class VexingDevilTest extends BaseCardTest {
         harness.assertInHand(player1, "Vexing Devil");
         harness.assertNotInGraveyard(player1, "Vexing Devil");
         harness.assertNotOnBattlefield(player1, "Vexing Devil");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("The last opponent's decline asks for the Devil's death replacement before it is sacrificed")
+    void lastDeclineAsksForTheDeathReplacementBeforeTheDevilIsSacrificed() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        castAndResolveToChoice();
+        Permanent devil = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Vexing Devil"))
+                .findFirst().orElseThrow();
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(devil.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.handleMayAbilityChosen(player3, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(devil);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(devil.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(devil);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.assertLife(player2, 16);
+        harness.assertLife(player3, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 }

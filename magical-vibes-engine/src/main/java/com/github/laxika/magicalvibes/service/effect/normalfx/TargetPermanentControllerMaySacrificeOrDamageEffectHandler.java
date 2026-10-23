@@ -85,6 +85,8 @@ public class TargetPermanentControllerMaySacrificeOrDamageEffectHandler
                 && canSacrifice(gameData, target, targetControllerId, sourceControllerId)) {
             destructionSupport.sacrificeAndLog(gameData, target, targetControllerId);
         } else if (targetControllerId != null) {
+            // The damage is no part of a sacrifice, so an accepted answer that can't sacrifice can't be redone.
+            gameData.deathReplacementsCanRerunEffect = false;
             dealDamage(gameData, syntheticEntry(ability, sourceControllerId), effect,
                     target, targetControllerId);
         }

@@ -131,6 +131,8 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
                 return;
             }
         }
+        // The damage is no part of a sacrifice, so an accepted answer that found nothing to sacrifice can't be redone.
+        gameData.deathReplacementsCanRerunEffect = false;
         StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
                 controllerId, ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(e)),
                 controllerId, ability.sourcePermanentId());

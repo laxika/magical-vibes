@@ -557,6 +557,30 @@ lose it), the remaining mayfx handlers whose answer sacrifices (`EachOpponentCre
 (random pick first), `AnyOpponentMayTakeDamageSacrificeSource`, `AnyPlayerMaySacrificeCreaturesThenSacrificeSource`, the
 "any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-third pass).** Four more may prompts whose sacrificing answer changes nothing
+before the sacrifice now run it through `PermanentChoiceHandlerService.answerAskingDeathReplacementsFirst`: the accepted
+answer of `EachOpponentCreatesTokenUnlessSacrificesCreatureHandler` (Acererak, The Dalek Emperor; a lone creature is
+sacrificed before the next opponent is prompted, several open a choice), `SacrificeOtherCreatureOrDamageHandler`
+(Unnatural Hunger; several candidates open the already covered `SacrificeCreature` choice) and
+`TargetPermanentControllerMaySacrificeOrDamageChoiceHandler` (Star Athlete), plus the decline of
+`AnyOpponentMayTakeDamageSacrificeSourceHandler` (Vexing Devil; a decline only prompts the next opponent or, after an
+earlier accept, sacrifices the source). The two "or damage" handlers close the window before an accepted answer that
+can't sacrifice falls through to the damage. `PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature`
+joined `PermanentChoiceHandlerService.killsBeforeChangingAnything` (its completion only reads before it sacrifices; a
+creature that can no longer be sacrificed only creates the token). Tests in `GravebaneZombieTest`:
+`acceptedSacrificeOrTokenAsksBeforeTheLoneZombieIsSacrificed` and `chosenSacrificeOrTokenAsksBeforeTheChosenZombieIsSacrificed`
+(The Dalek Emperor: no Dalek after), `acceptedSacrificeOrDamageAsksBeforeTheTargetedZombieIsSacrificed` (Star Athlete) and
+`acceptedSacrificeOtherOrDamageAsksBeforeTheZombieIsSacrificed` (Unnatural Hunger: no life lost), and
+`VexingDevilTest.lastDeclineAsksForTheDeathReplacementBeforeTheDevilIsSacrificed` (three players, the Devil enchanted with
+Necromancer's Magemark against Kalitas: the Devil returns to hand and Kalitas makes no Zombie). Not covered: Vexing
+Devil's sacrifice after an accepting last opponent (the damage comes first, so it can't be redone). Still not covered:
+the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma,
+`LandEquilibriumSacrifice`, the accepted-but-unpayable fall-through of the sacrifice-unless prompts, `CycloneUpkeep`,
+Tariff, `MultiPermanentChoiceContext.SacrificePermanentsOrElse` (Counter-unless-sacrifices' multi form), the remaining
+mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick first),
+`AnyPlayerMaySacrificeCreaturesThenSacrificeSource`, the "any opponent may sacrifice" handlers' other paths, ...; each
+needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
