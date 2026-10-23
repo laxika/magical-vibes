@@ -68,6 +68,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -969,8 +970,6 @@ public class MultiPermanentChoiceHandlerService {
             handleGoadDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberPermanents) {
             handleTapAnyNumberPermanents(gameData, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls ctx) {
-            handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage ctx) {
@@ -998,8 +997,6 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.UnattachEquipmentFromControlledCreature ctx) {
             chooseEquipmentToUnattachEffectHandler.completeChoice(gameData, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
-            handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackCost) {
             handleSacrificeAttackCost(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnToHandAttackCost) {
@@ -1103,18 +1100,6 @@ public class MultiPermanentChoiceHandlerService {
             chooseUpToNMatchingCreaturesThenMayExileRestEffectHandler.completeChoice(
                     gameData, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext
-                .PlayerChoosesUpToPermanentsThenSacrificesRestChoice ctx) {
-            playerChoosesUpToPermanentsThenSacrificesRestEffectHandler.completeChoice(
-                    gameData, permanentIds, ctx);
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest ctx) {
-            eachPlayerSacrificesDownToCountEffectHandler.completeKeepChoice(gameData, permanentIds, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                permanentRemovalService.removeOrphanedAuras(gameData);
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
         } else if (killsBeforeChangingAnything(context)) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx) {
@@ -1261,19 +1246,6 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyUpToOneNonbasicLandPerPlayerChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice ctx) {
             handleEachPlayerSacrificeOneOfEachTypeChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.TargetPlayerSacrificesCreatureAndPlaneswalker ctx) {
-            targetPlayerSacrificesCreatureAndPlaneswalkerHandler.completeChoice(gameData, permanentIds, ctx);
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesArtifactAndNonartifactCreature ctx) {
-            eachOpponentSacrificesArtifactAndNonartifactCreatureHandler.completeChoice(gameData, permanentIds, ctx);
-
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice ctx) {
             eachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnHandler.completeChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesLandOfEachBasicTypeChoice ctx) {
@@ -1811,24 +1783,16 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handleSacrificeAttackingCreature(GameData gameData, List<UUID> permanentIds) {
-        for (UUID permId : permanentIds) {
-            Permanent creature = gameQueryService.findPermanentById(gameData, permId);
-            if (creature != null) {
-                UUID ownerId = null;
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> bf = gameData.playerBattlefields.get(pid);
-                    if (bf != null && bf.contains(creature)) {
-                        ownerId = pid;
-                        break;
-                    }
-                }
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
-                if (ownerId != null) {
-                    gameData.playersWhoSacrificedPermanentsThisTurn.add(ownerId);
-                }
-                String ownerName = ownerId != null ? gameData.playerIdToName.get(ownerId) : "Unknown";
-                gameLogService.append(gameData, GameLog.playerSacrifices(ownerName, creature.getCard()));
-                log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, creature.getCard().getName());
+        List<Permanent> creatures = permanentIds.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(Objects::nonNull)
+                .toList();
+        // CR 616.1: every chosen creature's death replacement is chosen before any of them is sacrificed.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, creatures);
+        for (Permanent creature : creatures) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+            if (controllerId != null) {
+                destructionSupport.sacrificeAndLog(gameData, creature, controllerId);
             }
         }
 
@@ -2253,7 +2217,11 @@ public class MultiPermanentChoiceHandlerService {
      * chooser with the picks so far kept in the immutable context, then sacrifices the whole batch
      * through {@link DestructionSupport#performSimultaneousSacrifice}, which asks every member first
      * ({@link MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen}
-     * sacrifices one at a time, so only its first sacrifice can still ask).
+     * sacrifices one at a time, so only its first sacrifice can still ask). The "keep the chosen,
+     * sacrifice the rest" contexts only work out the rest before that sacrifice,
+     * {@link MultiPermanentChoiceContext.SacrificeDamagedPlayerControls} sacrifices its lone pick
+     * first, and {@link MultiPermanentChoiceContext.SacrificeAttackingCreatures} asks about all its
+     * picks before it sacrifices them one by one.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2264,7 +2232,13 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesPermanentCreateTokens
                 || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesNontokenCreatureConjuresDuplicates
                 || context instanceof MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice
-                || context instanceof MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen;
+                || context instanceof MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen
+                || context instanceof MultiPermanentChoiceContext.TargetPlayerSacrificesCreatureAndPlaneswalker
+                || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesArtifactAndNonartifactCreature
+                || context instanceof MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest
+                || context instanceof MultiPermanentChoiceContext.PlayerChoosesUpToPermanentsThenSacrificesRestChoice
+                || context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls
+                || context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures;
     }
 
     /**
@@ -2308,6 +2282,40 @@ public class MultiPermanentChoiceHandlerService {
             case MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen ctx ->
                     targetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentHandler.completeChoice(
                             gameData, permanentIds, ctx);
+            case MultiPermanentChoiceContext.TargetPlayerSacrificesCreatureAndPlaneswalker ctx -> {
+                targetPlayerSacrificesCreatureAndPlaneswalkerHandler.completeChoice(gameData, permanentIds, ctx);
+                permanentRemovalService.removeOrphanedAuras(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                return;
+            }
+            case MultiPermanentChoiceContext.EachOpponentSacrificesArtifactAndNonartifactCreature ctx -> {
+                eachOpponentSacrificesArtifactAndNonartifactCreatureHandler.completeChoice(
+                        gameData, permanentIds, ctx);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                }
+            }
+            case MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest ctx -> {
+                eachPlayerSacrificesDownToCountEffectHandler.completeKeepChoice(gameData, permanentIds, ctx);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                }
+            }
+            case MultiPermanentChoiceContext.PlayerChoosesUpToPermanentsThenSacrificesRestChoice ctx -> {
+                playerChoosesUpToPermanentsThenSacrificesRestEffectHandler.completeChoice(
+                        gameData, permanentIds, ctx);
+                permanentRemovalService.removeOrphanedAuras(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            case MultiPermanentChoiceContext.SacrificeDamagedPlayerControls ctx -> {
+                handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.SacrificeAttackingCreatures ignored -> {
+                handleSacrificeAttackingCreature(gameData, permanentIds);
+                return;
+            }
             default -> throw new IllegalStateException("Not a sacrifice choice: " + context);
         }
         if (!gameData.interaction.isAwaitingInput()) {

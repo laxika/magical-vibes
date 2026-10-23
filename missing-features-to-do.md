@@ -300,6 +300,27 @@ effects' own deaths, the deferred Torment picks, the remaining sacrifice multi-c
 `KeepForEachPlayerThenSacrificeRest`, `PlayerChoosesUpToPermanentsThenSacrificesRestChoice`, `SacrificeDamagedPlayerControls`,
 `WormsOfTheEarthSacrificeLands`, ...), `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, nineteenth pass).** Six more sacrifice multi-choice completions joined
+`MultiPermanentChoiceHandlerService.killsBeforeChangingAnything` and run through `completeAskingDeathReplacementsFirst`
+(each keeps its old epilogue): `TargetPlayerSacrificesCreatureAndPlaneswalker` (To the Slaughter with delirium) and
+`EachOpponentSacrificesArtifactAndNonartifactCreature` (Perilous Predicament; it only prompts the next opponent with
+the picks kept in the immutable context) end in `performSimultaneousSacrifice`; `KeepForEachPlayerThenSacrificeRest`
+(The Eternal Wanderer's -4) and `PlayerChoosesUpToPermanentsThenSacrificesRestChoice` (Archfiend of Depravity) only work
+out the unkept permanents before it; `SacrificeDamagedPlayerControls` sacrifices its lone pick first; and
+`SacrificeAttackingCreatures` (Dispense Justice, Odds // Ends) now asks about all its picks with
+`DestructionSupport.askDeathReplacementsBeforeSacrifice` before sacrificing them one by one through
+`DestructionSupport.sacrificeAndLog` (as its starting handler's auto-sacrifice already did, so the chosen path now
+also fires "whenever you sacrifice" triggers). Tests in `GravebaneZombieTest`:
+`targetPlayerSacrificesCreatureAndPlaneswalkerAsksBeforeTheChosenZombieIsSacrificed`,
+`eachOpponentSacrificesArtifactAndNonartifactCreatureAsksBeforeTheChosenZombieIsSacrificed`,
+`sacrificeAttackingCreatureAsksBeforeTheChosenZombieIsSacrificed` and
+`keepUpToThenSacrificeRestAsksBeforeTheUnkeptZombieIsSacrificed` (no sacrifice log line and nothing gone while
+asked). Still not covered: the fallback effects' own deaths, the deferred Torment picks, the remaining sacrifice
+multi-choices (`WormsOfTheEarthSacrificeLands`, which sacrifices lands one by one and then destroys its source;
+`EachPlayerSacrificeOneOfEachTypeChoice`, `EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice`,
+`EachPlayerChoosesCreatureThenSacrificesRestChoice`, `SacrificePermanentsThen` and the other "sacrifice, then"
+contexts, each needing review), `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
