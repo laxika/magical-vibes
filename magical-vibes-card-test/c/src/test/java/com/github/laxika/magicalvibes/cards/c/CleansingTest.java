@@ -1,9 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
 import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -148,6 +154,93 @@ class CleansingTest extends BaseCardTest {
 
         harness.assertLife(player1, 0);
         harness.assertOnBattlefield(player1, "City of Shadows");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class, PlatinumEmperion.class})
+    @DisplayName("Without a prompt, asks for a Dryad Arbor's death replacement before any land is destroyed")
+    void withoutPromptAsksForTheDeathReplacementBeforeAnyLandIsDestroyed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas(player2, player1);
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+        harness.addToBattlefield(player2, new CityOfShadows());
+        castCleansing();
+
+        assertDeathReplacementAskedWhileArborStays(player2, arbor);
+        harness.assertOnBattlefield(player2, "City of Shadows");
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertArborReturnedToHand(player2, player1, arbor);
+        harness.assertInGraveyard(player2, "City of Shadows");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Declining every payment asks for a Dryad Arbor's death replacement before it is destroyed")
+    void declinedPaymentsAskForTheDeathReplacementBeforeTheArborIsDestroyed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas(player2, player1);
+        castCleansing();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertDeathReplacementAskedWhileArborStays(player2, arbor);
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertArborReturnedToHand(player2, player1, arbor);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("After a paid last land, asks for a Dryad Arbor's death replacement without paying again")
+    void paidLastLandAsksForTheDeathReplacementWithoutPayingAgain() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas(player1, player2);
+        harness.addToBattlefield(player2, new CityOfShadows());
+        castCleansing();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertDeathReplacementAskedWhileArborStays(player1, arbor);
+        harness.assertLife(player1, 19);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertArborReturnedToHand(player1, player2, arbor);
+        harness.assertLife(player1, 19);
+        harness.assertOnBattlefield(player2, "City of Shadows");
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private Permanent setUpEnchantedArborAgainstKalitas(Player arborController, Player kalitasController) {
+        harness.addToBattlefield(kalitasController, new KalitasTraitorOfGhet());
+        Permanent arbor = harness.addToBattlefieldAndReturn(arborController, new DryadArbor());
+        harness.addToBattlefieldAndReturn(arborController, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        return arbor;
+    }
+
+    private void assertDeathReplacementAskedWhileArborStays(Player arborController, Permanent arbor) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(arborController.getId())).contains(arbor);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Dryad Arbor is destroyed"))
+                .isEmpty();
+    }
+
+    private void assertArborReturnedToHand(Player arborController, Player kalitasController, Permanent arbor) {
+        assertThat(gd.playerHands.get(arborController.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(arborController.getId())).doesNotContain(arbor);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Dryad Arbor is destroyed"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(kalitasController.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castCleansing() {

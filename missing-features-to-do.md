@@ -660,6 +660,28 @@ already passed). Still not covered: the fallback effects' own deaths, the deferr
 Voter's Dilemma, `LandEquilibriumSacrifice`, the remaining mayfx handlers whose answer sacrifices (the "any opponent may
 sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-ninth pass).** Two land-killing sequences now ask before a land creature leaves.
+Cleansing (`DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler`, now marked `AsksDeathReplacementsFirst`): without a
+prompt the spell only reads before its `destroyBatch`, so it is stopped and rerun. After a prompt, earlier answers may
+already have paid life, so the final destruction alone runs through `answerAskingDeathReplacementsFirst`, replayed
+through a declined Cleansing prompt with no current land and no remaining lands, which only finishes the sequence
+(the same shape as Tariff). The answered prompt's epilogue moved from the mayfx `DestroyLandsUnlessAnyPlayerPaysLifeHandler`
+into the effect handler (`continueAfterDecision` now takes the answering player). Worms of the Earth: an accepted
+prompt with exactly two lands runs through `answerAskingDeathReplacementsFirst` in `WormsOfTheEarthHandler`,
+`MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands` joined `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`
+(keeping its old epilogue), and `WormsOfTheEarthEffectHandler.sacrificeAndDestroy` asks both lands through
+`DestructionSupport.askDeathReplacementsBeforeSacrifice` before the first sacrifice; the Worms are destroyed after.
+Tests (Dryad Arbor enchanted with Necromancer's Magemark against Kalitas, Traitor of Ghet; while asked the Arbor stays
+and nothing is logged as destroyed or sacrificed; after the return-to-hand answer it is in its owner's hand and Kalitas
+makes no Zombie): `CleansingTest.withoutPromptAsksForTheDeathReplacementBeforeAnyLandIsDestroyed` (Platinum Emperions,
+so nobody can pay), `declinedPaymentsAskForTheDeathReplacementBeforeTheArborIsDestroyed` and
+`paidLastLandAsksForTheDeathReplacementWithoutPayingAgain` (life paid once, the paid-for land stays), and
+`WormsOfTheEarthTest.loneTwoLandsAskForTheDeathReplacementBeforeEitherIsSacrificed` /
+`chosenLandsAskForTheDeathReplacementBeforeEitherIsSacrificed` (the Forest stays while asked and is sacrificed after,
+then the Worms are destroyed). Still not covered: the fallback effects' own deaths, the deferred Torment picks, Voter's
+Dilemma, `LandEquilibriumSacrifice`, the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent
+may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

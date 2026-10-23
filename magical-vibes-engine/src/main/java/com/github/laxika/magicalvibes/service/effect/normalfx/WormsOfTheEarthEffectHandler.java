@@ -96,12 +96,16 @@ public class WormsOfTheEarthEffectHandler implements NormalEffectHandlerBean {
     public void sacrificeAndDestroy(GameData gameData, Card sourceCard,
                                     WormsOfTheEarthEffect effect, List<UUID> landIds,
                                     UUID playerId) {
-        for (UUID landId : landIds) {
-            Permanent land = gameQueryService.findPermanentById(gameData, landId);
-            if (land != null && playerId.equals(gameQueryService.findPermanentController(gameData, landId))
-                    && gameQueryService.isLand(gameData, land)) {
-                destructionSupport.sacrificeAndLog(gameData, land, playerId);
-            }
+        List<Permanent> lands = landIds.stream()
+                .map(landId -> gameQueryService.findPermanentById(gameData, landId))
+                .filter(land -> land != null
+                        && playerId.equals(gameQueryService.findPermanentController(gameData, land.getId()))
+                        && gameQueryService.isLand(gameData, land))
+                .toList();
+        // CR 616.1: both lands' death replacement choices come before either is sacrificed.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, lands);
+        for (Permanent land : lands) {
+            destructionSupport.sacrificeAndLog(gameData, land, playerId);
         }
         destroySource(gameData, sourceCard, effect.sourcePermanentId());
     }

@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ public class WormsOfTheEarthHandler implements MayEffectHandlerBean {
 
     private final WormsOfTheEarthEffectHandler effectHandler;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,9 +51,14 @@ public class WormsOfTheEarthHandler implements MayEffectHandlerBean {
                 if (lands.size() > 2) {
                     effectHandler.beginLandChoice(gameData, ability.sourceCard(), effect, playerId, lands);
                 } else {
-                    effectHandler.sacrificeAndDestroy(
-                            gameData, ability.sourceCard(), effect, lands, playerId);
-                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    // Nothing changes before the two lands are sacrificed, so a land creature's competing
+                    // death replacements are asked about first and this answer is completed again (CR 616.1).
+                    permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(gameData, player, ability, true,
+                            () -> {
+                                effectHandler.sacrificeAndDestroy(
+                                        gameData, ability.sourceCard(), effect, lands, playerId);
+                                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                            });
                 }
                 return;
             }

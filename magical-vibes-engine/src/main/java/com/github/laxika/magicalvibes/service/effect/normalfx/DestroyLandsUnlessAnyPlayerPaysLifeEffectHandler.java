@@ -4,24 +4,41 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLandsUnlessAnyPlayerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
-/** Resolves Cleansing's independent pay-life-or-destroy decision for every land. */
+/**
+ * Resolves Cleansing's independent pay-life-or-destroy decision for every land; the unprotected
+ * lands are destroyed together after the last decision.
+ *
+ * <p>Nothing changes before that destruction while the spell resolves without a prompt, so a land
+ * creature with competing death replacements stops and reruns the effect (CR 616.1). After a
+ * prompt the life already paid can't be paid again, so the final destruction alone is asked about
+ * first and redone through a declined prompt without a current land, which only finishes the
+ * sequence.
+ */
 @Component
 @RequiredArgsConstructor
-public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalEffectHandlerBean {
+public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;
+    private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,24 +49,30 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var cleansing = (DestroyLandsUnlessAnyPlayerPaysLifeEffect) effect;
         if (cleansing.currentLandId() != null) {
-            offerOrDestroyCurrentLand(gameData, entry.getCard(), cleansing);
+            offerOrDestroyCurrentLand(gameData, entry.getCard(), cleansing, null);
             return;
         }
 
         List<UUID> landIds = cleansing.remainingLandIds().isEmpty()
                 ? landsInApnapOrder(gameData)
                 : cleansing.remainingLandIds();
-        beginNextLand(gameData, entry.getCard(), cleansing.lifeCost(), landIds, cleansing.unprotectedLandIds());
+        beginNextLand(gameData, entry.getCard(), cleansing.lifeCost(), landIds, cleansing.unprotectedLandIds(),
+                null);
     }
 
+    /**
+     * Continues the sequence after {@code answeringPlayerId} answered the prompt for the current
+     * land, {@code paid} saying whether the land is now protected, and finishes the answered prompt.
+     */
     public void continueAfterDecision(GameData gameData, DestroyLandsUnlessAnyPlayerPaysLifeEffect effect,
-                                      Card sourceCard, boolean paid) {
+                                      Card sourceCard, boolean paid, UUID answeringPlayerId) {
         if (paid) {
-            beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds(), effect.unprotectedLandIds());
+            beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds(), effect.unprotectedLandIds(),
+                    answeringPlayerId);
             return;
         }
 
-        offerOrDestroyCurrentLand(gameData, sourceCard, effect);
+        offerOrDestroyCurrentLand(gameData, sourceCard, effect, answeringPlayerId);
     }
 
     public boolean canPayLife(GameData gameData, UUID playerId, int lifeCost) {
@@ -59,8 +82,14 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
                 && gameData.getLife(playerId) >= lifeCost;
     }
 
+    /**
+     * Offers the next land to the players, or destroys the unprotected lands once none is left.
+     * {@code answeringPlayerId} is the player whose answer to a prompt got here, or {@code null}
+     * while the spell is still resolving.
+     */
     private void beginNextLand(GameData gameData, Card sourceCard,
-                               int lifeCost, List<UUID> landIds, List<UUID> unprotectedLandIds) {
+                               int lifeCost, List<UUID> landIds, List<UUID> unprotectedLandIds,
+                               UUID answeringPlayerId) {
         List<UUID> remainingLandIds = new ArrayList<>(landIds);
         List<UUID> unprotected = new ArrayList<>(unprotectedLandIds);
         while (!remainingLandIds.isEmpty()) {
@@ -73,27 +102,62 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
             var effect = new DestroyLandsUnlessAnyPlayerPaysLifeEffect(
                     lifeCost, remainingLandIds, landId, apnapOrder(gameData), unprotected);
             if (offerNextPayer(gameData, sourceCard, effect)) {
+                finishAnsweredPrompt(gameData, answeringPlayerId);
                 return;
             }
             unprotected.add(landId);
         }
-        destructionSupport.destroyBatch(gameData, unprotected.stream()
-                .map(id -> gameQueryService.findPermanentById(gameData, id))
-                .filter(java.util.Objects::nonNull).toList(), sourceCard.getName(), false);
+        finish(gameData, sourceCard, lifeCost, unprotected, answeringPlayerId);
     }
 
     private void offerOrDestroyCurrentLand(GameData gameData,
                                            Card sourceCard,
-                                           DestroyLandsUnlessAnyPlayerPaysLifeEffect effect) {
+                                           DestroyLandsUnlessAnyPlayerPaysLifeEffect effect,
+                                           UUID answeringPlayerId) {
         Permanent land = gameQueryService.findPermanentById(gameData, effect.currentLandId());
         if (land != null && offerNextPayer(gameData, sourceCard, effect)) {
+            finishAnsweredPrompt(gameData, answeringPlayerId);
             return;
         }
         List<UUID> unprotected = new ArrayList<>(effect.unprotectedLandIds());
         if (land != null) {
             unprotected.add(effect.currentLandId());
         }
-        beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds(), unprotected);
+        beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds(), unprotected,
+                answeringPlayerId);
+    }
+
+    private void finishAnsweredPrompt(GameData gameData, UUID answeringPlayerId) {
+        if (answeringPlayerId != null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private void finish(GameData gameData, Card sourceCard, int lifeCost, List<UUID> unprotectedLandIds,
+                        UUID answeringPlayerId) {
+        if (answeringPlayerId == null) {
+            // Still inside the spell's own resolution, whose rerun window covers the destruction.
+            destroyLands(gameData, sourceCard, unprotectedLandIds);
+            return;
+        }
+        // Reached via an answered prompt: the destruction is asked about first (CR 616.1) and redone by
+        // declining a prompt without a current land, which leads straight back here.
+        PendingMayAbility finishOnly = new PendingMayAbility(sourceCard, answeringPlayerId,
+                List.of(new DestroyLandsUnlessAnyPlayerPaysLifeEffect(
+                        lifeCost, List.of(), null, List.of(), unprotectedLandIds)),
+                "");
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(gameData,
+                new Player(answeringPlayerId, gameData.playerIdToName.get(answeringPlayerId)), finishOnly, false,
+                () -> {
+                    destroyLands(gameData, sourceCard, unprotectedLandIds);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                });
+    }
+
+    private void destroyLands(GameData gameData, Card sourceCard, List<UUID> landIds) {
+        destructionSupport.destroyBatch(gameData, landIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull).toList(), sourceCard.getName(), false);
     }
 
     private boolean offerNextPayer(GameData gameData,

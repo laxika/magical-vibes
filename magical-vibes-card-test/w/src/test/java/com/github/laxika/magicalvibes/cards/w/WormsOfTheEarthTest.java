@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GaeasTouch;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -189,5 +193,75 @@ class WormsOfTheEarthTest extends BaseCardTest {
         harness.assertLife(player1, 15);
         harness.assertNotOnBattlefield(player1, "Worms of the Earth");
         assertThat(findPermanents(player1, "Forest")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Sacrificing the only two lands asks for a Dryad Arbor's death replacement before either is sacrificed")
+    void loneTwoLandsAskForTheDeathReplacementBeforeEitherIsSacrificed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertDeathReplacementAskedWhileLandsStay(arbor);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertArborReturnedAndWormsDestroyed(arbor);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Choosing two lands asks for a Dryad Arbor's death replacement before either is sacrificed")
+    void chosenLandsAskForTheDeathReplacementBeforeEitherIsSacrificed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas();
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(arbor.getId(), findPermanents(player1, "Forest").getFirst().getId()));
+
+        assertDeathReplacementAskedWhileLandsStay(arbor);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertArborReturnedAndWormsDestroyed(arbor);
+        assertThat(findPermanents(player1, "Forest")).hasSize(1);
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private Permanent setUpEnchantedArborAgainstKalitas() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new WormsOfTheEarth());
+        return arbor;
+    }
+
+    private void assertDeathReplacementAskedWhileLandsStay(Permanent arbor) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arbor);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Worms of the Earth");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices"))
+                .isEmpty();
+    }
+
+    private void assertArborReturnedAndWormsDestroyed(Permanent arbor) {
+        assertThat(gd.playerHands.get(player1.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arbor);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Worms of the Earth");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

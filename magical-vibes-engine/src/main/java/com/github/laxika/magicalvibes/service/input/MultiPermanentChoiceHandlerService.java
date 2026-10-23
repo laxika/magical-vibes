@@ -1100,11 +1100,6 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (killsBeforeChangingAnything(context)) {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx) {
-            wormsOfTheEarthEffectHandler.sacrificeAndDestroy(
-                    gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrificeThenDamageIfSubtype ctx) {
             handleForcedSacrificeThenDamageIfSubtype(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext
@@ -2214,6 +2209,8 @@ public class MultiPermanentChoiceHandlerService {
      * {@link MultiPermanentChoiceContext.SacrificePermanentsOrElse} (Insatiable Appetite, the multi-sacrifice
      * form of "counter unless its controller sacrifices") asks its whole selection before the first
      * sacrifice, and its "if you do" or "otherwise" branch is only queued after the sacrifices.
+     * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} asks both chosen lands before the
+     * first is sacrificed; Worms of the Earth itself is destroyed after.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2247,7 +2244,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice
-                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse;
+                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse
+                || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands;
     }
 
     /**
@@ -2406,6 +2404,13 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.SacrificePermanentsOrElse ctx -> {
                 handleSacrificePermanentsOrElse(gameData, playerId, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx -> {
+                wormsOfTheEarthEffectHandler.sacrificeAndDestroy(
+                        gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
+                permanentRemovalService.removeOrphanedAuras(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
             default -> throw new IllegalStateException("Not a killing choice: " + context);
