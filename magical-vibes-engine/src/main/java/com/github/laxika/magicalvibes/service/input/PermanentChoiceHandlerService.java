@@ -243,7 +243,12 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage
                 || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage
                 || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw
-                || context instanceof PermanentChoiceContext.ExploitSacrifice;
+                || context instanceof PermanentChoiceContext.ExploitSacrifice
+                || context instanceof PermanentChoiceContext.SacrificePermanentThen
+                || context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue
+                || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature
+                || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType
+                || context instanceof PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower;
     }
 
     private void completeKillingChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
@@ -317,6 +322,24 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleSacrificeAnotherCreatureGainLifeAndDraw(gameData, permanentId, sacgld);
             case PermanentChoiceContext.ExploitSacrifice exploitSac ->
                     battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
+            case PermanentChoiceContext.SacrificePermanentThen spt ->
+                    battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
+            case PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue kethek ->
+                    battlefieldHandler.handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(
+                            gameData, permanentId, kethek);
+            case PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature descendantsFury ->
+                    battlefieldHandler.handleSacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
+                            gameData, permanentId, descendantsFury);
+            case PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType descendantsFury -> {
+                gameData.playerBattlefields.getOrDefault(descendantsFury.controllerId(), java.util.List.of()).stream()
+                        .filter(permanent -> permanent.getId().equals(permanentId))
+                        .findFirst()
+                        .ifPresent(permanent -> descendantsFuryEffectHandler.resolveAfterChoice(
+                                gameData, descendantsFury.sourceCard(), descendantsFury.controllerId(), permanent));
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            case PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower rupture ->
+                    battlefieldHandler.handleSacrificeCreatureThenMassDamageEqualToPower(gameData, permanentId, rupture);
             default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
         }
     }
@@ -771,22 +794,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAnyPlayerMaySacrificeLandPutSourceOnTop(gameData, permanentId, ams);
         } else if (context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell ams) {
             battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
-        } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {
-            battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
-        } else if (context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue kethek) {
-            battlefieldHandler.handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(gameData, permanentId, kethek);
-        } else if (context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature descendantsFury) {
-            battlefieldHandler.handleSacrificeOneOfCombatDamageDealersThenRevealMatchingCreature(
-                    gameData, permanentId, descendantsFury);
-        } else if (context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType descendantsFury) {
-            gameData.playerBattlefields.getOrDefault(descendantsFury.controllerId(), java.util.List.of()).stream()
-                    .filter(permanent -> permanent.getId().equals(permanentId))
-                    .findFirst()
-                    .ifPresent(permanent -> descendantsFuryEffectHandler.resolveAfterChoice(
-                            gameData, descendantsFury.sourceCard(), descendantsFury.controllerId(), permanent));
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower rupture) {
-            battlefieldHandler.handleSacrificeCreatureThenMassDamageEqualToPower(gameData, permanentId, rupture);
         } else if (context instanceof PermanentChoiceContext.ExploitTriggerTarget exploitTt) {
             triggerHandler.handleExploitTrigger(gameData, permanentId, exploitTt);
         } else if (context instanceof PermanentChoiceContext.ExploitPermanentTriggerTarget exploitPt) {
