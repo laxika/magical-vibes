@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ public class ChooseCreatureOrPlaneswalkerDestroyRestEffectHandler implements Nor
             new PermanentIsPlaneswalkerPredicate()));
 
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -40,7 +42,8 @@ public class ChooseCreatureOrPlaneswalkerDestroyRestEffectHandler implements Nor
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
                 if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
-                        CREATURE_OR_PLANESWALKER)) {
+                        CREATURE_OR_PLANESWALKER)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     matchingIds.add(permanent.getId());
                 }
             }

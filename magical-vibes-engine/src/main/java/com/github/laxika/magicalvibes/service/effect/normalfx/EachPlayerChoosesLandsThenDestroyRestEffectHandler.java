@@ -78,7 +78,8 @@ public class EachPlayerChoosesLandsThenDestroyRestEffectHandler implements Norma
 
     private List<UUID> landIds(GameData gameData, UUID playerId) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> gameQueryService.isLand(gameData, permanent));
+                permanent -> gameQueryService.isLand(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent));
     }
 
     private void destroyRest(GameData gameData, Set<UUID> keptIds, String sourceName) {

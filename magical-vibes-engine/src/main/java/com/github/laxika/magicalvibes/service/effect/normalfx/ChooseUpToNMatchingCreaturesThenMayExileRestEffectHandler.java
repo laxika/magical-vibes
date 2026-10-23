@@ -44,7 +44,8 @@ public class ChooseUpToNMatchingCreaturesThenMayExileRestEffectHandler
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, choiceEffect.choiceFilter())) {
+                        gameData, permanent, choiceEffect.choiceFilter())
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     candidateIds.add(permanent.getId());
                 }
             }

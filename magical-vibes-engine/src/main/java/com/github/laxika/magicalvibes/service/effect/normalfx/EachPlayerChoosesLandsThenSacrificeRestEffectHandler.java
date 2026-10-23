@@ -78,7 +78,8 @@ public class EachPlayerChoosesLandsThenSacrificeRestEffectHandler implements Nor
 
     private List<UUID> landIds(GameData gameData, UUID playerId) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
-                permanent -> gameQueryService.isLand(gameData, permanent));
+                permanent -> gameQueryService.isLand(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent));
     }
 
     private void sacrificeRest(GameData gameData, Set<UUID> keptIds, String sourceName) {

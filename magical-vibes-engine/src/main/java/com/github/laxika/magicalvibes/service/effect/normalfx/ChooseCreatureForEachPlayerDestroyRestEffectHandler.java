@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureForEachPlayerDestroyRestEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class ChooseCreatureForEachPlayerDestroyRestEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -40,7 +42,8 @@ public class ChooseCreatureForEachPlayerDestroyRestEffectHandler implements Norm
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
                     if (predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, permanent, choiceEffect.choiceFilter())) {
+                            gameData, permanent, choiceEffect.choiceFilter())
+                            && !gameQueryService.cantBeChosen(gameData, permanent)) {
                         choices.add(permanent);
                     }
                 }

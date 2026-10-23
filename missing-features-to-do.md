@@ -47,13 +47,12 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 Reckoning, card-name answers and name-suggestion lists (`InteractionPromptProjectionRegistry`), and the
 candidate lists of resolution-time "sacrifice a/N permanent(s)" effects (`GameQueryService.cantBeChosenToSacrifice`,
 used by `SacrificePermanentsEffectHandler`, `DestructionSupport.performSacrificeCreatureForPlayer`, the
-each-player/each-opponent/target-player sacrifice handlers, devour), and AI name choices
-(`ColorChoiceAiStrategy.answerWith` swaps an unchoosable name for a choosable one). Still ignoring it:
+each-player/each-opponent/target-player sacrifice handlers, devour), AI name choices
+(`ColorChoiceAiStrategy.answerWith` swaps an unchoosable name for a choosable one), and the keep
+candidates of every "choose N to keep, then sacrifice/destroy/return/phase out the rest" handler (Glimpse
+can't be kept, so it goes with the rest). Still ignoring it:
 - sacrifice-as-a-cost choices (`GameQueryService.canSacrificePermanentForCosts` and the cost handlers; that
   helper is also used by "sacrifice all" and "sacrifice this" costs, so it can't simply call `cantBeChosen`);
-- "choose N to keep, then sacrifice/destroy the rest" effects that auto-keep when there is one candidate
-  (`EachPlayerChoosesCreatureThenSacrificesRestEffectHandler`, party, vow, lands-of-each-type, …) — there
-  Glimpse can't be kept, so it should be sacrificed with the rest;
 - other single-candidate auto-picks that are not sacrifices (for example Turf War, transform-chosen-permanent,
   `SacrificeCreatureWithLeastToughnessEffectHandler`'s tie-break, Make an Example piles).
 
@@ -64,8 +63,8 @@ has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when G
 
 ```
 Finish "can't be chosen" support for Glimpse, the Unthinkable (missing-features-to-do.md entry 21): make
-sacrifice-cost choices, "choose to keep, sacrifice the rest" auto-picks and the remaining non-sacrifice
-single-candidate permanent choices honour CantBeChosenEffect. Add tests to GlimpseTheUnthinkablePlaytestTest first.
+sacrifice-cost choices and the remaining non-sacrifice single-candidate permanent choices honour
+CantBeChosenEffect. Add tests to GlimpseTheUnthinkablePlaytestTest first.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

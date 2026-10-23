@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesPermanentsThenDestroyRestEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class EachPlayerChoosesPermanentsThenDestroyRestEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -70,6 +72,7 @@ public class EachPlayerChoosesPermanentsThenDestroyRestEffectHandler implements 
         return battlefield.stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, effect.filter()))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
     }
 

@@ -107,7 +107,8 @@ public class EachPlayerChoosesPartyThenSacrificesRestEffectHandler implements No
         for (Permanent permanent : battlefield) {
             if (!kept.contains(permanent.getId())
                     && gameQueryService.isCreature(gameData, permanent)
-                    && isPartyRole(gameData, permanent, role)) {
+                    && isPartyRole(gameData, permanent, role)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 candidates.add(permanent.getId());
             }
         }

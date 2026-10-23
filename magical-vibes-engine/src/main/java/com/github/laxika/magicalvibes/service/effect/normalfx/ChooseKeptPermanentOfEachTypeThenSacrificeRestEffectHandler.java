@@ -154,7 +154,8 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
     private List<UUID> candidates(GameData gameData, UUID playerId, CardType type, boolean includeLands) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
                 permanent -> (includeLands || !gameQueryService.isLand(gameData, permanent))
-                        && matchesType(gameData, permanent, type));
+                        && matchesType(gameData, permanent, type)
+                        && !gameQueryService.cantBeChosen(gameData, permanent));
     }
 
     private boolean matchesType(GameData gameData, Permanent permanent, CardType type) {

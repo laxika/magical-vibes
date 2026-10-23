@@ -61,7 +61,7 @@ public class EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
         for (int currentPlayerIndex = playerIndex; currentPlayerIndex < playerIds.size(); currentPlayerIndex++) {
             UUID playerId = playerIds.get(currentPlayerIndex);
             List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, playerId,
-                    ignored -> true);
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (candidates.isEmpty()) {
                 continue;
             }

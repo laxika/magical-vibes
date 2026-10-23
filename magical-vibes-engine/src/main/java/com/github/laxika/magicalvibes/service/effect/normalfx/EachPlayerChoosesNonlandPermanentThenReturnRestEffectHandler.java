@@ -82,6 +82,7 @@ public class EachPlayerChoosesNonlandPermanentThenReturnRestEffectHandler
     private List<UUID> nonlandPermanentIds(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

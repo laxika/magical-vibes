@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesPermanentsThenPhaseOutRestEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class EachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler
         implements NormalEffectHandlerBean {
 
     private final PhasingService phasingService;
+    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -84,6 +86,7 @@ public class EachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler
 
     private List<UUID> controlledPermanentIds(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

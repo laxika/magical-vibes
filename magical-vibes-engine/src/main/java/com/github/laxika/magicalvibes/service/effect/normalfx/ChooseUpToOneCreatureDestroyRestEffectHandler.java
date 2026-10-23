@@ -31,7 +31,8 @@ public class ChooseUpToOneCreatureDestroyRestEffectHandler implements NormalEffe
         List<UUID> creatureIds = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     creatureIds.add(permanent.getId());
                 }
             }

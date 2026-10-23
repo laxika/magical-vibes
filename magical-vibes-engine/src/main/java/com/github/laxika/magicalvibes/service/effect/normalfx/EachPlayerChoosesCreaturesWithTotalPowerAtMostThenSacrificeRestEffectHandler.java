@@ -93,7 +93,8 @@ public class EachPlayerChoosesCreaturesWithTotalPowerAtMostThenSacrificeRestEffe
     }
 
     private List<UUID> collectCreatureIds(GameData gameData, UUID playerId) {
-        return destructionSupport.collectCreatureIds(gameData, playerId, p -> true);
+        return destructionSupport.collectCreatureIds(gameData, playerId,
+                permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

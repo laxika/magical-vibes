@@ -48,7 +48,8 @@ public class TargetPlayerChoosesCreatureRestCantBlockEffectHandler implements No
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm)) {
+                if (gameQueryService.isCreature(gameData, perm)
+                        && !gameQueryService.cantBeChosen(gameData, perm)) {
                     creatureIds.add(perm.getId());
                 }
             }

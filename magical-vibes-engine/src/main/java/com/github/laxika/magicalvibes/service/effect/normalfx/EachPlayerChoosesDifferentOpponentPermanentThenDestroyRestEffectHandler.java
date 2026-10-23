@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffectHan
         implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -98,7 +100,8 @@ public class EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffectHan
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
                 if (!alreadyChosen.contains(permanent.getId())
                         && predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, filter, filterContext)) {
+                        permanent, filter, filterContext)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     candidateIds.add(permanent.getId());
                 }
             }

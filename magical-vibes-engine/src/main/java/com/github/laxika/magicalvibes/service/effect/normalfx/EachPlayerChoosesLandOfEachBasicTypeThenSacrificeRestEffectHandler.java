@@ -95,7 +95,8 @@ public class EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffectHandler
     private List<UUID> candidates(GameData gameData, UUID playerId, CardSubtype type) {
         return destructionSupport.collectPermanentIds(gameData, playerId,
                 permanent -> gameQueryService.isLand(gameData, permanent)
-                        && gameQueryService.effectiveBasicLandTypes(gameData, permanent).contains(type));
+                        && gameQueryService.effectiveBasicLandTypes(gameData, permanent).contains(type)
+                        && !gameQueryService.cantBeChosen(gameData, permanent));
     }
 
     private void sacrificeRest(GameData gameData, List<UUID> keptIds, String sourceName) {

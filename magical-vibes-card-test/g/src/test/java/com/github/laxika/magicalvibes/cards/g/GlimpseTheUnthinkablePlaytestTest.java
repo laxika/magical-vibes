@@ -1,12 +1,19 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDepravity;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.d.DivineReckoning;
+import com.github.laxika.magicalvibes.cards.d.Duneblast;
 import com.github.laxika.magicalvibes.cards.i.InnocentBlood;
 import com.github.laxika.magicalvibes.cards.n.Nevermore;
 import com.github.laxika.magicalvibes.cards.p.PathOfPeace;
+import com.github.laxika.magicalvibes.cards.p.PromiseOfLoyalty;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GlimpseTheUnthinkablePlaytest.class, PathOfPeace.class, DivineReckoning.class, Nevermore.class,
-        DiabolicEdict.class, InnocentBlood.class, GrizzlyBears.class})
+        DiabolicEdict.class, InnocentBlood.class, GrizzlyBears.class, PromiseOfLoyalty.class, Duneblast.class,
+        ArchfiendOfDepravity.class})
 class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
 
     @Test
@@ -137,5 +145,88 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
         assertThat(names).contains("Grizzly Bears").doesNotContain("Glimpse, the Unthinkable");
 
         harness.handleListChoice(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A keep-one-then-sacrifice-the-rest effect sacrifices Glimpse when it is the only creature")
+    void keepOneEffectSacrificesGlimpseAsOnlyCreature() {
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+
+        castPromiseOfLoyalty();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player2, "Glimpse, the Unthinkable");
+        harness.assertInGraveyard(player2, "Glimpse, the Unthinkable");
+    }
+
+    @Test
+    @DisplayName("A keep-one effect keeps the other creature without a prompt and sacrifices Glimpse")
+    void keepOneEffectKeepsOtherCreatureAutomatically() {
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castPromiseOfLoyalty();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
+        assertThat(bears.getCounterCount(CounterType.VOW)).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Glimpse, the Unthinkable");
+    }
+
+    @Test
+    @DisplayName("Choose-up-to-one-then-destroy-the-rest destroys Glimpse without a prompt when it is the only creature")
+    void chooseUpToOneDestroyRestDestroysGlimpse() {
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+
+        harness.castFromHand(player1, new Duneblast(), "{4}{W}{B}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Glimpse, the Unthinkable");
+    }
+
+    @Test
+    @DisplayName("Keeping up to two creatures can't keep Glimpse, so it is sacrificed with the rest")
+    void keepUpToTwoCannotKeepGlimpse() {
+        harness.addToBattlefield(player1, new ArchfiendOfDepravity());
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player2, new GlimpseTheUnthinkablePlaytest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToEndStep(player2);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(bears.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(glimpse.getCard());
+    }
+
+    @Test
+    @DisplayName("Keeping up to two creatures sacrifices Glimpse without a prompt when it is the only creature")
+    void keepUpToTwoSacrificesGlimpseAsOnlyCreature() {
+        harness.addToBattlefield(player1, new ArchfiendOfDepravity());
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Glimpse, the Unthinkable");
+    }
+
+    private void castPromiseOfLoyalty() {
+        harness.setHand(player1, List.of(new PromiseOfLoyalty()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    private void advanceToEndStep(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        harness.passBothPriorities();
     }
 }

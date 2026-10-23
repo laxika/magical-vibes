@@ -59,7 +59,7 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
         while (index < playerIds.size()) {
             UUID playerId = playerIds.get(index);
             List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, playerId,
-                    ignored -> true);
+                    permanent -> !gameQueryService.cantBeChosen(gameData, permanent));
             if (creatureIds.isEmpty()) {
                 index++;
                 continue;

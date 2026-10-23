@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerChoosesUpToPermanentsThenSacrificesRestEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class PlayerChoosesUpToPermanentsThenSacrificesRestEffectHandler
         implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -55,11 +57,19 @@ public class PlayerChoosesUpToPermanentsThenSacrificesRestEffectHandler
             return;
         }
 
+        List<UUID> choosableIds = candidateIds.stream()
+                .filter(id -> !gameQueryService.cantBeChosen(gameData, gameQueryService.findPermanentById(gameData, id)))
+                .toList();
+        if (choosableIds.isEmpty()) {
+            destructionSupport.performSimultaneousSacrifice(gameData, candidateIds);
+            return;
+        }
+
         playerInputService.beginMultiPermanentChoice(
                 gameData,
                 playerId,
-                candidateIds,
-                Math.min(choiceEffect.maxCount(), candidateIds.size()),
+                choosableIds,
+                Math.min(choiceEffect.maxCount(), choosableIds.size()),
                 new MultiPermanentChoiceContext.PlayerChoosesUpToPermanentsThenSacrificesRestChoice(
                         List.copyOf(candidateIds)),
                 "Choose up to " + choiceEffect.maxCount() + " permanents to keep.");
