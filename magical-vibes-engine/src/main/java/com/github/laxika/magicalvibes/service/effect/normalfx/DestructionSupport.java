@@ -276,18 +276,29 @@ public class DestructionSupport {
         }
 
         List<Permanent> actuallyDying = new ArrayList<>();
+        boolean destructionReplaced = false;
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
                 continue;
             }
             if (damagePreventionService.replaceDestructionWithShieldCounter(perm)) {
+                destructionReplaced = true;
                 continue;
             }
             if (graveyardService.tryReplaceDestruction(gameData, perm, !cannotBeRegenerated)) {
+                destructionReplaced = true;
                 continue;
             }
             actuallyDying.add(perm);
         }
+        if (destructionReplaced) {
+            // A shield counter or regeneration already changed the game, so the effect can't be
+            // stopped and resolved again for a death replacement choice.
+            gameData.deathReplacementsCanRerunEffect = false;
+        }
+        // CR 616.1: the whole batch's death replacement choices come before any of it is destroyed.
+        permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, actuallyDying);
+        gameData.deathReplacementsCanRerunEffect = false;
 
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {

@@ -391,6 +391,9 @@ public class PermanentRemovalService {
         if (chosenReplacement == null) {
             chosenReplacement = gameData.chosenStateBasedDeathReplacements.remove(target.getId());
         }
+        if (chosenReplacement == null) {
+            chosenReplacement = gameData.chosenDeathReplacementsForRerun.remove(target.getId());
+        }
         boolean declinedMayLibrary = chosenReplacement != null
                 && chosenReplacement.kind() == DeathExileReplacement.Kind.NO_REPLACEMENT;
         if (declinedMayLibrary) {
@@ -408,8 +411,9 @@ public class PermanentRemovalService {
                     // Every option exiles it, so it leaves with its event; the choice only picks the rider.
                     riderOptions = options;
                 } else {
+                    askDeathReplacementsBeforeRemoval(gameData, List.of(target));
                     promptDeathExileReplacement(gameData, target, options, destroyedBySpellOrAbility,
-                            wasSacrificed, destinationPlayerId, false);
+                            wasSacrificed, destinationPlayerId, false, false);
                     return false;
                 }
             }
@@ -656,12 +660,14 @@ public class PermanentRemovalService {
     private void promptDeathExileReplacement(GameData gameData, Permanent target,
                                              List<DeathExileReplacement> options,
                                              boolean destroyedBySpellOrAbility, boolean wasSacrificed,
-                                             UUID destinationPlayerId, boolean stateBased) {
+                                             UUID destinationPlayerId, boolean stateBased,
+                                             boolean rerunsEffect) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         openDeathReplacementChoice(gameData, new PendingInteraction.ColorChoice(
                 controllerId, target.getId(), null,
                 new ChoiceContext.DeathExileReplacementChoice(target.getId(), options,
-                        destroyedBySpellOrAbility, wasSacrificed, destinationPlayerId, stateBased),
+                        destroyedBySpellOrAbility, wasSacrificed, destinationPlayerId, stateBased,
+                        rerunsEffect),
                 options.stream().map(DeathExileReplacement::label).toList(),
                 "Choose which replacement effect applies to " + target.getCard().getName() + " dying."));
     }
@@ -710,21 +716,15 @@ public class PermanentRemovalService {
             return true;
         }
         boolean prompted = false;
-        int playerCount = gameData.orderedPlayerIds.size();
-        int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
-        List<Permanent> apnapOrder = new ArrayList<>(dying);
-        apnapOrder.sort(java.util.Comparator.comparingInt(permanent -> Math.floorMod(gameData.orderedPlayerIds
-                .indexOf(gameQueryService.findPermanentController(gameData, permanent.getId())) - activeIndex,
-                playerCount)));
         beginDeathReplacementChoiceBatch(gameData);
         try {
-            for (Permanent permanent : apnapOrder) {
+            for (Permanent permanent : inApnapOrder(gameData, dying)) {
                 if (gameData.chosenStateBasedDeathReplacements.containsKey(permanent.getId())) {
                     continue;
                 }
                 List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, permanent);
                 if (options.size() > 1) {
-                    promptDeathExileReplacement(gameData, permanent, options, false, false, null, true);
+                    promptDeathExileReplacement(gameData, permanent, options, false, false, null, true, false);
                     prompted = true;
                 } else if (findMayLibraryReplacement(gameData, permanent) != null) {
                     // Its only replacement is a "may": asked through the usual prompt, recorded for the batch.
@@ -737,6 +737,53 @@ public class PermanentRemovalService {
             endDeathReplacementChoiceBatch(gameData);
         }
         return prompted;
+    }
+
+    /**
+     * CR 616.1 for deaths a resolving effect causes: while that effect has changed nothing yet
+     * ({@link GameData#deathReplacementsCanRerunEffect}), asks each controller of a creature in
+     * {@code dying} whose competing death replacements include one that keeps the card which one
+     * applies, in APNAP order, then stops the effect with {@link DeathReplacementChoicePending} so
+     * it is resolved again once every answer is in. The creatures stay on the battlefield until
+     * then, and the rerun's deaths consume the answers. Does nothing when no such choice is needed
+     * or the effect has already changed the game.
+     */
+    public void askDeathReplacementsBeforeRemoval(GameData gameData, List<Permanent> dying) {
+        if (!gameData.deathReplacementsCanRerunEffect) {
+            return;
+        }
+        boolean prompted = false;
+        beginDeathReplacementChoiceBatch(gameData);
+        try {
+            for (Permanent permanent : inApnapOrder(gameData, dying)) {
+                if (gameData.chosenDeathReplacementsForRerun.containsKey(permanent.getId())
+                        || isDeathExileReplacementChoicePending(gameData, permanent.getId())) {
+                    continue;
+                }
+                List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, permanent);
+                if (options.size() > 1 && !options.stream().allMatch(option -> option.kind().exiles())) {
+                    promptDeathExileReplacement(gameData, permanent, options, false, false, null, false, true);
+                    prompted = true;
+                }
+            }
+        } finally {
+            endDeathReplacementChoiceBatch(gameData);
+        }
+        if (prompted) {
+            gameData.deathReplacementsCanRerunEffect = false;
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            throw new DeathReplacementChoicePending();
+        }
+    }
+
+    private List<Permanent> inApnapOrder(GameData gameData, List<Permanent> permanents) {
+        int playerCount = gameData.orderedPlayerIds.size();
+        int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
+        List<Permanent> apnapOrder = new ArrayList<>(permanents);
+        apnapOrder.sort(java.util.Comparator.comparingInt(permanent -> Math.floorMod(gameData.orderedPlayerIds
+                .indexOf(gameQueryService.findPermanentController(gameData, permanent.getId())) - activeIndex,
+                playerCount)));
+        return apnapOrder;
     }
 
     /**
@@ -764,6 +811,10 @@ public class PermanentRemovalService {
                                                    ChoiceContext.DeathExileReplacementChoice choice,
                                                    String label) {
         DeathExileReplacement chosen = chosenOption(choice.options(), label);
+        if (choice.rerunsEffect()) {
+            // The effect waiting on this answer was parked to resolve again; it must not rerun twice.
+            gameData.rerunCurrentEffectAfterInteraction = false;
+        }
         Permanent target = gameQueryService.findPermanentById(gameData, choice.permanentId());
         if (target == null) {
             return;
@@ -772,6 +823,10 @@ public class PermanentRemovalService {
                 ": its controller chooses \"" + chosen.label() + "\" as the replacement effect."));
         if (choice.stateBased()) {
             gameData.chosenStateBasedDeathReplacements.put(target.getId(), chosen);
+            return;
+        }
+        if (choice.rerunsEffect()) {
+            gameData.chosenDeathReplacementsForRerun.put(target.getId(), chosen);
             return;
         }
         boolean removed = removePermanentToGraveyard(gameData, target, choice.destroyedBySpellOrAbility(), true,
@@ -1810,6 +1865,17 @@ public class PermanentRemovalService {
     /** Allows a resolving effect to reattach an Aura before orphaned attachments are cleaned up. */
     public boolean tryDestroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated,
                                        boolean cleanUpAttachments) {
+        try {
+            return destroyPermanent(gameData, target, cannotBeRegenerated, cleanUpAttachments);
+        } finally {
+            // Indestructible, shield counters and regeneration change the game without removing
+            // anything, so a later death of the same effect can no longer stop it and resolve it again.
+            gameData.deathReplacementsCanRerunEffect = false;
+        }
+    }
+
+    private boolean destroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated,
+                                     boolean cleanUpAttachments) {
         if (gameQueryService.cantBeAffectedByOwnEffects(
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
@@ -2281,6 +2347,7 @@ public class PermanentRemovalService {
     }
 
     private Optional<RemovedPermanentInfo> removeFromBattlefield(GameData gameData, Permanent target) {
+        gameData.deathReplacementsCanRerunEffect = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {

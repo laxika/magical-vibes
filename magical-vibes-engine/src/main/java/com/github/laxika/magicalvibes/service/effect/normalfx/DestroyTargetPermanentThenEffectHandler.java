@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
@@ -46,7 +47,7 @@ import org.springframework.beans.factory.ObjectProvider;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHandlerBean {
+public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
@@ -130,6 +131,9 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         if (!entry.isNonTargeting() || departedId == null || e.thenCondition() != null || e.requiresDestruction()) {
             return;
         }
+        // Nothing is destroyed, so the then-effect is this handler's first change; it may change
+        // the game before a death of its own, so it can't be stopped and resolved again.
+        gameData.deathReplacementsCanRerunEffect = false;
         Card lastKnownCard = entry.lastKnownPermanentCard(departedId);
         Integer lastKnownToughness = entry.getLastKnownPermanentToughnesses().get(departedId);
         Integer lastKnownPower = entry.getLastKnownPermanentPowers().get(departedId);

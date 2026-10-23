@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GisaGloriousResurrector;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LiesaForgottenArchangel;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SlaughterDrone;
 import com.github.laxika.magicalvibes.cards.t.TarSnare;
@@ -268,6 +269,34 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(gravebane.getCard().getId())).isNotNull();
         assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, Murder.class})
+    @DisplayName("Murder on Gravebane Zombie asks library-or-Kalitas while Murder resolves, then the Zombie leaves")
+    void murderAsksForTheDeathReplacementBeforeTheZombieLeaves() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Card murder = new Murder();
+        harness.setHand(player1, List.of(murder));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, gravebane.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(murder.getId());
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertInGraveyard(player1, "Murder");
+        assertThat(gd.stack).isEmpty();
+        assertThat(countTokens(player1, "Zombie")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

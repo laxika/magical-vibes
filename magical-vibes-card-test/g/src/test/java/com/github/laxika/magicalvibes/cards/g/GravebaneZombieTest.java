@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.a.Abduction;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -137,6 +139,65 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
         harness.assertInGraveyard(player1, "Gravebane Zombie");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(filler);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GrislySpectacle.class})
+    @DisplayName("Chosen over Kalitas, it goes on top of the library before Grisly Spectacle's mill")
+    void libraryChosenBeforeTheRestOfTheDestroyingEffect() {
+        Card first = new WrathOfGod();
+        Card second = new WrathOfGod();
+        Card third = new WrathOfGod();
+        Card fourth = new WrathOfGod();
+        harness.setLibrary(player2, List.of(first, second, third, fourth));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.setHand(player1, List.of(new GrislySpectacle()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        // CR 608.2c: the Zombie is put on top first, then its controller mills three (its power).
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(zombie.getCard(), first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third, fourth);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GrizzlyBears.class})
+    @DisplayName("Under Wrath of God, its replacement is chosen before any creature is destroyed")
+    void wrathAsksBeforeAnyCreatureIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        destroyWithWrathOfGod(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Kalitas, Traitor of Ghet");
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void destroyWithWrathOfGod(Player caster) {

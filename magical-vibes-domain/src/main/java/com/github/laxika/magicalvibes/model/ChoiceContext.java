@@ -234,12 +234,15 @@ public sealed interface ChoiceContext {
      * {@code options} applies before the creature leaves the battlefield. For a state-based death
      * ({@code stateBased}) the choice is recorded and the whole state-based batch is performed once
      * every such choice is made. Elsewhere this is only asked when an option sends the creature
-     * somewhere other than exile; its removal then resumes with the chosen option and the removal's
+     * somewhere other than exile. When it was asked before the resolving effect changed anything
+     * ({@code rerunsEffect}), the choice is recorded and the effect is resolved again, its death
+     * consuming the choice. Otherwise its removal resumes with the chosen option and the removal's
      * original flags.
      */
     record DeathExileReplacementChoice(UUID permanentId, List<DeathExileReplacement> options,
                                        boolean destroyedBySpellOrAbility, boolean wasSacrificed,
-                                       UUID destinationPlayerId, boolean stateBased) implements ChoiceContext {
+                                       UUID destinationPlayerId, boolean stateBased,
+                                       boolean rerunsEffect) implements ChoiceContext {
         public DeathExileReplacementChoice {
             options = List.copyOf(options);
         }

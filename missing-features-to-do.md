@@ -11,48 +11,55 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 34. Asking death replacements before the creature leaves, outside state-based actions
 
-**Status:** open · **Found:** 2026-10-18, while implementing CR 616.1 death replacement ordering
+**Status:** open (partly done) · **Found:** 2026-10-18, while implementing CR 616.1 death replacement ordering
 
 **Failing tests:**
-- None yet. Write one first: Kalitas, Traitor of Ghet on one side, Gravebane Zombie on the other, and
-  Murder (or Diabolic Edict) on the Zombie. Expect the Zombie's controller to be asked "library or
-  Kalitas" while the Murder is still resolving, with the Zombie leaving inside the Murder's event.
+- None yet. Write one per remaining gap, e.g. Kalitas, Traitor of Ghet on one side, Gravebane Zombie
+  on the other and Diabolic Edict while the Zombie's controller also has another creature (the sacrifice
+  happens in the choice completion), or the Zombie sacrificed as a cost with Rest in Peace out.
+
+**What landed (2026-10-23).** A resolving effect whose handler implements `AsksDeathReplacementsFirst`
+(changes nothing before its first removal attempt) is stopped before anything happens when a creature
+it would kill has competing death replacements and one keeps the card. The controller answers a
+`DeathExileReplacementChoice` with `rerunsEffect`, the effect is parked and resolved again
+(`rerunCurrentEffectAfterInteraction`), and the rerun's deaths consume the answers from
+`GameData.chosenDeathReplacementsForRerun`. `DestructionSupport` batches ask every member before any
+is destroyed. Marked so far: `DestroyTargetPermanentEffectHandler`, `DestroyTargetPermanentThenEffectHandler`
+and `DestroyAllPermanentsEffectHandler`. Tests: `GravebaneZombieTest` (Grisly Spectacle's mill sees the
+Zombie on top of the library; Wrath of God asks before any creature is destroyed) and
+`KalitasTraitorOfGhetTest.murderAsksForTheDeathReplacementBeforeTheZombieLeaves`.
 
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
-dies, its controller chooses one, and the event then happens with that choice. State-based deaths do
-this already (`PermanentRemovalService.awaitStateBasedDeathReplacementChoices` asks first, then the
-batch dies together). Outside state-based actions, a death whose options all exile leaves at once and
-the controller picks the rider afterwards (`DeathExileRiderChoice`), which gives the same outcome.
-The remaining gaps:
-- When one option keeps the card (Firestorm Phoenix's return to hand, Gravebane Zombie's library,
-  Pulmonic Sliver's "may"), the creature stays on the battlefield until its controller answers
-  (`DeathExileReplacementChoice` with `stateBased = false`). Meanwhile the resolving effect carries
-  on: a sacrifice reports failure (cost payment, "sacrifice, then…" handlers), "destroy, then…"
-  steps run with the creature still there, and creatures dying with it lose CR 603.10a look-back.
-- A rider chosen during resolution is applied after the rest of the *same* effect handler. Later
-  effects of the spell already wait (`EffectResolutionService` parks them).
+dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
+where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
+neither `stateBased` nor `rerunsEffect`) while the effect carries on:
+- Handlers not marked `AsksDeathReplacementsFirst`, notably `SacrificePermanentsEffectHandler` (431
+  lines, many paths, not yet reviewed for "nothing before the first removal") and the other ~40
+  destroy handlers that use `DestructionSupport`. Each needs review before it is marked.
+- Deaths after an earlier change of the same handler (a second removal, damage, a regeneration or
+  shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
+- Deaths in an interaction's completion rather than in the handler (an edict whose player picks one
+  of several creatures, "sacrifice, then" multi-choices), and sacrifices paid as costs.
+- Pulmonic Sliver's lone "may" (one option, asked through the may prompt) outside state-based actions.
 
-**Why it's large.** Doing it right means asking before the creature leaves, inside a running effect
-handler or a cost payment, and the engine can't pause a handler partway through. Approaches looked at:
+**Why it's large.** Approaches looked at:
 - Leave the battlefield now and choose the destination later: the hand, library and graveyard
   pipelines fire different leave-the-battlefield triggers depending on the destination, so delaying
   them loses their look-back.
-- Simulate the effect on a copy of `GameData` first, collect the death questions, ask them, then
-  resolve for real with the answers: needs engine services to run on a copy mid-resolution, and
-  still misses deaths that come after another prompt inside the effect.
-- A death journal like `DamageJournal`, re-running the effect after the answer: every handler would
-  need to be safe to re-run (choices, tokens, life changes made before the death replay correctly).
+- Simulate the effect on a copy of `GameData` first: needs engine services to run on a copy
+  mid-resolution, and still misses deaths that come after another prompt inside the effect.
+- Stop and rerun (what landed): only safe for handlers proven to change nothing first. Extending it
+  to choice completions would need the completion re-dispatched with the same answer after the death
+  choice, and to costs a rerun of the activation's cost payment.
 
 **Prompt to start it:**
 
 ```
-Implement missing-features-to-do.md entry 34: outside state-based actions, competing death
-replacements where one option keeps the card (hand/library) must be chosen before the creature
-leaves, without leaving it on the battlefield while the effect keeps resolving. Start from
-PermanentRemovalService.removePermanentToGraveyard (the DeathExileReplacementChoice path with
-stateBased = false) and EffectResolutionService's rerunCurrentEffectAfterInteraction. Write the
-Kalitas + Gravebane Zombie + Murder test first. Don't run the full test suite; ask me.
-Don't commit until I say so.
+Continue missing-features-to-do.md entry 34: extend the CR 616.1 "ask before the creature leaves"
+rerun window (AsksDeathReplacementsFirst, PermanentRemovalService.askDeathReplacementsBeforeRemoval,
+GameData.chosenDeathReplacementsForRerun) to sacrifice effects and the remaining destroy handlers,
+reviewing each handler for changes before its first removal. Write a failing Kalitas + Gravebane
+Zombie test per case first. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

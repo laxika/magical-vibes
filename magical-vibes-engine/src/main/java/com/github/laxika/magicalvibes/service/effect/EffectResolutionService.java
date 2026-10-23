@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.DeathReplacementChoicePending;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
@@ -464,9 +465,28 @@ public class EffectResolutionService {
                 if (handler != null) {
                     beginCollectingSimultaneousDamage(gameData, entry, i);
                     damageJournalService.beginEffect(gameData, entry, i);
+                    // CR 616.1: a creature this effect would kill may need its death replacement
+                    // chosen before it leaves; a marked handler can then be stopped and run again. A
+                    // handler nested inside another one closes the window, since the outer one has
+                    // already begun.
+                    boolean deathReplacementRerunWindow = gameData.effectResolutionDepth == 1
+                            && handler instanceof AsksDeathReplacementsFirst
+                            && (gameData.pendingEffectResolutionEntry == null
+                            || gameData.pendingEffectResolutionEntry == entry);
+                    gameData.deathReplacementsCanRerunEffect = deathReplacementRerunWindow;
+                    boolean stoppedForDeathReplacement = false;
                     try {
                         handler.resolve(gameData, entry, effectToResolve);
+                    } catch (DeathReplacementChoicePending pending) {
+                        if (!deathReplacementRerunWindow) {
+                            throw pending;
+                        }
+                        stoppedForDeathReplacement = true;
                     } finally {
+                        gameData.deathReplacementsCanRerunEffect = false;
+                        if (deathReplacementRerunWindow && !stoppedForDeathReplacement) {
+                            gameData.chosenDeathReplacementsForRerun.clear();
+                        }
                         damageJournalService.endEffect(gameData);
                         gameData.collectingDamageEvent = null;
                     }

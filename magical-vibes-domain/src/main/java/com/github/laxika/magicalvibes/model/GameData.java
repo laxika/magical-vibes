@@ -2886,6 +2886,19 @@ public class GameData {
      * {@link #chosenStateBasedDeathReplacements}.
      */
     public final Set<UUID> stateBasedMayLibraryChoices = ConcurrentHashMap.newKeySet();
+    /**
+     * CR 616.1 outside state-based actions: {@code true} while the resolving effect's handler has
+     * changed nothing yet, so a creature it would kill that has competing death replacements (one of
+     * them keeping the card) can be asked about before anything happens, and the effect resolved
+     * again once its controller answers. The first removal attempt clears it.
+     */
+    public boolean deathReplacementsCanRerunEffect;
+    /**
+     * Death replacements chosen before the resolving effect is resolved again, by dying permanent.
+     * The rerun consumes them as its deaths happen; whatever is left is dropped when the rerun ends.
+     */
+    public final Map<UUID, ChoiceContext.DeathExileReplacement> chosenDeathReplacementsForRerun =
+            new ConcurrentHashMap<>();
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
@@ -4038,7 +4051,8 @@ public class GameData {
                     "currentlyResolvingControllerId", "pendingEffectResolutionEntry",
                     "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
-                    "rerunCurrentEffectAfterInteraction", "deferPlayerLossCheck",
+                    "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect",
+                    "chosenDeathReplacementsForRerun", "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
                     "alwaysOfferPriorityWindows" -> true;
             default -> false;
@@ -9529,6 +9543,8 @@ public class GameData {
         copy.deferredDeathReplacementChoices.addAll(this.deferredDeathReplacementChoices);
         copy.chosenStateBasedDeathReplacements.putAll(this.chosenStateBasedDeathReplacements);
         copy.stateBasedMayLibraryChoices.addAll(this.stateBasedMayLibraryChoices);
+        copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;
+        copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->
