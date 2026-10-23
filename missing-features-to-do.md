@@ -709,6 +709,25 @@ stay, one sacrifice log line and no Zombie). Still not covered: the fallback eff
 picks, Land Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the
 "any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-second pass).** A forced cost's fallback effects now ask before their own death when
+the cost can't be paid as `ForcedCostOrElseEffectHandler` resolves. Each "can't pay" path that only reads before it
+(too few Islands, graveyard cards, energy, counters, cards in hand or library, no payer, no candidate to sacrifice,
+...) goes through the new `resolveUnpayableElseEffects`, which opens the rerun window when the first fallback effect
+kills before it changes anything (`SacrificeSelfEffect`, `SacrificeEnchantedCreatureEffect`,
+`DestroySourceAndDamageControllerIfDestroyedEffect`, `DestroyReferencedPermanentEffect` on the source), and
+`DestructionSupport.resolveForcedCostElseEffects` now closes the window after each fallback effect, so only the first
+can stop. Left closed: the unsupported-cost warning, the "chosen permanent is gone" path after a villainous choice,
+and the fallbacks after a failed graveyard or counter payment attempt. Tests (the creature enchanted with
+Necromancer's Magemark against Kalitas, Traitor of Ghet; while asked the choice is a rerun one, the creature stays and
+nothing is logged as sacrificed; after the return-to-hand answer it is in its owner's hand, one sacrifice log line and
+no Zombie): `ElderSpawnTest.noIslandAsksForTheDeathReplacementBeforeElderSpawnIsSacrificed` (no damage while asked,
+6 once after) and `BarrowGhoulTest.noCreatureCardAsksForTheDeathReplacementBeforeTheGhoulIsSacrificed`. Still not
+covered: the fallback effects' deaths after a declined or unpaid may prompt (`MayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice`,
+e.g. Phantasmal Forces or Elder Spawn declining; its villainous and any-player-pays bookkeeping comes first and needs
+review), the deferred Torment picks, Land Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer
+sacrifices or destroys (the "any opponent may sacrifice" handlers' other paths, ...; each needing review) and
+sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

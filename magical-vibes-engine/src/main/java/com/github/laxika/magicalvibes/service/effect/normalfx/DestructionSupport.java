@@ -829,6 +829,11 @@ public class DestructionSupport {
         gameData.forcedCostOrElseRemainingPlayers.clear();
     }
 
+    /**
+     * Resolves the unpaid branch ({@link ForcedCostOrElseEffect#elseEffects()}) in order. Only the first
+     * fallback effect runs inside a death replacement rerun window its caller opened; each later one runs with
+     * it closed, since a rerun would repeat what came before.
+     */
     public void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
         for (var elseEffect : effect.elseEffects()) {
             if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.SELF) {
@@ -969,6 +974,8 @@ public class DestructionSupport {
                     }
                 }
             }
+            // CR 616.1: a caller may open the rerun window for the first fallback effect only.
+            gameData.deathReplacementsCanRerunEffect = false;
         }
     }
 

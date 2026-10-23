@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,6 +37,40 @@ class ElderSpawnTest extends BaseCardTest {
         harness.assertLife(player1, 14);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Without an Island, Elder Spawn's death replacement is chosen before it is sacrificed or deals damage")
+    void noIslandAsksForTheDeathReplacementBeforeElderSpawnIsSacrificed() {
+        Permanent elderSpawn = harness.addToBattlefieldAndReturn(player1, new ElderSpawn());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(elderSpawn.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elderSpawn);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+        harness.assertLife(player1, 20);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(elderSpawn.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elderSpawn);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).hasSize(1);
+        harness.assertLife(player1, 14);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 
     @Test
     @DisplayName("An opponent's Island cannot pay for Elder Spawn")

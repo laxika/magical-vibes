@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GerrardsWisdom;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +48,39 @@ class BarrowGhoulTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Barrow Ghoul");
         harness.assertInGraveyard(player1, "Benalish Infantry");
     }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("With no creature card in the graveyard, the Ghoul's death replacement is chosen before it is sacrificed")
+    void noCreatureCardAsksForTheDeathReplacementBeforeTheGhoulIsSacrificed() {
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new BarrowGhoul());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(ghoul.getId());
+        harness.setGraveyard(player1, List.of(new GerrardsWisdom()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(ghoul.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ghoul);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 
     @Test
     @DisplayName("With no creature card in the graveyard the Ghoul is sacrificed without a prompt")

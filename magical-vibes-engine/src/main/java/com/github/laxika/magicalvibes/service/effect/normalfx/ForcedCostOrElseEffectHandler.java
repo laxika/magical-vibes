@@ -31,6 +31,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromGraveyardOnBottomO
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
@@ -345,7 +350,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                             || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null))
                     .toList();
             if (candidates.size() < cost.count()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (candidates.size() == cost.count()) {
@@ -392,7 +397,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
             UUID payer = resolvePayer(gameData, entry, e);
             if (payer == null || coinFlipCostSupport == null) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -410,7 +415,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             UUID payer = resolvePayer(gameData, entry, e);
             List<Integer> validIndices = matchingHandIndices(gameData, payer, discardCost);
             if (payer == null || validIndices.size() < discardCost.count()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -430,7 +435,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (e.forcedCost() instanceof PayLifeCost payLifeCost) {
             UUID payer = resolvePayer(gameData, entry, e);
             if (payer == null) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             int lifeAmount = effectiveLifeAmount(gameData, payer, entry, payLifeCost);
@@ -445,7 +450,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             UUID payer = resolvePayer(gameData, entry, e);
             int energy = payer == null ? 0 : gameData.playerEnergyCounters.getOrDefault(payer, 0);
             if (payer == null || energy < energyCost.amount()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -467,7 +472,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             // the payer is asked only when the cost can actually be paid (CR 701.67a).
             UUID payer = resolvePayer(gameData, entry, e);
             if (payer == null || !waterbendPaymentService.canPay(gameData, payer, waterbendCost.amount())) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
@@ -491,7 +496,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                 effectiveCost = sourceCard.getManaCost();
                 if (effectiveCost == null || effectiveCost.isEmpty()) {
                     // A permanent with no mana cost cannot pay its mana cost.
-                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                     return;
                 }
             }
@@ -536,7 +541,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             // carried on the stack entry's targetId, not the Aura's controller.
             UUID payer = resolvePayer(gameData, entry, e);
             if (payer == null) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
@@ -550,7 +555,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             // "Cumulative upkeep — Exile the top card of your library" (Thought Lash): too few
             // cards means the cost can't be paid at all, so the penalty resolves immediately.
             if (!libraryExileSupport.hasAtLeast(gameData, entry.getControllerId(), exileCost.count())) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -567,7 +572,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
 
         if (e.forcedCost() instanceof PutCardsFromSingleGraveyardOnBottomOfLibraryCost cost) {
             if (!hasEnoughCumulativeUpkeepCards(gameData, cost)) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -579,14 +584,14 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                         null, null, entry.getSourcePermanentId()));
                 return;
             }
-            destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+            resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
             return;
         }
 
         if (e.forcedCost() instanceof OpponentGainsLifeCost lifeCost) {
             UUID sourceControllerId = entry.getControllerId();
             if (!canPayOpponentGainsLifeCost(gameData, sourceControllerId)) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -604,7 +609,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (e.forcedCost() instanceof MillControllerCost millCost) {
             var deck = gameData.playerDecks.get(entry.getControllerId());
             if (deck == null || deck.size() < millCost.count()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -624,7 +629,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             // resolves without a prompt.
             if (graveyardTopExileSupport.findTopMatching(gameData, entry.getControllerId(),
                     graveyardCost.requiredType()) == null) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -645,7 +650,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             // your hand" (Harvest Wurm): no matching card means the cost can't be paid, so the
             // penalty resolves without a prompt.
             if (!hasMatchingGraveyardCard(gameData, entry.getControllerId(), returnFromGraveyardCost.predicate())) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             String label = com.github.laxika.magicalvibes.model.filter.CardPredicateUtils
@@ -664,7 +669,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (e.forcedCost() instanceof PutCardsFromGraveyardOnBottomOfLibraryCost cost) {
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of());
             if (graveyard.size() < cost.count()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -686,7 +691,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (e.forcedCost() instanceof PutCardFromGraveyardOnBottomOfLibraryCost) {
             List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
             if (graveyard == null || graveyard.isEmpty()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -705,7 +710,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             List<Integer> matchingIndices = graveyardTopExileSupport.matchingIndices(
                     gameData, entry.getControllerId(), graveyardCost);
             if (matchingIndices.isEmpty()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -765,7 +770,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             UUID payerId = resolvePayer(gameData, entry, e);
             if (source == null || payerId == null
                     || !canPutCounterOnPermanent(gameData, source, counterCost.counterType())) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -788,7 +793,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost counterCost) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source == null || !canPayCounterFromSource(source, counterCost)) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -812,7 +817,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             List<UUID> candidates =
                     destructionSupport.collectPermanentIdsWithAnyCounter(gameData, entry.getControllerId());
             if (candidates.isEmpty()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -835,7 +840,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                             permanent -> canPutCounterOnPermanent(gameData, permanent, counterCost)
                                     && !gameQueryService.cantBeChosen(gameData, permanent));
             if (candidates.isEmpty()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -865,7 +870,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                     : destructionSupport.collectCreatureIds(gameData, opponentId,
                             permanent -> canPutCounterOnPermanent(gameData, permanent, counterCost.counterType()));
             if (candidates.isEmpty()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -894,7 +899,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                     ? List.of()
                     : destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId, gainCost.filter());
             if (candidates.size() < gainCost.count()) {
-                destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                 return;
             }
             if (e.optional()) {
@@ -910,12 +915,12 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         }
 
         if (e.forcedCost() instanceof SacrificeMultiplePermanentsCost multiCost) {
-            resolveMultiplePermanentSacrifice(gameData, entry, e, multiCost);
+            resolveMultiplePermanentSacrifice(gameData, entry, e, multiCost, deathReplacementRerunWindow);
             return;
         }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost returnCost) {
-            resolveMultiplePermanentReturnToHand(gameData, entry, e, returnCost);
+            resolveMultiplePermanentReturnToHand(gameData, entry, e, returnCost, deathReplacementRerunWindow);
             return;
         }
 
@@ -930,11 +935,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                 UUID sourceControllerId = entry.getControllerId();
                 UUID payerId = resolvePayer(gameData, entry, e);
                 if (payerId == null) {
-                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                     return;
                 }
                 if (!gameQueryService.canEffectCauseSacrifice(gameData, payerId, sourceControllerId)) {
-                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                     return;
                 }
                 UUID sourcePermanentId = entry.getSourcePermanentId();
@@ -953,7 +958,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                     gameData.villainousChoice.additionalChoicesRemaining =
                             gameQueryService.countAdditionalVillainousChoices(gameData, payerId);
                 } else if (matchingPermanentIds.isEmpty()) {
-                    destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+                    resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
                     return;
                 }
 
@@ -1016,6 +1021,37 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
      * {@code targetId} for "that player may …" (Mind Whip / Pillar Tombs of Aku), or the defending
      * player of the attack that triggered the ability (Ogre Marauder).
      */
+    /**
+     * Resolves the unpaid branch when the cost can't be paid and nothing has changed yet. CR 616.1: when its
+     * first fallback effect kills the source or the enchanted creature (Elder Spawn's "sacrifice this
+     * creature and it deals 6 damage to you"), that death's competing replacements are asked inside the rerun
+     * window, before it leaves; every later fallback effect runs with the window closed.
+     */
+    private void resolveUnpayableElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect e,
+            boolean deathReplacementRerunWindow) {
+        gameData.deathReplacementsCanRerunEffect = deathReplacementRerunWindow
+                && !e.villainousChoice()
+                && !e.elseEffects().isEmpty()
+                && killsBeforeChangingAnything(e.elseEffects().getFirst());
+        try {
+            destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+        } finally {
+            gameData.deathReplacementsCanRerunEffect = false;
+        }
+    }
+
+    /**
+     * Whether {@link DestructionSupport#resolveForcedCostElseEffects} resolves {@code elseEffect} by killing a
+     * permanent before it changes anything else.
+     */
+    private static boolean killsBeforeChangingAnything(CardEffect elseEffect) {
+        return elseEffect instanceof SacrificeSelfEffect
+                || elseEffect instanceof SacrificeEnchantedCreatureEffect
+                || elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect
+                || elseEffect instanceof DestroyReferencedPermanentEffect destroy
+                && destroy.reference() == PermanentReference.SOURCE;
+    }
+
     private UUID resolvePayer(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
         if (effect.payerIsEnchantedController()) {
             return entry.getTargetId();
@@ -1518,13 +1554,13 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
      * sacrifice is forced (choosing which when they control more than N).
      */
     private void resolveMultiplePermanentSacrifice(GameData gameData, StackEntry entry,
-            ForcedCostOrElseEffect e, SacrificeMultiplePermanentsCost multiCost) {
+            ForcedCostOrElseEffect e, SacrificeMultiplePermanentsCost multiCost, boolean deathReplacementRerunWindow) {
         UUID controllerId = entry.getControllerId();
         List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
                 p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, multiCost.filter()));
 
         if (matchingIds.size() < multiCost.count()) {
-            destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+            resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
             return;
         }
 
@@ -1545,13 +1581,14 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
      */
     private void resolveMultiplePermanentReturnToHand(GameData gameData, StackEntry entry,
             ForcedCostOrElseEffect e,
-            com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost returnCost) {
+            com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost returnCost,
+            boolean deathReplacementRerunWindow) {
         UUID controllerId = entry.getControllerId();
         List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
                 p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, returnCost.filter()));
 
         if (matchingIds.size() < returnCost.count()) {
-            destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
+            resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
             return;
         }
 
