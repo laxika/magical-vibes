@@ -11,15 +11,20 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves Breaking Point's damage-or-destruction choice. */
+/**
+ * Resolves Breaking Point's damage-or-destruction choice. Resolving only prompts the first player, or
+ * destroys all creatures when no player is left to ask, so it changes nothing before a destruction.
+ */
 @Component
-public class AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffectHandler implements NormalEffectHandlerBean {
+public class AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;

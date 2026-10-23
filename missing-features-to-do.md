@@ -486,6 +486,29 @@ deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dil
 the other "unless pays" list prompts in `ChoiceHandlerService` whose refusal kills (each needs a `ListChoiceReplay`
 case) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirtieth pass).** The "destroy unless" may prompts whose decline only destroys now run
+the decline through `PermanentChoiceHandlerService.declineAskingDeathReplacementsFirst`, as Essence Vortex does:
+`DestroyTargetPermanentUnlessControllerTakesDamageHandler` (Combustion Man, Dwarven Driller),
+`DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeHandler` (Giant Albatross; a decline pays nothing and
+destroys before it offers the next queued creature) and `AnyPlayerMayTakeDamageOrDestroyAllCreaturesHandler`
+(Breaking Point; only the last player's decline, which destroys all creatures through the marked
+`DestroyAllPermanentsEffectHandler`). Their starting handlers only read (or rebuild Albatross's queue the same)
+before they prompt or destroy, so `DestroyTargetPermanentUnlessControllerTakesDamageEffectHandler`,
+`DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler` and
+`AnyPlayerMayTakeDamageOrDestroyAllCreaturesEffectHandler` are now marked `AsksDeathReplacementsFirst`. Tests in
+`GravebaneZombieTest`: `declinedTakeDamageAsksBeforeTheZombieIsDestroyed` (Combustion Man),
+`breakingPointLastDeclineAsksBeforeAnyCreatureIsDestroyed` (Kalitas stays on the battlefield while asked) and
+`declinedAlbatrossLifePaymentAsksBeforeTheZombieIsDestroyed` (no destroy log line while asked, one after). Reviewed:
+the remaining list prompts in `ChoiceHandlerService` either only record a mode and resume a parked effect (Torment,
+Forbidden Ritual, Oath of Lim-Dul, the each-player sacrifice-or-discard/lose-life and villainous choices, Winter's
+Chill, ...; their kills happen in those unmarked handlers) or kill nothing on refusal
+(`TargetPlayerManaOrLifePaymentChoice`), so none needs a `ListChoiceReplay` case. `DestroyUpToOneAttachedPermanent`
+(Light of Judgment) only destroys Equipment, which is never a creature while attached, so it can't kill a creature
+with death replacements. Still not covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`,
+Voter's Dilemma, `LandEquilibriumSacrifice`, the other mayfx handlers whose answer sacrifices (`SacrificeUnless...`,
+`EachOpponentMay...OrSacrifice...`, `CounterUnlessSacrifices`, `TariffPayOrSacrifice`, `CycloneUpkeep`,
+`MagmasaurUpkeep`, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

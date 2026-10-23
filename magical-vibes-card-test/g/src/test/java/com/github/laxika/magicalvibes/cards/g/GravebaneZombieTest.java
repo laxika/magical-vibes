@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDepravity;
 import com.github.laxika.magicalvibes.cards.b.BarrinsSpite;
 import com.github.laxika.magicalvibes.cards.b.BarterInBlood;
 import com.github.laxika.magicalvibes.cards.b.BrainGorgers;
+import com.github.laxika.magicalvibes.cards.b.BreakingPoint;
 import com.github.laxika.magicalvibes.cards.c.CatchRelease;
+import com.github.laxika.magicalvibes.cards.c.CombustionMan;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DeadlyBrew;
 import com.github.laxika.magicalvibes.cards.d.DescendantsFury;
@@ -1980,6 +1982,112 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(returned.getId()).isNotEqualTo(zombie.getId());
         assertThat(aura.getAttachedTo()).isEqualTo(returned.getId());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(filler);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, CombustionMan.class})
+    @DisplayName("Declining Combustion Man's damage asks for the Zombie's death replacement before it is destroyed")
+    void declinedTakeDamageAsksBeforeTheZombieIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent combustionMan = addCreatureReady(player1, new CombustionMan());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(combustionMan);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(attackerIndex));
+            harness.handlePermanentChosen(player1, zombie.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, false);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                    .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+            harness.assertOnBattlefield(player2, "Gravebane Zombie");
+            assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                    .isEmpty();
+
+            harness.handleListChoice(player2, "Put it into its owner's library");
+        });
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, BreakingPoint.class})
+    @DisplayName("Breaking Point's last decline asks for the Zombie's death replacement before any creature is destroyed")
+    void breakingPointLastDeclineAsksBeforeAnyCreatureIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent kalitas = harness.addToBattlefieldAndReturn(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.castFromHand(player1, new BreakingPoint(), "{1}{R}{R}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(kalitas);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(zombie);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Kalitas, Traitor of Ghet");
+        harness.assertInGraveyard(player1, "Breaking Point");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GiantAlbatross.class})
+    @DisplayName("Declining Giant Albatross's life payment asks for the Zombie's death replacement before it is destroyed")
+    void declinedAlbatrossLifePaymentAsksBeforeTheZombieIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent albatross = addCreatureReady(player1, new GiantAlbatross());
+        albatross.setBlocking(true);
+        albatross.addBlockingTarget(0);
+        Card zombieCard = new GravebaneZombie();
+        zombieCard.setPower(5);
+        zombieCard.setToughness(5);
+        Permanent zombie = addCreatureReady(player2, zombieCard);
+        zombie.setAttacking(true);
+        resolveCombat(player2);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .isEmpty();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertLife(player2, 20);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
                 .doesNotContain("Zombie");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

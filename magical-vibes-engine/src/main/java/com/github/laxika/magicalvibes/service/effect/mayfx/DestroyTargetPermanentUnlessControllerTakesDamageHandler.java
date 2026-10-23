@@ -12,13 +12,19 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentUnlessC
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetPermanentUnlessControllerTakesDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
-/** Completes a targeted permanent's damage-or-destruction choice. */
+/**
+ * Completes a targeted permanent's damage-or-destruction choice (Combustion Man, Dwarven Driller). A
+ * decline only destroys the permanent, so a creature with competing death replacements is asked about
+ * before it leaves (CR 616.1) and the decline is completed again with that answer.
+ */
 @Component
 @RequiredArgsConstructor
 public class DestroyTargetPermanentUnlessControllerTakesDamageHandler implements MayEffectHandlerBean {
@@ -26,6 +32,7 @@ public class DestroyTargetPermanentUnlessControllerTakesDamageHandler implements
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final DestroyTargetPermanentUnlessControllerTakesDamageEffectHandler effectHandler;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,10 +58,13 @@ public class DestroyTargetPermanentUnlessControllerTakesDamageHandler implements
                     ability.controllerId(), ability.sourcePermanentId());
             damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
-        } else {
-            effectHandler.destroyTargetPermanent(gameData, ability.sourceCard(), ability.targetCardId());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
         }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        permanentChoiceHandlerServiceProvider.getObject().declineAskingDeathReplacementsFirst(
+                gameData, player, ability, () -> {
+                    effectHandler.destroyTargetPermanent(gameData, ability.sourceCard(), ability.targetCardId());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                });
     }
 }

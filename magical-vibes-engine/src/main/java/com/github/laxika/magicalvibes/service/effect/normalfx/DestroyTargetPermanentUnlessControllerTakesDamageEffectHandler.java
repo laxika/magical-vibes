@@ -9,16 +9,20 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves a targeted permanent's damage-or-destruction choice. */
+/**
+ * Resolves a targeted permanent's damage-or-destruction choice. Resolving only opens the controller's
+ * prompt, so it changes nothing before a destruction.
+ */
 @Component
 @RequiredArgsConstructor
 public class DestroyTargetPermanentUnlessControllerTakesDamageEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -25,12 +26,15 @@ import org.springframework.stereotype.Component;
  *
  * <p>Decisions are offered one at a time (remaining permanent ids live in
  * {@link GameData#destroyDamagersUnlessPaysRemaining}); a controller who can't pay has their creature
- * destroyed straight away, and destruction always ignores regeneration.
+ * destroyed straight away, and destruction always ignores regeneration. Before its first destruction
+ * it only rebuilds that queue, which a rerun rebuilds the same, so a creature with competing death
+ * replacements can be asked about before it leaves (CR 616.1).
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler implements NormalEffectHandlerBean {
+public class DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;
