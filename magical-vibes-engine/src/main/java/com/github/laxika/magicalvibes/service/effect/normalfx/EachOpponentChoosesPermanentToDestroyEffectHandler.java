@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import java.util.UUID;
 /** Resolves non-targeting per-opponent permanent choices before destroying them simultaneously. */
 @Component
 @RequiredArgsConstructor
-public class EachOpponentChoosesPermanentToDestroyEffectHandler implements NormalEffectHandlerBean {
+public class EachOpponentChoosesPermanentToDestroyEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

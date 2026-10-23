@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GisaGloriousResurrector;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HighcliffFelidar;
+import com.github.laxika.magicalvibes.cards.i.ImperialEdict;
 import com.github.laxika.magicalvibes.cards.l.LiesaForgottenArchangel;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -362,6 +364,102 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
         assertThat(gd.playersWhoSacrificedPermanentsThisTurn).contains(player2.getId());
         harness.assertInGraveyard(player1, "Diabolic Edict");
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, ImperialEdict.class})
+    @DisplayName("Imperial Edict on a lone Gravebane Zombie asks library-or-Kalitas before it is destroyed")
+    void targetPlayerChoosesDestroyAsksBeforeTheLoneZombieIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Card edict = new ImperialEdict();
+        harness.setHand(player1, List.of(edict));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(edict.getId());
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertInGraveyard(player1, "Imperial Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(countTokens(player1, "Zombie")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, ImperialEdict.class, GrizzlyBears.class})
+    @DisplayName("Imperial Edict asks library-or-Kalitas after the Zombie is chosen, before it is destroyed")
+    void chosenDestroyAsksBeforeTheChosenZombieIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card edict = new ImperialEdict();
+        harness.setHand(player1, List.of(edict));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player2, gravebane.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gameLogContains("Gravebane Zombie is destroyed")).isFalse();
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getId)
+                .contains(gravebane.getCard().getId());
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .hasSize(1);
+        harness.assertInGraveyard(player1, "Imperial Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, HighcliffFelidar.class, GrizzlyBears.class})
+    @DisplayName("Highcliff Felidar asks library-or-Kalitas after the Zombie is chosen, before it is destroyed")
+    void eachOpponentChoosesDestroyAsksBeforeTheChosenZombieIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new HighcliffFelidar()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castCreature(player1, 0);
+        while (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.handlePermanentChosen(player1, gravebane.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gameLogContains("Gravebane Zombie is destroyed")).isFalse();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(countTokens(player1, "Zombie")).isZero();
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

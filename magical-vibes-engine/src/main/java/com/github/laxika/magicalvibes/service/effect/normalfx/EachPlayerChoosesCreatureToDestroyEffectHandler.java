@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -21,7 +22,7 @@ import java.util.UUID;
 /** Resolves The Horus Heresy's controller-first creature choices. */
 @Component
 @RequiredArgsConstructor
-public class EachPlayerChoosesCreatureToDestroyEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerChoosesCreatureToDestroyEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;

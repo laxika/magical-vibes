@@ -168,7 +168,8 @@ public class PermanentChoiceHandlerService {
 
     /**
      * Completes {@code permanentId} as the answer to {@code choice} when its completion changes
-     * nothing before it sacrifices the chosen permanent. A creature it would kill that has
+     * nothing before it sacrifices or destroys the chosen permanent (or the batch of permanents
+     * chosen so far, for the "each player chooses ... then destroy" contexts). A creature it would kill that has
      * competing death replacements, one of them keeping the card, is then asked about first
      * (CR 616.1): the completion stops, its controller chooses, and
      * {@link #completeChoiceAgainAfterDeathReplacements} completes the same answer again with that
@@ -177,14 +178,14 @@ public class PermanentChoiceHandlerService {
     private boolean completeAskingDeathReplacementsFirst(GameData gameData,
                                                          PendingInteraction.PermanentChoice choice,
                                                          UUID permanentId) {
-        if (!sacrificesBeforeChangingAnything(choice.context())) {
+        if (!killsBeforeChangingAnything(choice.context())) {
             return false;
         }
         boolean rerunCurrentEffect = gameData.rerunCurrentEffectAfterInteraction;
         gameData.deathReplacementsCanRerunEffect = true;
         boolean stopped = false;
         try {
-            completeSacrificeChoice(gameData, permanentId, choice.context());
+            completeKillingChoice(gameData, permanentId, choice.context());
         } catch (DeathReplacementChoicePending pending) {
             stopped = true;
             // The stack object's parked resolution stays as it is; only this completion is redone.
@@ -211,8 +212,13 @@ public class PermanentChoiceHandlerService {
         completeAskingDeathReplacementsFirst(gameData, replay.choice(), replay.permanentId());
     }
 
-    private static boolean sacrificesBeforeChangingAnything(PermanentChoiceContext context) {
+    private static boolean killsBeforeChangingAnything(PermanentChoiceContext context) {
         return context instanceof PermanentChoiceContext.SacrificeCreature
+                || context instanceof PermanentChoiceContext.DestroyChosenCreature destroy
+                        && !destroy.exile() && !destroy.shuffleIntoOwnersLibrary()
+                || context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy
+                || context instanceof PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy
+                || context instanceof PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy
                 || context instanceof PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife
                 || context instanceof PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness
                 || context instanceof PermanentChoiceContext.SacrificeCreatureThenSearchLibrary
@@ -223,10 +229,19 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.TargetPlayerSacrificesPermanentThenDealsManaValueDamage;
     }
 
-    private void completeSacrificeChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
+    private void completeKillingChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
         switch (context) {
             case PermanentChoiceContext.SacrificeCreature sacrificeCreature ->
                     battlefieldHandler.handleSacrificeCreature(gameData, permanentId, sacrificeCreature);
+            case PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature ->
+                    battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
+            case PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy ->
+                    battlefieldHandler.handleEachOpponentChoosesGreatestPowerCreatureToDestroy(
+                            gameData, permanentId, destroy);
+            case PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy destroy ->
+                    battlefieldHandler.handleEachOpponentChoosesPermanentToDestroy(gameData, permanentId, destroy);
+            case PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy destroy ->
+                    battlefieldHandler.handleEachPlayerChoosesCreatureToDestroy(gameData, permanentId, destroy);
             case PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife sacrificeOpp ->
                     battlefieldHandler.handleSacrificeCreatureOpponentsLoseLife(gameData, permanentId, sacrificeOpp);
             case PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness sacrificeGainLife ->
@@ -249,7 +264,7 @@ public class PermanentChoiceHandlerService {
             case PermanentChoiceContext.TargetPlayerSacrificesPermanentThenDealsManaValueDamage targetPlayerSacrifice ->
                     battlefieldHandler.handleTargetPlayerSacrificesPermanentThenDealsManaValueDamage(
                             gameData, permanentId, targetPlayerSacrifice);
-            default -> throw new IllegalStateException("Not a sacrifice choice: " + context);
+            default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
         }
     }
 

@@ -113,6 +113,22 @@ multi-selects), the "each player chooses ... then destroy" completions (`EachPla
 `LandEquilibriumSacrifice`, `TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicate`, ...; each needs the same
 "nothing before the sacrifice" review before it joins `sacrificesBeforeChangingAnything`), and sacrifices paid as costs.
 
+**Also landed (2026-10-23, seventh pass).** The "choose ... then destroy" single-choice completions joined
+the window (`PermanentChoiceHandlerService.killsBeforeChangingAnything`, renamed from `sacrificesBeforeChangingAnything`):
+`DestroyChosenCreature` in its destroy mode (not its exile or villainous-shuffle modes) and the
+`EachOpponentChoosesGreatestPowerCreatureToDestroy`, `EachOpponentChoosesPermanentToDestroy` and
+`EachPlayerChoosesCreatureToDestroy` contexts, whose accumulated picks live in the immutable context, so the
+replayed last answer rebuilds the same batch. Their starting handlers are now marked too (each only logs "no
+creatures" on a path that destroys nothing): `TargetPlayerChoosesCreatureDestroyEffectHandler`,
+`OpponentChoosesCreatureToDestroyEffectHandler`, `EachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler`,
+`EachOpponentChoosesPermanentToDestroyEffectHandler` and `EachPlayerChoosesCreatureToDestroyEffectHandler`. Tests in
+`KalitasTraitorOfGhetTest`: `targetPlayerChoosesDestroyAsksBeforeTheLoneZombieIsDestroyed` (Imperial Edict, lone
+Zombie), `chosenDestroyAsksBeforeTheChosenZombieIsDestroyed` (Imperial Edict, Zombie chosen over Grizzly Bears: no
+destroy log line while asked, one after) and `eachOpponentChoosesDestroyAsksBeforeTheChosenZombieIsDestroyed`
+(Highcliff Felidar, Zombie chosen over a 3-power Bears). Still unreviewed among destroy completions:
+`ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom` (random pick, so it stays out) and the
+`DestroyTargetPermanentUnlessControllerTakesDamage` / `DestroyUpToOneAttachedPermanent` completions.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -126,9 +142,9 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
   also runs for exiles and bounces).
 - Deaths after an earlier change of the same handler (a second removal, damage, a regeneration or
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
-- Deaths in an interaction's completion other than the single-sacrifice contexts done in the sixth
-  pass ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`, the
-  "choose ... then destroy" completions, the unreviewed single-sacrifice contexts), and sacrifices
+- Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
+  and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
+  the unreviewed single-sacrifice contexts and destroy completions listed above), and sacrifices
   paid as costs.
 - Pulmonic Sliver's lone "may" (one option, asked through the may prompt) outside state-based actions.
 
@@ -150,7 +166,7 @@ Continue missing-features-to-do.md entry 34: extend the CR 616.1 "ask before the
 rerun window (AsksDeathReplacementsFirst, PermanentRemovalService.askDeathReplacementsBeforeRemoval,
 GameData.chosenDeathReplacementsForRerun; for choice completions
 PermanentChoiceHandlerService.completeAskingDeathReplacementsFirst) to the remaining choice completions
-(multi-choice ForcedSacrifice, "choose ... then destroy") and the remaining handlers,
+(multi-choice ForcedSacrifice, the unreviewed single-sacrifice contexts) and the remaining handlers,
 reviewing each handler for changes before its first removal. Write a failing Kalitas + Gravebane
 Zombie test per case first. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
