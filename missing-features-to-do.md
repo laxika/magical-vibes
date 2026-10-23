@@ -728,6 +728,26 @@ review), the deferred Torment picks, Land Equilibrium's lone-land sacrifice, the
 sacrifices or destroys (the "any opponent may sacrifice" handlers' other paths, ...; each needing review) and
 sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-third pass).** A declined forced-cost may prompt whose first fallback effect kills
+(Phantasmal Forces' "sacrifice this creature unless you pay {U}", Elder Spawn declining to sacrifice an Island) now
+asks before that death. The mayfx `ForcedCostOrElseHandler` runs such a decline through
+`PermanentChoiceHandlerService.declineAskingDeathReplacementsFirst`: the decline only reads before
+`resolveForcedCostElseEffects`, which closes the window after the first fallback effect, and the replay re-dispatches
+the same decline. `ForcedCostOrElseEffectHandler.killsBeforeChangingAnything` is now public for that check. Left
+outside the window: villainous choices (the decline counts down the remaining choices first), "any player may pay"
+prompts (a decline offers the next player first) and an enchanted or defending player's prompt without a source
+controller on the ability (it reads `GameData.forcedCostOrElseSourceControllerId`, which the decline clears). Tests
+(the creature enchanted with Necromancer's Magemark against Kalitas, Traitor of Ghet; while asked the choice is a rerun
+one, the creature stays and nothing is logged as sacrificed; after the return-to-hand answer it is in its owner's hand,
+one sacrifice log line and no Zombie): `PhantasmalForcesTest.decliningAsksForTheDeathReplacementBeforePhantasmalForcesIsSacrificed`
+and `ElderSpawnTest.decliningAsksForTheDeathReplacementBeforeElderSpawnIsSacrificed` (no damage while asked, 6 once
+after; the Island stays). Noticed: `PhantasmalForcesTest.mayDeclineEvenWithBlueManaAvailable` already fails on main.
+Still not covered: the fallback effects' deaths after an accepted but unpayable may prompt (e.g. Phantasmal Forces
+accepted without blue mana; each cost's "accepted" branch needs review for changes before it falls through), after
+the last decline of an "any player may pay" prompt (Icy Prison) and after a villainous decline, the deferred Torment
+picks, Land Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the
+"any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

@@ -1044,7 +1044,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
      * Whether {@link DestructionSupport#resolveForcedCostElseEffects} resolves {@code elseEffect} by killing a
      * permanent before it changes anything else.
      */
-    private static boolean killsBeforeChangingAnything(CardEffect elseEffect) {
+    public static boolean killsBeforeChangingAnything(CardEffect elseEffect) {
         return elseEffect instanceof SacrificeSelfEffect
                 || elseEffect instanceof SacrificeEnchantedCreatureEffect
                 || elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect

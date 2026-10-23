@@ -70,6 +70,41 @@ class ElderSpawnTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Declining to sacrifice an Island asks for Elder Spawn's death replacement before it is sacrificed or deals damage")
+    void decliningAsksForTheDeathReplacementBeforeElderSpawnIsSacrificed() {
+        Permanent elderSpawn = harness.addToBattlefieldAndReturn(player1, new ElderSpawn());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(elderSpawn.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elderSpawn);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+        harness.assertLife(player1, 20);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(elderSpawn.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elderSpawn);
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).hasSize(1);
+        harness.assertLife(player1, 14);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 
     @Test
