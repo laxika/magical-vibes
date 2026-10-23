@@ -1186,8 +1186,6 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed ctx) {
             handleSacrificePermanentsAddManaPerSacrificed(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse ctx) {
-            handleSacrificePermanentsOrElse(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount ctx) {
             handleSacrificeAnyNumberAndRecordCount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource ctx) {
@@ -2213,6 +2211,9 @@ public class MultiPermanentChoiceHandlerService {
      * {@link DestructionSupport#destroyBatch} batch, and
      * {@link MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice} likewise keeps its picks
      * and only prompts for the next player's land before its batch; its basic land searches come after.
+     * {@link MultiPermanentChoiceContext.SacrificePermanentsOrElse} (Insatiable Appetite, the multi-sacrifice
+     * form of "counter unless its controller sacrifices") asks its whole selection before the first
+     * sacrifice, and its "if you do" or "otherwise" branch is only queued after the sacrifices.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2245,7 +2246,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.FadeAwayKeep
                 || context instanceof MultiPermanentChoiceContext.FadeAwaySacrifice
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
-                || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice;
+                || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice
+                || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse;
     }
 
     /**
@@ -2258,11 +2260,11 @@ public class MultiPermanentChoiceHandlerService {
                                                      PendingInteraction.MultiPermanentChoice choice,
                                                      List<UUID> permanentIds) {
         permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData,
-                () -> completeKillingChoice(gameData, permanentIds, choice.context()),
+                () -> completeKillingChoice(gameData, choice.playerId(), permanentIds, choice.context()),
                 new GameData.MultiPermanentChoiceReplay(choice, List.copyOf(permanentIds)));
     }
 
-    private void completeKillingChoice(GameData gameData, List<UUID> permanentIds,
+    private void completeKillingChoice(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext context) {
         switch (context) {
             case MultiPermanentChoiceContext.ForcedSacrifice ctx -> {
@@ -2400,6 +2402,10 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice ctx -> {
                 handleDestroyUpToOneNonbasicLandPerPlayerChoice(gameData, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.SacrificePermanentsOrElse ctx -> {
+                handleSacrificePermanentsOrElse(gameData, playerId, permanentIds, ctx);
                 return;
             }
             default -> throw new IllegalStateException("Not a killing choice: " + context);
@@ -2670,13 +2676,17 @@ public class MultiPermanentChoiceHandlerService {
     private void handleSacrificePermanentsOrElse(
             GameData gameData, UUID playerId, List<UUID> permanentIds,
             MultiPermanentChoiceContext.SacrificePermanentsOrElse context) {
+        List<Permanent> chosen = permanentIds.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(permanent -> permanent != null
+                        && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                .toList();
+        // CR 616.1: every chosen creature's death replacement is chosen before any of them is sacrificed.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, chosen);
         int sacrificed = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
-                destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
-                sacrificed++;
-            }
+        for (Permanent permanent : chosen) {
+            destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+            sacrificed++;
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 

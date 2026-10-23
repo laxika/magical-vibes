@@ -581,6 +581,24 @@ mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifi
 `AnyPlayerMaySacrificeCreaturesThenSacrificeSource`, the "any opponent may sacrifice" handlers' other paths, ...; each
 needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-fourth pass).** `MultiPermanentChoiceContext.SacrificePermanentsOrElse` (Insatiable
+Appetite, Giant Opportunity, and the multi-sacrifice form of `CounterUnlessSacrificesHandler`, i.e. Valgavoth, Terror
+Eater's ward) joined `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`: its completion now collects the
+chosen permanents, asks their death replacements through `DestructionSupport.askDeathReplacementsBeforeSacrifice` before
+the first sacrifice, and only queues its "if you do" or "otherwise" branch after the sacrifices. Tests:
+`InsatiableAppetiteTest.asksForTheDeathReplacementBeforeTheFoodCreatureIsSacrificed` (Gingerbrute enchanted with
+Necromancer's Magemark against Kalitas, Traitor of Ghet: no sacrifice log line and no boost while asked; after the
+return-to-hand answer it is in its owner's hand, the target is 7/7 and Kalitas makes no Zombie) and
+`GravebaneZombieTest.wardMultiSacrificeAsksBeforeAnyChosenPermanentIsSacrificed` (Valgavoth's ward paid with the Zombie
+and two Fountains of Youth: nothing is sacrificed while asked, the Shock stays on the stack after). Noticed while
+writing it: Valgavoth's own "exile instead" isn't offered as a competing replacement against Gravebane Zombie's library
+replacement (the Zombie goes to the library unasked when Kalitas isn't out); that's a separate CR 616.1 gap. Still not
+covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma,
+`LandEquilibriumSacrifice`, the accepted-but-unpayable fall-through of the sacrifice-unless prompts, `CycloneUpkeep`,
+Tariff, the remaining mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick
+first), `AnyPlayerMaySacrificeCreaturesThenSacrificeSource`, the "any opponent may sacrifice" handlers' other paths, ...;
+each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

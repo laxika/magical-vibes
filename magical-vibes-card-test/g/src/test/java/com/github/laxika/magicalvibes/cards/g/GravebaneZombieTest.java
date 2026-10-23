@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.cards.f.FadeAway;
 import com.github.laxika.magicalvibes.cards.f.FandanielTelophoroiAscian;
 import com.github.laxika.magicalvibes.cards.f.FallenCleric;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.FortunateFew;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartPiercerManticore;
@@ -64,6 +65,7 @@ import com.github.laxika.magicalvibes.cards.t.TwistedJustice;
 import com.github.laxika.magicalvibes.cards.u.UnnaturalHunger;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.u.UrzasSylex;
+import com.github.laxika.magicalvibes.cards.v.ValgavothTerrorEater;
 import com.github.laxika.magicalvibes.cards.w.WarrenWeirding;
 import com.github.laxika.magicalvibes.cards.w.Winnowing;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -2287,6 +2289,44 @@ class GravebaneZombieTest extends BaseCardTest {
         assertZombieSacrificedOntoLibrary(zombie, filler, false);
         harness.assertLife(player2, 20);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, ValgavothTerrorEater.class, FountainOfYouth.class, Shock.class})
+    @DisplayName("Paying Valgavoth's ward asks for the chosen Zombie's death replacement before any permanent is sacrificed")
+    void wardMultiSacrificeAsksBeforeAnyChosenPermanentIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothTerrorEater());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent fountain1 = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent fountain2 = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, valgavoth.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMultiplePermanentsChosen(player2, List.of(zombie.getId(), fountain1.getId(), fountain2.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(zombie, fountain1, fountain2);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Bob sacrifices")).isEmpty();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(zombie, fountain1, fountain2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gravebane Zombie"))
+                .hasSize(1);
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getName()).containsExactly("Shock");
     }
 
     private void resolveBeginningOfCombatTriggers() {
