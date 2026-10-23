@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +52,17 @@ import org.springframework.stereotype.Component;
  * Otherwise a three-way {@link PendingInteraction.ColorChoice} list-pick is begun; the chosen mode then
  * runs a sacrifice ({@link PermanentChoiceContext.TormentSacrifice}) or discard sub-choice, or applies
  * the life loss inline. Each sub-choice completion re-runs this handler to advance to the next opponent.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst} for the deferred forms: their only removals are the
+ * collected sacrifices, whose competing death replacements (CR 616.1) are asked before the first of
+ * them while the progress is still recorded, so the rerun resumes at the same batch and repeats
+ * nothing. The non-deferred form removes nothing itself; its sacrifice happens in the
+ * {@link PermanentChoiceContext.TormentSacrifice} completion.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
+public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
@@ -289,6 +297,13 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
     private void finishDeferred(GameData gameData, StackEntry entry, String sourceName, int lifeLoss,
             int discardCount, PermanentPredicate sacrificePredicate) {
         TormentState state = gameData.torment;
+        // CR 616.1: the chosen permanents' death replacements are asked before any of them is
+        // sacrificed. The progress on GameData#torment is still intact, so a rerun resumes right here.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, state.chosenSacrifices.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(Objects::nonNull)
+                .toList());
+        gameData.deathReplacementsCanRerunEffect = false;
         boolean nextIteration = state.deferEachIteration && state.remainingIterations > 0;
         int iterationsLeft = state.remainingIterations;
         boolean targeted = state.targetedFlow;

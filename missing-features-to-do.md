@@ -781,6 +781,25 @@ first fallback effect kills, so nothing is missed today. Still not covered: the 
 Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent
 may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-sixth pass).** The deferred Torment picks now ask before the collected batch is
+sacrificed. `TormentOfHailfireEffectHandler` (Torment of Hailfire's per-repetition batch, Rottenmouth Viper's
+all-at-once batch) and `EachPlayerSacrificesPermanentUnlessDiscardEffectHandler` (Possessed Portal) are marked
+`AsksDeathReplacementsFirst`. Both are re-entrant: their progress lives on `GameData.torment` /
+`GameData.eachPlayerSacrificeOrDiscard`, so a rerun resumes where it stopped instead of repeating earlier picks,
+discards or life loss. Their final step now asks the whole batch through `DestructionSupport.askDeathReplacementsBeforeSacrifice`
+before it clears that progress, then closes the window, so the rerun reaches the same batch. The non-deferred Torment
+form removes nothing itself (its sacrifice is the already covered `TormentSacrifice` completion). Read the Runes'
+per-card-drawn form sacrifices as each pick is made, after the progress has moved on, so it resolves with the window
+closed. Tests in `GravebaneZombieTest` (Kalitas, Traitor of Ghet against Gravebane Zombie; while asked the choice is
+a rerun one and nothing is sacrificed; after the library answer the Zombie is on top of its owner's library, one
+sacrifice log line and no Kalitas Zombie): `tormentOfHailfireDeferredSacrificeAsksBeforeTheZombieIsSacrificed` (the
+Bears stays, no life lost) and `possessedPortalCollectedSacrificeAsksBeforeAnyPermanentIsSacrificed` (the other
+player's chosen Bears stays while asked and is sacrificed after). Still not covered: Read the Runes' immediate
+sacrifices and Long Reach of Night's lone-creature sacrifice (`EachOpponentSacrificesCreatureUnlessDiscardEffectHandler`,
+unmarked; both sacrifice after their progress has moved on), Land Equilibrium's lone-land sacrifice, the remaining
+mayfx handlers whose answer sacrifices or destroys (the "any opponent may sacrifice" handlers' other paths, ...; each
+needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

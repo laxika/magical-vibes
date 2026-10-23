@@ -12,18 +12,29 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves an APNAP each-player choice to discard a card or sacrifice a permanent. */
+/**
+ * Resolves an APNAP each-player choice to discard a card or sacrifice a permanent.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst} for the collected form (Possessed Portal): its only
+ * removal is the final simultaneous sacrifice, whose competing death replacements (CR 616.1) are
+ * asked while the progress on {@link EachPlayerSacrificeOrDiscardState} is still recorded, so the
+ * rerun resumes at the same batch and repeats nothing. The per-card-drawn form (Read the Runes)
+ * sacrifices as it goes and resolves with the rerun window closed.
+ */
 @Component
 @RequiredArgsConstructor
-public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
@@ -42,6 +53,11 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
                 (EachPlayerSacrificesPermanentUnlessDiscardEffect) effect;
         EachPlayerSacrificeOrDiscardState state = gameData.eachPlayerSacrificeOrDiscard;
         String sourceName = entry.getCard().getName();
+        if (sacrificeEffect.repeatForEachCardDrawn()) {
+            // Each sacrifice happens as it is chosen, after the progress has moved on, so a rerun
+            // would skip it.
+            gameData.deathReplacementsCanRerunEffect = false;
+        }
 
         if (!state.active) {
             state.reset();
@@ -109,6 +125,13 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
 
         gameData.rerunCurrentEffectAfterInteraction = false;
         List<UUID> sacrifices = List.copyOf(state.chosenSacrifices);
+        // CR 616.1: the chosen permanents' death replacements are asked before any of them is
+        // sacrificed, while the progress is still recorded, so a rerun resumes right here.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, sacrifices.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(Objects::nonNull)
+                .toList());
+        gameData.deathReplacementsCanRerunEffect = false;
         state.reset();
         if (!sacrifices.isEmpty()) {
             destructionSupport.performSimultaneousSacrifice(gameData, sacrifices);

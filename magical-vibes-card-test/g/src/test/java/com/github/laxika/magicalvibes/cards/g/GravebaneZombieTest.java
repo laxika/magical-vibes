@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.p.PanickedAltisaur;
 import com.github.laxika.magicalvibes.cards.p.PerilousPredicament;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PillarTombsOfAku;
+import com.github.laxika.magicalvibes.cards.p.PossessedPortal;
 import com.github.laxika.magicalvibes.cards.p.ProwlingPangolin;
 import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
 import com.github.laxika.magicalvibes.cards.r.ReignOfThePit;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.cards.s.StickTogether;
 import com.github.laxika.magicalvibes.cards.s.SyphonFlesh;
 import com.github.laxika.magicalvibes.cards.t.TheDalekEmperor;
 import com.github.laxika.magicalvibes.cards.t.TipTheScales;
+import com.github.laxika.magicalvibes.cards.t.TormentOfHailfire;
 import com.github.laxika.magicalvibes.cards.t.ToTheSlaughter;
 import com.github.laxika.magicalvibes.cards.t.TragicArrogance;
 import com.github.laxika.magicalvibes.cards.t.TwistedJustice;
@@ -1768,6 +1770,65 @@ class GravebaneZombieTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Kalitas, Traitor of Ghet", "Zombie");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, TormentOfHailfire.class})
+    @DisplayName("Torment of Hailfire asks for a chosen Zombie's replacement before its collected sacrifices happen")
+    void tormentOfHailfireDeferredSacrificeAsksBeforeTheZombieIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TormentOfHailfire()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, ChoiceContext.TormentPenaltyChoice.SACRIFICE);
+        harness.handlePermanentChosen(player2, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, PossessedPortal.class})
+    @DisplayName("Possessed Portal asks for the Zombie's replacement before any collected permanent is sacrificed")
+    void possessedPortalCollectedSacrificeAsksBeforeAnyPermanentIsSacrificed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new PossessedPortal());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        resolveEndStepTriggers();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertMayAnswerAskedWhileTheZombieStays();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertZombieSacrificedOntoLibrary(zombie, filler, false);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Possessed Portal");
     }
 
     private void destroyWithWrathOfGod(Player caster) {
