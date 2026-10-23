@@ -50,10 +50,11 @@ used by `SacrificePermanentsEffectHandler`, `DestructionSupport.performSacrifice
 each-player/each-opponent/target-player sacrifice handlers, devour), AI name choices
 (`ColorChoiceAiStrategy.answerWith` swaps an unchoosable name for a choosable one), and the keep
 candidates of every "choose N to keep, then sacrifice/destroy/return/phase out the rest" handler (Glimpse
-can't be kept, so it goes with the rest). Still ignoring it:
-- sacrifice-as-a-cost choices (`GameQueryService.canSacrificePermanentForCosts` and the cost handlers; that
-  helper is also used by "sacrifice all" and "sacrifice this" costs, so it can't simply call `cantBeChosen`);
-- other single-candidate auto-picks that are not sacrifices (for example Turf War, transform-chosen-permanent,
+can't be kept, so it goes with the rest), and sacrifice costs that involve a choice
+(`GameQueryService.canChooseToSacrificeForCosts`, used by the activated-ability sacrifice cost handlers,
+spell additional/alternative/flashback/graveyard/kicker sacrifice costs and free-cast sacrifice costs; "sacrifice
+this" and "sacrifice all" costs still use `canSacrificePermanentForCosts`). Still ignoring it:
+- single-candidate auto-picks that are not sacrifices (for example Turf War, transform-chosen-permanent,
   `SacrificeCreatureWithLeastToughnessEffectHandler`'s tie-break, Make an Example piles).
 
 **Why it's large.** Every auto-resolving "choose a permanent" path builds its own candidate list, so each one
@@ -63,8 +64,8 @@ has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when G
 
 ```
 Finish "can't be chosen" support for Glimpse, the Unthinkable (missing-features-to-do.md entry 21): make
-sacrifice-cost choices and the remaining non-sacrifice single-candidate permanent choices honour
-CantBeChosenEffect. Add tests to GlimpseTheUnthinkablePlaytestTest first.
+the remaining non-sacrifice single-candidate permanent choices honour CantBeChosenEffect. Add tests to
+GlimpseTheUnthinkablePlaytestTest first.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

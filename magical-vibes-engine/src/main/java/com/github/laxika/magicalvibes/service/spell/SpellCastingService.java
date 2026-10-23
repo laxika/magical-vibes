@@ -4478,7 +4478,7 @@ public class SpellCastingService {
                     if (toSacrifice == null) {
                         throw new IllegalStateException("Sacrifice target not found on your battlefield");
                     }
-                    if (!gameQueryService.canSacrificePermanentForCosts(gameData, toSacrifice)) {
+                    if (!gameQueryService.canChooseToSacrificeForCosts(gameData, toSacrifice)) {
                         throw new IllegalStateException("Players can't sacrifice this permanent to cast the alternate cost");
                     }
                     if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toSacrifice, sacCost.get().filter())) {
@@ -9448,7 +9448,7 @@ public class SpellCastingService {
                 if (permanent == null || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
                     throw new IllegalStateException("Sacrifice target is not on your battlefield");
                 }
-                if (!gameQueryService.canSacrificePermanentForCosts(gameData, permanent)) {
+                if (!gameQueryService.canChooseToSacrificeForCosts(gameData, permanent)) {
                     throw new IllegalStateException("Players can't sacrifice this permanent to cast from the graveyard");
                 }
                 if (!predicateEvaluationService.matchesPermanentPredicate(permanent,
@@ -15892,7 +15892,7 @@ public class SpellCastingService {
                             || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
                         throw new IllegalStateException("Sacrifice target is not on your battlefield");
                     }
-                    if (!gameQueryService.canSacrificePermanentForCosts(gameData, permanent)) {
+                    if (!gameQueryService.canChooseToSacrificeForCosts(gameData, permanent)) {
                         throw new IllegalStateException("Players can't sacrifice this permanent to cast from the graveyard");
                     }
                     if (!predicateEvaluationService.matchesPermanentPredicate(
@@ -16557,7 +16557,7 @@ public class SpellCastingService {
                     if (permanent == null || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
                         throw new IllegalStateException("Sacrifice target is not on your battlefield");
                     }
-                    if (!gameQueryService.canSacrificePermanentForCosts(gameData, permanent)) {
+                    if (!gameQueryService.canChooseToSacrificeForCosts(gameData, permanent)) {
                         throw new IllegalStateException("Players can't sacrifice this permanent to cast from the graveyard");
                     }
                     if (!predicateEvaluationService.matchesPermanentPredicate(permanent,

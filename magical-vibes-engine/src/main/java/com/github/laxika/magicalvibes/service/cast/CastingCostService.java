@@ -2409,7 +2409,7 @@ public class CastingCostService {
         if (sacCost.isPresent()) {
             if (battlefield == null) return false;
             long matchingCount = battlefield.stream()
-                    .filter(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p))
+                    .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
                     .count();
             if (matchingCount < sacCost.get().count()) return false;
@@ -3013,7 +3013,7 @@ public class CastingCostService {
         }
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(playerId);
         return sacrificeCosts.stream().allMatch(cost -> battlefield.stream()
-                .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                .filter(permanent -> gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         permanent, cost.filter(), filterContext))
                 .count() >= cost.count());
@@ -3161,7 +3161,7 @@ public class CastingCostService {
                         || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
                     throw new IllegalStateException("Can only sacrifice permanents you control");
                 }
-                if (!gameQueryService.canSacrificePermanentForCosts(gameData, permanent)) {
+                if (!gameQueryService.canChooseToSacrificeForCosts(gameData, permanent)) {
                     throw new IllegalStateException("Permanent cannot be sacrificed to cast " + card.getName());
                 }
                 if (!predicateEvaluationService.matchesPermanentPredicate(
@@ -3241,7 +3241,7 @@ public class CastingCostService {
                 }
             } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {
                 long matchingCount = battlefield.stream()
-                        .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                        .filter(permanent -> gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                         .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, sacrificeCost.filter(),
                                 FilterContext.of(gameData).withSourceControllerId(playerId)))

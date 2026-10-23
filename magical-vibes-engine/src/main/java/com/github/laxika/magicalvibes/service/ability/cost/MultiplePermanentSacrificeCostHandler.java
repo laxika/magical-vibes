@@ -100,7 +100,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> matchesFilter(gameData, p))
-                .filter(p -> gameQueryService == null || gameQueryService.canSacrificePermanentForCosts(gameData, p))
+                .filter(p -> gameQueryService == null || gameQueryService.canChooseToSacrificeForCosts(gameData, p, filter))
                 .filter(p -> excludedSourcePermanentId == null || !p.getId().equals(excludedSourcePermanentId))
                 .map(Permanent::getId)
                 .toList();
@@ -117,7 +117,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
         if (excludedSourcePermanentId != null && chosen.getId().equals(excludedSourcePermanentId)) {
             throw new IllegalStateException("Cannot sacrifice this permanent to its own ability");
         }
-        if (gameQueryService != null && !gameQueryService.canSacrificePermanentForCosts(gameData, chosen)) {
+        if (gameQueryService != null && !gameQueryService.canChooseToSacrificeForCosts(gameData, chosen, filter)) {
             throw new IllegalStateException("This permanent cannot be sacrificed as a cost");
         }
         sacrificeAction.sacrifice(gameData, player, chosen);

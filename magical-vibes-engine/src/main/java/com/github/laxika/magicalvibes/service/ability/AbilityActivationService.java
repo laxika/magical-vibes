@@ -6368,7 +6368,7 @@ public class AbilityActivationService {
             if (chosen == null
                     || !context.playerId().equals(gameQueryService.findPermanentController(gameData, permanentId))
                     || (cost.excludeSource() && permanentId.equals(source.getId()))
-                    || !gameQueryService.canSacrificePermanentForCosts(gameData, chosen)
+                    || !gameQueryService.canChooseToSacrificeForCosts(gameData, chosen, cost.filter())
                     || !predicateEvaluationService.matchesPermanentPredicate(chosen, cost.filter(), filterContext)) {
                 throw new IllegalStateException("A selected permanent is no longer a matching permanent you control");
             }
@@ -8001,7 +8001,7 @@ public class AbilityActivationService {
                 .filter(candidate -> !cost.excludeSource() || !candidate.getId().equals(source.getId()))
                 .filter(candidate -> predicateEvaluationService.matchesPermanentPredicate(
                         candidate, cost.filter(), filterContext))
-                .filter(candidate -> gameQueryService.canSacrificePermanentForCosts(gameData, candidate))
+                .filter(candidate -> gameQueryService.canChooseToSacrificeForCosts(gameData, candidate, cost.filter()))
                 .map(Permanent::getId)
                 .toList();
     }

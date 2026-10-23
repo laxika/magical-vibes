@@ -793,7 +793,7 @@ public class ExileFreeCastQueueSupport {
             List<UUID> candidates = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
                     .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                             gameData, permanent, sacrificeCost.filter())
-                            && gameQueryService.canSacrificePermanentForCosts(gameData, permanent)
+                            && gameQueryService.canChooseToSacrificeForCosts(gameData, permanent)
                             && !(sacrificeCost.excludeSource()
                             && permanent.getCard().getId().equals(entry.getCard().getId())))
                     .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
@@ -810,7 +810,7 @@ public class ExileFreeCastQueueSupport {
         if (!needsSacrifice) return false;
         List<UUID> candidates = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent)
-                        && !gameQueryService.cantBeSacrificed(gameData, permanent)
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, permanent)
                         && entry.getEffectsToResolve().stream()
                         .filter(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance)
                         .map(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::cast)
@@ -862,7 +862,7 @@ public class ExileFreeCastQueueSupport {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, cost.filter())
-                        && gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                        && gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                 .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
     }
 
@@ -954,7 +954,7 @@ public class ExileFreeCastQueueSupport {
         return gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, cost.filter())
-                        && gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                        && gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                 .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
     }
 

@@ -165,7 +165,7 @@ public class SpellEvaluator {
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(p -> !p.getId().equals(source.getId()))
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p))
+                .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
                 .toList();
     }
 

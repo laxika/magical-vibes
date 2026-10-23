@@ -126,7 +126,7 @@ public class DistinctNamePermanentSacrificeCostHandler implements PermanentChoic
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, cost.filter()))
                 .filter(permanent -> gameQueryService == null
-                        || gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                        || gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                 .toList();
     }
 

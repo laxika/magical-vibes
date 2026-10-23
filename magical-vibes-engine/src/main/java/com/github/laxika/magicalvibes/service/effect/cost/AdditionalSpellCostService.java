@@ -777,11 +777,11 @@ public class AdditionalSpellCostService {
                 }
                 case SacrificeCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p)
-                            && gameQueryService.canSacrificePermanentForCosts(gameData, p))) return false;
+                            && gameQueryService.canChooseToSacrificeForCosts(gameData, p))) return false;
                 }
                 case SacrificeCreatureOrDiscardCardOrPayLifeCost cost -> {
                     boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
-                            && gameQueryService.canSacrificePermanentForCosts(gameData, p));
+                            && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
                     boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
                             new DiscardCardTypeCost(null, null)).isEmpty();
                     boolean canPayLife = lifePaymentAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
@@ -792,7 +792,7 @@ public class AdditionalSpellCostService {
                 case SacrificePermanentOrPayManaCost cost -> {
                     boolean hasPermanent = battlefield.stream().anyMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && gameQueryService.canSacrificePermanentForCosts(gameData, p));
+                                    && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
                     if (!hasPermanent && !canAffordSacrificeOrPayManaOption(gameData, playerId, card, cost)) {
                         return false;
                     }
@@ -807,7 +807,7 @@ public class AdditionalSpellCostService {
                 }
                 case SacrificeCreatureOrPayManaCost cost -> {
                     boolean hasCreature = battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p)
-                            && gameQueryService.canSacrificePermanentForCosts(gameData, p));
+                            && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
                     if (!hasCreature && !canAffordSacrificeOrPayManaOption(gameData, playerId, card,
                             new SacrificePermanentOrPayManaCost(
                                     cost.manaCost(), new PermanentIsCreaturePredicate(), "a creature"))) {
@@ -822,7 +822,7 @@ public class AdditionalSpellCostService {
                 case SacrificePermanentOrDiscardCardCost cost -> {
                     boolean hasPermanent = battlefield.stream().anyMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && gameQueryService.canSacrificePermanentForCosts(gameData, p));
+                                    && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
                     boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
                             new DiscardCardTypeCost(null, null)).isEmpty();
                     if (!hasPermanent && !hasDiscard) return false;
@@ -853,7 +853,7 @@ public class AdditionalSpellCostService {
                             new DiscardCardTypeCost(null, null)).isEmpty();
                     boolean hasPermanent = battlefield.stream().anyMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
-                                    && gameQueryService.canSacrificePermanentForCosts(gameData, p));
+                                    && gameQueryService.canChooseToSacrificeForCosts(gameData, p));
                     if (!hasDiscard && !hasPermanent) {
                         return false;
                     }
@@ -887,13 +887,13 @@ public class AdditionalSpellCostService {
                         continue;
                     }
                     if (battlefield.stream().noneMatch(p ->
-                            gameQueryService.canSacrificePermanentForCosts(gameData, p)
+                            gameQueryService.canChooseToSacrificeForCosts(gameData, p)
                                     && predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))) return false;
                 }
                 case SacrificeMultiplePermanentsCost cost -> {
                     long matching = battlefield.stream()
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                            .filter(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p))
+                            .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
                             .count();
                     if (matching < cost.count()) return false;
                 }
@@ -904,7 +904,7 @@ public class AdditionalSpellCostService {
                     int required = (int) ((matching + cost.divisor() - 1) / cost.divisor());
                     long sacrificable = battlefield.stream()
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
-                            .filter(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p))
+                            .filter(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p))
                             .count();
                     if (sacrificable < required) return false;
                 }
@@ -1009,7 +1009,7 @@ public class AdditionalSpellCostService {
                     boolean canSacrifice = battlefield.stream()
                             .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                                     gameData, p, cost.filter()))
-                            .anyMatch(p -> gameQueryService.canSacrificePermanentForCosts(gameData, p));
+                            .anyMatch(p -> gameQueryService.canChooseToSacrificeForCosts(gameData, p));
                     if (!canPayLife && !canSacrifice) return false;
                 }
                 case PayLifeOrPayManaCost cost -> {
@@ -2171,6 +2171,9 @@ public class AdditionalSpellCostService {
                 throw new IllegalStateException("Players can't sacrifice creatures to cast " + sourceCard.getName());
             }
             throw new IllegalStateException("Players can't sacrifice nonland permanents to cast " + sourceCard.getName());
+        }
+        if (gameQueryService.cantBeChosen(gameData, toSacrifice)) {
+            throw new IllegalStateException(toSacrifice.getCard().getName() + " can't be chosen");
         }
         return toSacrifice;
     }

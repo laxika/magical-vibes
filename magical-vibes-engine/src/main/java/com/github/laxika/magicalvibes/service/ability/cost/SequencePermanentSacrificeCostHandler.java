@@ -155,7 +155,9 @@ public class SequencePermanentSacrificeCostHandler implements PermanentChoiceCos
                 context = context.withSourceCardId(source.getOriginalCard().getId());
             }
         }
-        return predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context);
+        return predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)
+                && (gameQueryService == null
+                || gameQueryService.canChooseToSacrificeForCosts(gameData, permanent, filter));
     }
 
     private Permanent findSourcePermanent(GameData gameData) {

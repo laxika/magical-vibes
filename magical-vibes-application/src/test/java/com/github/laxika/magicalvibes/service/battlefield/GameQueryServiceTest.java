@@ -1389,6 +1389,41 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("canChooseToSacrificeForCosts")
+    class CanChooseToSacrificeForCosts {
+
+        @Test
+        @DisplayName("a creature without restrictions can be chosen to pay a sacrifice cost")
+        void plainCreatureCanBeChosen() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(gqs.canChooseToSacrificeForCosts(gd, perm)).isTrue();
+            assertThat(gqs.canChooseToSacrificeForCosts(gd, perm, new PermanentIsCreaturePredicate())).isTrue();
+        }
+
+        @Test
+        @DisplayName("a permanent that can't be chosen can't pay a sacrifice cost that involves a choice")
+        void cantBeChosenPermanentIsExcluded() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Glimpse, the Unthinkable", 4, 5, CardColor.BLUE, new CantBeChosenEffect()));
+
+            assertThat(gqs.canSacrificePermanentForCosts(gd, perm)).isTrue();
+            assertThat(gqs.canChooseToSacrificeForCosts(gd, perm)).isFalse();
+            assertThat(gqs.canChooseToSacrificeForCosts(gd, perm, new PermanentIsCreaturePredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("a sacrifice cost naming one specific permanent involves no choice")
+        void specificPermanentFilterIgnoresCantBeChosen() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Glimpse, the Unthinkable", 4, 5, CardColor.BLUE, new CantBeChosenEffect()));
+
+            assertThat(gqs.canChooseToSacrificeForCosts(gd, perm, new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(), new PermanentIsSourcePermanentPredicate())))).isTrue();
+        }
+    }
+
     // ===== canPlayerGetPoisonCounters =====
 
     @Nested

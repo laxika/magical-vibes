@@ -781,7 +781,7 @@ public class GameActionAvailabilityService {
         }
         if (kicker.hasSacrificeCost()
                 && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                .filter(permanent -> gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                 .noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, kicker.sacrificePredicate()))) {
             return false;
@@ -2002,7 +2002,7 @@ public class GameActionAvailabilityService {
                 long matchingPermanents = gameData.playerBattlefields
                         .getOrDefault(playerId, List.of())
                         .stream()
-                        .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                        .filter(permanent -> gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                         .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, sacrificeCost.filter(),
                                 FilterContext.of(gameData).withSourceControllerId(playerId)))

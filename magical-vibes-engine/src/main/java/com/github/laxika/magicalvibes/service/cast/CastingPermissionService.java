@@ -2700,7 +2700,7 @@ public class CastingPermissionService {
                 return false;
             }
             long matching = battlefield.stream()
-                    .filter(permanent -> gameQueryService.canSacrificePermanentForCosts(gameData, permanent))
+                    .filter(permanent -> gameQueryService.canChooseToSacrificeForCosts(gameData, permanent))
                     .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                             permanent, sacrificeCost.filter(),
                             FilterContext.of(gameData).withSourceControllerId(playerId)))

@@ -2121,6 +2121,30 @@ public class GameQueryService {
     }
 
     /**
+     * Returns whether {@code permanent} may be chosen to pay a sacrifice cost that involves a
+     * choice ("Sacrifice a creature", "Sacrifice two artifacts", "Sacrifice any number of lands"):
+     * it may be sacrificed as a cost and it can't be chosen is not true of it (Glimpse, the
+     * Unthinkable). Costs that name one object ("Sacrifice this") or every matching permanent
+     * ("Sacrifice all lands you control") involve no choice and use
+     * {@link #canSacrificePermanentForCosts} alone.
+     */
+    public boolean canChooseToSacrificeForCosts(GameData gameData, Permanent permanent) {
+        return canSacrificePermanentForCosts(gameData, permanent) && !cantBeChosen(gameData, permanent);
+    }
+
+    /**
+     * As {@link #canChooseToSacrificeForCosts(GameData, Permanent)} for a sacrifice cost described
+     * by {@code filter}, except that a filter naming one specific object involves no choice, so
+     * only {@link #canSacrificePermanentForCosts} applies to it.
+     */
+    public boolean canChooseToSacrificeForCosts(GameData gameData, Permanent permanent,
+                                                com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        return designatesSpecificObject(filter)
+                ? canSacrificePermanentForCosts(gameData, permanent)
+                : canChooseToSacrificeForCosts(gameData, permanent);
+    }
+
+    /**
      * Returns whether {@code permanent} may be sacrificed to a resolving spell or ability's
      * "sacrifice unless" or upkeep sacrifice. The sacrifice restrictions of
      * {@link #canSacrificePermanentForCosts} only govern costs of casting spells and activating

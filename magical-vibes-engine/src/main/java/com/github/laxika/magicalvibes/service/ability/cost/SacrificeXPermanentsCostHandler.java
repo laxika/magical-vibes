@@ -71,7 +71,7 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
         return battlefield.stream()
                 .filter(p -> matchesFilter(gameData, p))
                 .filter(p -> gameQueryService == null
-                        || gameQueryService.canSacrificePermanentForCosts(gameData, p))
+                        || gameQueryService.canChooseToSacrificeForCosts(gameData, p, cost.filter()))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -81,7 +81,7 @@ public class SacrificeXPermanentsCostHandler implements PermanentChoiceCostHandl
         if (!matchesFilter(gameData, chosen)) {
             throw new IllegalStateException("Permanent does not match the required predicate");
         }
-        if (gameQueryService != null && !gameQueryService.canSacrificePermanentForCosts(gameData, chosen)) {
+        if (gameQueryService != null && !gameQueryService.canChooseToSacrificeForCosts(gameData, chosen, cost.filter())) {
             throw new IllegalStateException("This permanent cannot be sacrificed as a cost");
         }
         sacrificeAction.sacrifice(gameData, player, chosen);

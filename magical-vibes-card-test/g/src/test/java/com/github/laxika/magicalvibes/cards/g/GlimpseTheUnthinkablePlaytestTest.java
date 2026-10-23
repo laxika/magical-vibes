@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDepravity;
+import com.github.laxika.magicalvibes.cards.a.AshnodsAltar;
+import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.d.DivineReckoning;
 import com.github.laxika.magicalvibes.cards.d.Duneblast;
@@ -27,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GlimpseTheUnthinkablePlaytest.class, PathOfPeace.class, DivineReckoning.class, Nevermore.class,
         DiabolicEdict.class, InnocentBlood.class, GrizzlyBears.class, PromiseOfLoyalty.class, Duneblast.class,
-        ArchfiendOfDepravity.class})
+        ArchfiendOfDepravity.class, AshnodsAltar.class, BoneSplinters.class})
 class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
 
     @Test
@@ -215,6 +217,49 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player2, "Glimpse, the Unthinkable");
+    }
+
+    @Test
+    @DisplayName("A sacrifice-a-creature activation cost can't be paid with Glimpse when it is the only creature")
+    void activationSacrificeCostCannotChooseGlimpse() {
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A sacrifice-a-creature activation cost takes the other creature without a prompt")
+    void activationSacrificeCostTakesOtherCreatureAutomatically() {
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Glimpse can't be chosen to pay a spell's additional sacrifice cost")
+    void spellSacrificeCostCannotChooseGlimpse() {
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BoneSplinters()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), glimpse.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     private void castPromiseOfLoyalty() {
