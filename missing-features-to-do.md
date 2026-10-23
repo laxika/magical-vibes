@@ -148,6 +148,21 @@ and `targetPlayerSacrificeIfSubtypeAsksBeforeTheLoneZombieIsSacrificed`. Still u
 "sacrifice another creature, then ..." contexts (`SacrificeAnotherCreature*`, `SacrificeCreatureCreate*`,
 `SacrificeArtifactForDividedDamage`, `ExploitSacrifice`, `SacrificePermanentAnd*`, ...).
 
+**Also landed (2026-10-23, ninth pass).** The "sacrifice another creature/permanent, then ..." single-choice
+completions joined `PermanentChoiceHandlerService.killsBeforeChangingAnything`; each was reviewed to only read
+(power, toughness, mana value, the source permanent, last-known info copied onto the parked entry) before its
+sacrifice: `SacrificeAnotherCreatureGainLifeAndDraw` (Disciple of Bolas), `SacrificeAnotherCreatureDealPowerDamage`
+(Heart-Piercer Manticore and friends: the reflexive target prompt opens only after the answer),
+`SacrificeAnotherCreatureDrawAndMayPutPermanent`, `SacrificeArtifactForDividedDamage`, `ExploitSacrifice`,
+`SacrificePermanentAndReturnTargetCards`, `SacrificePermanentAndBoostSelf`, `SacrificePermanentAndGrantKeywordSelf`,
+`SacrificeCreatureCreateTokensEqualToToughness` and `SacrificeCreatureCreateSizedTokenEqualToPower`. Tests in
+`GravebaneZombieTest`: `sacrificeAnotherCreatureThenGainLifeAndDrawAsksBeforeTheZombieIsSacrificed` (no life or
+cards while asked, three of each after) and `sacrificeAnotherCreatureThenReflexiveDamageAsksBeforeTheZombieIsSacrificed`.
+Still unreviewed single-sacrifice contexts: `LandEquilibriumSacrifice`, `TormentSacrifice`, `ForcedCostOrElse`,
+the `AnyOpponent...`/`AnyPlayerMay...`/`MaySacrifice...` "unless" contexts, `SacrificePermanentThen`,
+`SacrificeOtherCreatureThenRevealUntilLowerManaValue`, the `SacrificeOneOfCombatDamageDealers...` contexts and
+`SacrificeCreatureThenMassDamageEqualToPower`.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -163,7 +178,7 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
-  the unreviewed single-sacrifice contexts and destroy completions listed in the seventh and eighth
+  the unreviewed single-sacrifice contexts and destroy completions listed in the seventh and ninth
   passes), and sacrifices paid as costs.
 - Pulmonic Sliver's lone "may" (one option, asked through the may prompt) outside state-based actions.
 

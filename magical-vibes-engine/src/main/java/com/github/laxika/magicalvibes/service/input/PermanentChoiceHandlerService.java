@@ -233,7 +233,17 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.EachTargetPlayerLosesLifeAndSacrificesCreature
                 || context instanceof PermanentChoiceContext.SacrificeOneOfTwo
                 || context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenCounterOnOther
-                || context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand;
+                || context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand
+                || context instanceof PermanentChoiceContext.SacrificePermanentAndReturnTargetCards
+                || context instanceof PermanentChoiceContext.SacrificePermanentAndBoostSelf
+                || context instanceof PermanentChoiceContext.SacrificePermanentAndGrantKeywordSelf
+                || context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness
+                || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent
+                || context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower
+                || context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage
+                || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage
+                || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw
+                || context instanceof PermanentChoiceContext.ExploitSacrifice;
     }
 
     private void completeKillingChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
@@ -287,6 +297,26 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleSacrificeOneOfTwoThenCounterOnOther(gameData, permanentId, sacrificeOneOfTwo);
             case PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand sacrificeOneOfTwo ->
                     battlefieldHandler.handleSacrificeOneOfTwoThenReturnOtherToHand(gameData, permanentId, sacrificeOneOfTwo);
+            case PermanentChoiceContext.SacrificePermanentAndReturnTargetCards spar ->
+                    battlefieldHandler.handleSacrificePermanentAndReturnTargetCards(gameData, permanentId, spar);
+            case PermanentChoiceContext.SacrificePermanentAndBoostSelf spabs ->
+                    battlefieldHandler.handleSacrificePermanentAndBoostSelf(gameData, permanentId, spabs);
+            case PermanentChoiceContext.SacrificePermanentAndGrantKeywordSelf spagks ->
+                    battlefieldHandler.handleSacrificePermanentAndGrantKeywordSelf(gameData, permanentId, spagks);
+            case PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct ->
+                    battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
+            case PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent venom ->
+                    battlefieldHandler.handleSacrificeAnotherCreatureDrawAndMayPutPermanent(gameData, permanentId, venom);
+            case PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower scsp ->
+                    battlefieldHandler.handleSacrificeCreatureCreateSizedTokenEqualToPower(gameData, permanentId, scsp);
+            case PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd ->
+                    battlefieldHandler.handleSacrificeArtifactForDividedDamage(gameData, permanentId, sadd);
+            case PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage sacpd ->
+                    battlefieldHandler.handleSacrificeAnotherCreatureDealPowerDamage(gameData, permanentId, sacpd);
+            case PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw sacgld ->
+                    battlefieldHandler.handleSacrificeAnotherCreatureGainLifeAndDraw(gameData, permanentId, sacgld);
+            case PermanentChoiceContext.ExploitSacrifice exploitSac ->
+                    battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
             default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
         }
     }
@@ -743,14 +773,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {
             battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
-        } else if (context instanceof PermanentChoiceContext.SacrificePermanentAndReturnTargetCards spar) {
-            battlefieldHandler.handleSacrificePermanentAndReturnTargetCards(gameData, permanentId, spar);
-        } else if (context instanceof PermanentChoiceContext.SacrificePermanentAndBoostSelf spabs) {
-            battlefieldHandler.handleSacrificePermanentAndBoostSelf(gameData, permanentId, spabs);
-        } else if (context instanceof PermanentChoiceContext.SacrificePermanentAndGrantKeywordSelf spagks) {
-            battlefieldHandler.handleSacrificePermanentAndGrantKeywordSelf(gameData, permanentId, spagks);
-        } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct) {
-            battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
         } else if (context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue kethek) {
             battlefieldHandler.handleSacrificeOtherCreatureThenRevealUntilLowerManaValue(gameData, permanentId, kethek);
         } else if (context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature descendantsFury) {
@@ -763,20 +785,8 @@ public class PermanentChoiceHandlerService {
                     .ifPresent(permanent -> descendantsFuryEffectHandler.resolveAfterChoice(
                             gameData, descendantsFury.sourceCard(), descendantsFury.controllerId(), permanent));
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent venom) {
-            battlefieldHandler.handleSacrificeAnotherCreatureDrawAndMayPutPermanent(gameData, permanentId, venom);
-        } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower scsp) {
-            battlefieldHandler.handleSacrificeCreatureCreateSizedTokenEqualToPower(gameData, permanentId, scsp);
-        } else if (context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {
-            battlefieldHandler.handleSacrificeArtifactForDividedDamage(gameData, permanentId, sadd);
-        } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage sacpd) {
-            battlefieldHandler.handleSacrificeAnotherCreatureDealPowerDamage(gameData, permanentId, sacpd);
-        } else if (context instanceof PermanentChoiceContext.SacrificeAnotherCreatureGainLifeAndDraw sacgld) {
-            battlefieldHandler.handleSacrificeAnotherCreatureGainLifeAndDraw(gameData, permanentId, sacgld);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower rupture) {
             battlefieldHandler.handleSacrificeCreatureThenMassDamageEqualToPower(gameData, permanentId, rupture);
-        } else if (context instanceof PermanentChoiceContext.ExploitSacrifice exploitSac) {
-            battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
         } else if (context instanceof PermanentChoiceContext.ExploitTriggerTarget exploitTt) {
             triggerHandler.handleExploitTrigger(gameData, permanentId, exploitTt);
         } else if (context instanceof PermanentChoiceContext.ExploitPermanentTriggerTarget exploitPt) {
