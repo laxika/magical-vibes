@@ -24,11 +24,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -251,5 +253,52 @@ class ColorChoiceAiStrategyTest {
         ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
         verify(gameActions).answerInteraction(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Glimmerpost"));
+    }
+
+    @Test
+    @DisplayName("Card name choice skips an offered name that can't be chosen")
+    void cardNameChoiceSkipsUnchoosableOfferedName() {
+        gameData.orderedPlayerIds.add(aiPlayerId);
+        gameData.orderedPlayerIds.add(UUID.randomUUID());
+        when(gameQueryService.isCardNameUnchoosable(gameData, "Glimpse, the Unthinkable")).thenReturn(true);
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.CardNameChoice(null, aiPlayerId, List.of()),
+                List.of("Glimpse, the Unthinkable", "Grizzly Bears"),
+                "Choose a card name.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Free-form name guess falls back to another visible card when its pick can't be chosen")
+    void freeFormNameGuessAvoidsUnchoosableName() {
+        Card glimpse = mock(Card.class);
+        Card bears = mock(Card.class);
+        when(glimpse.getName()).thenReturn("Glimpse, the Unthinkable");
+        when(bears.getName()).thenReturn("Grizzly Bears");
+        gameData.playerDecks.put(aiPlayerId, new ArrayList<>(List.of(glimpse, bears)));
+        when(gameQueryService.isCardNameUnchoosable(gameData, "Glimpse, the Unthinkable")).thenReturn(true);
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.TargetPlayerNameCardRevealTopChoice(aiPlayerId, aiPlayerId, null, 0),
+                List.of(),
+                "Choose a card name.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Grizzly Bears"));
     }
 }
