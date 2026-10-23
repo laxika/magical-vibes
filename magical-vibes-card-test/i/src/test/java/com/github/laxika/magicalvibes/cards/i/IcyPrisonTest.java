@@ -2,9 +2,14 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -227,4 +232,41 @@ class IcyPrisonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Icy Prison");
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
     }
+
+    @Test
+    @CardUsed({Opalescence.class, KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("The last player's decline asks for an animated Icy Prison's death replacement before it is sacrificed")
+    void lastDeclineAsksForTheDeathReplacementBeforeIcyPrisonIsSacrificed() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent prison = harness.addToBattlefieldAndReturn(player1, new IcyPrison());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(prison.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(prison);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(prison.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(prison);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 }

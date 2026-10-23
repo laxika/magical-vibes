@@ -765,6 +765,22 @@ and after a villainous decline, the deferred Torment picks, Land Equilibrium's l
 handlers whose answer sacrifices or destroys (the "any opponent may sacrifice" handlers' other paths, ...; each needing
 review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-fifth pass).** The last decline of an "any player may pay" forced-cost prompt (Icy
+Prison's "sacrifice this enchantment unless any player pays {3}") now asks before its first fallback effect's death.
+The mayfx `ForcedCostOrElseHandler` lets an "any player may pay" answer into the window once
+`GameData.forcedCostOrElseRemainingPlayers` is empty (an earlier decline still offers the next player outside it), and
+hands `answerAskingDeathReplacementsFirst` a copy of the prompt carrying the source controller read from
+`GameData.forcedCostOrElseSourceControllerId`, which the answer clears before the fallback, so the replay finds the
+same controller. The same copy lifts the earlier exclusion of enchanted- or defending-player prompts without a source
+controller on the ability. Test: `IcyPrisonTest.lastDeclineAsksForTheDeathReplacementBeforeIcyPrisonIsSacrificed`
+(Icy Prison animated by Opalescence and enchanted with Necromancer's Magemark against Kalitas, Traitor of Ghet; both
+players decline; while asked the choice is a rerun one for Icy Prison's controller, it stays and nothing is logged as
+sacrificed; after the return-to-hand answer it is in its owner's hand, one sacrifice log line and no Zombie). Villainous
+declines stay outside the window (the decline counts down the remaining choices first), but no villainous card's
+first fallback effect kills, so nothing is missed today. Still not covered: the deferred Torment picks, Land
+Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent
+may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 /**
  * Optional "you may pay [cost]; if you don't, [penalty]" (e.g. Yawgmoth Demon).
  * A decline, or an accepted mana cost the pool can't pay, whose first fallback effect kills (Phantasmal
- * Forces' "sacrifice this creature") changes nothing before that death, so a creature with competing death
+ * Forces' "sacrifice this creature", or Icy Prison's after the last player of "unless any player pays" declines)
+ * changes nothing before that death, so a creature with competing death
  * replacements is asked about before it leaves (CR 616.1) and the same answer is completed again with that
  * choice.
  */
@@ -33,37 +34,48 @@ public class ForcedCostOrElseHandler implements MayEffectHandlerBean {
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        Runnable answer = () -> mayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice(
-                gameData, player, accepted, ability);
         ForcedCostOrElseEffect effect = ability.effects().stream()
                 .filter(ForcedCostOrElseEffect.class::isInstance)
                 .map(ForcedCostOrElseEffect.class::cast)
                 .findFirst().orElseThrow();
-        if (fallbackKillsBeforeChangingAnything(ability, effect)
+        if (fallbackKillsBeforeChangingAnything(gameData, effect)
                 && (!accepted || mayPenaltyChoiceHandlerService.acceptedCostFallsThroughUnpaid(
                         gameData, ability, effect))) {
+            PendingMayAbility replayable = withRecordedSourceController(gameData, ability, effect);
             permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
-                    gameData, player, ability, accepted, answer);
+                    gameData, player, replayable, accepted,
+                    () -> mayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice(
+                            gameData, player, accepted, replayable));
         } else {
-            answer.run();
+            mayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice(gameData, player, accepted, ability);
         }
     }
 
     /**
-     * Whether an unpaid {@code ability} goes straight to a fallback effect that kills first. A villainous
-     * choice counts its remaining choices and an "any player may pay" prompt offers the next player before
-     * the fallback, and an enchanted or defending player's prompt without a recorded source controller reads
-     * it from {@link GameData#forcedCostOrElseSourceControllerId}, which the answer clears; a replay would
-     * repeat or lose those, so they stay outside the window.
+     * Whether an unpaid answer goes straight to a fallback effect that kills first. A villainous choice
+     * counts its remaining choices, and an "any player may pay" prompt that isn't the last one offers the
+     * next player, before the fallback; a replay would repeat those, so they stay outside the window.
      */
-    private static boolean fallbackKillsBeforeChangingAnything(PendingMayAbility ability,
-                                                               ForcedCostOrElseEffect effect) {
-        boolean sourceControllerFromGameState = ability.sourceControllerId() == null
-                && (effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer());
+    private static boolean fallbackKillsBeforeChangingAnything(GameData gameData, ForcedCostOrElseEffect effect) {
         return !effect.villainousChoice()
-                && !effect.anyPlayerMayPay()
-                && !sourceControllerFromGameState
+                && (!effect.anyPlayerMayPay() || gameData.forcedCostOrElseRemainingPlayers.isEmpty())
                 && !effect.elseEffects().isEmpty()
                 && ForcedCostOrElseEffectHandler.killsBeforeChangingAnything(effect.elseEffects().getFirst());
+    }
+
+    /**
+     * {@code ability} carrying the source controller an "any player may pay", enchanted-controller or
+     * defending-player prompt otherwise reads from {@link GameData#forcedCostOrElseSourceControllerId}. The
+     * answer clears that field before its fallback, so the replay after the death replacement choice reads
+     * the controller from the ability instead.
+     */
+    private static PendingMayAbility withRecordedSourceController(GameData gameData, PendingMayAbility ability,
+                                                                  ForcedCostOrElseEffect effect) {
+        boolean readsSourceControllerFromGameState = ability.sourceControllerId() == null
+                && (effect.anyPlayerMayPay() || effect.payerIsEnchantedController() || effect.payerIsDefendingPlayer())
+                && gameData.forcedCostOrElseSourceControllerId != null;
+        return readsSourceControllerFromGameState
+                ? ability.withSourceControllerId(gameData.forcedCostOrElseSourceControllerId)
+                : ability;
     }
 }
