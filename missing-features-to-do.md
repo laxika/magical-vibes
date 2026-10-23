@@ -682,6 +682,20 @@ then the Worms are destroyed). Still not covered: the fallback effects' own deat
 Dilemma, `LandEquilibriumSacrifice`, the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent
 may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, fortieth pass).** Voter's Dilemma's last vote now asks before the most-voted creatures are
+destroyed. `MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice` joined
+`MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`: its votes so far live in the immutable context, the
+vote is recorded before the completion runs (the replay doesn't record it again), and
+`VoteForCreatureThenDestroyMostVotedEffectHandler` now finishes the vote (clearing the recorded votes and collecting
+"finish voting" triggers) only once the batch's death replacements have been asked, through a new
+`DestructionSupport.destroyBatch(..., Runnable beforeDestruction)` overload that runs its hook after the ask and before
+the first destruction. A vote with no votes still finishes before the draws. Test:
+`Vault11VotersDilemmaTest.lastVoteAsksForTheDeathReplacementBeforeVotingFinishesOrTheZombieIsDestroyed` (Kalitas,
+Traitor of Ghet and Model of Unity against Gravebane Zombie: no Model of Unity trigger while asked, one after; the
+Zombie goes on top of its owner's library). Still not covered: the fallback effects' own deaths, the deferred Torment
+picks, `LandEquilibriumSacrifice`, the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent
+may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

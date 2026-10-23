@@ -68,18 +68,24 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
             return;
         }
 
-        votingFinishedSupport.finishVoting(gameData, effectControllerId);
-        finishVote(gameData, votes, sourceName, resolvingEntry);
+        finishVote(gameData, votes, effectControllerId, sourceName, resolvingEntry);
     }
 
-    private void finishVote(GameData gameData, Map<UUID, Integer> votes, String sourceName,
-                            StackEntry resolvingEntry) {
+    /**
+     * Ends the vote and destroys the most-voted creatures. Finishing the vote clears the recorded votes
+     * and collects "whenever players finish voting" triggers, so it runs only after the batch's competing
+     * death replacements have been asked (CR 616.1): until then the last vote's completion changes nothing
+     * and can be completed again with the same answer.
+     */
+    private void finishVote(GameData gameData, Map<UUID, Integer> votes, UUID effectControllerId,
+                            String sourceName, StackEntry resolvingEntry) {
         StackEntry pendingEntry = resolvingEntry != null ? resolvingEntry : gameData.pendingEffectResolutionEntry;
         if (pendingEntry == null) {
             throw new IllegalStateException("Voter's Dilemma resolution is not resumable");
         }
 
         if (votes.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             int insertIndex = resolvingEntry != null
                     ? resolvingEntry.getResolvingEffectIndex() + 1
                     : gameData.pendingEffectResolutionIndex;
@@ -93,7 +99,8 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
                 .map(entry -> gameQueryService.findPermanentById(gameData, entry.getKey()))
                 .filter(permanent -> permanent != null && gameQueryService.isCreature(gameData, permanent))
                 .toList();
-        destructionSupport.destroyBatch(gameData, toDestroy, sourceName, false);
+        destructionSupport.destroyBatch(gameData, toDestroy, sourceName, false,
+                () -> votingFinishedSupport.finishVoting(gameData, effectControllerId));
     }
 
     private List<UUID> creatureIds(GameData gameData) {

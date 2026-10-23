@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Vault11VotersDilemma.class, GrizzlyBears.class, Forest.class, ModelOfUnity.class})
+@CardUsed({Vault11VotersDilemma.class, GrizzlyBears.class, Forest.class, ModelOfUnity.class,
+        KalitasTraitorOfGhet.class, GravebaneZombie.class})
 class Vault11VotersDilemmaTest extends BaseCardTest {
 
     @Test
@@ -144,6 +147,30 @@ class Vault11VotersDilemmaTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void lastVoteAsksForTheDeathReplacementBeforeVotingFinishesOrTheZombieIsDestroyed() {
+        harness.addToBattlefield(player1, new ModelOfUnity());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        addSagaWithLore(1);
+
+        advanceToNextChapter();
+        harness.handleMultiplePermanentsChosen(player1, List.of(gravebane.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(gravebane.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Model of Unity"));
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(countPermanents(player1, "Zombie")).isZero();
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Model of Unity")).hasSize(1);
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

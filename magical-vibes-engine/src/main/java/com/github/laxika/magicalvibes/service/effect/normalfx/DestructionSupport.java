@@ -263,11 +263,29 @@ public class DestructionSupport {
         return destroyBatchWithOutcome(gameData, toDestroy, sourceName, cannotBeRegenerated).destroyed();
     }
 
+    /**
+     * Same batch destruction as {@link #destroyBatch}, but runs {@code beforeDestruction} once the batch's
+     * death replacements have been asked (CR 616.1) and before the first permanent is destroyed. Lets an
+     * effect whose resolution would otherwise change the game between choosing the batch and destroying it
+     * (Voter's Dilemma finishing its vote) be stopped and resolved again for a death replacement choice;
+     * {@code beforeDestruction} runs with that window already closed.
+     */
+    public int destroyBatch(GameData gameData, List<Permanent> toDestroy, String sourceName,
+                            boolean cannotBeRegenerated, Runnable beforeDestruction) {
+        return destroyBatchWithOutcome(gameData, toDestroy, sourceName, cannotBeRegenerated, beforeDestruction)
+                .died().size();
+    }
+
     private record BatchOutcome(List<Permanent> destroyed, List<Permanent> died) {
     }
 
     private BatchOutcome destroyBatchWithOutcome(GameData gameData, List<Permanent> toDestroy, String sourceName,
                                                  boolean cannotBeRegenerated) {
+        return destroyBatchWithOutcome(gameData, toDestroy, sourceName, cannotBeRegenerated, () -> { });
+    }
+
+    private BatchOutcome destroyBatchWithOutcome(GameData gameData, List<Permanent> toDestroy, String sourceName,
+                                                 boolean cannotBeRegenerated, Runnable beforeDestruction) {
         Set<Permanent> indestructible = new HashSet<>();
         for (Permanent perm : toDestroy) {
             if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
@@ -299,6 +317,7 @@ public class DestructionSupport {
         // CR 616.1: the whole batch's death replacement choices come before any of it is destroyed.
         permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, actuallyDying);
         gameData.deathReplacementsCanRerunEffect = false;
+        beforeDestruction.run();
 
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {

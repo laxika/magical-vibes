@@ -1120,8 +1120,6 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesOpponentPermanentToExile(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice ctx) {
             handleWillOfTheCouncilChoice(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice ctx) {
-            handleVoteForCreatureThenDestroyMostVotedChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SecretCouncilChoice ctx) {
             handleSecretCouncilChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ElrondFellowshipChoice ctx) {
@@ -2211,6 +2209,11 @@ public class MultiPermanentChoiceHandlerService {
      * sacrifice, and its "if you do" or "otherwise" branch is only queued after the sacrifices.
      * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} asks both chosen lands before the
      * first is sacrificed; Worms of the Earth itself is destroyed after.
+     * {@link MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice} (Voter's Dilemma) keeps
+     * the votes so far in the immutable context and only prompts the next voter before its
+     * {@link DestructionSupport#destroyBatch} batch; the vote is recorded before the completion runs (a
+     * replay doesn't record it again) and finished, firing "finish voting" triggers, only after the
+     * batch's death replacements have been asked.
      */
     private boolean killsBeforeChangingAnything(MultiPermanentChoiceContext context) {
         return context instanceof MultiPermanentChoiceContext.ForcedSacrifice
@@ -2245,7 +2248,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
                 || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice
                 || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse
-                || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands;
+                || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
+                || context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice;
     }
 
     /**
@@ -2404,6 +2408,10 @@ public class MultiPermanentChoiceHandlerService {
             }
             case MultiPermanentChoiceContext.SacrificePermanentsOrElse ctx -> {
                 handleSacrificePermanentsOrElse(gameData, playerId, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice ctx -> {
+                handleVoteForCreatureThenDestroyMostVotedChoice(gameData, permanentIds, ctx);
                 return;
             }
             case MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands ctx -> {
