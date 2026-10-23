@@ -219,5 +219,64 @@ class LandEquilibriumTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("A lone Dryad Arbor left for a second copy asks for its death replacement before it is sacrificed")
+    void loneArborAsksForTheDeathReplacementBeforeItIsSacrificed() {
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        harness.setHand(player2, List.of(new Island()));
+        harness.forceActivePlayer(player2);
+
+        harness.playLand(player2, 0);
+        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Island"));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+        harness.assertInGraveyard(player2, "Island");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices")).hasSize(1);
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices")).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Choosing Kalitas's replacement for the lone Dryad Arbor exiles it and makes a Zombie")
+    void loneArborExiledByKalitasAfterTheAnswer() {
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        harness.setHand(player2, List.of(new Island()));
+        harness.forceActivePlayer(player2);
+
+        harness.playLand(player2, 0);
+        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Island"));
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsOnlyOnce("Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices")).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 }

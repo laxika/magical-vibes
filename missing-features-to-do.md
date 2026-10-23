@@ -815,6 +815,22 @@ and no Kalitas Zombie): `longReachOfNightAsksBeforeTheLoneZombieIsSacrificed` (c
 Land Equilibrium's lone-land sacrifice, the remaining mayfx handlers whose answer sacrifices or destroys (the "any
 opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, forty-eighth pass).** Land Equilibrium's lone-land sacrifice now asks before a land
+creature leaves. `LandEquilibriumSupport.beginNext` sacrifices a lone land through
+`PermanentChoiceHandlerService.runAskingDeathReplacementsFirst` (which now returns whether it stopped), with a
+replay that is a `LandEquilibriumSacrifice` choice answered with that land. So only the sacrifice is redone, not
+the land's entry (the reason the forty-first pass left it out): once answered, `handleLandEquilibriumSacrifice`
+sacrifices it and finishes the entry (a further copy's sacrifice, the land play's ETB and "plays a land"
+triggers) exactly as for a chosen land, and the stopped land play skips them, since input is awaited. Test:
+`LandEquilibriumTest.loneArborAsksForTheDeathReplacementBeforeItIsSacrificed` (two Land Equilibriums; the Island
+is chosen for the first, leaving Dryad Arbor enchanted with Necromancer's Magemark as the lone land for the
+second, against Kalitas, Traitor of Ghet: while asked the Arbor stays and only the Island's sacrifice is logged;
+after the return-to-hand answer it is in its owner's hand with two sacrifice log lines and no Zombie) and
+`loneArborExiledByKalitasAfterTheAnswer`. A lone land that is the entering land itself can't have competing
+death replacements with today's cards (none can enchant or grant one to it as it enters), so it has no test.
+Still not covered: the remaining mayfx handlers whose answer sacrifices or destroys (the "any opponent may
+sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

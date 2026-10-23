@@ -3,13 +3,16 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.LandEquilibriumEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -27,14 +30,17 @@ public class LandEquilibriumSupport {
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
     private final ThreadLocal<Boolean> putterIsNotEnteringController = ThreadLocal.withInitial(() -> false);
 
     public LandEquilibriumSupport(GameQueryService gameQueryService,
                                   PlayerInputService playerInputService,
-                                  @Lazy DestructionSupport destructionSupport) {
+                                  @Lazy DestructionSupport destructionSupport,
+                                  ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider) {
         this.gameQueryService = gameQueryService;
         this.playerInputService = playerInputService;
         this.destructionSupport = destructionSupport;
+        this.permanentChoiceHandlerServiceProvider = permanentChoiceHandlerServiceProvider;
     }
 
     /**
@@ -82,6 +88,15 @@ public class LandEquilibriumSupport {
                 plan.replacementCount());
     }
 
+    /**
+     * Applies the next of {@code remainingReplacements} Land Equilibrium replacements: {@code sacrificingPlayerId}
+     * sacrifices a land, chosen through a permanent choice when there are several. A lone land is sacrificed at
+     * once, but a land creature with competing death replacements is asked about before it leaves (CR 616.1):
+     * the sacrifice stops, and its controller's answer completes it as if the land had been chosen, which also
+     * finishes the rest of the entry (the next replacement, the land play's ETB and "plays a land" triggers).
+     *
+     * @return {@code true} when a choice is pending and its completion finishes the entry
+     */
     public boolean beginNext(GameData gameData, UUID sacrificingPlayerId, Card enteringCard,
                              Zone landPlayZone, int remainingReplacements) {
         if (remainingReplacements <= 0) {
@@ -95,7 +110,16 @@ public class LandEquilibriumSupport {
             return false;
         }
         if (lands.size() == 1) {
-            destructionSupport.sacrificeAndLog(gameData, lands.getFirst(), sacrificingPlayerId);
+            Permanent land = lands.getFirst();
+            PendingInteraction.PermanentChoice asChosen = new PendingInteraction.PermanentChoice(
+                    sacrificingPlayerId, List.of(land.getId()), List.of(),
+                    new PermanentChoiceContext.LandEquilibriumSacrifice(
+                            sacrificingPlayerId, enteringCard, landPlayZone, remainingReplacements), "");
+            if (permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData,
+                    () -> destructionSupport.sacrificeAndLog(gameData, land, sacrificingPlayerId),
+                    new GameData.PermanentChoiceReplay(asChosen, land.getId()))) {
+                return true;
+            }
             return beginNext(gameData, sacrificingPlayerId, enteringCard, landPlayZone,
                     remainingReplacements - 1);
         }

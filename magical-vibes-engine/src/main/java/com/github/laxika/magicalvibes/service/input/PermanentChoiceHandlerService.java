@@ -228,8 +228,10 @@ public class PermanentChoiceHandlerService {
      * death replacements is then asked about before it leaves (CR 616.1): the completion stops,
      * {@code replay} is stored, and {@link #completeChoiceAgainAfterDeathReplacements} completes the
      * same answer again once every replacement is chosen. The window is closed when this returns.
+     *
+     * @return {@code true} when the completion stopped to ask
      */
-    public void runAskingDeathReplacementsFirst(GameData gameData, Runnable completion,
+    public boolean runAskingDeathReplacementsFirst(GameData gameData, Runnable completion,
                                                 GameData.DeathReplacementChoiceReplay replay) {
         boolean rerunCurrentEffect = gameData.rerunCurrentEffectAfterInteraction;
         gameData.deathReplacementsCanRerunEffect = true;
@@ -248,6 +250,7 @@ public class PermanentChoiceHandlerService {
                 gameData.chosenDeathReplacementsForRerun.clear();
             }
         }
+        return stopped;
     }
 
     /**
