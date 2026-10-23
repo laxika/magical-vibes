@@ -156,6 +156,7 @@ public class PermanentChoiceHandlerService {
             redirectCreatureDamageHandler;
     private final org.springframework.beans.factory.ObjectProvider<MultiPermanentChoiceHandlerService>
             multiPermanentChoiceHandlerServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<ChoiceHandlerService> choiceHandlerServiceProvider;
 
     /** Declines a champion choice, so the permanent is sacrificed instead of exiling another one (CR 702.72a). */
     public void handleChampionDeclined(GameData gameData, Player player, boolean accepted) {
@@ -236,7 +237,7 @@ public class PermanentChoiceHandlerService {
     }
 
     /**
-     * Completes the permanent choice, multi-permanent choice or declined may prompt stopped by
+     * Completes the permanent choice, multi-permanent choice, list choice or declined may prompt stopped by
      * {@link #runAskingDeathReplacementsFirst} again with the same answer, once every death
      * replacement it asked about has been chosen; its deaths consume
      * {@link GameData#chosenDeathReplacementsForRerun}.
@@ -254,6 +255,9 @@ public class PermanentChoiceHandlerService {
             case GameData.MayDeclineReplay declineReplay ->
                     mayEffectHandlerRegistry.getHandler(declineReplay.ability().effects().getFirst())
                             .handle(gameData, declineReplay.player(), false, declineReplay.ability());
+            case GameData.ListChoiceReplay listReplay ->
+                    choiceHandlerServiceProvider.getObject().completeListChoiceAgainAfterDeathReplacements(
+                            gameData, listReplay);
         }
     }
 

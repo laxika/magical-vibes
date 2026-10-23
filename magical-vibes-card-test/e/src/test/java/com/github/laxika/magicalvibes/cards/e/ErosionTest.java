@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.o.Oasis;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -221,6 +225,88 @@ class ErosionTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Oasis");
         harness.assertLife(player1, lifeBefore - 1);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Declining the may prompt asks for a Dryad Arbor's death replacement before it is destroyed")
+    void declinedMayPromptAsksForTheDeathReplacementBeforeTheArborIsDestroyed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertDeathReplacementAskedWhileArborStays(arbor);
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertArborReturnedToHand(arbor);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Refusing both payments asks for a Dryad Arbor's death replacement before it is destroyed")
+    void refusedPaymentChoiceAsksForTheDeathReplacementBeforeTheArborIsDestroyed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas();
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Don't pay");
+
+        assertDeathReplacementAskedWhileArborStays(arbor);
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertArborReturnedToHand(arbor);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class, PlatinumEmperion.class})
+    @DisplayName("When nothing can be paid, asks for a Dryad Arbor's death replacement before it is destroyed")
+    void unpayableTriggerAsksForTheDeathReplacementBeforeTheArborIsDestroyed() {
+        Permanent arbor = setUpEnchantedArborAgainstKalitas();
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertDeathReplacementAskedWhileArborStays(arbor);
+
+        harness.handleListChoice(player2, MAGEMARK_RETURN);
+
+        assertArborReturnedToHand(arbor);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
+
+    private Permanent setUpEnchantedArborAgainstKalitas() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player2, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        attachErosion(arbor);
+        return arbor;
+    }
+
+    private void assertDeathReplacementAskedWhileArborStays(Permanent arbor) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Dryad Arbor is destroyed"))
+                .isEmpty();
+    }
+
+    private void assertArborReturnedToHand(Permanent arbor) {
+        assertThat(gd.playerHands.get(player2.getId())).contains(arbor.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Dryad Arbor is destroyed"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void attachErosion(Permanent land) {

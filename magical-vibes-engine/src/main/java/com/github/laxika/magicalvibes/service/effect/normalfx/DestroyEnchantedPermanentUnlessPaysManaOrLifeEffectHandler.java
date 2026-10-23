@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
@@ -21,11 +22,12 @@ import org.springframework.stereotype.Component;
  * "Destroy [the enchanted permanent] unless that player pays {M} or N life." (Erosion.) The paying
  * player is the enchanted permanent's controller — baked onto the trigger's {@code targetId} by
  * {@code StepTriggerService}. When the player can pay neither resource the permanent is destroyed
- * immediately; otherwise the choice is offered via the may-ability system.
+ * immediately; otherwise the choice is offered via the may-ability system. It only reads before it
+ * destroys or prompts, so it {@link AsksDeathReplacementsFirst}.
  */
 @Component
 @RequiredArgsConstructor
-public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implements NormalEffectHandlerBean {
+public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

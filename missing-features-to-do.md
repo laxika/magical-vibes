@@ -465,10 +465,26 @@ with Necromancer's Magemark against Kalitas: both chosen lands stay while asked;
 the Escape Tunnel is destroyed and its controller searches) and `BladegriffPrototypeTest.asksForTheDeathReplacementBeforeTheChosenZombieIsDestroyed`.
 Open rules question: Buzzcrusher only offers a search for lands that went to a graveyard (`destroyBatchCollecting`),
 so the returned Arbor's controller gets no search; whether a destroyed land moved elsewhere by a replacement counts as
-"destroyed this way" is unverified. Not yet reviewed: `DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler` (Erosion;
-its `EnchantedPermanentManaOrLifePaymentChoice` decline in `ChoiceHandlerService` would need the same decline window as
-Essence Vortex). Still not covered: the fallback effects' own deaths, the deferred Torment picks,
+"destroyed this way" is unverified. Still not covered: the fallback effects' own deaths, the deferred Torment picks,
 `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
+**Also landed (2026-10-23, twenty-ninth pass).** Erosion's three destroy paths are now asked before the land leaves.
+`DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler` is marked `AsksDeathReplacementsFirst` (it only reads
+before it destroys a land whose controller can pay neither resource, or opens a prompt). Its mayfx
+`DestroyEnchantedPermanentUnlessPaysManaOrLifeHandler` runs a decline through
+`PermanentChoiceHandlerService.declineAskingDeathReplacementsFirst`, as Essence Vortex does. An unpaid answer to the
+`EnchantedPermanentManaOrLifePaymentChoice` list prompt in `ChoiceHandlerService` (offered when both resources are
+payable) now finishes its bookkeeping first and runs the destruction through `runAskingDeathReplacementsFirst` with
+the new `GameData.ListChoiceReplay`, which `ChoiceHandlerService.completeListChoiceAgainAfterDeathReplacements`
+completes again once the answers are in. Tests in `ErosionTest` (an opponent's Dryad Arbor enchanted with Erosion and
+Necromancer's Magemark against Kalitas, Traitor of Ghet): `declinedMayPromptAsksForTheDeathReplacementBeforeTheArborIsDestroyed`,
+`refusedPaymentChoiceAsksForTheDeathReplacementBeforeTheArborIsDestroyed` and
+`unpayableTriggerAsksForTheDeathReplacementBeforeTheArborIsDestroyed` (Platinum Emperion: the trigger destroys at
+once). In each, the Arbor stays with no destroy log line while asked; after the return-to-hand answer it is in its
+owner's hand, there is one destroy log line and Kalitas makes no Zombie. Still not covered: the fallback effects' own
+deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice`,
+the other "unless pays" list prompts in `ChoiceHandlerService` whose refusal kills (each needs a `ListChoiceReplay`
+case) and sacrifices paid as costs.
 
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,

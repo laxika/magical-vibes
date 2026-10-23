@@ -5836,21 +5836,45 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid enchanted-permanent payment choice: " + chosen);
         }
 
-        if (!paid) {
-            Permanent aura = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-            Permanent enchanted = aura != null && aura.isAttached()
-                    ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) : null;
-            if (enchanted != null) {
-                destructionSupport.tryDestroyAndLog(gameData, enchanted, ctx.sourceCardName());
-            }
-        }
-
         gameData.interaction.clearAwaitingInput();
         gameData.rerunCurrentEffectAfterInteraction = false;
         if (gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionIndex++;
         }
+        if (paid) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        // An unpaid answer only destroys, so a creature land with competing death replacements is
+        // asked about before it leaves (CR 616.1) and the destruction is completed again after.
+        permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                () -> destroyUnpaidEnchantedPermanent(gameData, ctx),
+                new GameData.ListChoiceReplay(active, chosen));
+    }
+
+    private void destroyUnpaidEnchantedPermanent(GameData gameData,
+                                                 ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        Permanent enchanted = aura != null && aura.isAttached()
+                ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) : null;
+        if (enchanted != null) {
+            destructionSupport.tryDestroyAndLog(gameData, enchanted, ctx.sourceCardName());
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Completes the list choice answer stopped by
+     * {@link PermanentChoiceHandlerService#runAskingDeathReplacementsFirst} again with the same
+     * answer, once every death replacement it asked about has been chosen.
+     */
+    public void completeListChoiceAgainAfterDeathReplacements(GameData gameData, GameData.ListChoiceReplay replay) {
+        if (!(replay.choice().context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx)) {
+            throw new IllegalStateException("Not a list choice that asks death replacements first: "
+                    + replay.choice().context());
+        }
+        permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                () -> destroyUnpaidEnchantedPermanent(gameData, ctx), replay);
     }
 
     private void handleSubtypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SubtypeChoice ctx) {
