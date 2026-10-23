@@ -178,6 +178,24 @@ choice, so it stays unmarked). Tests in `GravebaneZombieTest`: `sacrificePermane
 unreviewed single-sacrifice contexts: `LandEquilibriumSacrifice`, `TormentSacrifice`, `ForcedCostOrElse` and the
 `AnyOpponent...`/`AnyPlayerMay...`/`MaySacrifice...` "unless" contexts.
 
+**Also landed (2026-10-23, eleventh pass).** The "any opponent / any player may sacrifice" and "you may sacrifice
+for a counter" single-choice completions joined `PermanentChoiceHandlerService.killsBeforeChangingAnything`; each
+sacrifices first and only then taps, grows, transforms, counters or prompts the next player (or, for the contexts
+that collect picks in their immutable effect, only prompts the next player or ends in
+`performSimultaneousSacrifice`, which asks the whole batch first): `MaySacrificeForCounterOnSource` (Ravenous Vampire,
+Crovax, Chitterspitter, ...), `GargantuanGorillaSacrificeForest`, `AnyOpponentSacrificeCreatureForTapAndCounter`
+(Desecration Demon), `AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand`, `AnyOpponentSacrificeCreatureForTransform`,
+`AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw`, `AnyPlayerMaySacrificeLandPutSourceOnTop` and
+`AnyPlayerMaySacrificeCreatureToCounterSpell` (Brain Gorgers). Tests in `GravebaneZombieTest`:
+`anyOpponentSacrificeAsksBeforeTheChosenZombieIsSacrificed` (Desecration Demon: untapped with no counter while asked,
+tapped with one after), `maySacrificeForCounterAsksBeforeTheZombieIsSacrificed` (Ravenous Vampire) and
+`anyPlayerSacrificeToCounterAsksBeforeTheChosenZombieIsSacrificed` (Brain Gorgers: not countered while asked).
+Not covered: the same sacrifices made straight from the may prompt when the player controls only one candidate
+(the mayfx handlers sacrifice on "yes" without a permanent choice, the same gap as Pulmonic Sliver's lone "may"),
+and the collected-picks batches (Innocent Traveler, Brain Gorgers) when the last player declines, since their
+`performSimultaneousSacrifice` then runs in the may completion. Still unreviewed single-sacrifice contexts:
+`LandEquilibriumSacrifice`, `TormentSacrifice` and `ForcedCostOrElse`.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
@@ -193,9 +211,11 @@ neither `stateBased` nor `rerunsEffect`) while the effect carries on:
   shield counter used, an indestructible log): the window closes, since a rerun would repeat them.
 - Deaths in an interaction's completion other than the single-sacrifice and destroy contexts done in the sixth
   and seventh passes ("sacrifice, then" multi-choices through `MultiPermanentChoiceContext.ForcedSacrifice`,
-  the unreviewed single-sacrifice contexts and destroy completions listed in the seventh and tenth
+  the unreviewed single-sacrifice contexts and destroy completions listed in the seventh and eleventh
   passes), and sacrifices paid as costs.
-- Pulmonic Sliver's lone "may" (one option, asked through the may prompt) outside state-based actions.
+- Sacrifices made straight from a may prompt's "yes" (Pulmonic Sliver's lone "may", the eleventh pass's
+  "may sacrifice" handlers with a single candidate, a collected-picks batch ended by the last player's
+  decline) outside state-based actions.
 
 **Why it's large.** Approaches looked at:
 - Leave the battlefield now and choose the destination later: the hand, library and graveyard

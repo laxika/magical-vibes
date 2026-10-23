@@ -248,7 +248,15 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificeOtherCreatureThenRevealUntilLowerManaValue
                 || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealMatchingCreature
                 || context instanceof PermanentChoiceContext.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureType
-                || context instanceof PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower;
+                || context instanceof PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower
+                || context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource
+                || context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest
+                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter
+                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand
+                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform
+                || context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw
+                || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop
+                || context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell;
     }
 
     private void completeKillingChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
@@ -340,6 +348,24 @@ public class PermanentChoiceHandlerService {
             }
             case PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower rupture ->
                     battlefieldHandler.handleSacrificeCreatureThenMassDamageEqualToPower(gameData, permanentId, rupture);
+            case PermanentChoiceContext.MaySacrificeForCounterOnSource msfc ->
+                    battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
+            case PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf ->
+                    battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
+            case PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter aosc ->
+                    battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndCounter(gameData, permanentId, aosc);
+            case PermanentChoiceContext.AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand ansc ->
+                    battlefieldHandler.handleAnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(
+                            gameData, permanentId, ansc);
+            case PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform aosc ->
+                    battlefieldHandler.handleAnyOpponentSacrificeCreatureForTransform(gameData, permanentId, aosc);
+            case PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw aosc ->
+                    battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(
+                            gameData, permanentId, aosc);
+            case PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop ams ->
+                    battlefieldHandler.handleAnyPlayerMaySacrificeLandPutSourceOnTop(gameData, permanentId, ams);
+            case PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell ams ->
+                    battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
             default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
         }
     }
@@ -776,24 +802,8 @@ public class PermanentChoiceHandlerService {
             earthbendThenFightHandler.handleTargetChoice(gameData, permanentId, earthbendFight);
         } else if (context instanceof PermanentChoiceContext.ResolvingModalTarget rmt) {
             triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
-        } else if (context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource msfc) {
-            battlefieldHandler.handleMaySacrificeForCounterOnSource(gameData, permanentId, msfc);
-        } else if (context instanceof PermanentChoiceContext.GargantuanGorillaSacrificeForest ggsf) {
-            battlefieldHandler.handleGargantuanGorillaSacrificeForest(gameData, permanentId, ggsf);
-        } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndCounter aosc) {
-            battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndCounter(gameData, permanentId, aosc);
-        } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeNontokenCreatureForTapAndSeekLand ansc) {
-            battlefieldHandler.handleAnyOpponentSacrificeNontokenCreatureForTapAndSeekLand(gameData, permanentId, ansc);
-        } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTransform aosc) {
-            battlefieldHandler.handleAnyOpponentSacrificeCreatureForTransform(gameData, permanentId, aosc);
-        } else if (context instanceof PermanentChoiceContext.AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw aosc) {
-            battlefieldHandler.handleAnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(gameData, permanentId, aosc);
         } else if (context instanceof PermanentChoiceContext.AnyOpponentMayTapCreatureForToken aotc) {
             battlefieldHandler.handleAnyOpponentMayTapCreatureForToken(gameData, permanentId, aotc);
-        } else if (context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeLandPutSourceOnTop ams) {
-            battlefieldHandler.handleAnyPlayerMaySacrificeLandPutSourceOnTop(gameData, permanentId, ams);
-        } else if (context instanceof PermanentChoiceContext.AnyPlayerMaySacrificeCreatureToCounterSpell ams) {
-            battlefieldHandler.handleAnyPlayerMaySacrificeCreatureToCounterSpell(gameData, permanentId, ams);
         } else if (context instanceof PermanentChoiceContext.ExploitTriggerTarget exploitTt) {
             triggerHandler.handleExploitTrigger(gameData, permanentId, exploitTt);
         } else if (context instanceof PermanentChoiceContext.ExploitPermanentTriggerTarget exploitPt) {
