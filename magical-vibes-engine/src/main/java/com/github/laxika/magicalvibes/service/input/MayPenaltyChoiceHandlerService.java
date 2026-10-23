@@ -829,7 +829,9 @@ public class MayPenaltyChoiceHandlerService {
                 gameData.discardCausedByOpponent = false;
 
                 if (effect.random()) {
-                    // Pillaging Horde: the discard is at random, so no player choice is needed.
+                    // Pillaging Horde: the discard is at random, so no player choice is needed. A rerun
+                    // would discard again, so nothing after this point may stop for a death replacement.
+                    gameData.deathReplacementsCanRerunEffect = false;
                     playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), effect.discardCount());
                     log.info("Game {} - {} accepts sacrifice-unless-discard (random) for {}", gameData.id, player.getUsername(), sourceCard.getName());
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

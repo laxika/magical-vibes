@@ -615,6 +615,20 @@ the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSa
 Tariff, the remaining mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick
 first), the "any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
 
+**Also landed (2026-10-23, thirty-sixth pass).** The accepted-but-unpayable fall-through of the sacrifice-unless
+prompts is now asked too: `SacrificeUnlessDiscardHandler`, `SacrificeUnlessSacrificeOwnPermanentHandler`,
+`SacrificeUnlessReturnOwnPermanentHandler` and `SacrificeUnlessReturnPermanentHandler` run every answer through
+`PermanentChoiceHandlerService.answerAskingDeathReplacementsFirst` (a payable acceptance only opens its choice and kills
+nothing; one that finds nothing left to pay with only reads before the source's sacrifice, and its replay re-checks the
+same state). Pillaging Horde's random discard closes the window before discarding, since a rerun would discard again.
+Tests (the creature enchanted with Necromancer's Magemark against Kalitas, Traitor of Ghet; the payment removed between
+the prompt and the "yes"): `LithophageTest`, `MasticoreTest` and `GlintHawkTest`
+`acceptingWithNothingLeftAsksForTheDeathReplacementBefore...IsSacrificed`. Drake Familiar's fall-through can't be set
+up against the Magemark (itself an enchantment to return). Still not covered: the fallback effects' own deaths, the
+deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice`, `CycloneUpkeep`,
+Tariff, the remaining mayfx handlers whose answer sacrifices (`DealDamageToRandomOpponentUnlessSacrifice` (random pick
+first), the "any opponent may sacrifice" handlers' other paths, ...; each needing review) and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with

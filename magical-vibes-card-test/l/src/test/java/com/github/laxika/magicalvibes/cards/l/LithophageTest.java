@@ -158,6 +158,27 @@ class LithophageTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mountain");
     }
 
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Accepting with no Mountain left asks for Lithophage's death replacement before it is sacrificed")
+    void acceptingWithNothingLeftAsksForTheDeathReplacementBeforeLithophageIsSacrificed() {
+        Permanent lithophage = harness.addToBattlefieldAndReturn(player1, new Lithophage());
+        enchantWithMagemarkAgainstKalitas(lithophage);
+        harness.addToBattlefield(player1, new Mountain());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard().getName().equals("Mountain"));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertDeathReplacementAskedWhileLithophageStays(lithophage);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertLithophageReturnedToHandWithoutZombie(lithophage);
+    }
+
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 
     private void assertDeathReplacementAskedWhileLithophageStays(Permanent creature) {

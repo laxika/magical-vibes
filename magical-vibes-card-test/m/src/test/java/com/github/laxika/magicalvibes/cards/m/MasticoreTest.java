@@ -210,6 +210,26 @@ class MasticoreTest extends BaseCardTest {
         harness.assertInHand(player1, "Braidwood Cup");
     }
 
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Accepting with an empty hand asks for Masticore's death replacement before it is sacrificed")
+    void acceptingWithNothingLeftAsksForTheDeathReplacementBeforeMasticoreIsSacrificed() {
+        Permanent masticore = harness.addToBattlefieldAndReturn(player1, new Masticore());
+        enchantWithMagemarkAgainstKalitas(masticore);
+        harness.setHand(player1, List.of(new BraidwoodCup()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertDeathReplacementAskedWhileMasticoreStays(masticore);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertMasticoreReturnedToHandWithoutZombie(masticore);
+    }
+
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 
     private void assertDeathReplacementAskedWhileMasticoreStays(Permanent creature) {

@@ -13,9 +13,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Sacrifice-unless-sacrifice — "unless you sacrifice a [permanent], sacrifice [source]".
- * A decline changes nothing before it sacrifices the source, so a creature with competing death
- * replacements is asked about before it leaves (CR 616.1) and the decline is completed again with
- * that answer.
+ * A decline, or an accepted answer that finds nothing left to pay with, changes nothing before it
+ * sacrifices the source, and a payable acceptance only opens its choice, so a creature with competing
+ * death replacements is asked about before it leaves (CR 616.1) and the same answer is completed again
+ * with that choice.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,12 +32,8 @@ public class SacrificeUnlessSacrificeOwnPermanentHandler implements MayEffectHan
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        if (accepted) {
-            mayPenaltyChoiceHandlerService.handleSacrificeUnlessSacrificeOwnPermanentChoice(gameData, player, true, ability);
-            return;
-        }
-        permanentChoiceHandlerServiceProvider.getObject().declineAskingDeathReplacementsFirst(
-                gameData, player, ability,
-                () -> mayPenaltyChoiceHandlerService.handleSacrificeUnlessSacrificeOwnPermanentChoice(gameData, player, false, ability));
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted,
+                () -> mayPenaltyChoiceHandlerService.handleSacrificeUnlessSacrificeOwnPermanentChoice(gameData, player, accepted, ability));
     }
 }

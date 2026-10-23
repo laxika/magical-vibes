@@ -13,9 +13,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Sacrifice-unless-discard — "unless you discard a [type] card, sacrifice [source]".
- * A decline changes nothing before it sacrifices the source, so a creature with competing death
- * replacements is asked about before it leaves (CR 616.1) and the decline is completed again with
- * that answer.
+ * A decline, or an accepted answer that finds nothing left to pay with, changes nothing before it
+ * sacrifices the source, and a payable acceptance only opens its choice (a random discard closes the
+ * window first), so a creature with competing death replacements is asked about before it leaves
+ * (CR 616.1) and the same answer is completed again with that choice.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,12 +32,8 @@ public class SacrificeUnlessDiscardHandler implements MayEffectHandlerBean {
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        if (accepted) {
-            mayPenaltyChoiceHandlerService.handleSacrificeUnlessDiscardChoice(gameData, player, true, ability);
-            return;
-        }
-        permanentChoiceHandlerServiceProvider.getObject().declineAskingDeathReplacementsFirst(
-                gameData, player, ability,
-                () -> mayPenaltyChoiceHandlerService.handleSacrificeUnlessDiscardChoice(gameData, player, false, ability));
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted,
+                () -> mayPenaltyChoiceHandlerService.handleSacrificeUnlessDiscardChoice(gameData, player, accepted, ability));
     }
 }

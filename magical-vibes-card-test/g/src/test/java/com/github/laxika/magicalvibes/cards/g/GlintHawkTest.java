@@ -304,6 +304,29 @@ class GlintHawkTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Memnite");
     }
 
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, NecromancersMagemark.class})
+    @DisplayName("Accepting with no artifact left asks for Glint Hawk's death replacement before it is sacrificed")
+    void acceptingWithNothingLeftAsksForTheDeathReplacementBeforeGlintHawkIsSacrificed() {
+        harness.addToBattlefield(player1, new Memnite());
+        harness.setHand(player1, List.of(new GlintHawk()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent hawk = findPermanent(player1, "Glint Hawk");
+        enchantWithMagemarkAgainstKalitas(hawk);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard().getName().equals("Memnite"));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertDeathReplacementAskedWhileGlintHawkStays(hawk);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertGlintHawkReturnedToHandWithoutZombie(hawk);
+    }
+
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
 
     private void assertDeathReplacementAskedWhileGlintHawkStays(Permanent creature) {
