@@ -43,6 +43,7 @@ public class TransformChosenPermanentEffectHandler implements NormalEffectHandle
         List<UUID> validIds = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         permanent, transformEffect.filter(), filterContext))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
 

@@ -45,6 +45,22 @@ class TurfWarTest extends BaseCardTest {
     }
 
     @Test
+    void entersAndMarksEachPlayersOnlyLandWithoutAPrompt() {
+        Permanent player1Land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent player2Land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.setHand(player1, java.util.List.of(new TurfWar()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(player1Land.getCounterCount(CounterType.CONTESTED)).isEqualTo(1);
+        assertThat(player2Land.getCounterCount(CounterType.CONTESTED)).isEqualTo(1);
+    }
+
+    @Test
     void combatDamageToOpponentTransfersAndUntapsContestedLand() {
         harness.addToBattlefieldAndReturn(player1, new TurfWar());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());

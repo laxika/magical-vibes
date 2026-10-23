@@ -53,9 +53,16 @@ candidates of every "choose N to keep, then sacrifice/destroy/return/phase out t
 can't be kept, so it goes with the rest), and sacrifice costs that involve a choice
 (`GameQueryService.canChooseToSacrificeForCosts`, used by the activated-ability sacrifice cost handlers,
 spell additional/alternative/flashback/graveyard/kicker sacrifice costs and free-cast sacrifice costs; "sacrifice
-this" and "sacrifice all" costs still use `canSacrificePermanentForCosts`). Still ignoring it:
-- single-candidate auto-picks that are not sacrifices (for example Turf War, transform-chosen-permanent,
-  `SacrificeCreatureWithLeastToughnessEffectHandler`'s tie-break, Make an Example piles).
+this" and "sacrifice all" costs still use `canSacrificePermanentForCosts`), plus Turf War (both the enter trigger's
+land choice and the combat-damage control change), `TransformChosenPermanentEffectHandler` and The Dining
+Car's least-toughness sacrifice (`SacrificeCreatureWithLeastToughnessEffectHandler`). Make an Example needs
+nothing: separating creatures into piles isn't choosing a creature (the official rulings limit the ability to
+spells and abilities that ask a player to "choose" among permanents). Still ignoring it:
+- the remaining handlers that auto-pick a single candidate before falling back to a
+  `beginPermanentChoice`/`beginMultiPermanentChoice` prompt. The prompt itself filters out Glimpse, but the
+  auto-pick shortcut doesn't. About 160 handlers in `service/effect` have that shape and haven't been audited
+  (find them with `grep -lE "size\(\) == 1"`, keep the files that call a choice prompt, and drop the ones that already
+  mention `cantBeChosen`).
 
 **Why it's large.** Every auto-resolving "choose a permanent" path builds its own candidate list, so each one
 has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when Glimpse was the only candidate).
@@ -63,8 +70,9 @@ has to call `GameQueryService.cantBeChosen` (and handle "no legal choice" when G
 **Prompt to start it:**
 
 ```
-Finish "can't be chosen" support for Glimpse, the Unthinkable (missing-features-to-do.md entry 21): make
-the remaining non-sacrifice single-candidate permanent choices honour CantBeChosenEffect. Add tests to
+Finish "can't be chosen" support for Glimpse, the Unthinkable (missing-features-to-do.md entry 21): audit
+the remaining handlers whose single-candidate auto-pick skips the (already filtered) choice prompt and make
+them honour CantBeChosenEffect. Add tests to
 GlimpseTheUnthinkablePlaytestTest first.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```

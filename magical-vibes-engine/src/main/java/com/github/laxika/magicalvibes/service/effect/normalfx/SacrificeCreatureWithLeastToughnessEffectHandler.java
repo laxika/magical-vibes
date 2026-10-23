@@ -46,8 +46,12 @@ public class SacrificeCreatureWithLeastToughnessEffectHandler implements NormalE
                 .orElseThrow();
         List<Permanent> tied = creatures.stream()
                 .filter(permanent -> gameQueryService.getEffectiveToughness(gameData, permanent) == leastToughness)
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
 
+        if (tied.isEmpty()) {
+            return;
+        }
         if (tied.size() == 1) {
             destructionSupport.sacrificeAndLog(gameData, tied.getFirst(), controllerId);
             return;

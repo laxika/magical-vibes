@@ -1,24 +1,32 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDepravity;
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.a.AshnodsAltar;
 import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.d.DivineReckoning;
 import com.github.laxika.magicalvibes.cards.d.Duneblast;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.InnocentBlood;
 import com.github.laxika.magicalvibes.cards.n.Nevermore;
 import com.github.laxika.magicalvibes.cards.p.PathOfPeace;
 import com.github.laxika.magicalvibes.cards.p.PromiseOfLoyalty;
+import com.github.laxika.magicalvibes.cards.t.TheDiningCar;
+import com.github.laxika.magicalvibes.cards.t.TurfWar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GlimpseTheUnthinkablePlaytest.class, PathOfPeace.class, DivineReckoning.class, Nevermore.class,
         DiabolicEdict.class, InnocentBlood.class, GrizzlyBears.class, PromiseOfLoyalty.class, Duneblast.class,
-        ArchfiendOfDepravity.class, AshnodsAltar.class, BoneSplinters.class})
+        ArchfiendOfDepravity.class, AshnodsAltar.class, BoneSplinters.class, TurfWar.class,
+        AshayaSoulOfTheWild.class, Forest.class, TheDiningCar.class})
 class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
 
     @Test
@@ -260,6 +269,99 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Turf War can't give control of Glimpse when it is the only contested land")
+    void turfWarCannotChooseGlimpseAsOnlyContestedLand() {
+        harness.addToBattlefield(player1, new TurfWar());
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        glimpse.setCounterCount(CounterType.CONTESTED, 1);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(glimpse);
+    }
+
+    @Test
+    @DisplayName("Turf War takes the other contested land without a prompt when Glimpse is the alternative")
+    void turfWarTakesOtherContestedLandAutomatically() {
+        harness.addToBattlefield(player1, new TurfWar());
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        glimpse.setCounterCount(CounterType.CONTESTED, 1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.CONTESTED, 1);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(glimpse);
+    }
+
+    @Test
+    @DisplayName("Turf War's enter trigger can't choose Glimpse as the land to get a contested counter")
+    void turfWarEnterTriggerSkipsGlimpse() {
+        Permanent ashaya = harness.addToBattlefieldAndReturn(player1, new AshayaSoulOfTheWild());
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.setHand(player1, List.of(new TurfWar()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(glimpse.getCounterCount(CounterType.CONTESTED)).isZero();
+        assertThat(ashaya.getCounterCount(CounterType.CONTESTED)).isEqualTo(1);
+        assertThat(opponentForest.getCounterCount(CounterType.CONTESTED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Dining Car can't make you sacrifice Glimpse when it alone has the least toughness")
+    void diningCarCannotChooseGlimpseWithLeastToughness() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+
+        resolveDiningCarUpkeep();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+    }
+
+    @Test
+    @DisplayName("The Dining Car sacrifices the creature tied with Glimpse for least toughness without a prompt")
+    void diningCarTakesTiedCreatureAutomatically() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        resolveDiningCarUpkeep();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    private void resolveDiningCarUpkeep() {
+        gd.planechase = new PlanechaseState();
+        gd.planechase.controllerId = player1.getId();
+        gd.planechase.faceUp.add(new PlanarObject(new TheDiningCar(), gd.nextTimestamp()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
     }
 
     private void castPromiseOfLoyalty() {

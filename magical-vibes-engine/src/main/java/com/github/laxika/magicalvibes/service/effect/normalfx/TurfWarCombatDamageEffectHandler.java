@@ -96,6 +96,7 @@ public class TurfWarCombatDamageEffectHandler implements NormalEffectHandlerBean
     private List<UUID> contestedLandIds(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> isContestedLandControlledBy(gameData, permanent, playerId))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }

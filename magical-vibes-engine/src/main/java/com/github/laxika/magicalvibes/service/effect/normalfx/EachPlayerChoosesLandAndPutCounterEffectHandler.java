@@ -34,7 +34,7 @@ public class EachPlayerChoosesLandAndPutCounterEffectHandler implements NormalEf
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerChoosesLandAndPutCounterEffect counterEffect =
                 (EachPlayerChoosesLandAndPutCounterEffect) effect;
-        step(gameData, apnapPlayers(gameData), 0, List.of(), counterEffect.counterType(),
+        step(gameData, entry, apnapPlayers(gameData), 0, List.of(), counterEffect.counterType(),
                 entry.getCard().getName(), entry.getControllerId());
     }
 
@@ -42,11 +42,11 @@ public class EachPlayerChoosesLandAndPutCounterEffectHandler implements NormalEf
                                MultiPermanentChoiceContext.EachPlayerChoosesLandAndPutCounterChoice context) {
         List<UUID> allChosenIds = new ArrayList<>(context.chosenIds());
         allChosenIds.addAll(chosenIds);
-        step(gameData, context.playerIds(), context.playerIndex() + 1, allChosenIds,
-                context.counterType(), context.sourceName(), context.chooserId());
+        step(gameData, gameData.pendingEffectResolutionEntry, context.playerIds(), context.playerIndex() + 1,
+                allChosenIds, context.counterType(), context.sourceName(), context.chooserId());
     }
 
-    private void step(GameData gameData, List<UUID> playerIds, int playerIndex,
+    private void step(GameData gameData, StackEntry entry, List<UUID> playerIds, int playerIndex,
                       List<UUID> chosenIds, CounterType counterType, String sourceName,
                       UUID chooserId) {
         List<UUID> allChosenIds = new ArrayList<>(chosenIds);
@@ -72,7 +72,6 @@ public class EachPlayerChoosesLandAndPutCounterEffectHandler implements NormalEf
             return;
         }
 
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
         if (entry != null) {
             for (UUID permanentId : allChosenIds) {
                 Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
@@ -86,6 +85,7 @@ public class EachPlayerChoosesLandAndPutCounterEffectHandler implements NormalEf
     private List<UUID> landIds(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
     }
