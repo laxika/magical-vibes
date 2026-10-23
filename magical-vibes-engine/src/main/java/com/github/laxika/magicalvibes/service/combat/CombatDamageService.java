@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -4401,8 +4402,8 @@ public class CombatDamageService {
                             .addAll(controllers));
             state.normalDamageToPlayers.put(recipientId, recipientState.damageToDefendingPlayer);
             state.infectDamageToPlayers.put(recipientId, recipientState.poisonDamageToDefendingPlayer);
-            totalNormal += recipientState.damageToDefendingPlayer;
-            totalInfect += recipientState.poisonDamageToDefendingPlayer;
+            totalNormal = SaturatingMath.add(totalNormal, recipientState.damageToDefendingPlayer);
+            totalInfect = SaturatingMath.add(totalInfect, recipientState.poisonDamageToDefendingPlayer);
         }
         state.damageToDefendingPlayer = totalNormal;
         state.poisonDamageToDefendingPlayer = totalInfect;
@@ -4432,7 +4433,7 @@ public class CombatDamageService {
             } else if (gameQueryService.canPlayerLifeChange(gameData, defenderId)
                     && !gameQueryService.damageDoesNotCauseLifeLoss(gameData, defenderId)) {
                 int currentLife = gameData.getLife(defenderId);
-                int lifeAfterDamage = currentLife - state.damageToDefendingPlayer;
+                int lifeAfterDamage = SaturatingMath.subtract(currentLife, state.damageToDefendingPlayer);
                 // Worship / Elderscale Wurm: combat damage can't reduce the player's life total past an
                 // active floor. The full damage is still dealt; only the life reduction is capped.
                 // 0 means no active floor — do not clamp (life may go negative).
@@ -4440,9 +4441,9 @@ public class CombatDamageService {
                 if (lifeFloor > 0 && lifeAfterDamage < lifeFloor) {
                     lifeAfterDamage = lifeFloor;
                 }
-                int lifeLoss = (currentLife - lifeAfterDamage)
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, defenderId);
-                int newLife = currentLife - lifeLoss;
+                int lifeLoss = SaturatingMath.multiply(SaturatingMath.subtract(currentLife, lifeAfterDamage),
+                        gameQueryService.opponentLifeLossMultiplier(gameData, defenderId));
+                int newLife = SaturatingMath.subtract(currentLife, lifeLoss);
                 gameData.playerLifeTotals.put(defenderId, newLife);
                 int lifeLost = currentLife - newLife;
                 String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + state.damageToDefendingPlayer + " combat damage.";
@@ -4671,7 +4672,7 @@ public class CombatDamageService {
             lifeSupport.applyPoisonCounters(gameData, targetId, damage,
                     portion.sourceSnapshot().getCard().getName(), sourceControllerId);
         } else if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
-            int lifeLoss = damage * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
+            int lifeLoss = SaturatingMath.multiply(damage, gameQueryService.opponentLifeLossMultiplier(gameData, targetId));
             gameData.playerLifeTotals.put(targetId, gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
         }
         gameData.recordCombatDamageToPlayer(targetId, damage);
@@ -5202,18 +5203,18 @@ public class CombatDamageService {
             Permanent source = combatSource(gameData, portion);
             int amount = portion.amount();
             state.combatDamageDealt.merge(source, amount, Integer::sum);
-            state.combatDamageDealtToPlayer.merge(source, amount, Integer::sum);
+            state.combatDamageDealtToPlayer.merge(source, amount, SaturatingMath::add);
             state.combatDamagePlayerRecipients.put(source, playerId);
             if (amount <= 0) continue;
             emitCombatDamageCue(gameData, source, null, playerId, amount);
             if (portion.counterDamage()) {
-                state.poisonDamageToDefendingPlayer += amount;
-                state.infectDamageToPlayers.merge(playerId, amount, Integer::sum);
+                state.poisonDamageToDefendingPlayer = SaturatingMath.add(state.poisonDamageToDefendingPlayer, amount);
+                state.infectDamageToPlayers.merge(playerId, amount, SaturatingMath::add);
             } else {
-                state.damageToDefendingPlayer += amount;
-                state.normalDamageToPlayers.merge(playerId, amount, Integer::sum);
+                state.damageToDefendingPlayer = SaturatingMath.add(state.damageToDefendingPlayer, amount);
+                state.normalDamageToPlayers.merge(playerId, amount, SaturatingMath::add);
                 if (portion.unpreventable()) {
-                    state.unpreventableDamageToDefendingPlayer += amount;
+                    state.unpreventableDamageToDefendingPlayer = SaturatingMath.add(state.unpreventableDamageToDefendingPlayer, amount);
                     state.unpreventableDamageToPlayers.merge(playerId, amount, Integer::sum);
                 }
             }
@@ -5277,11 +5278,11 @@ public class CombatDamageService {
             if (portion.counterDamage()) {
                 recordCounterCombatDamage(gameData, source, sourceControllerId, portion, target);
             } else if (index >= 0) {
-                damageTaken.merge(index, amount, Integer::sum);
+                damageTaken.merge(index, amount, SaturatingMath::add);
                 takenBySource.computeIfAbsent(index, ignored -> new HashMap<>())
-                        .merge(source.getId(), amount, Integer::sum);
+                        .merge(source.getId(), amount, SaturatingMath::add);
                 if (portion.unpreventable()) {
-                    unpreventableTaken.merge(index, amount, Integer::sum);
+                    unpreventableTaken.merge(index, amount, SaturatingMath::add);
                 }
                 if (portion.deathtouch()) {
                     deathtouchIndices.add(index);

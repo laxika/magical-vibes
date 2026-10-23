@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import lombok.Getter;
@@ -497,8 +498,8 @@ public class CharacteristicState {
     // --- Layer 7 ---
 
     public void addPowerToughnessDelta(int power, int toughness) {
-        this.powerDelta += power;
-        this.toughnessDelta += toughness;
+        this.powerDelta = SaturatingMath.add(this.powerDelta, power);
+        this.toughnessDelta = SaturatingMath.add(this.toughnessDelta, toughness);
     }
 
     /** Layer 7d: each switch is its own step; an even total cancels out. */
@@ -526,12 +527,12 @@ public class CharacteristicState {
 
     /** Final power after all applied layers, honoring an odd number of 7d switches. */
     public int getEffectivePower() {
-        return isSwitched() ? baseToughness + toughnessDelta : basePower + powerDelta;
+        return isSwitched() ? SaturatingMath.add(baseToughness, toughnessDelta) : SaturatingMath.add(basePower, powerDelta);
     }
 
     /** Final toughness after all applied layers, honoring an odd number of 7d switches. */
     public int getEffectiveToughness() {
-        return isSwitched() ? basePower + powerDelta : baseToughness + toughnessDelta;
+        return isSwitched() ? SaturatingMath.add(basePower, powerDelta) : SaturatingMath.add(baseToughness, toughnessDelta);
     }
 
     public boolean isSwitched() {

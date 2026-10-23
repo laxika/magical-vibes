@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +69,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
                 biter.getCard(), sourceController, biter.getCard().getName(), List.of(), null, biter.getId());
         damageEntry.setSourcePermanentSnapshot(new Permanent(biter));
         int power = gameQueryService.getPowerBasedDamage(gameData, biter);
-        int rawDamage = Math.multiplyExact(power, e.powerMultiplier());
+        int rawDamage = SaturatingMath.multiply(power, e.powerMultiplier());
         int markedDamageBefore = e.recordExcessDamage() ? target.getMarkedDamage() : 0;
         boolean deathtouch = e.recordExcessDamage()
                 && gameQueryService.sourceHasKeyword(gameData, entry, biter, Keyword.DEATHTOUCH);

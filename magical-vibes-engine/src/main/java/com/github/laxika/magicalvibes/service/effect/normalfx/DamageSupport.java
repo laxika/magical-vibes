@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -1357,8 +1358,8 @@ public class DamageSupport {
                     playerName + " takes " + effectiveDamage + " damage from ", source, "."));
         } else {
             int currentLife = gameData.getLife(playerId);
-            int lifeAfterDamage = currentLife - effectiveDamage
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            int lifeAfterDamage = SaturatingMath.subtract(currentLife, SaturatingMath.multiply(effectiveDamage,
+                    gameQueryService.opponentLifeLossMultiplier(gameData, playerId)));
             // Worship / Elderscale Wurm: damage can't reduce the player's life total past an active floor.
             // The full damage is still dealt (lifelink/damage triggers see the full amount); only the life
             // total reduction is capped.

@@ -10,32 +10,6 @@ Remove an entry once the feature has landed and its tests pass.
 ---
 
 
-## 5. Power and toughness larger than a 32-bit int
-
-**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
-
-**Failing tests:**
-- `ExponentialGrowthTest.largeXDoesNotWrapPositivePowerIntoNegativePower()`
-
-**What the rules require.** The rules don't cap power (CR 107.1b only covers negative values). Exponential Growth doubles power
-X times, so it can exceed 2,147,483,647. Power, toughness and their modifiers are `int` throughout
-the model and layer system, so `DoubleTargetCreaturePowerEffectHandler` wraps to a negative number.
-
-**Why it's large.** It's a type migration across `Permanent`, `CharacteristicState`, the layer system, damage, combat
-and the networking/frontend views, or else a rules decision to saturate at a maximum value.
-
-**Prompt to start it:**
-
-```
-Stop large power and toughness values from overflowing (Exponential Growth doubling past
-Integer.MAX_VALUE). Decide with me whether to move P/T to long or saturate at a cap, then implement it
-across the model, layer system, damage and views. Start with ExponentialGrowthTest, then ask me to run
-the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 21. "Can't be chosen" on remaining auto-resolved choices (Glimpse, the Unthinkable)
 
 **Status:** open (partly done) · **Found:** 2026-10-14, while fixing G-card tests

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -221,12 +222,12 @@ public class LifeSupport {
             if (replaceLifeLossWithShield(gameData, playerId)) {
                 return true;
             }
-            int lifeLoss = (currentLife - newLife)
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            int lifeLoss = SaturatingMath.multiply(SaturatingMath.subtract(currentLife, newLife),
+                    gameQueryService.opponentLifeLossMultiplier(gameData, playerId));
             if (replaceLethalLifeReduction(gameData, playerId, lifeLoss)) {
                 return true;
             }
-            gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+            gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, lifeLoss));
             emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, lifeLoss, null);
             triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         }
@@ -243,12 +244,12 @@ public class LifeSupport {
         if (replaceLifeLossWithShield(gameData, playerId)) {
             return;
         }
-        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        amount = SaturatingMath.multiply(amount, gameQueryService.opponentLifeLossMultiplier(gameData, playerId));
         if (replaceLethalLifeReduction(gameData, playerId, amount)) {
             return;
         }
         int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - amount);
+        gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, amount));
         emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, amount, null);
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -285,12 +286,12 @@ public class LifeSupport {
         }
 
         int currentLife = gameData.getLife(playerId);
-        int lifeLoss = amount * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        int lifeLoss = SaturatingMath.multiply(amount, gameQueryService.opponentLifeLossMultiplier(gameData, playerId));
         if (replaceLethalLifeReduction(gameData, playerId, lifeLoss)) {
             triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
             return;
         }
-        gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+        gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, lifeLoss));
         emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, lifeLoss, null);
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -360,7 +361,7 @@ public class LifeSupport {
         if (amount <= 0) return;
 
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-        gameData.playerPoisonCounters.put(playerId, currentPoison + amount);
+        gameData.playerPoisonCounters.put(playerId, SaturatingMath.add(currentPoison, amount));
 
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " gets " + amount + " poison counter" + (amount > 1 ? "s" : "")

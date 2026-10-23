@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetCreaturePowerEffect;
@@ -51,10 +52,15 @@ public class DoubleTargetCreaturePowerEffectHandler implements NormalEffectHandl
             if (target == null) {
                 continue;
             }
-            int effectiveTimes = times * MaroGoneNutsSupport.doublingFactor(gameData);
+            int effectiveTimes = SaturatingMath.multiply(times, MaroGoneNutsSupport.doublingFactor(gameData));
             for (int i = 0; i < effectiveTimes; i++) {
                 int currentPower = gameQueryService.getEffectivePower(gameData, target);
-                target.setPowerModifier(target.getPowerModifier() + currentPower);
+                int newModifier = SaturatingMath.add(target.getPowerModifier(), currentPower);
+                // Doubling 0 power or a saturated modifier changes nothing, so a huge X needn't loop on.
+                if (newModifier == target.getPowerModifier()) {
+                    break;
+                }
+                target.setPowerModifier(newModifier);
             }
 
             gameLogService.append(gameData, GameLog.builder()

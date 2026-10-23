@@ -121,13 +121,35 @@ class ExponentialGrowthTest extends BaseCardTest {
     }
 
     @Test
-    void largeXDoesNotWrapPositivePowerIntoNegativePower() {
+    void largeXSaturatesPowerInsteadOfWrappingNegative() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        cast(target, 30, 2, 60);
+        cast(target, 40, 2, 80);
 
-        assertThat((long) target.getEffectivePower()).isEqualTo(2_147_483_648L);
+        assertThat(target.getEffectivePower()).isEqualTo(Integer.MAX_VALUE);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void largeXSaturatesNegativePowerInsteadOfWrappingPositive() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setPowerModifier(-3);
+
+        cast(target, 40, 2, 80);
+
+        // The power modifier saturates at Integer.MIN_VALUE; the Bears' base power of 2 still adds on top.
+        assertThat(target.getEffectivePower()).isEqualTo(Integer.MIN_VALUE + 2);
+    }
+
+    @Test
+    void saturatedAttackerDealsSaturatedCombatDamage() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        cast(bears, 40, 2, 80);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20 - Integer.MAX_VALUE);
     }
 
     private void cast(Permanent target, int x, int greenMana, int colorlessMana) {

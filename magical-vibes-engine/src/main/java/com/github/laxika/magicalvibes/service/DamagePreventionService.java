@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
@@ -1928,8 +1929,8 @@ public class DamagePreventionService {
             }
             if (shield.damageMultiplier() != 0) {
                 it.remove();
-                damage = damage * shield.damageMultiplier()
-                        * MaroGoneNutsSupport.doublingFactor(gameData);
+                damage = SaturatingMath.multiply(SaturatingMath.multiply(damage, shield.damageMultiplier()),
+                        MaroGoneNutsSupport.doublingFactor(gameData));
                 continue;
             }
             if (!preventable) {
@@ -3287,7 +3288,7 @@ public class DamagePreventionService {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PlaneswalkerDamagePreventionEffect prevention
                             && !permanent.isStaticEffectSuppressed(effect.getClass())) {
-                        reduction = saturatingAdd(reduction, prevention.amount());
+                        reduction = SaturatingMath.add(reduction, prevention.amount());
                     }
                 }
             }
@@ -3297,16 +3298,12 @@ public class DamagePreventionService {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PlaneswalkerDamagePreventionEffect prevention) {
-                        reduction = saturatingAdd(reduction, prevention.amount());
+                        reduction = SaturatingMath.add(reduction, prevention.amount());
                     }
                 }
             }
         }
         return Math.min(damage, reduction);
-    }
-
-    private int saturatingAdd(int left, int right) {
-        return (int) Math.min(Integer.MAX_VALUE, (long) left + right);
     }
 
     /**

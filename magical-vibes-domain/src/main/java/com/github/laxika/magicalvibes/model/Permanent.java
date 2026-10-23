@@ -1376,9 +1376,9 @@ public class Permanent {
             turnFaceUp();
             pendingAutomaticTurnFaceUp = true;
         }
-        this.markedDamage += amount;
+        this.markedDamage = SaturatingMath.add(this.markedDamage, amount);
         if (sourceId != null) {
-            this.markedDamageBySource.merge(sourceId, amount, Integer::sum);
+            this.markedDamageBySource.merge(sourceId, amount, SaturatingMath::add);
         }
     }
 
@@ -1760,7 +1760,7 @@ public class Permanent {
      * that replace the base but preserve modifiers on top.
      */
     public int getPowerModifiers() {
-        return persistentPowerModifier + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+        return SaturatingMath.clamp((long) persistentPowerModifier + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
@@ -1768,7 +1768,7 @@ public class Permanent {
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO)
-                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO));
     }
 
     /**
@@ -1777,7 +1777,7 @@ public class Permanent {
      * that replace the base but preserve modifiers on top.
      */
     public int getToughnessModifiers() {
-        return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+        return SaturatingMath.clamp((long) toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + 2 * getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
@@ -1785,7 +1785,7 @@ public class Permanent {
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_ZERO_PLUS_TWO)
                 - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
-                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO);
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO));
     }
 
     /**
@@ -1796,7 +1796,7 @@ public class Permanent {
      * readers (views' raw term, last-known-information reads, predicate leaves).
      */
     public int getEffectivePower() {
-        return getBasePower() + persistentPowerModifier + powerModifier
+        return SaturatingMath.clamp((long) getBasePower() + persistentPowerModifier + powerModifier
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
@@ -1804,12 +1804,12 @@ public class Permanent {
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
                 - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO)
-                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO);
+                + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO));
     }
 
     /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
-        return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+        return SaturatingMath.clamp((long) getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + 2 * getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
@@ -1817,7 +1817,7 @@ public class Permanent {
                 - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_ZERO_PLUS_TWO)
                 - getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)
-                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO);
+                - 2 * getCounterCount(CounterType.MINUS_TWO_MINUS_TWO));
     }
 
     /**

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService.StaticBonus;
 
@@ -60,11 +61,11 @@ public class StaticBonusAccumulator {
     }
 
     public void addPower(int amount) {
-        power += amount;
+        power = SaturatingMath.add(power, amount);
     }
 
     public void addToughness(int amount) {
-        toughness += amount;
+        toughness = SaturatingMath.add(toughness, amount);
     }
 
     public void addDevotionBonus(int amount) {

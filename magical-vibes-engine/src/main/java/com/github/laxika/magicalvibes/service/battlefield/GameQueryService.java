@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -3264,7 +3265,7 @@ public class GameQueryService {
     public int lifeAfterDamage(GameData gameData, UUID playerId, int damage) {
         int currentLife = gameData.getLife(playerId);
         if (!canPlayerLoseLife(gameData, playerId)) return currentLife;
-        int newLife = currentLife - damage;
+        int newLife = SaturatingMath.subtract(currentLife, damage);
         int lifeFloor = damageLifeFloor(gameData, playerId, currentLife);
         return lifeFloor > 0 ? Math.max(newLife, lifeFloor) : newLife;
     }
@@ -5982,17 +5983,17 @@ public class GameQueryService {
     /** The permanent's power through layer 7c (base + modifiers + static bonuses), before 7d. */
     private int preSwitchPower(Permanent permanent, StaticBonus bonus) {
         if (bonus.basePTOverridden()) {
-            return bonus.basePowerOverride() + permanent.getPowerModifiers() + bonus.power();
+            return SaturatingMath.clamp((long) bonus.basePowerOverride() + permanent.getPowerModifiers() + bonus.power());
         }
-        return permanent.getEffectivePower() + bonus.power();
+        return SaturatingMath.add(permanent.getEffectivePower(), bonus.power());
     }
 
     /** The permanent's toughness through layer 7c (base + modifiers + static bonuses), before 7d. */
     private int preSwitchToughness(Permanent permanent, StaticBonus bonus) {
         if (bonus.basePTOverridden()) {
-            return bonus.baseToughnessOverride() + permanent.getToughnessModifiers() + bonus.toughness();
+            return SaturatingMath.clamp((long) bonus.baseToughnessOverride() + permanent.getToughnessModifiers() + bonus.toughness());
         }
-        return permanent.getEffectiveToughness() + bonus.toughness();
+        return SaturatingMath.add(permanent.getEffectiveToughness(), bonus.toughness());
     }
 
     /**
@@ -6098,10 +6099,10 @@ public class GameQueryService {
         }
         LayerSystemService.BasePt base = board.basePt7b().get(permanent.getId());
         int power = base != null && base.power() != null
-                ? base.power() + permanent.getPowerModifiers()
+                ? SaturatingMath.add(base.power(), permanent.getPowerModifiers())
                 : permanent.getEffectivePower();
         int toughness = base != null && base.toughness() != null
-                ? base.toughness() + permanent.getToughnessModifiers()
+                ? SaturatingMath.add(base.toughness(), permanent.getToughnessModifiers())
                 : permanent.getEffectiveToughness();
         boolean switched = board.switchedPt7d().contains(permanent.getId());
         if (switched) {
@@ -11849,7 +11850,7 @@ public class GameQueryService {
      * @return the damage after applying all {@link GlobalDamageMultiplyingEffect} multipliers
      */
     public int applyDamageMultiplier(GameData gameData, int damage) {
-        return damage * getDamageMultiplier(gameData);
+        return SaturatingMath.multiply(damage, getDamageMultiplier(gameData));
     }
 
     /**
