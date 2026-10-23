@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler implements NormalEffectHandlerBean {
+public class DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;

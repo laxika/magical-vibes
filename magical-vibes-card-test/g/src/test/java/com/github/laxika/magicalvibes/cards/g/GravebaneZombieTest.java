@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.d.DispenseJustice;
 import com.github.laxika.magicalvibes.cards.d.DualShot;
 import com.github.laxika.magicalvibes.cards.d.Duneblast;
 import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
+import com.github.laxika.magicalvibes.cards.e.EssenceVortex;
 import com.github.laxika.magicalvibes.cards.f.FadeAway;
 import com.github.laxika.magicalvibes.cards.f.FallenCleric;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.cards.m.MagnifyingGlass;
 import com.github.laxika.magicalvibes.cards.m.MercyKilling;
 import com.github.laxika.magicalvibes.cards.p.ParasiticImplant;
 import com.github.laxika.magicalvibes.cards.p.PerilousPredicament;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
 import com.github.laxika.magicalvibes.cards.p.PillarTombsOfAku;
 import com.github.laxika.magicalvibes.cards.r.RavenousVampire;
 import com.github.laxika.magicalvibes.cards.r.ReignOfThePit;
@@ -43,6 +45,7 @@ import com.github.laxika.magicalvibes.cards.r.Retribution;
 import com.github.laxika.magicalvibes.cards.r.RunningIsUseless;
 import com.github.laxika.magicalvibes.cards.r.Rupture;
 import com.github.laxika.magicalvibes.cards.s.SadisticShellGame;
+import com.github.laxika.magicalvibes.cards.s.ShiftingShadow;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StickTogether;
 import com.github.laxika.magicalvibes.cards.s.SyphonFlesh;
@@ -1839,6 +1842,146 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("pays {1} for Fade Away")).hasSize(2);
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, PhyrexianPurge.class, GrizzlyBears.class})
+    @DisplayName("Phyrexian Purge asks for the Zombie's death replacement before any target is destroyed")
+    void destroyEachTargetAsksBeforeAnyTargetIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        Permanent kalitas = harness.addToBattlefieldAndReturn(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card purge = new PhyrexianPurge();
+        harness.setHand(player1, List.of(purge));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.castSorcery(player1, 0, List.of(zombie.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .containsExactly(zombie.getId(), bears.getId());
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(purge.getId());
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Kalitas, Traitor of Ghet", "Zombie");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kalitas);
+        harness.assertInGraveyard(player1, "Phyrexian Purge");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, EssenceVortex.class})
+    @DisplayName("Essence Vortex asks for the Zombie's death replacement before destroying it when its controller can't pay")
+    void destroyUnlessPaysToughnessLifeAsksBeforeTheZombieIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.setLife(player2, 1);
+        Card vortex = new EssenceVortex();
+        harness.setHand(player1, List.of(vortex));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(vortex.getId());
+        // The spell is stopped and resolved again with the answer, rather than carrying on without the Zombie.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
+                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertInGraveyard(player1, "Essence Vortex");
+        harness.assertLife(player2, 1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, EssenceVortex.class})
+    @DisplayName("Declining Essence Vortex's payment asks for the Zombie's death replacement before it is destroyed")
+    void declinedToughnessLifePaymentAsksBeforeTheZombieIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new EssenceVortex()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, zombie.getId());
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .isEmpty();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertLife(player2, 20);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Gravebane Zombie is destroyed"))
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, ShiftingShadow.class})
+    @DisplayName("Shifting Shadow asks for the Zombie's death replacement before anything is revealed")
+    void destroyEnchantedThenRevealAsksBeforeTheZombieIsDestroyed() {
+        Card filler = new WrathOfGod();
+        harness.setLibrary(player2, List.of(filler));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShiftingShadow());
+        aura.setAttachedTo(zombie.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(zombie);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(filler);
+        assertThat(aura.getAttachedTo()).isEqualTo(zombie.getId());
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        // CR 608.2c: the Zombie goes on top first, so the reveal finds it and puts it back onto the battlefield.
+        Permanent returned = findPermanent(player2, "Gravebane Zombie");
+        assertThat(returned.getId()).isNotEqualTo(zombie.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(returned.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(filler);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getName())
+                .doesNotContain("Zombie");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

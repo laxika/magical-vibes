@@ -433,6 +433,26 @@ Mountain picked automatically: both stay while asked) and `asksForTheDeathReplac
 Mountain is destroyed and Kalitas makes no Zombie. Still not covered: the fallback effects' own deaths, the deferred
 Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
 
+**Also landed (2026-10-23, twenty-seventh pass).** Three more destroy handlers that only read before their first
+destruction are now marked `AsksDeathReplacementsFirst`: `DestroyEachTargetPermanentEffectHandler` (Phyrexian Purge,
+Volcanic Eruption, Builder's Bane and the other "destroy each target" spells; its riders only set event values on the
+entry after `destroyBatchDestroyed`, which asks the whole batch first), `DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler`
+(Essence Vortex; its can't-pay path destroys at once, its other path only opens the may prompt) and
+`DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffectHandler` (Shifting Shadow; the reveal and
+reattachment come after the destruction). Essence Vortex's declined payment now runs through
+`PermanentChoiceHandlerService.declineAskingDeathReplacementsFirst` in its mayfx `DestroyTargetCreatureUnlessControllerPaysToughnessLifeHandler`
+(the decline only destroys), so it is asked before the creature leaves and replayed after. Tests in `GravebaneZombieTest`:
+`destroyEachTargetAsksBeforeAnyTargetIsDestroyed` (Phyrexian Purge on the Zombie and a Bears: both stay while asked),
+`destroyUnlessPaysToughnessLifeAsksBeforeTheZombieIsDestroyed` (the choice is a rerun one),
+`declinedToughnessLifePaymentAsksBeforeTheZombieIsDestroyed` (no destroy log line while asked, one after) and
+`destroyEnchantedThenRevealAsksBeforeTheZombieIsDestroyed` (nothing revealed while asked; after, the Zombie is on top,
+so the reveal puts it back onto the battlefield with the Aura attached). Not yet reviewed among the small destroy
+handlers: `DestroyPermanentChosenByDamagedPlayerAmongOpponentsEffectHandler` (Bladegriff Prototype; its trigger's
+targeting path needs a look first), `DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler` (Erosion; only a land
+creature can have a death replacement) and `DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler`. Still not
+covered: the fallback effects' own deaths, the deferred Torment picks, `WormsOfTheEarthSacrificeLands`, Voter's
+Dilemma, `LandEquilibriumSacrifice` and sacrifices paid as costs.
+
 **What the rules require.** CR 616.1: when several replacement effects would modify how a creature
 dies, its controller chooses one, and the event then happens with that choice. The remaining gaps,
 where the creature still stays on the battlefield until answered (`DeathExileReplacementChoice` with
