@@ -695,6 +695,18 @@
             </div>
           </div>
         }
+        @if (libraryTopAdventureCards.length > 0) {
+          <div class="revealed-hand-row">
+            <div class="revealed-hand-label">Library Top as Adventure</div>
+            <div class="revealed-hand-cards">
+              @for (card of libraryTopAdventureCards; track $index) {
+                <app-card-display [card]="card" class="revealed-hand-card playable"
+                  (click)="playLibraryTopAdventure(card)"
+                  (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
+        }
         @if (playableExileCards().length > 0) {
           <div class="revealed-hand-row">
             <div class="revealed-hand-label">Playable From Exile or Outside the Game</div>

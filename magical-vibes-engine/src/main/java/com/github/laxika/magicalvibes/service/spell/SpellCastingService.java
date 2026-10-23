@@ -12596,6 +12596,20 @@ public class SpellCastingService {
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds,
+                additionalCostSacrificePermanentIds, castFaceDown, false);
+    }
+
+    /**
+     * Casts the top card of the library. With {@code castAsAdventure} an adventurer card is cast as
+     * its Adventure: only the Adventure's characteristics are evaluated to see whether it can be cast
+     * (CR 715.3a), so an instant or sorcery permission (Johann, Apprentice Sorcerer) allows it, and the
+     * resolved spell is exiled with permission to cast the creature later (CR 715.3d).
+     */
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds,
+                                       List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
+                                       boolean castAsAdventure) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -12612,7 +12626,16 @@ public class SpellCastingService {
         if (castFaceDown && physicalCard.getMorphCost() == null) {
             throw new IllegalStateException("Card cannot be cast face down");
         }
-        Card card = castFaceDown ? CastingPermissionService.faceDownSpellCharacteristics(physicalCard) : physicalCard;
+        if (castFaceDown && castAsAdventure) {
+            throw new IllegalStateException("A face-down spell can't be cast as an Adventure");
+        }
+        Card adventureCharacteristics = castAsAdventure
+                ? CastingPermissionService.adventureSpellCharacteristics(physicalCard) : null;
+        if (castAsAdventure && adventureCharacteristics == null) {
+            throw new IllegalStateException("Card does not have a castable Adventure face");
+        }
+        Card card = castFaceDown ? CastingPermissionService.faceDownSpellCharacteristics(physicalCard)
+                : castAsAdventure ? adventureCharacteristics : physicalCard;
         if (card.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from library");
         }
@@ -12663,7 +12686,7 @@ public class SpellCastingService {
             return;
         }
 
-        if (castingPermissionService.canPlotNonlandCardsFromTopOfLibrary(gameData, playerId, card)) {
+        if (!castAsAdventure && castingPermissionService.canPlotNonlandCardsFromTopOfLibrary(gameData, playerId, card)) {
             if (!playerId.equals(gameData.activePlayerId)
                     || (gameData.currentStep != TurnStep.PRECOMBAT_MAIN
                     && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN)
@@ -12894,11 +12917,15 @@ public class SpellCastingService {
             effectsToResolve = List.of();
         }
 
+        if (castAsAdventure) {
+            card.freeze();
+        }
         StackEntry stackEntry = new StackEntry(
-                entryType, castFaceDown ? physicalCard : card, playerId, card.getName(),
+                entryType, castFaceDown || castAsAdventure ? physicalCard : card, playerId, card.getName(),
                 effectsToResolve, effectiveXValue, targetId, null
         );
         stackEntry.setSourceZone(Zone.LIBRARY);
+        stackEntry.setCastWithAdventure(castAsAdventure);
         stackEntry.getGrantedKeywordsOnEntry().addAll(permissionGrantedKeywords);
         stackEntry.setCastFaceDown(castFaceDown);
         stackEntry.setCastWithDisguise(castFaceDown && physicalCard.hasKeyword(Keyword.DISGUISE));

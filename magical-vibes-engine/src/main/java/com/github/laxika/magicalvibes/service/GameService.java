@@ -2171,17 +2171,28 @@ public class GameService {
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds,
+                additionalCostSacrificePermanentIds, castFaceDown, false);
+    }
+
+    /** Casts the top library card, as its Adventure when {@code castAsAdventure} is set. */
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds,
+                                       List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
+                                       boolean castAsAdventure) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
-                        counterCostPermanentIds, additionalCostSacrificePermanentIds, castFaceDown))) return;
+                        counterCostPermanentIds, additionalCostSacrificePermanentIds, castFaceDown,
+                        castAsAdventure))) return;
         synchronized (gameData) {
             requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
                     counterCostPermanentIds != null ? counterCostPermanentIds : List.of(),
-                    additionalCostSacrificePermanentIds != null ? additionalCostSacrificePermanentIds : List.of(), castFaceDown);
+                    additionalCostSacrificePermanentIds != null ? additionalCostSacrificePermanentIds : List.of(),
+                    castFaceDown, castAsAdventure);
         }
     }
 

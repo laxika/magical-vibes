@@ -242,6 +242,9 @@ export interface Card {
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other
    *  card. Not a face you flip to — the front face stays and this is drawn alongside it. */
   prepareSpell: Card | null;
+  /** A playable library-top entry that casts the adventurer card as its Adventure; the view
+   *  carries the Adventure's characteristics. */
+  castAsAdventure?: boolean;
 }
 
 export interface ModalOptionView {

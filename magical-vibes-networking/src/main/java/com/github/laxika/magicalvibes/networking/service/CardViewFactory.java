@@ -330,7 +330,7 @@ public class CardViewFactory {
                 additionalSacrificeCreature,
                 collectEvidenceAlternativeCost != null,
                 collectEvidenceAlternativeCost != null ? collectEvidenceAlternativeCost.minimumManaValue() : 0,
-                prepareSpellView);
+                prepareSpellView, false);
     }
 
     /**

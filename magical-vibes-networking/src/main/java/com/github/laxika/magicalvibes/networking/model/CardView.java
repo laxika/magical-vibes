@@ -25,6 +25,9 @@ import java.util.UUID;
  * @param prepareSpell the spell printed inset on a "prepare" layout card's front face (SOS
  *                     "Prepared"), projected from the card's back face; null for every other card.
  *                     Not a transform: the front face stays visible and this is shown alongside it.
+ * @param castAsAdventure set on a playable library-top entry that offers an adventurer card cast as
+ *                        its Adventure; the view then carries the Adventure's characteristics and the
+ *                        client sends {@code adventure} with {@code fromLibraryTop}.
  */
 @Builder(toBuilder = true)
 public record CardView(
@@ -101,6 +104,7 @@ public record CardView(
         boolean additionalSacrificeCreature,
         boolean alternateCostCollectEvidence,
         int alternateCostCollectEvidenceAmount,
-        CardView prepareSpell
+        CardView prepareSpell,
+        boolean castAsAdventure
 ) {
 }

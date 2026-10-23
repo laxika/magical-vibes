@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -2502,6 +2503,27 @@ public class CastingPermissionService {
             face.setKeywords(Set.of(Keyword.WARD));
         }
         return card.createRuntimeCopyWithFace(face);
+    }
+
+    /**
+     * Builds the characteristics used when casting an adventurer card as its Adventure: the card's
+     * identity with only the Adventure's characteristics, so every castability check (a top-library
+     * permission's card types included) sees the Adventure alone (CR 715.3a). Returns {@code null}
+     * when the card has no Adventure that is an instant or sorcery.
+     */
+    public static Card adventureSpellCharacteristics(Card card) {
+        Card adventure = card.getBackFaceCard();
+        if (adventure == null || card.getCastingOption(AdventureCast.class).isEmpty()
+                || (!adventure.hasType(CardType.INSTANT) && !adventure.hasType(CardType.SORCERY))) {
+            return null;
+        }
+        return card.createRuntimeCopyWithFace(adventure);
+    }
+
+    /** Returns whether an adventurer card may be cast as its Adventure from the top of the library. */
+    public boolean canCastFromTopOfLibraryAsAdventure(GameData gameData, UUID playerId, Card card) {
+        Card adventure = adventureSpellCharacteristics(card);
+        return adventure != null && canCastFromTopOfLibrary(gameData, playerId, adventure);
     }
 
     /** Returns whether a specific card may be cast from the top of the player's library. */

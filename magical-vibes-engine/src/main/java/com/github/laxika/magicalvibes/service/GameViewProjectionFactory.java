@@ -585,7 +585,8 @@ public class GameViewProjectionFactory {
                         }
                     } else if (pid.equals(viewerId) && effect instanceof AllowCastFromTopOfLibraryEffect allow
                             && allow.filter() != null && deck != null && !deck.isEmpty()
-                            && !castingPermissionService.canCastFromTopOfLibrary(data, pid, deck.getFirst())) {
+                            && !castingPermissionService.canCastFromTopOfLibrary(data, pid, deck.getFirst())
+                            && !castingPermissionService.canCastFromTopOfLibraryAsAdventure(data, pid, deck.getFirst())) {
                         // A filtered permission only exposes a top card it lets the player cast.
                         continue;
                     } else if (pid.equals(viewerId) &&
@@ -1032,22 +1033,48 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
+        CardView frontView = playableLibraryTopSpellView(gameData, playerId, topCard,
+                cardViewFactory.create(physicalTopCard), castFaceDown);
+        if (frontView != null) {
+            playable.add(frontView);
+        }
+        // CR 715.3a: cast as an Adventure, only the Adventure's characteristics decide castability.
+        Card adventure = CastingPermissionService.adventureSpellCharacteristics(physicalTopCard);
+        if (adventure != null) {
+            CardView adventureView = playableLibraryTopSpellView(gameData, playerId, adventure,
+                    cardViewFactory.create(adventure).toBuilder().castAsAdventure(true).build(), false);
+            if (adventureView != null) {
+                playable.add(adventureView);
+            }
+        }
+
+        return playable;
+    }
+
+    /**
+     * Returns {@code view} when the nonland {@code topCard} characteristics can be cast from the top
+     * of the library right now, or {@code null} when they can't.
+     */
+    private CardView playableLibraryTopSpellView(GameData gameData, UUID playerId, Card topCard,
+                                                 CardView view, boolean castFaceDown) {
+        boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, topCard);
+        boolean lifeTopPlay = castingPermissionService.hasLibraryTopCardLifePlayPermission(gameData, playerId, topCard);
         if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
                 || (!castFaceDown && !freeTopPlay && !lifeTopPlay && topCard.getManaCost() == null)) {
-            return playable;
+            return null;
         }
 
         if (!gameQueryService.canPlayerCastSpellsFromZone(gameData, playerId, Zone.LIBRARY)) {
-            return playable;
+            return null;
         }
         if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY, playerId)) {
-            return playable;
+            return null;
         }
 
         // The from-library-top cast path rejects cards with additional cast costs (no wire for
         // the payment selections) — never advertise them as playable.
         if (castingCostService.hasAdditionalSpellCosts(gameData, playerId, topCard)) {
-            return playable;
+            return null;
         }
 
         boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
@@ -1059,19 +1086,19 @@ public class GameViewProjectionFactory {
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
         if (castingPermissionService.isSpellLimitReached(gameData, playerId, topCard)
-                || cantCastDueToAttack) return playable;
-        if (castingPermissionService.isSpellRestricted(gameData, playerId, topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
-        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return playable;
-        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return playable;
-        if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
-        if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, topCard)) return playable;
+                || cantCastDueToAttack) return null;
+        if (castingPermissionService.isSpellRestricted(gameData, playerId, topCard, restrictedSpellTypes, forbiddenCardNames)) return null;
+        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, topCard)) return null;
+        if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, topCard)) return null;
+        if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return null;
+        if (castingPermissionService.isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, topCard)) return null;
 
         if (!castingPermissionService.canCastWithTimingFromLibraryTop(
-                gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
+                gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return null;
 
         // Check if spell requires a legal target (MTG rule 601.2c)
         if (EffectResolution.needsSpellCastTarget(topCard) && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
-            return playable;
+            return null;
         }
 
         boolean canPayLifeAlternative = !castFaceDown && castingPermissionService
@@ -1081,7 +1108,7 @@ public class GameViewProjectionFactory {
                 && gameQueryService.canPayLifeForCosts(gameData);
         boolean alternativeZeroCost = !castFaceDown && castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY);
-        CardView topCardView = cardViewFactory.create(physicalTopCard);
+        CardView topCardView = view;
         if (!freeTopPlay && !lifeTopPlay && !canPayLifeAlternative && !alternativeZeroCost) {
             int counterCost = castingPermissionService.findAdditionalCounterCostFromTopOfLibrary(
                     gameData, playerId, topCard).orElse(0);
@@ -1090,7 +1117,7 @@ public class GameViewProjectionFactory {
             }
         }
         if (freeTopPlay || canPayLifeAlternative || alternativeZeroCost) {
-            playable.add(topCardView);
+            return topCardView;
         } else {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, topCard, castFaceDown ? new ManaCost("{3}") : topCard.getParsedManaCost());
@@ -1133,11 +1160,10 @@ public class GameViewProjectionFactory {
                         gameData, playerId, topCard, pool, additionalCost, Zone.LIBRARY);
             }
             if (canAfford) {
-                playable.add(topCardView);
+                return topCardView;
             }
         }
-
-        return playable;
+        return null;
     }
 
     private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {

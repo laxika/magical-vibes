@@ -741,11 +741,21 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.playableLibraryTopCards().length > 0;
   }
 
+  /** Library-top entries that cast the top card as its Adventure, offered beside the card itself. */
+  get libraryTopAdventureCards(): Card[] {
+    return this.playableLibraryTopCards().filter(card => card.castAsAdventure);
+  }
+
   playLibraryTopCard(): void {
-    const card = this.playableLibraryTopCards()[0];
+    const playable = this.playableLibraryTopCards();
+    const card = playable.find(c => !c.castAsAdventure) ?? playable[0];
     if (card) {
       this.choice.targeting.startLibraryTopPlay(card);
     }
+  }
+
+  playLibraryTopAdventure(card: Card): void {
+    this.choice.targeting.startLibraryTopPlay(card);
   }
 
   passPriority(): void {

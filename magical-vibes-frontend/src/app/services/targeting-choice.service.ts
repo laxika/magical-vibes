@@ -154,6 +154,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
     this.selectingExileCounterCost = false;
@@ -413,6 +414,7 @@ export class TargetingChoiceService {
   private pendingFromExileCardId: string | null = null;
   private pendingFromExileFlashforward = false;
   private pendingFromLibraryTop = false;
+  private pendingLibraryTopAdventure = false;
   private pendingZoneCard: Card | null = null;
   selectingExileCounterCost = false;
   exileCounterCostCardName = '';
@@ -1239,6 +1241,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
   }
@@ -1550,6 +1553,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
     this.playCard(0, () => true);
   }
   startExilePlay(card: Card): void {
@@ -1558,6 +1562,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = card.id;
     this.pendingFromExileFlashforward = card.hasFlashforward === true;
     this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
     this.continueZonePlay(card);
   }
 
@@ -1567,6 +1572,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = true;
+    this.pendingLibraryTopAdventure = card.castAsAdventure === true;
     this.continueZonePlay(card);
   }
 
@@ -1774,7 +1780,9 @@ export class TargetingChoiceService {
     }
     if (this.pendingFromLibraryTop) {
       msg.fromLibraryTop = true;
+      if (this.pendingLibraryTopAdventure) msg.adventure = true;
       this.pendingFromLibraryTop = false;
+      this.pendingLibraryTopAdventure = false;
     }
     if (this.pendingExileCounterCostPermanentIds.length > 0) {
       msg.exileCounterCostPermanentIds = this.pendingExileCounterCostPermanentIds;
@@ -2232,6 +2240,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
     this.pendingBeholdPermanentId = null;
@@ -2468,6 +2477,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
     // Note: don't reset pendingPhyrexianLifeCount here — it carries through to the final send
@@ -2532,6 +2542,7 @@ export class TargetingChoiceService {
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
     this.pendingZoneCard = null;
   }
 

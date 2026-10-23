@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.q.QuestingDruid;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({JohannApprenticeSorcerer.class, Shock.class, Pyroclasm.class, GrizzlyBears.class,
-        QuestingDruid.class})
+        QuestingDruid.class, BonecrusherGiant.class})
 class JohannApprenticeSorcererTest extends BaseCardTest {
 
     @Test
@@ -196,6 +197,85 @@ class JohannApprenticeSorcererTest extends BaseCardTest {
 
         assertThat(harness.getConn1().getSentMessages())
                 .anyMatch(message -> message.contains("\"playableLibraryTopCards\":[{"));
+    }
+
+    @Test
+    void castsAdventureFromTopAndExilesTheCardWithPermissionToCastTheCreature() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        QuestingDruid druid = new QuestingDruid();
+        Card firstBears = new GrizzlyBears();
+        Card secondBears = new GrizzlyBears();
+        Card thirdBears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(druid, firstBears, secondBears, thirdBears));
+        harness.addMana(player1, ManaColor.RED, 2);
+        prepareMainPhase();
+
+        harness.castAndResolveAdventureFromLibraryTop(player1);
+
+        assertThat(gd.findExiledCard(druid.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions).containsEntry(druid.getId(), player1.getId());
+        assertThat(gd.findExiledCard(firstBears.getId())).isNotNull();
+        assertThat(gd.findExiledCard(secondBears.getId())).isNotNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(thirdBears);
+        harness.assertNotInGraveyard(player1, "Questing Druid");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void adventureCastFromTopUsesTheOncePerTurnPermission() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(new QuestingDruid(), new GrizzlyBears(), new GrizzlyBears(), shock));
+        harness.addMana(player1, ManaColor.RED, 3);
+        prepareMainPhase();
+
+        harness.castAndResolveAdventureFromLibraryTop(player1);
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(shock);
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventurerCreatureFaceIsNotCastableFromTop() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        QuestingDruid druid = new QuestingDruid();
+        harness.setLibrary(player1, List.of(druid));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(druid);
+    }
+
+    @Test
+    void castsTargetedInstantAdventureFromTopDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        BonecrusherGiant giant = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(giant));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveAdventureFromLibraryTop(player1, player2.getId());
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.findExiledCard(giant.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions).containsEntry(giant.getId(), player1.getId());
+    }
+
+    @Test
+    void adventureCastFromTopRequiresPayingTheAdventureCost() {
+        harness.addToBattlefield(player1, new JohannApprenticeSorcerer());
+        QuestingDruid druid = new QuestingDruid();
+        harness.setLibrary(player1, List.of(druid));
+        harness.addMana(player1, ManaColor.RED, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castAdventureFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(druid);
     }
 
     private void prepareMainPhase() {

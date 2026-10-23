@@ -46,13 +46,20 @@ public class PlayCardRequestDispatchService {
             gameService.foretellCard(gameData, player, request.cardIndex());
             return;
         }
-        if (Boolean.TRUE.equals(request.adventure())) {
+        if (Boolean.TRUE.equals(request.adventure()) && !Boolean.TRUE.equals(request.fromLibraryTop())) {
             gameService.playCardWithAdventure(gameData, player, request.cardIndex(), request.xValue(),
                     request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()),
                     request.sacrificePermanentId());
             return;
         }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
+            if (Boolean.TRUE.equals(request.adventure())) {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.additionalCostSacrificePermanentIds()),
+                        Boolean.TRUE.equals(request.morph()), true);
+                return;
+            }
             if (Boolean.TRUE.equals(request.morph())) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
                         listOrEmpty(request.exileCounterCostPermanentIds()),

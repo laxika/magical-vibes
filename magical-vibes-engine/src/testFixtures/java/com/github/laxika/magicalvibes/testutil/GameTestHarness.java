@@ -1695,6 +1695,25 @@ public class GameTestHarness {
         gameService.playCardFromLibraryTop(gameData, player, null, null, counterCostPermanentIds);
     }
 
+    /** Casts the adventurer card on top of the player's library as its Adventure. */
+    public void castAdventureFromLibraryTop(Player player, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, targetId, List.of(), List.of(), false, true);
+    }
+
+    public void castAdventureFromLibraryTop(Player player) {
+        castAdventureFromLibraryTop(player, null);
+    }
+
+    public void castAndResolveAdventureFromLibraryTop(Player player, UUID targetId) {
+        castAdventureFromLibraryTop(player, targetId);
+        passBothPriorities();
+    }
+
+    public void castAndResolveAdventureFromLibraryTop(Player player) {
+        castAndResolveAdventureFromLibraryTop(player, null);
+    }
+
     public void castFromLibraryTopWithAdditionalCost(Player player, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCardFromLibraryTop(gameData, player, null, null, List.of(),
