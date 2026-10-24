@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -10,10 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +21,15 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Resolves {@link SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffect} (Goblin Crash Pilot): sacrifices the
+ * tracked permanent and, when a creature was sacrificed this way, queues the reflexive "it deals damage equal to its
+ * power" ability with that creature's last-known information (CR 608.2h) as the damage source.
+ *
+ * <p>The sacrifice is departed at once rather than ending the step: the reflexive ability needs the creature as it
+ * was on the battlefield, which a paused step can't carry to its continuation. Inside the handler's rerun window
+ * ({@link AsksDeathReplacementsFirst}) a CR 616.1 question stops and resolves it again before anything changed.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -28,10 +37,8 @@ public class SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffectHandler
         implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final DepartureService departureService;
     private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,19 +54,15 @@ public class SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffectHandler
             return;
         }
 
-        boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, target));
         Permanent sourceSnapshot = new Permanent(target);
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, target)) {
+        DepartureService.Outcome outcome = departureService.departAsStep(gameData, entry, null,
+                DepartureBatch.of(List.of(DepartureIntent.sacrifice(target.getId()))));
+        if (!(outcome instanceof DepartureService.Outcome.Done done)) {
             return;
         }
-
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                gameData, entry.getControllerId(), target.getCard());
-        gameLogService.append(gameData, GameLog.isSacrificed(target.getCard()));
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        if (!wasCreature) {
+        DepartureResult result = done.results().getFirst();
+        // "When you sacrifice a creature this way": only a sacrificed creature has a last-known power.
+        if (!result.sacrificed() || result.lastKnownPower() == null) {
             return;
         }
 
@@ -67,7 +70,7 @@ public class SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffectHandler
                 entry.getEntryType(), entry.getCard(), entry.getControllerId(), entry.getDescription(),
                 new ArrayList<>(List.of()), null, target.getId());
         reflexiveContext.setSourcePermanentSnapshot(sourceSnapshot);
-        reflexiveContext.setEventValue(power);
+        reflexiveContext.setEventValue(Math.max(0, result.lastKnownPower()));
         queueReflexiveAbilityEffectHandler.resolve(gameData, reflexiveContext,
                 new QueueReflexiveAbilityEffect(
                         DealDamageToAnyTargetEffect.fromEnteringPermanent(new EventValue()), false, true));

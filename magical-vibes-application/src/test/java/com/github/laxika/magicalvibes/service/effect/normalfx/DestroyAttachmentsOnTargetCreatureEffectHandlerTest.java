@@ -7,7 +7,11 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -30,6 +34,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,6 +52,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
+    @Mock private TriggerCollectionService triggerCollectionService;
     @InjectMocks private DestructionSupport destructionSupport;
     private GameData gd;
     private UUID player1Id;
@@ -68,6 +75,10 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         handler = new DestroyAttachmentsOnTargetCreatureEffectHandler(destructionSupport);
 
+        lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
+        org.springframework.test.util.ReflectionTestUtils.setField(destructionSupport, "departureService",
+                new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
+                        triggerCollectionService, gameLogService));
     }
 
     // ===== Helper methods =====
@@ -128,11 +139,9 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
             Card card = createCard("Turn to Slag");
             StackEntry entry = sorceryEntry(card, player1Id, angel.getId());
 
-            when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
-
             handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
 
-            verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(scimitar), eq(DepartureIntent.destroy(scimitar.getId(), false)), any());
             verify(gameLogService).append(gd, GameLog.isDestroyed(scimitar.getCard()));
         }
 
@@ -152,13 +161,10 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
             Card card = createCard("Strip Bare");
             StackEntry entry = sorceryEntry(card, player1Id, angel.getId());
 
-            when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
-            when(permanentRemovalService.tryDestroyPermanent(gd, pacifism, false)).thenReturn(true);
-
             handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(true, true));
 
-            verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
-            verify(permanentRemovalService).tryDestroyPermanent(gd, pacifism, false);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(scimitar), eq(DepartureIntent.destroy(scimitar.getId(), false)), any());
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(pacifism), eq(DepartureIntent.destroy(pacifism.getId(), false)), any());
         }
 
         @Test
@@ -174,7 +180,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
 
             handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
 
-            verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
         }
 
         @Test
@@ -187,6 +193,6 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
 
             handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(true, true));
 
-            verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
+            verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
         }
 }

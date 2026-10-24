@@ -6,7 +6,11 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -58,6 +62,10 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
     private PermanentRemovalService permanentRemovalService;
     @Mock
     private PlayerInputService playerInputService;
+    @Mock
+    private GraveyardService graveyardService;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -88,7 +96,10 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        destroyTargetAndEachPlayerSearchesBasicLandHandler = new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler(permanentRemovalService, gameQueryService, gameLogService, support);
+        destroyTargetAndEachPlayerSearchesBasicLandHandler = new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler(gameQueryService, support,
+                new StepDepartureSupport(new DepartureService(gameQueryService, permanentRemovalService,
+                        graveyardService, triggerCollectionService, gameLogService), null));
+        lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
 
     }
 
@@ -148,7 +159,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), anyBoolean());
+                verify(permanentRemovalService, never()).departToGraveyard(any(), any(), any(), any());
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
             }
 
@@ -160,11 +171,11 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).tryDestroyPermanent(gd, target, false);
+                verify(permanentRemovalService).departToGraveyard(eq(gd), eq(target), eq(DepartureIntent.destroy(target.getId(), false)), any());
                 verify(gameLogService).append(eq(gd), eq(GameLog.isDestroyed(target.getCard())));
             }
 
@@ -176,7 +187,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
                 stubCardViewFactory();
 
                 // active player is player1Id; put basic lands in both libraries
@@ -201,7 +212,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
                 stubCardViewFactory();
 
                 gd.playerDecks.get(player1Id).addAll(List.of(
@@ -226,7 +237,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
                 stubCardViewFactory();
 
                 gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
@@ -245,7 +256,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
                 stubCardViewFactory();
 
                 // player1 has no basic lands, player2 does
@@ -269,7 +280,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
                 stubCardViewFactory();
 
                 // player1 has empty library, player2 has basic lands
@@ -290,7 +301,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
 
                 // Neither player has basic lands
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
@@ -309,7 +320,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 StackEntry entry = entryWithTarget(target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-                when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
+                gd.playerBattlefields.get(player2Id).add(target);
                 stubCardViewFactory();
 
                 // Both players have basic lands

@@ -21,10 +21,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Sacrifices a permanent as the resolving step ({@link DepartureService#departAsStep}) for the "sacrifice it,
- * then …" handlers, and runs what follows the sacrifice only once the permanent has left (CR 608.2c): right
- * away when the departure is done, or as the step inserted after this one when a CR 616.1 question ended the
- * step. Logs, "whenever you sacrifice" triggers and orphaned Auras are handled by the departure itself.
+ * Sacrifices or destroys permanents as the resolving step ({@link DepartureService#departAsStep}) for the
+ * "sacrifice it, then …" and "destroy it, then …" handlers, and runs what follows only once the permanents have
+ * left (CR 608.2c): right away when the departure is done, or as the step inserted after this one when a CR 616.1
+ * question ended the step. Logs, "whenever you sacrifice" triggers and orphaned Auras are handled by the departure
+ * itself.
  */
 @Slf4j
 @Component
@@ -45,8 +46,32 @@ public class StepDepartureSupport {
      */
     public void sacrificeThenContinue(GameData gameData, StackEntry entry, CardEffect step, UUID permanentId,
                                       ContinuesAfterDeparture continuation) {
-        if (departureService.departAsStep(gameData, entry, step, sacrificeBatch(permanentId))
-                instanceof DepartureService.Outcome.Done) {
+        departThenContinue(gameData, entry, step, sacrificeBatch(permanentId), continuation);
+    }
+
+    /** Departs {@code batch} (one event) as {@code step}; nothing follows it. */
+    public void depart(GameData gameData, StackEntry entry, CardEffect step, DepartureBatch batch) {
+        departureService.departAsStep(gameData, entry, step, batch);
+    }
+
+    /**
+     * Destroys {@code permanentId} as {@code step} ({@code cantBeRegenerated} as the effect says), then runs
+     * {@code continuation}'s {@link ContinuesAfterDeparture#continueAfterDeparture} for it, whether or not it was
+     * destroyed.
+     */
+    public void destroyThenContinue(GameData gameData, StackEntry entry, CardEffect step, UUID permanentId,
+                                    boolean cantBeRegenerated, ContinuesAfterDeparture continuation) {
+        departThenContinue(gameData, entry, step,
+                DepartureBatch.of(List.of(DepartureIntent.destroy(permanentId, cantBeRegenerated))), continuation);
+    }
+
+    /**
+     * Departs {@code batch} as {@code step}, then runs {@code continuation}'s
+     * {@link ContinuesAfterDeparture#continueAfterDeparture}, which reads the departure from the scratchpad.
+     */
+    public void departThenContinue(GameData gameData, StackEntry entry, CardEffect step, DepartureBatch batch,
+                                   ContinuesAfterDeparture continuation) {
+        if (departureService.departAsStep(gameData, entry, step, batch) instanceof DepartureService.Outcome.Done) {
             continuation.continueAfterDeparture(gameData, entry, step);
         } else {
             insertAfterResolvingStep(entry, new ContinueAfterDepartureEffect(step));

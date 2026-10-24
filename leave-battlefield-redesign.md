@@ -20,7 +20,7 @@ order; each one lists what it depends on.
 | 6 | Legacy wrappers and the guard | done |
 | 7 | Resolution scratchpad and pausing at the end of a step | done |
 | 8 | Convert the "sacrifice this, then …" handlers | done (bespoke records kept where engine code or data needs them; see Findings) |
-| 9 | Convert the "destroy/sacrifice target, then …" handlers | open |
+| 9 | Convert the "destroy/sacrifice target, then …" handlers | done (Goblin Crash Pilot and Goblin Welder depart at once, not as a step; see Findings) |
 | 10 | Convert the choice-completion paths | open |
 | 11 | Loops and drained queues | open |
 | 12 | Costs and mana abilities | open |
@@ -663,6 +663,59 @@ Steps add notes here for later steps, under their number.
   `BreathOfFuryTest` (6), `CheeringCrowdTest` (7), `LavabrinkFloodgatesTest`, `ParasiticImplantTest` (2),
   `PhantasmalForcesTest`, `PreponderantPearlTest`, `PrototypeX8Test`, `SupremeExemplarTest` (2),
   `DestroyAllPermanentsEffectHandlerTest` (12), `SacrificePermanentsEffectHandlerTest` (6).
+
+### Step 9
+
+- All 12 listed callers are off the legacy wrappers and the ratchet allowlist (now 62 callers).
+- New pieces: `StepDepartureSupport.depart` (any batch, nothing follows), `destroyThenContinue` and the general
+  `departThenContinue` (`sacrificeThenContinue` delegates to it). `DepartureResult.lastKnownCardTypes` (from the
+  snapshot's last-known card, CR 608.2h) for Reweave's "shares a card type with the sacrificed permanent"; a
+  nine-argument constructor without it keeps the test helpers unchanged. `departAsStep`'s hooks now also log
+  "is indestructible" for a DESTROY intent (as `departDestroyBatch` does), and `DepartureService.perform` wraps a
+  batch of two or more permanents in one `beginPermanentLeaveBatch` / `endPermanentLeaveBatch`, so "whenever one or
+  more ... leave" watchers see the whole event (this replaces Corrosive Ooze's own wrapping and now also covers
+  wraths; nesting inside `sacrificeTogether`'s wrap is harmless).
+- Converted to step departures with `ContinuesAfterDeparture`: Polymorph (`DestroyTargetThenRevealUntilType…`; the
+  reveal uses the result's `lastKnownControllerId`, also set when the target was indestructible), Reweave / Shape
+  Anew, Sarkhan the Mad's -2, Mercy Killing (power from `lastKnownPower`, or the current power of a creature that
+  stayed), Arcum Dagsson, Field of Ruin / Demolition Field (searchers from the last controller), Goblin Vandal /
+  Floral Spuzzem (no combat damage after the destroy). Nothing follows: Corrosive Ooze (all Equipment in one DESTROY
+  batch) and the exchange fizzle sacrifice (`StepDepartureSupport.sacrifice`). The "Player sacrifices X." logs of the
+  target handlers are now the departure's "X is sacrificed."
+- Ported to `depart` directly, not as a step (`departAsStep(gd, entry, null, …)`, i.e. `departNow`; both handlers
+  keep `AsksDeathReplacementsFirst`, so a question stops and reruns them before anything changed):
+  - Goblin Crash Pilot (`SacrificeTargetPermanentThenDealPowerDamageToAnyTarget…`): its reflexive ability needs the
+    sacrificed creature's `Permanent` as the damage source, which a paused step can't carry. The power and "was a
+    creature that was sacrificed" now come from the `DepartureResult`.
+  - Goblin Welder: "simultaneously sacrifices … and returns", and whether the return is allowed (a sacrificed
+    Grafdigger's Cage still stops it) is decided as the event happens. Steps 13/14 need either the return inside the
+    departure event or a way to carry that check across a pause.
+- `DestructionSupport.tryDestroyAndLog` now departs a one-intent DESTROY batch through `departDestroyBatch` (logs
+  and indestructible log as before, orphaned Auras removed only when destroyed). It still can't end a step, since
+  its ~55 callers go on in the same handler; it asks inside a marked handler's rerun window, else the old fallback
+  applies. It no longer has `tryDestroyPermanent`'s special case for a permanent already snapshotted by an
+  enclosing `performSimultaneousRemovals` group (`destroyPermanentInEnclosingBatch`); no path was found that calls
+  it inside such a group (the group callers exile, bounce or pay sacrifice costs), but steps 10–13 should keep it
+  in mind. Its callers can become step departures one by one.
+- Rules fixes: Reweave reveals only if the permanent was sacrificed ("If the player does"), using its last-known
+  card types; Polymorph and Field of Ruin ask CR 616.1 questions before the target leaves (they weren't marked, so
+  they reached the legacy fallback); Corrosive Ooze's Equipment are destroyed as one event.
+- Tests: enabled `PolymorphTest.revealFindsGravebaneZombiePutIntoItsLibraryOverKalitas`; replaced
+  `destroyThatCannotAskFirstIsReportedAsLegacyFallback` (it asserted the fallback fired) with
+  `destroyAsksFirstAndTheRevealWaitsForTheAnswer` (no fallback, the reveal waits). New
+  `ReweaveTest.revealWaitsForTheReplacementChoiceBeforeTheSacrifice`. Mock-based unit tests switched from verifying
+  `tryDestroyPermanent` to a real `DepartureService` and verifying `departToGraveyard` with a DESTROY intent:
+  `DestroyTargetPermanentEffectHandlerTest`, `DestroyAttachmentsOnTargetCreatureEffectHandlerTest` and
+  `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest` (whose targets are now on the
+  battlefield; its constructor changed). A sweep of 1,744 card test classes using the touched effects and
+  `DestructionSupport` destroy helpers (15,552 tests), plus `LegacyDepartureWrapperRatchetTest`, `GameSimulatorTest`,
+  the scratchpad tests and the destroy/sacrifice handler unit tests, had no new failures; the 91 failures in 43
+  classes (Ordeal cycle, `PyramidsTest`, `BreathOfFuryTest`, `AlphaDeathclawTest`, `FloralSpuzzemTest`,
+  `FieldOfRuinTest`, …) fail at baseline too, and `EffectResolutionServiceTest`, `PermanentRemovalServiceTest`,
+  `DestroyAllPermanentsEffectHandlerTest`, `SacrificePermanentsEffectHandlerTest` and six
+  `DestroyTargetAndEachPlayerSearches…HandlerTest` search tests fail at baseline with the same tests.
+  `OrzhovCharmTest$BounceMode.doesNotBounceOpponentAura` is flaky (player2's random opening hand may hold a
+  Pacifism).
 
 ### Step 2
 

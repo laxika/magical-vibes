@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,17 +25,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Resolves {@link DestroyTargetThenRevealUntilTypeToBattlefieldEffect} (Polymorph): destroys the target as the
+ * resolving step, and once it has left (or survived) its last controller reveals until a matching card (CR 608.2c,
+ * 608.2h). The reveal happens whether or not the destruction succeeded.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implements NormalEffectHandlerBean {
+public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implements NormalEffectHandlerBean,
+        ContinuesAfterDeparture {
 
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final CardSpecificSupport cardSpecificSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,28 +52,25 @@ public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implemen
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DestroyTargetThenRevealUntilTypeToBattlefieldEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        if (target == null || gameQueryService.findPermanentController(gameData, target.getId()) == null) {
             return;
         }
+        stepDepartureSupport.destroyThenContinue(gameData, entry, effect, target.getId(), e.cannotBeRegenerated(),
+                this);
+    }
 
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
+    /** "Its controller reveals cards …": the destroyed permanent's last controller. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (DestroyTargetThenRevealUntilTypeToBattlefieldEffect) effect;
+        List<DepartureResult> departures = entry.getResolutionResults().departures();
+        UUID targetControllerId = departures.isEmpty() ? null : departures.getFirst().lastKnownControllerId();
         if (targetControllerId == null) {
             return;
         }
-
         String targetControllerName = gameData.playerIdToName.get(targetControllerId);
-        String targetName = target.getCard().getName();
-
-        // Destroy the targeted permanent (may fail due to indestructible)
-        boolean destroyed = permanentRemovalService.tryDestroyPermanent(gameData, target, e.cannotBeRegenerated());
-        if (destroyed) {
-            String destroyLog = targetName + " is destroyed.";
-            gameLogService.append(gameData, GameLog.text(destroyLog));
-            log.info("Game {} - {} is destroyed by {}", gameData.id, targetName, entry.getCard().getName());
-        }
 
         // Reveal cards from the top of the controller's library until a matching card is found
-        // This happens regardless of whether the destruction succeeded
         List<Card> deck = gameData.playerDecks.get(targetControllerId);
         List<Card> revealedCards = new ArrayList<>();
         Card foundCard = null;
@@ -134,7 +138,7 @@ public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implemen
             legendRuleService.checkLegendRule(gameData, targetControllerId);
         }
 
-        log.info("Game {} - {} destroyed {}, {} enters the battlefield",
-                gameData.id, targetControllerName, targetName, foundCard.getName());
+        log.info("Game {} - {} reveals {} for {}, it enters the battlefield",
+                gameData.id, targetControllerName, foundCard.getName(), entry.getCard().getName());
     }
 }

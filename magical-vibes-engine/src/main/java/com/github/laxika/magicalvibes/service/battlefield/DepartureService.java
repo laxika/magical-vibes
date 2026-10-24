@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext.DeathExileReplacement;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureCause;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -237,11 +239,11 @@ public class DepartureService {
                 && gameData.pendingDepartureBatch == null;
         gameData.stepDepartureEffect = null;
         if (!endsStep) {
-            Outcome.Done done = departNow(gameData, batch, stepHooks(gameData));
+            Outcome.Done done = departNow(gameData, batch, stepHooks(gameData, batch));
             finishStep(gameData, entry, done);
             return done;
         }
-        Outcome outcome = depart(gameData, batch.ownedBy(entry.getTargetableId()), stepHooks(gameData));
+        Outcome outcome = depart(gameData, batch.ownedBy(entry.getTargetableId()), stepHooks(gameData, batch));
         if (outcome instanceof Outcome.Done done) {
             finishStep(gameData, entry, done);
         }
@@ -264,15 +266,22 @@ public class DepartureService {
         if (!awaitsStepDeparture(gameData, entry)) {
             return true;
         }
-        if (depart(gameData, gameData.pendingDepartureBatch, stepHooks(gameData)) instanceof Outcome.Done done) {
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (depart(gameData, pending, stepHooks(gameData, pending)) instanceof Outcome.Done done) {
             finishStep(gameData, entry, done);
             return true;
         }
         return false;
     }
 
-    private Hooks stepHooks(GameData gameData) {
-        return Hooks.afterEach((intent, permanent, snapshot, removed) -> {
+    private Hooks stepHooks(GameData gameData, DepartureBatch batch) {
+        return new Hooks(() -> {
+            for (Departing departing : locate(gameData, batch, intent -> intent.cause() == DepartureCause.DESTROY)) {
+                if (gameQueryService.hasKeyword(gameData, departing.permanent(), Keyword.INDESTRUCTIBLE)) {
+                    gameLogService.append(gameData, GameLog.isIndestructible(departing.permanent().getCard()));
+                }
+            }
+        }, (intent, permanent, snapshot, removed) -> {
             if (!removed) {
                 return;
             }
@@ -552,6 +561,11 @@ public class DepartureService {
         Map<UUID, List<CardEffect>> oldSelfDeathEffects =
                 new HashMap<>(gameData.simultaneousDyingGrantedSelfDeathEffects);
         batch.snapshots().values().forEach(snapshot -> publish(gameData, snapshot));
+        // Leaving together, so "whenever one or more ... leave" watchers that also leave still see the others leave.
+        boolean leaveBatch = departing.size() > 1;
+        if (leaveBatch) {
+            permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        }
         permanentRemovalService.beginDeathReplacementChoiceBatch(gameData);
         try {
             for (Departing leaving : departing) {
@@ -573,6 +587,9 @@ public class DepartureService {
             restore(gameData.simultaneousDyingGrantedCreatureDeathEffects, oldCreatureDeathEffects);
             restore(gameData.simultaneousDyingGrantedSelfDeathEffects, oldSelfDeathEffects);
             permanentRemovalService.endDeathReplacementChoiceBatch(gameData);
+            if (leaveBatch) {
+                permanentRemovalService.endPermanentLeaveBatch(gameData);
+            }
         }
         return batch.withStage(DepartureStage.REPORT);
     }
@@ -646,7 +663,7 @@ public class DepartureService {
             Integer toughness = snapshot.creature() ? snapshot.permanent().getLastKnownToughness() : null;
             if (findOnBattlefield(gameData, permanentId) != null) {
                 results.add(new DepartureResult(permanentId, Zone.BATTLEFIELD, null, null, power, toughness,
-                        false, false, snapshot.controllerId()));
+                        false, false, snapshot.controllerId(), lastKnownCardTypes(snapshot)));
                 continue;
             }
             Location location = cardIds.getOrDefault(permanentId, List.of()).stream()
@@ -657,9 +674,23 @@ public class DepartureService {
             results.add(new DepartureResult(permanentId, location == null ? null : location.zone(),
                     location == null ? null : location.ownerId(), location == null ? null : location.cardId(),
                     power, toughness, intent.cause().isDestruction(), intent.cause() == DepartureCause.SACRIFICE,
-                    snapshot.controllerId()));
+                    snapshot.controllerId(), lastKnownCardTypes(snapshot)));
         }
         return results;
+    }
+
+    /** The card types of the snapshot's last-known card, which holds its effective types (CR 608.2h). */
+    private static Set<CardType> lastKnownCardTypes(DepartureSnapshot snapshot) {
+        Card card = snapshot.permanent().getCard();
+        Set<CardType> types = EnumSet.noneOf(CardType.class);
+        if (card == null) {
+            return types;
+        }
+        if (card.getType() != null) {
+            types.add(card.getType());
+        }
+        types.addAll(card.getAdditionalTypes());
+        return types;
     }
 
     private record Location(Zone zone, UUID ownerId, UUID cardId) {}

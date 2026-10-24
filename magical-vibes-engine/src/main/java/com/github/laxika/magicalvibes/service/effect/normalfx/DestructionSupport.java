@@ -322,6 +322,14 @@ public class DestructionSupport {
     public DepartureService.Outcome.Done departDestroyBatch(GameData gameData, List<Permanent> toDestroy,
                                                             String sourceName, boolean cannotBeRegenerated,
                                                             Runnable beforeDestruction) {
+        return departDestroyBatch(gameData, toDestroy, sourceName, cannotBeRegenerated, beforeDestruction,
+                (intent, perm, snapshot, removed) -> { });
+    }
+
+    private DepartureService.Outcome.Done departDestroyBatch(GameData gameData, List<Permanent> toDestroy,
+                                                             String sourceName, boolean cannotBeRegenerated,
+                                                             Runnable beforeDestruction,
+                                                             DepartureService.AfterEach afterEach) {
         List<DepartureIntent> intents = toDestroy.stream()
                 .map(Permanent::getId)
                 .distinct()
@@ -337,6 +345,7 @@ public class DestructionSupport {
                     }
                 },
                 (intent, perm, snapshot, removed) -> {
+                    afterEach.departed(intent, perm, snapshot, removed);
                     if (snapshot == null) {
                         // The destruction couldn't touch it (its controller's own effects can't affect it).
                         return;
@@ -363,17 +372,26 @@ public class DestructionSupport {
         return tryDestroyAndLog(gameData, target, sourceName, cannotBeRegenerated, true);
     }
 
+    /**
+     * Destroys {@code target} as a one-permanent {@link DepartureBatch} through {@link #departDestroyBatch}: its
+     * destruction replacements and CR 616.1 death replacements are settled before it leaves, asked inside a caller
+     * that can be stopped and resolved again ({@code AsksDeathReplacementsFirst}). It can't end a resolution step,
+     * since its callers go on in the same handler; a "destroy it, then …" handler that should pause departs through
+     * {@link StepDepartureSupport} instead.
+     *
+     * @param cleanUpAttachments whether Auras left attached to nothing are put into the graveyard afterwards
+     *                           ({@code false} lets the caller reattach an Aura first)
+     * @return whether it was destroyed (indestructible, shielded or regenerated permanents were not)
+     */
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName,
                                     boolean cannotBeRegenerated, boolean cleanUpAttachments) {
-        boolean destroyed = cleanUpAttachments
-                ? permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated)
-                : permanentRemovalService.tryDestroyPermanent(gameData, target, cannotBeRegenerated, false);
-        if (!destroyed) {
-            return false;
+        boolean[] destroyed = {false};
+        departDestroyBatch(gameData, List.of(target), sourceName, cannotBeRegenerated, () -> { },
+                (intent, permanent, snapshot, removed) -> destroyed[0] = snapshot != null);
+        if (destroyed[0] && cleanUpAttachments) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
-        log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), sourceName);
-        return true;
+        return destroyed[0];
     }
 
     public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {

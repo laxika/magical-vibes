@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -12,27 +13,31 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves {@link SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffect} (Goblin Welder): the player
+ * sacrifices the artifact and returns the artifact card at the same time. The sacrifice is departed at once rather
+ * than ending the step, because whether the return is allowed is decided as the event happens (a sacrificed
+ * Grafdigger's Cage still stops it), which a paused step can't carry to its continuation. Inside the handler's rerun
+ * window ({@link AsksDeathReplacementsFirst}) a CR 616.1 question stops and resolves it again before anything
+ * changed.
+ */
 @Component
 @RequiredArgsConstructor
 public class SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffectHandler
         implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
-    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final DepartureService departureService;
     private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,13 +68,11 @@ public class SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffectHa
 
         boolean returnBlocked = graveyardReturnSupport.isCardBlockedFromEnteringFromZone(
                 gameData, targetCard, Zone.GRAVEYARD);
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, targetPermanent)) {
+        DepartureService.Outcome outcome = departureService.departAsStep(gameData, entry, null,
+                DepartureBatch.of(List.of(DepartureIntent.sacrifice(targetPermanentId))));
+        if (!(outcome instanceof DepartureService.Outcome.Done done) || !done.results().getFirst().sacrificed()) {
             return;
         }
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                gameData, artifactControllerId, targetPermanent.getCard());
-        gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " is sacrificed."));
-        permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (returnBlocked) {
             return;

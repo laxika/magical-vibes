@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.d.DivinersWand;
 import com.github.laxika.magicalvibes.cards.h.HithlainRope;
@@ -8,7 +10,10 @@ import com.github.laxika.magicalvibes.cards.h.HondenOfSeeingWinds;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.j.JadeIdol;
 import com.github.laxika.magicalvibes.cards.s.SenseisDiviningTop;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -200,5 +205,32 @@ class ReweaveTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Isamaru, Hound of Konda");
         harness.assertOnBattlefield(player2, "Isamaru, Hound of Konda");
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(reweave, drawnCard);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("The reveal waits for the sacrificed creature's replacement choice, and Kalitas's exile still counts as sacrificed")
+    void revealWaitsForTheReplacementChoiceBeforeTheSacrifice() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Card forest = new Forest();
+        Card hound = new IsamaruHoundOfKonda();
+        harness.setLibrary(player2, List.of(forest, hound));
+        harness.setHand(player1, List.of(new Reweave()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(zombie);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest, hound);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.findExiledCard(zombie.getCard().getId())).isNotNull();
+        harness.assertOnBattlefield(player2, "Isamaru, Hound of Konda");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
+        harness.assertInGraveyard(player1, "Reweave");
     }
 }

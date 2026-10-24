@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -19,13 +20,25 @@ import java.util.UUID;
  * @param sacrificed         whether it left the battlefield because it was sacrificed
  * @param lastKnownControllerId the player who controlled it immediately before the event (CR 608.2h), or
  *                           {@code null} if it wasn't on the battlefield
+ * @param lastKnownCardTypes the card types it had immediately before the event (CR 608.2h), or empty when the
+ *                           event couldn't touch it
  */
 public record DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
                               Integer lastKnownPower, Integer lastKnownToughness,
-                              boolean destroyed, boolean sacrificed, UUID lastKnownControllerId) {
+                              boolean destroyed, boolean sacrificed, UUID lastKnownControllerId,
+                              Set<CardType> lastKnownCardTypes) {
 
     public DepartureResult {
         Objects.requireNonNull(permanentId, "permanentId");
+        lastKnownCardTypes = lastKnownCardTypes == null ? Set.of() : Set.copyOf(lastKnownCardTypes);
+    }
+
+    /** A result without last-known card types. */
+    public DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
+                           Integer lastKnownPower, Integer lastKnownToughness,
+                           boolean destroyed, boolean sacrificed, UUID lastKnownControllerId) {
+        this(permanentId, destination, destinationOwnerId, newCardId, lastKnownPower, lastKnownToughness,
+                destroyed, sacrificed, lastKnownControllerId, Set.of());
     }
 
     /** Whether it left the battlefield. */

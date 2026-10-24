@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -327,7 +326,6 @@ class PolymorphTest extends BaseCardTest {
     }
 
     @Test
-    @Disabled("leave-battlefield-redesign step 9")
     @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, Forest.class})
     @DisplayName("Gravebane Zombie put into its library instead of Kalitas's exile is the creature the reveal finds")
     void revealFindsGravebaneZombiePutIntoItsLibraryOverKalitas() {
@@ -364,11 +362,12 @@ class PolymorphTest extends BaseCardTest {
 
     @Test
     @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, Forest.class})
-    @DisplayName("A destroy that can't ask before the Zombie leaves is reported as a legacy fallback naming its caller")
-    void destroyThatCannotAskFirstIsReportedAsLegacyFallback() {
+    @DisplayName("The destroy asks before the Zombie leaves, so the reveal waits and no legacy fallback is reported")
+    void destroyAsksFirstAndTheRevealWaitsForTheAnswer() {
         harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
         Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
-        harness.setLibrary(player2, List.of(new Forest()));
+        Card forest = new Forest();
+        harness.setLibrary(player2, List.of(forest));
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         LegacyDepartureFallback.watch(gd.id);
@@ -376,11 +375,11 @@ class PolymorphTest extends BaseCardTest {
         harness.castSorcery(player1, 0, gravebane.getId());
         harness.passBothPriorities();
 
-        assertThat(LegacyDepartureFallback.unwatch(gd.id)).singleElement().satisfies(hit -> {
-            assertThat(hit.kind()).isEqualTo(LegacyDepartureFallback.Kind.DEATH_REPLACEMENT_ASKED_AFTER_EVENT);
-            assertThat(hit.permanentName()).isEqualTo("Gravebane Zombie");
-            assertThat(hit.caller()).startsWith("DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler.resolve:");
-        });
+        assertThat(LegacyDepartureFallback.unwatch(gd.id)).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(gravebane);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
+        assertThat(gameLogContains("reveals")).isFalse();
     }
 }

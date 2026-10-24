@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +16,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,17 +28,24 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Resolves {@link SacrificeTargetThenRevealUntilTypeToBattlefieldEffect} (Shape Anew, Reweave): the target's
+ * controller sacrifices it as the resolving step, and once it has left that player reveals until a matching card
+ * (CR 608.2c). Reweave's "shares a card type with the sacrificed permanent" uses its last-known card types
+ * (CR 608.2h), and Reweave reveals only if the permanent was sacrificed ("If the player does").
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst, ContinuesAfterDeparture {
 
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final CardSpecificSupport cardSpecificSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,36 +54,40 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (SacrificeTargetThenRevealUntilTypeToBattlefieldEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        if (target == null || gameQueryService.findPermanentController(gameData, target.getId()) == null) {
             return;
         }
-
-        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
-        if (targetControllerId == null) {
-            return;
-        }
-
-        String targetControllerName = gameData.playerIdToName.get(targetControllerId);
-        String targetName = target.getCard().getName();
-
-        // Reweave mode: an empty type set means "shares a card type with the sacrificed permanent"
-        Set<CardType> matchTypes = e.cardTypes().isEmpty()
-                ? effectivePermanentTypesOf(gameData, target)
-                : e.cardTypes();
-        boolean permanentCardsOnly = e.cardTypes().isEmpty();
-
         // "Its controller sacrifices it": a permanent that can't be sacrificed (Hithlain Rope) stops the
         // effect, so nothing is revealed or put onto the battlefield.
         if (gameQueryService.cantBeSacrificed(gameData, target)) {
             return;
         }
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, target.getId(), this);
+    }
 
-        // Sacrifice the targeted permanent
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
-        String sacrificeLog = targetControllerName + " sacrifices " + targetName + ".";
-        gameLogService.append(gameData, GameLog.text(sacrificeLog));
+    /** The reveal, by the sacrificed permanent's last controller. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (SacrificeTargetThenRevealUntilTypeToBattlefieldEffect) effect;
+        List<DepartureResult> departures = entry.getResolutionResults().departures();
+        DepartureResult sacrificed = departures.isEmpty() ? null : departures.getFirst();
+        if (sacrificed == null || sacrificed.lastKnownControllerId() == null) {
+            return;
+        }
+        // Reweave mode: an empty type set means "shares a card type with the sacrificed permanent"
+        boolean permanentCardsOnly = e.cardTypes().isEmpty();
+        if (permanentCardsOnly && !sacrificed.sacrificed()) {
+            return;
+        }
+        Set<CardType> matchTypes = e.cardTypes();
+        if (permanentCardsOnly) {
+            matchTypes = EnumSet.noneOf(CardType.class);
+            matchTypes.addAll(sacrificed.lastKnownCardTypes());
+            matchTypes = withoutNonPermanentTypes(matchTypes);
+        }
+        UUID targetControllerId = sacrificed.lastKnownControllerId();
+        String targetControllerName = gameData.playerIdToName.get(targetControllerId);
 
         // Reveal cards from the top of the controller's library until a matching card is found
         List<Card> deck = gameData.playerDecks.get(targetControllerId);
@@ -144,8 +156,8 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
             legendRuleService.checkLegendRule(gameData, targetControllerId);
         }
 
-        log.info("Game {} - {} sacrificed {}, {} enters the battlefield",
-                gameData.id, targetControllerName, targetName, foundCard.getName());
+        log.info("Game {} - {} reveals {} for {}, it enters the battlefield",
+                gameData.id, targetControllerName, foundCard.getName(), entry.getCard().getName());
     }
 
     /**
@@ -158,12 +170,6 @@ public class SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler implem
             types.add(card.getType());
         }
         types.addAll(card.getAdditionalTypes());
-        return withoutNonPermanentTypes(types);
-    }
-
-    private Set<CardType> effectivePermanentTypesOf(GameData gameData, Permanent permanent) {
-        Set<CardType> types = EnumSet.noneOf(CardType.class);
-        types.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
         return withoutNonPermanentTypes(types);
     }
 

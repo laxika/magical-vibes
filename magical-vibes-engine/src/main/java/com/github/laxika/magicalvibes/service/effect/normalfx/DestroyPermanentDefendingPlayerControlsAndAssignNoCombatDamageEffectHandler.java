@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,17 +17,18 @@ import java.util.UUID;
 
 /**
  * Resolves {@link DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect}
- * after its permanent target and the wrapped payment choice have both been made.
+ * after its permanent target and the wrapped payment choice have both been made: destroys the target as the
+ * resolving step, then the source assigns no combat damage.
  */
 @Component
 @RequiredArgsConstructor
 public class DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, ContinuesAfterDeparture {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,13 +52,16 @@ public class DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffec
             return;
         }
 
-        // The no-combat-damage instruction is a separate step after the destroy instruction (CR 608.2c),
-        // so regeneration or indestructibility of the artifact does not restore combat damage.
-        if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-            gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
+        stepDepartureSupport.destroyThenContinue(gameData, entry, effect, targetId, false, this);
+    }
 
+    /**
+     * The no-combat-damage instruction is a separate step after the destroy instruction (CR 608.2c), so
+     * regeneration or indestructibility of the artifact does not restore combat damage.
+     */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source != null) {
             gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermanentId);

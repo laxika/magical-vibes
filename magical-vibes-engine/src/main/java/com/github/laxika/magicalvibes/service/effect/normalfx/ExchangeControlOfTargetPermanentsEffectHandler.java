@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -41,8 +39,7 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
     private final CreatureControlService creatureControlService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final StepDepartureSupport stepDepartureSupport;
     private final TargetLegalityService targetLegalityService;
 
     @Override
@@ -219,11 +216,6 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, source.getId()))) {
             return;
         }
-        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                    gameData, entry.getControllerId(), source.getCard());
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is sacrificed."));
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
+        stepDepartureSupport.sacrifice(gameData, entry, exchange, source.getId());
     }
 }

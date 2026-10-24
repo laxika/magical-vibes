@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,7 @@ import org.springframework.stereotype.Component;
 public class DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,17 +49,13 @@ public class DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffectHandler 
                 }
             });
         }
-        permanentRemovalService.beginPermanentLeaveBatch(gameData);
-        try {
-            for (UUID equipmentId : equipmentIds) {
-                Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
-                if (equipment != null && permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
-                    gameLogService.append(gameData, GameLog.isDestroyed(equipment.getCard()));
-                }
-            }
-        } finally {
-            permanentRemovalService.endPermanentLeaveBatch(gameData);
+        // The Equipment are destroyed together as the resolving step; the departure removes orphaned Auras.
+        java.util.List<DepartureIntent> intents = equipmentIds.stream().distinct()
+                .filter(equipmentId -> gameQueryService.findPermanentById(gameData, equipmentId) != null)
+                .map(equipmentId -> DepartureIntent.destroy(equipmentId, false))
+                .toList();
+        if (!intents.isEmpty()) {
+            stepDepartureSupport.depart(gameData, entry, effect, DepartureBatch.of(intents));
         }
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }
