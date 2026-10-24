@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.PlaguecrafterState;
@@ -27,6 +28,7 @@ public class EachPlayerSacrificesPermanentOrDiscardsEffectHandler implements Nor
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -74,8 +76,14 @@ public class EachPlayerSacrificesPermanentOrDiscardsEffectHandler implements Nor
         }
 
         if (choosers.isEmpty()) {
-            destructionSupport.performSimultaneousSacrifice(gameData, automaticSacrificeIds);
-            beginDiscardPhase(gameData, entry);
+            // A step departure: a CR 616.1 question ends the step before anything leaves, and the effect is resolved
+            // again (as after the sacrifice choices) to begin the discards once the sacrifice is done.
+            state.sacrificeChoicesInProgress = true;
+            if (stepDepartureSupport.departOrResolveAgain(gameData, entry, effect,
+                    DepartureBatch.of(StepDepartureSupport.sacrifices(automaticSacrificeIds)))) {
+                state.sacrificeChoicesInProgress = false;
+                beginDiscardPhase(gameData, entry);
+            }
             return;
         }
 

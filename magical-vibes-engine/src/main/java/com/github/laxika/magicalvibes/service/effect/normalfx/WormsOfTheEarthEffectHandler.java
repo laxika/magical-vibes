@@ -34,6 +34,7 @@ public class WormsOfTheEarthEffectHandler implements NormalEffectHandlerBean {
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -140,12 +141,17 @@ public class WormsOfTheEarthEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    /**
+     * "If you do, destroy this enchantment": the step the parked resolution resumes with, so the damage dealt or lands
+     * sacrificed before aren't redone and a CR 616.1 question is asked before it leaves.
+     */
     private void destroySource(GameData gameData, Card sourceCard, UUID sourcePermanentId) {
         if (sourcePermanentId == null) {
             return;
         }
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source != null) {
+        if (source != null && !stepDepartureSupport.departAfterChoice(gameData,
+                StepDepartureSupport.destructions(List.of(sourcePermanentId), false), List.of())) {
             destructionSupport.tryDestroyAndLog(gameData, source, sourceCard.getName());
         }
     }

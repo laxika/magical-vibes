@@ -26,6 +26,7 @@ public class ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHa
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,12 +35,16 @@ public class ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextOpponent(gameData, entry.getControllerId(), entry.getCard(),
+        beginNextOpponent(gameData, new ResolvingStep(entry, effect), entry.getControllerId(), entry.getCard(),
                 apnapOpponents(gameData, entry.getControllerId()), List.of());
     }
 
-    public void beginNextOpponent(GameData gameData, UUID controllerId, Card sourceCard,
-            List<UUID> remainingOpponentIds, List<UUID> chosenPermanentIds) {
+    /** The step being resolved when the choices start during resolution, so the destroy can be that step. */
+    private record ResolvingStep(StackEntry entry, CardEffect effect) {
+    }
+
+    private void beginNextOpponent(GameData gameData, ResolvingStep resolvingStep, UUID controllerId,
+            Card sourceCard, List<UUID> remainingOpponentIds, List<UUID> chosenPermanentIds) {
         List<UUID> remaining = new ArrayList<>(remainingOpponentIds);
         List<UUID> chosen = new ArrayList<>(chosenPermanentIds);
 
@@ -65,7 +70,7 @@ public class ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHa
             return;
         }
 
-        destroyOneAtRandom(gameData, chosen, sourceCard.getName());
+        destroyOneAtRandom(gameData, resolvingStep, chosen, sourceCard.getName());
     }
 
     public void completeChoice(GameData gameData, UUID permanentId,
@@ -79,7 +84,7 @@ public class ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHa
 
         List<UUID> chosenPermanentIds = new ArrayList<>(context.chosenPermanentIds());
         chosenPermanentIds.add(permanentId);
-        beginNextOpponent(gameData, context.controllerId(), context.sourceCard(),
+        beginNextOpponent(gameData, null, context.controllerId(), context.sourceCard(),
                 context.remainingOpponentIds(), chosenPermanentIds);
     }
 
@@ -90,14 +95,26 @@ public class ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHa
                 .toList();
     }
 
-    private void destroyOneAtRandom(GameData gameData, List<UUID> chosenPermanentIds, String sourceName) {
+    /**
+     * Picks one chosen permanent at random and destroys it as a step of its own, after the random pick: the resolving
+     * step itself, or the step the parked resolution resumes with after the last choice, so a CR 616.1 question is
+     * asked before it leaves and the pick isn't made again.
+     */
+    private void destroyOneAtRandom(GameData gameData, ResolvingStep resolvingStep, List<UUID> chosenPermanentIds,
+                                    String sourceName) {
         List<Permanent> chosen = chosenPermanentIds.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(permanent -> permanent != null)
                 .toList();
         if (!chosen.isEmpty()) {
             Permanent target = chosen.get(ThreadLocalRandom.current().nextInt(chosen.size()));
-            destructionSupport.tryDestroyAndLog(gameData, target, sourceName, false);
+            if (resolvingStep != null) {
+                stepDepartureSupport.destroy(gameData, resolvingStep.entry(), resolvingStep.effect(),
+                        List.of(target), false);
+            } else if (!stepDepartureSupport.departAfterChoice(gameData,
+                    StepDepartureSupport.destructions(List.of(target.getId()), false), List.of())) {
+                destructionSupport.tryDestroyAndLog(gameData, target, sourceName, false);
+            }
         }
     }
 

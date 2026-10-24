@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EachPlayerSacrificeOrLoseLifeState;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,13 +19,15 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** Resolves an APNAP each-player choice between sacrificing a permanent and losing life. */
 @Component
 @RequiredArgsConstructor
-public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler
+        implements NormalEffectHandlerBean, ContinuesAfterDeparture {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
@@ -32,6 +36,7 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -103,13 +108,30 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
             return;
         }
 
-        destructionSupport.performSimultaneousSacrifice(gameData, state.sacrificeIds);
-        for (UUID playerId : state.lifeLossPlayerIds) {
+        // Every player has chosen: the sacrifices are one event, a step departure, so a CR 616.1 question ends the
+        // step before any permanent leaves; the life loss follows once it is done.
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        List<UUID> sacrificeIds = state.sacrificeIds.stream()
+                .filter(permanentId -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+                    return permanent != null && !gameQueryService.cantBeSacrificed(gameData, permanent);
+                })
+                .toList();
+        stepDepartureSupport.departThenContinue(gameData, entry, effect,
+                DepartureBatch.of(StepDepartureSupport.sacrifices(sacrificeIds)), this);
+    }
+
+    /** The players who chose (or had) to lose life lose it, after the sacrifices, and the choices are cleared. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        var sacrificeEffect = (EachPlayerSacrificesPermanentOrLosesLifeEffect) effect;
+        EachPlayerSacrificeOrLoseLifeState state = gameData.eachPlayerSacrificeOrLoseLife;
+        String sourceName = entry.getCard().getName();
+        for (UUID playerId : List.copyOf(state.lifeLossPlayerIds)) {
             lifeSupport.applyLifeLoss(gameData, playerId,
-                    lifeLoss(gameData, entry, effect, playerId), sourceName);
+                    lifeLoss(gameData, entry, sacrificeEffect, playerId), sourceName);
         }
         state.reset();
-        gameData.rerunCurrentEffectAfterInteraction = false;
     }
 
     private void applyChoice(GameData gameData, StackEntry entry,

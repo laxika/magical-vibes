@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EachPlayerSacrificeOrLoseLifeState;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
@@ -30,6 +30,7 @@ public class DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffectHand
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final PlayerInputService playerInputService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -92,13 +93,11 @@ public class DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffectHand
         if (legalIds.size() < amount) {
             loseLife(gameData, state, playerId, amount, entry);
         } else if (legalIds.size() == amount) {
-            for (UUID permanentId : legalIds) {
-                Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-                if (permanent != null) {
-                    destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
-                }
-            }
+            // They are sacrificed together as this step's last action, so a CR 616.1 question ends the step before
+            // any of them leaves.
             finish(state, gameData);
+            stepDepartureSupport.depart(gameData, entry, effect,
+                    DepartureBatch.of(StepDepartureSupport.sacrifices(legalIds)));
         } else {
             state.chosenMode = SACRIFICE_SELECTION_PENDING;
             gameData.rerunCurrentEffectAfterInteraction = true;

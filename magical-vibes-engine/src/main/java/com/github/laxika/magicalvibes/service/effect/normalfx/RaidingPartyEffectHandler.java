@@ -34,6 +34,7 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final TapUntapSupport tapUntapSupport;
     private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,8 +44,8 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<UUID> playerIds = apnapPlayers(gameData);
-        stepTap(gameData, playerIds, 0, new ArrayList<>(Collections.nCopies(playerIds.size(), 0)),
-                entry.getCard().getName());
+        stepTap(gameData, new ResolvingStep(entry, effect), playerIds, 0,
+                new ArrayList<>(Collections.nCopies(playerIds.size(), 0)), entry.getCard().getName());
     }
 
     public void completeTapChoice(GameData gameData, List<UUID> chosenIds,
@@ -60,7 +61,7 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
 
         List<Integer> tappedCounts = new ArrayList<>(context.tappedCounts());
         tappedCounts.set(context.playerIndex(), tappedCount);
-        stepTap(gameData, context.playerIds(), context.playerIndex() + 1, tappedCounts,
+        stepTap(gameData, null, context.playerIds(), context.playerIndex() + 1, tappedCounts,
                 context.sourceName());
     }
 
@@ -68,11 +69,15 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
                                      MultiPermanentChoiceContext.RaidingPartyPlainsChoice context) {
         List<UUID> chosenPlains = new ArrayList<>(context.chosenPlains());
         chosenPlains.addAll(chosenIds);
-        stepPlains(gameData, context.playerIds(), context.playerIndex() + 1,
+        stepPlains(gameData, null, context.playerIds(), context.playerIndex() + 1,
                 context.tappedCounts(), chosenPlains, context.sourceName());
     }
 
-    private void stepTap(GameData gameData, List<UUID> playerIds, int playerIndex,
+    /** The step being resolved when no choice has been asked yet, so the destroy can be that step. */
+    private record ResolvingStep(StackEntry entry, CardEffect effect) {
+    }
+
+    private void stepTap(GameData gameData, ResolvingStep resolvingStep, List<UUID> playerIds, int playerIndex,
                          List<Integer> tappedCounts, String sourceName) {
         for (int currentPlayerIndex = playerIndex; currentPlayerIndex < playerIds.size(); currentPlayerIndex++) {
             UUID playerId = playerIds.get(currentPlayerIndex);
@@ -90,10 +95,10 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        stepPlains(gameData, playerIds, 0, tappedCounts, List.of(), sourceName);
+        stepPlains(gameData, resolvingStep, playerIds, 0, tappedCounts, List.of(), sourceName);
     }
 
-    private void stepPlains(GameData gameData, List<UUID> playerIds, int playerIndex,
+    private void stepPlains(GameData gameData, ResolvingStep resolvingStep, List<UUID> playerIds, int playerIndex,
                             List<Integer> tappedCounts, List<UUID> chosenPlains, String sourceName) {
         for (int currentPlayerIndex = playerIndex; currentPlayerIndex < playerIds.size(); currentPlayerIndex++) {
             int maxCount = tappedCounts.get(currentPlayerIndex) * 2;
@@ -115,10 +120,16 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        destroyUnchosenPlains(gameData, chosenPlains, sourceName);
+        destroyUnchosenPlains(gameData, resolvingStep, chosenPlains, sourceName);
     }
 
-    private void destroyUnchosenPlains(GameData gameData, List<UUID> chosenPlains, String sourceName) {
+    /**
+     * Destroys every Plains not chosen, as one event and as a step of its own (this step, or the step the parked
+     * resolution resumes with after the last choice), so a CR 616.1 question is asked before any of them leaves and
+     * the taps and choices made before aren't redone.
+     */
+    private void destroyUnchosenPlains(GameData gameData, ResolvingStep resolvingStep, List<UUID> chosenPlains,
+                                       String sourceName) {
         Set<UUID> chosenIds = new HashSet<>(chosenPlains);
         List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
@@ -134,7 +145,12 @@ public class RaidingPartyEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        destructionSupport.destroyBatchCollecting(gameData, toDestroy, sourceName, false);
+        if (resolvingStep != null) {
+            stepDepartureSupport.destroy(gameData, resolvingStep.entry(), resolvingStep.effect(), toDestroy, false);
+        } else if (!stepDepartureSupport.departAfterChoice(gameData, StepDepartureSupport.destructions(
+                toDestroy.stream().map(Permanent::getId).toList(), false), List.of())) {
+            destructionSupport.destroyBatchCollecting(gameData, toDestroy, sourceName, false);
+        }
         log.info("Game {} - {} destroys {} Plains", gameData.id, sourceName, toDestroy.size());
     }
 

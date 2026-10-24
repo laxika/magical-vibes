@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AssaultSuit;
+import com.github.laxika.magicalvibes.cards.f.FirestormPhoenix;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RalIzzetViceroy;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -212,6 +215,34 @@ class PlaguecrafterTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, source.getId());
         harness.assertInGraveyard(player1, "Plaguecrafter");
         assertThat(gd.stack).isNotEmpty();
+    }
+
+    @Test
+    @CardUsed({RestInPeace.class, FirestormPhoenix.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Automatic sacrifices ask their death replacements before either creature leaves")
+    void automaticSacrificesAskTheDeathReplacementFirst() {
+        GameData gd = harness.getGameData();
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player2, new FirestormPhoenix());
+        castPlaguecrafter();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options())
+                .containsExactlyInAnyOrder("Return it to its owner's hand (Firestorm Phoenix)", "Exile it");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(phoenix);
+        harness.assertOnBattlefield(player1, "Plaguecrafter");
+
+        harness.handleListChoice(player2, "Return it to its owner's hand (Firestorm Phoenix)");
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(phoenix.getCard());
+        harness.assertNotOnBattlefield(player1, "Plaguecrafter");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Plaguecrafter"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
     private void castPlaguecrafter() {

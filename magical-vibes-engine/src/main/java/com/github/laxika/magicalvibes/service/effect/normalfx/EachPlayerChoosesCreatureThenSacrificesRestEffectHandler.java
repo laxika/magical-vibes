@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,6 +35,7 @@ public class EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final PlayerInputService playerInputService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,7 +45,7 @@ public class EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choiceEffect = (EachPlayerChoosesCreatureThenSacrificesRestEffect) effect;
-        step(gameData, apnapPlayers(gameData), 0, List.of(), choiceEffect.counterType(),
+        step(gameData, entry, effect, apnapPlayers(gameData), 0, List.of(), choiceEffect.counterType(),
                 entry.getControllerId(), entry.getCard().getName());
     }
 
@@ -50,11 +53,16 @@ public class EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
             MultiPermanentChoiceContext.EachPlayerChoosesCreatureThenSacrificesRestChoice context) {
         List<UUID> allChosenIds = new ArrayList<>(context.chosenIds());
         allChosenIds.addAll(chosenIds);
-        step(gameData, context.playerIds(), context.playerIndex() + 1, allChosenIds,
+        step(gameData, null, null, context.playerIds(), context.playerIndex() + 1, allChosenIds,
                 context.counterType(), context.controllerId(), context.sourceName());
     }
 
-    private void step(GameData gameData, List<UUID> playerIds, int playerIndex,
+    /**
+     * @param resolvingEntry the entry being resolved when no choice has been asked yet ({@code effect} is then its
+     *                       step), or {@code null} from a choice completion, whose entry is the parked resolution
+     */
+    private void step(GameData gameData, StackEntry resolvingEntry, CardEffect effect,
+            List<UUID> playerIds, int playerIndex,
             List<UUID> chosenIds, CounterType counterType, UUID controllerId, String sourceName) {
         List<UUID> allChosenIds = new ArrayList<>(chosenIds);
 
@@ -79,12 +87,12 @@ public class EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
             return;
         }
 
-        finish(gameData, allChosenIds, counterType, controllerId, sourceName);
+        finish(gameData, resolvingEntry, effect, allChosenIds, counterType, controllerId, sourceName);
     }
 
-    private void finish(GameData gameData, List<UUID> chosenIds, CounterType counterType,
-            UUID controllerId, String sourceName) {
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
+    private void finish(GameData gameData, StackEntry resolvingEntry, CardEffect effect, List<UUID> chosenIds,
+            CounterType counterType, UUID controllerId, String sourceName) {
+        StackEntry entry = resolvingEntry != null ? resolvingEntry : gameData.pendingEffectResolutionEntry;
         if (entry == null) {
             return;
         }
@@ -113,7 +121,15 @@ public class EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
                 }
             }
         });
-        if (!toSacrifice.isEmpty()) {
+        if (toSacrifice.isEmpty()) {
+            return;
+        }
+        // The counters are already on, so the sacrifice is a step of its own (this step, or the step the parked
+        // resolution resumes with) and a CR 616.1 question is asked before any creature leaves.
+        List<DepartureIntent> intents = StepDepartureSupport.sacrifices(toSacrifice);
+        if (resolvingEntry != null) {
+            stepDepartureSupport.depart(gameData, resolvingEntry, effect, DepartureBatch.of(intents));
+        } else if (!stepDepartureSupport.departAfterChoice(gameData, intents, List.of())) {
             destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
         }
     }

@@ -43,7 +43,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
     private final CardRevealService cardRevealService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -73,7 +73,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
         }
 
         discardMatchingCreatureCards(gameData, entry, targetPlayerId, chosenSubtype);
-        destroyMatchingCreatures(gameData, entry, targetPlayerId, chosenSubtype);
+        destroyMatchingCreatures(gameData, entry, effect, targetPlayerId, chosenSubtype);
     }
 
     private void discardMatchingCreatureCards(GameData gameData, StackEntry entry, UUID targetPlayerId,
@@ -138,7 +138,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
     }
 
-    private void destroyMatchingCreatures(GameData gameData, StackEntry entry, UUID targetPlayerId,
+    private void destroyMatchingCreatures(GameData gameData, StackEntry entry, CardEffect effect, UUID targetPlayerId,
                                            CardSubtype chosenSubtype) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null || battlefield.isEmpty()) {
@@ -155,6 +155,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         permanent, filter, filterContext))
                 .toList();
-        destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(), true);
+        // The step's last action: a CR 616.1 question ends the step before any of them is destroyed.
+        stepDepartureSupport.destroy(gameData, entry, effect, toDestroy, true);
     }
 }

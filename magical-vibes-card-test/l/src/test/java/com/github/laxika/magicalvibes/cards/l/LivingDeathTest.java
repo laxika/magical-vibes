@@ -4,14 +4,18 @@ import com.github.laxika.magicalvibes.cards.a.AjanisWelcome;
 import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.d.DesecratedTomb;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.PoisonTipArcher;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -176,5 +180,35 @@ class LivingDeathTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Wind Drake");
         harness.assertOnBattlefield(player1, "Lowland Giant");
         harness.assertOnBattlefield(player2, "Canopy Spider");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("A sacrificed creature's death replacement is asked before anything is sacrificed or returned")
+    void asksTheDeathReplacementBeforeTheSacrificeAndTheReturn() {
+        harness.setHand(player1, List.of(new LivingDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Permanent kalitas = addCreatureReady(player1, new KalitasTraitorOfGhet());
+        Permanent zombie = addCreatureReady(player2, new GravebaneZombie());
+        harness.setGraveyard(player2, List.of(new LowlandGiant()));
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(kalitas);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(zombie);
+        harness.assertNotOnBattlefield(player2, "Lowland Giant");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        harness.assertInGraveyard(player1, "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lowland Giant");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(zombie);
+        harness.assertInGraveyard(player1, "Living Death");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

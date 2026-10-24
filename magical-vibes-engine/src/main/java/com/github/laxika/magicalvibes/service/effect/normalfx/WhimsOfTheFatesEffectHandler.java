@@ -28,6 +28,7 @@ public class WhimsOfTheFatesEffectHandler implements NormalEffectHandlerBean {
     private final GameOutcomeService gameOutcomeService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -128,6 +129,11 @@ public class WhimsOfTheFatesEffectHandler implements NormalEffectHandlerBean {
         beginNextPileSelection(gameData);
     }
 
+    /**
+     * Chooses each player's pile at random, then sacrifices the chosen piles as one event. The piles are chosen by
+     * a player's last answer, so the sacrifice is the step the parked resolution resumes with: a CR 616.1 question
+     * is asked before anything leaves, and the random choice isn't made again.
+     */
     private void resolvePiles(GameData gameData, PendingWhimsOfTheFates state) {
         List<UUID> sacrificeIds = new ArrayList<>();
         for (PendingWhimsOfTheFates.PlayerPiles playerPiles : state.playerPiles()) {
@@ -149,7 +155,8 @@ public class WhimsOfTheFatesEffectHandler implements NormalEffectHandlerBean {
         if (sacrificeIds.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.text(state.sourceName() + " resolves without sacrificing any permanents."));
-        } else {
+        } else if (!stepDepartureSupport.departAfterChoice(gameData,
+                StepDepartureSupport.sacrifices(sacrificeIds), List.of())) {
             destructionSupport.performSimultaneousSacrifice(gameData, sacrificeIds);
         }
         gameOutcomeService.checkWinCondition(gameData);

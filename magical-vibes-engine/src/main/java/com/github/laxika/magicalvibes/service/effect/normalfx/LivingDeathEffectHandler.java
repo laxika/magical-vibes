@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.effect.l.LivingDeathEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,13 +29,17 @@ import java.util.UUID;
  * <p>The exile step runs first, so creatures sacrificed by the second step hit their owners'
  * graveyards after the exile snapshot was taken and are not reanimated. The returning cards all
  * enter simultaneously (CR 614.12), so none of them sees the others entering.
+ *
+ * <p>The sacrifice is a step departure: a CR 616.1 question ends the step before any creature leaves, and the
+ * return then follows as its own step. The exiled cards are kept on the entry
+ * ({@link StackEntry#getResolutionExiledCardIds}), so the return never depends on state held by this handler.
  */
 @Component
 @RequiredArgsConstructor
-public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
+public class LivingDeathEffectHandler implements NormalEffectHandlerBean, ContinuesAfterDeparture {
 
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
@@ -45,7 +52,7 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LivingDeathEffect livingDeathEffect = (LivingDeathEffect) effect;
-        Map<UUID, List<Card>> exiledByPlayer = new LinkedHashMap<>();
+        List<UUID> exiledCardIds = new ArrayList<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -57,13 +64,11 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
                 List<Card> affectedCards = graveyard.stream()
                         .filter(card -> card.hasType(livingDeathEffect.cardType()))
                         .toList();
-                List<Card> exiled = new ArrayList<>();
                 for (Card card : affectedCards) {
                     if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, card.getId(), card)) {
-                        exiled.add(card);
+                        exiledCardIds.add(card.getId());
                     }
                 }
-                exiledByPlayer.put(playerId, exiled);
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
@@ -75,7 +80,25 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
                 permanentIdsToSacrifice.add(permanent.getId());
             }
         });
-        destructionSupport.performSimultaneousSacrifice(gameData, permanentIdsToSacrifice);
+        entry.setResolutionExiledCardIds(exiledCardIds);
+        List<UUID> sacrificeIds = permanentIdsToSacrifice.stream()
+                .filter(permanentId -> !gameQueryService.cantBeSacrificed(gameData,
+                        gameQueryService.findPermanentById(gameData, permanentId)))
+                .toList();
+        stepDepartureSupport.departThenContinue(gameData, entry, effect,
+                DepartureBatch.of(StepDepartureSupport.sacrifices(sacrificeIds)), this);
+    }
+
+    /** "Then puts all cards they exiled this way onto the battlefield", together, under their owners' control. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        Map<UUID, List<Card>> exiledByPlayer = new LinkedHashMap<>();
+        for (UUID cardId : entry.getResolutionExiledCardIds()) {
+            ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+            if (exiled != null) {
+                exiledByPlayer.computeIfAbsent(exiled.ownerId(), id -> new ArrayList<>()).add(exiled.card());
+            }
+        }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();

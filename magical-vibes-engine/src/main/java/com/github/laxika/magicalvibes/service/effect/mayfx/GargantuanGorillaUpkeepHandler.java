@@ -58,7 +58,13 @@ public class GargantuanGorillaUpkeepHandler implements MayEffectHandlerBean {
             // Accepted but no Forest left — treated as not having sacrificed one.
         }
 
-        gargantuanGorillaUpkeepSupport.applyPenalty(gameData, controllerId, sourcePermanentId, ability.sourceCard());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        // Nothing changes before the Gorilla is sacrificed, so its competing death replacements are asked about
+        // first and this answer is completed again (CR 616.1).
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted, () -> {
+                    gargantuanGorillaUpkeepSupport.applyPenalty(
+                            gameData, controllerId, sourcePermanentId, ability.sourceCard());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                });
     }
 }

@@ -36,6 +36,7 @@ public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements Nor
     private final GameLogService gameLogService;
     private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final SacrificeSelfEffectHandler sacrificeSelfEffectHandler;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -101,7 +102,10 @@ public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements Nor
                 ability.sourceCard(), "."));
     }
 
-    /** Sacrifices the source permanent if it is still on the battlefield. */
+    /**
+     * Sacrifices the source permanent if it is still on the battlefield: as the step the parked resolution resumes
+     * with, so the damage already dealt isn't dealt again and a CR 616.1 question is asked before it leaves.
+     */
     public void sacrificeSource(GameData gameData, PendingMayAbility ability,
             AnyOpponentMayTakeDamageSacrificeSourceEffect effect) {
         UUID sourceId = effect.sourcePermanentId();
@@ -110,6 +114,10 @@ public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements Nor
         }
         Permanent self = gameQueryService.findPermanentById(gameData, sourceId);
         if (self == null) {
+            return;
+        }
+        if (stepDepartureSupport.departAfterChoice(gameData, StepDepartureSupport.sacrifices(List.of(sourceId)),
+                List.of())) {
             return;
         }
         SacrificeSelfEffect sac = new SacrificeSelfEffect();

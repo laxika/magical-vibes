@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EumidianWastewakerState;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,6 +32,7 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
     private final PlayerInteractionSupport playerInteractionSupport;
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,14 +71,14 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
         if (state.chosenMode != null) {
             String chosenMode = state.chosenMode;
             state.chosenMode = null;
-            applyMode(gameData, entry, sourceName, state, chosenMode);
+            applyMode(gameData, entry, effect, sourceName, state, chosenMode);
             return;
         }
 
-        advance(gameData, entry, sourceName, state);
+        advance(gameData, entry, effect, sourceName, state);
     }
 
-    private void advance(GameData gameData, StackEntry entry, String sourceName,
+    private void advance(GameData gameData, StackEntry entry, CardEffect effect, String sourceName,
                          EumidianWastewakerState state) {
         while (!state.remaining.isEmpty()) {
             UUID playerId = state.remaining.removeFirst();
@@ -105,7 +107,7 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
                 return;
             }
 
-            applyMode(gameData, entry, sourceName, state,
+            applyMode(gameData, entry, effect, sourceName, state,
                     hasPermanent
                             ? ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE
                             : ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
@@ -115,26 +117,31 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
         finish(gameData, entry, state);
     }
 
-    private void applyMode(GameData gameData, StackEntry entry, String sourceName,
+    private void applyMode(GameData gameData, StackEntry entry, CardEffect effect, String sourceName,
                            EumidianWastewakerState state, String mode) {
         UUID playerId = state.currentPlayerId;
         if (ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE.equals(mode)) {
             List<UUID> ids = permanentIds(gameData, playerId, entry.getControllerId());
             if (ids.isEmpty()) {
                 state.currentPlayerId = null;
-                advance(gameData, entry, sourceName, state);
+                advance(gameData, entry, effect, sourceName, state);
                 return;
             }
             if (ids.size() == 1) {
                 Permanent permanent = gameQueryService.findPermanentById(gameData, ids.getFirst());
+                state.currentPlayerId = null;
                 if (permanent != null) {
                     if (permanent.getCard().hasType(CardType.LAND)) {
                         state.landCardsPutIntoGraveyard++;
                     }
-                    destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+                    // A step departure: a CR 616.1 question ends the step before the permanent leaves, and the
+                    // effect is resolved again to go on with the next player once the sacrifice is done.
+                    if (!stepDepartureSupport.departOrResolveAgain(gameData, entry, effect,
+                            DepartureBatch.of(StepDepartureSupport.sacrifices(List.of(permanent.getId()))))) {
+                        return;
+                    }
                 }
-                state.currentPlayerId = null;
-                advance(gameData, entry, sourceName, state);
+                advance(gameData, entry, effect, sourceName, state);
                 return;
             }
 
@@ -156,7 +163,7 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
         if (ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD.equals(mode)) {
             if (!hasCardToDiscard(gameData, playerId)) {
                 state.currentPlayerId = null;
-                advance(gameData, entry, sourceName, state);
+                advance(gameData, entry, effect, sourceName, state);
                 return;
             }
             gameData.lastDiscardedCardTypes = java.util.Set.of();
@@ -170,13 +177,13 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
                 }
                 state.pendingDiscard = false;
                 state.currentPlayerId = null;
-                advance(gameData, entry, sourceName, state);
+                advance(gameData, entry, effect, sourceName, state);
             }
             return;
         }
 
         state.currentPlayerId = null;
-        advance(gameData, entry, sourceName, state);
+        advance(gameData, entry, effect, sourceName, state);
     }
 
     private void finish(GameData gameData, StackEntry entry, EumidianWastewakerState state) {

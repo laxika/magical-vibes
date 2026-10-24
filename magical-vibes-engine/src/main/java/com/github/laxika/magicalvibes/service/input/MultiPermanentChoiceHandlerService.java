@@ -1252,9 +1252,6 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.ExileForEachLifeLost) {
             exileForEachLifeLostEffectHandler.completeChoice(gameData, playerId, permanentIds);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.DestroyUpToOneAttachedPermanent ctx) {
-            destroyUpToOneAttachedPermanentHandler.completeChoice(gameData, permanentIds, ctx);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SagaChapterTargetSelection ctx) {
             handleSagaChapterTargetSelection(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExileOwnNontokenCreaturesUntilSourceLeaves ctx) {
@@ -2258,7 +2255,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.DestroyUpToOneNonbasicLandPerPlayerChoice
                 || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse
                 || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
-                || context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice;
+                || context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice
+                || context instanceof MultiPermanentChoiceContext.DestroyUpToOneAttachedPermanent;
     }
 
     /**
@@ -2443,6 +2441,8 @@ public class MultiPermanentChoiceHandlerService {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
+            case MultiPermanentChoiceContext.DestroyUpToOneAttachedPermanent ctx ->
+                    destroyUpToOneAttachedPermanentHandler.completeChoice(gameData, permanentIds, ctx);
             case MultiPermanentChoiceContext.FreeCastTapCost ctx -> {
                 exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, ctx);
                 return;

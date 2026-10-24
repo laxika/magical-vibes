@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.IndulgentTormentorState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -34,6 +33,7 @@ public class DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffectHandler
     private final LifeSupport lifeSupport;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -127,13 +127,9 @@ public class DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffectHandler
                 return;
             }
             if (creatureIds.size() == 1) {
-                Permanent creature = gameData.playerBattlefields.get(targetPlayerId).stream()
-                        .filter(permanent -> permanent.getId().equals(creatureIds.getFirst()))
-                        .findFirst().orElse(null);
-                if (creature != null) {
-                    destructionSupport.sacrificeAndLog(gameData, creature, targetPlayerId);
-                }
+                // This step's last action, so a CR 616.1 question ends the step before the creature leaves.
                 finish(gameData, gameData.indulgentTormentor);
+                stepDepartureSupport.sacrifice(gameData, entry, effect, creatureIds.getFirst());
                 return;
             }
 

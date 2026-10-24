@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part done: the allowlist is empty and 13 more handlers are step departures; the fallback stays until the callers listed in Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); the fallback stays until the callers listed in the second part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1159,6 +1159,83 @@ Steps add notes here for later steps, under their number.
   `LegacyDepartureWrapperRatchetTest`, `GameSimulatorTest` (40/40), the Kalitas and Gravebane Zombie test classes,
   `EffectResolutionServiceTest`, `PermanentRemovalServiceTest` and `ResolutionScratchpadAmountTest` show no new failures
   (the first two of the last three fail at HEAD with the same tests).
+
+### Step 13 (second part: the normalfx handlers)
+
+- Done: of the 38 normalfx files the first part listed, 34 now ask every CR 616.1 question before anything leaves.
+  13 already did and only lacked the marker the grep looks for: their removal runs in a replay window (Rupture,
+  Victimize, Magmasaur, Voter's Dilemma, Make an Example, Tariff, the `AnyOpponentMay…` / `AnyPlayerMay…` supports,
+  `MaySacrificeForCounterSupport`, `TargetPermanentControllerMaySacrificeOrDamage`, `EachOpponentCreatesTokenUnless…`).
+  The grep therefore overcounts; a temporary probe in `DepartureService.depart` (logging every non-state-based,
+  unowned batch departed while it couldn't ask) run over the sweep below confirmed which paths still couldn't ask.
+- New pieces (in `StepDepartureSupport`, documented in `agent-docs/ARCHITECTURE.md` and the effect references):
+  - `DepartPermanentsEffect(List<DepartureIntent>)` + `DepartPermanentsEffectHandler`: an internal step that departs
+    already chosen permanents as one event (it skips one that left or can no longer be sacrificed). `departAsStepAt` /
+    `departAsNextStep` insert it (and any follow-up steps) into an entry; `departAfterChoice` inserts it where the parked
+    resolution resumes (`pendingEffectResolutionIndex`) and returns `false` when nothing is parked (the caller then
+    departs at once, the old fallback). This is the shape for a choice completion that has already changed the game
+    (counters, random picks, damage) before its removal: it can't be replayed, but the removal can be the next step.
+    The design's "picks go to the scratchpad" (`StackEntry.recordPicks`) is still unused: the intents travel in the
+    inserted record instead, so a later pick on the same entry can't overwrite them.
+  - `departOrResolveAgain`: for a handler that keeps its progress in game state and goes on after a sacrifice. As the
+    resolution step it ends the step and inserts its own effect again (so every later removal of the loop is a step of
+    its own too), and the handler's existing re-entry branch goes on once the departure is done; nested, it departs at
+    once and returns `true`.
+  - `sacrifices(ids)` / `destructions(ids, cantBeRegenerated)` build the intents.
+- Converted (21 files):
+  - Step departures as the handler's last action: Tsabo's Decree (`TargetPlayerDiscardsAndDestroysCreaturesOfChosenType`,
+    after the discard), `ExchangeControlOfSharedTypeTargetsAndDestroyAuras` (after the exchange), Goblin Assassin's coin
+    flips, the auto-paid branches of `DamageSourceControllerLosesLifeUnlessSacrificesPermanents` (now one event, it was
+    one sacrifice after another) and Indulgent Tormentor.
+  - `departThenContinue`: Living Death (exile, then the sacrifice step, then the return; the exiled cards are kept on
+    the entry with `setResolutionExiledCardIds` and grouped by their exile entry's owner), the resolve path of
+    `EachTargetPlayerLosesLifeAndSacrificesCreature` (Priest of Forgotten Gods, Will of the Abzan; the sacrifice-first form
+    loses life in the continuation) and `EachPlayerSacrificesPermanentOrLosesLife` (life loss in the continuation, from
+    the copied state).
+  - `departOrResolveAgain`: Plaguecrafter's automatic sacrifices (re-entry begins the discards), Eumidian Wastewaker's
+    lone sacrifice (re-entry goes on with the next player) and Forbidden Ritual's first lone sacrifice (re-entry offers
+    the opponent's penalty).
+  - `departAfterChoice` / inserted steps: Promise of Loyalty and the unused `EachPlayerChoosesCreatureThenSacrificesRest`
+    (after the counters; from resolution the sacrifice is the step itself; the latter's resolve path used to do nothing
+    when no choice was needed, since it read `pendingEffectResolutionEntry`), Chaos Defiler's random destroy
+    (`ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom`; the random pick is made once, then destroyed as the
+    step), Whims of the Fates (random piles), Raiding Party (after the taps), Infernal Offering (the sacrifices and the
+    draws are inserted steps), the take-damage source sacrifice (`AnyOpponentMayTakeDamageSacrificeSource`) and Worms of
+    the Earth's "destroy this" (after the damage or the lands).
+  - Marked / windowed: `GargantuanGorillaUpkeepEffectHandler` is `AsksDeathReplacementsFirst`, its may handler runs the
+    penalty in `answerAskingDeathReplacementsFirst`; `DestroyUpToOneAttachedPermanent` is in
+    `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`.
+- Rules effects: these sacrifices log "X is sacrificed." (the step hooks) instead of "P sacrifices X."; the several
+  sacrifices of one event in the converted loops are now one event (CR 101.4).
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (`RemoveAllCountersThenDestroyReferencedPermanentAndDamageController`: "destroy it. That creature
+    deals 4 damage to its controller" needs the creature's last-known card and damage-prevention state after a pause;
+    `DepartureResult` has neither), Desolation (`PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtype`: who sacrificed a
+    Plains needs last-known subtypes on `DepartureResult`), Bend or Break (destroy, then tap the other piles: no step
+    taps a given list of permanents) and `LifeSupport` (Lich's Duel Mastery, a life loss in progress). Partly: Forbidden
+    Ritual's repeat started from `ForbiddenRitualRepeatChoiceInteractionHandler` still sacrifices at once (that handler
+    moves `pendingEffectResolutionIndex` itself), and Worms of the Earth's second land: `DepartureService.perform` closes
+    the window after the first departure, so the second `sacrificeAndLog` of one completion can't ask (it was asked
+    ahead by `askDeathReplacementsBeforeSacrifice`, so it only matters for a land a question first appears for).
+    Infernal Offering still draws for every player who chose a creature, not only those whose sacrifice happened.
+  - Outside normalfx, unchanged from the first part: `DamagePreventionService` / `DamagePreventionReplacementSupport`,
+    `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s CR 118.6 sacrifice,
+    the multi-choice completions outside `killsBeforeChangingAnything`, and the `performSimultaneousRemovals` groups.
+  - A tool that would help the rest: a probe like the one used here (temporary, removed) that a test run can turn on,
+    listing the callers that depart while they can't ask.
+- Tests: new (all `@FailOnLegacyDepartureFallback`) `LivingDeathTest.asksTheDeathReplacementBeforeTheSacrificeAndTheReturn`
+  (Kalitas and the Zombie still on the battlefield and Lowland Giant still exiled while the question is open; after the
+  answer the Zombie is on top of its library and the Giant returns), `PromiseOfLoyaltyTest.asksTheDeathReplacementAfterTheVowCountersBeforeTheSacrifice`
+  (the completion path: both vow counters on, the Zombie still there until the answer) and
+  `PlaguecrafterTest.automaticSacrificesAskTheDeathReplacementFirst` (Rest in Peace and Firestorm Phoenix: both automatic
+  sacrifices wait for the Phoenix's answer). No existing test changed. A sweep of 146 card test classes (1,495 tests:
+  every card using an effect of the 38 files or their may handlers, plus every test mentioning Kalitas, Gravebane
+  Zombie, Firestorm Phoenix or Rest in Peace) had 23 failures; the same 23 fail with the old engine code (Dauthi
+  Voidwalker, Ordeal of Nylea, Palantir of Orthanc, Phantasmal Forces, Priest of Forgotten Gods, three Promise of Loyalty
+  attack tests, Prowling Geistcatcher, Star Athlete, and `GoblinAssassinTest.flipsHaveNoWinner`, which is flaky: it
+  failed 1 of 4 runs with the old code). `LegacyDepartureWrapperRatchetTest`, `DepartureServiceOrphanedStepBatchTest`,
+  `ResolutionScratchpadAmountTest` and `GameSimulatorTest` pass; `EffectResolutionServiceTest` has only the failures
+  step 7 recorded (its `DamageSupport` mock parks every resolution).
 
 ### Step 2
 

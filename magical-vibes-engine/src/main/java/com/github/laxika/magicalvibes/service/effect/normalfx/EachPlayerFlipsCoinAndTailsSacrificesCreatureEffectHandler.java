@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
@@ -26,6 +27,7 @@ public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final TriggerCollectionService triggerCollectionService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,7 +71,12 @@ public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
         }
 
         if (choosers.isEmpty()) {
-            destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
+            // The coins are already flipped, so the sacrifice is this step's last action: a CR 616.1 question
+            // ends the step before any of them leaves.
+            if (!autoSacrificeIds.isEmpty()) {
+                stepDepartureSupport.depart(gameData, entry, effect,
+                        DepartureBatch.of(StepDepartureSupport.sacrifices(autoSacrificeIds)));
+            }
         } else {
             destructionSupport.beginNextForcedSacrificeFromQueue(
                     gameData, choosers, autoSacrificeIds, true);

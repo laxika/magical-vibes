@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ContinueAfterDepartureEffect;
+import com.github.laxika.magicalvibes.model.effect.DepartPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -94,6 +96,74 @@ public class StepDepartureSupport {
         } else {
             insertAfterResolvingStep(entry, new ContinueAfterDepartureEffect(step));
         }
+    }
+
+    /**
+     * Departs {@code batch} as {@code step} for a handler that keeps its own progress in game state and goes on
+     * after the departure (a "sacrifice, then the next player chooses" loop). When {@code step} is the resolution step
+     * itself, the departure ends it, {@code step} is inserted again as the next step and {@code false} is returned:
+     * the handler must return, and it is resolved again, from its saved progress, once the departure is done, so a
+     * later removal of the loop is a step of its own too. Otherwise (a nested dispatch) the departure is performed at
+     * once and {@code true} is returned, and the handler goes on.
+     */
+    public boolean departOrResolveAgain(GameData gameData, StackEntry entry, CardEffect step, DepartureBatch batch) {
+        boolean resolutionStep = step != null && gameData.stepDepartureEffect == step;
+        departureService.departAsStep(gameData, entry, step, batch);
+        if (!resolutionStep) {
+            return true;
+        }
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        insertAfterResolvingStep(entry, step);
+        return false;
+    }
+
+    /**
+     * Makes the departure of {@code intents} (one event) the step at {@code index} of {@code entry}, followed by
+     * {@code followUps}, for a handler or choice completion that has changed the game before it (CR 608.2c): as a
+     * step of its own, the departure can end on its CR 616.1 questions before anything leaves. Does nothing but
+     * insert {@code followUps} when {@code intents} is empty.
+     */
+    public void departAsStepAt(StackEntry entry, int index, List<DepartureIntent> intents,
+                               List<CardEffect> followUps) {
+        List<CardEffect> steps = new ArrayList<>();
+        if (!intents.isEmpty()) {
+            steps.add(new DepartPermanentsEffect(intents));
+        }
+        steps.addAll(followUps);
+        if (!steps.isEmpty()) {
+            entry.insertEffectsToResolve(index, steps);
+        }
+    }
+
+    /**
+     * {@link #departAsStepAt} as the next step of the resolution being resolved ({@code entry}'s resolving step).
+     */
+    public void departAsNextStep(StackEntry entry, List<DepartureIntent> intents, List<CardEffect> followUps) {
+        departAsStepAt(entry, entry.getResolvingEffectIndex() + 1, intents, followUps);
+    }
+
+    /**
+     * {@link #departAsStepAt} for a choice completion: the departure becomes the step the parked resolution resumes
+     * with. Returns {@code false}, changing nothing, when no resolution is parked; the caller must then depart at once.
+     */
+    public boolean departAfterChoice(GameData gameData, List<DepartureIntent> intents, List<CardEffect> followUps) {
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked == null) {
+            return false;
+        }
+        departAsStepAt(parked, gameData.pendingEffectResolutionIndex, intents, followUps);
+        return true;
+    }
+
+    /** Sacrifice intents, one per distinct permanent, in order. */
+    public static List<DepartureIntent> sacrifices(List<UUID> permanentIds) {
+        return permanentIds.stream().distinct().map(DepartureIntent::sacrifice).toList();
+    }
+
+    /** Destroy intents, one per distinct permanent, in order ({@code cantBeRegenerated} as the effect says). */
+    public static List<DepartureIntent> destructions(List<UUID> permanentIds, boolean cantBeRegenerated) {
+        return permanentIds.stream().distinct()
+                .map(permanentId -> DepartureIntent.destroy(permanentId, cantBeRegenerated)).toList();
     }
 
     /**

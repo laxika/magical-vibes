@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.InfernalOfferingEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,9 +27,9 @@ public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -159,11 +158,6 @@ public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean {
     private void completeSacrifices(GameData gameData, StackEntry entry, UUID opponentId,
                                     List<UUID> creatureIds, List<UUID> sacrificingPlayerIds,
                                     int insertionIndex) {
-        if (!creatureIds.isEmpty()) {
-            destructionSupport.performSimultaneousSacrifice(gameData, creatureIds);
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
-
         List<CardEffect> drawEffects = new ArrayList<>();
         if (sacrificingPlayerIds.contains(entry.getControllerId())) {
             drawEffects.add(new DrawCardEffect(2));
@@ -171,9 +165,10 @@ public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean {
         if (sacrificingPlayerIds.contains(opponentId)) {
             drawEffects.add(new DrawCardForTargetPlayerEffect(2));
         }
-        if (!drawEffects.isEmpty()) {
-            entry.insertEffectsToResolve(insertionIndex, drawEffects);
-        }
+        // The sacrifices are the next step, one event, so a CR 616.1 question is asked before either creature leaves
+        // (the opponent may have been chosen and creatures picked already), and the draws follow it.
+        stepDepartureSupport.departAsStepAt(entry, insertionIndex, StepDepartureSupport.sacrifices(creatureIds),
+                drawEffects);
     }
 
     private void queueGraveyardReturns(GameData gameData, UUID controllerId, UUID opponentId) {

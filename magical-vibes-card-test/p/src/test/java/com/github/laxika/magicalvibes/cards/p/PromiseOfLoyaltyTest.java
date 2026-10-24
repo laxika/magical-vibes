@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -152,6 +156,32 @@ class PromiseOfLoyaltyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The sacrificed creature's death replacement is asked after the vow counters and before it leaves")
+    void asksTheDeathReplacementAfterTheVowCountersBeforeTheSacrifice() {
+        Permanent kalitas = addCreatureReady(player1, new KalitasTraitorOfGhet());
+        Permanent kept = addCreatureReady(player2, new GrizzlyBears());
+        Permanent zombie = addCreatureReady(player2, new GravebaneZombie());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(kalitas.getCounterCount(CounterType.VOW)).isEqualTo(1);
+        assertThat(kept.getCounterCount(CounterType.VOW)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(kept, zombie);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(kept.getCounterCount(CounterType.VOW)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new PromiseOfLoyalty()));
         harness.addMana(player1, ManaColor.WHITE, 5);

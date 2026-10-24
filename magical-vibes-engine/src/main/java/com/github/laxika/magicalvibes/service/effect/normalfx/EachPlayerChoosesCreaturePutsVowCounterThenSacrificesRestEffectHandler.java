@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -33,6 +35,7 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final PlayerInputService playerInputService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +44,7 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        step(gameData, entry, apnapPlayers(gameData), 0, List.of());
+        step(gameData, entry, effect, apnapPlayers(gameData), 0, List.of());
     }
 
     /** Continues the APNAP keep choices after one player selects a creature. */
@@ -49,10 +52,11 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
             MultiPermanentChoiceContext.EachPlayerChoosesCreaturePutsVowCounterChoice context) {
         List<UUID> keptIds = new ArrayList<>(context.keptIds());
         keptIds.addAll(chosenIds);
-        step(gameData, context.resolvingEntry(), context.playerIds(), context.playerIndex() + 1, keptIds);
+        step(gameData, context.resolvingEntry(), null, context.playerIds(), context.playerIndex() + 1, keptIds);
     }
 
-    private void step(GameData gameData, StackEntry entry, List<UUID> playerIds, int playerIndex,
+    /** @param effect the resolving step when no choice has been asked yet, {@code null} from a choice completion */
+    private void step(GameData gameData, StackEntry entry, CardEffect effect, List<UUID> playerIds, int playerIndex,
             List<UUID> keptIds) {
         List<UUID> choices = new ArrayList<>(keptIds);
         int index = playerIndex;
@@ -77,10 +81,10 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
             return;
         }
 
-        resolveChoices(gameData, entry, playerIds, choices);
+        resolveChoices(gameData, entry, effect, playerIds, choices);
     }
 
-    private void resolveChoices(GameData gameData, StackEntry entry, List<UUID> playerIds,
+    private void resolveChoices(GameData gameData, StackEntry entry, CardEffect effect, List<UUID> playerIds,
             List<UUID> keptIds) {
         Set<UUID> kept = new HashSet<>(keptIds);
         for (UUID keptId : keptIds) {
@@ -114,7 +118,14 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
                     GameLog.text(entry.getCard().getName() + " resolves but no creatures are sacrificed."));
             return;
         }
-        destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
+        // The vow counters are already on, so the sacrifice is a step of its own (this step, or the step the parked
+        // resolution resumes with) and a CR 616.1 question is asked before any creature leaves.
+        List<DepartureIntent> intents = StepDepartureSupport.sacrifices(toSacrifice);
+        if (effect != null) {
+            stepDepartureSupport.depart(gameData, entry, effect, DepartureBatch.of(intents));
+        } else if (!stepDepartureSupport.departAfterChoice(gameData, intents, List.of())) {
+            destructionSupport.performSimultaneousSacrifice(gameData, toSacrifice);
+        }
         log.info("Game {} - {} sacrifices {} creatures", gameData.id, entry.getCard().getName(),
                 toSacrifice.size());
     }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.ForbiddenRitualState;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -45,6 +46,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
     private final DestructionSupport destructionSupport;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,7 +70,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
             state.reset();
             state.active = true;
             state.lifeLoss = lifeLoss;
-            beginControllerSacrifice(gameData, entry, sourceName, controllerId, opponentId, lifeLoss);
+            beginControllerSacrifice(gameData, entry, effect, sourceName, controllerId, opponentId, lifeLoss);
             return;
         }
 
@@ -96,6 +98,15 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
      */
     public void beginControllerSacrifice(GameData gameData, StackEntry entry, String sourceName,
             UUID controllerId, UUID opponentId, int lifeLoss) {
+        beginControllerSacrifice(gameData, entry, null, sourceName, controllerId, opponentId, lifeLoss);
+    }
+
+    /**
+     * @param step the resolving step when this starts the first sacrifice, so a lone sacrifice is a step departure;
+     *             {@code null} for a repeat started from its prompt, which sacrifices at once
+     */
+    private void beginControllerSacrifice(GameData gameData, StackEntry entry, CardEffect step, String sourceName,
+            UUID controllerId, UUID opponentId, int lifeLoss) {
         ForbiddenRitualState state = gameData.forbiddenRitual;
         state.controllerSacrificed = false;
         state.chosenMode = null;
@@ -108,7 +119,14 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
 
         if (nontokenIds.size() == 1) {
             Permanent only = gameQueryService.findPermanentById(gameData, nontokenIds.getFirst());
-            if (only != null) {
+            if (only != null && step != null) {
+                // A step departure: a CR 616.1 question ends the step before the permanent leaves, and the effect
+                // is resolved again (as after a chosen sacrifice) to offer the opponent's penalty.
+                if (!stepDepartureSupport.departOrResolveAgain(gameData, entry, step,
+                        DepartureBatch.of(StepDepartureSupport.sacrifices(List.of(only.getId()))))) {
+                    return;
+                }
+            } else if (only != null) {
                 destructionSupport.sacrificeAndLog(gameData, only, controllerId);
             }
             state.controllerSacrificed = true;

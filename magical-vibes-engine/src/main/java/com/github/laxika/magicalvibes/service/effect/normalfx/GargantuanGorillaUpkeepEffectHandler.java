@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GargantuanGorillaUpkeepEffect;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +15,12 @@ import org.springframework.stereotype.Component;
  * "You may sacrifice a Forest. If you sacrifice a snow Forest this way, this creature gains trample
  * until end of turn. If you don't sacrifice a Forest, sacrifice this creature and it deals 7 damage
  * to you." With no Forest to sacrifice there is no choice to make, so the penalty applies without a
- * prompt.
+ * prompt. Resolving only reads before it opens the prompt or sacrifices, so a Gorilla with competing death
+ * replacements can be asked about before it leaves (CR 616.1).
  */
 @Component
 @RequiredArgsConstructor
-public class GargantuanGorillaUpkeepEffectHandler implements NormalEffectHandlerBean {
+public class GargantuanGorillaUpkeepEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
 

@@ -35,7 +35,7 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
 
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -101,10 +101,9 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());
 
-        // "destroy all Auras attached to them" — only because the exchange happened.
-        for (Permanent aura : aurasToDestroy) {
-            destructionSupport.tryDestroyAndLog(gameData, aura, entry.getCard().getName());
-        }
+        // "destroy all Auras attached to them" — only because the exchange happened. One event, as this step's
+        // last action, so a CR 616.1 question ends the step before any of them leaves.
+        stepDepartureSupport.destroy(gameData, entry, effect, aurasToDestroy, false);
     }
 
     private void logFizzle(GameData gameData, StackEntry entry) {
