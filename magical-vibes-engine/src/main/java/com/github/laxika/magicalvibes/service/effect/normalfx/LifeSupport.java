@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
@@ -56,6 +60,9 @@ public class LifeSupport {
     private ReplacementOrderService replacementOrderService;
     @Autowired
     private VisualCueService visualCueService;
+    @Autowired
+    @Lazy
+    private DepartureService departureService;
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
@@ -403,7 +410,9 @@ public class LifeSupport {
 
     /**
      * Replaces a life loss the player would suffer with Lich's Duel Mastery's shield, if the player
-     * controls one that applies.
+     * controls one that applies, or else by sacrificing the Mastery. The sacrifice is a one-permanent departure
+     * batch; it can't stop the life loss in the middle, so it asks CR 616.1 questions only inside a window that can
+     * run its caller again, and the Mastery, a noncreature, has none today.
      *
      * @return true if the life loss was replaced
      */
@@ -434,8 +443,13 @@ public class LifeSupport {
 
         for (Permanent source : masters) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
-            if (gameQueryService.cantBeSacrificed(gameData, source)
-                    || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {
+            if (gameQueryService.cantBeSacrificed(gameData, source)) {
+                continue;
+            }
+            DepartureResult result = departureService.departNow(gameData,
+                    DepartureBatch.of(List.of(DepartureIntent.sacrifice(source.getId()))),
+                    DepartureService.Hooks.NONE).results().getFirst();
+            if (!result.sacrificed()) {
                 continue;
             }
             if (controllerId != null) {

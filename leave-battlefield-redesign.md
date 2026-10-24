@@ -22,7 +22,7 @@ order; each one lists what it depends on.
 | 8 | Convert the "sacrifice this, then …" handlers | done (bespoke records kept where engine code or data needs them; see Findings) |
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | done (Goblin Crash Pilot and Goblin Welder depart at once, not as a step; see Findings) |
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
-| 11 | Loops and drained queues | open |
+| 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | open |
 | 13 | Make the guard strict and remove the fallback | open |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
@@ -786,6 +786,68 @@ Steps add notes here for later steps, under their number.
   `GameSimulatorTest` and the touched handler unit tests show no new failures (`EffectResolutionServiceTest`,
   `DestroyAllPermanentsEffectHandlerTest`, six `SacrificePermanentsEffectHandlerTest` tests, six
   `DestroyTargetAndEachPlayerSearches…` tests and `CardImmutabilityArchTest` fail at baseline with the same tests).
+
+### Step 11
+
+- All listed callers are off the legacy wrappers and the ratchet allowlist, plus two found on the way (Spinal Embrace's
+  delayed sacrifice and `PermanentRemovalService.resolveDelayedPermanentAction`); the allowlist now has 20 callers.
+- Tyrant of Discord (`TargetPlayerSacrificesRandomPermanentsUntilLandEffectHandler`) is a `ContinuesAfterDeparture` step:
+  it picks one permanent at random and departs it with `sacrificeThenContinue`; `continueAfterDeparture` inserts the same
+  effect again as the next step when a permanent was sacrificed whose last-known types (`DepartureResult.lastKnownCardTypes`,
+  CR 608.2h) don't include land. A re-inserted step re-checks the target and "can't be made to sacrifice". This is the
+  pattern for other "repeat this process" loops. Its log line is now the departure's "X is sacrificed." instead of
+  "P sacrifices X.".
+- Delayed sacrifices and destroys: `StepTriggerService` no longer removes anything while it drains. Every drained
+  `DelayedPermanentAction` already becomes a stack trigger with one `ResolveDelayedPermanentActionEffect` step per permanent,
+  so the "lose the rest of the queue on a question" problem no longer exists. `ResolveDelayedPermanentActionEffectHandler` now
+  does SACRIFICE and DESTROY itself as step departures (`departThenContinue`). A trigger's run of consecutive steps with the
+  same operation leaves as **one batch** in the run's first step ("sacrifice those tokens", Goblin Sappers' "destroy it and
+  this creature"), so every CR 616.1 question comes before any of them leaves; the later steps of the run find their
+  permanent among the recorded departures and do nothing. The continuation returns the exiled card of each sacrificed
+  action (`PermanentRemovalService.returnExiledCardToBattlefield`, now public). `resolveDelayedPermanentAction` handles only
+  the other moves (exile, hand, command zone, library top) and throws for SACRIFICE / DESTROY. Logs come from the step hooks,
+  so `DESTROY_AT_END_STEP`'s " is destroyed at end step." is now " is destroyed.".
+- `DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler`: all victims are one DESTROY batch through
+  `StepDepartureSupport.depart` (Venomous Breath, Glyph of Doom, Gaze of the Gorgon, Kjeldoran Frostbeast).
+- Spinal Embrace (`SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffectHandler`): the delayed sacrifice is a
+  `sacrificeThenContinue` step; the life gain follows only if it was sacrificed, from `lastKnownToughness()` (it used the
+  toughness read before the sacrifice). It keeps `AsksDeathReplacementsFirst` for the `departNow` fallback.
+- `TurnCleanupService.sacrificePermanentsFlaggedForCleanup`: no permanent on the battlefield normally carries the flag (a
+  resolved spell turns the Mirage flash rider into a `DelayedCleanupTrigger` as it enters). A flag that is still set now puts
+  the same kind of cleanup trigger on the stack (`SacrificePermanentsEffect` of that permanent, CR 514.3a) and is cleared when
+  the trigger owns it, instead of sacrificing inline during cleanup.
+- `RemoveLinkedPermanentEffectHandler`: SACRIFICE and SACRIFICE_PARTNER are `StepDepartureSupport.sacrifice` steps (they now
+  also fire "whenever you sacrifice" triggers). The partner's link is still broken before the departure: it points at the
+  permanent that has already left, so breaking it while the question is open can't lose a trigger, and the link is read when
+  the partner itself leaves, so it can't be broken inside the event without a new hook. EXILE is unchanged.
+- Ante exchanges: Timmerian Fiends' artifact (and the Fiends, if it is on the battlefield) leave as one OTHER batch straight
+  to the new owners' graveyards (`DepartureIntent` with `graveyardOwnerId`), so a replacement that sends the artifact
+  elsewhere (Kalitas) is no longer undone by the old "relocate from exile" step; `moveCardToGraveyard` no longer touches the
+  battlefield, so the suspected self-recursion is gone. Tempest Efreet leaves the battlefield (if it is there) before the
+  random reveal. Both effect handlers are now `AsksDeathReplacementsFirst` (nothing changes before the departure; the owner
+  override written first is idempotent), and both may handlers run the decline through `answerAskingDeathReplacementsFirst`.
+- Sheltered Valley (`BattlefieldPlacementService.applySacrificeOtherPermanentsWithSameName`) sacrifices its namesakes as one
+  SACRIFICE batch through `departNow` (it was an OTHER removal that logged as a sacrifice); Lich's Duel Mastery
+  (`LifeSupport.replaceLifeLossWithShield`) is a one-intent SACRIFICE batch. Both can't pause (an entry and a life loss in
+  progress), so they ask only inside a window; their permanents are noncreatures with no death replacements today. Both use
+  `@Autowired @Lazy` `DepartureService` fields so the hand-built unit-test constructors are unchanged.
+- **Left on the allowlist and not in any step's list** (step 12 or 13 must take them): `StateBasedActionService.applyWorldRule`,
+  `removeRedundantRoles`, `sacrificeCompletedSagas` (state-based actions, CR 704; they belong in the state-based departure
+  batch), `GraveyardService.performUmbraArmorReplacement` / `performSacrificeAuraAndGrantIndestructibleReplacement` (run inside
+  `DepartureService.perform` → `applyDestructionReplacement`; step 6 says nested `departNow` calls there should stay
+  immediate) and `PermanentRemovalService.destroyPermanentInEnclosingBatch`. The other 14 are step 12's costs and mana
+  abilities.
+- Not done: the stale owned-batch cleanup from step 7 (an owned batch whose entry never resumes) is still open for step 13.
+- Tests: enabled `TyrantOfDiscordTest.processRepeatsAfterEachDeathReplacementChoice`. New
+  `SpinalEmbraceTest.delayedSacrificeAsksTheDeathReplacementBeforeTheLifeGain` and
+  `GoblinSappersTest.destroysBothTogetherAfterTheDeathReplacementChoice` (the Sappers stays on the battlefield while the
+  Zombie's question is open; Kalitas exiles the Sappers in the same event), both `@FailOnLegacyDepartureFallback`. Changed:
+  `TimeStopTest.processesPermanentsScheduledForNextCleanup` (the flagged permanent is now sacrificed by a cleanup trigger on
+  the stack, so the test resolves it). A sweep of 1,518 card test classes (every card test mentioning end step, end of combat,
+  upkeep or cleanup together with sacrifice or destroy, plus every card using a touched effect), with
+  `LegacyDepartureWrapperRatchetTest`, `GameSimulatorTest` (35/35), `TurnProgressionServiceTest`, `TurnCleanupServiceTest`,
+  `StepTriggerServiceTest`, `ResolutionScratchpadAmountTest`, `EffectResolutionServiceTest`, `PermanentRemovalServiceTest` and
+  `BattlefieldPlacementServiceTest` (11,233 tests), had 237 failures in 61 classes; the same 237 fail at the baseline, none new.
 
 ### Step 2
 

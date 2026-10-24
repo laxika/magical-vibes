@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -12,8 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.TempestEfreetAnteExchangeEffe
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
@@ -35,13 +41,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandlerBean {
+public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final CardRevealService cardRevealService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
+    private final DepartureService departureService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,6 +84,11 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
      * put into {@code controllerId}'s hand, and {@code efreetCard} moves from its current zone into
      * the opponent's graveyard.
      * Does nothing if the opponent's hand is empty (no card to reveal, nothing to exchange).
+     *
+     * <p>A Tempest Efreet on the battlefield leaves first, as a one-permanent departure batch, so its CR 616.1
+     * questions are asked before anything else happens: the caller is stopped and run again with the answers
+     * (this handler resolving as a marked stack step, or the declined payment prompt's replay). The only change
+     * before it, recording the exchanged owner, is the same when it is run again.
      */
     public void performExchange(GameData gameData, Card efreetCard, UUID controllerId, UUID opponentId) {
         List<Card> opponentHand = gameData.playerHands.get(opponentId);
@@ -87,6 +99,15 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
             gameLogService.append(gameData, GameLog.textCardText(opponentName + " has no cards to reveal — nothing is exchanged. (", efreetCard, ")"));
             log.info("Game {} - {} has empty hand, no {} exchange", gameData.id, opponentName, efreetCard.getName());
             return;
+        }
+
+        gameData.cardOwnerOverrides.put(efreetCard.getId(), opponentId);
+        Permanent efreetPermanent = findOnBattlefield(gameData, efreetCard);
+        if (efreetPermanent != null) {
+            departureService.departNow(gameData, DepartureBatch.of(List.of(
+                    new DepartureIntent(efreetPermanent.getId(), DepartureCause.OTHER, opponentId))),
+                    DepartureService.Hooks.NONE);
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
 
         int randomIndex = ThreadLocalRandom.current().nextInt(opponentHand.size());
@@ -100,25 +121,33 @@ public class TempestEfreetAnteExchangeEffectHandler implements NormalEffectHandl
                 List.of(revealed));
 
         gameData.cardOwnerOverrides.put(revealed.getId(), controllerId);
-        gameData.cardOwnerOverrides.put(efreetCard.getId(), opponentId);
         gameData.addCardToHand(controllerId, revealed);
-        moveSourceToOpponentsGraveyard(gameData, efreetCard, opponentId);
+        if (efreetPermanent == null) {
+            moveSourceToOpponentsGraveyard(gameData, efreetCard, opponentId);
+        }
 
         gameLogService.append(gameData, GameLog.builder().text(opponentName + " reveals ").card(revealed).text(" at random. " + controllerName + " takes it, and ").card(efreetCard).text(" goes to " + opponentName + "'s graveyard.").build());
         log.info("Game {} - {} takes {} from {}; {} to {}'s graveyard", gameData.id, controllerName,
                 revealed.getName(), opponentName, efreetCard.getName(), opponentName);
     }
 
-    /** Follows the physical card's explicit "from anywhere" instruction, without duplicating it. */
-    private void moveSourceToOpponentsGraveyard(GameData gameData, Card card, UUID opponentId) {
+    /** The permanent {@code card} is on the battlefield as, or {@code null}. */
+    private static Permanent findOnBattlefield(GameData gameData, Card card) {
         for (var battlefield : gameData.playerBattlefields.values()) {
-            for (var permanent : List.copyOf(battlefield)) {
+            for (var permanent : battlefield) {
                 if (permanent.getOriginalCard().getId().equals(card.getId())) {
-                    permanentRemovalService.removePermanentToPlayerGraveyard(gameData, permanent, opponentId);
-                    return;
+                    return permanent;
                 }
             }
         }
+        return null;
+    }
+
+    /**
+     * Follows the physical card's explicit "from anywhere" instruction for a card that is not on the battlefield,
+     * without duplicating it.
+     */
+    private void moveSourceToOpponentsGraveyard(GameData gameData, Card card, UUID opponentId) {
         for (Zone zone : List.of(Zone.HAND, Zone.LIBRARY, Zone.GRAVEYARD, Zone.COMMAND)) {
             var containers = switch (zone) {
                 case HAND -> gameData.playerHands;

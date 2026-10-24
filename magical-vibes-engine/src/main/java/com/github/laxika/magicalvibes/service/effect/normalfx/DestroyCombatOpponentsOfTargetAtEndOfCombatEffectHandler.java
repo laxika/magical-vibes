@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,11 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTargetAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,7 +32,7 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,7 +67,8 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
      * remembered when the delayed trigger was created (carried as the entry's triggering
      * permanents) and those recorded since. A source still on the battlefield that has been
      * removed from combat (e.g. regenerated) has no combat opponents left, so the turn's
-     * recorded combat history is not consulted for it.
+     * recorded combat history is not consulted for it. They are destroyed together, as one departure batch that
+     * asks every CR 616.1 question before any of them leaves.
      */
     private void destroyCombatOpponents(GameData gameData, StackEntry entry,
                                         DestroyCombatOpponentsOfTargetAtEndOfCombatEffect destroyEffect) {
@@ -74,13 +78,13 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
         if (!sourceOutOfCombat) {
             opponentIds.addAll(combatOpponentIds(gameData, entry.getSourcePermanentId(), destroyEffect));
         }
+        List<DepartureIntent> intents = new ArrayList<>();
         for (UUID opponentId : opponentIds) {
-            Permanent opponent = gameQueryService.findPermanentById(gameData, opponentId);
-            if (opponent != null && permanentRemovalService.tryDestroyPermanent(gameData, opponent)) {
-                gameLogService.append(gameData, GameLog.isDestroyed(opponent.getCard()));
+            if (gameQueryService.findPermanentById(gameData, opponentId) != null) {
+                intents.add(DepartureIntent.destroy(opponentId, false));
             }
         }
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        stepDepartureSupport.depart(gameData, entry, destroyEffect, DepartureBatch.of(intents));
     }
 
     private static Set<UUID> combatOpponentIds(GameData gameData, UUID creatureId,

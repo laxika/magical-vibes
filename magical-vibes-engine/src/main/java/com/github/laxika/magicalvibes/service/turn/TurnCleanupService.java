@@ -38,6 +38,9 @@ import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -95,8 +98,8 @@ public class TurnCleanupService {
     }
 
     /**
-     * Performs the full cleanup-step reset: sacrifices permanents whose controller must sacrifice
-     * them at the beginning of this cleanup step, clears all "until end of turn" modifiers on every
+     * Performs the full cleanup-step reset: puts the "at the beginning of the next cleanup step"
+     * triggers (such as sacrificing a permanent) on the stack, clears all "until end of turn" modifiers on every
      * permanent and recomputes control of temporarily stolen permanents.
      *
      * @param gameData the current game state to modify
@@ -167,8 +170,11 @@ public class TurnCleanupService {
     }
 
     /**
-     * Sacrifices every permanent carrying the Mirage flash clause's "sacrifice it at the beginning
-     * of the next cleanup step" rider (Ward of Lights cast at instant speed).
+     * Puts a cleanup trigger on the stack for every permanent still carrying the Mirage flash clause's "sacrifice it
+     * at the beginning of the next cleanup step" rider (Ward of Lights cast at instant speed). A resolved spell turns
+     * the rider into its own {@code DelayedCleanupTrigger} as it enters, so this only catches a flag set some other
+     * way. The sacrifice is a resolution step of that trigger, so it can ask its CR 616.1 questions before the
+     * permanent leaves; the flag is cleared once the trigger owns it.
      */
     private void sacrificePermanentsFlaggedForCleanup(GameData gameData) {
         List<Permanent> doomed = new ArrayList<>();
@@ -177,14 +183,19 @@ public class TurnCleanupService {
                 doomed.add(p);
             }
         });
-        if (doomed.isEmpty()) {
-            return;
-        }
         for (Permanent permanent : doomed) {
             permanent.setSacrificeAtNextCleanup(false);
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent);
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            var entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(), controllerId,
+                    permanent.getCard().getName() + "'s cleanup trigger",
+                    List.of(new SacrificePermanentsEffect(1,
+                            new PermanentIsSpecificPermanentPredicate(permanent.getId()),
+                            SacrificeRecipient.EACH_PLAYER)));
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
         }
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     /**

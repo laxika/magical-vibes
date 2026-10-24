@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -10,9 +13,12 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TimmerianFiendsAnteExchangeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +42,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHandlerBean {
+public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
+    private final DepartureService departureService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -81,6 +88,12 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
      * graveyard and the Timmerian Fiends card (in the controller's graveyard after being sacrificed
      * as a cost) into the artifact owner's graveyard. Does nothing if the artifact has left the
      * battlefield in the meantime.
+     *
+     * <p>The artifact (and the Fiends, should it be on the battlefield) leaves as one departure batch, so
+     * its CR 616.1 questions are asked before it leaves: the caller is stopped and run again with the answers
+     * (this handler resolving as a marked stack step, or the declined ante prompt's replay). Nothing changes
+     * before that departure. A replacement that sends a card elsewhere (an artifact creature exiled by
+     * Kalitas) leaves it there.
      */
     public void performExchange(GameData gameData, Card fiendsCard, UUID controllerId, UUID ownerId, UUID artifactId) {
         Permanent artifact = gameQueryService.findPermanentById(gameData, artifactId);
@@ -89,14 +102,20 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
         }
         Card artifactCard = artifact.getOriginalCard() != null ? artifact.getOriginalCard() : artifact.getCard();
 
-        permanentRemovalService.removePermanentToGraveyard(gameData, artifact);
+        List<DepartureIntent> intents = new ArrayList<>();
+        intents.add(new DepartureIntent(artifact.getId(), DepartureCause.OTHER, controllerId));
+        Permanent fiendsPermanent = findOnBattlefield(gameData, fiendsCard);
+        if (fiendsPermanent != null && !fiendsPermanent.getId().equals(artifact.getId())) {
+            intents.add(new DepartureIntent(fiendsPermanent.getId(), DepartureCause.OTHER, ownerId));
+        }
+        departureService.departNow(gameData, DepartureBatch.of(intents), DepartureService.Hooks.NONE);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        // The artifact went to its owner's graveyard; the ownership swap makes "your graveyard" the
-        // ability controller's, so relocate the physical card. The swap is permanent, but frozen
-        // cards keep their stamped owner, so the new owners are recorded as overrides.
-        moveCardToGraveyard(gameData, artifactCard, controllerId);
-        moveCardToGraveyard(gameData, fiendsCard, ownerId);
+        // The swap is permanent, but frozen cards keep their stamped owner, so the new owners are
+        // recorded as overrides.
+        if (fiendsPermanent == null) {
+            moveCardToGraveyard(gameData, fiendsCard, ownerId);
+        }
         gameData.cardOwnerOverrides.put(artifactCard.getId(), controllerId);
         gameData.cardOwnerOverrides.put(fiendsCard.getId(), ownerId);
 
@@ -112,9 +131,10 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
     }
 
     /**
-     * Moves {@code card} from wherever it currently is into {@code targetPlayerId}'s graveyard.
-     * Moving between graveyards only changes the holder; moving from another zone uses the shared
-     * graveyard path so replacement effects and zone-change triggers still apply.
+     * Moves {@code card}, which is not on the battlefield, from wherever it currently is into
+     * {@code targetPlayerId}'s graveyard. Moving between graveyards only changes the holder; moving
+     * from another zone uses the shared graveyard path so replacement effects and zone-change
+     * triggers still apply.
      */
     private void moveCardToGraveyard(GameData gameData, Card card, UUID targetPlayerId) {
         for (List<Card> graveyard : gameData.playerGraveyards.values()) {
@@ -143,8 +163,11 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
                 return;
             }
         }
+    }
 
-        Permanent battlefieldCard = gameData.playerBattlefields.values().stream()
+    /** The permanent {@code card} is on the battlefield as, or {@code null}. */
+    private static Permanent findOnBattlefield(GameData gameData, Card card) {
+        return gameData.playerBattlefields.values().stream()
                 .filter(java.util.Objects::nonNull)
                 .flatMap(List::stream)
                 .filter(permanent -> permanent.getCard().getId().equals(card.getId())
@@ -152,10 +175,6 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
                         && permanent.getOriginalCard().getId().equals(card.getId())))
                 .findFirst()
                 .orElse(null);
-        if (battlefieldCard != null) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, battlefieldCard);
-            moveCardToGraveyard(gameData, card, targetPlayerId);
-        }
     }
 
     /** The artifact's owner — the card's stamped owner, falling back to its controller. */

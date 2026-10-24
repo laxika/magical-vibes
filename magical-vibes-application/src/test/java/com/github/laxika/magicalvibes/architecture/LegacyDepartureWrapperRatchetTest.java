@@ -68,15 +68,9 @@ class LegacyDepartureWrapperRatchetTest {
             "ActivatedAbilityExecutionService.doResolveManaAbility",
             "ActivatedAbilityExecutionService.sacrificeCostPermanents",
             "AttackSacrificeCostService.sacrificeMatching",
-            "BattlefieldPlacementService.applySacrificeOtherPermanentsWithSameName",
-            "DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler.destroyCombatOpponents",
             "GraveyardService.performSacrificeAuraAndGrantIndestructibleReplacement",
             "GraveyardService.performUmbraArmorReplacement",
-            "LifeSupport.replaceLifeLossWithShield",
             "PermanentRemovalService.destroyPermanentInEnclosingBatch",
-            "PermanentRemovalService.resolveDelayedPermanentAction",
-            "RemoveLinkedPermanentEffectHandler.resolve",
-            "SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffectHandler.sacrificeAndGainLife",
             "SpellCastingService.computeAlternateCastingManaPayment",
             "SpellCastingService.payFlashbackPermanentSacrificeCosts",
             "SpellCastingService.payGraveyardCastAdditionalCosts",
@@ -87,12 +81,7 @@ class LegacyDepartureWrapperRatchetTest {
             "SpellCastingService.paySingleSacrificeCost",
             "StateBasedActionService.applyWorldRule",
             "StateBasedActionService.removeRedundantRoles",
-            "StateBasedActionService.sacrificeCompletedSagas",
-            "TargetPlayerSacrificesRandomPermanentsUntilLandEffectHandler.resolve",
-            "TempestEfreetAnteExchangeEffectHandler.moveSourceToOpponentsGraveyard",
-            "TimmerianFiendsAnteExchangeEffectHandler.moveCardToGraveyard",
-            "TimmerianFiendsAnteExchangeEffectHandler.performExchange",
-            "TurnCleanupService.sacrificePermanentsFlaggedForCleanup");
+            "StateBasedActionService.sacrificeCompletedSagas");
 
     @Test
     @DisplayName("Only the frozen callers use the legacy removal wrappers")

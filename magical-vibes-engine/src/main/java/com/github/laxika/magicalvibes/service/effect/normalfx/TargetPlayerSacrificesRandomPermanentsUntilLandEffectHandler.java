@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesRandomPermanentsUntilLandEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -18,22 +17,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link TargetPlayerSacrificesRandomPermanentsUntilLandEffect}: the targeted player
- * repeatedly sacrifices a uniformly-random permanent they control, stopping once a land is
- * sacrificed or they control no permanents (Tyrant of Discord).
+ * Resolves {@link TargetPlayerSacrificesRandomPermanentsUntilLandEffect}: the targeted player sacrifices a
+ * uniformly-random permanent they control, and if a nonland permanent was sacrificed this way the process repeats
+ * (Tyrant of Discord).
  *
- * <p>The choice is made by the engine, so no player input is needed and the loop runs to
- * completion inside this resolution.
+ * <p>Each sacrifice is one resolution step ({@link StepDepartureSupport#sacrificeThenContinue}), so a CR 616.1
+ * question about the sacrificed permanent ends the step before it leaves. Once it has left, the process repeats by
+ * inserting this effect again as the next step, reading what was sacrificed from the resolution scratchpad. It ends
+ * when a land was sacrificed, nothing was sacrificed, or the player controls no permanents.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TargetPlayerSacrificesRandomPermanentsUntilLandEffectHandler implements NormalEffectHandlerBean {
+public class TargetPlayerSacrificesRandomPermanentsUntilLandEffectHandler
+        implements NormalEffectHandlerBean, ContinuesAfterDeparture {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,25 +54,27 @@ public class TargetPlayerSacrificesRandomPermanentsUntilLandEffectHandler implem
             return;
         }
 
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
-        boolean repeat = true;
-        while (repeat) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-            if (battlefield == null || battlefield.isEmpty()) {
-                return;
-            }
-
-            Permanent chosen = battlefield.get(ThreadLocalRandom.current().nextInt(battlefield.size()));
-            repeat = !gameQueryService.isLand(gameData, chosen);
-
-            if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, chosen)) {
-                return;
-            }
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, targetPlayerId, chosen.getCard());
-            gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", chosen.getCard(), "."));
-            log.info("Game {} - {} sacrifices {} to {}", gameData.id, playerName, chosen.getCard().getName(),
-                    entry.getCard().getName());
-            permanentRemovalService.removeOrphanedAuras(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return;
         }
+        Permanent chosen = battlefield.get(ThreadLocalRandom.current().nextInt(battlefield.size()));
+        log.info("Game {} - {} sacrifices {} at random to {}", gameData.id,
+                gameData.playerIdToName.get(targetPlayerId), chosen.getCard().getName(), entry.getCard().getName());
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, chosen.getId(), this);
+    }
+
+    /** Repeats the process as the next step if a nonland permanent was sacrificed this way. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        boolean nonlandSacrificed = entry.getResolutionResults().departures().stream()
+                .anyMatch(result -> result.sacrificed() && isNonland(result));
+        if (nonlandSacrificed) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(effect));
+        }
+    }
+
+    private static boolean isNonland(DepartureResult result) {
+        return !result.lastKnownCardTypes().contains(CardType.LAND);
     }
 }

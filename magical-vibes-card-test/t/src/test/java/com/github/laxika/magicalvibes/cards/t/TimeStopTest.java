@@ -407,7 +407,7 @@ class TimeStopTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving processes permanents scheduled for the next cleanup")
+    @DisplayName("Resolving triggers the sacrifices scheduled for the next cleanup, which use the stack")
     void processesPermanentsScheduledForNextCleanup() {
         Permanent bears = addCreatureReady(player1, new ScatheZombies());
         bears.setSacrificeAtNextCleanup(true);
@@ -416,6 +416,11 @@ class TimeStopTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castAndResolveInstant(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Scathe Zombies");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Scathe Zombies");
         harness.assertInGraveyard(player1, "Scathe Zombies");

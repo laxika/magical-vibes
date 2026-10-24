@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
@@ -188,6 +191,39 @@ class GoblinSappersTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Goblin Sappers");
         harness.assertInGraveyard(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Both are destroyed in one event, after library-or-Kalitas is answered for the Gravebane Zombie (Kalitas exiles the Sappers)")
+    void destroysBothTogetherAfterTheDeathReplacementChoice() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent sappers = addCreatureReady(player1, new GoblinSappers());
+        Permanent zombie = addCreatureReady(player1, new GravebaneZombie());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.activateAbility(player1, indexOf(player1, sappers), 0, null, zombie.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertOnBattlefield(player1, "Goblin Sappers");
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertNotOnBattlefield(player1, "Goblin Sappers");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getId().equals(sappers.getCard().getId()));
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.stack).isEmpty();
     }
 
     private void advanceThroughEndOfCombat() {

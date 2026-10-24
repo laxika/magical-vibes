@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.TimmerianFiendsAnteExchangeEf
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimmerianFiendsAnteExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,6 +33,7 @@ public class TimmerianFiendsAnteExchangeHandler implements MayEffectHandlerBean 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final TimmerianFiendsAnteExchangeEffectHandler exchangeEffectHandler;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,11 +53,16 @@ public class TimmerianFiendsAnteExchangeHandler implements MayEffectHandlerBean 
             gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
             log.info("Game {} - {} antes {} to {}", gameData.id, player.getUsername(), anted.getName(),
                     ability.sourceCard().getName());
-        } else {
-            // Declined (or no longer able to ante) — the exchange happens.
-            exchangeEffectHandler.performExchange(gameData, ability.sourceCard(), controllerId, ownerId, artifactId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
         }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        // Declined (or no longer able to ante) — the exchange happens. It changes nothing before the artifact
+        // leaves, so its CR 616.1 questions are asked first and the decline is completed again with the answers.
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted, () -> {
+                    exchangeEffectHandler.performExchange(gameData, ability.sourceCard(), controllerId, ownerId,
+                            artifactId);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                });
     }
 }

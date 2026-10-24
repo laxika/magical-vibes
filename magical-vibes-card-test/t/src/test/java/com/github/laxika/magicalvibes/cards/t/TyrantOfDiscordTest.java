@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -109,7 +108,6 @@ class TyrantOfDiscordTest extends BaseCardTest {
     }
 
     @Test
-    @Disabled("leave-battlefield-redesign step 11")
     @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
     @DisplayName("The random sacrifices go on after each Gravebane Zombie's library-or-Kalitas choice")
     void processRepeatsAfterEachDeathReplacementChoice() {

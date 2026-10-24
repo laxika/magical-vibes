@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
@@ -124,6 +126,9 @@ public class BattlefieldPlacementService {
 
     @Autowired @Lazy
     private CloneService cloneService;
+
+    @Autowired @Lazy
+    private DepartureService departureService;
 
     @Autowired @Lazy
     private AsEntersDiscardSupport asEntersDiscardSupport;
@@ -1728,7 +1733,10 @@ public class BattlefieldPlacementService {
      * then put this land onto the battlefield." (Sheltered Valley.)
      *
      * <p>Runs before the entering permanent is placed, so it can never sacrifice itself. The
-     * entering permanent always enters; only the older copies leave.
+     * entering permanent always enters; only the older copies leave. They are sacrificed together, as one
+     * departure batch. Their controller can't be stopped in the middle of an entry, so their CR 616.1 questions
+     * are asked only when the entry runs inside a window that can be run again; these lands are noncreatures,
+     * which have none today.
      */
     private void applySacrificeOtherPermanentsWithSameName(GameData gameData, UUID controllerId, Permanent permanent) {
         if (losesNonManaAbilitiesAsLandEnters(gameData, permanent)) {
@@ -1743,15 +1751,19 @@ public class BattlefieldPlacementService {
         List<Permanent> doomed = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(p -> name.equals(p.getCard().getName()))
                 .toList();
-        for (Permanent other : doomed) {
-            if (permanentRemovalService.removePermanentToGraveyard(gameData, other)) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, other.getCard());
-                gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is sacrificed."));
-            }
+        if (doomed.isEmpty()) {
+            return;
         }
-        if (!doomed.isEmpty()) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
+        departureService.departNow(gameData,
+                DepartureBatch.of(doomed.stream().map(Permanent::getId).map(DepartureIntent::sacrifice).toList()),
+                DepartureService.Hooks.afterEach((intent, other, snapshot, removed) -> {
+                    if (removed) {
+                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId,
+                                other.getCard(), null, snapshot.creature());
+                        gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is sacrificed."));
+                    }
+                }));
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, Permanent permanent) {

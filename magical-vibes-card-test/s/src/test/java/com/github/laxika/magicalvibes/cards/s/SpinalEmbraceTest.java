@@ -1,19 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.ExplosiveGrowth;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.h.HoodedKavu;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.r.Repulse;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -196,6 +201,38 @@ class SpinalEmbraceTest extends BaseCardTest {
         harness.assertInHand(player2, "Hooded Kavu");
         harness.assertNotOnBattlefield(player1, "Hooded Kavu");
         harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("The delayed sacrifice asks library-or-Kalitas before the creature leaves, and the life gain waits")
+    void delayedSacrificeAsksTheDeathReplacementBeforeTheLifeGain() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = addCreatureReady(player2, new GravebaneZombie());
+        castSpinalEmbrace(zombie.getId());
+        harness.passBothPriorities();
+        int lifeBeforeEndStep = gd.getLife(player1.getId());
+
+        advanceToNextEndStep();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertLife(player1, lifeBeforeEndStep);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerGraveyards.get(player2.getId())).noneMatch(card -> card.getId().equals(zombie.getCard().getId()));
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(Stream.concat(gd.playerDecks.get(player2.getId()).stream(), gd.playerHands.get(player2.getId()).stream()))
+                .anyMatch(card -> card.getId().equals(zombie.getCard().getId()));
+        harness.assertLife(player1, lifeBeforeEndStep + 2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setUpSpinalEmbrace() {

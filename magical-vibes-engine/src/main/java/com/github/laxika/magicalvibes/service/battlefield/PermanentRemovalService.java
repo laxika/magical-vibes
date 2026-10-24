@@ -2064,11 +2064,10 @@ public class PermanentRemovalService {
     }
 
     /**
-     * Drains and performs all scheduled {@link DelayedPermanentAction}s of the given kind, in
-     * insertion order. Permanents that already left the battlefield are skipped. Exile, sacrifice
-     * and return-to-hand clean up orphaned auras after each removal; destruction goes through
-     * {@link #tryDestroyPermanent} (which does its own aura cleanup) so indestructible and
-     * regeneration still apply, and logs only when the permanent actually died.
+     * Drains all scheduled {@link DelayedPermanentAction}s of the given kind and puts their delayed triggers on the
+     * stack, one trigger per source that scheduled them together (a token exiled at the next cleanup is exiled at
+     * once). Permanents that already left the battlefield are skipped. Each permanent is one
+     * {@code ResolveDelayedPermanentActionEffect} step of its trigger.
      */
     public void processDelayedPermanentActions(GameData gameData, DelayedPermanentActionKind kind) {
         List<DelayedPermanentAction> actions =
@@ -2162,15 +2161,18 @@ public class PermanentRemovalService {
         }
     }
 
-    /** Resolves one previously collected delayed action on a permanent. */
+    /**
+     * Resolves one previously collected delayed action that moves a permanent without destroying or sacrificing it
+     * (exile, return to hand or the command zone, put on top of its library). A delayed sacrifice or destroy is a
+     * departure and is resolved by {@code ResolveDelayedPermanentActionEffectHandler}.
+     */
     public void resolveDelayedPermanentAction(GameData gameData, DelayedPermanentAction action) {
         DelayedPermanentActionKind kind = action.kind();
         Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
         if (perm == null) {
             return;
         }
-        if ((kind.op() == DelayedPermanentActionKind.Op.EXILE
-                || kind.op() == DelayedPermanentActionKind.Op.SACRIFICE)
+        if (kind.op() == DelayedPermanentActionKind.Op.EXILE
                 && !gameQueryService.delayedTriggeredAbilityCanMoveCreatureToken(gameData, perm)) {
             return;
         }
@@ -2189,32 +2191,11 @@ public class PermanentRemovalService {
                     }
                 }
             }
-            case SACRIFICE -> {
-                UUID sacrificeControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                if (action.sacrificingPlayerId() != null
-                        && !action.sacrificingPlayerId().equals(sacrificeControllerId)) {
-                    return;
-                }
-                if (gameQueryService.cantBeSacrificed(gameData, perm)) {
-                    return;
-                }
-                boolean sacrificed = sacrificePermanentToGraveyard(gameData, perm);
-                if (sacrificed && sacrificeControllerId != null) {
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                            gameData, sacrificeControllerId, perm.getCard());
-                }
-                if (sacrificed) {
-                    returnExiledCardToBattlefield(gameData, action.returnExiledCardId(), action.sacrificingPlayerId());
-                }
-            }
             case RETURN_TO_HAND -> removePermanentToHand(gameData, perm);
             case RETURN_TO_COMMAND_ZONE -> removePermanentToCommandZone(gameData, perm);
             case PUT_ON_TOP_OF_LIBRARY -> removePermanentToLibraryTop(gameData, perm);
-            case DESTROY -> {
-                if (!tryDestroyPermanent(gameData, perm, action.cannotBeRegenerated())) {
-                    return;
-                }
-            }
+            case SACRIFICE, DESTROY -> throw new IllegalArgumentException(
+                    "A delayed sacrifice or destroy departs as its resolution step: " + kind);
         }
         if (!completed) {
             return;
@@ -2222,17 +2203,14 @@ public class PermanentRemovalService {
         gameLogService.append(gameData,
                 GameLog.builder().card(perm.getCard()).text(kind.logSuffix()).build());
         log.info("Game {} - {}{}", gameData.id, perm.getCard().getName(), kind.logSuffix());
-        if (kind.op() != DelayedPermanentActionKind.Op.DESTROY) {
-            removeOrphanedAuras(gameData);
-        }
-
+        removeOrphanedAuras(gameData);
     }
 
     /**
      * Returns an exiled card to the battlefield. CR 110.2a: it enters under the control of the player
      * the effect instructs to put it there ({@code returningPlayerId}), falling back to its owner.
      */
-    private void returnExiledCardToBattlefield(GameData gameData, UUID cardId, UUID returningPlayerId) {
+    public void returnExiledCardToBattlefield(GameData gameData, UUID cardId, UUID returningPlayerId) {
         if (cardId == null) {
             return;
         }

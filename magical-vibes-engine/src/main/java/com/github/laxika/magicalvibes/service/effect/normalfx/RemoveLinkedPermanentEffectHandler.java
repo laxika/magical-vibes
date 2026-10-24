@@ -18,7 +18,9 @@ import org.springframework.stereotype.Component;
  * Removes the permanent linked to the trigger source (Dance of Many's mutual bond). The trigger
  * collector bakes the linked permanent's id into the stack entry's {@code targetId}; here we clear the
  * partner's back-reference first so removing it does not re-trigger the reciprocal removal, then exile
- * or sacrifice it per {@link RemoveLinkedPermanentEffect.Mode}.
+ * or sacrifice it per {@link RemoveLinkedPermanentEffect.Mode}. A sacrifice is the resolution step's
+ * departure ({@link StepDepartureSupport#sacrifice}), so it asks its CR 616.1 questions before the
+ * permanent leaves.
  */
 @Slf4j
 @Component
@@ -28,6 +30,7 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,27 +66,24 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
         }
 
         // Break the mutual bond before removal so the linked permanent's own leaves-battlefield trigger
-        // becomes a no-op (avoids the reciprocal exile <-> sacrifice bouncing back). A one-way link
-        // (Tyrannical Pitlord) has no reciprocal trigger, and the linked permanent may itself be a Pitlord
-        // whose own chosen creature must still be sacrificed when it leaves.
+        // becomes a no-op (avoids the reciprocal exile <-> sacrifice bouncing back). A sacrificed partner's
+        // link points at the permanent that has already left, so breaking it while its departure waits for
+        // an answer can't lose a trigger. A one-way link (Tyrannical Pitlord) has no reciprocal trigger, and
+        // the linked permanent may itself be a Pitlord whose own chosen creature must still be sacrificed
+        // when it leaves.
         if (e.mode() != RemoveLinkedPermanentEffect.Mode.SACRIFICE) {
             linked.setChosenPermanentId(null);
         }
 
         String name = linked.getCard().getName();
-        switch (e.mode()) {
-            case EXILE -> {
-                permanentRemovalService.removePermanentToExile(gameData, linked);
-                gameLogService.append(gameData, GameLog.text(name + " is exiled."));
-            }
-            case SACRIFICE, SACRIFICE_PARTNER -> {
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, linked);
-                gameLogService.append(gameData, GameLog.text(name + " is sacrificed."));
-            }
-        }
         log.info("Game {} - {} removed ({}) via linked leaves-battlefield trigger",
                 gameData.id, name, e.mode());
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        if (e.mode() == RemoveLinkedPermanentEffect.Mode.EXILE) {
+            permanentRemovalService.removePermanentToExile(gameData, linked);
+            gameLogService.append(gameData, GameLog.text(name + " is exiled."));
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            return;
+        }
+        stepDepartureSupport.sacrifice(gameData, entry, e, linked.getId());
     }
 }
