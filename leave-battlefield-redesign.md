@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; the fallback stays until the callers listed in the fourth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; the fallback stays until the callers listed in the fifth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1317,6 +1317,45 @@ Steps add notes here for later steps, under their number.
   `ForbiddenRitualTest` (14), `InfernalOfferingTest` (8), `WormsOfTheEarthTest` (12), `KalitasTraitorOfGhetTest`,
   `GravebaneZombieTest`, `NecromancersMagemarkTest`, `DryadArborTest`, `TormentOfHailfireTest`,
   `LegacyDepartureWrapperRatchetTest` and `DepartureServiceOrphanedStepBatchTest` pass.
+
+### Step 13 (fifth part: Flash's no-mana-cost sacrifice and the stale entries)
+
+- Done: `CardChoiceHandlerService`'s sacrifice of a creature Flash put onto the battlefield that has no mana cost
+  (CR 118.6: its "mana cost reduced by {2}" is unpayable, so it is sacrificed without a payment prompt). The
+  completion has already put the creature onto the battlefield, so it can't be redone; the sacrifice is now the
+  step the parked Flash resolution resumes with (`StepDepartureSupport.departAfterChoice`), so its CR 616.1
+  question is asked before it leaves. With no parked resolution it is sacrificed at once as before. It is still
+  sacrificed before Flash finishes resolving. Its log line is now the step hook's "X is sacrificed.".
+- Checked and taken off the list (no change needed):
+  - `LandEquilibriumSupport` already asks first: a lone land is sacrificed inside `runAskingDeathReplacementsFirst`
+    with a `PermanentChoiceReplay`, and a chosen land's completion (`LandEquilibriumSacrifice`) is in
+    `PermanentChoiceHandlerService.killsBeforeChangingAnything`. Its three Dryad Arbor tests are now
+    `@FailOnLegacyDepartureFallback`.
+  - `CombatService` and `TriggerCollectionService` call no removal (the first part's grep matched a Javadoc
+    mention and `removeOrphanedAuras`; that was already true before the first part). The end-of-combat sacrifices
+    and destroys are delayed triggers whose `SacrificeSelfEffect` / `ResolveDelayedPermanentActionEffect` steps
+    depart on the stack.
+  - The `performSimultaneousRemovals` groups (Warp World, `ReturnTargetAndAttachedMatchingToHand`,
+    `ExileAllPermanents`, `ExileCreaturesExceptThoseSharingConvokeCreatureType`,
+    `ExileEachTargetPermanentThenRevealUntilSharedCardType`) only exile, bounce or put permanents into a library,
+    so no permanent dies in them and they never reach a death replacement question.
+- Noticed, not in this step's scope: `PermanentRemovalService.removeOrphanedAuras` (and `enforceAttachmentLegality`)
+  put Auras into the graveyard through `AuraAttachmentService` without any departure batch, so an Aura that is also a
+  creature never gets its CR 616.1 question at all (it doesn't reach the fallback either). Worth an entry of its own.
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (parked pending an official ruling; see the third part) and `LifeSupport` (Lich's Duel
+    Mastery's sacrifice inside a life loss replacement).
+  - `DamagePreventionService.replaceNextDamageToTargetWithDestruction` (destroys instead of dealing damage) and
+    `DamagePreventionReplacementSupport.applyDamageToPermanentByRemovingCountersOrSacrificing` (sacrifices instead
+    of being dealt damage): both run inside a damage event that can't pause.
+  - The multi-choice completions outside `MultiPermanentChoiceHandlerService.killsBeforeChangingAnything`.
+- Tests: new `FlashTest.creatureWithNoManaCostAsksTheDeathReplacementBeforeItIsSacrificed`
+  (`@FailOnLegacyDepartureFallback`; Dryad Arbor under Wheel of Sun and Moon against Kalitas: still on the battlefield
+  while asked, then in its owner's library and no Zombie; fails with the old code by reaching the fallback from
+  `DestructionSupport.sacrificeTogether`). Changed: `LandEquilibriumTest`'s three Dryad Arbor tests got
+  `@FailOnLegacyDepartureFallback` (they pass). `FlashTest` (14), `LandEquilibriumTest` (11),
+  `WheelOfSunAndMoonTest`, `DryadArborTest`, `KalitasTraitorOfGhetTest`, `LegacyDepartureWrapperRatchetTest` and
+  `DepartureServiceOrphanedStepBatchTest` pass.
 
 ### Step 2
 

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -185,6 +186,7 @@ class LandEquilibriumTest extends BaseCardTest {
     }
 
     @Test
+    @FailOnLegacyDepartureFallback
     @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
     @DisplayName("Choosing a Dryad Arbor asks for its death replacement before it is sacrificed")
     void chosenArborAsksForTheDeathReplacementBeforeItIsSacrificed() {
@@ -220,6 +222,7 @@ class LandEquilibriumTest extends BaseCardTest {
     }
 
     @Test
+    @FailOnLegacyDepartureFallback
     @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
     @DisplayName("A lone Dryad Arbor left for a second copy asks for its death replacement before it is sacrificed")
     void loneArborAsksForTheDeathReplacementBeforeItIsSacrificed() {
@@ -253,6 +256,7 @@ class LandEquilibriumTest extends BaseCardTest {
     }
 
     @Test
+    @FailOnLegacyDepartureFallback
     @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
     @DisplayName("Choosing Kalitas's replacement for the lone Dryad Arbor exiles it and makes a Zombie")
     void loneArborExiledByKalitasAfterTheAnswer() {

@@ -122,6 +122,9 @@ public class CardChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport destructionSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.StepDepartureSupport stepDepartureSupport;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     private final DrawService drawService;
@@ -3325,8 +3328,13 @@ public class CardChoiceHandlerService {
         // (or being unable to pay) sacrifices it via the ForcedCostOrElse SacrificeSelf penalty.
         if (sacrificeUnlessPayGenericReduction != null && (card.getManaCost() == null || card.getManaCost().isEmpty())) {
             // CR 118.6: a card with no mana cost has an unpayable cost, so it is sacrificed without a payment prompt.
-            // It has just entered, so this completion can't be redone for a CR 616.1 question.
-            destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+            // It has just entered, so this completion can't be redone; the sacrifice is the next step of the parked
+            // resolution instead, which asks its CR 616.1 questions before it leaves.
+            if (!stepDepartureSupport.departAfterChoice(gameData,
+                    com.github.laxika.magicalvibes.service.effect.normalfx.StepDepartureSupport.sacrifices(
+                            List.of(permanent.getId())), List.of())) {
+                destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
+            }
         } else if (sacrificeUnlessPayGenericReduction != null) {
             String reducedCost = reduceGenericCost(card.getManaCost(), sacrificeUnlessPayGenericReduction);
             ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
