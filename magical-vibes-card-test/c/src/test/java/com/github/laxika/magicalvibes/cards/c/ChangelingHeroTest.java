@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -203,5 +207,33 @@ class ChangelingHeroTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, hero, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Declining to champion asks Wheel-or-Kalitas before Changeling Hero is sacrificed")
+    void decliningToChampionAsksTheDeathReplacementBeforeTheSacrifice() {
+        harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon()).setAttachedTo(player1.getId());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        castChangelingHero();
+        harness.passBothPriorities();
+        Card hero = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Changeling Hero")).getCard();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Changeling Hero");
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Changeling Hero");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).containsExactly(hero.getId());
+        assertThat(gd.playersWhoSacrificedPermanentsThisTurn).contains(player1.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

@@ -394,11 +394,16 @@ public class DestructionSupport {
         return destroyed[0];
     }
 
-    public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
-        Card sacrificedCard = creature.getCard();
-        boolean sacrificedCreature = gameQueryService.isCreature(gameData, creature);
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
-        logSacrifice(gameData, sacrificedCard, playerId, sacrificedCreature);
+    /**
+     * {@code playerId} sacrifices {@code permanent}, as a one-permanent {@link #sacrificeTogether}: its CR 616.1
+     * death replacements are chosen before it leaves when its caller can be stopped and run again (a marked
+     * handler's window, or a choice completion's replay window), and the sacrifice is logged and fires "whenever you
+     * sacrifice" triggers only if it happened (CR 701.21a).
+     *
+     * @return what happened to it; read last-known power, toughness and card types from here
+     */
+    public DepartureResult sacrificeAndLog(GameData gameData, Permanent permanent, UUID playerId) {
+        return sacrificeTogether(gameData, List.of(permanent), playerId).results().getFirst();
     }
 
     private void logSacrifice(GameData gameData, Card sacrificedCard, UUID playerId, boolean sacrificedCreature) {
@@ -1210,8 +1215,12 @@ public class DestructionSupport {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    /**
+     * The target player has chosen which pile to destroy or sacrifice. The pile leaves as one event; the separation
+     * stays pending until it has, so a completion stopped for a CR 616.1 question is completed again unchanged.
+     */
     public void completePileSeparationStep2(GameData gameData, boolean accepted) {
-        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+        PendingPileSeparation state = gameData.peekPendingInteraction(PendingPileSeparation.class);
         List<UUID> pileToSacrifice = accepted
                 ? new ArrayList<>(state.pile1Ids())
                 : new ArrayList<>(state.pile2Ids());
@@ -1222,27 +1231,30 @@ public class DestructionSupport {
 
         String pileDescription = buildPileDescription(gameData, pileToSacrifice);
         if (state.disposition() == CardPileDisposition.DESTROY) {
-            gameLogService.append(gameData, GameLog.text(playerName + " destroys " + pileName + ": " + pileDescription + "."));
-
             List<Permanent> creaturesToDestroy = pileToSacrifice.stream()
                     .map(permId -> gameQueryService.findPermanentById(gameData, permId))
                     .filter(perm -> perm != null && gameQueryService.isCreature(gameData, perm))
                     .toList();
-            destroyBatch(gameData, creaturesToDestroy, "Do or Die", true);
+            destroyBatch(gameData, creaturesToDestroy, "Do or Die", true, () -> {
+                gameData.pollPendingInteraction(PendingPileSeparation.class);
+                gameLogService.append(gameData,
+                        GameLog.text(playerName + " destroys " + pileName + ": " + pileDescription + "."));
+            });
         } else {
-            gameLogService.append(gameData, GameLog.text(playerName + " sacrifices " + pileName + ": " + pileDescription + "."));
-
             List<DepartureIntent> intents = pileToSacrifice.stream()
                     .filter(permId -> gameQueryService.findPermanentById(gameData, permId) != null)
                     .distinct()
                     .map(DepartureIntent::sacrifice)
                     .toList();
-            departureService.departNow(gameData, DepartureBatch.of(intents), DepartureService.Hooks.afterEach(
-                    (intent, perm, snapshot, removed) -> {
-                        if (removed) {
-                            gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
-                        }
-                    }));
+            departureService.departNow(gameData, DepartureBatch.of(intents), new DepartureService.Hooks(() -> {
+                gameData.pollPendingInteraction(PendingPileSeparation.class);
+                gameLogService.append(gameData,
+                        GameLog.text(playerName + " sacrifices " + pileName + ": " + pileDescription + "."));
+            }, (intent, perm, snapshot, removed) -> {
+                if (removed) {
+                    gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
+                }
+            }));
         }
 
         gameOutcomeService.checkWinCondition(gameData);

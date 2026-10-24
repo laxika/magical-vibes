@@ -970,12 +970,12 @@ public class MultiPermanentChoiceHandlerService {
             handleGoadDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberPermanents) {
             handleTapAnyNumberPermanents(gameData, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
-            handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy) {
+            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage ctx) {
             handleGainControlOfPermanentAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage ctx) {
-            handleDestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage) {
+            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
             handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAnyNumber ctx) {
@@ -998,7 +998,7 @@ public class MultiPermanentChoiceHandlerService {
             chooseEquipmentToUnattachEffectHandler.completeChoice(gameData, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackCost) {
-            handleSacrificeAttackCost(gameData, playerId, permanentIds);
+            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnToHandAttackCost) {
             handleReturnToHandAttackCost(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {
@@ -1457,34 +1457,51 @@ public class MultiPermanentChoiceHandlerService {
                                               MultiPermanentChoiceContext.SacrificeSelfToDestroy context) {
         UUID sourcePermId = context.sourcePermanentId();
 
-        if (!permanentIds.isEmpty()) {
+        if (permanentIds.isEmpty()) {
+            // Nothing leaves, so nothing after this may stop the completion to be redone.
+            gameData.deathReplacementsCanRerunEffect = false;
+        } else if (context.sourceSacrificed()) {
+            destroyChosenAfterSacrifice(gameData, permanentIds.getFirst(), context);
+        } else {
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
             UUID sourceController = source == null ? null
                     : gameQueryService.findPermanentController(gameData, sourcePermId);
             if (source != null && playerId.equals(sourceController)) {
-                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, source)) {
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, source.getCard());
-                    gameLogService.append(gameData, GameLog.isSacrificed(source.getCard()));
-                    log.info("Game {} - {} sacrificed for combat damage trigger", gameData.id, source.getCard().getName());
-
-                    UUID chosenPermId = permanentIds.getFirst();
-                    Permanent target = gameQueryService.findPermanentById(gameData, chosenPermId);
-                    if (target != null) {
-                        if (permanentRemovalService.tryDestroyPermanent(gameData, target, context.cannotBeRegenerated())) {
-                            gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
-                            log.info("Game {} - {} destroyed by sacrifice trigger", gameData.id, target.getCard().getName());
-                        }
+                if (destructionSupport.sacrificeAndLog(gameData, source, playerId).sacrificed()) {
+                    // "If you do": the destroy is a second event, asked about once the sacrifice is done; a question
+                    // stops only this part, which is then completed again on its own.
+                    MultiPermanentChoiceContext.SacrificeSelfToDestroy destroy =
+                            new MultiPermanentChoiceContext.SacrificeSelfToDestroy(
+                                    sourcePermId, context.cannotBeRegenerated(), true);
+                    if (permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData,
+                            () -> destroyChosenAfterSacrifice(gameData, permanentIds.getFirst(), destroy),
+                            new GameData.MultiPermanentChoiceReplay(new PendingInteraction.MultiPermanentChoice(
+                                    playerId, List.copyOf(permanentIds), 1, destroy, ""),
+                                    List.copyOf(permanentIds)))) {
+                        return;
                     }
                 }
-
                 permanentRemovalService.removeOrphanedAuras(gameData);
             } else {
+                gameData.deathReplacementsCanRerunEffect = false;
                 String logEntry = "Source creature no longer exists — sacrifice trigger fizzles.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
             }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /** Destroys the creature chosen for {@code context} once its source was sacrificed ("if you do"). */
+    private void destroyChosenAfterSacrifice(GameData gameData, UUID chosenPermId,
+                                             MultiPermanentChoiceContext.SacrificeSelfToDestroy context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, chosenPermId);
+        if (target == null) {
+            gameData.deathReplacementsCanRerunEffect = false;
+            return;
+        }
+        destructionSupport.tryDestroyAndLog(gameData, target, "sacrifice trigger", context.cannotBeRegenerated(),
+                false);
     }
 
     private void handleGainControlOfPermanentAndAssignNoCombatDamage(GameData gameData, UUID playerId, List<UUID> permanentIds,
@@ -1532,9 +1549,10 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.playerIdToName.get(playerId) + " chooses no " + context.choiceNoun() + " to destroy."));
         } else {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
-            if (target != null && permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-                gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
-                log.info("Game {} - {} destroyed by unblocked-attack trigger", gameData.id, target.getCard().getName());
+            if (target != null) {
+                destructionSupport.tryDestroyAndLog(gameData, target, "unblocked-attack trigger");
+            } else {
+                gameData.deathReplacementsCanRerunEffect = false;
             }
             permanentRemovalService.removeOrphanedAuras(gameData);
 
@@ -1720,15 +1738,8 @@ public class MultiPermanentChoiceHandlerService {
         if (!permanentIds.isEmpty()) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             if (target != null) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-                String ownerName = controllerId != null ? gameData.playerIdToName.get(controllerId) : "Unknown";
-                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, target)) {
-                    if (controllerId != null) {
-                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, target.getCard());
-                    }
-                    gameLogService.append(gameData, GameLog.playerSacrifices(ownerName, target.getCard()));
-                    log.info("Game {} - {} sacrificed by {}", gameData.id, target.getCard().getName(), context.sourceName());
-                }
+                destructionSupport.sacrificeAndLog(gameData, target,
+                        gameQueryService.findPermanentController(gameData, target.getId()));
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
@@ -1741,32 +1752,24 @@ public class MultiPermanentChoiceHandlerService {
                 .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
                 .filter(Objects::nonNull)
                 .toList();
-        // CR 616.1: every chosen creature's death replacement is chosen before any of them is sacrificed.
-        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, creatures);
-        for (Permanent creature : creatures) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-            if (controllerId != null) {
-                destructionSupport.sacrificeAndLog(gameData, creature, controllerId);
-            }
-        }
+        // Sacrificed at the same time, so every death replacement is chosen before any of them leaves (CR 616.1).
+        destructionSupport.sacrificeTogether(gameData, creatures, null);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleSacrificeAttackCost(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        String playerName = gameData.playerIdToName.get(playerId);
+        List<Permanent> sacrificed = new ArrayList<>();
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent == null
                     || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
                 throw new IllegalStateException("A selected permanent is no longer controlled by the attacker");
             }
-            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                        gameData, playerId, permanent.getCard());
-                gameLogService.append(gameData, GameLog.playerSacrifices(playerName, permanent.getCard()));
-            }
+            sacrificed.add(permanent);
         }
+        // The cost is paid all at once, so the sacrifices are one event.
+        destructionSupport.sacrificeTogether(gameData, sacrificed, playerId);
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
@@ -2269,6 +2272,19 @@ public class MultiPermanentChoiceHandlerService {
     private void completeKillingChoice(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext context) {
         switch (context) {
+            case MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx -> {
+                handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage ctx -> {
+                handleDestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamage(
+                        gameData, playerId, permanentIds, ctx);
+                return;
+            }
+            case MultiPermanentChoiceContext.SacrificeAttackCost ignored -> {
+                handleSacrificeAttackCost(gameData, playerId, permanentIds);
+                return;
+            }
             case MultiPermanentChoiceContext.ForcedSacrifice ctx -> {
                 handleForcedSacrifice(gameData, permanentIds, ctx);
                 return;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class SacrificeCreatureThenMassDamageEqualToPowerEffectHandler implements
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
     private final PlayerInputService playerInputService;
     private final MassDamageEffectHandler massDamageEffectHandler;
 
@@ -80,14 +80,9 @@ public class SacrificeCreatureThenMassDamageEqualToPowerEffectHandler implements
 
     public void resolveAfterChoice(GameData gameData, Permanent chosen,
                                    PermanentChoiceContext.SacrificeCreatureThenMassDamageEqualToPower context) {
-        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, chosen);
-
-        String playerName = gameData.playerIdToName.get(context.controllerId());
-        gameLogService.append(gameData,
-                GameLog.textCardText(playerName + " sacrifices ", chosen.getCard(), "."));
-        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
-                chosen.getCard().getName(), context.sourceCard().getName());
+        DepartureResult sacrificed = destructionSupport.sacrificeAndLog(gameData, chosen, context.controllerId());
+        int power = sacrificed.sacrificed() && sacrificed.lastKnownPower() != null
+                ? Math.max(0, sacrificed.lastKnownPower()) : 0;
 
         if (power > 0) {
             MassDamageEffect massDamage = new MassDamageEffect(new Fixed(power), true, false, WITHOUT_FLYING);

@@ -2912,7 +2912,12 @@ public class GameData {
 
     /** A player's answer to complete again once the death replacements it asked about are chosen. */
     public sealed interface DeathReplacementChoiceReplay
-            permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay {
+            permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay,
+                    PileChoiceReplay {
+    }
+
+    /** A pile separation's "which pile" answer whose chosen pile is destroyed or sacrificed. */
+    public record PileChoiceReplay(boolean accepted) implements DeathReplacementChoiceReplay {
     }
 
     /** A permanent choice answer to complete again: the prompt that was answered and the chosen permanent. */

@@ -119,6 +119,9 @@ public class CardChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.AsEntersDiscardSupport asEntersDiscardSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport destructionSupport;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     private final DrawService drawService;
@@ -3322,7 +3325,8 @@ public class CardChoiceHandlerService {
         // (or being unable to pay) sacrifices it via the ForcedCostOrElse SacrificeSelf penalty.
         if (sacrificeUnlessPayGenericReduction != null && (card.getManaCost() == null || card.getManaCost().isEmpty())) {
             // CR 118.6: a card with no mana cost has an unpayable cost, so it is sacrificed without a payment prompt.
-            permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
+            // It has just entered, so this completion can't be redone for a CR 616.1 question.
+            destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
         } else if (sacrificeUnlessPayGenericReduction != null) {
             String reducedCost = reduceGenericCost(card.getManaCost(), sacrificeUnlessPayGenericReduction);
             ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(

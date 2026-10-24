@@ -121,6 +121,9 @@ public class MayAbilityHandlerService {
     private LifeSupport lifeSupport;
 
     @Autowired @Lazy
+    private PermanentChoiceHandlerService permanentChoiceHandlerService;
+
+    @Autowired @Lazy
     private QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
@@ -176,6 +179,32 @@ public class MayAbilityHandlerService {
     @Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
+
+    /**
+     * Completes a pile separation whose chosen pile is destroyed or sacrificed (Make an Example, Liliana of the Veil,
+     * Do or Die). It changes nothing before the pile leaves, so a creature in it with competing death replacements is
+     * asked about first (CR 616.1) and the answer is completed again once its controller has chosen.
+     */
+    public void completeKillingPileChoice(GameData gameData, boolean accepted) {
+        Runnable completion = gameData.peekPendingInteraction(PendingPileSeparation.class).disposition()
+                == CardPileDisposition.MAKE_AN_EXAMPLE
+                ? () -> makeAnExampleEffectHandler.completePileSeparationStep2(gameData, accepted)
+                : () -> destructionSupport.completePileSeparationStep2(gameData, accepted);
+        if (permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData, completion,
+                new GameData.PileChoiceReplay(accepted))) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Whether the chosen pile of {@code separation} is sacrificed or destroyed rather than moved or kept. */
+    private static boolean killsChosenPile(PendingPileSeparation separation) {
+        CardPileDisposition disposition = separation.disposition();
+        return disposition == CardPileDisposition.MAKE_AN_EXAMPLE
+                || !separation.cardPileMode() && disposition != CardPileDisposition.ATTACKERS
+                        && disposition != CardPileDisposition.BLOCKERS
+                        && disposition != CardPileDisposition.PLAY_FROM_EXILE;
+    }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
@@ -278,8 +307,9 @@ public class MayAbilityHandlerService {
         // Unesh, Curator of Destinies)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null) {
-            if (pileSeparation.disposition() == CardPileDisposition.MAKE_AN_EXAMPLE) {
-                makeAnExampleEffectHandler.completePileSeparationStep2(gameData, accepted);
+            if (killsChosenPile(pileSeparation)) {
+                completeKillingPileChoice(gameData, accepted);
+                return;
             } else if (pileSeparation.disposition() == CardPileDisposition.ATTACKERS) {
                 fightOrFlightSupport.completePileSeparationStep2(gameData, accepted);
             } else if (pileSeparation.disposition() == CardPileDisposition.BLOCKERS) {

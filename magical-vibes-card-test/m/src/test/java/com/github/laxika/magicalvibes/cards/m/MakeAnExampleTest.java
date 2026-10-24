@@ -1,13 +1,18 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +21,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MakeAnExample.class, GrizzlyBears.class, GiantSpider.class, ZulaportCutthroat.class})
 class MakeAnExampleTest extends BaseCardTest {
+
+    @Test
+    @CardUsed({GravebaneZombie.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The chosen pile's death replacements are asked before any of it is sacrificed")
+    void chosenPileAsksTheDeathReplacementBeforeAnyOfItIsSacrificed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player2, List.of(gravebane.getId(), bears.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(gravebane.getCard().getId(), bears.getCard().getId());
+        harness.assertInGraveyard(player1, "Make an Example");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     @Test
     void controllerChoosesPileForOpponentToSacrifice() {

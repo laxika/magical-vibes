@@ -21,7 +21,7 @@ order; each one lists what it depends on.
 | 7 | Resolution scratchpad and pausing at the end of a step | done |
 | 8 | Convert the "sacrifice this, then …" handlers | done (bespoke records kept where engine code or data needs them; see Findings) |
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | done (Goblin Crash Pilot and Goblin Welder depart at once, not as a step; see Findings) |
-| 10 | Convert the choice-completion paths | open |
+| 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | open |
 | 12 | Costs and mana abilities | open |
 | 13 | Make the guard strict and remove the fallback | open |
@@ -716,6 +716,76 @@ Steps add notes here for later steps, under their number.
   `DestroyTargetAndEachPlayerSearches…HandlerTest` search tests fail at baseline with the same tests.
   `OrzhovCharmTest$BounceMode.doesNotBounceOpponentAura` is flaky (player2's random opening hand may hold a
   Pacifism).
+
+### Step 10
+
+- All 31 listed callers are off the legacy wrappers and the ratchet allowlist (now 31 callers, all for steps 11–12:
+  costs, loops, delayed actions, ante, Sheltered Valley, `LifeSupport`, world rule, roles, Sagas, cleanup). The
+  ratchet's "main classes are scanned" check now looks for a `SpellCastingService.` caller, since no
+  `DestructionSupport` method calls a wrapper any more.
+- How completions pause: not through the scratchpad. A choice completion has no resolution step of its own, so each
+  converted completion runs inside the existing replay window (`PermanentChoiceHandlerService.runAskingDeathReplacementsFirst`):
+  it changes nothing before its departure, a CR 616.1 question stops it, and the same answer is completed again once
+  the last answer is in. Its departure is a `DepartureBatch` through `departNow`. `StackEntry.recordPicks` is still
+  unused; moving completions onto real steps (pick to the parked entry's scratchpad, removal as an inserted step) is
+  step 14 work, together with retiring the replay windows.
+- `DestructionSupport.sacrificeAndLog` (about 60 callers) is now a one-permanent `sacrificeTogether` batch and returns
+  its `DepartureResult`. It logs "P sacrifices X." and fires "whenever you sacrifice" triggers only when the sacrifice
+  happened (CR 701.21a). It asks only inside a window, like `tryDestroyAndLog`.
+- Newly inside a replay window, so they now ask before the permanent leaves (they reached the legacy fallback before):
+  the legend rule (CR 704.5j; the others leave as one OTHER batch), a declined champion (`completeKillingChoice` gets a
+  `null` permanent id), Sacred Mesa's "sacrifice another or this", sacrifice-to-enter and land casualty when not
+  declined, the sacrifice before an Aura is reattached, the attack sacrifice cost (one batch), the unblocked-attacker
+  "destroy the chosen permanent" and the "sacrifice this to destroy" multi-choice, and pile separations whose chosen
+  pile is sacrificed or destroyed (Make an Example, Liliana of the Veil, Do or Die) through
+  `MayAbilityHandlerService.completeKillingPileChoice` and a new `GameData.PileChoiceReplay`. The pile completions
+  now peek the `PendingPileSeparation` and poll it in the batch's `beforePerform`, so a replay finds it again; Make an
+  Example's next opponent is prompted only after the pile has left.
+- Two removals in one completion ("sacrifice it; if you do, destroy ..."): after the first departure, a second window is
+  opened with a replay of only the rest (`MultiPermanentChoiceContext.SacrificeSelfToDestroy.sourceSacrificed`). Nested
+  `runAskingDeathReplacementsFirst` calls work because the inner one owns the question; the outer one doesn't drop the
+  pending batch, since it is still awaiting its answer. Use this pattern for later completions with sequential removals.
+- A completion that has no departure on some branch must close the window itself (`deathReplacementsCanRerunEffect =
+  false`) before the epilogue, or a removal in the epilogue would stop and replay the whole completion. Logs a replayed
+  completion writes must come after its departure (or in `beforePerform`), or a replay writes them twice (the "declines
+  to ..." lines of the `SacrificeUnless*` may handlers, the champion line, the pile lines).
+- Already in windows and only moved off the wrappers: the other `PermanentChoiceBattlefieldHandlerService` sacrifices
+  (now `sacrificeAndLog`; exploit, divided damage, power damage, life-and-draw, boost, keyword, sized token, tokens per
+  toughness, search library, "sacrifice a permanent, then"), the four `MayPenaltyChoiceHandlerService` sacrifice-unless
+  branches, `handleSacrificeDamagedPlayerControlsPermanent`, attacking-creature sacrifices (now one `sacrificeTogether`
+  batch instead of asking ahead and sacrificing one by one), Victimize, Garruk, Rupture (power from the result's
+  `lastKnownPower`) and `TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffect`. Rules fixes: those sacrifices now fire "whenever you
+  sacrifice" triggers (several didn't), and Victimize, Garruk and the subtype tokens follow "if you do".
+- Still a fallback, off the wrappers: `CardChoiceHandlerService` sacrifices a creature put onto the battlefield with an
+  unpayable "sacrifice it unless you pay" cost (CR 118.6, Flash with a creature that has no mana cost) through
+  `sacrificeAndLog`; it has just entered, so the completion can't be redone and nothing is asked. It is now a real
+  sacrifice (it used to be a plain move to the graveyard).
+- Found along the way (step 8 leftover, fixed): `StepDepartureSupport.sacrificeThenIfSacrificed` resolved its payload as
+  a nested dispatch when the sacrifice needed no question, so Blind Zealot's "if you do, destroy" (its
+  `forDamagedPlayer` form is a `SacrificeSelfThenEffect`) reached the legacy fallback. When the sacrifice is the
+  resolution step itself the payload is now always inserted as the next step, so its removal gets its own window.
+  The `SacrificeSelfToDestroy` multi-choice context is reached only when `SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect`
+  resolves unconverted.
+- Rules gap noted, not fixed: Make an Example says "each opponent sacrifices the creatures in their chosen pile", one
+  event after every pile is chosen; the engine sacrifices each opponent's pile before the next opponent separates. This
+  matches the step's wording but is wrong with two or more opponents. Fixing it means collecting every chosen pile and
+  departing one batch at the end.
+- Tests: new `KalitasTraitorOfGhetTest.legendRuleAsksTheDeathReplacementBeforeTheOtherLegendLeaves`,
+  `ChangelingHeroTest.decliningToChampionAsksTheDeathReplacementBeforeTheSacrifice`,
+  `BlindZealotTest.destroyAsksTheDeathReplacementAfterTheSacrificeBeforeTheTargetLeaves` and
+  `MakeAnExampleTest.chosenPileAsksTheDeathReplacementBeforeAnyOfItIsSacrificed` (all `@FailOnLegacyDepartureFallback`).
+  The step 1 edict tests were already passing and still pass. Changed: `SacrificePermanentsEffectHandlerTest` (three
+  auto-sacrifice tests now verify `departToGraveyard` with a SACRIFICE intent) and
+  `SacrificeOtherCreatureOrDamageEffectHandlerTest` (injects a real `DepartureService`, verifies `departToGraveyard`),
+  since `sacrificeAndLog` no longer calls the wrapper. A sweep of 1,206 card test classes (5,921 tests) for every
+  handler calling `sacrificeAndLog` / `sacrificeTogether` / `sacrificeThenIfSacrificed` / the pile completions, every
+  card using the touched choice contexts, and legend-rule, exploit, champion, casualty, pile, Kalitas, Wheel of Sun and
+  Moon and Gravebane Zombie tests had 67 failures; 65 fail at baseline too (Cheering Crowd, Breath of Fury, Mantle of
+  Leadership, Dauthi Voidwalker, ...). The other two (`LithophageTest`, the "declines to" line written before the
+  question) were fixed by moving the reason logs after the departure. `LegacyDepartureWrapperRatchetTest`,
+  `GameSimulatorTest` and the touched handler unit tests show no new failures (`EffectResolutionServiceTest`,
+  `DestroyAllPermanentsEffectHandlerTest`, six `SacrificePermanentsEffectHandlerTest` tests, six
+  `DestroyTargetAndEachPlayerSearches…` tests and `CardImmutabilityArchTest` fail at baseline with the same tests).
 
 ### Step 2
 

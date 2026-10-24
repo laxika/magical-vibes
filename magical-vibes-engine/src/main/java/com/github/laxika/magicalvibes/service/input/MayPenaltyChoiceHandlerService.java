@@ -858,9 +858,8 @@ public class MayPenaltyChoiceHandlerService {
 
         // Declined or no valid cards left — sacrifice if still on the battlefield
         if (sourcePermanent != null) {
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to discard. ", sourceCard, " is sacrificed."));
+            destructionSupport.sacrificeAndLog(gameData, sourcePermanent, controllerId);
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " declines to discard."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
         } else {
             String logEntry = player.getUsername() + " declines to discard.";
@@ -1793,9 +1792,8 @@ public class MayPenaltyChoiceHandlerService {
 
         // Declined or no valid permanents left — sacrifice if still on the battlefield
         if (sourcePermanent != null) {
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
+            destructionSupport.sacrificeAndLog(gameData, sourcePermanent, controllerId);
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " declines to return a permanent."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
         } else {
             String logEntry = player.getUsername() + " declines to return a permanent.";
@@ -1847,9 +1845,8 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (sourcePermanent != null) {
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to return a permanent. ", sourceCard, " is sacrificed."));
+            destructionSupport.sacrificeAndLog(gameData, sourcePermanent, controllerId);
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " declines to return a permanent."));
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -1907,9 +1904,9 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (sourcePermanent != null) {
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to sacrifice " + effect.description() + ". ", sourceCard, " is sacrificed."));
+            destructionSupport.sacrificeAndLog(gameData, sourcePermanent, controllerId);
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " declines to sacrifice " + effect.description() + "."));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
         } else {
             gameLogService.append(gameData, GameLog.text(

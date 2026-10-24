@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +25,7 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
     private final PlayerInputService playerInputService;
     private final LibrarySearchSupport librarySearchSupport;
 
@@ -64,11 +63,8 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
 
         if (creatureIds.size() == 1) {
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
-            if (creature != null) {
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
-                gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
-                log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
-
+            if (creature != null
+                    && destructionSupport.sacrificeAndLog(gameData, creature, controllerId).sacrificed()) {
                 librarySearchSupport.searchLibraryForCreatureToHand(gameData, controllerId);
             }
             return;

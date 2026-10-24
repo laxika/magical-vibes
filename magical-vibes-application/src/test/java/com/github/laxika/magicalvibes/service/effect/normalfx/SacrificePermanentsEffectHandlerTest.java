@@ -204,7 +204,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, bears);
+            verify(permanentRemovalService).departToGraveyard(gd, bears, DepartureIntent.sacrifice(bears.getId()), null);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Grizzly Bears.")));
         }
 
@@ -429,7 +429,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.CONTROLLER));
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, bears);
+            verify(permanentRemovalService).departToGraveyard(gd, bears, DepartureIntent.sacrifice(bears.getId()), null);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Grizzly Bears.")));
         }
     }
@@ -451,7 +451,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.EACH_OPPONENT));
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, bears);
+            verify(permanentRemovalService).departToGraveyard(gd, bears, DepartureIntent.sacrifice(bears.getId()), null);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 sacrifices Grizzly Bears.")));
         }
 

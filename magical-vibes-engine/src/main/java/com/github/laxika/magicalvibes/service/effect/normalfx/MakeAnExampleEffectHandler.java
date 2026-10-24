@@ -85,8 +85,13 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    /**
+     * The opponent sacrifices the chosen pile as one event, and only then is the next opponent asked to separate
+     * theirs. The separation stays pending until the pile has left, so a completion stopped for a CR 616.1
+     * question is completed again unchanged.
+     */
     public void completePileSeparationStep2(GameData gameData, boolean choosePile1) {
-        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+        PendingPileSeparation state = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (state == null) {
             throw new IllegalStateException("No pending Make an Example pile choice");
         }
@@ -102,7 +107,8 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
             }
             toSacrifice.add(DepartureIntent.sacrifice(permanentId));
         }
-        departureService.departNow(gameData, DepartureBatch.of(toSacrifice), DepartureService.Hooks.afterEach(
+        departureService.departNow(gameData, DepartureBatch.of(toSacrifice), new DepartureService.Hooks(
+                () -> gameData.pollPendingInteraction(PendingPileSeparation.class),
                 (intent, permanent, snapshot, removed) -> {
                     if (removed) {
                         triggerCollectionService.checkAllyPermanentSacrificedTriggers(

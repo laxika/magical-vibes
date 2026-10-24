@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +14,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,10 +32,10 @@ public class SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -89,14 +87,10 @@ public class SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler
             throw new IllegalStateException("No pending resolution for sacrifice choice");
         }
 
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice)) {
+        // "If you do": only a creature that was sacrificed returns the cards.
+        if (!destructionSupport.sacrificeAndLog(gameData, toSacrifice, context.controllerId()).sacrificed()) {
             return;
         }
-
-        Card sacrificedCard = toSacrifice.getCard();
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                gameData, context.controllerId(), sacrificedCard);
-        gameLogService.append(gameData, GameLog.cardThen(sacrificedCard, " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         var e = context.effect();

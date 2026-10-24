@@ -158,6 +158,8 @@ public class PermanentChoiceHandlerService {
     private final org.springframework.beans.factory.ObjectProvider<MultiPermanentChoiceHandlerService>
             multiPermanentChoiceHandlerServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<ChoiceHandlerService> choiceHandlerServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<MayAbilityHandlerService>
+            mayAbilityHandlerServiceProvider;
 
     /** Declines a champion choice, so the permanent is sacrificed instead of exiling another one (CR 702.72a). */
     public void handleChampionDeclined(GameData gameData, Player player, boolean accepted) {
@@ -171,7 +173,10 @@ public class PermanentChoiceHandlerService {
         }
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearPermanentChoiceContext();
-        battlefieldHandler.handleChampionDeclined(gameData, champion);
+        // Declining sacrifices the champion; its death replacements are asked before it leaves.
+        if (!completeAskingDeathReplacementsFirst(gameData, permanentChoice, null)) {
+            throw new IllegalStateException("A declined champion choice is a sacrifice: " + champion);
+        }
     }
 
     /**
@@ -186,11 +191,11 @@ public class PermanentChoiceHandlerService {
     private boolean completeAskingDeathReplacementsFirst(GameData gameData,
                                                          PendingInteraction.PermanentChoice choice,
                                                          UUID permanentId) {
-        if (!killsBeforeChangingAnything(choice.context())) {
+        if (!killsBeforeChangingAnything(choice, permanentId)) {
             return false;
         }
         runAskingDeathReplacementsFirst(gameData,
-                () -> completeKillingChoice(gameData, permanentId, choice.context()),
+                () -> completeKillingChoice(gameData, choice, permanentId),
                 new GameData.PermanentChoiceReplay(choice, permanentId));
         return true;
     }
@@ -274,6 +279,9 @@ public class PermanentChoiceHandlerService {
             case GameData.MayAnswerReplay answerReplay ->
                     mayEffectHandlerRegistry.getHandler(answerReplay.ability().effects().getFirst())
                             .handle(gameData, answerReplay.player(), answerReplay.accepted(), answerReplay.ability());
+            case GameData.PileChoiceReplay pileReplay ->
+                    mayAbilityHandlerServiceProvider.getObject().completeKillingPileChoice(
+                            gameData, pileReplay.accepted());
             case GameData.ListChoiceReplay listReplay ->
                     choiceHandlerServiceProvider.getObject().completeListChoiceAgainAfterDeathReplacements(
                             gameData, listReplay);
@@ -296,8 +304,23 @@ public class PermanentChoiceHandlerService {
         }
     }
 
-    private static boolean killsBeforeChangingAnything(PermanentChoiceContext context) {
+    /**
+     * Whether answering {@code choice} with {@code permanentId} ({@code null} for a declined champion choice)
+     * changes nothing before it sacrifices, destroys or otherwise kills, so the completion can be stopped for a
+     * CR 616.1 question and completed again.
+     */
+    private static boolean killsBeforeChangingAnything(PendingInteraction.PermanentChoice choice, UUID permanentId) {
+        PermanentChoiceContext context = choice.context();
         return context instanceof PermanentChoiceContext.SacrificeCreature
+                || context instanceof PermanentChoiceContext.LegendRule
+                || context instanceof PermanentChoiceContext.ChampionCreature && permanentId == null
+                || context instanceof PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach
+                        && reattach.permanentToSacrificeId() != null
+                || context instanceof PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf
+                || context instanceof PermanentChoiceContext.SacrificePermanentToEnter toEnter
+                        && !toEnter.controllerId().equals(permanentId)
+                || context instanceof PermanentChoiceContext.LandCasualty casualty
+                        && !casualty.controllerId().equals(permanentId)
                 || context instanceof PermanentChoiceContext.DestroyChosenCreature destroy
                         && !destroy.exile() && !destroy.shuffleIntoOwnersLibrary()
                 || context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy
@@ -348,10 +371,23 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature;
     }
 
-    private void completeKillingChoice(GameData gameData, UUID permanentId, PermanentChoiceContext context) {
-        switch (context) {
+    private void completeKillingChoice(GameData gameData, PendingInteraction.PermanentChoice choice,
+                                       UUID permanentId) {
+        switch (choice.context()) {
             case PermanentChoiceContext.SacrificeCreature sacrificeCreature ->
                     battlefieldHandler.handleSacrificeCreature(gameData, permanentId, sacrificeCreature);
+            case PermanentChoiceContext.LegendRule legendRule ->
+                    battlefieldHandler.handleLegendRule(gameData, choice.playerId(), permanentId, legendRule);
+            case PermanentChoiceContext.ChampionCreature champion ->
+                    battlefieldHandler.handleChampionDeclined(gameData, champion);
+            case PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach ->
+                    battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
+            case PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf ignored ->
+                    battlefieldHandler.handleSacrificeOwnPermanentOrSacrificeSelf(gameData, permanentId);
+            case PermanentChoiceContext.SacrificePermanentToEnter toEnter ->
+                    battlefieldHandler.handleSacrificePermanentToEnter(gameData, permanentId, toEnter);
+            case PermanentChoiceContext.LandCasualty casualty ->
+                    battlefieldHandler.handleLandCasualty(gameData, permanentId, casualty);
             case PermanentChoiceContext.LandEquilibriumSacrifice landEquilibrium ->
                     battlefieldHandler.handleLandEquilibriumSacrifice(gameData, permanentId, landEquilibrium);
             case PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature ->
@@ -464,7 +500,7 @@ public class PermanentChoiceHandlerService {
             case PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken ->
                     battlefieldHandler.handleEachOpponentCreatesTokenUnlessSacrificesCreature(gameData, permanentId,
                             sacrificeOrToken);
-            default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + context);
+            default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + choice.context());
         }
     }
 

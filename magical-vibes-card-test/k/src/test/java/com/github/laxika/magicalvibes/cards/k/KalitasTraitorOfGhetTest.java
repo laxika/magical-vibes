@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HighcliffFelidar;
 import com.github.laxika.magicalvibes.cards.i.ImperialEdict;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.l.LiesaForgottenArchangel;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.s.SlaughterDrone;
 import com.github.laxika.magicalvibes.cards.t.TarSnare;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.v.VampireEnvoy;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -543,5 +545,31 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getSubtypes().stream()
                         .anyMatch(subtype -> subtype.name().equalsIgnoreCase(subtypeName)))
                 .count();
+    }
+
+    @Test
+    @CardUsed({IsamaruHoundOfKonda.class, WheelOfSunAndMoon.class})
+    @DisplayName("The legend rule asks Wheel-or-Kalitas before the legend that isn't kept leaves")
+    void legendRuleAsksTheDeathReplacementBeforeTheOtherLegendLeaves() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon()).setAttachedTo(player2.getId());
+        Permanent kept = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
+        harness.setLibrary(player2, List.of());
+
+        harness.runStateBasedActions();
+        harness.handlePermanentChosen(player2, kept.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(kept, other);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(kept).doesNotContain(other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getId)
+                .contains(other.getCard().getId());
+        assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

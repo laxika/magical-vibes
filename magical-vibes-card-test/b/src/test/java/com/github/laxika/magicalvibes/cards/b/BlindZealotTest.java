@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -184,5 +187,34 @@ class BlindZealotTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Phyrexian Hulk");
         assertThat(victim.isTapped()).isTrue();
         assertThat(victim.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Blind Zealot is sacrificed first, then library-or-Kalitas is asked before the target is destroyed")
+    void destroyAsksTheDeathReplacementAfterTheSacrificeBeforeTheTargetLeaves() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zealot = addCreatureReady(player1, new BlindZealot());
+        zealot.setAttacking(true);
+        Permanent gravebane = addCreatureReady(player2, new GravebaneZombie());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, gravebane.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertInGraveyard(player1, "Blind Zealot");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(c -> c.getId())
+                .contains(gravebane.getCard().getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(c -> c.getName().equals("Blind Zealot"))
+                .hasSize(1);
     }
 }

@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -90,6 +92,10 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
         ObjectProvider<DamageSupport> damageSupportProvider = mock(ObjectProvider.class);
         lenient().when(damageSupportProvider.getObject()).thenReturn(damageSupport);
         ReflectionTestUtils.setField(destructionSupport, "damageSupportProvider", damageSupportProvider);
+        lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
+        ReflectionTestUtils.setField(destructionSupport, "departureService", new DepartureService(gameQueryService,
+                permanentRemovalService, graveyardService, triggerCollectionService, gameLogService));
         sacrificeOtherOrDamageHandler = new SacrificeOtherCreatureOrDamageEffectHandler(
                 destructionSupport, gameOutcomeService, gameQueryService, playerInputService);
 
@@ -194,7 +200,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
-                verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, elves);
+                verify(permanentRemovalService).departToGraveyard(gd, elves, DepartureIntent.sacrifice(elves.getId()), null);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Llanowar Elves.")));
                 // No damage dealt
                 assertThat(gd.getLife(player1Id)).isEqualTo(20);

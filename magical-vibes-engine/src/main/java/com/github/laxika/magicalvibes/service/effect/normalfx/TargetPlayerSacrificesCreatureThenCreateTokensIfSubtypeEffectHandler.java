@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatur
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
     private final PlayerInputService playerInputService;
@@ -109,13 +108,9 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
         boolean hadSubtype = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, creature, new PermanentHasSubtypePredicate(requiredSubtype));
 
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
+        boolean sacrificed = destructionSupport.sacrificeAndLog(gameData, creature, sacrificingPlayerId).sacrificed();
 
-        String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , creature.getCard(), "."));
-        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
-
-        if (hadSubtype) {
+        if (sacrificed && hadSubtype) {
             permanentControlSupport.applyCreateToken(gameData, sacrificingPlayerId, tokenTemplate, sourceSetCode);
         }
     }

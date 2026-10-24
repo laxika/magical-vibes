@@ -80,12 +80,15 @@ public class StepDepartureSupport {
 
     /**
      * "Sacrifice it. If you do, {@code payload}": sacrifices {@code permanentId} as {@code step} and resolves
-     * {@code payload} against the same entry only if it was sacrificed.
+     * {@code payload} against the same entry only if it was sacrificed. When {@code step} is the resolution step
+     * itself, {@code payload} is always the next step, so a removal in it is its own step and can ask its CR 616.1
+     * questions first (Blind Zealot's destroy); a nested dispatch resolves it at once.
      */
     public void sacrificeThenIfSacrificed(GameData gameData, StackEntry entry, CardEffect step, UUID permanentId,
                                           CardEffect payload) {
+        boolean resolutionStep = step != null && gameData.stepDepartureEffect == step;
         if (departureService.departAsStep(gameData, entry, step, sacrificeBatch(permanentId))
-                instanceof DepartureService.Outcome.Done) {
+                instanceof DepartureService.Outcome.Done && !resolutionStep) {
             if (entry.getResolutionResults().anySacrificed()) {
                 dispatch(gameData, entry, payload);
             }

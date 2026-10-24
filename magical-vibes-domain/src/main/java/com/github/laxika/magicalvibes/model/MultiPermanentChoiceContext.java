@@ -234,8 +234,17 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
     }
 
-    /** "You may sacrifice [source]. If you do, destroy target creature that player controls." */
-    record SacrificeSelfToDestroy(UUID sourcePermanentId, boolean cannotBeRegenerated) implements MultiPermanentChoiceContext {
+    /**
+     * "You may sacrifice [source]. If you do, destroy target creature that player controls."
+     * {@code sourceSacrificed} is set for the completion's second departure, the destroy, once the source has been
+     * sacrificed, so completing it again after a CR 616.1 question doesn't sacrifice again.
+     */
+    record SacrificeSelfToDestroy(UUID sourcePermanentId, boolean cannotBeRegenerated, boolean sourceSacrificed)
+            implements MultiPermanentChoiceContext {
+
+        public SacrificeSelfToDestroy(UUID sourcePermanentId, boolean cannotBeRegenerated) {
+            this(sourcePermanentId, cannotBeRegenerated, false);
+        }
     }
 
     /**
