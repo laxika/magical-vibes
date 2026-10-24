@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.JudgmentOfAlexanderDamagePreventionShield;
@@ -467,11 +468,12 @@ public class DamagePreventionService {
         List<CreatureDamageStep> steps = new ArrayList<>();
         steps.add(preventAll("AllCombatDamagePrevented", "Prevent all combat damage",
                 (gd, c, damage) -> c.combatDamage() && gd.preventAllCombatDamage && preventable(gd, c)));
-        steps.add(step("DestructionShield", "Destroy it instead", replacement, false,
+        steps.add(new CreatureDamageStep("DestructionShield", "Destroy it instead", replacement, false,
                 (gd, c, damage) -> damage > 0 && c.permanent().getDamageDestructionShield() > 0
                         && gameQueryService.isCreature(gd, c.permanent())
                         && gameQueryService.findPermanentById(gd, c.permanent().getId()) == c.permanent(),
-                (gd, c, damage) -> replaceNextDamageToTargetWithDestruction(gd, c.permanent(), damage) ? 0 : damage));
+                (gd, c, damage) -> replaceNextDamageToTargetWithDestruction(gd, c.permanent(), damage) ? 0 : damage,
+                NEVER, (gd, c, damage) -> DepartureIntent.destroy(c.permanent().getId(), false)));
         steps.add(step("ControlledCreaturesReduction", "Reduce the damage to your creature", replacement, true,
                 (gd, c, damage) -> damage > 0 && gameQueryService.isCreature(gd, c.permanent())
                         && applyControlledCreaturesDamageReduction(gd, c.permanent(), damage) < damage,
@@ -566,11 +568,14 @@ public class DamagePreventionService {
                         && controllerOf(gd, c.permanent()) != null
                         && gd.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented
                         .contains(controllerOf(gd, c.permanent()))));
-        steps.add(step("RemoveCountersOrSacrifice", "Remove counters from it, or sacrifice it, instead", replacement, false,
+        steps.add(new CreatureDamageStep("RemoveCountersOrSacrifice", "Remove counters from it, or sacrifice it, instead",
+                replacement, false,
                 (gd, c, damage) -> damagePreventionReplacementSupport.removesCountersOrSacrificesForDamage(
                         gd, c.permanent(), damage),
                 (gd, c, damage) -> damagePreventionReplacementSupport
-                        .applyDamageToPermanentByRemovingCountersOrSacrificing(gd, c.permanent(), damage) ? 0 : damage));
+                        .applyDamageToPermanentByRemovingCountersOrSacrificing(gd, c.permanent(), damage) ? 0 : damage,
+                NEVER, (gd, c, damage) -> damagePreventionReplacementSupport.sacrificesForDamage(
+                        gd, c.permanent(), damage) ? DepartureIntent.sacrifice(c.permanent().getId()) : null));
         steps.add(new CreatureDamageStep("RemovePlusOneCounters", "Remove +1/+1 counters from it instead",
                 replacement, false,
                 (gd, c, damage) -> {

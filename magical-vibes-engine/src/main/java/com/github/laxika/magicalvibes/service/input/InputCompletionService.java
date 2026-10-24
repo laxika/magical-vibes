@@ -314,11 +314,34 @@ public class InputCompletionService {
     public void sbaProcessMayAbilitiesThenAutoPass(GameData gameData) {
         gameData.deathReplacementsCanRerunEffect = false;
         if (resumeSuspendedInteraction(gameData)) return;
+        if (continueDamageAwaitingDeparture(gameData)) return;
         if (gameData.pendingEffectResolutionEntry == null) {
             stateBasedActionService.performStateBasedActions(gameData);
         }
         if (gameData.status == GameStatus.FINISHED) return;
         processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Continues a damage event that waited for the questions of the departure a replacement performs instead of the
+     * damage (CR 616.1f), once they are answered. While a question is still open, and after combat damage (its step
+     * checks state-based actions once all of its damage is dealt), no state-based action is checked in the middle of
+     * the event: the rest of the epilogue runs without them and this returns {@code true}.
+     */
+    private boolean continueDamageAwaitingDeparture(GameData gameData) {
+        if (damageSupport == null || gameData.suspendedDamageDepartureStep == null) {
+            return false;
+        }
+        boolean combat = gameData.suspendedReplacementEvent
+                instanceof com.github.laxika.magicalvibes.model.replacement.DamageEvent event && event.combat();
+        if (!damageSupport.resumeDamageAfterDepartureQuestions(gameData)) {
+            return false;
+        }
+        if (combat || gameData.suspendedDamageDepartureStep != null) {
+            processMayAbilitiesThenAutoPass(gameData);
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; the fallback stays until the callers listed in the eighth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; the fallback stays until the callers listed in the ninth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1481,6 +1481,56 @@ Steps add notes here for later steps, under their number.
   opponent's side, black chosen). No existing test changed. `TheToymakersTrapTest` (10), `RootGreevilTest` (8),
   `WheelOfSunAndMoonTest`, `OpalescenceTest`, `KalitasTraitorOfGhetTest`, `LegacyDepartureWrapperRatchetTest` and
   `DepartureServiceOrphanedStepBatchTest` pass.
+
+### Step 13 (ninth part: removals inside a damage event)
+
+- Rules: "destroy it instead" (Kill-Suit Cultist's `DestroyTargetCreatureInsteadOfNextDamageEffect`, the
+  `DestructionShield` damage step) and "remove that many counters instead; if you can't, sacrifice it" (Underdark
+  Beholder's `PreventDamageByRemovingCountersOrSacrificeEffect`, the `RemoveCountersOrSacrifice` step) replace the
+  damage with a destruction or sacrifice (CR 614.6, checked: the modified event happens instead). CR 616.1f (checked)
+  repeats the replacement process on the modified event with the effects that now apply, and CR 616.2 (checked) lets
+  effects become applicable that way, so the destruction's own replacements (regeneration, then Kalitas / Gravebane
+  Zombie / Wheel of Sun and Moon) are chosen before the modified event happens, inside the same process. Deferring the
+  removal until after the damage event would be wrong; asking up front, before the step is applied, is right. No official
+  card ruling covers either card's interaction (Kill-Suit Cultist has none; Underdark Beholder's are about its attack
+  trigger).
+- Done: `CreatureDamageStep` has a new `departs` component (the `DepartureIntent` its `apply` would perform, or `null`;
+  the old seven-argument constructor keeps `null`). In `PermanentDamagePreventions.stepRule`'s apply, the CR 616.1
+  ordering first calls `DamageSupport.askBeforeDamageDeparture`, which asks the departure's questions through the new
+  `DepartureService.askBeforeEvent` (gather, then choose, with asking allowed and without stopping the caller; nothing
+  changes). If a question opens, the step returns `ApplyResult.Suspended`, the event waits in
+  `GameData.suspendedReplacementEvent` and the step's family in the new `GameData.suspendedDamageDepartureStep` (copied
+  in `simulationFrameCopy`). Effect damage is then journaled as awaiting (the effect resolves again), and combat damage
+  parks its step (`isReplacementDecisionOutstanding`). Once answered, `InputCompletionService.sbaProcessMayAbilitiesThenAutoPass`
+  calls `DamageSupport.resumeDamageAfterDepartureQuestions`. It asks the next question the answers leave
+  (`DepartureService.continueAskingBeforeEvent`: a regeneration choice answered in the gather stage can leave a death
+  replacement to choose), or it applies the step, whose `tryDestroyAndLog` / `sacrificeAndLog` continues the answered
+  batch through `departNow`. Then it runs the rest of the event's replacements as an answered event (journaled damage is
+  dealt when the effect resolves again; combat goes on through `continueCombatDamageAfterDecision`). No state-based action
+  is checked while the question is open, or after combat damage until its step ends.
+- Not covered (still the fallback): `askBeforeEvent` asks nothing while another departure batch or a replay window's
+  answers are pending. The fixed-order chain `DamagePreventionService.applyCreaturePreventionShield` still calls the
+  steps' `apply` directly, but no engine code calls it any more (only Javadoc mentions it).
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (parked pending an official ruling; see the third part) and `LifeSupport` (Lich's Duel
+    Mastery's sacrifice inside a life loss replacement). The life loss is not a `ReplacementEvent`, so the shape used
+    here (suspend the event, resume it after the answers) would first need life loss to go through
+    `ReplacementOrderService` or to pause in some other way. The Mastery is a noncreature, so it has no death
+    replacement unless it is animated.
+- Tests: new (all `@FailOnLegacyDepartureFallback`, all fail with the old engine code by reaching the fallback from
+  `DestructionSupport.departDestroyBatch` / `sacrificeTogether`)
+  `KillSuitCultistTest.destructionInsteadOfSpellDamageAsksTheDeathReplacementFirst` (Shock on a shielded Gravebane Zombie
+  against Kalitas: still on the battlefield with Shock on the stack while asked, then on top of its library, no damage,
+  no Zombie token), `KillSuitCultistTest.destructionInsteadOfCombatDamageAsksTheDeathReplacementFirst` (the Zombie
+  blocks: asked mid damage step, then the attacker has its 3 damage) and
+  `UnderdarkBeholderTest.sacrificeInsteadOfDamageAsksTheDeathReplacementFirst` (one eyestalk counter, Wheel of Sun and Moon
+  against Kalitas: the counter is still there while asked, then the Beholder is on the bottom of its library). No
+  existing test changed. `KillSuitCultistTest` (12), `UnderdarkBeholderTest` (11), `KalitasTraitorOfGhetTest`,
+  `KalitasBloodchiefOfGhetTest`, `GravebaneZombieTest`, `PhytohydraTest`, `WheelOfSunAndMoonTest`, `FirestormPhoenixTest`
+  and `GameSimulatorTest` pass. In `magical-vibes-application`, `DamagePreventionSpecTest`, `LegacyDepartureWrapperRatchetTest`,
+  `SimulationCopyCompletenessTest`, `InputCompletionServiceTest`, `DepartureServiceOrphanedStepBatchTest`,
+  `CombatDamageServiceTest`, `SimultaneousDamageMechanicTest`, `RedirectedDamageRulesTest`, `CombatDamageAssignmentTest`
+  and the `service.effect.normalfx.*Damage*` tests have the same 100 failures (of 186) as at HEAD.
 
 ### Step 2
 

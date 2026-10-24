@@ -88,37 +88,41 @@ public class DamagePreventionReplacementSupport {
      * {@code damage} to {@code permanent}.
      */
     public boolean removesCountersOrSacrificesForDamage(GameData gameData, Permanent permanent, int damage) {
-        if (damage <= 0 || permanent == null
-                || !gameQueryService.hasActiveStaticEffect(
-                gameData, permanent, PreventDamageByRemovingCountersOrSacrificeEffect.class)) {
-            return false;
-        }
-        PreventDamageByRemovingCountersOrSacrificeEffect effect = permanent.getCard()
-                .getEffects(EffectSlot.STATIC).stream()
-                .filter(PreventDamageByRemovingCountersOrSacrificeEffect.class::isInstance)
-                .map(PreventDamageByRemovingCountersOrSacrificeEffect.class::cast)
-                .findFirst()
-                .orElse(null);
+        PreventDamageByRemovingCountersOrSacrificeEffect effect = activeEffect(gameData, permanent, damage);
         return effect != null && (permanent.getCounterCount(effect.counterType()) >= damage
                 || !gameQueryService.cantBeSacrificed(gameData, permanent)
                 && gameQueryService.findPermanentController(gameData, permanent.getId()) != null);
     }
 
-    /** Applies a permanent's damage replacement that consumes counters or sacrifices it. */
-    public boolean applyDamageToPermanentByRemovingCountersOrSacrificing(
-            GameData gameData, Permanent permanent, int damage) {
+    /**
+     * Whether {@link #applyDamageToPermanentByRemovingCountersOrSacrificing} would sacrifice {@code permanent}
+     * for {@code damage} (it has too few counters to remove), without changing the game.
+     */
+    public boolean sacrificesForDamage(GameData gameData, Permanent permanent, int damage) {
+        PreventDamageByRemovingCountersOrSacrificeEffect effect = activeEffect(gameData, permanent, damage);
+        return effect != null && permanent.getCounterCount(effect.counterType()) < damage
+                && !gameQueryService.cantBeSacrificed(gameData, permanent)
+                && gameQueryService.findPermanentController(gameData, permanent.getId()) != null;
+    }
+
+    private PreventDamageByRemovingCountersOrSacrificeEffect activeEffect(GameData gameData, Permanent permanent,
+                                                                          int damage) {
         if (damage <= 0 || permanent == null
                 || !gameQueryService.hasActiveStaticEffect(
                 gameData, permanent, PreventDamageByRemovingCountersOrSacrificeEffect.class)) {
-            return false;
+            return null;
         }
-
-        PreventDamageByRemovingCountersOrSacrificeEffect effect = permanent.getCard()
-                .getEffects(EffectSlot.STATIC).stream()
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(PreventDamageByRemovingCountersOrSacrificeEffect.class::isInstance)
                 .map(PreventDamageByRemovingCountersOrSacrificeEffect.class::cast)
                 .findFirst()
                 .orElse(null);
+    }
+
+    /** Applies a permanent's damage replacement that consumes counters or sacrifices it. */
+    public boolean applyDamageToPermanentByRemovingCountersOrSacrificing(
+            GameData gameData, Permanent permanent, int damage) {
+        PreventDamageByRemovingCountersOrSacrificeEffect effect = activeEffect(gameData, permanent, damage);
         if (effect == null) {
             return false;
         }

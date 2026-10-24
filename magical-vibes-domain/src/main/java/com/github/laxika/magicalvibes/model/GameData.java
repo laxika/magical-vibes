@@ -1837,6 +1837,12 @@ public class GameData {
      * CR 616.1 ordering prompt (a Cleric's "you may prevent"); that decision resumes it.
      */
     public com.github.laxika.magicalvibes.model.replacement.ReplacementEvent suspendedReplacementEvent;
+    /**
+     * The family of the damage replacement step ("destroy it instead", "sacrifice it") whose departure's questions
+     * {@link #suspendedReplacementEvent} waits for (CR 616.1f), or null. The step is applied, and the event continued,
+     * once the pending departure batch is answered.
+     */
+    public String suspendedDamageDepartureStep;
     /** The damage events of the effect being resolved, while one of them awaits its player's order. */
     public com.github.laxika.magicalvibes.model.replacement.DamageJournal damageJournal;
     /**
@@ -9969,6 +9975,7 @@ public class GameData {
         copy.pendingSourceRedirectDamage.addAll(this.pendingSourceRedirectDamage);
         copy.suspendedReplacementEvent = this.suspendedReplacementEvent == null
                 ? null : this.suspendedReplacementEvent.copyForSimulation();
+        copy.suspendedDamageDepartureStep = this.suspendedDamageDepartureStep;
         copy.damageJournal = this.damageJournal == null ? null : this.damageJournal.copyForSimulation();
         this.pendingSimultaneousDamage.forEach(pending ->
                 copy.pendingSimultaneousDamage.add(pending.copyForSimulation()));

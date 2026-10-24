@@ -300,8 +300,15 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                 (ctx, instance) -> step.label(),
                 (ctx, instance) -> ctx.event().withAmount(
                         step.apply().apply(ctx.gameData(), stepContext(ctx), ctx.amount())),
-                (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(
-                        step.apply().apply(ctx.gameData(), stepContext(ctx), ctx.amount()))));
+                (ctx, instance) -> {
+                    // CR 616.1f: the departure this step performs instead of the damage is asked about first.
+                    if (damageSupport.getObject().askBeforeDamageDeparture(
+                            ctx.gameData(), step, stepContext(ctx), ctx.amount())) {
+                        return new ApplyResult.Suspended<>(ctx.event());
+                    }
+                    return new ApplyResult.Applied<>(ctx.event().withAmount(
+                            step.apply().apply(ctx.gameData(), stepContext(ctx), ctx.amount())));
+                });
         return PER_SOURCE_STEPS.contains(step.family()) ? rule : rule.whole();
     }
 

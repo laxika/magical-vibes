@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.service.CreatureDamageStep;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
@@ -106,6 +110,7 @@ public class DamageSupport {
     private final ObjectProvider<com.github.laxika.magicalvibes.service.combat.CombatDamageService> combatDamageService;
     private final ObjectProvider<com.github.laxika.magicalvibes.service.input.PlayerInputService> playerInputService;
     private final VisualCueService visualCueService;
+    private final ObjectProvider<DepartureService> departureService;
 
     /**
      * Whether a creature source's damage is dealt by another object, such as the Equipment whose granted
@@ -1176,6 +1181,63 @@ public class DamageSupport {
             }
         }
         continueDamage(gameData, event, true, current -> replacementOrderService.run(gameData, current));
+    }
+
+    /**
+     * Asks, before {@code step} is applied to {@code damage}, every question about the departure it would perform
+     * instead of the damage ("destroy it instead", "sacrifice it"): the destruction is the modified event, so its own
+     * replacements apply to it before anything happens (CR 616.1f). When a question is opened, the damage event must
+     * be suspended; {@link #resumeDamageAfterDepartureQuestions} applies the step and continues the event once every
+     * answer is in.
+     *
+     * @return {@code true} when a question is open
+     */
+    public boolean askBeforeDamageDeparture(GameData gameData, CreatureDamageStep step,
+                                            CreatureDamageStep.Context context, int damage) {
+        DepartureIntent departure = step.departs().departure(gameData, context, damage);
+        if (departure == null
+                || !departureService.getObject().askBeforeEvent(gameData, DepartureBatch.of(List.of(departure)))) {
+            return false;
+        }
+        gameData.suspendedDamageDepartureStep = step.family();
+        return true;
+    }
+
+    /**
+     * Continues the damage event suspended by {@link #askBeforeDamageDeparture} once its departure's questions are
+     * answered: asks the next question the answers leave, or applies the step (whose departure consumes the answered
+     * batch) and runs the rest of the event's replacements. Combat damage then goes on with the damage step.
+     *
+     * @return whether a damage event was waiting for the departure's answers (it may still be)
+     */
+    public boolean resumeDamageAfterDepartureQuestions(GameData gameData) {
+        String family = gameData.suspendedDamageDepartureStep;
+        if (family == null) {
+            return false;
+        }
+        if (!(gameData.suspendedReplacementEvent instanceof DamageEvent event)) {
+            gameData.suspendedDamageDepartureStep = null;
+            return false;
+        }
+        if (departureService.getObject().continueAskingBeforeEvent(gameData)) {
+            return true;
+        }
+        gameData.suspendedDamageDepartureStep = null;
+        gameData.suspendedReplacementEvent = null;
+        CreatureDamageStep step = damagePreventionService.creatureDamageSteps().stream()
+                .filter(candidate -> candidate.family().equals(family))
+                .findFirst()
+                .orElseThrow();
+        Permanent target = gameQueryService.findPermanentById(gameData, event.recipientPermanentId());
+        DamageEvent replaced = target == null ? event : event.withAmount(step.apply().apply(gameData,
+                new CreatureDamageStep.Context(target, event.combat(), event.explicitSource(), true), event.amount()));
+        continueDamage(gameData, replaced, true, current -> replacementOrderService.run(gameData, current));
+        if (event.combat()) {
+            combatDamageService.getObject().continueCombatDamageAfterDecision(gameData);
+        } else {
+            drainPendingPlayerDamage(gameData);
+        }
+        return true;
     }
 
     /**

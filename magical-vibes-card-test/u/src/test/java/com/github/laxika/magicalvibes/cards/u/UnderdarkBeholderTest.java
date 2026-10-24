@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.Fervor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -14,6 +16,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,6 +64,36 @@ class UnderdarkBeholderTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Underdark Beholder");
         assertThat(beholder.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Sacrificing instead of the damage asks the death replacement before the Beholder leaves")
+    void sacrificeInsteadOfDamageAsksTheDeathReplacementFirst() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player2.getId());
+        Permanent beholder = harness.enterBattlefieldAndReturn(player2, new UnderdarkBeholder());
+        beholder.setCounterCount(CounterType.EYEBALL, 1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, beholder.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Underdark Beholder");
+        assertThat(beholder.getCounterCount(CounterType.EYEBALL)).isEqualTo(1);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Underdark Beholder");
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(beholder.getCard().getId());
+        assertThat(beholder.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

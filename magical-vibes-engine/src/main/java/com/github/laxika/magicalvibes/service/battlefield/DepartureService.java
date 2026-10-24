@@ -263,6 +263,60 @@ public class DepartureService {
     }
 
     /**
+     * Asks, before an event that can't be stopped and run again performs {@code batch} as part of a replacement it
+     * applies (CR 616.1f: "destroy it instead" of damage), every question the batch needs: its destruction
+     * replacements, then its CR 616.1 death replacements. Nothing has changed when this returns. When a question is
+     * opened, the batch waits in {@link GameData#pendingDepartureBatch} and the caller must pause its event; once
+     * {@link #continueAskingBeforeEvent} reports every answer in, the caller performs the same batch through
+     * {@link #departNow}, which continues the answered batch in its place. Nothing is asked while another batch or a
+     * replay window's answers are waiting.
+     *
+     * @return {@code true} when a question is open
+     */
+    public boolean askBeforeEvent(GameData gameData, DepartureBatch batch) {
+        if (gameData.pendingDepartureBatch != null || gameData.pendingDeathReplacementChoiceReplay != null
+                || batch.intents().stream().anyMatch(intent ->
+                gameData.chosenDeathReplacementsForRerun.containsKey(intent.permanentId()))) {
+            return false;
+        }
+        return askAhead(gameData, batch);
+    }
+
+    /**
+     * Goes on asking the batch {@link #askBeforeEvent} opened once its open questions are answered (a destruction
+     * replacement answered in the gather stage can leave a death replacement to choose).
+     *
+     * @return {@code true} while a question of the batch is open; {@code false} once the answered batch is ready to
+     *         be performed, or when no batch is pending
+     */
+    public boolean continueAskingBeforeEvent(GameData gameData) {
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (pending == null) {
+            return false;
+        }
+        return pending.isAwaitingAnswer() || askAhead(gameData, pending);
+    }
+
+    private boolean askAhead(GameData gameData, DepartureBatch batch) {
+        if (batch.stage() == DepartureStage.GATHER) {
+            batch = gather(gameData, batch, true);
+            if (batch.isAwaitingAnswer()) {
+                return true;
+            }
+        }
+        if (batch.stage() == DepartureStage.CHOOSE) {
+            batch = choose(gameData, batch, true);
+            if (batch.isAwaitingAnswer()) {
+                return true;
+            }
+        }
+        if (gameData.pendingDepartureBatch != null) {
+            gameData.pendingDepartureBatch = batch;
+        }
+        return false;
+    }
+
+    /**
      * Moves the answers of the answered batch {@link #askBeforePayment} asked into
      * {@link GameData#chosenDeathReplacementsForRerun}, for the payment that is made again to consume, and drops the
      * batch.
