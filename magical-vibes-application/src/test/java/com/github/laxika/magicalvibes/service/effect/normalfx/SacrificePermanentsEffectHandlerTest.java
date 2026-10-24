@@ -35,7 +35,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -76,20 +78,19 @@ class SacrificePermanentsEffectHandlerTest {
                 any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
         for (Permanent permanent : List.of(first, second)) {
             when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
-            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
             org.mockito.Mockito.doAnswer(invocation -> {
                 assertThat(gd.simultaneousDyingPermanentControllers)
                         .containsKeys(first.getId(), second.getId());
                 return true;
-            }).when(permanentRemovalService).sacrificePermanentToGraveyard(gd, permanent);
+            }).when(permanentRemovalService).departToGraveyard(eq(gd), eq(permanent), any(), any());
         }
 
         handler.resolve(gd, entry(player1Id, null),
                 new SacrificePermanentsEffect(2, new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER)
                         .withSimultaneousChoices());
 
-        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, first);
-        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, second);
+        verify(permanentRemovalService).departToGraveyard(gd, first, DepartureIntent.sacrifice(first.getId()), null);
+        verify(permanentRemovalService).departToGraveyard(gd, second, DepartureIntent.sacrifice(second.getId()), null);
         assertThat(gd.simultaneousDyingPermanentControllers).isEmpty();
     }
 
@@ -150,6 +151,11 @@ class SacrificePermanentsEffectHandlerTest {
                 gameQueryService, predicateEvaluationService, playerInputService, amountEvaluationService);
         lenient().when(gameQueryService.canEffectCauseSacrifice(any(), any(), any())).thenReturn(true);
         lenient().when(permanentRemovalService.sacrificePermanentToGraveyard(any(), any())).thenReturn(true);
+        lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
+        org.springframework.test.util.ReflectionTestUtils.setField(destructionSupport, "departureService",
+                new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
+                        triggerCollectionService, gameLogService));
     }
 
     // ===== Helpers =====
@@ -481,13 +487,11 @@ class SacrificePermanentsEffectHandlerTest {
                     any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
             when(gameQueryService.findPermanentById(gd, island.getId())).thenReturn(island);
-            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
-            when(gameQueryService.findPermanentController(gd, island.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry(player1Id, null), landSac(SacrificeRecipient.EACH_PLAYER));
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, forest);
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, island);
+            verify(permanentRemovalService).departToGraveyard(gd, forest, DepartureIntent.sacrifice(forest.getId()), null);
+            verify(permanentRemovalService).departToGraveyard(gd, island, DepartureIntent.sacrifice(island.getId()), null);
         }
 
         @Test

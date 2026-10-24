@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -62,6 +65,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -101,6 +105,7 @@ public class DestructionSupport {
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DepartureService departureService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -286,117 +291,68 @@ public class DestructionSupport {
 
     private BatchOutcome destroyBatchWithOutcome(GameData gameData, List<Permanent> toDestroy, String sourceName,
                                                  boolean cannotBeRegenerated, Runnable beforeDestruction) {
-        Set<Permanent> indestructible = new HashSet<>();
-        for (Permanent perm : toDestroy) {
-            if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
-                indestructible.add(perm);
-            }
-        }
-
-        List<Permanent> actuallyDying = new ArrayList<>();
-        boolean destructionReplaced = false;
-        for (Permanent perm : toDestroy) {
-            if (indestructible.contains(perm)) {
-                continue;
-            }
-            if (damagePreventionService.replaceDestructionWithShieldCounter(perm)) {
-                destructionReplaced = true;
-                continue;
-            }
-            if (graveyardService.tryReplaceDestruction(gameData, perm, !cannotBeRegenerated)) {
-                destructionReplaced = true;
-                continue;
-            }
-            actuallyDying.add(perm);
-        }
-        if (destructionReplaced) {
-            // A shield counter or regeneration already changed the game, so the effect can't be
-            // stopped and resolved again for a death replacement choice.
-            gameData.deathReplacementsCanRerunEffect = false;
-        }
-        // CR 616.1: the whole batch's death replacement choices come before any of it is destroyed.
-        permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, actuallyDying);
-        gameData.deathReplacementsCanRerunEffect = false;
-        beforeDestruction.run();
-
-        for (Permanent perm : toDestroy) {
-            if (indestructible.contains(perm)) {
-                gameLogService.append(gameData, GameLog.isIndestructible(perm.getCard()));
-            }
-        }
-
+        Map<UUID, Permanent> byId = new java.util.LinkedHashMap<>();
+        toDestroy.forEach(permanent -> byId.putIfAbsent(permanent.getId(), permanent));
+        DepartureService.Outcome.Done done = departDestroyBatch(gameData, List.copyOf(byId.values()), sourceName,
+                cannotBeRegenerated, beforeDestruction);
+        List<Permanent> destroyed = new ArrayList<>();
         List<Permanent> died = new ArrayList<>();
-        try {
-            beginSimultaneousCreatureDeaths(gameData, actuallyDying);
-            for (Permanent perm : actuallyDying) {
-                boolean removed = permanentRemovalService.destroyPermanentToGraveyard(gameData, perm);
-                if (removed && diedFromBattlefield(gameData, perm)) {
-                    died.add(perm);
-                }
-                gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
-                log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
+        for (DepartureResult result : done.results()) {
+            Permanent perm = byId.get(result.permanentId());
+            if (!result.destroyed()) {
+                continue;
             }
-            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
-            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
-        } finally {
-            endSimultaneousCreatureDeaths(gameData);
+            destroyed.add(perm);
+            if (diedFromBattlefield(result, perm)) {
+                died.add(perm);
+            }
         }
-        return new BatchOutcome(actuallyDying, died);
+        return new BatchOutcome(destroyed, died);
+    }
+
+    /**
+     * Destroys {@code toDestroy} as one event through {@link DepartureService}: every destruction replacement
+     * (indestructible, regeneration, shield counters, ...) and CR 616.1 death replacement is settled while all of
+     * them are still on the battlefield, then they are destroyed together. Inside a resolving effect that can be run
+     * again ({@code AsksDeathReplacementsFirst}) a question stops the effect, which is resolved again with the
+     * answers. {@code beforeDestruction} runs once every question is answered, before anything is destroyed.
+     *
+     * @return one result per distinct permanent, in the order given
+     */
+    public DepartureService.Outcome.Done departDestroyBatch(GameData gameData, List<Permanent> toDestroy,
+                                                            String sourceName, boolean cannotBeRegenerated,
+                                                            Runnable beforeDestruction) {
+        List<DepartureIntent> intents = toDestroy.stream()
+                .map(Permanent::getId)
+                .distinct()
+                .map(permanentId -> DepartureIntent.destroy(permanentId, cannotBeRegenerated))
+                .toList();
+        return departureService.departNow(gameData, DepartureBatch.of(intents), new DepartureService.Hooks(
+                () -> {
+                    beforeDestruction.run();
+                    for (Permanent perm : toDestroy.stream().distinct().toList()) {
+                        if (gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE)) {
+                            gameLogService.append(gameData, GameLog.isIndestructible(perm.getCard()));
+                        }
+                    }
+                },
+                (intent, perm, snapshot, removed) -> {
+                    if (snapshot == null) {
+                        // The destruction couldn't touch it (its controller's own effects can't affect it).
+                        return;
+                    }
+                    gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
+                    log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
+                }));
     }
 
     /**
      * Per CR 700.4 a creature dies only when it is put into a graveyard from the battlefield, so a permanent
-     * whose removal was replaced by exile or by a return to hand does not count. A token leaves no card in
-     * a graveyard, so it counts unless it was exiled instead.
+     * whose removal was replaced by exile or by a return to hand does not count. A token that ceased to exist
+     * on its way counts unless it was exiled instead.
      */
-    private boolean diedFromBattlefield(GameData gameData, Permanent perm) {
-        UUID cardId = perm.getCard().getId();
-        for (List<Card> graveyard : gameData.playerGraveyards.values()) {
-            if (graveyard.stream().anyMatch(card -> card.getId().equals(cardId))) {
-                return true;
-            }
-        }
-        return perm.getCard().isToken() && gameData.playerIds.stream()
-                .noneMatch(playerId -> gameData.getPlayerExiledCards(playerId).stream()
-                        .anyMatch(card -> card.getId().equals(cardId)));
-    }
-
-    private void beginSimultaneousCreatureDeaths(GameData gameData, List<Permanent> dying) {
-        for (Permanent perm : dying) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (controllerId == null) continue;
-            Permanent snapshot = new Permanent(perm);
-            snapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, perm));
-            snapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, perm));
-            snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, perm));
-            snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, perm));
-            gameData.simultaneousDyingPermanents.put(perm.getId(), snapshot);
-            gameData.simultaneousDyingPermanentControllers.put(perm.getId(), controllerId);
-            gameData.simultaneousDyingGrantedSelfDeathEffects.put(perm.getId(),
-                    List.copyOf(triggerCollectionService.grantedTriggeredEffects(
-                            gameData, perm, EffectSlot.ON_DEATH)));
-            if (!gameQueryService.isCreature(gameData, perm)) continue;
-            gameData.simultaneousDyingCreatures.put(perm.getId(), snapshot);
-            gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
-            gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
-            gameData.simultaneousDyingTriggerKeywordInstances.put(perm.getId(), Map.of(
-                    Keyword.PERSIST, gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.PERSIST),
-                    Keyword.UNDYING, gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.UNDYING)));
-            gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
-                    perm.getId(), List.copyOf(triggerCollectionService.grantedTriggeredEffects(
-                            gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES)));
-        }
-    }
-
-    private void endSimultaneousCreatureDeaths(GameData gameData) {
-        gameData.simultaneousDyingCreatures.clear();
-        gameData.simultaneousDyingControllers.clear();
-        gameData.simultaneousDyingPermanents.clear();
-        gameData.simultaneousDyingPermanentControllers.clear();
-        gameData.simultaneousDyingPowers.clear();
-        gameData.simultaneousDyingTriggerKeywordInstances.clear();
-        gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
-        gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
+    private static boolean diedFromBattlefield(DepartureResult result, Permanent perm) {
+        return result.wentToGraveyard() || result.destination() == null && perm.getCard().isToken();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {
@@ -424,6 +380,10 @@ public class DestructionSupport {
         Card sacrificedCard = creature.getCard();
         boolean sacrificedCreature = gameQueryService.isCreature(gameData, creature);
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
+        logSacrifice(gameData, sacrificedCard, playerId, sacrificedCreature);
+    }
+
+    private void logSacrifice(GameData gameData, Card sacrificedCard, UUID playerId, boolean sacrificedCreature) {
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
@@ -631,26 +591,44 @@ public class DestructionSupport {
                 .filter(java.util.Objects::nonNull)
                 .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                 .toList();
-        // CR 616.1: the whole batch's death replacement choices come before any of it is sacrificed.
-        permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, permanents);
-        gameData.deathReplacementsCanRerunEffect = false;
-        beginSimultaneousCreatureDeaths(gameData, permanents);
+        sacrificeTogether(gameData, permanents, null);
+    }
+
+    /**
+     * Each controller sacrifices their permanents among {@code permanents} at the same time, as one event
+     * through {@link DepartureService}: every CR 616.1 death replacement is chosen in APNAP order while all of
+     * them are still on the battlefield. Inside a caller that can be run again a question stops it, and it is run
+     * again with the answers. Each sacrifice is logged and its sacrifice triggers collected as it happens.
+     *
+     * @param sacrificingPlayerId the player credited with every sacrifice, or {@code null} for each controller
+     * @return one result per distinct permanent, in the order given
+     */
+    public DepartureService.Outcome.Done sacrificeTogether(GameData gameData, List<Permanent> permanents,
+                                                           UUID sacrificingPlayerId) {
+        List<DepartureIntent> intents = permanents.stream()
+                .map(Permanent::getId)
+                .distinct()
+                .map(DepartureIntent::sacrifice)
+                .toList();
         // Sacrificed at the same time, so "another creature leaves" watchers that are also sacrificed still see the others leave.
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         gameData.simultaneousSacrificeDepth++;
         try {
-            for (Permanent perm : permanents) {
-                UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(perm.getId());
-                sacrificeAndLog(gameData, perm, controllerId);
-            }
-            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
-            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
+            return departureService.departNow(gameData, DepartureBatch.of(intents), DepartureService.Hooks.afterEach(
+                    (intent, perm, snapshot, removed) -> {
+                        if (snapshot == null) {
+                            // It couldn't be sacrificed (CR 701.21a), so it wasn't, and nothing that watches for a
+                            // sacrifice sees one.
+                            return;
+                        }
+                        UUID playerId = sacrificingPlayerId != null ? sacrificingPlayerId : snapshot.controllerId();
+                        logSacrifice(gameData, perm.getCard(), playerId, snapshot.creature());
+                    }));
         } finally {
             if (--gameData.simultaneousSacrificeDepth == 0) {
                 gameData.sacrificeBoonBatchPlayerIds.clear();
             }
             permanentRemovalService.endPermanentLeaveBatch(gameData);
-            endSimultaneousCreatureDeaths(gameData);
         }
     }
 
@@ -1237,17 +1215,17 @@ public class DestructionSupport {
         } else {
             gameLogService.append(gameData, GameLog.text(playerName + " sacrifices " + pileName + ": " + pileDescription + "."));
 
-            List<Permanent> sacrificed = pileToSacrifice.stream()
-                    .map(permId -> gameQueryService.findPermanentById(gameData, permId))
-                    .filter(java.util.Objects::nonNull)
+            List<DepartureIntent> intents = pileToSacrifice.stream()
+                    .filter(permId -> gameQueryService.findPermanentById(gameData, permId) != null)
+                    .distinct()
+                    .map(DepartureIntent::sacrifice)
                     .toList();
-            permanentRemovalService.performSimultaneousRemovals(gameData, sacrificed, () -> {
-                for (Permanent perm : sacrificed) {
-                    if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, perm)) {
-                        gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
-                    }
-                }
-            });
+            departureService.departNow(gameData, DepartureBatch.of(intents), DepartureService.Hooks.afterEach(
+                    (intent, perm, snapshot, removed) -> {
+                        if (removed) {
+                            gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
+                        }
+                    }));
         }
 
         gameOutcomeService.checkWinCondition(gameData);

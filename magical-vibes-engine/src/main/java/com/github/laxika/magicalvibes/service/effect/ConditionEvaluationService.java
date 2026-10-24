@@ -353,6 +353,7 @@ import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
@@ -1363,6 +1364,9 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
+            case PermanentLeftThisWay c -> c.how() == PermanentLeftThisWay.How.SACRIFICED
+                    ? ctx.resolutionResults().anySacrificed()
+                    : ctx.resolutionResults().anyDestroyed();
             case VoidCondition ignored ->
                     gameData.nonlandPermanentLeftBattlefieldThisTurn || gameData.spellWarpedThisTurn;
             case DidntActivateLoyaltyAbilityThisTurn ignored ->

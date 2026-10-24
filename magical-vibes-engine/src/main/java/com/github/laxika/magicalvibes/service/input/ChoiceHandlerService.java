@@ -157,6 +157,8 @@ public class ChoiceHandlerService {
     private final GameQueryService gameQueryService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileAndReturnTransformedService exileAndReturnTransformedService;
@@ -505,7 +507,11 @@ public class ChoiceHandlerService {
                 throw new IllegalArgumentException("Invalid replacement effect");
             }
             gameData.interaction.clearAwaitingInput();
-            permanentRemovalService.resolveDeathExileReplacementChoice(gameData, choice, colorName);
+            if (choice.inDepartureBatch()) {
+                departureService.recordReplacementAnswer(gameData, choice.permanentId(), choice.options(), colorName);
+            } else {
+                permanentRemovalService.resolveDeathExileReplacementChoice(gameData, choice, colorName);
+            }
             if (gameData.pendingDeathReplacementChoiceReplay != null
                     && !permanentRemovalService.awaitsDeathReplacementChoiceBeforeRerun(gameData)) {
                 permanentChoiceHandlerService.completeChoiceAgainAfterDeathReplacements(gameData);
@@ -624,7 +630,16 @@ public class ChoiceHandlerService {
                 throw new IllegalArgumentException("Invalid regeneration shield");
             }
             gameData.interaction.clearAwaitingInput();
-            graveyardService.resolveRegenerationShieldChoice(gameData, choice, colorName);
+            if (choice.inDepartureBatch()) {
+                departureService.recordDestructionAnswer(gameData, choice.permanentId(), choice.shields().get(colorName));
+                if (gameData.pendingDeathReplacementChoiceReplay != null
+                        && !permanentRemovalService.awaitsDeathReplacementChoiceBeforeRerun(gameData)) {
+                    permanentChoiceHandlerService.completeChoiceAgainAfterDeathReplacements(gameData);
+                    return;
+                }
+            } else {
+                graveyardService.resolveRegenerationShieldChoice(gameData, choice, colorName);
+            }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }

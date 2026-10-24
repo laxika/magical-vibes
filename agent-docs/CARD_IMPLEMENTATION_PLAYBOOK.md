@@ -220,7 +220,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MagmaPhoenix.java`
 
 - Shuffle-into-library replacement effect ("if would be put into graveyard from anywhere, shuffle into library instead"):
-  - `addEffect(EffectSlot.STATIC, new ShuffleIntoLibraryReplacementEffect())` — checked in `GraveyardService.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution.
+  - `addEffect(EffectSlot.STATIC, new ShuffleIntoLibraryReplacementEffect())` — checked in `GraveyardService.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution. A dying creature's shuffle is a CR 616.1 option (`SHUFFLE_INTO_LIBRARY`) its controller picks among competing death replacements before it leaves.
   - Example: `magical-vibes-card/b/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/l/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
 
 - Discard-to-battlefield replacement effect ("if opponent causes you to discard this card, put it onto the battlefield instead"):

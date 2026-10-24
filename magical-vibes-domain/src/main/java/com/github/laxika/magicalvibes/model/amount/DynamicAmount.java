@@ -26,6 +26,8 @@ public sealed interface DynamicAmount permits
         NonCreatureSubtypesAmongCardsInGraveyard,
         CreatureTypesAmongControlledCreatures,
         CardsDrawnThisResolution,
+        PermanentLeftThisWayPower,
+        PermanentLeftThisWayToughness,
         CardsDrawnThisTurn,
         CardsLookedAtWhileScrying,
         OpponentsWithAtLeastCardsDrawnThisTurn,

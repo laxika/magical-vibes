@@ -2,6 +2,13 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureResult;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -36,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +62,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -1187,6 +1196,183 @@ class EffectResolutionServiceTest {
             inOrder.verify(handlerA).resolve(gd, entry, stepA);
             inOrder.verify(handlerB).resolve(gd, entry, stepB);
             inOrder.verify(afterHandler).resolve(gd, entry, after);
+        }
+    }
+
+    @Nested
+    @DisplayName("Resolution scratchpad")
+    class ResolutionScratchpad {
+
+        private final CardEffect sacrifice = new SacrificeSelfEffect();
+        private final CardEffect destroy = new DestroyTargetPermanentEffect();
+        private final CardEffect draw = new DrawCardEffect(1);
+
+        @BeforeEach
+        void openDamageEvents() {
+            lenient().when(damageSupport.beginDamageEvent(any(), any(), anyInt())).thenReturn(true);
+            lenient().when(damageSupport.endOpenDamageEvent(any())).thenReturn(true);
+        }
+
+        private DepartureResult left(Zone destination, boolean destroyed, boolean sacrificed) {
+            return new DepartureResult(UUID.randomUUID(), destination, player1Id, UUID.randomUUID(),
+                    2, 2, destroyed, sacrificed);
+        }
+
+        private EffectHandler recording(CardEffect step, StackEntry entry, List<DepartureResult> results) {
+            EffectHandler handler = stubHandler(step);
+            doAnswer(invocation -> {
+                entry.recordDepartures(results);
+                return null;
+            }).when(handler).resolve(gd, entry, step);
+            return handler;
+        }
+
+        private StackEntry sacrificeThenIfYouDoDraw() {
+            return createEntry(createCard("Sacrifice then draw"), player1Id,
+                    List.of(sacrifice, ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), draw)));
+        }
+
+        @Test
+        @DisplayName("\"If you do\" resolves when the earlier step sacrificed, even into exile")
+        void ifYouDoResolvesAfterASacrifice() {
+            StackEntry entry = sacrificeThenIfYouDoDraw();
+            recording(sacrifice, entry, List.of(left(Zone.EXILE, false, true)));
+            EffectHandler drawHandler = stubHandler(draw);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(drawHandler).resolve(gd, entry, draw);
+        }
+
+        @Test
+        @DisplayName("\"If you do\" does nothing when the earlier step sacrificed nothing")
+        void ifYouDoSkipsWhenNothingWasSacrificed() {
+            StackEntry entry = sacrificeThenIfYouDoDraw();
+            recording(sacrifice, entry, List.of());
+            EffectHandler drawHandler = stubHandler(draw);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(drawHandler, never()).resolve(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("A later removal step's results replace an earlier step's")
+        void laterRemovalStepReplacesEarlierResults() {
+            CardEffect secondSacrifice = new SacrificeSelfEffect(true);
+            StackEntry entry = createEntry(createCard("Two sacrifices"), player1Id, List.of(sacrifice,
+                    secondSacrifice, ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), draw)));
+            recording(sacrifice, entry, List.of(left(Zone.GRAVEYARD, false, true)));
+            recording(secondSacrifice, entry, List.of());
+            EffectHandler drawHandler = stubHandler(draw);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(drawHandler, never()).resolve(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("\"If it was destroyed this way\" ignores a permanent that regenerated")
+        void destroyedThisWayIgnoresARegeneratedPermanent() {
+            StackEntry entry = createEntry(createCard("Destroy then draw"), player1Id,
+                    List.of(destroy, ConditionalEffect.unless(PermanentLeftThisWay.destroyed(), draw)));
+            recording(destroy, entry, List.of(left(Zone.BATTLEFIELD, false, false)));
+            EffectHandler drawHandler = stubHandler(draw);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(drawHandler, never()).resolve(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("\"If it was destroyed this way\" resolves after a destruction")
+        void destroyedThisWayResolvesAfterADestruction() {
+            StackEntry entry = createEntry(createCard("Destroy then draw"), player1Id,
+                    List.of(destroy, ConditionalEffect.unless(PermanentLeftThisWay.destroyed(), draw)));
+            recording(destroy, entry, List.of(left(Zone.GRAVEYARD, true, false)));
+            EffectHandler drawHandler = stubHandler(draw);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(drawHandler).resolve(gd, entry, draw);
+        }
+
+        @Test
+        @DisplayName("A step that ends on its pending departure parks at the next step without running again")
+        void stepEndingOnAPendingDepartureParksAtTheNextStep() {
+            DepartureService departureService = stepDepartures();
+            StackEntry entry = sacrificeThenIfYouDoDraw();
+            EffectHandler sacrificeHandler = stubHandler(sacrifice);
+            doAnswer(invocation -> {
+                gd.pendingDepartureBatch = DepartureBatch.of(List.of(DepartureIntent.sacrifice(UUID.randomUUID())))
+                        .ownedBy(entry.getTargetableId())
+                        .awaitingAnswer(UUID.randomUUID());
+                return null;
+            }).when(sacrificeHandler).resolve(gd, entry, sacrifice);
+            EffectHandler drawHandler = stubHandler(draw);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            assertThat(gd.pendingEffectResolutionEntry).isSameAs(entry);
+            assertThat(gd.pendingEffectResolutionIndex).isEqualTo(1);
+            verify(drawHandler, never()).resolve(any(), any(), any());
+
+            when(departureService.finishStepDeparture(gd, entry)).thenAnswer(invocation -> {
+                gd.pendingDepartureBatch = null;
+                entry.recordDepartures(List.of(left(Zone.LIBRARY, false, true)));
+                return true;
+            });
+            effectResolutionService.resolveEffectsFrom(gd, entry, gd.pendingEffectResolutionIndex);
+
+            verify(sacrificeHandler).resolve(gd, entry, sacrifice);
+            verify(drawHandler).resolve(gd, entry, draw);
+            assertThat(gd.pendingEffectResolutionEntry).isNull();
+        }
+
+        @Test
+        @DisplayName("A resumed resolution stays parked while its step's departure still waits for an answer")
+        void resumeStaysParkedWhileTheStepDepartureIsUnanswered() {
+            DepartureService departureService = stepDepartures();
+            StackEntry entry = sacrificeThenIfYouDoDraw();
+            EffectHandler drawHandler = stubHandler(draw);
+            when(departureService.finishStepDeparture(gd, entry)).thenReturn(false);
+
+            effectResolutionService.resolveEffectsFrom(gd, entry, 1);
+
+            assertThat(gd.pendingEffectResolutionEntry).isSameAs(entry);
+            assertThat(gd.pendingEffectResolutionIndex).isEqualTo(1);
+            verify(drawHandler, never()).resolve(any(), any(), any());
+        }
+
+        private DepartureService stepDepartures() {
+            DepartureService departureService = mock(DepartureService.class);
+            lenient().when(departureService.finishStepDeparture(any(), any())).thenReturn(true);
+            org.springframework.test.util.ReflectionTestUtils.setField(
+                    effectResolutionService, "departureService", departureService);
+            return departureService;
+        }
+
+        @Test
+        @DisplayName("A copy taken while the resolution is parked keeps the scratchpad for the next step")
+        void parkedCopyKeepsTheScratchpad() {
+            StackEntry entry = sacrificeThenIfYouDoDraw();
+            EffectHandler sacrificeHandler = stubHandler(sacrifice);
+            doAnswer(invocation -> {
+                entry.recordDepartures(List.of(left(Zone.GRAVEYARD, false, true)));
+                gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        createCard("May source"), player1Id, List.of(), "may ability"));
+                return null;
+            }).when(sacrificeHandler).resolve(gd, entry, sacrifice);
+
+            effectResolutionService.resolveEffects(gd, entry);
+            assertThat(gd.pendingEffectResolutionIndex).isEqualTo(1);
+
+            StackEntry copy = new StackEntry(entry);
+            EffectHandler drawHandler = stubHandler(draw);
+            gd.pendingMayAbilities.clear();
+            effectResolutionService.resolveEffectsFrom(gd, copy, gd.pendingEffectResolutionIndex);
+
+            verify(drawHandler).resolve(gd, copy, draw);
         }
     }
 }

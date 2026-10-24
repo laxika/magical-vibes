@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -19,7 +20,9 @@ import com.github.laxika.magicalvibes.service.GameService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.platform.commons.support.AnnotationSupport;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +41,7 @@ public abstract class BaseCardTest {
     protected GameData gd;
 
     @BeforeEach
-    void setUp() {
+    void setUp(TestInfo testInfo) {
         harness = new GameTestHarness();
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
@@ -63,6 +66,27 @@ public abstract class BaseCardTest {
         // to one. Marking both players AI silently left conn1/conn2 empty, breaking every test that
         // asserts on sent messages. alwaysOfferPriorityWindows buys the priority behavior alone.
         gd.alwaysOfferPriorityWindows = true;
+
+        if (testInfo.getTestMethod().stream().anyMatch(method ->
+                AnnotationSupport.isAnnotated(method, FailOnLegacyDepartureFallback.class))
+                || testInfo.getTestClass().stream().anyMatch(testClass ->
+                        AnnotationSupport.isAnnotated(testClass, FailOnLegacyDepartureFallback.class))) {
+            LegacyDepartureFallback.watch(gd.id);
+        }
+    }
+
+    /**
+     * A test marked {@link FailOnLegacyDepartureFallback} fails when its game reached a legacy departure fallback:
+     * a removal whose replacement question could no longer be asked before the permanent left the battlefield.
+     */
+    @AfterEach
+    void assertNoLegacyDepartureFallback() {
+        if (gd == null) return;
+        List<LegacyDepartureFallback.Hit> hits = LegacyDepartureFallback.unwatch(gd.id);
+        if (!hits.isEmpty()) {
+            throw new AssertionError("Test reached the legacy departure fallback: " + hits
+                    + ". Move the caller onto DepartureService.depart.");
+        }
     }
 
     /**

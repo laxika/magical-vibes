@@ -433,8 +433,6 @@ public class TurnCleanupService {
         gameData.playersShufflingCreaturesEnteringFromExileThisTurn.clear();
         gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.clear();
-        gameData.chosenStateBasedDeathReplacements.clear();
-        gameData.stateBasedMayLibraryChoices.clear();
         gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();

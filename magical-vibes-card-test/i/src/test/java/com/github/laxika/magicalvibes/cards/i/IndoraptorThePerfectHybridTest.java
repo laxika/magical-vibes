@@ -162,7 +162,7 @@ class IndoraptorThePerfectHybridTest extends BaseCardTest {
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(zombie);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
 

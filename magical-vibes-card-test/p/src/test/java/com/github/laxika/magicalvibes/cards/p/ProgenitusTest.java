@@ -266,7 +266,9 @@ class ProgenitusTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, "SHUFFLE");
+        assertThat(choice.options()).contains("Shuffle it into its owner's library");
+        harness.assertOnBattlefield(player2, "Progenitus");
+        harness.handleListChoice(player2, "Shuffle it into its owner's library");
         assertThat(gd.playerDecks.get(player1.getId())).contains(progenitus);
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(progenitus);
     }
@@ -284,7 +286,9 @@ class ProgenitusTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        harness.handleListChoice(player2, "SHUFFLE");
+        assertThat(choice.options()).contains("Shuffle it into its owner's library");
+        harness.assertOnBattlefield(player2, "Progenitus");
+        harness.handleListChoice(player2, "Shuffle it into its owner's library");
         assertThat(gd.playerDecks.get(player2.getId())).contains(progenitus);
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(progenitus);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);

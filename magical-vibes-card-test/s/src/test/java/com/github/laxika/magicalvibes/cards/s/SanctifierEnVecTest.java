@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.c.Chatterstorm;
 import com.github.laxika.magicalvibes.cards.d.Damn;
 import com.github.laxika.magicalvibes.cards.d.DressDown;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SanctifierEnVec.class, NestedShambler.class, Chatterstorm.class, UnholyHeat.class, DressDown.class, Damn.class})
+@CardUsed({KalitasTraitorOfGhet.class, CruelEdict.class, SanctifierEnVec.class, NestedShambler.class, Chatterstorm.class, UnholyHeat.class, DressDown.class, Damn.class})
 class SanctifierEnVecTest extends BaseCardTest {
 
     @Test
@@ -131,5 +134,25 @@ class SanctifierEnVecTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void dyingBlackCreatureOffersSanctifierAlongsideKalitas() {
+        harness.addToBattlefield(player1, new SanctifierEnVec());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent shambler = harness.addToBattlefieldAndReturn(player2, new NestedShambler());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Exile it", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Nested Shambler");
+
+        harness.handleListChoice(player2, "Exile it");
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(shambler.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

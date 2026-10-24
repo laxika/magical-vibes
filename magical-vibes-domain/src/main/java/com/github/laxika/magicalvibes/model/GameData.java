@@ -843,8 +843,6 @@ public class GameData {
      * battlefield lists) is queued here and applied once that sweep is done.
      */
     public final Map<UUID, UUID> pendingRegenerationControlChanges = new ConcurrentHashMap<>();
-    /** Replacement choices collected before a batch of state-based destruction is applied. */
-    public final Map<UUID, String> chosenRegenerationShields = new ConcurrentHashMap<>();
     /** Source permanent id → ids of the tokens created with it ("tokens created with this permanent"; Tetravus, Tombstone Stairwell). */
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
@@ -1119,6 +1117,11 @@ public class GameData {
     public PermanentChoiceContext.AuraEntryBatchChoice pendingBattlefieldEntryBatch;
     /** Answered and pending entry requests, keyed by the physical card's ID. */
     public final Map<UUID, BattlefieldEntryRequest> pendingBattlefieldEntryRequests = new ConcurrentHashMap<>();
+    /**
+     * Departure from the battlefield waiting for an answer before any of its permanents leave; it
+     * resumes at its stage once the answer arrives. {@code null} when no departure is pending.
+     */
+    public DepartureBatch pendingDepartureBatch;
     /**
      * Entries that reached their "enter as a copy" choice while another copy choice was open, such as
      * the second of two Clones entering together. Each is offered its own choice once {@link #cloneOperation}
@@ -2875,24 +2878,18 @@ public class GameData {
     /** Death replacement prompts raised inside the current group of simultaneous deaths. */
     public final List<PendingInteraction.ColorChoice> deferredDeathReplacementChoices = new ArrayList<>();
     /**
-     * Death replacements chosen ahead of a state-based-action batch, by dying permanent. The batch
-     * waits until every choice is made, then applies each while performing the deaths together.
-     */
-    public final Map<UUID, ChoiceContext.DeathExileReplacement> chosenStateBasedDeathReplacements =
-            new ConcurrentHashMap<>();
-    /**
-     * Dying permanents of a pending state-based-action batch whose "you may put it on top of its
-     * owner's library instead" is being asked ahead of the batch; the answer is recorded in
-     * {@link #chosenStateBasedDeathReplacements}.
-     */
-    public final Set<UUID> stateBasedMayLibraryChoices = ConcurrentHashMap.newKeySet();
-    /**
      * CR 616.1 outside state-based actions: {@code true} while the resolving effect's handler has
      * changed nothing yet, so a creature it would kill that has competing death replacements (one of
      * them keeping the card) can be asked about before anything happens, and the effect resolved
      * again once its controller answers. The first removal attempt clears it.
      */
     public boolean deathReplacementsCanRerunEffect;
+    /**
+     * The step (the effect of the resolving stack entry's effect list) whose handler is running and may end on a
+     * pending departure batch, or {@code null}. Only that step's own departure may pause: a handler it dispatches
+     * for a nested effect, or a second departure of the same step, sees a different value (CR 608.2c).
+     */
+    public CardEffect stepDepartureEffect;
     /**
      * Death replacements chosen before the resolving effect is resolved again, by dying permanent.
      * The rerun consumes them as its deaths happen; whatever is left is dropped when the rerun ends.
@@ -4099,7 +4096,7 @@ public class GameData {
                     "currentlyResolvingControllerId", "pendingEffectResolutionEntry",
                     "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
-                    "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect",
+                    "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect", "stepDepartureEffect",
                     "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
@@ -8207,7 +8204,6 @@ public class GameData {
         copy.pendingEachPlayerMayDrawThenGainLifeInitialCount = this.pendingEachPlayerMayDrawThenGainLifeInitialCount;
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
-        copy.chosenRegenerationShields.putAll(this.chosenRegenerationShields);
         copy.unpreventableDamageInProgress = this.unpreventableDamageInProgress;
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
@@ -9221,6 +9217,8 @@ public class GameData {
                 ? null : this.pendingBattlefieldEntryBatch.deepCopy();
         this.pendingBattlefieldEntryRequests.forEach((id, request) ->
                 copy.pendingBattlefieldEntryRequests.put(id, request.deepCopy()));
+        copy.pendingDepartureBatch = this.pendingDepartureBatch == null
+                ? null : this.pendingDepartureBatch.deepCopy();
         this.pendingEntryCopyChoices.forEach(choice -> copy.pendingEntryCopyChoices.add(choice.deepCopy()));
         copy.pendingAnyNumberHandPutCardIds.addAll(this.pendingAnyNumberHandPutCardIds);
         copy.holdingHandBattlefieldPuts = this.holdingHandBattlefieldPuts;
@@ -9590,9 +9588,8 @@ public class GameData {
         copy.permanentLeaveBatchPendingPermanents.putAll(this.permanentLeaveBatchPendingPermanents);
         copy.deathReplacementChoiceBatchDepth = this.deathReplacementChoiceBatchDepth;
         copy.deferredDeathReplacementChoices.addAll(this.deferredDeathReplacementChoices);
-        copy.chosenStateBasedDeathReplacements.putAll(this.chosenStateBasedDeathReplacements);
-        copy.stateBasedMayLibraryChoices.addAll(this.stateBasedMayLibraryChoices);
         copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;
+        copy.stepDepartureEffect = this.stepDepartureEffect;
         copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
         copy.rerunMayLibraryChoices.addAll(this.rerunMayLibraryChoices);
         copy.pendingDeathReplacementChoiceReplay = this.pendingDeathReplacementChoiceReplay;

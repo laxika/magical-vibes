@@ -201,16 +201,22 @@ public sealed interface ChoiceContext {
             RETURN_TO_HAND,
             /** Its own replacement puts it into its owner's library (Gravebane Zombie). */
             LIBRARY,
+            /** Its card is revealed and put on the bottom of its owner's library (Wheel of Sun and Moon). */
+            BOTTOM_OF_LIBRARY,
+            /** Its own replacement reveals it and shuffles it into its owner's library (Progenitus). */
+            SHUFFLE_INTO_LIBRARY,
             /** Exiles the creature with no further effect. */
             PLAIN,
             /** An opponent's replacement with a rider (Kalitas's Zombie, Gisa's tracking, ...). */
             OPPONENT,
             /** A spell's "exile it instead" that links the exiled card to its source. */
             TRACKED,
-            /** A permanent's graveyard replacement that exiles the card with it (Void Maw). */
+            /** A permanent's graveyard replacement that exiles the card with it (Void Maw, Valgavoth). */
             EXILED_WITH_PERMANENT,
             /** Exiles the card with a blood counter. */
             BLOOD_COUNTER,
+            /** An opponent's graveyard replacement exiles the card with a void counter (Dauthi Voidwalker). */
+            VOID_COUNTER,
             /** A face-up plane's exile replacement that also costs its controller life. */
             PLANAR,
             /** Exiles the permanent and returns it at the beginning of the next end step. */
@@ -224,24 +230,26 @@ public sealed interface ChoiceContext {
 
             /** Whether choosing it leaves the card in exile, so only its rider depends on the choice. */
             public boolean exiles() {
-                return this != RETURN_TO_HAND && this != LIBRARY && this != NO_REPLACEMENT;
+                return this != RETURN_TO_HAND && this != LIBRARY && this != BOTTOM_OF_LIBRARY
+                        && this != SHUFFLE_INTO_LIBRARY && this != NO_REPLACEMENT;
             }
         }
     }
 
     /**
      * CR 616.1: the controller of the dying creature {@code permanentId} picks which of
-     * {@code options} applies before the creature leaves the battlefield. For a state-based death
-     * ({@code stateBased}) the choice is recorded and the whole state-based batch is performed once
-     * every such choice is made. Elsewhere this is only asked when an option sends the creature
-     * somewhere other than exile. When it was asked before the resolving effect changed anything
+     * {@code options} applies before the creature leaves the battlefield. For a creature of a departure
+     * batch ({@code inDepartureBatch}) the choice is recorded on the pending batch, which is performed
+     * once every such choice is made. Elsewhere it is asked when the effect causing the death can be
+     * stopped and run again, or when an option sends the creature somewhere other than exile. When it
+     * was asked before the resolving effect changed anything
      * ({@code rerunsEffect}), the choice is recorded and the effect is resolved again, its death
      * consuming the choice. Otherwise its removal resumes with the chosen option and the removal's
      * original flags.
      */
     record DeathExileReplacementChoice(UUID permanentId, List<DeathExileReplacement> options,
                                        boolean destroyedBySpellOrAbility, boolean wasSacrificed,
-                                       UUID destinationPlayerId, boolean stateBased,
+                                       UUID destinationPlayerId, boolean inDepartureBatch,
                                        boolean rerunsEffect) implements ChoiceContext {
         public DeathExileReplacementChoice {
             options = List.copyOf(options);
@@ -251,7 +259,10 @@ public sealed interface ChoiceContext {
     /**
      * CR 616.1: a dying creature was exiled in place of dying while several exile replacements with
      * different riders applied; every one of them exiles it, so it left with its event and its
-     * controller now picks which replacement it was. Only the chosen one's rider is applied.
+     * controller now picks which replacement it was. Only the chosen one's rider is applied. Only a
+     * removal whose caller can't be stopped and run again gets here: outside a departure batch and
+     * outside {@code GameData.deathReplacementsCanRerunEffect}, or a departure batch performed outside
+     * that window. Everywhere else the choice is made before the creature leaves.
      *
      * @param controllerId   the creature's controller when it left, who chooses
      * @param ownerId        the owner of its main card
@@ -366,13 +377,15 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Chooses the regeneration replacement before the destruction event is completed. */
+    /**
+     * Chooses the destruction replacement (CR 614.8) that saves {@code permanentId}. For a permanent of a
+     * departure batch ({@code inDepartureBatch}) it is asked in the batch's gather stage, before anything
+     * leaves, and recorded on the pending batch, which applies it once every question of the batch is
+     * answered. Otherwise (a batch performed while its caller can't be stopped and run again) the permanent
+     * already survived and the chosen replacement is applied at once.
+     */
     record RegenerationShieldChoice(UUID permanentId, Map<String, String> shields,
-                                    boolean stateBasedDestruction) implements ChoiceContext {
-        public RegenerationShieldChoice(UUID permanentId, Map<String, String> shields) {
-            this(permanentId, shields, false);
-        }
-
+                                    boolean inDepartureBatch) implements ChoiceContext {
         public RegenerationShieldChoice {
             shields = Map.copyOf(shields);
         }

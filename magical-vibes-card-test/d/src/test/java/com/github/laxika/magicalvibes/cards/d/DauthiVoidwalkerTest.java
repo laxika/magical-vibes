@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
@@ -17,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DauthiVoidwalker.class, Shock.class, GrizzlyBears.class, DressDown.class, DreyKeeper.class,
+@CardUsed({KalitasTraitorOfGhet.class, CruelEdict.class, DauthiVoidwalker.class, Shock.class, GrizzlyBears.class, DressDown.class, DreyKeeper.class,
         WalkingBallista.class})
 class DauthiVoidwalkerTest extends BaseCardTest {
 
@@ -196,5 +198,26 @@ class DauthiVoidwalkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void dyingOpponentCreatureOffersVoidCounterExileAlongsideKalitas() {
+        harness.addToBattlefield(player1, new DauthiVoidwalker());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Exile it with a void counter (Dauthi Voidwalker)", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.handleListChoice(player2, "Exile it with a void counter (Dauthi Voidwalker)");
+
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        assertThat(gd.exiledCardsWithVoidCounters).containsExactly(bears.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

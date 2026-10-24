@@ -17,7 +17,10 @@ import java.util.UUID;
  * is NO "if you do" contingency between steps. A step that no-ops (its target is gone, its condition
  * is unmet) does not stop the later steps — they still resolve. This is exactly how a flat list of
  * effects on one spell slot behaves, not the gated "if you do the first, then the second" of a
- * {@code MayEffect}-style contingency.</p>
+ * {@code MayEffect}-style contingency. An "if you do" is its own step that reads what an earlier step recorded
+ * on the resolution scratchpad, e.g. {@code SequenceEffect.of(new SacrificeSelfEffect(),
+ * ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), new DrawCardEffect(1)))} (Dreamcatcher); a step
+ * that ends on a pending departure holds the later steps until the departure is done.</p>
  *
  * <p><b>When to use.</b> Only when a single-effect wrapper must gate several steps as one unit
  * (e.g. {@code MayEffect(SequenceEffect.of(a, b))}, {@code ConditionalEffect(cond, SequenceEffect.of(a, b))},

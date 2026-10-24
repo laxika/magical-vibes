@@ -2,11 +2,17 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.a.AvacynAngelOfHope;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.n.NettleSwine;
 import com.github.laxika.magicalvibes.cards.s.SigardaHostOfHerons;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -100,5 +106,40 @@ class TyrantOfDiscordTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Avacyn, Angel of Hope");
         harness.assertInGraveyard(player2, "Nettle Swine");
+    }
+
+    @Test
+    @Disabled("leave-battlefield-redesign step 11")
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("The random sacrifices go on after each Gravebane Zombie's library-or-Kalitas choice")
+    void processRepeatsAfterEachDeathReplacementChoice() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.setLibrary(player2, List.of());
+
+        castTyrant();
+
+        var firstChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(firstChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(firstChoice.options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(first.getCard().getId(), second.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

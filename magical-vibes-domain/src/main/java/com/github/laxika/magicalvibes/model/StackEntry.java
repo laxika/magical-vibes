@@ -431,6 +431,21 @@ public class StackEntry {
     public void setResolutionExiledCardIds(List<UUID> cardIds) {
         resolutionExiledCardIds = List.copyOf(cardIds);
     }
+    /** The resolution scratchpad: results an earlier step left for later steps to read. */
+    private ResolutionResults resolutionResults = ResolutionResults.EMPTY;
+
+    /**
+     * Records the departures of the step being resolved, replacing those of earlier steps. A removal
+     * step calls this even when nothing left (an empty list), so "if you do" reads this step's result.
+     */
+    public void recordDepartures(List<DepartureResult> departures) {
+        resolutionResults = resolutionResults.withDepartures(departures);
+    }
+
+    /** Records what a player picked in the step being resolved, for the next step to act on. */
+    public void recordPicks(List<UUID> pickedIds) {
+        resolutionResults = resolutionResults.withPickedIds(pickedIds);
+    }
     /**
      * The per-permanent mana value payload behind this entry, positionally aligned with
      * {@link #eventPlayerIds}. Stamped by {@code DestroyAllPermanentsEffectHandler} with the
@@ -1060,6 +1075,7 @@ public class StackEntry {
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventCardGraveyardEntryVersions.putAll(source.eventCardGraveyardEntryVersions);
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;
+        this.resolutionResults = source.resolutionResults;
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()

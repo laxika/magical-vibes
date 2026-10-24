@@ -104,7 +104,7 @@ class InputCompletionServiceTest {
     void pendingRegenerationChoiceIsServicedBeforePriorityResumes() {
         var choice = new PendingInteraction.ColorChoice(playerId, UUID.randomUUID(), null,
                 new com.github.laxika.magicalvibes.model.ChoiceContext.RegenerationShieldChoice(
-                        UUID.randomUUID(), java.util.Map.of("Plain shield", "PLAIN")),
+                        UUID.randomUUID(), java.util.Map.of("Plain shield", "PLAIN"), false),
                 List.of("Plain shield"), "Choose a shield");
         gameData.pendingInteractions.add(choice);
         doAnswer(invocation -> {

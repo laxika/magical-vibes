@@ -117,7 +117,7 @@ class PhantasmalForcesTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(forces);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
 
@@ -149,7 +149,7 @@ class PhantasmalForcesTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isTrue());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(forces);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
 

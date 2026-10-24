@@ -2565,11 +2565,7 @@ public class MultiPermanentChoiceHandlerService {
                 .filter(java.util.Objects::nonNull)
                 .toList();
         int sacrificed = sacrificedPermanents.size();
-        permanentRemovalService.performSimultaneousRemovals(gameData, sacrificedPermanents, () -> {
-            for (Permanent perm : sacrificedPermanents) {
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
-            }
-        });
+        destructionSupport.sacrificeTogether(gameData, sacrificedPermanents, playerId);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Search the library for up to that many land cards, put them onto the battlefield tapped.
@@ -2637,11 +2633,7 @@ public class MultiPermanentChoiceHandlerService {
         int sacrificedPower = context.recordSacrificedPower() ? selected.stream()
                 .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent)).sum() : 0;
         int sacrificed = selected.size();
-        permanentRemovalService.performSimultaneousRemovals(gameData, selected, () -> {
-            for (Permanent permanent : selected) {
-                destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
-            }
-        });
+        destructionSupport.sacrificeTogether(gameData, selected, playerId);
         permanentRemovalService.removeOrphanedAuras(gameData);
         context.resolvingEntry().setEventValue(sacrificed);
         if (context.recordSacrificedPower()) {

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.DeathReplacementChoicePending;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
@@ -73,6 +74,9 @@ public class EffectResolutionService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport copySupport;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private DepartureService departureService;
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final EffectHandlerRegistry registry;
@@ -156,6 +160,12 @@ public class EffectResolutionService {
     }
 
     private void resolveEffectsLoop(GameData gameData, StackEntry entry, int startIndex) {
+        // A step that ended on a pending departure (DepartureService.departAsStep) parked the resolution at the
+        // step after it; that departure happens, and its results are recorded, before the next step resolves.
+        if (departureService != null && !departureService.finishStepDeparture(gameData, entry)) {
+            parkResolution(gameData, entry, startIndex);
+            return;
+        }
         List<CardEffect> effects = entry.getEffectsToResolve();
         for (int i = startIndex; i < effects.size(); i++) {
             // A new damage event ends the open one first; held simultaneous damage that prompts its
@@ -474,6 +484,11 @@ public class EffectResolutionService {
                             && (gameData.pendingEffectResolutionEntry == null
                             || gameData.pendingEffectResolutionEntry == entry);
                     gameData.deathReplacementsCanRerunEffect = deathReplacementRerunWindow;
+                    // Only this step's own departure may end it on a pending question (CR 616.1): not one in a
+                    // nested resolution, nor one a handler dispatches for another effect.
+                    gameData.stepDepartureEffect = gameData.effectResolutionDepth == 1
+                            && (gameData.pendingEffectResolutionEntry == null
+                            || gameData.pendingEffectResolutionEntry == entry) ? effectToResolve : null;
                     boolean stoppedForDeathReplacement = false;
                     try {
                         handler.resolve(gameData, entry, effectToResolve);
@@ -484,8 +499,10 @@ public class EffectResolutionService {
                         stoppedForDeathReplacement = true;
                     } finally {
                         gameData.deathReplacementsCanRerunEffect = false;
+                        gameData.stepDepartureEffect = null;
                         if (deathReplacementRerunWindow && !stoppedForDeathReplacement) {
                             gameData.chosenDeathReplacementsForRerun.clear();
+                            DepartureService.discardAnsweredRerunBatch(gameData);
                         }
                         damageJournalService.endEffect(gameData);
                         gameData.collectingDamageEvent = null;
@@ -502,12 +519,16 @@ public class EffectResolutionService {
 
             if (commanderZoneMoves != null) commanderZoneMoves.beginPending(gameData);
             effects = entry.getEffectsToResolve();
-            if (gameData.waitingForSubgame || gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+            // A step that ended on a pending departure is done: the next step waits for the departure.
+            boolean awaitsStepDeparture = DepartureService.awaitsStepDeparture(gameData, entry);
+            if (awaitsStepDeparture || gameData.waitingForSubgame || gameData.interaction.isAwaitingInput()
+                    || !gameData.pendingMayAbilities.isEmpty()) {
                 // Store state for resumption after async input completes.
                 // X_VALUE_CHOICE and resolution-time MayEffect re-run the same effect on re-entry.
-                boolean rerunCurrentEffect = gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
+                boolean rerunCurrentEffect = !awaitsStepDeparture
+                        && (gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
                         || gameData.resolvingMayEffectFromStack
-                        || gameData.rerunCurrentEffectAfterInteraction;
+                        || gameData.rerunCurrentEffectAfterInteraction);
                 // A handler may replace the parent wrapper while resolving a nested effect (for
                 // example Learn inside a conditional ETB or a declined may branch). Preserve that
                 // handler replacement instead of restoring the transient unwrapped effect here.

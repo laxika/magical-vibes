@@ -6,16 +6,21 @@ import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.b.BloodthroneVampire;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
+import com.github.laxika.magicalvibes.cards.d.Dreamcatcher;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
+import com.github.laxika.magicalvibes.cards.f.FlayingTendrils;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.l.LivingInferno;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -23,7 +28,9 @@ import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
+import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -976,5 +983,77 @@ class GameSimulatorTest {
 
             assertThat(gd.playerHands.get(player2.getId())).containsExactly(oppCreature);
         }
+    }
+
+    @Test
+    @DisplayName("A copy taken while a state-based death question is open answers it on its own battlefield")
+    void copyAnswersPendingStateBasedDeathQuestionIndependently() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        UUID gravebaneCardId = gravebane.getCard().getId();
+        harness.castFromHand(player1, new FlayingTendrils(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingDepartureBatch).isNotNull();
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(gravebane.getId());
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player2.getId(),
+                new SimulationAction.ChooseColor("Put it into its owner's library"));
+
+        assertThat(copy.pendingDepartureBatch).isNull();
+        assertThat(copy.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(gravebane.getId()));
+        assertThat(copy.findExiledCard(gravebaneCardId)).isNull();
+        assertThat(copy.playerGraveyards.get(player2.getId()))
+                .noneMatch(card -> card.getId().equals(gravebaneCardId));
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(gravebane.getId());
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.pendingDepartureBatch).isNull();
+        assertThat(gd.findExiledCard(gravebaneCardId)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A copy taken while a resolution step waits on its departure question finishes it and the next step")
+    void copyFinishesAPendingStepDepartureAndResumesTheNextStep() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        Permanent dreamcatcher = harness.addToBattlefieldAndReturn(player1, new Dreamcatcher());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player1.getId());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Card topCard = new ArabaMothrider();
+        harness.setLibrary(player1, List.of(topCard));
+        UUID dreamcatcherCardId = dreamcatcher.getCard().getId();
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.pendingDepartureBatch.isOwnedByResolutionStep()).isTrue();
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(dreamcatcher.getId());
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(),
+                new SimulationAction.ChooseColor("Put it on the bottom of its owner's library"));
+
+        assertThat(copy.pendingDepartureBatch).isNull();
+        assertThat(copy.playerDecks.get(player1.getId())).extracting(Card::getId).containsExactly(dreamcatcherCardId);
+        assertThat(copy.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(topCard.getId());
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(dreamcatcher.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dreamcatcher);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.pendingDepartureBatch).isNull();
+        assertThat(gd.findExiledCard(dreamcatcherCardId)).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
     }
 }

@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEachMatchingPermanen
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +28,6 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,24 +43,17 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
                 .withSourcePermanentId(entry.getSourcePermanentId());
 
         List<Permanent> toSacrifice = new ArrayList<>();
-        List<UUID> controllerIds = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId())) return;
             for (Permanent perm : battlefield) {
                 if (!gameQueryService.cantBeSacrificed(gameData, perm)
                         && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     toSacrifice.add(perm);
-                    controllerIds.add(playerId);
                 }
             }
         });
 
         // CR 616.1: the whole batch's death replacement choices come before any of it is sacrificed.
-        permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, toSacrifice);
-        permanentRemovalService.performSimultaneousRemovals(gameData, toSacrifice, () -> {
-            for (int i = 0; i < toSacrifice.size(); i++) {
-                destructionSupport.sacrificeAndLog(gameData, toSacrifice.get(i), controllerIds.get(i));
-            }
-        });
+        destructionSupport.sacrificeTogether(gameData, toSacrifice, null);
     }
 }

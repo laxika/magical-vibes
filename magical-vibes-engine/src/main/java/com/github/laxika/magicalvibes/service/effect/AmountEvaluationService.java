@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ResolutionResults;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
@@ -29,6 +30,8 @@ import com.github.laxika.magicalvibes.model.amount.CardsDelved;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
+import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayPower;
+import com.github.laxika.magicalvibes.model.amount.PermanentLeftThisWayToughness;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
@@ -530,6 +533,10 @@ public class AmountEvaluationService {
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
             case CardsDrawnThisResolution ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getDrawnCardIdsThisResolution().size();
+            case PermanentLeftThisWayPower ignored ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getResolutionResults().lastKnownPower();
+            case PermanentLeftThisWayToughness ignored ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getResolutionResults().lastKnownToughness();
             case CardsDrawnThisTurn c ->
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case OpponentsWithAtLeastCardsDrawnThisTurn c ->
@@ -1088,7 +1095,9 @@ public class AmountEvaluationService {
                 ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                 ctx.sourcePermanent(), ctx.sourceCard(), kickedInContext(ctx), false, false, ctx.madness(), false,
                 ctx.stackEntry() == null ? null : ctx.stackEntry().getSourceZone(), ctx.xValue(), ctx.targetPermanentId(), triggeringCard, ctx.staticEvaluation(), false,
-                triggeringPermanentId, null, null).withEventValue(ctx.eventValue());
+                triggeringPermanentId, null, null).withEventValue(ctx.eventValue())
+                .withResolutionResults(ctx.stackEntry() == null
+                        ? ResolutionResults.EMPTY : ctx.stackEntry().getResolutionResults());
     }
 
     private static boolean kickedInContext(AmountContext ctx) {

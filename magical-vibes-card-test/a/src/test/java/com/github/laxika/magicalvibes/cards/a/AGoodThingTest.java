@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AGoodThing.class, Disenchant.class, FracturingGust.class})
+@CardUsed({AGoodThing.class, Disenchant.class, FracturingGust.class, AbzanAdvantage.class})
 class AGoodThingTest extends BaseCardTest {
 
     @Test
@@ -117,5 +117,34 @@ class AGoodThingTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "A Good Thing");
         harness.assertInGraveyard(player2, "A Good Thing");
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("The controller's untargeted destruction doesn't log A Good Thing as destroyed")
+    void ownUntargetedDestructionDoesNotLogItDestroyed() {
+        harness.addToBattlefield(player1, new AGoodThing());
+        harness.addToBattlefield(player2, new AGoodThing());
+        harness.setHand(player1, List.of(new FracturingGust()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("A Good Thing is destroyed"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A sacrifice the controller's own spell can't make isn't logged as a sacrifice")
+    void ownSacrificeEffectDoesNotSacrificeOrLogIt() {
+        harness.addToBattlefield(player1, new AGoodThing());
+        harness.setHand(player1, List.of(new AbzanAdvantage()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "A Good Thing");
+        assertThat(gameLogContains("sacrifices A Good Thing")).isFalse();
+        assertThat(gd.playersWhoSacrificedPermanentsThisTurn).doesNotContain(player1.getId());
     }
 }

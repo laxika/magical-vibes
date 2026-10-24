@@ -45,7 +45,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
         assertThat(second.getRegenerationShield()).isEqualTo(1);
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(second.getMarkedDamage()).isZero();
-        assertThat(gd.chosenRegenerationShields).isEmpty();
+        assertThat(gd.pendingDepartureBatch).isNull();
     }
 
     @Test

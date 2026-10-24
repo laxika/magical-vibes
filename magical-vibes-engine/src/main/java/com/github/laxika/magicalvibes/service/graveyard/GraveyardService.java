@@ -72,6 +72,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -671,12 +672,7 @@ public class GraveyardService {
                 }
                 return false;
             }
-            List<Card> deck = gameData.playerDecks.get(ownerId);
-            deck.add(card);
-            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is revealed and shuffled into its owner's library instead."));
-            log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());
-            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+            shuffleIntoLibraryInsteadOfGraveyard(gameData, ownerId, card);
             return false;
         }
 
@@ -712,12 +708,8 @@ public class GraveyardService {
         // Wheel of Sun and Moon â€” if the graveyard's owner is enchanted by a player aura with this
         // replacement, cards headed to their graveyard from anywhere are revealed and put on the
         // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
-        if (!isToken(gameData, card)
-                && enchantedPlayerHasBottomOfLibraryReplacement(gameData, ownerId, battlefieldSnapshot)) {
-            gameData.playerDecks.get(ownerId).add(card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is revealed and put on the bottom of its owner's library instead."));
-            log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard", gameData.id, card.getName());
-            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+        if (putsCardOnBottomOfLibraryInsteadOfGraveyard(gameData, ownerId, card, battlefieldSnapshot)) {
+            putOnBottomOfLibraryInsteadOfGraveyard(gameData, ownerId, card);
             return false;
         }
 
@@ -1157,6 +1149,11 @@ public class GraveyardService {
         }
     }
 
+    /**
+     * Applies a lone destruction replacement to {@code perm}, destroyed by a state-based action (CR 704.5g,
+     * 704.5h), or asks which applies when several do. Shield counters only replace destruction by an effect
+     * (CR 122.1c), so they are not among them. Returns whether the destruction was replaced.
+     */
     public boolean tryRegenerate(GameData gameData, Permanent perm) {
         return tryReplaceDestruction(gameData, perm, true, false);
     }
@@ -1171,18 +1168,15 @@ public class GraveyardService {
                 .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
             return true;
         }
-        String selectedReplacement = gameData.chosenRegenerationShields.remove(perm.getId());
-        if (selectedReplacement != null) {
-            spendRegenerationShield(gameData, perm, selectedReplacement);
-            return true;
-        }
         Map<String, String> replacements = destructionReplacementOptions(
                 gameData, perm, allowRegeneration, allowShieldCounter);
         if (replacements.size() > 1) {
+            LegacyDepartureFallback.reached(gameData,
+                    LegacyDepartureFallback.Kind.DESTRUCTION_REPLACEMENT_ASKED_AFTER_EVENT, perm);
             queueDestructionReplacementChoice(gameData, perm, replacements, false);
             return true;
         }
-        if (allowShieldCounter && perm.getLandDestructionShield() > 0) {
+        if (perm.getLandDestructionShield() > 0) {
             perm.setLandDestructionShield(perm.getLandDestructionShield() - 1);
             perm.healDamage();
             gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
@@ -1220,22 +1214,8 @@ public class GraveyardService {
             return true;
         }
         if (perm.getRegenerationShield() > 0) {
-            String chosenShield = gameData.chosenRegenerationShields.remove(perm.getId());
-            if (chosenShield != null) {
-                spendRegenerationShield(gameData, perm, chosenShield);
-                return true;
-            }
-            Map<String, String> shields = regenerationOptions(gameData, perm);
-            if (shields.size() > 1) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
-                        controllerId, perm.getId(), null,
-                        new ChoiceContext.RegenerationShieldChoice(perm.getId(), shields),
-                        List.copyOf(shields.keySet()), "Choose a regeneration shield for " + perm.getCard().getName()));
-                processPendingRegenerationChoice(gameData);
-            } else {
-                spendRegenerationShield(gameData, perm, shields.values().iterator().next());
-            }
+            // Several kinds of shield are among the replacements above, so only one kind is left here.
+            spendRegenerationShield(gameData, perm, regenerationOptions(gameData, perm).values().iterator().next());
             return true;
         }
         return false;
@@ -1265,11 +1245,15 @@ public class GraveyardService {
         return options;
     }
 
-    /** Lists the applicable alternatives so the affected permanent's controller can choose. */
-    private Map<String, String> destructionReplacementOptions(GameData gameData, Permanent perm,
-                                                               boolean allowRegeneration, boolean allowShieldCounter) {
+    /**
+     * Lists the destruction replacements (CR 614.8) that apply to {@code perm} so its controller can
+     * choose: option label to the option {@link #applyDestructionReplacement} applies. Shield counters
+     * only replace destruction by an effect (CR 122.1c). Changes nothing.
+     */
+    public Map<String, String> destructionReplacementOptions(GameData gameData, Permanent perm,
+                                                              boolean allowRegeneration, boolean allowShieldCounter) {
         Map<String, String> options = new LinkedHashMap<>();
-        if (allowShieldCounter && perm.getLandDestructionShield() > 0) {
+        if (perm.getLandDestructionShield() > 0) {
             options.put("Remove damage instead of destroying it", "LAND_SHIELD");
         }
         for (Permanent aura : findDestructionReplacementSources(gameData, perm,
@@ -1298,27 +1282,23 @@ public class GraveyardService {
         return options;
     }
 
+    /**
+     * Asks {@code perm}'s controller which of the destruction replacements {@code options} (from
+     * {@link #destructionReplacementOptions}) applies to a permanent of a departure batch; the answer is
+     * recorded on the batch (see {@code DepartureService}).
+     */
+    public void askDepartureDestructionReplacement(GameData gameData, Permanent perm, Map<String, String> options) {
+        queueDestructionReplacementChoice(gameData, perm, options, true);
+    }
+
     private void queueDestructionReplacementChoice(GameData gameData, Permanent perm,
-                                                   Map<String, String> options, boolean stateBased) {
+                                                   Map<String, String> options, boolean inDepartureBatch) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
         gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
                 controllerId, perm.getId(), null,
-                new ChoiceContext.RegenerationShieldChoice(perm.getId(), options, stateBased),
+                new ChoiceContext.RegenerationShieldChoice(perm.getId(), options, inDepartureBatch),
                 List.copyOf(options.keySet()), "Choose how to save " + perm.getCard().getName()));
         processPendingRegenerationChoice(gameData);
-    }
-
-    /** Collects choices before any replacement or death in the state-based batch is performed. */
-    public void prepareRegenerationChoice(GameData gameData, Permanent perm) {
-        if (gameData.chosenRegenerationShields.containsKey(perm.getId())
-                || pendingRegenerationChoices(gameData).stream()
-                .anyMatch(choice -> perm.getId().equals(choice.permanentId()))) {
-            return;
-        }
-        Map<String, String> shields = destructionReplacementOptions(gameData, perm, true, true);
-        if (shields.size() > 1) {
-            queueDestructionReplacementChoice(gameData, perm, shields, true);
-        }
     }
 
     private List<PendingInteraction.ColorChoice> pendingRegenerationChoices(GameData gameData) {
@@ -1356,12 +1336,13 @@ public class GraveyardService {
         if (shield == null) throw new IllegalArgumentException("Invalid regeneration shield");
         Permanent permanent = gameQueryService.findPermanentById(gameData, choice.permanentId());
         if (permanent != null) {
-            if (choice.stateBasedDestruction()) {
-                gameData.chosenRegenerationShields.put(permanent.getId(), shield);
-            } else {
-                spendRegenerationShield(gameData, permanent, shield);
-            }
+            spendRegenerationShield(gameData, permanent, shield);
         }
+    }
+
+    /** Applies a destruction replacement option (a value of {@link #destructionReplacementOptions}) to {@code perm}. */
+    public void applyDestructionReplacement(GameData gameData, Permanent perm, String option) {
+        spendRegenerationShield(gameData, perm, option);
     }
 
     private void spendRegenerationShield(GameData gameData, Permanent perm, String shield) {
@@ -1660,6 +1641,27 @@ public class GraveyardService {
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
     }
 
+    /**
+     * Whether the leaving permanent {@code dying}'s own "if this would be put into a graveyard from anywhere,
+     * reveal it and shuffle it into its owner's library instead" (Progenitus, Blightsteel Colossus) applies.
+     * Changes nothing.
+     */
+    public boolean shufflesBattlefieldCardIntoLibrary(GameData gameData, Permanent dying) {
+        return hasShuffleIntoLibraryReplacementEffect(dying.getCard()) && !dying.isFaceDown()
+                && !gameQueryService.hasLostPrintedAbilities(gameData, dying);
+    }
+
+    /** Applies a card's own "reveal it and shuffle it into its owner's library instead" replacement. */
+    public void shuffleIntoLibraryInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card) {
+        gameData.playerDecks.get(ownerId).add(card);
+        LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is revealed and shuffled into its owner's library instead."));
+        log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id,
+                card.getName());
+        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+    }
+
     /** Applies the graveyard destination replacement chosen by the card's owner. */
     public void resolveShuffleOrExileReplacement(GameData gameData,
                                                 ChoiceContext.GraveyardShuffleOrExileReplacementChoice choice,
@@ -1701,6 +1703,9 @@ public class GraveyardService {
         }
         boolean token = isToken(gameData, card);
         if (!token && gameData.playersExilingCardsInsteadOfGraveyardThisTurn.contains(ownerId)) {
+            return true;
+        }
+        if (globalColorGraveyardExileApplies(gameData, card, Zone.BATTLEFIELD, battlefieldSnapshot)) {
             return true;
         }
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -1824,6 +1829,21 @@ public class GraveyardService {
     private boolean tryApplyGlobalColorGraveyardExileReplacement(
             GameData gameData, UUID ownerId, Card card, Zone sourceZone,
             Permanent battlefieldSnapshot) {
+        if (!globalColorGraveyardExileApplies(gameData, card, sourceZone, battlefieldSnapshot)) {
+            return false;
+        }
+        exileService.exileCard(gameData, ownerId, card);
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is exiled instead of being put into a graveyard."));
+        log.info("Game {} - {} replacement effect: colored card exiled instead of graveyard",
+                gameData.id, card.getName());
+        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+        return true;
+    }
+
+    /** Whether a "black or red ... would be put into a graveyard, exile it instead" (Sanctifier en-Vec) applies. */
+    private boolean globalColorGraveyardExileApplies(GameData gameData, Card card, Zone sourceZone,
+                                                     Permanent battlefieldSnapshot) {
         if (isToken(gameData, card) && sourceZone != Zone.BATTLEFIELD) {
             return false;
         }
@@ -1838,7 +1858,7 @@ public class GraveyardService {
             }
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
-                if (applyGlobalColorGraveyardExile(gameData, ownerId, card, cardColors, permanent)) {
+                if (exilesCardsOfColors(permanent, cardColors)) {
                     return true;
                 }
             }
@@ -1847,24 +1867,17 @@ public class GraveyardService {
         // other's cards, even once an earlier member of the group has already left.
         for (Permanent permanent : gameData.simultaneousDyingPermanents.values()) {
             if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-            if (applyGlobalColorGraveyardExile(gameData, ownerId, card, cardColors, permanent)) {
+            if (exilesCardsOfColors(permanent, cardColors)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean applyGlobalColorGraveyardExile(GameData gameData, UUID ownerId, Card card,
-                                                   Set<CardColor> cardColors, Permanent permanent) {
+    private static boolean exilesCardsOfColors(Permanent permanent, Set<CardColor> cardColors) {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof GlobalColorGraveyardExileReplacement replacement
                     && cardColors.stream().anyMatch(replacement.colors()::contains)) {
-                exileService.exileCard(gameData, ownerId, card);
-                gameLogService.append(gameData, GameLog.cardThen(card,
-                        " is exiled instead of being put into a graveyard."));
-                log.info("Game {} - {} replacement effect: colored card exiled instead of graveyard",
-                        gameData.id, card.getName());
-                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
                 return true;
             }
         }
@@ -1875,6 +1888,28 @@ public class GraveyardService {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
                         && replacement.filter() == null && !replacement.excludeSource());
+    }
+
+    /**
+     * Whether a "revealed and put on the bottom of that player's library instead" replacement (Wheel of Sun and
+     * Moon) applies to {@code card} on its way to {@code ownerId}'s graveyard. Tokens aren't cards, so it never
+     * applies to them. {@code leavingSnapshot} is the permanent the card leaves the battlefield as, if any.
+     * Changes nothing.
+     */
+    public boolean putsCardOnBottomOfLibraryInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card,
+                                                               Permanent leavingSnapshot) {
+        return !isToken(gameData, card)
+                && enchantedPlayerHasBottomOfLibraryReplacement(gameData, ownerId, leavingSnapshot);
+    }
+
+    /** Applies Wheel of Sun and Moon's replacement: reveals {@code card} and puts it on the bottom of the library. */
+    public void putOnBottomOfLibraryInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card) {
+        gameData.playerDecks.get(ownerId).add(card);
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is revealed and put on the bottom of its owner's library instead."));
+        log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard",
+                gameData.id, card.getName());
+        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
     }
 
     /**
@@ -1967,6 +2002,63 @@ public class GraveyardService {
             }
         }
         return null;
+    }
+
+    /**
+     * An opponent's "exile it instead" for cards headed to its opponents' graveyards whose exile has a rider: a
+     * void counter (Dauthi Voidwalker) or the card exiled with its source (Valgavoth, Terror Eater).
+     *
+     * @param sourceCard        the card generating the replacement
+     * @param sourcePermanentId the permanent generating it
+     * @param voidCounter       whether the card is exiled with a void counter; otherwise it is exiled with its source
+     */
+    public record OpponentGraveyardExileRider(Card sourceCard, UUID sourcePermanentId, boolean voidCounter) {
+    }
+
+    /**
+     * The opponent graveyard replacements with riders ({@link OpponentGraveyardExileRider}) that would exile
+     * {@code card}, controlled by {@code cardControllerId}, as it moves from the battlefield to {@code ownerId}'s
+     * graveyard. Tokens aren't cards, so none applies to them. Plain ones are reported by
+     * {@link #exilesBattlefieldCardPlainlyInsteadOfGraveyard}. Changes nothing.
+     */
+    public List<OpponentGraveyardExileRider> opponentGraveyardExileRiders(GameData gameData, UUID ownerId, Card card,
+                                                                        UUID cardControllerId) {
+        if (isToken(gameData, card)) {
+            return List.of();
+        }
+        List<OpponentGraveyardExileRider> riders = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ownerId)) continue;
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (p.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, p)) {
+                    continue;
+                }
+                addOpponentGraveyardExileRiders(riders, p, playerId, cardControllerId);
+            }
+        }
+        for (var dying : gameData.simultaneousDyingPermanents.entrySet()) {
+            UUID dyingControllerId = gameData.simultaneousDyingPermanentControllers.get(dying.getKey());
+            Permanent p = dying.getValue();
+            if (dyingControllerId == null || dyingControllerId.equals(ownerId)
+                    || p.isFaceDown() || p.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.findPermanentById(gameData, p.getId()) != null) {
+                continue;
+            }
+            addOpponentGraveyardExileRiders(riders, p, dyingControllerId, cardControllerId);
+        }
+        return riders;
+    }
+
+    private static void addOpponentGraveyardExileRiders(List<OpponentGraveyardExileRider> riders, Permanent source,
+                                                        UUID sourceControllerId, UUID cardControllerId) {
+        for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
+                    && (replacement.addVoidCounter() || replacement.trackWithSource())
+                    && exileReplacementApplies(replacement, sourceControllerId, cardControllerId)) {
+                riders.add(new OpponentGraveyardExileRider(source.getCard(), source.getId(),
+                        replacement.addVoidCounter()));
+            }
+        }
     }
 
     private static boolean exileReplacementApplies(ExileOpponentCardsInsteadOfGraveyardEffect replacement,

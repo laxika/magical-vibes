@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCar
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.DeathReplacementChoicePending;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -248,6 +249,7 @@ public class PermanentChoiceHandlerService {
             gameData.deathReplacementsCanRerunEffect = false;
             if (!stopped) {
                 gameData.chosenDeathReplacementsForRerun.clear();
+                DepartureService.discardAnsweredRerunBatch(gameData);
             }
         }
         return stopped;

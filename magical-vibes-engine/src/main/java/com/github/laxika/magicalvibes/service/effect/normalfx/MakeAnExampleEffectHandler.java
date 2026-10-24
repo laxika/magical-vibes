@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMakeAnExample;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAnExampleEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -30,6 +33,7 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DepartureService departureService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -89,26 +93,25 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
 
         UUID sacrificingPlayerId = state.controllerId();
         List<UUID> chosenPile = choosePile1 ? state.pile1Ids() : state.pile2Ids();
-        List<Permanent> toSacrifice = new ArrayList<>();
+        List<DepartureIntent> toSacrifice = new ArrayList<>();
         for (UUID permanentId : chosenPile) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent == null || !gameQueryService.isCreature(gameData, permanent)
                     || gameQueryService.cantBeSacrificed(gameData, permanent)) {
                 continue;
             }
-            toSacrifice.add(permanent);
+            toSacrifice.add(DepartureIntent.sacrifice(permanentId));
         }
-        permanentRemovalService.performSimultaneousRemovals(gameData, toSacrifice, () -> {
-            for (Permanent permanent : toSacrifice) {
-                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                            gameData, sacrificingPlayerId, permanent.getCard());
-                    gameData.recordSacrificedPermanent(sacrificingPlayerId, permanent.getCard());
-                    gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
-                    permanentRemovalService.removeOrphanedAuras(gameData);
-                }
-            }
-        });
+        departureService.departNow(gameData, DepartureBatch.of(toSacrifice), DepartureService.Hooks.afterEach(
+                (intent, permanent, snapshot, removed) -> {
+                    if (removed) {
+                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                                gameData, sacrificingPlayerId, permanent.getCard());
+                        gameData.recordSacrificedPermanent(sacrificingPlayerId, permanent.getCard());
+                        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
+                        permanentRemovalService.removeOrphanedAuras(gameData);
+                    }
+                }));
 
         PendingMakeAnExample progress = gameData.pollPendingInteraction(PendingMakeAnExample.class);
         if (progress == null) {

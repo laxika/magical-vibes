@@ -12,13 +12,13 @@ order; each one lists what it depends on.
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | Behaviour tests for the target rules | open |
-| 2 | Departure model types | open |
-| 3 | `DepartureService` for state-based deaths | open |
-| 4 | Simultaneous removals and destroy batches | open |
-| 5 | Fold the leftover replacement workarounds into the choose stage | open |
-| 6 | Legacy wrappers and the guard | open |
-| 7 | Resolution scratchpad and pausing at the end of a step | open |
+| 1 | Behaviour tests for the target rules | done |
+| 2 | Departure model types | done |
+| 3 | `DepartureService` for state-based deaths | done |
+| 4 | Simultaneous removals and destroy batches | done |
+| 5 | Fold the leftover replacement workarounds into the choose stage | done (rider and non-batch regeneration choices remain only for callers that can't pause; see Findings) |
+| 6 | Legacy wrappers and the guard | done |
+| 7 | Resolution scratchpad and pausing at the end of a step | done |
 | 8 | Convert the "sacrifice this, then …" handlers | open |
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | open |
 | 10 | Convert the choice-completion paths | open |
@@ -398,6 +398,238 @@ only at the end of a step". Start with the families that have the most files, an
 ## Findings
 
 Steps add notes here for later steps, under their number.
+
+### Step 1
+
+- Already covered by existing tests: Murder (`KalitasTraitorOfGhetTest.murderAsksForTheDeathReplacementBeforeTheZombieLeaves`),
+  Diabolic Edict (`KalitasTraitorOfGhetTest.edictAsksForTheDeathReplacementBeforeTheZombieIsSacrificed` and
+  `edictChoiceAsksForTheDeathReplacementBeforeTheChosenZombieIsSacrificed`; the "sacrifice, then" follow-ups by
+  the Twisted Justice, Devour Flesh and Mercy Killing tests in `GravebaneZombieTest`) and Wrath of God
+  (`GravebaneZombieTest.wrathAsksBeforeAnyCreatureIsDestroyed`).
+- Passing: `FirestormPhoenixTest.restInPeaceWrathAsksOnceThenBothCreaturesLeaveTogether`. Its "whenever a
+  creature dies" watcher (Moonlit Wake) correctly counts 0: under Rest in Peace nothing dies.
+- Passing: `BoneSplintersTest.sacrificeCostAsksTheDeathReplacementBeforePayment`. A single sacrifice cost
+  already asks before payment, so step 12 needs a test that fails today, such as one through
+  `SpellCastingService.paySacrificeCreaturesForCostReduction`.
+- Disabled for step 9: `PolymorphTest.revealFindsGravebaneZombiePutIntoItsLibraryOverKalitas`. Polymorph logs
+  "is destroyed" and reveals the library before the question is answered.
+- Disabled for step 11: `TyrantOfDiscordTest.processRepeatsAfterEachDeathReplacementChoice` (two Zombies, so it
+  doesn't depend on the random pick). The loop stops after the first answer.
+- Disabled for step 5: `WheelOfSunAndMoonTest.dyingCreatureOffersWheelAndKalitasReplacements`. Confirmed that
+  Wheel of Sun and Moon is never offered today: Kalitas applies silently.
+  `PermanentRemovalService.deathExileReplacementOptions` must include it. The test picks "the option that
+  isn't Kalitas" because Wheel's option label doesn't exist yet.
+- `TimmerianFiendsAnteExchangeEffectHandler` recursing forever is still unconfirmed.
+
+### Step 3
+
+- `DepartureService.depart(GameData, DepartureBatch)` returns a sealed `Outcome`: `Pending()` (a question is
+  open, nothing moved, the batch is in `gameData.pendingDepartureBatch`) or `Done(results, survivorIds)` (one
+  `DepartureResult` per intent in intent order; `survivorIds` are what a destruction replacement kept, since
+  "regenerated" and "removal failed" both report `BATTLEFIELD`). Resume by passing the pending batch back.
+  Answers are recorded with `recordDestructionAnswer` / `recordReplacementAnswer` / `recordMayLibraryAnswer`.
+- Choices raised by a batch carry `inDepartureBatch = true` (renamed from `stateBased` on
+  `DeathExileReplacementChoice` and from `stateBasedDestruction` on `RegenerationShieldChoice`);
+  `ChoiceHandlerService` routes them to `DepartureService`.
+- Each permanent leaves through `PermanentRemovalService.departToGraveyard(gd, perm, intent, chosenReplacement)`.
+  Its `DESTROY` / `SACRIFICE` / `OTHER` branches mirror the old public wrappers but no batch uses them yet.
+- Perform still publishes the batch's snapshots through the eight `simultaneousDying*` maps (saved and
+  restored around it). Step 4 can drop the maps once `performSimultaneousRemovals` and `destroyBatch` read
+  from the batch.
+- Gather uses `tryReplaceDestruction(perm, true)`. Steps 4/6 need a "can't be regenerated" flag on
+  `DepartureIntent` (Wrath of God, `tryDestroyPermanent(..., cannotBeRegenerated)`) and must cover
+  `cantBeAffectedByOwnEffects`, which `destroyPermanentToGraveyard` checks today.
+- Only one batch can be pending. The state-based check skips while any batch awaits an answer and only
+  resumes batches with a state-based intent; step 4 needs a resume hook for other batches (the input
+  epilogue reaches only state-based actions today).
+- Death log lines are written after the whole batch. `report` finds zones by card id, so a token sent to
+  the graveyard reports `GRAVEYARD` until the next check removes it.
+- Rules fixes: the state-based gather no longer offers shield counters (they replace destruction only "as
+  the result of an effect", CR 122.1c), and Pyramids' land shield now replaces lethal-damage destruction
+  even when it is the only option.
+- Deleted: `awaitStateBasedDeathReplacementChoices`, `recordStateBasedMayLibraryChoice`,
+  `destroyPermanentByStateBasedAction`, `GraveyardService.prepareRegenerationChoice`,
+  `GameData.chosenStateBasedDeathReplacements` / `stateBasedMayLibraryChoices` / `chosenRegenerationShields`.
+- Tests: `GameSimulatorTest.copyAnswersPendingStateBasedDeathQuestionIndependently` (passes) and
+  `PyramidsTest.removesLethalDamageInsteadOfTheLandCreatureDyingToStateBasedActions` (fails with the other
+  five `PyramidsTest` tests, which fail at HEAD because Pyramids' mode activation gets stuck on a
+  `ColorChoice`). `StateBasedActionServiceTest`, `PermanentRemovalServiceTest`, `CombatDamageServiceTest`
+  and one `InputCompletionServiceTest` test fail at HEAD with the same counts.
+
+### Step 4
+
+- Through `depart` now: `DestructionSupport.destroyBatch` / `destroyBatchCollecting` / `destroyBatchDestroyed`
+  (via `departDestroyBatch`; intents `DepartureIntent.destroy(id, cantBeRegenerated)`; `died` = results that
+  went to a graveyard plus tokens that ended in no zone), `performSimultaneousSacrifice` (via
+  `sacrificeTogether`), `SacrificeEachMatchingPermanentEffectHandler`, Make an Example's pile, the sacrificed
+  pile of `completePileSeparationStep2`, and the Scapeshift and "sacrifice any number and record count"
+  multi-choice completions.
+- Still on `performSimultaneousRemovals` (now package-private, snapshots only): exile/bounce callers, which
+  are not deaths (`ExileAllPermanentsEffectHandler`, the convoke exile, `ExileEachTargetPermanentThenReveal…`,
+  `ReturnTargetAndAttachedMatchingToHandEffectHandler`, Warp World); sacrifice costs (step 12:
+  `SpellCastingService` ×2, `ActivatedAbilityExecutionService`, `AbilityActivationService`,
+  `SequencePermanentSacrificeCostHandler`); and `tryDestroyPermanent` (step 6).
+  `askDeathReplacementsBeforeSacrifice` (one-at-a-time sacrificers like Torment of Hailfire) is unchanged.
+- The `simultaneousDying*` maps stay: about 270 readers in 12 engine files. `perform` fills them from the
+  batch snapshots and restores them; moving the readers is a separate change.
+- API: `DepartureIntent.cantBeRegenerated` (+ `destroy(id, cantBeRegenerated)` / `sacrifice(id)`);
+  `DepartureBatch.isStateBased()` / `withoutSurvivor(id)`; `depart(gd, batch, Hooks(beforePerform, afterEach))`
+  (hooks are not stored on the batch); `departNow`; `discardAnsweredRerunBatch`.
+- Gather only decides survivors now. Regeneration, shields and other destruction replacements are applied at
+  the start of perform, after every answer is in, so a caller stopped for a question has changed nothing (state-based
+  batches too). `cantBeAffectedByOwnEffects` (and `!triggeredAbilityCanMoveCreatureToken` for sacrifices) makes a
+  permanent unaffected: no question, no snapshot, reported on the battlefield.
+- A non-state-based batch still pauses through stop-and-rerun: it asks only inside `deathReplacementsCanRerunEffect`
+  with no other batch pending, stores itself in `pendingDepartureBatch`, sets `rerunCurrentEffectAfterInteraction`
+  and throws `DeathReplacementChoicePending`. The rerun builds the same intents and `depart` continues the
+  answered batch if its intents are equal (a stale one is dropped; the `EffectResolutionService` /
+  `runAskingDeathReplacementsFirst` windows drop an answered batch no rerun took). Answers already in
+  `chosenDeathReplacementsForRerun` answer the batch's question too (otherwise Killing Wave, Fade Away and
+  Tragic Arrogance asked twice). Outside the window nothing is asked and each member leaves the old way.
+- For step 5: `DeathExileRiderChoice` and `RegenerationShieldChoice(inDepartureBatch=false)` are now only
+  reached outside a window and by the old-path callers above.
+- For step 6: `tryDestroyPermanent` still pre-applies shields and regeneration, then uses
+  `performSimultaneousRemovals`; it can become a one-intent DESTROY batch. `afterEach` keeps the old
+  `destroyBatch` "is destroyed" log for a removal that failed, and `sacrificeTogether` keeps the old
+  `sacrificeAndLog` log and "sacrificed" triggers for a failed sacrifice; fix both when the wrappers change.
+- For step 7: replace "throw and rerun" with "park at `i + 1` and record `Done.results()` on the parked entry";
+  the batch then needs an owner instead of matching intents. `Hooks.afterEach` is a place to record results.
+- Tests: new `GravebaneZombieTest.wrathAsksBothPlayersInApnapOrderBeforeAnyCreatureIsDestroyed`;
+  `SacrificePermanentsEffectHandlerTest` now injects a real `DepartureService` and verifies `departToGraveyard`
+  with a SACRIFICE intent. A sweep of about 1,960 card test classes covering every handler that calls the
+  changed APIs had 65 failures, all also failing at the synced baseline. `PendingInteractionContractTest`
+  and `CardImmutabilityArchTest` also fail at the baseline.
+
+### Step 5
+
+- New CR 616.1 options in `deathExileReplacementOptions` (`ChoiceContext.DeathExileReplacement.Kind`):
+  `BOTTOM_OF_LIBRARY` (Wheel of Sun and Moon; never for tokens), `SHUFFLE_INTO_LIBRARY` (Progenitus,
+  Blightsteel/Darksteel Colossus; Kalitas used to win silently), `VOID_COUNTER` (Dauthi Voidwalker), Valgavoth,
+  Terror Eater's exile (reusing `EXILED_WITH_PERMANENT`), and Sanctifier en-Vec's colour exile as a `PLAIN` exile.
+  A chosen library option is applied directly in `processGraveyardAndTriggers`, so the pipeline's fixed order
+  can't override it. Non-death moves (discard, mill, resolving spells) still use the unchanged Wheel branch.
+- `tryDestroyPermanent` is now a one-intent DESTROY batch through `departNow`, except
+  `PermanentRemovalService.destroyPermanentInEnclosingBatch` (a permanent already snapshotted by an enclosing
+  `performSimultaneousRemovals` group keeps the old inline path, so the group's batched death triggers aren't
+  flushed early).
+- Inside a rerun window, `askDeathReplacementsBeforeRemoval` and `removePermanentToGraveyard` also ask when
+  every option exiles, so riders are chosen before the creature leaves.
+- Removed: the two-argument `RegenerationShieldChoice` constructor and the dead multi-shield branch in
+  `tryReplaceDestruction`.
+- Still left for steps 6/12 (callers that can't pause): `DeathExileRiderChoice` when every option exiles
+  (single-removal wrappers from unmarked handlers, triggered sacrifices and costs, `performSimultaneousRemovals`
+  callers, `departNow` outside a window), and `RegenerationShieldChoice(inDepartureBatch = false)` from
+  `DepartureService.perform` → `applyDestructionReplacement` outside a window and from
+  `destroyPermanentInEnclosingBatch`. Step 6's guard should count both (`riderOptions` in
+  `removePermanentToGraveyard`, and `queueDestructionReplacementChoice(…, false)` when `canAsk` is false).
+- Not done: Yawgmoth's Testament (`playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn`) is
+  still applied silently in the graveyard pipeline (it would map to `BOTTOM_OF_LIBRARY`); a noncreature with the
+  shuffle replacement (Legacy Weapon) still uses the after-the-move `GraveyardShuffleOrExileReplacementChoice`.
+- Tests: `WheelOfSunAndMoonTest.dyingCreatureOffersWheelAndKalitasReplacements` enabled, plus
+  `choosingKalitasOverWheelExilesTheCreature`; one "offered alongside Kalitas" test each in `SanctifierEnVecTest`,
+  `DauthiVoidwalkerTest`, `ValgavothTerrorEaterTest`, `BlightsteelColossusTest`. Changed to the new rule (the
+  creature stays until answered): two `KalitasTraitorOfGhetTest` tests (one renamed to
+  `sacrificedCreatureStaysUntilItsControllerChoosesTheExileReplacement`), two `ProgenitusTest` tests (both
+  failed at baseline, now pass), and `GravebaneZombieTest`'s Essence Vortex (`inDepartureBatch()`) and Valgavoth
+  ward tests. A sweep of 1,838 card test classes found no new failures. Paths reaching `tryDestroyPermanent` only
+  through choice-handler services (multi-choice destroys, delayed actions, `DamagePreventionService`, aura
+  destroy in `GraveyardService`) are only partly covered by tests.
+
+### Step 6
+
+- `removePermanentToGraveyard` / `removePermanentToPlayerGraveyard` / `sacrificePermanentToGraveyard` /
+  `destroyPermanentToGraveyard` build one intent (OTHER / OTHER to a player / SACRIFICE /
+  `DepartureIntent.destroyAfterDestructionReplacements(id)`) and run it through the private `departAlone` →
+  `departNow`. `destructionReplacementsApplied` makes gather skip an intent whose caller already applied
+  indestructible and regeneration (otherwise regeneration could save a "can't be regenerated" target); steps
+  8–12 should switch those callers to plain `DepartureIntent.destroy` and then drop it.
+- A wrapper stays on the inline path (`departToGraveyard(..., null)`) inside an enclosing simultaneous-removal
+  group, while another batch is pending (unless it is this call's answered rerun), or when the `Permanent`
+  passed in isn't the one on the battlefield. `tryDestroyPermanent` still uses the narrower
+  `containsKey(target)` enclosing check; consider switching it to `departsAlone`.
+- Guard: `LegacyDepartureFallback.reached(gd, kind, permanent)` logs a warning naming the caller
+  (`StackWalker`, fallback path only) for `RIDER_CHOSEN_AFTER_EXILE`, `DEATH_REPLACEMENT_ASKED_AFTER_EVENT`,
+  `MAY_LIBRARY_ASKED_AFTER_EVENT` and `DESTRUCTION_REPLACEMENT_ASKED_AFTER_EVENT`. Tests opt in with
+  `@FailOnLegacyDepartureFallback` (class or method); `KalitasTraitorOfGhetTest`, `KalitasBloodchiefOfGhetTest`
+  and `GravebaneZombieTest` do. `PolymorphTest.destroyThatCannotAskFirstIsReportedAsLegacyFallback` asserts the
+  guard fires for Polymorph: update or remove it in step 9. Step 13 makes `reached` throw.
+- Ratchet: `LegacyDepartureWrapperRatchetTest` (application module) freezes the 97 current callers of the
+  public wrappers (`OuterClass.method`, lambdas folded into their method). ArchUnit 1.3.0 can't read Java 25
+  class files, which is why `CardImmutabilityArchTest` fails, so it reads bytecode with the JDK class-file API.
+  The allowlist is the work list for steps 8–12.
+- Log fixes (CR 701.8a, 701.21a): a permanent the destruction or sacrifice couldn't touch is no longer logged as
+  destroyed / sacrificed and no longer fires "sacrificed" triggers. Tests in `AGoodThingTest`.
+- Inside replay windows a wrapper's single removal is now asked by its one-intent batch, so 16 assertions in
+  12 card tests (Barrow Ghoul, Cyclone, Drake Familiar, Elder Spawn, Glint Hawk, Icy Prison, Lithophage,
+  Masticore, Magmasaur, Phantasmal Forces, Indoraptor, Vexing Devil) now check `choice.inDepartureBatch()`
+  instead of `choice.rerunsEffect()`.
+- For step 7: pauses go through `DepartureService.paused` (sets `rerunCurrentEffectAfterInteraction`, throws
+  `DeathReplacementChoicePending`); the rerun finds the batch by equal intents (`answeredRerunBatch`). Hooks
+  (`DestructionSupport` log and trigger hooks, `departAlone`'s capture) are closures and don't survive a pause:
+  derive logs and triggers from `DepartureResult`s or store what's needed on the batch. Nested `departNow` calls
+  happen inside `perform` (e.g. an aura sacrificed during `applyDestructionReplacement`) and should stay
+  immediate.
+
+### Step 7
+
+- First half done (ahead of steps 3–6, since it doesn't touch removal): `StackEntry.resolutionResults`
+  (immutable `ResolutionResults(departures, pickedIds)`, shared by the copy constructor), written with
+  `recordDepartures` / `recordPicks`. A removal step records its results even when nothing left (an empty
+  list), so "if you do" never reads an older step's result.
+- Conditions and amounts: `PermanentLeftThisWay.sacrificed()` / `destroyed()` (true wherever the permanent
+  ended up; regenerated or indestructible is not destroyed), `PermanentLeftThisWayPower` /
+  `PermanentLeftThisWayToughness`. `ConditionContext` carries the entry's `resolutionResults`; use
+  `ConditionalEffect.unless(...)` for "if you do". Tests: `EffectResolutionServiceTest$ResolutionScratchpad`
+  and `ResolutionScratchpadAmountTest` (stub removal handlers stand in for step 8).
+- Pausing (second half): a batch started by a resolution step is owned by it (`DepartureBatch.ownerStackEntryId`,
+  the parked entry's `getTargetableId()`; set with `ownedBy`). `EffectResolutionService` sets
+  `GameData.stepDepartureEffect` around a top-level `handler.resolve` (same depth and entry conditions as the rerun
+  window). After the handler returns, `DepartureService.awaitsStepDeparture` parks at `i + 1` (never a rerun). On
+  resume `resolveEffectsLoop` first calls `finishStepDeparture`, which continues `depart`, records `Done.results()`
+  with `recordDepartures`, and keeps the entry parked while a question is still open. Owned batches always ask,
+  return `Pending` without throwing, and are skipped by the rerun matching (`answeredRerunBatch`,
+  `discardAnsweredRerunBatch`, `answeredForRerun`, `departsAlone`).
+- API for steps 8–10: `DepartureService.departAsStep(gd, entry, effect, batch)`; return right after it and never
+  depart twice in one step. Outside the step window, or while another batch is pending, it falls back to
+  `departNow` and still records results. Logs and triggers come from `stepHooks`, rebuilt per call: SACRIFICE
+  logs "X is sacrificed." and runs `checkAllyPermanentSacrificedTriggers` inside the event (CR 603.10a
+  look-back; before, `SacrificeSelfEffectHandler` fired them after the removal); DESTROY logs `isDestroyed`.
+  Callers that log "Player sacrifices X" or credit another sacrificing player need that stored on the batch first.
+- `SacrificeSelfEffectHandler` uses `departAsStep` (except its token-rider form, still on the old wrapper and on
+  the ratchet allowlist; step 8 should make that rider its own step). It keeps `AsksDeathReplacementsFirst` for
+  the fallback. Dreamcatcher is converted to `MayEffect(SequenceEffect.of(SacrificeSelfEffect,
+  ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), DrawCardEffect(1))))`; `SacrificeSelfThenEffect`
+  stays for its other users.
+- Not yet handled: `departAsStep`'s `departNow` fallback inside an enclosing simultaneous-removal group would flush
+  that group's batched triggers early (`departsAlone` avoids it; `departAsStep` doesn't yet). An owned batch whose
+  entry never resumes (game over, entry removed while parked) stays pending and blocks state-based deaths;
+  step 11 or 13 should clean it up.
+- Tests: `DreamcatcherTest` (question ends the sacrifice step and the draw waits; Kalitas exile still counts as
+  sacrificed; no sacrifice, no draw), `GameSimulatorTest.copyFinishesAPendingStepDepartureAndResumesTheNextStep`,
+  `EffectResolutionServiceTest$ResolutionScratchpad.stepEndingOnAPendingDepartureParksAtTheNextStep` and
+  `resumeStaysParkedWhileTheStepDepartureIsUnanswered`. Sweeps of about 520 `SacrificeSelfEffect` /
+  `SacrificeSelfThenEffect` / may-sequence card test classes found no new failures.
+- The other `EffectResolutionServiceTest` tests fail at HEAD: its `DamageSupport` mock returns false from
+  `beginDamageEvent`, so every resolution parks at once. The new nested class stubs it for itself.
+
+### Step 2
+
+- Types live in `magical-vibes-domain` `model/`: `DepartureCause`, `DepartureStage`, `DepartureIntent`,
+  `DepartureSnapshot`, `DepartureBatch`, `DepartureResult`. `GameData.pendingDepartureBatch` is copied in
+  `simulationFrameCopy()`, which feeds `GameSession.simulationCopy` (used by `Determinizer` and
+  `GameSimulator`), the turn-start snapshot and `restoreMutableStateFrom`. Test:
+  `GameDataDeepCopyTest.deepCopyPreservesPendingDepartureBatch`.
+- `DepartureCause` has five values, not four: lethal damage is destruction that regeneration can
+  replace (CR 704.5g), 0 toughness is not (CR 704.5f), so the gather stage needs `STATE_BASED_DESTROY`
+  apart from `STATE_BASED`.
+- Intents refer to permanents by id, so a simulation copy finds the permanent on its own battlefield.
+  `DepartureService` must treat a missing permanent as "not there" (`DepartureResult.destination` null).
+- `DepartureSnapshot` holds what the eight `simultaneousDying*` maps hold today and clones its
+  `Permanent` on copy (the maps share it between copies today).
+- `DeathExileReplacementChoice` has no batch reference: step 3 links answers to the one pending batch
+  by permanent id. There is no batch-level pending/done result yet; step 3 decides what `depart` returns.
+- `SimulationCopyCompletenessTest` already fails on HEAD (22 older fields missing from
+  `simulationCopy()`); `pendingDepartureBatch` is not among them.
 
 ## Prompt
 

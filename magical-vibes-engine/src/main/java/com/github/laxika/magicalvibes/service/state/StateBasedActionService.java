@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureResult;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -77,6 +82,7 @@ public class StateBasedActionService {
     private final TriggerCollectionService triggerCollectionService;
     private final LegendRuleService legendRuleService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
+    private final DepartureService departureService;
 
     private enum DeathReason {
         ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY, ZERO_DEFENSE
@@ -462,6 +468,16 @@ public class StateBasedActionService {
     }
 
     private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (pending != null) {
+            // A question about this check's deaths is open, or was just answered: the check is still
+            // performing that batch (CR 704.3), so nothing new is looked for until it is done.
+            if (pending.isAwaitingAnswer()
+                    || pending.intents().stream().noneMatch(intent -> intent.cause().isStateBased())) {
+                return false;
+            }
+            return depart(gameData, pending, Map.of(), processedIds);
+        }
         List<Permanent> permanents = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
 
@@ -498,132 +514,104 @@ public class StateBasedActionService {
             return null;
         });
 
-        boolean replacementPerformed = false;
-        int activeIndex = Math.max(0, gameData.orderedPlayerIds.indexOf(gameData.activePlayerId));
-        for (int offset = 0; offset < gameData.orderedPlayerIds.size(); offset++) {
-            UUID playerId = gameData.orderedPlayerIds.get(
-                    (activeIndex + offset) % gameData.orderedPlayerIds.size());
-            for (DeathEntry candidate : lethalDamageCandidates) {
-                if (playerId.equals(gameQueryService.findPermanentController(gameData, candidate.permanent().getId()))) {
-                    graveyardService.prepareRegenerationChoice(gameData, candidate.permanent());
-                }
-            }
+        List<DepartureIntent> intents = new ArrayList<>();
+        Map<UUID, DeathReason> reasons = new HashMap<>();
+        for (DeathEntry entry : toDie) {
+            intents.add(new DepartureIntent(entry.permanent().getId(), DepartureCause.STATE_BASED));
+            reasons.put(entry.permanent().getId(), entry.reason());
         }
-        if (graveyardService.hasPendingRegenerationChoice(gameData)) return false;
-        for (DeathEntry candidate : lethalDamageCandidates) {
-            if (graveyardService.tryRegenerate(gameData, candidate.permanent())) {
-                replacementPerformed = true;
-            } else {
-                toDie.add(candidate);
-            }
+        // CR 704.5g/704.5h: regeneration can replace these, so they are destructions.
+        for (DeathEntry entry : lethalDamageCandidates) {
+            intents.add(new DepartureIntent(entry.permanent().getId(), DepartureCause.STATE_BASED_DESTROY));
+            reasons.put(entry.permanent().getId(), entry.reason());
         }
-        if (graveyardService.hasPendingRegenerationChoice(gameData)) return false;
-        // CR 616.1: competing death replacements are chosen before anything in the batch leaves,
-        // so the batch still dies together, each creature with the replacement its controller chose.
-        if (permanentRemovalService.awaitStateBasedDeathReplacementChoices(gameData,
-                toDie.stream().map(DeathEntry::permanent).toList())) {
+        return depart(gameData, DepartureBatch.of(intents), reasons, processedIds);
+    }
+
+    /**
+     * Performs one CR 704.3 check's deaths as one departure batch: every question about them (destruction
+     * replacements, then CR 616.1 death replacements) is asked before any of them leaves, and the check
+     * resumes the pending batch once they are answered. Returns whether anything was performed.
+     */
+    private boolean depart(GameData gameData, DepartureBatch batch, Map<UUID, DeathReason> reasons,
+                           Set<UUID> processedIds) {
+        Map<UUID, Permanent> departing = new HashMap<>();
+        Map<UUID, DeathReason> deathReasons = new HashMap<>(reasons);
+        Map<UUID, DepartureIntent> intents = new HashMap<>();
+        batch.intents().forEach(intent -> intents.put(intent.permanentId(), intent));
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            DepartureIntent intent = intents.get(permanent.getId());
+            if (intent != null) {
+                departing.put(permanent.getId(), permanent);
+                deathReasons.computeIfAbsent(permanent.getId(), id -> deathReason(gameData, permanent, intent));
+            }
+        });
+        if (!(departureService.depart(gameData, batch) instanceof DepartureService.Outcome.Done done)) {
             return false;
         }
 
         // CR 704.5h spans "since the last state-based check" and this pass is that check:
         // consume the deathtouch memory so survivors (indestructible, regenerated) aren't
         // re-destroyed by a later pass or a later check.
-        for (Permanent p : permanents) {
-            p.setDamagedByDeathtouch(false);
+        gameData.forEachPermanent((controllerId, permanent) -> permanent.setDamagedByDeathtouch(false));
+
+        boolean performed = !done.survivorIds().isEmpty();
+        boolean anyLeft = false;
+        for (DepartureResult result : done.results()) {
+            Permanent permanent = departing.get(result.permanentId());
+            if (permanent == null || done.survivorIds().contains(permanent.getId())) {
+                continue;
+            }
+            // Skipped by later passes of this check, so a removal that left it in place isn't performed twice.
+            processedIds.add(permanent.getId());
+            performed = true;
+            if (result.left()) {
+                anyLeft = true;
+                logDeath(gameData, permanent.getCard(), deathReasons.get(permanent.getId()));
+            }
         }
 
-        permanentRemovalService.beginDeathReplacementChoiceBatch(gameData);
-        try {
-            for (DeathEntry entry : toDie) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
-                Permanent dyingSnapshot = new Permanent(entry.permanent());
-                dyingSnapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, entry.permanent()));
-                dyingSnapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, entry.permanent()));
-                dyingSnapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, entry.permanent()));
-                for (StackEntry stackEntry : gameData.stack) {
-                    Permanent stackSource = stackEntry.getSourcePermanentSnapshot();
-                    if (entry.permanent().getId().equals(stackEntry.getSourcePermanentId())
-                            && stackSource != null && stackSource.getLastKnownPower() == null) {
-                        stackSource.setLastKnownPower(dyingSnapshot.getLastKnownPower());
-                        stackSource.setLastKnownToughness(dyingSnapshot.getLastKnownToughness());
-                    }
-                }
-                dyingSnapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, entry.permanent()));
-                gameData.simultaneousDyingGrantedSelfDeathEffects.put(entry.permanent().getId(),
-                        List.copyOf(triggerCollectionService.grantedTriggeredEffects(
-                                gameData, entry.permanent(), EffectSlot.ON_DEATH)));
-                if (controllerId != null) {
-                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), dyingSnapshot);
-                    gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
-                }
-                if (gameQueryService.isCreature(gameData, entry.permanent())) {
-                    if (controllerId != null) {
-                        gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), dyingSnapshot);
-                        gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
-                        gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
-                                gameQueryService.getEffectivePower(gameData, entry.permanent()));
-                        gameData.simultaneousDyingTriggerKeywordInstances.put(entry.permanent().getId(), Map.of(
-                                Keyword.PERSIST, gameQueryService.triggerKeywordInstances(
-                                        gameData, entry.permanent(), Keyword.PERSIST),
-                                Keyword.UNDYING, gameQueryService.triggerKeywordInstances(
-                                        gameData, entry.permanent(), Keyword.UNDYING)));
-                        List<CardEffect> grantedCreatureDeathEffects = new ArrayList<>(
-                                entry.permanent().getTemporaryTriggeredEffects(EffectSlot.ON_ANY_CREATURE_DIES));
-                        grantedCreatureDeathEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
-                                gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES));
-                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
-                                entry.permanent().getId(),
-                                List.copyOf(grantedCreatureDeathEffects));
-                    }
-                }
-            }
-
-            for (DeathEntry entry : toDie) {
-                processedIds.add(entry.permanent().getId());
-                if (entry.reason() == DeathReason.LETHAL_DAMAGE) {
-                    permanentRemovalService.destroyPermanentByStateBasedAction(gameData, entry.permanent());
-                } else {
-                    permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
-                }
-                Card cardEntry = entry.permanent().getCard();
-                String name = cardEntry.getName();
-                switch (entry.reason()) {
-                    case ZERO_TOUGHNESS -> {
-                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " is put into the graveyard (0 toughness)."));
-                        log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, name);
-                    }
-                    case LETHAL_DAMAGE -> {
-                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " is destroyed (lethal damage)."));
-                        log.info("Game {} - {} dies to state-based actions (lethal damage)", gameData.id, name);
-                    }
-                    case ZERO_LOYALTY -> {
-                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " has no loyalty counters and is put into the graveyard."));
-                        log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, name);
-                    }
-                    case ZERO_DEFENSE -> {
-                        gameLogService.append(gameData, GameLog.cardThen(cardEntry, " has no defense counters and is put into the graveyard."));
-                        log.info("Game {} - {} dies to state-based actions (0 defense)", gameData.id, name);
-                    }
-                }
-            }
-            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
-            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
-        } finally {
-            gameData.simultaneousDyingCreatures.clear();
-            gameData.simultaneousDyingControllers.clear();
-            gameData.simultaneousDyingPermanents.clear();
-            gameData.simultaneousDyingPermanentControllers.clear();
-            gameData.simultaneousDyingPowers.clear();
-            gameData.simultaneousDyingTriggerKeywordInstances.clear();
-            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
-            gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
-            permanentRemovalService.endDeathReplacementChoiceBatch(gameData);
-        }
-
-        if (!toDie.isEmpty()) {
+        if (anyLeft) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        return !toDie.isEmpty() || replacementPerformed;
+        return performed;
+    }
+
+    /** Why a permanent of a resumed state-based batch dies, judged the way the check that found it judged it. */
+    private DeathReason deathReason(GameData gameData, Permanent permanent, DepartureIntent intent) {
+        if (intent.cause() == DepartureCause.STATE_BASED_DESTROY) {
+            return DeathReason.LETHAL_DAMAGE;
+        }
+        if (gameQueryService.isCreature(gameData, permanent)
+                && gameQueryService.getEffectiveToughness(gameData, permanent) <= 0) {
+            return DeathReason.ZERO_TOUGHNESS;
+        }
+        if (gameQueryService.isPlaneswalker(gameData, permanent)) {
+            return DeathReason.ZERO_LOYALTY;
+        }
+        return gameQueryService.isBattle(gameData, permanent) ? DeathReason.ZERO_DEFENSE : DeathReason.ZERO_TOUGHNESS;
+    }
+
+    private void logDeath(GameData gameData, Card card, DeathReason reason) {
+        String name = card.getName();
+        switch (reason) {
+            case ZERO_TOUGHNESS -> {
+                gameLogService.append(gameData, GameLog.cardThen(card, " is put into the graveyard (0 toughness)."));
+                log.info("Game {} - {} dies to state-based actions (0 toughness)", gameData.id, name);
+            }
+            case LETHAL_DAMAGE -> {
+                gameLogService.append(gameData, GameLog.cardThen(card, " is destroyed (lethal damage)."));
+                log.info("Game {} - {} dies to state-based actions (lethal damage)", gameData.id, name);
+            }
+            case ZERO_LOYALTY -> {
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no loyalty counters and is put into the graveyard."));
+                log.info("Game {} - {} dies to state-based actions (0 loyalty)", gameData.id, name);
+            }
+            case ZERO_DEFENSE -> {
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no defense counters and is put into the graveyard."));
+                log.info("Game {} - {} dies to state-based actions (0 defense)", gameData.id, name);
+            }
+        }
     }
 
     private boolean enforceCounterLimits(GameData gameData) {

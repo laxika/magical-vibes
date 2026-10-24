@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ResolutionResults;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 
@@ -45,7 +46,46 @@ public record ConditionContext(
         boolean giftPromised,
         boolean revealCardFromHandCostPaid,
         boolean controlledDragonAsCast
+, boolean treasureManaSpentToActivate, boolean teamworkCostPaid, boolean controlledModifiedCreatureAsCast, boolean copiedSpell,
+        ResolutionResults resolutionResults) {
+    /** A context with an empty resolution scratchpad, for evaluations outside a resolving stack entry. */
+    public ConditionContext(
+        UUID controllerId,
+        UUID sourcePermanentId,
+        Permanent sourcePermanent,
+        Card sourceCard,
+        boolean kicked,
+        boolean buyback,
+        boolean prowl,
+        boolean madness,
+        boolean castForForetell,
+        boolean overloaded,
+        Zone sourceZone,
+        int xValue,
+        UUID targetId,
+        Card triggeringCard,
+        boolean staticEvaluation,
+        boolean putCounterCostPaid,
+        boolean beholdCostPaid,
+        UUID triggeringPermanentId,
+        Integer triggeringPermanentPowerAtTrigger,
+        Card sacrificedCard,
+        List<String> repeatedAdditionalCosts,
+        boolean alternateCost,
+        boolean spectacle,
+        boolean controlledMountAsCast,
+        boolean controlledFaerieAsCast,
+        boolean collectEvidenceCostPaid,
+        boolean castDuringMainPhase,
+        int eventValue,
+        boolean waterbendCostPaid,
+        boolean giftPromised,
+        boolean revealCardFromHandCostPaid,
+        boolean controlledDragonAsCast
 , boolean treasureManaSpentToActivate, boolean teamworkCostPaid, boolean controlledModifiedCreatureAsCast, boolean copiedSpell) {
+        this(controllerId, sourcePermanentId, sourcePermanent, sourceCard, kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue, waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell, ResolutionResults.EMPTY);
+    }
+
     public ConditionContext(
         UUID controllerId,
         UUID sourcePermanentId,
@@ -198,6 +238,9 @@ public record ConditionContext(
         repeatedAdditionalCosts = repeatedAdditionalCosts == null
                 ? List.of()
                 : List.copyOf(repeatedAdditionalCosts);
+        if (resolutionResults == null) {
+            resolutionResults = ResolutionResults.EMPTY;
+        }
     }
 
     public ConditionContext(
@@ -400,7 +443,8 @@ public record ConditionContext(
                 entry.isCollectEvidenceCostPaid(),
                 entry.isCastDuringMainPhase(), entry.getEventValue(), entry.isWaterbendCostPaid(),
                 entry.isGiftPromised(), entry.isRevealCardFromHandCostPaid(),
-                entry.isControlledDragonAsCast(), entry.getActivationTreasureManaSpent() > 0 || entry.isActivationUsedTreasureMana(), entry.isTeamworkCostPaid(), entry.isControlledModifiedCreatureAsCast(), entry.isCopy());
+                entry.isControlledDragonAsCast(), entry.getActivationTreasureManaSpent() > 0 || entry.isActivationUsedTreasureMana(), entry.isTeamworkCostPaid(), entry.isControlledModifiedCreatureAsCast(), entry.isCopy(),
+                entry.getResolutionResults());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -486,7 +530,8 @@ public record ConditionContext(
                 copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
                 spectacle, controlledMountAsCast, controlledFaerieAsCast, collectEvidenceCostPaid,
                 castDuringMainPhase, copiedEventValue, waterbendCostPaid, giftPromised,
-                revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell);
+                revealCardFromHandCostPaid, controlledDragonAsCast, treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
+                resolutionResults);
     }
 
     public ConditionContext withTeamworkCostPaid(boolean paid) {
@@ -497,7 +542,21 @@ public record ConditionContext(
                 repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast,
                 controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
                 waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
-                treasureManaSpentToActivate, paid, controlledModifiedCreatureAsCast, copiedSpell);
+                treasureManaSpentToActivate, paid, controlledModifiedCreatureAsCast, copiedSpell,
+                resolutionResults);
+    }
+
+    /** The same context reading {@code results} as the resolving entry's scratchpad. */
+    public ConditionContext withResolutionResults(ResolutionResults results) {
+        return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue,
+                targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid,
+                triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard,
+                repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast,
+                controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
+                waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
+                treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
+                results);
     }
 
     public ConditionContext withEventValue(int newEventValue) {

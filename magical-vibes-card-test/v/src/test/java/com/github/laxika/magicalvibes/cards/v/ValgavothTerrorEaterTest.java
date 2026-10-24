@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GremlinTamer;
@@ -20,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ValgavothTerrorEater.class, GrizzlyBears.class, Forest.class, Shock.class,
+@CardUsed({KalitasTraitorOfGhet.class, CruelEdict.class, ValgavothTerrorEater.class, GrizzlyBears.class, Forest.class, Shock.class,
         ThaliaGuardianOfThraben.class, UnableToScream.class, GremlinTamer.class})
 class ValgavothTerrorEaterTest extends BaseCardTest {
 
@@ -357,5 +360,26 @@ class ValgavothTerrorEaterTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    @DisplayName("A dying opponent creature's controller may have Valgavoth exile it instead of Kalitas")
+    void dyingOpponentCreatureOffersValgavothAlongsideKalitas() {
+        Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothTerrorEater());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Exile it with Valgavoth, Terror Eater", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.handleListChoice(player2, "Exile it with Valgavoth, Terror Eater");
+
+        assertThat(gd.findExiledCard(bears.getCard().getId()).sourcePermanentId()).isEqualTo(valgavoth.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

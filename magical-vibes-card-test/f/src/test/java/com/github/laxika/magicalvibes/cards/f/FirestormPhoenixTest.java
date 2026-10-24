@@ -1,7 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.m.MoonlitWake;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -136,6 +141,41 @@ class FirestormPhoenixTest extends BaseCardTest {
         assertThat(harness.getConn2().getSentMessages())
                 .noneMatch(message -> message.contains(returnedPhoenix.getId().toString()));
         assertThat(gd.playerHands.get(player1.getId())).contains(returnedPhoenix);
+    }
+
+    @Test
+    @CardUsed({RestInPeace.class, MoonlitWake.class, WrathOfGod.class, GrizzlyBears.class})
+    @DisplayName("Under Rest in Peace, Wrath of God asks once about the Phoenix, then both creatures leave together")
+    void restInPeaceWrathAsksOnceThenBothCreaturesLeaveTogether() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        harness.addToBattlefield(player1, new MoonlitWake());
+        Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new FirestormPhoenix());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options())
+                .containsExactlyInAnyOrder("Return it to its owner's hand (Firestorm Phoenix)", "Exile it");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(phoenix);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+
+        harness.handleListChoice(player1, "Return it to its owner's hand (Firestorm Phoenix)");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phoenix);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        assertThat(gd.playerHands.get(player1.getId())).contains(phoenix.getCard());
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(phoenix.getCard().getId())).isNull();
+        harness.assertNotInGraveyard(player1, "Firestorm Phoenix");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void killPhoenix(Permanent phoenix) {

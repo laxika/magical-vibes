@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ChoiceContext.DeathExileReplacement;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -116,6 +119,8 @@ public class PermanentRemovalService {
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @org.springframework.beans.factory.annotation.Autowired @Lazy
+    private DepartureService departureService;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -224,8 +229,11 @@ public class PermanentRemovalService {
      *         {@code false} if it was not on any battlefield
      */
     public boolean removePermanentToGraveyard(GameData gameData, Permanent target) {
-        return emitLeaveCue(gameData, target, removePermanentToGraveyard(gameData, target, false),
-                VisualCueType.DIED, VisualCueService.Source.none());
+        DepartureIntent intent = new DepartureIntent(target.getId(), DepartureCause.OTHER);
+        if (departsAlone(gameData, target, intent)) {
+            return departAlone(gameData, intent);
+        }
+        return departToGraveyard(gameData, target, intent, null);
     }
 
     /** Preserves battlefield information while a simultaneous group of removals is performed. */
@@ -283,7 +291,84 @@ public class PermanentRemovalService {
         }
     }
 
+    /**
+     * Its controller sacrifices {@code target} (CR 701.21a) as a one-permanent {@link DepartureBatch}.
+     *
+     * @return {@code true} if it left the battlefield
+     */
     public boolean sacrificePermanentToGraveyard(GameData gameData, Permanent target) {
+        DepartureIntent intent = DepartureIntent.sacrifice(target.getId());
+        if (departsAlone(gameData, target, intent)) {
+            return departAlone(gameData, intent);
+        }
+        return departToGraveyard(gameData, target, intent, null);
+    }
+
+    /**
+     * Whether a legacy wrapper's removal of {@code target} can be a {@link DepartureBatch} of its own. It can't
+     * inside an enclosing group of simultaneous removals, whose snapshots and batched death triggers belong to that
+     * group; while another departure batch is pending, which it would otherwise drop; or when {@code target} is not
+     * the permanent on the battlefield (a stale copy), which the batch would find by id. Those removals stay on the
+     * older inline path, which is what the batch performs for its one intent anyway.
+     */
+    private boolean departsAlone(GameData gameData, Permanent target, DepartureIntent intent) {
+        if (!gameData.simultaneousDyingPermanents.isEmpty()) {
+            return false;
+        }
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (pending != null && (pending.isAwaitingAnswer() || pending.isStateBased()
+                || pending.isOwnedByResolutionStep() || !pending.intents().equals(List.of(intent)))) {
+            return false;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.stream().anyMatch(permanent -> permanent == target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Performs a legacy wrapper's one intent as a {@link DepartureBatch} through {@link DepartureService#departNow}:
+     * its CR 616.1 question is asked before it leaves while its caller can be stopped and run again. When it can't,
+     * nothing is asked and the removal falls back to the older behaviour, which {@link LegacyDepartureFallback}
+     * reports.
+     *
+     * @return {@code true} if it left the battlefield
+     */
+    private boolean departAlone(GameData gameData, DepartureIntent intent) {
+        boolean[] removed = {false};
+        departureService.departNow(gameData, DepartureBatch.of(List.of(intent)),
+                DepartureService.Hooks.afterEach((departed, permanent, snapshot, left) -> removed[0] = left));
+        return removed[0];
+    }
+
+    /**
+     * Performs one intent of a {@link DepartureBatch} (see {@link DepartureService}): moves {@code target}
+     * to a graveyard the way the intent's cause says, applying {@code chosenReplacement}, the CR 616.1
+     * death replacement its controller chose before the batch was performed ({@code null} when none was
+     * asked).
+     *
+     * @return {@code true} if it left the battlefield
+     */
+    public boolean departToGraveyard(GameData gameData, Permanent target, DepartureIntent intent,
+                                     DeathExileReplacement chosenReplacement) {
+        return switch (intent.cause()) {
+            case DESTROY -> destroyPermanentToGraveyard(gameData, target, chosenReplacement);
+            case SACRIFICE -> sacrificePermanentToGraveyard(gameData, target, chosenReplacement);
+            case STATE_BASED_DESTROY -> emitLeaveCue(gameData, target,
+                    destroyPermanentToGraveyard(gameData, target, false, chosenReplacement),
+                    VisualCueType.DIED, VisualCueService.Source.none());
+            case STATE_BASED, OTHER -> emitLeaveCue(gameData, target,
+                    removePermanentToGraveyard(gameData, target, false, false, intent.graveyardOwnerId(), false,
+                            chosenReplacement),
+                    VisualCueType.DIED, VisualCueService.Source.none());
+        };
+    }
+
+    private boolean sacrificePermanentToGraveyard(GameData gameData, Permanent target,
+                                                  DeathExileReplacement chosenReplacement) {
         if (!gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, target)) {
             return false;
         }
@@ -295,7 +380,7 @@ public class PermanentRemovalService {
         boolean wasArtifact = gameQueryService.isArtifact(gameData, target);
         boolean wasNoncreatureArtifact = wasArtifact && !gameQueryService.isCreature(gameData, target);
         boolean removed = emitLeaveCue(gameData, target,
-                removePermanentToGraveyard(gameData, target, false, false, null, true),
+                removePermanentToGraveyard(gameData, target, false, false, null, true, chosenReplacement),
                 VisualCueType.SACRIFICED, visualCueService.resolvingSource(gameData));
         if (removed && wasArtifact && controllerId != null) {
             gameData.playersWhoSacrificedArtifactsThisTurn.add(controllerId);
@@ -312,26 +397,31 @@ public class PermanentRemovalService {
      * applied destruction-specific replacement checks such as indestructible and regeneration.
      */
     public boolean destroyPermanentToGraveyard(GameData gameData, Permanent target) {
+        DepartureIntent intent = DepartureIntent.destroyAfterDestructionReplacements(target.getId());
+        if (departsAlone(gameData, target, intent)) {
+            return departAlone(gameData, intent);
+        }
+        return departToGraveyard(gameData, target, intent, null);
+    }
+
+    private boolean destroyPermanentToGraveyard(GameData gameData, Permanent target,
+                                                DeathExileReplacement chosenReplacement) {
         if (gameQueryService.cantBeAffectedByOwnEffects(
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
         }
-        return emitLeaveCue(gameData, target, destroyPermanentToGraveyard(gameData, target, true),
+        return emitLeaveCue(gameData, target, destroyPermanentToGraveyard(gameData, target, true, chosenReplacement),
                 VisualCueType.DESTROYED, visualCueService.resolvingSource(gameData));
     }
 
-    /** Moves a permanent destroyed by a state-based action to its graveyard. */
-    public boolean destroyPermanentByStateBasedAction(GameData gameData, Permanent target) {
-        return emitLeaveCue(gameData, target, destroyPermanentToGraveyard(gameData, target, false),
-                VisualCueType.DIED, VisualCueService.Source.none());
-    }
-
     private boolean destroyPermanentToGraveyard(GameData gameData, Permanent target,
-                                                boolean destroyedBySpellOrAbility) {
+                                                boolean destroyedBySpellOrAbility,
+                                                DeathExileReplacement chosenReplacement) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         boolean wasNoncreatureArtifact = gameQueryService.isArtifact(gameData, target)
                 && !gameQueryService.isCreature(gameData, target);
-        boolean removed = removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility);
+        boolean removed = removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility, false, null,
+                false, chosenReplacement);
         if (removed && wasNoncreatureArtifact && controllerId != null) {
             triggerCollectionService.checkAnyNoncreatureArtifactSacrificedOrDestroyedTriggers(
                     gameData, controllerId, target.getCard());
@@ -346,11 +436,6 @@ public class PermanentRemovalService {
     }
 
     private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
-                                               boolean destroyedBySpellOrAbility) {
-        return removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility, false);
-    }
-
-    private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
                                                boolean destroyedBySpellOrAbility,
                                                boolean ignoreMayLibraryReplacement) {
         return removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility,
@@ -359,9 +444,11 @@ public class PermanentRemovalService {
 
     /** Moves a permanent into an explicitly named player's graveyard, retaining normal removal processing. */
     public boolean removePermanentToPlayerGraveyard(GameData gameData, Permanent target, UUID destinationPlayerId) {
-        return emitLeaveCue(gameData, target,
-                removePermanentToGraveyard(gameData, target, false, false, destinationPlayerId),
-                VisualCueType.DIED, VisualCueService.Source.none());
+        DepartureIntent intent = new DepartureIntent(target.getId(), DepartureCause.OTHER, destinationPlayerId);
+        if (departsAlone(gameData, target, intent)) {
+            return departAlone(gameData, intent);
+        }
+        return departToGraveyard(gameData, target, intent, null);
     }
 
     private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
@@ -389,9 +476,6 @@ public class PermanentRemovalService {
                                                boolean wasSacrificed, DeathExileReplacement chosenReplacement) {
         markDynamicToken(gameData, target);
         if (chosenReplacement == null) {
-            chosenReplacement = gameData.chosenStateBasedDeathReplacements.remove(target.getId());
-        }
-        if (chosenReplacement == null) {
             chosenReplacement = gameData.chosenDeathReplacementsForRerun.remove(target.getId());
         }
         boolean declinedMayLibrary = chosenReplacement != null
@@ -407,11 +491,16 @@ public class PermanentRemovalService {
             }
             List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, target);
             if (options.size() > 1) {
+                askDeathReplacementsBeforeRemoval(gameData, List.of(target));
                 if (options.stream().allMatch(option -> option.kind().exiles())) {
-                    // Every option exiles it, so it leaves with its event; the choice only picks the rider.
+                    // Its caller can't be stopped and run again. Every option exiles it, so it leaves with its
+                    // event, and its controller then picks which replacement's rider applies.
+                    LegacyDepartureFallback.reached(gameData,
+                            LegacyDepartureFallback.Kind.RIDER_CHOSEN_AFTER_EXILE, target);
                     riderOptions = options;
                 } else {
-                    askDeathReplacementsBeforeRemoval(gameData, List.of(target));
+                    LegacyDepartureFallback.reached(gameData,
+                            LegacyDepartureFallback.Kind.DEATH_REPLACEMENT_ASKED_AFTER_EVENT, target);
                     promptDeathExileReplacement(gameData, target, options, destroyedBySpellOrAbility,
                             wasSacrificed, destinationPlayerId, false, false);
                     return false;
@@ -443,6 +532,8 @@ public class PermanentRemovalService {
             }
 
             if (chosenKind == null && !ignoreMayLibraryReplacement && offerMayLibraryReplacement(gameData, target)) {
+                LegacyDepartureFallback.reached(gameData,
+                        LegacyDepartureFallback.Kind.MAY_LIBRARY_ASKED_AFTER_EVENT, target);
                 return false;
             }
         }
@@ -510,9 +601,10 @@ public class PermanentRemovalService {
      * The "if it would die, ... instead" replacements that currently apply to the creature
      * {@code target}, one option per distinct outcome. Replacements that only exile it collapse
      * into a single {@link DeathExileReplacement.Kind#PLAIN} option. Options that keep the card
-     * (hand, library) come first, then the plain exile, then exiles with riders. Changes nothing.
+     * (hand, library, the bottom of the library) come first, then the plain exile, then exiles with
+     * riders. Changes nothing.
      */
-    private List<DeathExileReplacement> deathExileReplacementOptions(GameData gameData, Permanent target) {
+    public List<DeathExileReplacement> deathExileReplacementOptions(GameData gameData, Permanent target) {
         if (!gameQueryService.isCreature(gameData, target)) {
             return List.of();
         }
@@ -567,6 +659,18 @@ public class PermanentRemovalService {
             }
         }
 
+        for (GraveyardService.OpponentGraveyardExileRider rider : graveyardService.opponentGraveyardExileRiders(
+                gameData, ownerId, target.getCard(), controllerId)) {
+            String sourceName = rider.sourceCard().getName();
+            riders.add(rider.voidCounter()
+                    ? new DeathExileReplacement("Exile it with a void counter (" + sourceName + ")",
+                            DeathExileReplacement.Kind.VOID_COUNTER, null, rider.sourceCard(), null,
+                            rider.sourcePermanentId())
+                    : new DeathExileReplacement("Exile it with " + sourceName,
+                            DeathExileReplacement.Kind.EXILED_WITH_PERMANENT, null, rider.sourceCard(), null,
+                            rider.sourcePermanentId()));
+        }
+
         for (Permanent source : graveyardService.exilesBattlefieldCardWithSources(gameData, target)) {
             riders.add(new DeathExileReplacement("Exile it with " + source.getCard().getName(),
                     DeathExileReplacement.Kind.EXILED_WITH_PERMANENT, null, source.getCard(), null,
@@ -615,6 +719,14 @@ public class PermanentRemovalService {
             riders.add(new DeathExileReplacement("Exile it and take an extra turn",
                     DeathExileReplacement.Kind.EXTRA_TURN, null, target.getCard(), null, null));
         }
+        if (graveyardService.shufflesBattlefieldCardIntoLibrary(gameData, target)) {
+            options.add(new DeathExileReplacement("Shuffle it into its owner's library",
+                    DeathExileReplacement.Kind.SHUFFLE_INTO_LIBRARY, null, target.getCard(), null, null));
+        }
+        if (graveyardService.putsCardOnBottomOfLibraryInsteadOfGraveyard(gameData, ownerId, target.getCard(), target)) {
+            options.add(new DeathExileReplacement("Put it on the bottom of its owner's library",
+                    DeathExileReplacement.Kind.BOTTOM_OF_LIBRARY, null, null, null, null));
+        }
         if (plain) {
             options.add(new DeathExileReplacement("Exile it", DeathExileReplacement.Kind.PLAIN,
                     null, null, null, null));
@@ -652,24 +764,24 @@ public class PermanentRemovalService {
     private static boolean isDeathExileReplacementChoiceFor(PendingInteraction interaction, UUID permanentId) {
         return interaction instanceof PendingInteraction.ColorChoice choice
                 && choice.context() instanceof ChoiceContext.DeathExileReplacementChoice context
-                && (permanentId == null ? context.stateBased() : context.permanentId().equals(permanentId));
+                && context.permanentId().equals(permanentId);
     }
 
     /**
      * CR 616.1: asks the dying creature's controller which of {@code options} applies, before it
-     * leaves the battlefield. Outside state-based actions the creature stays put until
+     * leaves the battlefield. Outside a departure batch the creature stays put until
      * {@link #resolveDeathExileReplacementChoice} resumes its removal.
      */
     private void promptDeathExileReplacement(GameData gameData, Permanent target,
                                              List<DeathExileReplacement> options,
                                              boolean destroyedBySpellOrAbility, boolean wasSacrificed,
-                                             UUID destinationPlayerId, boolean stateBased,
+                                             UUID destinationPlayerId, boolean inDepartureBatch,
                                              boolean rerunsEffect) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         openDeathReplacementChoice(gameData, new PendingInteraction.ColorChoice(
                 controllerId, target.getId(), null,
                 new ChoiceContext.DeathExileReplacementChoice(target.getId(), options,
-                        destroyedBySpellOrAbility, wasSacrificed, destinationPlayerId, stateBased,
+                        destroyedBySpellOrAbility, wasSacrificed, destinationPlayerId, inDepartureBatch,
                         rerunsEffect),
                 options.stream().map(DeathExileReplacement::label).toList(),
                 "Choose which replacement effect applies to " + target.getCard().getName() + " dying."));
@@ -709,45 +821,26 @@ public class PermanentRemovalService {
     }
 
     /**
-     * CR 616.1 for a state-based-action batch: before anything in {@code dying} leaves, asks each
-     * controller whose creature has competing death replacements with different outcomes which one
-     * applies, in APNAP order. Returns {@code true} while the batch must wait for those answers; the
-     * chosen options are then applied as the batch performs every death together.
+     * CR 616.1 for one permanent of a {@link DepartureBatch} (see {@link DepartureService}): asks its
+     * controller which of {@code options} applies before the batch is performed. The answer is
+     * recorded on the pending batch.
      */
-    public boolean awaitStateBasedDeathReplacementChoices(GameData gameData, List<Permanent> dying) {
-        if (isDeathExileReplacementChoicePending(gameData, null) || !gameData.stateBasedMayLibraryChoices.isEmpty()) {
-            return true;
-        }
-        boolean prompted = false;
-        beginDeathReplacementChoiceBatch(gameData);
-        try {
-            for (Permanent permanent : inApnapOrder(gameData, dying)) {
-                if (gameData.chosenStateBasedDeathReplacements.containsKey(permanent.getId())) {
-                    continue;
-                }
-                List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, permanent);
-                if (options.size() > 1) {
-                    promptDeathExileReplacement(gameData, permanent, options, false, false, null, true, false);
-                    prompted = true;
-                } else if (findMayLibraryReplacement(gameData, permanent) != null) {
-                    // Its only replacement is a "may": asked through the usual prompt, recorded for the batch.
-                    gameData.stateBasedMayLibraryChoices.add(permanent.getId());
-                    offerMayLibraryReplacement(gameData, permanent);
-                    prompted = true;
-                }
-            }
-        } finally {
-            endDeathReplacementChoiceBatch(gameData);
-        }
-        return prompted;
+    public void askDepartureDeathReplacement(GameData gameData, Permanent target,
+                                             List<DeathExileReplacement> options, DepartureIntent intent) {
+        promptDeathExileReplacement(gameData, target, options, intent.cause() == DepartureCause.DESTROY,
+                intent.cause() == DepartureCause.SACRIFICE, intent.graveyardOwnerId(), true, false);
+    }
+
+    /** Whether the dying creature {@code target} has a "you may put it on top of its owner's library instead". */
+    public boolean hasMayLibraryReplacement(GameData gameData, Permanent target) {
+        return findMayLibraryReplacement(gameData, target) != null;
     }
 
     /**
      * CR 616.1 for deaths a resolving effect causes: while that effect has changed nothing yet
      * ({@link GameData#deathReplacementsCanRerunEffect}), asks each controller of a creature in
-     * {@code dying} whose competing death replacements include one that keeps the card which one
-     * applies (or, when its only replacement is a granted "may" such as Pulmonic Sliver's, whether to
-     * apply it), in APNAP order, then stops the effect with {@link DeathReplacementChoicePending} so
+     * {@code dying} with competing death replacements which one applies (or, when its only
+     * replacement is a granted "may" such as Pulmonic Sliver's, whether to apply it), in APNAP order, then stops the effect with {@link DeathReplacementChoicePending} so
      * it is resolved again once every answer is in. The creatures stay on the battlefield until
      * then, and the rerun's deaths consume the answers. Does nothing when no such choice is needed
      * or the effect has already changed the game.
@@ -769,10 +862,8 @@ public class PermanentRemovalService {
                 }
                 List<DeathExileReplacement> options = deathExileReplacementOptions(gameData, permanent);
                 if (options.size() > 1) {
-                    if (!options.stream().allMatch(option -> option.kind().exiles())) {
-                        promptDeathExileReplacement(gameData, permanent, options, false, false, null, false, true);
-                        prompted = true;
-                    }
+                    promptDeathExileReplacement(gameData, permanent, options, false, false, null, false, true);
+                    prompted = true;
                 } else if (findMayLibraryReplacement(gameData, permanent) != null) {
                     // Its only replacement is a "may": asked through the usual prompt, recorded for the rerun.
                     gameData.rerunMayLibraryChoices.add(permanent.getId());
@@ -792,11 +883,13 @@ public class PermanentRemovalService {
 
     /**
      * Returns {@code true} while a death replacement asked ahead of a stopped effect or choice
-     * completion (see {@link #askDeathReplacementsBeforeRemoval}) is still waiting for its answer.
+     * completion (see {@link #askDeathReplacementsBeforeRemoval}), or a question of the pending departure batch
+     * (see {@link DepartureService#depart}), is still waiting for its answer.
      */
     public boolean awaitsDeathReplacementChoiceBeforeRerun(GameData gameData) {
         PendingInteraction.ColorChoice active = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         return !gameData.rerunMayLibraryChoices.isEmpty()
+                || gameData.pendingDepartureBatch != null && gameData.pendingDepartureBatch.isAwaitingAnswer()
                 || isRerunDeathReplacementChoice(active)
                 || gameData.pendingInteractions.stream().anyMatch(PermanentRemovalService::isRerunDeathReplacementChoice)
                 || gameData.deferredDeathReplacementChoices.stream()
@@ -837,7 +930,7 @@ public class PermanentRemovalService {
         return true;
     }
 
-    private static DeathExileReplacement mayLibraryAnswer(boolean accepted) {
+    static DeathExileReplacement mayLibraryAnswer(boolean accepted) {
         return accepted
                 ? new DeathExileReplacement("Put it into its owner's library",
                         DeathExileReplacement.Kind.LIBRARY, null, null, null, null)
@@ -846,21 +939,9 @@ public class PermanentRemovalService {
     }
 
     /**
-     * Records the answer to a "you may put it on top of its owner's library instead" asked ahead of
-     * a state-based-action batch. Returns {@code false} when {@code target}'s choice was not asked
-     * that way, so the caller moves it at once.
-     */
-    public boolean recordStateBasedMayLibraryChoice(GameData gameData, Permanent target, boolean accepted) {
-        if (!gameData.stateBasedMayLibraryChoices.remove(target.getId())) {
-            return false;
-        }
-        gameData.chosenStateBasedDeathReplacements.put(target.getId(), mayLibraryAnswer(accepted));
-        return true;
-    }
-
-    /**
      * Applies the replacement the creature's controller chose from {@code choice}: recorded for the
-     * pending state-based batch, or resuming the creature's removal with it.
+     * effect that is resolved again, or resuming the creature's removal with it. A choice asked for a
+     * departure batch is answered through {@link DepartureService#recordReplacementAnswer} instead.
      */
     public void resolveDeathExileReplacementChoice(GameData gameData,
                                                    ChoiceContext.DeathExileReplacementChoice choice,
@@ -877,10 +958,6 @@ public class PermanentRemovalService {
         }
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 ": its controller chooses \"" + chosen.label() + "\" as the replacement effect."));
-        if (choice.stateBased()) {
-            gameData.chosenStateBasedDeathReplacements.put(target.getId(), chosen);
-            return;
-        }
         if (choice.rerunsEffect()) {
             gameData.chosenDeathReplacementsForRerun.put(target.getId(), chosen);
             return;
@@ -931,6 +1008,11 @@ public class PermanentRemovalService {
                     gameData.exiledCardsWithBloodCounters.add(mainCardId);
                 }
             }
+            case VOID_COUNTER -> {
+                if (gameData.findExiledCard(mainCardId) != null) {
+                    gameData.exiledCardsWithVoidCounters.add(mainCardId);
+                }
+            }
             case PLANAR -> chosen.sourceCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::isInstance)
                     .map(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::cast)
@@ -948,12 +1030,12 @@ public class PermanentRemovalService {
                             choice.controllerId());
                 }
             }
-            case PLAIN, RETURN_TO_HAND, LIBRARY, NO_REPLACEMENT -> {
+            case PLAIN, RETURN_TO_HAND, LIBRARY, BOTTOM_OF_LIBRARY, SHUFFLE_INTO_LIBRARY, NO_REPLACEMENT -> {
             }
         }
     }
 
-    private static DeathExileReplacement chosenOption(List<DeathExileReplacement> options, String label) {
+    static DeathExileReplacement chosenOption(List<DeathExileReplacement> options, String label) {
         return options.stream()
                 .filter(option -> option.label().equals(label))
                 .findFirst()
@@ -1007,7 +1089,7 @@ public class PermanentRemovalService {
         return Set.copyOf(subtypes);
     }
 
-    private void snapshotEffectiveSubtypes(GameData gameData, Permanent permanent) {
+    void snapshotEffectiveSubtypes(GameData gameData, Permanent permanent) {
         Set<CardSubtype> subtypes = java.util.EnumSet.noneOf(CardSubtype.class);
         for (CardSubtype subtype : CardSubtype.values()) {
             if (gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype)) {
@@ -1930,15 +2012,42 @@ public class PermanentRemovalService {
         }
     }
 
+    /**
+     * Destroys {@code target} as a one-permanent {@link DepartureBatch} (see {@link DepartureService}), so its
+     * destruction replacements (indestructible, shield counters, regeneration, ...) and its CR 616.1 death
+     * replacements are settled before it leaves, asked while the caller can be stopped and run again.
+     */
     private boolean destroyPermanent(GameData gameData, Permanent target, boolean cannotBeRegenerated,
                                      boolean cleanUpAttachments) {
+        if (gameData.simultaneousDyingPermanents.containsKey(target.getId())) {
+            return destroyPermanentInEnclosingBatch(gameData, target, cannotBeRegenerated, cleanUpAttachments);
+        }
+        boolean[] destroyed = {false};
+        departureService.departNow(gameData,
+                DepartureBatch.of(List.of(DepartureIntent.destroy(target.getId(), cannotBeRegenerated))),
+                new DepartureService.Hooks(() -> {
+                    if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
+                        gameLogService.append(gameData, GameLog.isIndestructible(target.getCard()));
+                    }
+                }, (intent, permanent, snapshot, removed) -> destroyed[0] = snapshot != null));
+        if (destroyed[0] && cleanUpAttachments) {
+            removeOrphanedAuras(gameData);
+        }
+        return destroyed[0];
+    }
+
+    /**
+     * A permanent another group of simultaneous removals has already snapshotted: it is destroyed inside that
+     * group, whose batched death triggers belong to it, so it can't be a batch of its own.
+     */
+    private boolean destroyPermanentInEnclosingBatch(GameData gameData, Permanent target, boolean cannotBeRegenerated,
+                                                     boolean cleanUpAttachments) {
         if (gameQueryService.cantBeAffectedByOwnEffects(
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
         }
         if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
             gameLogService.append(gameData, GameLog.isIndestructible(target.getCard()));
-            log.info("Game {} - {} is indestructible, destroy prevented", gameData.id, target.getCard().getName());
             return false;
         }
         if (damagePreventionService.replaceDestructionWithShieldCounter(target)) {
@@ -1947,16 +2056,7 @@ public class PermanentRemovalService {
         if (graveyardService.tryReplaceDestruction(gameData, target, !cannotBeRegenerated)) {
             return false;
         }
-        // Routed through a one-permanent simultaneous batch so the destroyed permanent's own
-        // "put into a graveyard from the battlefield" triggers look back at it (CR 603.10a). Inside an
-        // enclosing batch the permanent is already snapshotted, and the batched death triggers belong
-        // to that batch.
-        if (gameData.simultaneousDyingPermanents.containsKey(target.getId())) {
-            destroyPermanentToGraveyard(gameData, target);
-        } else {
-            performSimultaneousRemovals(gameData, List.of(target),
-                    () -> destroyPermanentToGraveyard(gameData, target));
-        }
+        destroyPermanentToGraveyard(gameData, target);
         if (cleanUpAttachments) {
             removeOrphanedAuras(gameData);
         }
@@ -3036,9 +3136,11 @@ public class PermanentRemovalService {
             planarExileReplacement = null;
             controlledPermanentExileReplacement = false;
         } else if (chosenReplacement != null && EnumSet.of(DeathExileReplacement.Kind.LIBRARY,
+                DeathExileReplacement.Kind.BOTTOM_OF_LIBRARY, DeathExileReplacement.Kind.SHUFFLE_INTO_LIBRARY,
                 DeathExileReplacement.Kind.EGG_COUNTERS, DeathExileReplacement.Kind.EXTRA_TURN)
                 .contains(chosenReplacement.kind())) {
-            // The card's own replacement was chosen; it applies as the card heads to the graveyard.
+            // The card's own replacement, or a library replacement for its owner's graveyard, was chosen; it
+            // applies as the card heads to the graveyard.
             exileInstead = false;
             bloodCounterReplacement = null;
             opponentExileReplacement = null;
@@ -3092,6 +3194,11 @@ public class PermanentRemovalService {
                         && leaving.getId().equals(target.getCard().getId())) {
                     exileService.exileCard(gameData, leavingOwnerId, leaving,
                             chosenReplacement.sourcePermanentId());
+                } else if (chosenReplacement != null
+                        && chosenReplacement.kind() == DeathExileReplacement.Kind.VOID_COUNTER
+                        && leaving.getId().equals(target.getCard().getId())) {
+                    exileService.exileCard(gameData, leavingOwnerId, leaving);
+                    gameData.exiledCardsWithVoidCounters.add(leaving.getId());
                 } else if (opponentExileReplacement != null
                         && opponentExileReplacement.effect().trackWithSource()) {
                     exileService.exileCard(gameData, leavingOwnerId, leaving,
@@ -3120,6 +3227,15 @@ public class PermanentRemovalService {
                             controllerId, leaving, null, null,
                             new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(leaving.getId())));
                 }
+                } else if (chosenReplacement != null
+                        && chosenReplacement.kind() == DeathExileReplacement.Kind.SHUFFLE_INTO_LIBRARY
+                        && leaving.getId().equals(target.getCard().getId())) {
+                    graveyardService.shuffleIntoLibraryInsteadOfGraveyard(gameData, leavingOwnerId, leaving);
+                } else if (chosenReplacement != null
+                        && chosenReplacement.kind() == DeathExileReplacement.Kind.BOTTOM_OF_LIBRARY
+                        && graveyardService.putsCardOnBottomOfLibraryInsteadOfGraveyard(
+                                gameData, leavingOwnerId, leaving, graveyardSnapshot)) {
+                    graveyardService.putOnBottomOfLibraryInsteadOfGraveyard(gameData, leavingOwnerId, leaving);
                 } else {
                     boolean enteredGraveyard = graveyardService.addCardToGraveyard(
                             gameData, leavingOwnerId, leaving, Zone.BATTLEFIELD, controllerId, graveyardSnapshot,
@@ -3374,7 +3490,12 @@ public class PermanentRemovalService {
         handler.resolve(gameData, riderEntry, rider);
     }
 
-    private boolean offerMayLibraryReplacement(GameData gameData, Permanent target) {
+    /**
+     * Asks whether to apply the dying creature {@code target}'s "you may put it on top of its owner's
+     * library instead" through the usual may prompt; the answer's handler decides what happens to it.
+     * Returns {@code false} when it has no such replacement.
+     */
+    public boolean offerMayLibraryReplacement(GameData gameData, Permanent target) {
         DyingCreatureLibraryReplacementEffect replacement = findMayLibraryReplacement(gameData, target);
         if (replacement == null) {
             return false;

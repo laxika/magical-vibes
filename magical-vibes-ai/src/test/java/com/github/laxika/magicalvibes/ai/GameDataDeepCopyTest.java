@@ -8,10 +8,17 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureSnapshot;
+import com.github.laxika.magicalvibes.model.DepartureStage;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -31,6 +38,8 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -394,5 +403,57 @@ class GameDataDeepCopyTest {
         copy.spellAdditionalEnterCounters.clear();
         assertThat(gd.nextCreatureSpellEmpowermentsThisTurn.get(player1.getId())).containsExactly(empowerment);
         assertThat(gd.spellAdditionalEnterCounters).containsEntry(spellId, 2);
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves a pending departure batch independently")
+    void deepCopyPreservesPendingDepartureBatch() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SerraAngel());
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent angel = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bearsSnapshot = new Permanent(bears);
+        bearsSnapshot.setLastKnownPower(2);
+        bearsSnapshot.setLastKnownToughness(2);
+        UUID ownerStackEntryId = UUID.randomUUID();
+        ChoiceContext.DeathExileReplacement toHand = new ChoiceContext.DeathExileReplacement(
+                "Return it to its owner's hand", ChoiceContext.DeathExileReplacement.Kind.RETURN_TO_HAND,
+                null, null, null, null);
+        DepartureBatch batch = DepartureBatch.of(List.of(
+                        new DepartureIntent(bears.getId(), DepartureCause.STATE_BASED_DESTROY),
+                        new DepartureIntent(angel.getId(), DepartureCause.SACRIFICE, player1.getId())))
+                .withDestructionAnswer(bears.getId(), "INTRINSIC")
+                .withStage(DepartureStage.CHOOSE)
+                .withSnapshot(new DepartureSnapshot(bearsSnapshot, player1.getId(), true,
+                        Map.of(Keyword.PERSIST, 0, Keyword.UNDYING, 0), List.of(), List.of()))
+                .withReplacementAnswer(bears.getId(), toHand)
+                .awaitingAnswer(angel.getId())
+                .ownedBy(ownerStackEntryId);
+        gd.pendingDepartureBatch = batch;
+
+        GameData copy = gd.simulationCopy();
+
+        DepartureBatch copied = copy.pendingDepartureBatch;
+        assertThat(copied).isNotNull().isNotSameAs(batch);
+        assertThat(copied)
+                .usingRecursiveComparison()
+                .withEqualsForType((a, b) -> a.getId().equals(b.getId())
+                        && Objects.equals(a.getLastKnownPower(), b.getLastKnownPower())
+                        && Objects.equals(a.getLastKnownToughness(), b.getLastKnownToughness()), Permanent.class)
+                .isEqualTo(batch);
+        assertThat(copied.isAwaitingAnswer()).isTrue();
+        assertThat(copied.ownerStackEntryId()).isEqualTo(ownerStackEntryId);
+        Permanent copiedSnapshot = copied.snapshots().get(bears.getId()).permanent();
+        assertThat(copiedSnapshot).isNotSameAs(bearsSnapshot);
+
+        copiedSnapshot.setLastKnownPower(7);
+        copy.pendingDepartureBatch = copied.withReplacementAnswer(angel.getId(), toHand)
+                .withStage(DepartureStage.PERFORM);
+
+        assertThat(gd.pendingDepartureBatch).isSameAs(batch);
+        assertThat(batch.stage()).isEqualTo(DepartureStage.CHOOSE);
+        assertThat(batch.awaitingAnswerIds()).containsExactly(angel.getId());
+        assertThat(batch.replacementAnswers()).containsOnlyKeys(bears.getId());
+        assertThat(bearsSnapshot.getLastKnownPower()).isEqualTo(2);
     }
 }

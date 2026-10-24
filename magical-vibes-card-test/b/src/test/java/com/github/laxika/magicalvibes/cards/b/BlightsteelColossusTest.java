@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -26,7 +28,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlightsteelColossus.class, Demolish.class, CruelEdict.class,
+@CardUsed({KalitasTraitorOfGhet.class, BlightsteelColossus.class, Demolish.class, CruelEdict.class,
         GravePact.class, GrizzlyBears.class, Millstone.class, Cancel.class, MindRot.class, Humble.class,
         RestInPeace.class})
 class BlightsteelColossusTest extends BaseCardTest {
@@ -247,5 +249,28 @@ class BlightsteelColossusTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Blightsteel Colossus");
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(colossus);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A sacrificed Colossus's controller chooses between its shuffle and Kalitas's exile")
+    void sacrificedColossusOffersShuffleAlongsideKalitas() {
+        BlightsteelColossus colossus = new BlightsteelColossus();
+        harness.addToBattlefield(player2, colossus);
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Shuffle it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Blightsteel Colossus");
+
+        harness.handleListChoice(player2, "Shuffle it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(colossus);
+        assertThat(gd.findExiledCard(colossus.getId())).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

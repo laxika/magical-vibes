@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IceStorm;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
@@ -53,6 +54,22 @@ class PyramidsTest extends BaseCardTest {
         assertThat(land.getMarkedDamage()).isZero();
         assertThat(land.getLandDestructionShield()).isZero();
         assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed(DryadArbor.class)
+    void removesLethalDamageInsteadOfTheLandCreatureDyingToStateBasedActions() {
+        harness.addToBattlefield(player1, new Pyramids());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        chooseModeAndTarget(PROTECT_LAND_MODE, arbor);
+        arbor.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+        assertThat(arbor.getMarkedDamage()).isZero();
+        assertThat(arbor.getLandDestructionShield()).isZero();
     }
 
     @Test

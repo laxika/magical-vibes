@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -20,6 +21,7 @@ public class PutOnTopOfLibraryInsteadOfDyingHandler implements MayEffectHandlerB
 
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DepartureService departureService;
     private final InputCompletionService inputCompletionService;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
@@ -43,7 +45,13 @@ public class PutOnTopOfLibraryInsteadOfDyingHandler implements MayEffectHandlerB
         }
         Permanent target = ability.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-        if (target != null && !permanentRemovalService.recordStateBasedMayLibraryChoice(gameData, target, accepted)) {
+        if (target != null && departureService.recordMayLibraryAnswer(gameData, target.getId(), accepted)) {
+            if (gameData.pendingDeathReplacementChoiceReplay != null
+                    && !permanentRemovalService.awaitsDeathReplacementChoiceBeforeRerun(gameData)) {
+                permanentChoiceHandlerServiceProvider.getObject().completeChoiceAgainAfterDeathReplacements(gameData);
+                return;
+            }
+        } else if (target != null) {
             if (accepted) {
                 permanentRemovalService.removePermanentToLibraryTop(gameData, target);
             } else {

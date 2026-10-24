@@ -1018,6 +1018,13 @@ class PermanentRemovalServiceTest {
     @DisplayName("tryDestroyPermanent")
     class TryDestroyPermanent {
 
+        @BeforeEach
+        void setUpDepartures() {
+            org.springframework.test.util.ReflectionTestUtils.setField(prs, "departureService",
+                    new DepartureService(gameQueryService, prs, graveyardService, triggerCollectionService,
+                            gameLogService));
+        }
+
         @Test
         @DisplayName("Destroys a normal permanent and sends it to graveyard")
         void destroysNormalPermanent() {
@@ -1064,6 +1071,8 @@ class PermanentRemovalServiceTest {
         void regenerationPreventsDestruction() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.destructionReplacementOptions(gd, bears, true, true))
+                    .thenReturn(java.util.Map.of("Regenerate without an additional effect", "PLAIN"));
             when(graveyardService.tryReplaceDestruction(gd, bears, true)).thenReturn(true);
 
             boolean result = prs.tryDestroyPermanent(gd, bears);
@@ -1083,7 +1092,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
-            verify(graveyardService).tryReplaceDestruction(gd, bears, false);
+            verify(graveyardService).destructionReplacementOptions(gd, bears, false, true);
         }
 
         @Test

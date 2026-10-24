@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KalitasBloodchiefOfGhet.class, GrizzlyBears.class, FountainOfYouth.class,
         LeylineOfTheVoid.class, EldraziMonument.class})
+@FailOnLegacyDepartureFallback
 class KalitasBloodchiefOfGhetTest extends BaseCardTest {
 
     private void activate(Permanent kalitas, UUID targetId) {

@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -100,6 +101,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GravebaneZombie.class, WrathOfGod.class, Abduction.class, Counterspell.class,
         Humble.class, Unsummon.class})
+@FailOnLegacyDepartureFallback
 class GravebaneZombieTest extends BaseCardTest {
 
     @Test
@@ -275,6 +277,45 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie.getCard(), filler);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WrathOfGod.class})
+    @DisplayName("Under Wrath of God, both players are asked in APNAP order before any creature is destroyed")
+    void wrathAsksBothPlayersInApnapOrderBeforeAnyCreatureIsDestroyed() {
+        Card filler1 = new WrathOfGod();
+        Card filler2 = new WrathOfGod();
+        harness.setLibrary(player1, List.of(filler1));
+        harness.setLibrary(player2, List.of(filler2));
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent zombie1 = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie2 = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+
+        destroyWithWrathOfGod(player1);
+
+        PendingInteraction.ColorChoice first = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(first.playerId()).isEqualTo(player1.getId());
+        assertThat(first.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        PendingInteraction.ColorChoice second = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(second.playerId()).isEqualTo(player2.getId());
+        assertThat(second.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(filler1);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zombie1.getCard(), filler1);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(zombie2.getCard(), filler2);
+        harness.assertNotOnBattlefield(player1, "Kalitas, Traitor of Ghet");
+        harness.assertNotOnBattlefield(player2, "Kalitas, Traitor of Ghet");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -2109,10 +2150,11 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(vortex.getId());
-        // The spell is stopped and resolved again with the answer, rather than carrying on without the Zombie.
+        // The spell is stopped (its destruction is a departure batch) and resolved again with the answer,
+        // rather than carrying on without the Zombie.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isTrue());
         harness.assertOnBattlefield(player2, "Gravebane Zombie");
 
         harness.handleListChoice(player2, "Put it into its owner's library");
@@ -2509,7 +2551,8 @@ class GravebaneZombieTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(zombie.getId(), fountain1.getId(), fountain2.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
-                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet",
+                        "Exile it with Valgavoth, Terror Eater");
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(zombie, fountain1, fountain2);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("Bob sacrifices")).isEmpty();
 

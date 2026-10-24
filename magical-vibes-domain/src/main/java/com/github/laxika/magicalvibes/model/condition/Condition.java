@@ -334,6 +334,7 @@ public sealed interface Condition permits
         OpponentSearchedLibraryThisTurn,
         PermanentEnteredThisTurn,
         PermanentLeftBattlefieldUnderYourControlThisTurn,
+        PermanentLeftThisWay,
         PermanentTurnedFaceUpThisTurn,
         VoidCondition,
         PermanentPutIntoYourHandFromBattlefieldThisTurn,

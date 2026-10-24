@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
@@ -34,7 +37,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -85,7 +87,6 @@ class StateBasedActionServiceTest {
     @Mock
     private CreatureControlService creatureControlService;
 
-    @InjectMocks
     private StateBasedActionService sut;
 
     private GameData gd;
@@ -94,6 +95,11 @@ class StateBasedActionServiceTest {
 
     @BeforeEach
     void setUp() {
+        sut = new StateBasedActionService(gameOutcomeService, gameQueryService, gameLogService,
+                permanentRemovalService, graveyardService, creatureControlService, stateTriggerService,
+                triggerCollectionService, legendRuleService, battleDefeatSupport,
+                new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
+                        triggerCollectionService, gameLogService));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -118,6 +124,12 @@ class StateBasedActionServiceTest {
                         invocation.getArgument(0, GameData.class), invocation.getArgument(1, Permanent.class)));
         lenient().when(gameQueryService.withQueryScope(any(), any())).thenAnswer(invocation ->
                 invocation.<Supplier<?>>getArgument(1).get());
+        // A state-based death is reported from where the permanent ended up, so the mocked removal must remove.
+        lenient().when(permanentRemovalService.departToGraveyard(eq(gd), any(), any(), any())).thenAnswer(invocation -> {
+            Permanent dead = invocation.getArgument(1);
+            gd.playerBattlefields.values().forEach(battlefield -> battlefield.remove(dead));
+            return true;
+        });
     }
 
     @Test
@@ -128,6 +140,16 @@ class StateBasedActionServiceTest {
         sut.performStateBasedActions(gd);
 
         verify(gameQueryService, atLeastOnce()).withQueryScope(eq(gd), any());
+    }
+
+    /** A departure intent for a creature destroyed by lethal damage (CR 704.5g). */
+    private static DepartureIntent lethalDamage() {
+        return argThat((DepartureIntent intent) -> intent.cause() == DepartureCause.STATE_BASED_DESTROY);
+    }
+
+    /** A departure intent for a permanent put into the graveyard by a state-based action that isn't destruction. */
+    private static DepartureIntent putIntoGraveyard() {
+        return argThat((DepartureIntent intent) -> intent.cause() == DepartureCause.STATE_BASED);
     }
 
     private static Card createCreatureCard(String name) {
@@ -214,7 +236,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), lethalDamage(), any());
         }
 
         @Test
@@ -232,7 +254,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
             // CR 704.5h only spans "since the last state-based check" — the check consumes it,
             // so losing indestructible later must not retroactively kill the creature.
             assertThat(perm.isDamagedByDeathtouch()).isFalse();
@@ -257,7 +279,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
             assertThat(perm.isDamagedByDeathtouch()).isFalse();
         }
     }
@@ -278,7 +300,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Scornful Egotist is put into the graveyard (0 toughness).")));
         }
 
@@ -294,7 +316,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
         }
     }
 
@@ -317,7 +339,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), lethalDamage(), any());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears is destroyed (lethal damage).")));
         }
 
@@ -336,7 +358,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), lethalDamage(), any());
         }
 
         @Test
@@ -360,7 +382,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(creature);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, creature);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(creature), any(), any());
         }
 
         @Test
@@ -391,8 +413,8 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, doomedCreature);
-            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(gd, protectedCreature);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(doomedCreature), lethalDamage(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(protectedCreature), any(), any());
         }
 
         @Test
@@ -409,7 +431,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -430,7 +452,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -446,7 +468,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -462,7 +484,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Enfeebled Creature is put into the graveyard (0 toughness).")));
         }
     }
@@ -484,7 +506,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Jace Beleren has no loyalty counters and is put into the graveyard.")));
         }
 
@@ -501,7 +523,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
         }
 
         @Test
@@ -521,7 +543,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
             // Death reason is captured at collection time: creature checks fail (healthy toughness,
             // no lethal damage), but planeswalker check succeeds (0 loyalty)
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Gideon Jura has no loyalty counters and is put into the graveyard.")));
@@ -539,7 +561,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
     }
 
@@ -1046,14 +1068,14 @@ class StateBasedActionServiceTest {
             doAnswer(inv -> {
                 battlefield.remove((Permanent) inv.getArgument(1));
                 return true;
-            }).when(permanentRemovalService).destroyPermanentByStateBasedAction(eq(gd), any());
+            }).when(permanentRemovalService).departToGraveyard(eq(gd), any(), any(), any());
 
             sut.performStateBasedActions(gd);
 
             // First pass: bear survives (2 damage < 3 toughness), lord dies. Second pass: the
             // bear's marked damage is now lethal (2 >= 2) and it must die before anything else.
-            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, lord);
-            verify(permanentRemovalService).destroyPermanentByStateBasedAction(gd, bear);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(lord), lethalDamage(), any());
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(bear), lethalDamage(), any());
         }
 
         @Test
@@ -1088,10 +1110,11 @@ class StateBasedActionServiceTest {
             when(graveyardService.tryRegenerate(gd, perm)).thenReturn(false);
             // The mocked removal leaves the permanent on the battlefield; the repeat loop
             // must not pick it up again.
+            when(permanentRemovalService.departToGraveyard(eq(gd), eq(perm), any(), any())).thenReturn(false);
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, times(1)).destroyPermanentByStateBasedAction(gd, perm);
+            verify(permanentRemovalService, times(1)).departToGraveyard(eq(gd), eq(perm), lethalDamage(), any());
         }
     }
 
@@ -1117,8 +1140,8 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm1);
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm2);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm1), putIntoGraveyard(), any());
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm2), putIntoGraveyard(), any());
         }
 
         @Test
@@ -1138,8 +1161,8 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, dyingPerm);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, survivingPerm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(dyingPerm), putIntoGraveyard(), any());
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(survivingPerm), any(), any());
         }
 
         @Test
@@ -1155,7 +1178,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
     }
 

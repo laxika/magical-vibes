@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KalitasTraitorOfGhet.class, Shock.class, SlaughterDrone.class,
         TarSnare.class, TurnToFrog.class, VampireEnvoy.class, FlayingTendrils.class})
+@FailOnLegacyDepartureFallback
 class KalitasTraitorOfGhetTest extends BaseCardTest {
 
     @Test
@@ -171,7 +173,7 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
 
     @Test
     @CardUsed({LiesaForgottenArchangel.class, DiabolicEdict.class, GrizzlyBears.class})
-    void sacrificedCreatureLeavesBeforeItsControllerChoosesTheReplacement() {
+    void sacrificedCreatureStaysUntilItsControllerChoosesTheExileReplacement() {
         harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
         harness.addToBattlefield(player1, new LiesaForgottenArchangel());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -180,13 +182,16 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
+        // Both replacements exile it, but the choice is still made before the event (CR 616.1).
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                 .isEqualTo(player2.getId());
 
         harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
 
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
         assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
     }
 
@@ -202,11 +207,13 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
 
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
         assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
