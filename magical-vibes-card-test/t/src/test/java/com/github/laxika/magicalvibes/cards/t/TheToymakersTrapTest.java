@@ -1,9 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -206,5 +213,35 @@ class TheToymakersTrapTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("1", "2", "3", "4", "5");
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("A right guess asks the animated Trap's death replacement before it is sacrificed")
+    void rightGuessAsksTheDeathReplacementBeforeTheTrapIsSacrificed() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player1.getId());
+        Permanent trap = harness.addToBattlefieldAndReturn(player1, new TheToymakersTrap());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "4");
+        harness.handleListChoice(player2, "4");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(trap);
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "The Toymaker's Trap");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).contains("The Toymaker's Trap");
+        harness.assertNotOnBattlefield(player2, "Zombie");
+        harness.assertLife(player2, 20);
     }
 }

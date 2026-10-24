@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; the fallback stays until the callers listed in the seventh part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; the fallback stays until the callers listed in the eighth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1441,6 +1441,46 @@ Steps add notes here for later steps, under their number.
   under Wheel of Sun and Moon against Kalitas). No existing test changed. `CelestialJudgmentTest` (8),
   `DemonicHordesTest` (11), `DryadArborTest`, `KalitasTraitorOfGhetTest`, `GravebaneZombieTest`,
   `WheelOfSunAndMoonTest`, `LegacyDepartureWrapperRatchetTest` and `DepartureServiceOrphanedStepBatchTest` pass.
+
+### Step 13 (eighth part: the list-choice completions)
+
+- Audited every branch of `ChoiceHandlerService.handleListChoice` (the `ColorChoice` completions: colors, names, numbers,
+  modes and votes) and the handlers it hands off to. Two removed a permanent outside every window, so a CR 616.1 question
+  reached the legacy fallback; both now insert the removal as the next step of the parked resolution
+  (`StackEntry.insertEffectsToResolve` at `pendingEffectResolutionIndex`, as Diviner's Lockbox and the Coercive Portal / Grace or
+  Condemnation / Tyrant's Choice votes already did), so it departs on the stack and asks first:
+  - The Toymaker's Trap's right guess (`ToymakersTrapEffectHandler.completeGuess`) inserts `SacrificeSelfEffect` after
+    revealing the number (it called `SacrificeSelfEffectHandler.resolve` directly). The wrong-guess life loss and draw
+    are unchanged.
+  - Root Greevil's color (`DestroyAllPermanentsOfChosenColorChoice`) inserts `DestroyAllPermanentsEffect` with the color
+    filter (it called `DestroyAllPermanentsEffectHandler.resolve` directly; that field is gone from `ChoiceHandlerService`).
+- Checked, no change needed: the vote and mode handlers (Plea for Power, Council's Dilemma, Expropriate, Fateful Tempest,
+  ...) remove nothing or insert their removals as steps; the each-player sacrifice-or-discard / sacrifice-or-lose-life
+  choices only record the mode and resume the parked effect; the unpaid enchanted-permanent payment already runs in the
+  replay window (`ListChoiceReplay`); forage and turn-face-up choices are costs (step 12); the other branches resolve their
+  follow-ups through `EffectResolutionService`, call state-based actions or the legend rule (which ask on their own), or only
+  mill, exile, bounce, reveal, add mana or counters.
+- The non-creature case: `PermanentRemovalService.deathExileReplacementOptions` returns nothing for a permanent that isn't a
+  creature, so a plain enchantment (an unanimated Toymaker's Trap) never gets a CR 616.1 question at all, even with Wheel of
+  Sun and Moon against Rest in Peace. Only creatures reach the fallback; whether "put into a graveyard" replacements for
+  noncreature permanents should be offered is a separate gap (like the orphaned Auras in the fifth part).
+- Not audited in this part: the `InteractionHandler` completions in `service/interaction` (152 files: X value, number and
+  card choices). A grep finds no removal in them except the attacker declaration (costs, step 12), Forbidden Ritual's repeat
+  (fourth part) and the permanent / multi-permanent choice delegates (sixth and seventh parts); the ones that resume a parked
+  effect through `chosenXValue` rerun it through `EffectResolutionService`.
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (parked pending an official ruling; see the third part) and `LifeSupport` (Lich's Duel
+    Mastery's sacrifice inside a life loss replacement).
+  - `DamagePreventionService.replaceNextDamageToTargetWithDestruction` (destroys instead of dealing damage) and
+    `DamagePreventionReplacementSupport.applyDamageToPermanentByRemovingCountersOrSacrificing` (sacrifices instead
+    of being dealt damage): both run inside a damage event that can't pause.
+- Tests: new (both `@FailOnLegacyDepartureFallback`, both fail with the old engine code)
+  `TheToymakersTrapTest.rightGuessAsksTheDeathReplacementBeforeTheTrapIsSacrificed` (the Trap animated by Opalescence under
+  Wheel of Sun and Moon against Kalitas: still on the battlefield while asked, then in its owner's library, no Zombie, no
+  life lost) and `RootGreevilTest.asksTheDeathReplacementBeforeTheChosenColorsEnchantmentIsDestroyed` (the same setup on the
+  opponent's side, black chosen). No existing test changed. `TheToymakersTrapTest` (10), `RootGreevilTest` (8),
+  `WheelOfSunAndMoonTest`, `OpalescenceTest`, `KalitasTraitorOfGhetTest`, `LegacyDepartureWrapperRatchetTest` and
+  `DepartureServiceOrphanedStepBatchTest` pass.
 
 ### Step 2
 

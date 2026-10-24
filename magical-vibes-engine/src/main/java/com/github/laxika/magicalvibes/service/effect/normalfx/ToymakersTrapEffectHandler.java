@@ -29,7 +29,6 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final LifeSupport lifeSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final SacrificeSelfEffectHandler sacrificeSelfEffectHandler;
     private final InputCompletionService inputCompletionService;
     private final GameLogService gameLogService;
 
@@ -105,7 +104,9 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(context.controllerId())
                 + " reveals the number " + context.chosenNumber() + "."));
         if (guessedNumber == context.chosenNumber()) {
-            sacrificeSelfEffectHandler.resolve(gameData, entry, new SacrificeSelfEffect());
+            // The sacrifice is the step the parked resolution resumes with, so its death replacements
+            // are asked before the Trap leaves (CR 616.1).
+            entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(new SacrificeSelfEffect()));
         } else {
             lifeSupport.applyLifeLoss(gameData, context.opponentId(), guessedNumber, context.sourceCard().getName());
             playerInteractionSupport.applyDrawCards(gameData, context.controllerId(), 1);

@@ -92,7 +92,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.ManaSourceColorSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
@@ -187,7 +186,6 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BounceSupport bounceSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
-    private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;
     private final EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler
             eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
@@ -5272,8 +5270,10 @@ public class ChoiceHandlerService {
             PermanentPredicate filter = ctx.filter() == null
                     ? colorFilter
                     : new PermanentAllOfPredicate(List.of(ctx.filter(), colorFilter));
-            destroyAllPermanentsEffectHandler.resolve(gameData, gameData.pendingEffectResolutionEntry,
-                    new DestroyAllPermanentsEffect(filter));
+            // The destruction is the step the parked resolution resumes with, so its death replacements
+            // are asked before anything is destroyed (CR 616.1).
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(new DestroyAllPermanentsEffect(filter)));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
