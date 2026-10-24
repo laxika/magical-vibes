@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BendOrBreakEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ContinueAfterDepartureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class BendOrBreakEffectHandler implements NormalEffectHandlerBean {
+public class BendOrBreakEffectHandler implements NormalEffectHandlerBean, ContinuesAfterDeparture {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -31,6 +33,7 @@ public class BendOrBreakEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
     private final TapUntapSupport tapUntapSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -186,6 +189,12 @@ public class BendOrBreakEffectHandler implements NormalEffectHandlerBean {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    /**
+     * Destroys the lands of the chosen piles, then taps the lands of the other piles (CR 608.2c). The destruction is
+     * the step the parked resolution resumes with, so every CR 616.1 question is asked before any land leaves and the
+     * piles aren't chosen again; the lands to tap wait in the scratchpad's picks for the tap step that follows it.
+     * With no parked resolution both happen at once.
+     */
     private void resolvePiles(GameData gameData, PendingBendOrBreak state) {
         List<Permanent> toDestroy = new ArrayList<>();
         List<Permanent> toTap = new ArrayList<>();
@@ -199,17 +208,40 @@ public class BendOrBreakEffectHandler implements NormalEffectHandlerBean {
             addCurrentLands(gameData, otherIds, toTap);
         }
 
+        if (toDestroy.isEmpty() && toTap.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(state.sourceName() + " resolves without affecting any lands."));
+            return;
+        }
+
+        List<UUID> tapIds = toTap.stream().map(Permanent::getId).toList();
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked != null && !toDestroy.isEmpty()) {
+            parked.recordPicks(tapIds);
+            stepDepartureSupport.departAfterChoice(gameData,
+                    StepDepartureSupport.destructions(toDestroy.stream().map(Permanent::getId).toList(), false),
+                    List.of(new ContinueAfterDepartureEffect(new BendOrBreakEffect())));
+            return;
+        }
+
         destructionSupport.destroyBatch(gameData, toDestroy, state.sourceName(), false);
-        for (Permanent permanent : toTap) {
-            if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
+        tapLands(gameData, tapIds, state.sourceName());
+    }
+
+    /** Taps the lands of the piles that weren't chosen, recorded as the scratchpad's picks. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        tapLands(gameData, entry.getResolutionResults().pickedIds(), entry.getCard().getName());
+    }
+
+    private void tapLands(GameData gameData, List<UUID> landIds, String sourceName) {
+        for (UUID landId : landIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, landId);
+            if (permanent == null) {
                 continue;
             }
             tapUntapSupport.tapPermanent(gameData, permanent);
             gameLogService.append(gameData, GameLog.text(permanent.getCard().getName() + " is tapped by "
-                    + state.sourceName() + "."));
-        }
-        if (toDestroy.isEmpty() && toTap.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(state.sourceName() + " resolves without affecting any lands."));
+                    + sourceName + "."));
         }
         gameOutcomeService.checkWinCondition(gameData);
     }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext.DeathExileReplacement;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
@@ -731,7 +732,8 @@ public class DepartureService {
             Integer toughness = snapshot.creature() ? snapshot.permanent().getLastKnownToughness() : null;
             if (findOnBattlefield(gameData, permanentId) != null) {
                 results.add(new DepartureResult(permanentId, Zone.BATTLEFIELD, null, null, power, toughness,
-                        false, false, snapshot.controllerId(), lastKnownCardTypes(snapshot)));
+                        false, false, snapshot.controllerId(), lastKnownCardTypes(snapshot),
+                        lastKnownSubtypes(snapshot)));
                 continue;
             }
             Location location = cardIds.getOrDefault(permanentId, List.of()).stream()
@@ -742,7 +744,7 @@ public class DepartureService {
             results.add(new DepartureResult(permanentId, location == null ? null : location.zone(),
                     location == null ? null : location.ownerId(), location == null ? null : location.cardId(),
                     power, toughness, intent.cause().isDestruction(), intent.cause() == DepartureCause.SACRIFICE,
-                    snapshot.controllerId(), lastKnownCardTypes(snapshot)));
+                    snapshot.controllerId(), lastKnownCardTypes(snapshot), lastKnownSubtypes(snapshot)));
         }
         return results;
     }
@@ -759,6 +761,12 @@ public class DepartureService {
         }
         types.addAll(card.getAdditionalTypes());
         return types;
+    }
+
+    /** The snapshot's effective subtypes, recorded when it was taken (CR 608.2h). */
+    private static Set<CardSubtype> lastKnownSubtypes(DepartureSnapshot snapshot) {
+        Set<CardSubtype> subtypes = snapshot.permanent().getLastKnownSubtypes();
+        return subtypes == null ? Set.of() : subtypes;
     }
 
     private record Location(Zone zone, UUID ownerId, UUID cardId) {}

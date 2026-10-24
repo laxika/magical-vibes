@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AncientKavu;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -158,5 +162,36 @@ class BendOrBreakTest extends BaseCardTest {
         assertThat(tokenLand.isTapped()).isFalse();
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class, DryadArbor.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("A destroyed land creature's death replacement is asked before it leaves and before the other pile is tapped")
+    void asksTheDeathReplacementBeforeTheDestroyAndTheTap() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player2.getId());
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.castFromHand(player1, new BendOrBreak(), "{3}{R}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(arbor.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor, forest);
+        assertThat(forest.isTapped()).isFalse();
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(arbor.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(arbor);
+        assertThat(forest.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Bend or Break");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

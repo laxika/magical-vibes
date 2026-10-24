@@ -2536,15 +2536,12 @@ public class MultiPermanentChoiceHandlerService {
         List<UUID> allIds = new ArrayList<>(context.accumulatedSacrificeIds());
         allIds.addAll(permanentIds);
 
+        tappedLandSacrificeDamageIfSubtypeHandler.beginNextChooser(gameData,
+                context.remainingChoosers(), allIds, context.subtype(), context.damageAmount(),
+                context.damageEntry());
         if (!context.remainingChoosers().isEmpty()) {
-            tappedLandSacrificeDamageIfSubtypeHandler.beginNextChooser(gameData,
-                    context.remainingChoosers(), allIds, context.subtype(), context.damageAmount(),
-                    context.damageEntry());
             return;
         }
-
-        tappedLandSacrificeDamageIfSubtypeHandler.sacrificeThenDamageIfSubtype(gameData,
-                context.damageEntry(), allIds, context.subtype(), context.damageAmount());
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

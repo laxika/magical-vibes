@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); the fallback stays until the callers listed in the second part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; the fallback stays until the callers listed in the third part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1236,6 +1236,47 @@ Steps add notes here for later steps, under their number.
   failed 1 of 4 runs with the old code). `LegacyDepartureWrapperRatchetTest`, `DepartureServiceOrphanedStepBatchTest`,
   `ResolutionScratchpadAmountTest` and `GameSimulatorTest` pass; `EffectResolutionServiceTest` has only the failures
   step 7 recorded (its `DamageSupport` mock parks every resolution).
+
+### Step 13 (third part: Desolation and Bend or Break)
+
+- Done: two more of the four normalfx files the second part left now ask every CR 616.1 question before anything
+  leaves.
+  - Desolation (`PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtype`): the lands are sacrificed as one event and a
+    step of their own: `departThenContinue` from the resolve path (every land was the player's only one), or
+    `departAfterChoice` with a `ContinueAfterDepartureEffect` follow-up after the last land choice. The continuation
+    deals the damage to each player whose sacrificed permanent had the subtype, from the new
+    `DepartureResult.lastKnownSubtypes` (the snapshot's `Permanent.lastKnownSubtypes`, i.e. its effective subtypes) and
+    `lastKnownControllerId`, instead of reading subtypes before the sacrifice. A land that stays (it can't be
+    sacrificed any more) no longer counts. `sacrificeThenDamageIfSubtype` is gone; the choice completion always goes
+    through `beginNextChooser`.
+  - Bend or Break: after the last pile choice, the lands to tap are recorded as the parked entry's scratchpad picks
+    (`StackEntry.recordPicks`, its first user), the destruction of the chosen piles is the step the parked resolution
+    resumes with (`departAfterChoice`), and a `ContinueAfterDepartureEffect(BendOrBreakEffect)` step taps the picks that
+    are still on the battlefield. No new tap effect was needed. Nothing else on the entry picks between those two
+    steps, so the picks can't be overwritten. With nothing to destroy, or no parked resolution, it taps at once as
+    before.
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (`RemoveAllCountersThenDestroyReferencedPermanentAndDamageController`): the continuation would
+    need the destroyed creature's last-known card as the damage source and its damage-prevention state, which
+    `DepartureResult` doesn't carry. Whether a prevention effect tied to the creature (an Aura's "prevent all damage
+    enchanted creature would deal", a "prevent damage target creature would deal this turn" shield) still applies to the
+    damage it deals after it left needs an official ruling before the shape is chosen. `LifeSupport` (Lich's Duel
+    Mastery's sacrifice inside a life loss replacement). Partly, unchanged: Forbidden Ritual's repeat from
+    `ForbiddenRitualRepeatChoiceInteractionHandler`, Worms of the Earth's second land, Infernal Offering's draws.
+  - Outside normalfx, unchanged: `DamagePreventionService` / `DamagePreventionReplacementSupport`,
+    `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s CR 118.6
+    sacrifice, the multi-choice completions outside `killsBeforeChangingAnything`, and the `performSimultaneousRemovals`
+    groups.
+- Tests: new (all `@FailOnLegacyDepartureFallback`, using an animated land: Dryad Arbor under Wheel of Sun and Moon,
+  with Kalitas on the other side) `DesolationTest.asksTheDeathReplacementBeforeAnyLandIsSacrificed` (resolve path: the
+  other player's lone Plains is still there and no damage is dealt while the Arbor's question is open, then the Plains is
+  sacrificed and its controller takes 2), `DesolationTest.asksTheDeathReplacementAfterTheLandChoices` (the choice
+  completion path) and `BendOrBreakTest.asksTheDeathReplacementBeforeTheDestroyAndTheTap` (the other pile is still
+  untapped while asked, tapped after the answer). All three fail with the old handlers. No existing test changed;
+  `DesolationTest` (16) and `BendOrBreakTest` (7) pass, and so do `WheelOfSunAndMoonTest`, `KalitasTraitorOfGhetTest`,
+  `GravebaneZombieTest`, `TyrantOfDiscordTest`, `DryadArborTest`, `LegacyDepartureWrapperRatchetTest`,
+  `DepartureServiceOrphanedStepBatchTest` and `ResolutionScratchpadAmountTest`; `EffectResolutionServiceTest` has the
+  same 43 failures as at HEAD.
 
 ### Step 2
 

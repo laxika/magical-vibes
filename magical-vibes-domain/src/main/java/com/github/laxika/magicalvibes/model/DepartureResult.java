@@ -22,23 +22,35 @@ import java.util.UUID;
  *                           {@code null} if it wasn't on the battlefield
  * @param lastKnownCardTypes the card types it had immediately before the event (CR 608.2h), or empty when the
  *                           event couldn't touch it
+ * @param lastKnownSubtypes  the subtypes it had immediately before the event (CR 608.2h), or empty when the
+ *                           event couldn't touch it
  */
 public record DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
                               Integer lastKnownPower, Integer lastKnownToughness,
                               boolean destroyed, boolean sacrificed, UUID lastKnownControllerId,
-                              Set<CardType> lastKnownCardTypes) {
+                              Set<CardType> lastKnownCardTypes, Set<CardSubtype> lastKnownSubtypes) {
 
     public DepartureResult {
         Objects.requireNonNull(permanentId, "permanentId");
         lastKnownCardTypes = lastKnownCardTypes == null ? Set.of() : Set.copyOf(lastKnownCardTypes);
+        lastKnownSubtypes = lastKnownSubtypes == null ? Set.of() : Set.copyOf(lastKnownSubtypes);
     }
 
-    /** A result without last-known card types. */
+    /** A result without last-known subtypes. */
+    public DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
+                           Integer lastKnownPower, Integer lastKnownToughness,
+                           boolean destroyed, boolean sacrificed, UUID lastKnownControllerId,
+                           Set<CardType> lastKnownCardTypes) {
+        this(permanentId, destination, destinationOwnerId, newCardId, lastKnownPower, lastKnownToughness,
+                destroyed, sacrificed, lastKnownControllerId, lastKnownCardTypes, Set.of());
+    }
+
+    /** A result without last-known card types or subtypes. */
     public DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
                            Integer lastKnownPower, Integer lastKnownToughness,
                            boolean destroyed, boolean sacrificed, UUID lastKnownControllerId) {
         this(permanentId, destination, destinationOwnerId, newCardId, lastKnownPower, lastKnownToughness,
-                destroyed, sacrificed, lastKnownControllerId, Set.of());
+                destroyed, sacrificed, lastKnownControllerId, Set.of(), Set.of());
     }
 
     /** Whether it left the battlefield. */

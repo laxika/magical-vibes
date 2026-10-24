@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -8,17 +10,19 @@ import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ContinueAfterDepartureEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +32,15 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffect}: each player who
  * tapped a land for mana this turn sacrifices a land (APNAP simultaneous), then the source deals
- * damage to each player who sacrificed a matching subtype land this way.
+ * damage to each player who sacrificed a matching subtype land this way. The sacrifices are one event and a step
+ * of their own, so every CR 616.1 question is asked before any land leaves; the damage reads who sacrificed what from
+ * the departure's last-known information.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, ContinuesAfterDeparture {
 
     private final DestructionSupport destructionSupport;
     private final DamageSupport damageSupport;
@@ -43,6 +49,7 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
     private final GameOutcomeService gameOutcomeService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -92,7 +99,10 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
         }
 
         if (choosers.isEmpty()) {
-            sacrificeThenDamageIfSubtype(gameData, entry, autoSacrificeIds, e.subtype(), e.damage());
+            if (!autoSacrificeIds.isEmpty()) {
+                stepDepartureSupport.departThenContinue(gameData, entry, effect,
+                        DepartureBatch.of(StepDepartureSupport.sacrifices(autoSacrificeIds)), this);
+            }
             return;
         }
 
@@ -100,15 +110,15 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
     }
 
     /**
-     * Advances the Desolation-style APNAP sacrifice queue, or finishes with sacrifice + subtype
-     * damage when no choosers remain. Shared by the effect resolve path and the multi-permanent
-     * choice completion handler.
+     * Advances the Desolation-style APNAP sacrifice queue, or, when no choosers remain, sacrifices the chosen lands
+     * and then deals the subtype damage. Shared by the effect resolve path and the multi-permanent choice
+     * completion handler.
      */
     public void beginNextChooser(GameData gameData, List<PendingForcedSacrifice> choosers,
             List<UUID> accumulatedSacrificeIds, CardSubtype subtype, int damageAmount,
             StackEntry damageEntry) {
         if (choosers.isEmpty()) {
-            sacrificeThenDamageIfSubtype(gameData, damageEntry, accumulatedSacrificeIds, subtype, damageAmount);
+            sacrificeAfterChoices(gameData, damageEntry, accumulatedSacrificeIds, subtype, damageAmount);
             return;
         }
 
@@ -123,34 +133,53 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
     }
 
     /**
-     * Sacrifices every permanent in {@code sacrificeIds} simultaneously, then deals
-     * {@code damageAmount} to each controller who sacrificed a permanent matching {@code subtype}.
+     * Once every player has chosen, sacrifices every permanent in {@code sacrificeIds} as one event, as the step the
+     * parked resolution resumes with (so every CR 616.1 question is asked before any land leaves), followed by the
+     * subtype damage as the next step. With no parked resolution they are sacrificed at once.
      */
-    public void sacrificeThenDamageIfSubtype(GameData gameData, StackEntry damageEntry,
-            List<UUID> sacrificeIds, CardSubtype subtype, int damageAmount) {
-        Set<UUID> playersToDamage = new HashSet<>();
-        PermanentHasSubtypePredicate subtypePred = new PermanentHasSubtypePredicate(subtype);
+    private void sacrificeAfterChoices(GameData gameData, StackEntry damageEntry, List<UUID> sacrificeIds,
+            CardSubtype subtype, int damageAmount) {
+        var effect = new PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffect(subtype, damageAmount);
+        if (stepDepartureSupport.departAfterChoice(gameData, StepDepartureSupport.sacrifices(sacrificeIds),
+                List.of(new ContinueAfterDepartureEffect(effect)))) {
+            return;
+        }
+        List<Permanent> permanents = sacrificeIds.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(Objects::nonNull)
+                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                .toList();
+        List<DepartureResult> results = destructionSupport.sacrificeTogether(gameData, permanents, null).results();
+        damagePlayersWhoSacrificedSubtype(gameData, damageEntry, results, subtype, damageAmount);
+    }
 
-        for (UUID permId : sacrificeIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm == null) {
-                continue;
-            }
-            UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-            if (controllerId != null
-                    && predicateEvaluationService.matchesPermanentPredicate(gameData, perm, subtypePred)) {
-                playersToDamage.add(controllerId);
+    /** Deals the damage to each player who sacrificed a land of the subtype in the departure just recorded. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffect) effect;
+        damagePlayersWhoSacrificedSubtype(gameData, entry, entry.getResolutionResults().departures(),
+                e.subtype(), e.damage());
+    }
+
+    /**
+     * Deals {@code damageAmount} to each player who sacrificed a permanent that had {@code subtype} immediately
+     * before it left, by its last-known subtypes and controller (CR 608.2h).
+     */
+    private void damagePlayersWhoSacrificedSubtype(GameData gameData, StackEntry damageEntry,
+            List<DepartureResult> results, CardSubtype subtype, int damageAmount) {
+        Set<UUID> playersToDamage = new HashSet<>();
+        for (DepartureResult result : results) {
+            if (result.sacrificed() && result.lastKnownControllerId() != null
+                    && result.lastKnownSubtypes().contains(subtype)) {
+                playersToDamage.add(result.lastKnownControllerId());
             }
         }
-        destructionSupport.performSimultaneousSacrifice(gameData, sacrificeIds);
 
         if (!playersToDamage.isEmpty() && !damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
             for (UUID playerId : gameData.orderedPlayerIds) {
-                if (!playersToDamage.contains(playerId)) {
-                    continue;
+                if (playersToDamage.contains(playerId)) {
+                    damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId, damageAmount);
                 }
-                int raw = damageAmount;
-                damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId, raw);
             }
             gameOutcomeService.checkWinCondition(gameData);
         }

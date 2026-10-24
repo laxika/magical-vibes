@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AssaultSuit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -343,6 +346,79 @@ class DesolationTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mishra's Factory");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class, DryadArbor.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("A sacrificed land creature's death replacement is asked before any land is sacrificed or damage dealt")
+    void asksTheDeathReplacementBeforeAnyLandIsSacrificed() {
+        harness.addToBattlefield(player1, new Desolation());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent arbor = addLandCreatureWithWheel(player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(plains));
+        harness.tapPermanent(player2, gd.playerBattlefields.get(player2.getId()).indexOf(arbor));
+
+        resolveEndStep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(plains);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+        harness.assertLife(player1, 20);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(arbor.getCard().getId());
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class, DryadArbor.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("After the land choices, the death replacement is asked before the chosen Plains is sacrificed")
+    void asksTheDeathReplacementAfterTheLandChoices() {
+        harness.addToBattlefield(player1, new Desolation());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent arbor = addLandCreatureWithWheel(player2);
+        harness.setLife(player1, 20);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(plains));
+        harness.tapPermanent(player2, gd.playerBattlefields.get(player2.getId()).indexOf(arbor));
+
+        resolveEndStep(player1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(plains.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(plains);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
+        harness.assertLife(player1, 20);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.findExiledCard(arbor.getCard().getId())).isNotNull();
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertLife(player1, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private Permanent addLandCreatureWithWheel(Player player) {
+        Permanent wheel = harness.addToBattlefieldAndReturn(player, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player.getId());
+        harness.setLibrary(player, List.of(new Forest()));
+        Permanent arbor = harness.addToBattlefieldAndReturn(player, new DryadArbor());
+        arbor.setSummoningSick(false);
+        return arbor;
     }
 
     private void resolveEndStep(Player activePlayer) {
