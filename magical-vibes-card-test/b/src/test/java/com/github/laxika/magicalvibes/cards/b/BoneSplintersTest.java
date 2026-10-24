@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +107,7 @@ class BoneSplintersTest extends BaseCardTest {
     }
 
     @Test
+    @FailOnLegacyDepartureFallback
     @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
     @DisplayName("Sacrificing Gravebane Zombie under an opponent's Kalitas asks library-or-Kalitas before the cost is paid")
     void sacrificeCostAsksTheDeathReplacementBeforePayment() {
@@ -122,6 +124,9 @@ class BoneSplintersTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(splinters);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
 
         harness.handleListChoice(player1, "Put it into its owner's library");
 

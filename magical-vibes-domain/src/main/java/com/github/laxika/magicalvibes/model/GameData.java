@@ -2913,7 +2913,53 @@ public class GameData {
     /** A player's answer to complete again once the death replacements it asked about are chosen. */
     public sealed interface DeathReplacementChoiceReplay
             permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay,
-                    PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay {
+                    PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay, SpellCastReplay {
+    }
+
+    /**
+     * A spell cast from hand stopped once its costs were validated and before any of them was paid, so that a
+     * permanent it sacrifices as a cost could have its death replacement chosen first (CR 616.1, CR 601.2h): the
+     * cast request to make again once every answer is in. Plain data (permanents and cards by id), so a simulation
+     * copy casts it on its own state. {@code opponentChosenTargetPlayerId} is the opponent who chose the spell's
+     * target player for an opponent-chosen target spell, stamped on its stack entry after the cast; otherwise
+     * {@code null}.
+     */
+    public record SpellCastReplay(Player player, int cardIndex, Integer xValue, UUID targetId,
+                                  Map<UUID, Integer> damageAssignments, java.util.List<UUID> targetIds,
+                                  java.util.List<UUID> convokeCreatureIds, boolean fromGraveyard,
+                                  UUID sacrificePermanentId, Integer phyrexianLifeCount,
+                                  java.util.List<UUID> alternateCostSacrificePermanentIds,
+                                  Integer exileGraveyardCardIndex, java.util.List<Integer> exileGraveyardCardIndices,
+                                  boolean kicked, Integer discardHandCardIndex,
+                                  java.util.List<Integer> discardHandCardIndices, boolean forceAlternateCost,
+                                  java.util.List<UUID> conspireCreatureIds, Integer modalXValue,
+                                  java.util.List<Integer> spliceHandCardIndices,
+                                  java.util.List<UUID> imposedSacrificePermanentIds,
+                                  java.util.List<UUID> additionalCostSacrificePermanentIds,
+                                  java.util.List<String> repeatedAdditionalCosts, boolean buyback, boolean overloaded,
+                                  java.util.List<UUID> spliceCostPermanentIds, Integer sharedColorDiscardHandCardIndex,
+                                  UUID beholdPermanentId, Integer beholdHandCardIndex,
+                                  java.util.List<UUID> beholdPermanentIds, java.util.List<Integer> beholdHandCardIndices,
+                                  CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                                  boolean waterbendPaid, Boolean payLifeForAdditionalCost, boolean adventure,
+                                  boolean giftPromised, UUID chosenAdditionalCostObjectId,
+                                  java.util.List<UUID> casualtyCreatureIds, UUID castCardId,
+                                  UUID opponentChosenTargetPlayerId)
+            implements DeathReplacementChoiceReplay {
+
+        /** This replay, stamping {@code playerId} as the opponent who chose the spell's target player. */
+        public SpellCastReplay withOpponentChosenTargetPlayerId(UUID playerId) {
+            return new SpellCastReplay(player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                    convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                    alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
+                    discardHandCardIndex, discardHandCardIndices, forceAlternateCost, conspireCreatureIds,
+                    modalXValue, spliceHandCardIndices, imposedSacrificePermanentIds,
+                    additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, overloaded,
+                    spliceCostPermanentIds, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex,
+                    beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType,
+                    waterbendPaid, payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId,
+                    casualtyCreatureIds, castCardId, playerId);
+        }
     }
 
     /**

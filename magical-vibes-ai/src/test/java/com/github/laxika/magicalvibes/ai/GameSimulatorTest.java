@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.b.BloodthroneVampire;
+import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.d.Dreamcatcher;
@@ -1085,6 +1086,46 @@ class GameSimulatorTest {
 
         assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.pendingDepartureBatch).isNull();
+        assertThat(gd.findExiledCard(zombieCardId)).isNotNull();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A copy taken while a cast asks its sacrifice cost's death replacement casts the spell on its own")
+    void copyCastsASpellStoppedBeforeItsSacrificeCost() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card splinters = new BoneSplinters();
+        harness.setHand(player1, List.of(splinters));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        UUID zombieCardId = zombie.getCard().getId();
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), zombie.getId());
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
+        assertThat(gd.stack).isEmpty();
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(),
+                new SimulationAction.ChooseColor("Put it into its owner's library"));
+
+        assertThat(copy.pendingDepartureBatch).isNull();
+        assertThat(copy.pendingDeathReplacementChoiceReplay).isNull();
+        assertThat(copy.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombieCardId);
+        assertThat(copy.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getId()).isEqualTo(splinters.getId()));
+        assertThat(copy.playerHands.get(player1.getId())).isEmpty();
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(splinters);
         assertThat(gd.stack).isEmpty();
 
         harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");

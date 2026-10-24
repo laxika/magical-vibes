@@ -28,7 +28,10 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.FlashforwardCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -224,6 +227,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -287,6 +291,10 @@ public class SpellCastingService {
 
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private DepartureService departureService;
 
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.event.VisualCueService visualCueService;
@@ -1918,6 +1926,15 @@ public class SpellCastingService {
         playCard(gameData, player, cardIndex, xValue, targetId, Map.of(), List.of(), List.of(),
                 false, null, null, null, null, null, false, null, null, null, null, null,
                 List.of(), buyback);
+        if (gameData.pendingDeathReplacementChoiceReplay instanceof GameData.SpellCastReplay replay
+                && card.getId().equals(replay.castCardId())) {
+            gameData.pendingDeathReplacementChoiceReplay = replay.withOpponentChosenTargetPlayerId(chosenOpponentId);
+            return;
+        }
+        stampOpponentChosenTargetPlayer(gameData, card, chosenOpponentId);
+    }
+
+    private static void stampOpponentChosenTargetPlayer(GameData gameData, Card card, UUID chosenOpponentId) {
         gameData.stack.stream()
                 .filter(entry -> entry.getTargetableId().equals(card.getId()))
                 .findFirst()
@@ -3318,7 +3335,102 @@ public class SpellCastingService {
         playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex, discardHandCardIndices, forceAlternateCost, conspireCreatureIds, modalXValue, spliceHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, overloaded, spliceCostPermanentIds, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType, waterbendPaid, payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId, List.of());
     }
 
+    /**
+     * Casts a card, or stops the cast before any cost is paid when a permanent it sacrifices as a cost needs its
+     * CR 616.1 death replacement chosen first ({@link #askCastCostSacrificesFirst}): the card is then back where it
+     * was, the question is open, and {@link GameData.SpellCastReplay} holds the request to cast again once every
+     * answer is in ({@link #completeCastAfterCostSacrificeAnswers}).
+     */
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
+                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex,
+                  List<Integer> discardHandCardIndices, boolean forceAlternateCost,
+                  List<UUID> conspireCreatureIds, Integer modalXValue, List<Integer> spliceHandCardIndices,
+                  List<UUID> imposedSacrificePermanentIds, List<UUID> additionalCostSacrificePermanentIds,
+                  List<String> repeatedAdditionalCosts, boolean buyback, boolean overloaded,
+                  List<UUID> spliceCostPermanentIds, Integer sharedColorDiscardHandCardIndex,
+                  UUID beholdPermanentId, Integer beholdHandCardIndex,
+                  List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                  CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType, boolean waterbendPaid, Boolean payLifeForAdditionalCost, boolean adventure, boolean giftPromised, UUID chosenAdditionalCostObjectId, List<UUID> casualtyCreatureIds) {
+        List<Card> sourceCards = fromGraveyard ? null : gameData.castingSourceCards(player.getId());
+        Card attempted = sourceCards != null && cardIndex >= 0 && cardIndex < sourceCards.size()
+                ? sourceCards.get(cardIndex) : null;
+        try {
+            playCardInternalOnce(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                    convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                    alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
+                    discardHandCardIndex, discardHandCardIndices, forceAlternateCost, conspireCreatureIds,
+                    modalXValue, spliceHandCardIndices, imposedSacrificePermanentIds,
+                    additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, overloaded,
+                    spliceCostPermanentIds, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex,
+                    beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType,
+                    waterbendPaid, payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId,
+                    casualtyCreatureIds);
+        } catch (CastStoppedForCostSacrificeAnswers stopped) {
+            restoreAttemptedCardAfterFailedCast(gameData, sourceCards, attempted, cardIndex);
+            gameData.pendingDeathReplacementChoiceReplay = new GameData.SpellCastReplay(player, cardIndex, xValue,
+                    targetId, immutableCopy(damageAssignments), immutableCopy(targetIds),
+                    immutableCopy(convokeCreatureIds), fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                    immutableCopy(alternateCostSacrificePermanentIds), exileGraveyardCardIndex,
+                    immutableCopy(exileGraveyardCardIndices), kicked, discardHandCardIndex,
+                    immutableCopy(discardHandCardIndices), forceAlternateCost, immutableCopy(conspireCreatureIds),
+                    modalXValue, immutableCopy(spliceHandCardIndices), immutableCopy(imposedSacrificePermanentIds),
+                    immutableCopy(additionalCostSacrificePermanentIds), immutableCopy(repeatedAdditionalCosts),
+                    buyback, overloaded, immutableCopy(spliceCostPermanentIds), sharedColorDiscardHandCardIndex,
+                    beholdPermanentId, beholdHandCardIndex, immutableCopy(beholdPermanentIds),
+                    immutableCopy(beholdHandCardIndices), beholdChosenSubtype, chosenCreatureType, waterbendPaid,
+                    payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId,
+                    immutableCopy(casualtyCreatureIds), attempted == null ? null : attempted.getId(), null);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
+    }
+
+    /**
+     * Casts again the spell {@link #askCastCostSacrificesFirst} stopped, once every death replacement it asked
+     * about is chosen; its sacrifices consume the answers. A cast that is no longer legal fails as any cast does,
+     * with the card back where it was.
+     */
+    public void completeCastAfterCostSacrificeAnswers(GameData gameData, GameData.SpellCastReplay replay) {
+        List<Card> sourceCards = replay.fromGraveyard() ? null : gameData.castingSourceCards(replay.player().getId());
+        int cardIndex = replay.cardIndex();
+        Card attempted = sourceCards != null && cardIndex >= 0 && cardIndex < sourceCards.size()
+                ? sourceCards.get(cardIndex) : null;
+        if (attempted == null || !attempted.getId().equals(replay.castCardId())) {
+            throw new IllegalStateException("The stopped spell is no longer where it was cast from");
+        }
+        try {
+            playCardInternal(gameData, replay.player(), cardIndex, replay.xValue(), replay.targetId(),
+                    replay.damageAssignments(), replay.targetIds(), replay.convokeCreatureIds(),
+                    replay.fromGraveyard(), replay.sacrificePermanentId(), replay.phyrexianLifeCount(),
+                    replay.alternateCostSacrificePermanentIds(), replay.exileGraveyardCardIndex(),
+                    replay.exileGraveyardCardIndices(), replay.kicked(), replay.discardHandCardIndex(),
+                    replay.discardHandCardIndices(), replay.forceAlternateCost(), replay.conspireCreatureIds(),
+                    replay.modalXValue(), replay.spliceHandCardIndices(), replay.imposedSacrificePermanentIds(),
+                    replay.additionalCostSacrificePermanentIds(), replay.repeatedAdditionalCosts(), replay.buyback(),
+                    replay.overloaded(), replay.spliceCostPermanentIds(), replay.sharedColorDiscardHandCardIndex(),
+                    replay.beholdPermanentId(), replay.beholdHandCardIndex(), replay.beholdPermanentIds(),
+                    replay.beholdHandCardIndices(), replay.beholdChosenSubtype(), replay.chosenCreatureType(),
+                    replay.waterbendPaid(), replay.payLifeForAdditionalCost(), replay.adventure(),
+                    replay.giftPromised(), replay.chosenAdditionalCostObjectId(), replay.casualtyCreatureIds());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            restoreAttemptedCardAfterFailedCast(gameData, sourceCards, attempted, cardIndex);
+            throw e;
+        }
+        if (replay.opponentChosenTargetPlayerId() != null) {
+            stampOpponentChosenTargetPlayer(gameData, attempted, replay.opponentChosenTargetPlayerId());
+        }
+    }
+
+    private static <T> List<T> immutableCopy(List<T> list) {
+        return list == null ? null : Collections.unmodifiableList(new ArrayList<>(list));
+    }
+
+    private static <K, V> Map<K, V> immutableCopy(Map<K, V> map) {
+        return map == null ? null : Collections.unmodifiableMap(new LinkedHashMap<>(map));
+    }
+
+    private void playCardInternalOnce(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex,
@@ -3487,6 +3599,7 @@ public class SpellCastingService {
         }
 
         UUID playerId = player.getId();
+        CastStartState castStart = CastStartState.of(gameData, playerId);
 
         // Refresh the caster's "spend white as red" permission (Sunglasses of Urza) from current board
         // state so this cast's affordability checks and payment honor it.
@@ -5655,6 +5768,16 @@ public class SpellCastingService {
                         additionalCostSacrificePermanentIds);
             }
 
+            askCastCostSacrificesFirst(gameData, player, commandCast || fromGraveyard, castStart, castCostSacrificeIds(
+                    gameData, player, card, additionalCosts, paymentCostSelection,
+                    kicked ? kickerEffect : null, buyback ? buybackEffect : null, sacrificePermanentId,
+                    additionalCostSacrificePermanentIds,
+                    hasSacrificeForCostReduction ? costReductionSacrificeIds : List.of(),
+                    usingAlternateCost && !usingWebSlingingCost && !usingBestowCost
+                            && !usingSharedColorDiscardAlternativeCost && !usingCollectEvidenceAlternativeCost
+                            ? alternateHandCast : null,
+                    alternateCostSacrificePermanentIds, casualtyCreatureIds, imposedSacrificePermanentIds,
+                    List.of(), List.of()));
             // Clear the previous cast's grants before this cast's payment can grant new counters.
             gameData.spellAdditionalEnterCounters.remove(card.getId());
             int waterbendAdditionalGenericCost = waterbendCostPaid
@@ -6085,6 +6208,17 @@ public class SpellCastingService {
                 validateBuybackSacrificeCost(gameData, player, card, buybackEffect, sacrificePermanentId,
                         additionalCostSacrificePermanentIds);
             }
+
+            askCastCostSacrificesFirst(gameData, player, commandCast || fromGraveyard, castStart, castCostSacrificeIds(
+                    gameData, player, card, additionalCosts, paymentCostSelection,
+                    kicked ? kickerEffect : null, buyback ? buybackEffect : null, sacrificePermanentId,
+                    additionalCostSacrificePermanentIds,
+                    hasSacrificeForCostReduction ? costReductionSacrificeIds : List.of(),
+                    usingAlternateCost && !usingWebSlingingCost && !usingBestowCost
+                            && !usingSharedColorDiscardAlternativeCost && !usingCollectEvidenceAlternativeCost
+                            ? alternateHandCast : null,
+                    alternateCostSacrificePermanentIds, casualtyCreatureIds, imposedSacrificePermanentIds,
+                    pendingSpliceCosts, spliceCostPermanentIds));
 
             int waterbendAdditionalGenericCost = waterbendCostPaid
                     ? additionalCosts.waterbendCost().effectiveAmount(resolvedXValue) : 0;
@@ -8679,6 +8813,196 @@ public class SpellCastingService {
     private record SacrificedCreatureStats(UUID cardId, Card card, int manaValue, int power, int toughness,
                                            Permanent permanentSnapshot) {}
 
+    /** Stops a cast, before any of its costs is paid, to ask its sacrifices' death replacements first. */
+    private static final class CastStoppedForCostSacrificeAnswers extends RuntimeException {
+        CastStoppedForCostSacrificeAnswers() {
+            super(null, null, false, false);
+        }
+    }
+
+    /**
+     * What a cast's payments change, read as the cast starts. A cast may stop to ask its sacrifices' death
+     * replacements only while none of it has changed, so stopping it changes nothing but the card's place.
+     */
+    private record CastStartState(int logSize, int mana, int life, int stackSize) {
+        static CastStartState of(GameData gameData, UUID playerId) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            return new CastStartState(gameData.gameLog.size(), pool == null ? 0 : pool.getTotalAllMana(),
+                    gameData.getLife(playerId), gameData.stack.size());
+        }
+    }
+
+    /**
+     * CR 616.1 and CR 601.2h: once a cast's costs are validated and before any is paid, asks the death replacement
+     * questions of every permanent it sacrifices as a cost. When one is asked, the cast stops
+     * ({@link CastStoppedForCostSacrificeAnswers}) and is cast again with the same request once every answer is in;
+     * its sacrifices then consume the answers. Nothing is asked for a cast that can't be stopped and made again:
+     * one made while something resolves or a resolution is parked, a cast from the graveyard, a commander cast
+     * (its tax is already paid), or one that has already paid or logged something.
+     */
+    private void askCastCostSacrificesFirst(GameData gameData, Player player, boolean notFromHand,
+                                            CastStartState castStart, Set<UUID> sacrificeIds) {
+        if (sacrificeIds.isEmpty() || notFromHand || gameData.currentlyResolvingControllerId != null
+                || gameData.pendingEffectResolutionEntry != null || gameData.deathReplacementsCanRerunEffect
+                || !castStart.equals(CastStartState.of(gameData, player.getId()))) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
+        List<DepartureIntent> intents = sacrificeIds.stream()
+                .filter(id -> battlefield.stream().anyMatch(permanent -> permanent.getId().equals(id)))
+                .map(DepartureIntent::sacrifice)
+                .toList();
+        if (intents.isEmpty()) {
+            return;
+        }
+        UUID previousCauseControllerId = gameData.currentlyResolvingControllerId;
+        boolean asked;
+        try {
+            gameData.currentlyResolvingControllerId = player.getId();
+            asked = departureService.askBeforePayment(gameData, DepartureBatch.of(intents));
+        } finally {
+            gameData.currentlyResolvingControllerId = previousCauseControllerId;
+        }
+        if (asked) {
+            throw new CastStoppedForCostSacrificeAnswers();
+        }
+    }
+
+    /**
+     * The permanents a validated cast will sacrifice to pay its costs, read from the same request fields its
+     * payments read: its additional costs ({@link #payAdditionalCosts}), kicker and buyback sacrifices, creatures sacrificed to reduce its cost, an alternative cost's
+     * sacrifices, casualty, a sacrifice tax imposed by a permanent (Drought) and splice sacrifices.
+     */
+    private Set<UUID> castCostSacrificeIds(GameData gameData, Player player, Card card,
+                                           AdditionalSpellCostService.ExtractedCosts costs,
+                                           AdditionalSpellCostService.CostSelection selection, KickerEffect kicker,
+                                           BuybackEffect buybackEffect, UUID sacrificePermanentId,
+                                           List<UUID> additionalCostSacrificePermanentIds,
+                                           List<UUID> costReductionSacrificeIds, AlternateHandCast alternateCast,
+                                           List<UUID> alternateCostSacrificePermanentIds,
+                                           List<UUID> casualtyCreatureIds, List<UUID> imposedSacrificePermanentIds,
+                                           List<SpliceEffect> spliceCosts, List<UUID> spliceCostPermanentIds) {
+        Set<UUID> ids = new java.util.LinkedHashSet<>();
+        UUID chosenId = selection.sacrificePermanentId();
+        List<UUID> chosenIds = selection.sacrificePermanentIds() != null ? selection.sacrificePermanentIds() : List.of();
+        if (chosenId != null && (costs.payLifeOrSacrificePermanentCost() != null || costs.casualtyCost() != null
+                || costs.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null
+                || costs.sacrificePermanentOrDiscardCardCost() != null
+                || costs.discardCardOrSacrificePermanentCost() != null || costs.forageOrPayManaCost() != null
+                || costs.sacrificePermanentOrPayManaCost() != null)) {
+            ids.add(chosenId);
+        }
+        if (chosenId != null && (costs.sacrificeCreature() || costs.sacrificePermanentCost() != null)) {
+            ids.add(chosenId);
+        }
+        if (costs.sacrificeAllCreatures() || costs.sacrificeAllPermanents()) {
+            gameData.playerBattlefields.getOrDefault(player.getId(), List.of()).stream()
+                    .filter(permanent -> costs.sacrificeAllPermanents() || gameQueryService.isCreature(gameData, permanent))
+                    .forEach(permanent -> ids.add(permanent.getId()));
+        }
+        if (costs.sacrificeMultiplePermanentsCost() != null || costs.sacrificeAnyNumberCost() != null
+                || costs.sacrificeFractionRoundedUpCost() != null
+                || costs.escalateSacrificeCost() != null && costs.escalateSacrificeCost().count()
+                        * Math.max(0, selection.escalateModeCount() - 1) > 0) {
+            ids.addAll(chosenIds);
+        }
+        if (kicker != null && kicker.hasSacrificeCost()) {
+            if (kicker.sacrificeCount() == 1) {
+                if (sacrificePermanentId != null) ids.add(sacrificePermanentId);
+            } else if (additionalCostSacrificePermanentIds != null) {
+                ids.addAll(additionalCostSacrificePermanentIds);
+            }
+        }
+        if (kicker != null && kicker.hasForageCost() && sacrificePermanentId != null) {
+            ids.add(sacrificePermanentId);
+        }
+        if (buybackEffect != null && buybackEffect.hasSacrificeCost()) {
+            if (buybackEffect.sacrificeCount() == 1) {
+                if (sacrificePermanentId != null) ids.add(sacrificePermanentId);
+            } else if (additionalCostSacrificePermanentIds != null) {
+                ids.addAll(additionalCostSacrificePermanentIds);
+            }
+        }
+        ids.addAll(costReductionSacrificeIds);
+        if (alternateCast != null && alternateCast.getCost(SacrificePermanentsCost.class).isPresent()
+                && alternateCostSacrificePermanentIds != null) {
+            ids.addAll(alternateCostSacrificePermanentIds);
+        }
+        if (casualtyCreatureIds != null) {
+            ids.addAll(casualtyCreatureIds);
+        }
+        if (imposedSacrificePermanentIds != null && !imposedSacrificePermanentIds.isEmpty()
+                && !castingCostService.getImposedSacrificeRequirementForSpell(gameData, card).isEmpty()) {
+            ids.addAll(imposedSacrificePermanentIds);
+        }
+        int permanentIndex = 0;
+        for (SpliceEffect splice : spliceCosts) {
+            for (CastingCost cost : splice.costs()) {
+                int count = cost instanceof SacrificePermanentsCost sacrificeCost ? sacrificeCost.count()
+                        : cost instanceof TapUntappedPermanentsCost tapCost ? tapCost.count() : 0;
+                for (int i = 0; i < count && permanentIndex < spliceCostPermanentIds.size(); i++) {
+                    UUID id = spliceCostPermanentIds.get(permanentIndex++);
+                    if (cost instanceof SacrificePermanentsCost) {
+                        ids.add(id);
+                    }
+                }
+            }
+        }
+        ids.remove(null);
+        return ids;
+    }
+
+    /**
+     * Sacrifices {@code permanents} together to pay a cost of {@code sourceCard}, the spell being cast, as one
+     * {@link DepartureBatch}. Each one that leaves is logged and fires its "whenever you sacrifice" triggers
+     * (CR 701.21a) as it leaves, with {@code sacrificedCard} giving the card those triggers see. A death replacement
+     * answered before the payment ({@link #askCastCostSacrificesFirst}) is applied here.
+     *
+     * @return the ids of the permanents that left the battlefield
+     */
+    private Set<UUID> sacrificeForSpellCost(GameData gameData, Player player, Card sourceCard,
+                                            List<Permanent> permanents, String purpose,
+                                            java.util.function.Function<Permanent, Card> sacrificedCard,
+                                            boolean triggerWithSourceCard) {
+        Set<UUID> removed = new HashSet<>();
+        if (permanents.isEmpty()) {
+            return removed;
+        }
+        Map<UUID, Card> triggerCards = new HashMap<>();
+        permanents.forEach(permanent -> triggerCards.put(permanent.getId(), sacrificedCard.apply(permanent)));
+        departureService.departNow(gameData,
+                DepartureBatch.of(permanents.stream().map(p -> DepartureIntent.sacrifice(p.getId())).toList()),
+                DepartureService.Hooks.afterEach((intent, permanent, snapshot, left) -> {
+                    if (!left) {
+                        return;
+                    }
+                    removed.add(permanent.getId());
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " sacrifices ")
+                            .card(permanent.getCard())
+                            .text(purpose)
+                            .card(sourceCard)
+                            .text(".")
+                            .build());
+                    Card triggerCard = triggerCards.get(permanent.getId());
+                    if (triggerWithSourceCard) {
+                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                                gameData, player.getId(), triggerCard, sourceCard);
+                    } else {
+                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                                gameData, player.getId(), triggerCard);
+                    }
+                }));
+        return removed;
+    }
+
+    /** {@link #sacrificeForSpellCost} for one permanent, the plain "P sacrifices X for S." payment. */
+    private boolean sacrificeForSpellCost(GameData gameData, Player player, Card sourceCard, Permanent permanent,
+                                          boolean triggerWithSourceCard) {
+        return permanent != null && !sacrificeForSpellCost(gameData, player, sourceCard, List.of(permanent), " for ",
+                Permanent::getCard, triggerWithSourceCard).isEmpty();
+    }
+
     private SacrificedCreatureStats paySingleSacrificeCost(GameData gameData, Player player, Card sourceCard,
                                        UUID sacrificePermanentId, String typeDescription,
                                        Predicate<Permanent> typeCheck) {
@@ -8690,24 +9014,14 @@ public class SpellCastingService {
         Card sacrificedCardSnapshot = permanentRemovalService.snapshotEffectivePermanentCard(gameData, toSacrifice);
         Permanent permanentSnapshot = new Permanent(toSacrifice);
         UUID previousCauseControllerId = gameData.currentlyResolvingControllerId;
-        boolean sacrificed;
         try {
             gameData.currentlyResolvingControllerId = player.getId();
             gameData.sacrificingAsSpellCost = true;
-            sacrificed = permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
+            sacrificeForSpellCost(gameData, player, sourceCard, List.of(toSacrifice), " for ",
+                    permanent -> sacrificedCardSnapshot, true);
         } finally {
             gameData.sacrificingAsSpellCost = false;
             gameData.currentlyResolvingControllerId = previousCauseControllerId;
-        }
-        if (sacrificed) {
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " sacrifices ")
-                    .card(toSacrifice.getCard())
-                    .text(" for ")
-                    .card(sourceCard)
-                    .text(".")
-                    .build());
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), sacrificedCardSnapshot, sourceCard);
         }
         return new SacrificedCreatureStats(toSacrifice.getCard().getId(), sacrificedCardSnapshot, manaValue,
                 power, toughness, permanentSnapshot);
@@ -8725,21 +9039,8 @@ public class SpellCastingService {
         for (Permanent creature : creaturesToSacrifice) {
             totalPower += gameQueryService.getEffectivePower(gameData, creature);
         }
-        permanentRemovalService.performSimultaneousRemovals(gameData, creaturesToSacrifice, () -> {
-            for (Permanent creature : creaturesToSacrifice) {
-                Card sacrificedCardSnapshot = permanentRemovalService.snapshotEffectivePermanentCard(gameData, creature);
-                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature)) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " sacrifices ")
-                            .card(creature.getCard())
-                            .text(" for ")
-                            .card(sourceCard)
-                            .text(".")
-                            .build());
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), sacrificedCardSnapshot, sourceCard);
-                }
-            }
-        });
+        sacrificeForSpellCost(gameData, player, sourceCard, creaturesToSacrifice, " for ",
+                creature -> permanentRemovalService.snapshotEffectivePermanentCard(gameData, creature), true);
         return Math.max(0, totalPower);
     }
 
@@ -8747,21 +9048,8 @@ public class SpellCastingService {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> toSacrifice = List.copyOf(battlefield);
-        permanentRemovalService.performSimultaneousRemovals(gameData, toSacrifice, () -> {
-            for (Permanent permanent : toSacrifice) {
-                Card sacrificedCardSnapshot = permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent);
-                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " sacrifices ")
-                            .card(permanent.getCard())
-                            .text(" for ")
-                            .card(sourceCard)
-                            .text(".")
-                            .build());
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedCardSnapshot, sourceCard);
-                }
-            }
-        });
+        sacrificeForSpellCost(gameData, player, sourceCard, toSacrifice, " for ",
+                permanent -> permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent), true);
     }
 
     private void payDiscardHandCost(GameData gameData, Player player, Card sourceCard) {
@@ -9045,7 +9333,7 @@ public class SpellCastingService {
 
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        int sacrificedCount = 0;
+        List<Permanent> toSacrificeAll = new ArrayList<>();
 
         for (UUID sacId : sacrificeIds) {
             Permanent toSacrifice = battlefield.stream()
@@ -9061,19 +9349,11 @@ public class SpellCastingService {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toSacrifice, effect.filter())) {
                 throw new IllegalStateException("Permanent is not eligible to reduce this spell's cost");
             }
-            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice)) {
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(player.getUsername() + " sacrifices ")
-                        .card(toSacrifice.getCard())
-                        .text(" to reduce the cost of ")
-                        .card(card)
-                        .text(".")
-                        .build());
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard(), card);
-                sacrificedCount++;
-            }
+            toSacrificeAll.add(toSacrifice);
         }
 
+        int sacrificedCount = sacrificeForSpellCost(gameData, player, card, toSacrificeAll,
+                " to reduce the cost of ", Permanent::getCard, true).size();
         return sacrificedCount * effect.reductionPerCreature();
     }
 
@@ -9475,17 +9755,7 @@ public class SpellCastingService {
             for (int i = 0; i < count; i++) {
                 Permanent permanent = gameQueryService.findPermanentById(
                         gameData, sacrificePermanentIds.get(selectedIndex++));
-                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " sacrifices ")
-                            .card(permanent.getCard())
-                            .text(" for ")
-                            .card(card)
-                            .text(".")
-                            .build());
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                            gameData, player.getId(), permanent.getCard());
-                }
+                sacrificeForSpellCost(gameData, player, card, permanent, false);
             }
         }
     }
@@ -16082,17 +16352,7 @@ public class SpellCastingService {
             } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {
                 for (int i = 0; i < sacrificeCost.count(); i++) {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, selectedIds.get(selectedIndex++));
-                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                        gameLogService.append(gameData, GameLog.builder()
-                                .text(player.getUsername() + " sacrifices ")
-                                .card(permanent.getCard())
-                                .text(" for ")
-                                .card(card)
-                                .text(".")
-                                .build());
-                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                                gameData, playerId, permanent.getCard(), card);
-                    }
+                sacrificeForSpellCost(gameData, player, card, permanent, true);
                 }
             } else {
                 throw new IllegalStateException("Cannot pay this graveyard cast cost");
@@ -16638,17 +16898,7 @@ public class SpellCastingService {
                 for (int i = 0; i < sacrificeCost.count(); i++) {
                     Permanent permanent = gameQueryService.findPermanentById(gameData,
                             sacrificePermanentIds.get(selectedIndex++));
-                    if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                        gameLogService.append(gameData, GameLog.builder()
-                                .text(player.getUsername() + " sacrifices ")
-                                .card(permanent.getCard())
-                                .text(" for ")
-                                .card(card)
-                                .text(".")
-                                .build());
-                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                                gameData, player.getId(), permanent.getCard());
-                    }
+                    sacrificeForSpellCost(gameData, player, card, permanent, false);
                 }
             } else if (cost instanceof ExilePermanentCastingCost) {
                 Permanent permanent = gameQueryService.findPermanentById(
@@ -16935,16 +17185,7 @@ public class SpellCastingService {
         if (altCast.getCost(SacrificePermanentsCost.class).isPresent()) {
             for (UUID sacId : sacrificePermanentIds) {
                 Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacId);
-                if (toSacrifice != null && permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice)) {
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " sacrifices ")
-                            .card(toSacrifice.getCard())
-                            .text(" for ")
-                            .card(card)
-                            .text(".")
-                            .build());
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), toSacrifice.getCard(), card);
-                }
+                sacrificeForSpellCost(gameData, player, card, toSacrifice, true);
             }
         }
 

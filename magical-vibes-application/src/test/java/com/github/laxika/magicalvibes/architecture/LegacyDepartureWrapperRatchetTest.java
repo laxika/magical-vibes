@@ -67,14 +67,6 @@ class LegacyDepartureWrapperRatchetTest {
             "GraveyardService.performSacrificeAuraAndGrantIndestructibleReplacement",
             "GraveyardService.performUmbraArmorReplacement",
             "PermanentRemovalService.destroyPermanentInEnclosingBatch",
-            "SpellCastingService.computeAlternateCastingManaPayment",
-            "SpellCastingService.payFlashbackPermanentSacrificeCosts",
-            "SpellCastingService.payGraveyardCastAdditionalCosts",
-            "SpellCastingService.payGraveyardCastPermanentSacrificeCosts",
-            "SpellCastingService.paySacrificeAllCreaturesYouControlCost",
-            "SpellCastingService.paySacrificeAllPermanentsYouControlCost",
-            "SpellCastingService.paySacrificeCreaturesForCostReduction",
-            "SpellCastingService.paySingleSacrificeCost",
             "StateBasedActionService.applyWorldRule",
             "StateBasedActionService.removeRedundantRoles",
             "StateBasedActionService.sacrificeCompletedSagas");
@@ -91,7 +83,7 @@ class LegacyDepartureWrapperRatchetTest {
 
         assertThat(callers)
                 .as("the engine's main classes are scanned")
-                .anyMatch(caller -> caller.startsWith("SpellCastingService."));
+                .anyMatch(caller -> caller.startsWith("StateBasedActionService."));
         assertThat(callers)
                 .withFailMessage(() -> "The callers of PermanentRemovalService's legacy removal wrappers changed.\n"
                         + "New code must build a DepartureBatch and call DepartureService.depart instead of "

@@ -219,7 +219,7 @@ public class DepartureService {
      * Asks, before a cost is paid, every CR 616.1 question the sacrifices of {@code batch} need (CR 601.2h: the
      * player pays the costs in any order, so the payment can stop here). Nothing has left when this returns. When a
      * question is opened, the batch waits in {@link GameData#pendingDepartureBatch} and the caller must stop before
-     * paying anything else and store a {@link GameData.CostPaymentReplay}; once every answer is in, the replay takes
+     * paying anything else and store a {@link GameData.DeathReplacementChoiceReplay}; once every answer is in, the replay takes
      * the answers with {@link #takeAnswersForPayment} and pays again, and the sacrifices consume them. A permanent
      * whose answer is already waiting for that payment is not asked again.
      *

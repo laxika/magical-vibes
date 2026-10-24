@@ -23,7 +23,7 @@ order; each one lists what it depends on.
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | done (Goblin Crash Pilot and Goblin Welder depart at once, not as a step; see Findings) |
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
-| 12 | Costs and mana abilities | partly done (a permanent's activated-ability sacrifice costs, mana abilities and `ON_SACRIFICE` abilities; spell, graveyard-ability, attack and sequence sacrifice costs remain; see Findings) |
+| 12 | Costs and mana abilities | partly done (a permanent's activated-ability sacrifice costs, mana abilities, `ON_SACRIFICE` abilities and hand-cast spell sacrifice costs; graveyard, exile, library-top, free and morph cast costs, graveyard-ability, attack and sequence sacrifice costs remain; see Findings) |
 | 13 | Make the guard strict and remove the fallback | open |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
@@ -903,6 +903,66 @@ Steps add notes here for later steps, under their number.
   No existing test changed. A sweep of 2,083 card test classes (18,360 tests: every card using a sacrifice
   cost effect or `ON_SACRIFICE`, plus every Kalitas and Gravebane Zombie test), with `LegacyDepartureWrapperRatchetTest` and
   `GameSimulatorTest` (36/36), had 55 failures in 34 classes; the same 55 fail at the baseline, none new.
+
+### Step 12 (second part: spells cast from hand)
+
+- Done: a spell cast from hand (every `playCard*` entry point that reaches the 39-argument
+  `SpellCastingService.playCardInternal`: plain casts, gift, splice, evoke, alternative costs, adventure, prowl,
+  overload, conspire, casualty) asks the CR 616.1 question of every permanent it sacrifices as a cost before any cost
+  is paid. Off the ratchet allowlist (now 8 callers): all eight `SpellCastingService` callers. The ratchet's "main
+  classes are scanned" check now looks for a `StateBasedActionService.` caller.
+- Where it asks: not at the very start of `playCardInternal` (the sketch from the first part), because which request
+  field is a sacrifice depends on the cost structure the impl only works out during validation. Both cast branches of
+  `playCardInternalImpl` (permanent spells, instants/sorceries) validate every non-mana cost before paying any ("CR
+  601.2h: a cast either completes or leaves the game state untouched"); right after that block,
+  `askCastCostSacrificesFirst` asks `DepartureService.askBeforePayment` for `castCostSacrificeIds`: the sacrifices
+  `payAdditionalCosts` / `payAllSacrificeCosts` make (sacrifice a creature / permanent, the "or" costs when a permanent
+  was chosen, sacrifice all creatures / permanents, multiple, any number, fraction, escalate), kicker and buyback
+  sacrifices, creatures sacrificed to reduce the cost (Torgaar), an alternative cost's `SacrificePermanentsCost`,
+  casualty, an imposed tax (Drought) and splice sacrifices. A question throws the private
+  `CastStoppedForCostSacrificeAnswers`; the new `playCardInternal` wrapper catches it, puts the card back where it was
+  (`restoreAttemptedCardAfterFailedCast`, as a failed cast does; the impl only removed it from hand by then) and stores
+  `GameData.SpellCastReplay` (the request as plain data: lists and maps copied immutably, the card by id). Once every
+  answer is in, `PermanentChoiceHandlerService.completeChoiceAgainAfterDeathReplacements` takes the answers
+  (`payAgainAfterDeathReplacements`) and `SpellCastingService.completeCastAfterCostSacrificeAnswers` casts again; the
+  sacrifices consume the answers, and a cast no longer legal fails with the card back in hand.
+  `playCardAfterOpponentChosenTarget` carries its opponent-chosen player across a stop
+  (`SpellCastReplay.withOpponentChosenTargetPlayerId`).
+- It doesn't ask (the old fallback applies, reported by `LegacyDepartureFallback`) when the cast can't be stopped and
+  made again: during a resolution (`currentlyResolvingControllerId`), with a parked resolution
+  (`pendingEffectResolutionEntry`) or inside a rerun window, for a commander cast (its life tax is paid before
+  validation), for a cast with `fromGraveyard` set, and when the mana pool, life, stack or game log changed since the
+  impl started (`CastStartState`; e.g. the exile-from-hand alternative cost pays a mana portion during validation).
+- Spell cost sacrifices are now `DepartureBatch`es through `departNow` (`sacrificeForSpellCost`): `paySingleSacrificeCost`
+  (still sets `sacrificingAsSpellCost`), the sacrifice-all costs, the creatures sacrificed to reduce the cost (now one
+  batch instead of one by one, so they leave as one event), alternative-cost, flashback and graveyard-cast sacrifices.
+  Logs and "whenever you sacrifice" triggers come from `Hooks.afterEach`, only for a permanent that left, with the
+  same cards the old code passed (snapshots computed before the batch).
+- **Left for the next run(s)**: the other cast paths still sacrifice through `departNow` without asking first, so a
+  death replacement there still reaches the legacy fallback: graveyard casts (`playFlashbackSpellFromLocation`:
+  flashback, graveyard-cast permissions, harmonize, escape, Muldrotha-style casts; payments such as convoke taps,
+  `consumeFreeCastFromBattlefield` and the cost-reduction sacrifice are interleaved with its validations, so it needs
+  its own "validated, nothing paid" point), `playAdventureCardFromGraveyardInternal`, `playCardFromExileInternal`,
+  `playCardFromLibraryTop` (`payTopLibraryAdditionalCosts`), the free casts (`payAdditionalCostsForFreeCast`,
+  `paySacrificeCreatureCostForFreeCast`, cast during a resolution) and morph (`payMorphSacrificeCost`). Plus, unchanged
+  from the first part: `AbilityActivationService.sacrificePermanentAsCost` (graveyard abilities sacrifice as each
+  permanent is chosen, so they need the "choose all, sacrifice together after" shape `pendingActivationCostSacrificeIds`
+  gives permanents), `AttackSacrificeCostService.sacrificeMatching` (its auto path, one at a time) and
+  `SequencePermanentSacrificeCostHandler` (`performSimultaneousRemovals`), and the six non-cost callers for step 13.
+- Tests: `BoneSplintersTest.sacrificeCostAsksTheDeathReplacementBeforePayment` is now `@FailOnLegacyDepartureFallback`
+  and also asserts that the stack is empty, the card is still in hand and the mana unpaid while the question is open.
+  New (both `@FailOnLegacyDepartureFallback`, both failing at the baseline):
+  `TorgaarFamineIncarnateTest.costReductionSacrificeAsksTheDeathReplacementBeforePayment` (two creatures sacrificed for
+  the cost reduction, the question before anything is paid, both still reduce the cost) and
+  `SoulblastTest.sacrificeAllAsksTheDeathReplacementBeforePayment` (sacrifice all creatures; total power still 5);
+  `GameSimulatorTest.copyCastsASpellStoppedBeforeItsSacrificeCost`. Changed: `SpellCastingServiceTest` injects a
+  real `DepartureService` (and stubs `triggeredAbilityCanMoveCreatureToken`), and its two sacrifice-cost tests verify
+  `departToGraveyard` with a SACRIFICE intent instead of `sacrificePermanentToGraveyard` (10 of its tests fail at the
+  baseline with the same tests). A sweep of 1,248 card test classes (10,802 tests: every card using a spell or ability
+  sacrifice cost effect, kicker, buyback, splice, casualty, emerge or the cost-reduction sacrifice, plus Drought and
+  every Kalitas and Gravebane Zombie test) had 40 failures in 24 classes (Aang's Journey, Ana Battlemage, Archangel of
+  Wrath, Dusk Rose Reliquary, Psychic Puppetry, Sloppity Bilepiper, ...); the same 40 fail at the baseline, none new.
+  `LegacyDepartureWrapperRatchetTest` and `GameSimulatorTest` (37/37) pass.
 
 ### Step 2
 

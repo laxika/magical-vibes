@@ -294,6 +294,7 @@ class SpellCastingServiceTest {
         lenient().when(gameQueryService.opponentLifeLossMultiplier(any(), any())).thenReturn(1);
         lenient().when(gameQueryService.canSacrificePermanentForCosts(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.canSacrificeCreaturesForCosts(any())).thenReturn(true);
+        lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
         // Real cost service (pure logic over two already-mocked collaborators), matching
         // GameActionAvailabilityServiceTest — cast-time cost extraction/validation runs for real.
         svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
@@ -306,6 +307,9 @@ class SpellCastingServiceTest {
                 waterbendPaymentService,
                 mutationCoordinator, stateBasedActionService, lifeSupport,
                 playerInputService);
+        org.springframework.test.util.ReflectionTestUtils.setField(svc, "departureService",
+                new com.github.laxika.magicalvibes.service.battlefield.DepartureService(gameQueryService,
+                        permanentRemovalService, graveyardService, triggerCollectionService, gameLogService));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -406,7 +410,7 @@ class SpellCastingServiceTest {
         when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                 .thenReturn(true);
-        when(permanentRemovalService.sacrificePermanentToGraveyard(gd, artifact)).thenReturn(true);
+        when(permanentRemovalService.departToGraveyard(eq(gd), eq(artifact), any(), any())).thenReturn(true);
 
         svc.playCard(gd, player1, 0, null, target.getId(), null, null, null, false, artifact.getId());
 
@@ -435,12 +439,13 @@ class SpellCastingServiceTest {
         when(gameQueryService.findPermanentController(gd, artifact.getId())).thenReturn(player1Id);
         when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                 .thenReturn(true);
-        when(permanentRemovalService.sacrificePermanentToGraveyard(gd, artifact)).thenReturn(true);
+        when(permanentRemovalService.departToGraveyard(eq(gd), eq(artifact), any(), any())).thenReturn(true);
 
         svc.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
                 List.of(), null, artifact.getId());
 
-        verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, artifact);
+        verify(permanentRemovalService).departToGraveyard(eq(gd), eq(artifact),
+                eq(com.github.laxika.magicalvibes.model.DepartureIntent.sacrifice(artifact.getId())), any());
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -1411,11 +1416,12 @@ class SpellCastingServiceTest {
             when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.getEffectivePower(gd, creature)).thenReturn(2);
-            when(permanentRemovalService.sacrificePermanentToGraveyard(gd, creature)).thenReturn(true);
+            when(permanentRemovalService.departToGraveyard(eq(gd), eq(creature), any(), any())).thenReturn(true);
 
             svc.playCard(gd, player1, 0, 0, null, null, null, null, false, creature.getId());
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, creature);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(creature),
+                eq(com.github.laxika.magicalvibes.model.DepartureIntent.sacrifice(creature.getId())), any());
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getXValue()).isEqualTo(2);
         }
