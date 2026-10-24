@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDestroyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -30,7 +32,7 @@ public class WaspOfTheBitterEnd extends Card {
                         new CardSubtypePredicate(CardSubtype.BOLAS)
                 )),
                 List.of(new MayEffect(
-                        new SacrificeSelfThenDestroyTargetEffect(),
+                        new SacrificeSelfThenEffect(new DestroyTargetPermanentEffect(new PermanentIsCreaturePredicate())),
                         "You may sacrifice this creature. If you do, destroy the target creature.")),
                 null,
                 TargetFilters.creature()

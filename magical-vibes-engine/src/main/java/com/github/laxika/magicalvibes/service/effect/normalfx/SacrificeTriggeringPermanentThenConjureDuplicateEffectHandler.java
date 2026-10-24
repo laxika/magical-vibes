@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentT
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,12 +20,13 @@ import org.springframework.stereotype.Component;
 /** Resolves an ally-enter trigger that replaces its entering permanent with a fresh copy. */
 @Component
 @RequiredArgsConstructor
-public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst, ContinuesAfterDeparture {
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -50,18 +51,33 @@ public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler imple
 
         // The duplicate doesn't depend on the sacrifice: if the permanent already left or can't be
         // sacrificed, its last known information is still conjured.
-        if (triggeringPermanent != null) {
-            var currentControllerId = gameQueryService.findPermanentController(gameData, triggeringPermanent.getId());
-            if (entry.getControllerId().equals(currentControllerId)
-                    && !gameQueryService.cantBeSacrificed(gameData, triggeringPermanent)
-                    && permanentRemovalService.sacrificePermanentToGraveyard(gameData, triggeringPermanent)) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                        gameData, currentControllerId, sourceCard);
-                gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is sacrificed."));
-                permanentRemovalService.removeOrphanedAuras(gameData);
+        if (triggeringPermanent != null
+                && entry.getControllerId().equals(
+                        gameQueryService.findPermanentController(gameData, triggeringPermanent.getId()))
+                && !gameQueryService.cantBeSacrificed(gameData, triggeringPermanent)) {
+            if (entry.getTriggeringCardSnapshot() == null) {
+                entry.setTriggeringCardSnapshot(sourceCard);
             }
+            stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, triggeringPermanent.getId(), this);
+            return;
         }
+        conjureDuplicate(gameData, entry, replacement, sourceCard);
+    }
 
+    /** "Conjure a duplicate of it": its last-known information, after it was sacrificed. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        Permanent triggeringPermanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        Card sourceCard = triggeringPermanent != null
+                ? triggeringPermanent.getCard() : entry.getTriggeringCardSnapshot();
+        if (sourceCard != null) {
+            conjureDuplicate(gameData, entry, (SacrificeTriggeringPermanentThenConjureDuplicateEffect) effect,
+                    sourceCard);
+        }
+    }
+
+    private void conjureDuplicate(GameData gameData, StackEntry entry,
+                                  SacrificeTriggeringPermanentThenConjureDuplicateEffect replacement, Card sourceCard) {
         Card duplicateCard = TokenCopySupport.buildTokenCopyCard(sourceCard, replacement.copyProfile());
         duplicateCard.setToken(false);
         duplicateCard.setConjured(true);

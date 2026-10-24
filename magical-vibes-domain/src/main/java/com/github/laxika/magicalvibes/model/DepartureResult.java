@@ -17,10 +17,12 @@ import java.util.UUID;
  * @param lastKnownToughness its toughness immediately before the event, or {@code null} if it wasn't a creature
  * @param destroyed          whether it left the battlefield because it was destroyed
  * @param sacrificed         whether it left the battlefield because it was sacrificed
+ * @param lastKnownControllerId the player who controlled it immediately before the event (CR 608.2h), or
+ *                           {@code null} if it wasn't on the battlefield
  */
 public record DepartureResult(UUID permanentId, Zone destination, UUID destinationOwnerId, UUID newCardId,
                               Integer lastKnownPower, Integer lastKnownToughness,
-                              boolean destroyed, boolean sacrificed) {
+                              boolean destroyed, boolean sacrificed, UUID lastKnownControllerId) {
 
     public DepartureResult {
         Objects.requireNonNull(permanentId, "permanentId");

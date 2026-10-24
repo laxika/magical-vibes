@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -131,6 +135,37 @@ class LimDLsPaladinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Lim-Dûl's Paladin")).isZero();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The sacrifice asks Wheel of Sun and Moon or Kalitas before the Paladin leaves, and the draw waits for it")
+    void deathReplacementQuestionComesBeforeTheDraw() {
+        Permanent paladin = addCreatureReady(player1, new LimDLsPaladin());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player1.getId());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.setHand(player1, List.of());
+        Card topCard = new Skullcrack();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        // CR 616.1: asked while the Paladin is still on the battlefield; nothing is drawn yet.
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(paladin);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        // The Paladin went under the old top card, which the draw then takes.
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(paladin);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(paladin.getCard());
+        assertThat(gd.pendingDepartureBatch).isNull();
     }
 
 

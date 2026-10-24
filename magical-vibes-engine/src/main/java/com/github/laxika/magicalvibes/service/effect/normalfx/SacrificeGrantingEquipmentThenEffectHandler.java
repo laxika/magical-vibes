@@ -14,10 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,14 +27,14 @@ import java.util.UUID;
 /** Resolves a granted attack ability that sacrifices its granting Equipment before its payload. */
 @Component
 @RequiredArgsConstructor
-public class SacrificeGrantingEquipmentThenEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeGrantingEquipmentThenEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst, ContinuesAfterDeparture {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
     private final PlayerInputService playerInputService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,16 +56,15 @@ public class SacrificeGrantingEquipmentThenEffectHandler implements NormalEffect
             return;
         }
 
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, equipment)) {
-            return;
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, equipmentId, this);
+    }
+
+    /** "If you do, …": the payload is a reflexive ability (CR 603.12) that triggers only on the sacrifice. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (entry.getResolutionResults().anySacrificed()) {
+            beginReflexiveTrigger(gameData, entry, ((SacrificeGrantingEquipmentThenEffect) effect).thenEffect());
         }
-
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                gameData, entry.getControllerId(), equipment.getCard());
-        gameLogService.append(gameData, GameLog.cardThen(equipment.getCard(), " is sacrificed."));
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        beginReflexiveTrigger(gameData, entry, sacrificeThen.thenEffect());
     }
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry, CardEffect thenEffect) {

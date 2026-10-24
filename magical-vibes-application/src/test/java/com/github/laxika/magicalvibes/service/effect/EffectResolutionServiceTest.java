@@ -1215,7 +1215,7 @@ class EffectResolutionServiceTest {
 
         private DepartureResult left(Zone destination, boolean destroyed, boolean sacrificed) {
             return new DepartureResult(UUID.randomUUID(), destination, player1Id, UUID.randomUUID(),
-                    2, 2, destroyed, sacrificed);
+                    2, 2, destroyed, sacrificed, player1Id);
         }
 
         private EffectHandler recording(CardEffect step, StackEntry entry, List<DepartureResult> results) {

@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,8 +22,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeEnchantedCreatureOnLeaveEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,10 +43,6 @@ public class SacrificeEnchantedCreatureOnLeaveEffectHandler implements NormalEff
             return;
         }
 
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature);
-        gameLogService.append(gameData, GameLog.cardTextCard(enchantedCreature.getCard(), " is sacrificed (", entry.getCard(), ")."));
-        log.info("Game {} - {} sacrificed by {}", gameData.id,
-                enchantedCreature.getCard().getName(), entry.getCard().getName());
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        stepDepartureSupport.sacrifice(gameData, entry, effect, enchantedCreature.getId());
     }
 }

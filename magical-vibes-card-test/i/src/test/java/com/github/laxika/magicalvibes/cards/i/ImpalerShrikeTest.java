@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.f.Fleshtaker;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import com.github.laxika.magicalvibes.cards.s.SpireMonitor;
 import com.github.laxika.magicalvibes.cards.n.NumbingDose;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -54,6 +57,36 @@ class ImpalerShrikeTest extends BaseCardTest {
 
         // Controller should have drawn 3 cards
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The sacrifice asks its death replacement before the Shrike leaves; the draw waits, then counts the exiled Shrike")
+    void deathReplacementQuestionEndsTheSacrificeStepBeforeTheDraw() {
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
+        shrike.setAttacking(true);
+        Permanent wheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player1.getId());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+
+        resolveCombat();
+        resolveAllTriggers();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // CR 616.1: asked while the Shrike is still on the battlefield; the draw hasn't happened.
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shrike);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+
+        harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");
+
+        // Exiled instead of put into the graveyard, it was still sacrificed: "if you do" draws three.
+        assertThat(gd.findExiledCard(shrike.getCard().getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+        assertThat(gd.pendingDepartureBatch).isNull();
     }
 
     @Test

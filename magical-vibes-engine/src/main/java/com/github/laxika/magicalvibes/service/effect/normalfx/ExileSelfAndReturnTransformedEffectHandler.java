@@ -45,7 +45,7 @@ public class ExileSelfAndReturnTransformedEffectHandler implements NormalEffectH
     /**
      * Resolves the "if you do" payload through its own handler against this entry. {@link SequenceEffect}
      * has no handler of its own, so a multi-step payload is expanded here — dispatch is synchronous,
-     * so its steps must be synchronous too, exactly as in {@code SacrificeSelfThenEffectHandler}.
+     * so its steps must be synchronous too, exactly as in {@code StepDepartureSupport.dispatch}.
      */
     private void dispatch(GameData gameData, StackEntry entry, CardEffect payload) {
         if (payload instanceof SequenceEffect sequence) {

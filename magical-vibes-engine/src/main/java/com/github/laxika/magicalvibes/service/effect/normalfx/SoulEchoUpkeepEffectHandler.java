@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +30,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SoulEchoUpkeepEffectHandler implements NormalEffectHandlerBean {
 
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,10 +51,8 @@ public class SoulEchoUpkeepEffectHandler implements NormalEffectHandlerBean {
 
         // "until your next upkeep" — whatever the opponent chose last upkeep ends here.
         if (self.getCounterCount(CounterType.ECHO) <= 0) {
-            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-                gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
-                permanentRemovalService.removeOrphanedAuras(gameData);
+            if (entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, self.getId()))) {
+                stepDepartureSupport.sacrifice(gameData, entry, effect, self.getId());
             }
             return;
         }

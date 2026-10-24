@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,8 +23,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,9 +41,9 @@ public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements No
 
         if (validPermanents.isEmpty()) {
             if (sourcePermanent != null) {
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
-                gameLogService.append(gameData, GameLog.cardThen(sourceCard, " is sacrificed because there is no "
+                gameLogService.append(gameData, GameLog.text("There is no "
                         + e.permanentType().name().toLowerCase() + " to return."));
+                stepDepartureSupport.sacrifice(gameData, entry, effect, sourcePermanent.getId());
                 log.info("Game {} - {} sacrificed (no {}s to return)", gameData.id, sourceCard.getName(),
                         e.permanentType().name().toLowerCase());
             }

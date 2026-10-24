@@ -12,6 +12,11 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -35,6 +40,9 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
     private final GameQueryService gameQueryService;
     private final AuraAttachmentService auraAttachmentService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DepartureService departureService;
+    private final StepDepartureSupport stepDepartureSupport;
+    private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -66,7 +74,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
                 gameQueryService.findPermanentController(gameData, enchantedPermanentId));
         if (!auraOnBattlefield) {
             if (sacrificeEnchanted) {
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted);
+                stepDepartureSupport.sacrifice(gameData, entry, effect, enchantedPermanentId);
             }
             return;
         }
@@ -99,9 +107,16 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         }
 
         if (sacrificeEnchanted) {
-            if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted)) {
+            // The Aura is attached right after the sacrifice, before orphaned Auras are removed, so this
+            // departure can't end the step (DepartureService#departAsStep removes them as it finishes). A
+            // CR 616.1 question instead stops this handler, which changed nothing yet, and resolves it again.
+            DepartureService.Outcome.Done done = departureService.departNow(gameData,
+                    DepartureBatch.of(List.of(DepartureIntent.sacrifice(enchantedPermanentId))),
+                    DepartureService.Hooks.NONE);
+            if (done.results().stream().noneMatch(DepartureResult::sacrificed)) {
                 return;
             }
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, enchanted.getCard());
             entry.setSacrificedCard(enchanted.getCard());
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));

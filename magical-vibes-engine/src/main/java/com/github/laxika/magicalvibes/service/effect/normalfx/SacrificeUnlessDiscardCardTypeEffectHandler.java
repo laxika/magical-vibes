@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -22,11 +22,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst, ContinuesAfterDeparture {
 
     private final DrawService drawService;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -75,11 +76,11 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
 
         if (validCardCount < e.discardCount()) {
             if (sourcePermanent != null) {
-                // Not enough valid cards to discard — sacrifice immediately
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
-                
-                gameLogService.append(gameData, GameLog.builder().text(playerName + " does not have enough " + typeName + "s to discard. ").card(sourceCard).text(" is sacrificed.").build());
+                // Not enough valid cards to discard — sacrifice immediately, then draw.
+                gameLogService.append(gameData, GameLog.text(playerName + " does not have enough " + typeName + "s to discard."));
                 log.info("Game {} - {} sacrificed (fewer than {} {}s to discard)", gameData.id, sourceCard.getName(), e.discardCount(), typeName);
+                stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sourcePermanent.getId(), this);
+                return;
             } else {
                 // Permanent already gone and not enough valid cards — nothing to do
                 log.info("Game {} - {} is no longer on the battlefield and has fewer than {} {}s to discard", gameData.id, sourceCard.getName(), e.discardCount(), typeName);
@@ -106,5 +107,13 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
                 sourceCard, controllerId, List.of(e), prompt, null, null, sourcePermanentId, null, 0, 0, null
         ));
     
+    }
+
+    /** "If you don't, sacrifice it and draw a card": the draw follows the sacrifice. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (((SacrificeUnlessDiscardCardTypeEffect) effect).drawCardIfNotDiscarded()) {
+            drawService.resolveDrawCard(gameData, entry.getControllerId());
+        }
     }
 }

@@ -19,7 +19,7 @@ order; each one lists what it depends on.
 | 5 | Fold the leftover replacement workarounds into the choose stage | done (rider and non-batch regeneration choices remain only for callers that can't pause; see Findings) |
 | 6 | Legacy wrappers and the guard | done |
 | 7 | Resolution scratchpad and pausing at the end of a step | done |
-| 8 | Convert the "sacrifice this, then …" handlers | open |
+| 8 | Convert the "sacrifice this, then …" handlers | done (bespoke records kept where engine code or data needs them; see Findings) |
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | open |
 | 10 | Convert the choice-completion paths | open |
 | 11 | Loops and drained queues | open |
@@ -611,6 +611,58 @@ Steps add notes here for later steps, under their number.
   `SacrificeSelfThenEffect` / may-sequence card test classes found no new failures.
 - The other `EffectResolutionServiceTest` tests fail at HEAD: its `DamageSupport` mock returns false from
   `beginDamageEvent`, so every resolution parks at once. The new nested class stubs it for itself.
+
+### Step 8
+
+- All 20 listed handlers are off the legacy wrappers and the ratchet allowlist (23 entries removed: every handler
+  plus `DestructionSupport.sacrificeSource`; the allowlist now has 74 callers).
+- New pieces: `StepDepartureSupport` (normalfx) with `sacrifice` (nothing follows), `sacrificeThenIfSacrificed`
+  (an "if you do" payload: dispatched at once when the departure is done, otherwise inserted after the step as
+  `ConditionalEffect.unless(PermanentLeftThisWay.sacrificed(), payload)`) and `sacrificeThenContinue` (the handler
+  implements `ContinuesAfterDeparture`; its `continueAfterDeparture` runs at once, or as an inserted internal
+  `ContinueAfterDepartureEffect` step). Follow-ups read the scratchpad, never state captured before the departure.
+  `DepartureResult` gained `lastKnownControllerId` (also set for a permanent the event couldn't touch) for "its
+  controller draws" (Soul Ransom, Hold for Ransom) and "the player who sacrificed it creates" (Basalt Golem's token
+  rider on `SacrificeSelfEffect`).
+- Converted to existing effects and deleted: `SacrificeSelfThenDestroyTargetEffect` + handler (Wasp of the Bitter
+  End is now `MayEffect(SacrificeSelfThenEffect(DestroyTargetPermanentEffect(PermanentIsCreaturePredicate)))`).
+- Kept as card-facing records, handlers ported: `SacrificeSelfThenEffect` (about 44 cards, and read by
+  `TriggeredAbilityQueueService`, `MayEffectHandler`, `DrawService` (Booby Trap), `Card` target registration and
+  two handlers that dispatch it nested); `SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect`,
+  `SacrificeSelfAndReturnCardsExiledWithSourceEffect`, `SoulEchoUpkeepEffect`, `SacrificeEnchanted*`,
+  `SacrificeGrantingPermanentAndControllerDrawsEffect`, `SacrificeTriggeringPermanentEffect` and
+  `ChampionCreatureEffect` (engine services construct or inspect them); the rest because no existing effect does
+  their follow-up (draw for the sacrificing player, Prototype X-8's copy profile, Spare Dagger's reflexive trigger,
+  Soul Ransom). Merging those is optional cleanup, not needed for the guard.
+- Ported to `depart` directly, not as a step:
+  - `SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler` (Nettlevine Blight, Breath of Fury), single
+    destination path: `departNow` with no hooks. The Aura is attached right after the sacrifice, but
+    `departAsStep`'s finish removes orphaned Auras first, so a pause would bin the Aura. A question there stops and
+    reruns the handler (it changed nothing yet). The several-destinations path is still the choice completion
+    `handleReattachSourceAuraAfterSacrifice` (step 10). Step 13/14 needs a way to finish a step departure without the
+    orphan sweep, or to attach inside it.
+  - `DestructionSupport.sacrificeSource`: `departAsStep(gd, entry, null, …)` (always `departNow`), since the
+    forced-cost fallback effects run in one synchronous loop, also from choice completions with synthetic entries.
+- Nested dispatches (`RemoveCounterOrSacrificeSelfThenEffectHandler`, `SacrificeSelfThenDealDamageToEnteringCreatureEffectHandler`,
+  `DestructionSupport` calling `SacrificeEnchantedCreatureEffectHandler` for Soul Tithe) are not the step, so they
+  never pend: `departNow` asks and reruns inside a marked handler's window, otherwise the old fallback applies.
+- Rules fixes along the way: Furnace Scamp and Whispering Specter now deal damage / force discards only if the
+  creature was sacrificed ("if you do"); Soul Echo, Champion, the four `SacrificeUnless*` immediate branches,
+  `SacrificeTriggeringPermanentEffect`, Parasitic Implant, Animate Dead-style leave sacrifices and Nettlevine Blight
+  now fire "whenever you sacrifice" triggers (CR 701.21a sacrifices); `SacrificeSelfThenEffect` checks
+  "can't be sacrificed"; Soul Echo checks that its controller still controls it. Reason logs ("X controls no
+  Ys.", "does not have enough …s to discard.") are now separate from the departure's "X is sacrificed." line.
+- Tests: new `ImpalerShrikeTest.deathReplacementQuestionEndsTheSacrificeStepBeforeTheDraw` (the "if you do" path,
+  Kalitas exile still counts as sacrificed) and `LimDLsPaladinTest.deathReplacementQuestionComesBeforeTheDraw` (the
+  continuation path: the draw takes the old top card after the Paladin went to the bottom). Changed:
+  `HiddenHorrorTest` (log assertion split into the reason line and "Hidden Horror is sacrificed.") and the
+  `DepartureResult` constructors in `EffectResolutionServiceTest` / `ResolutionScratchpadAmountTest`. A sweep of 282
+  card test classes using the touched effects (1,048 tests), plus `LegacyDepartureWrapperRatchetTest`,
+  `GameSimulatorTest`, the scratchpad tests and the destroy/sacrifice handler unit tests, had no new failures. Failing
+  at baseline too: `AjanisLastStandTest`, `AngelicRenewalTest`, `BasaltGolemTest`, `BloodSpeakerTest`,
+  `BreathOfFuryTest` (6), `CheeringCrowdTest` (7), `LavabrinkFloodgatesTest`, `ParasiticImplantTest` (2),
+  `PhantasmalForcesTest`, `PreponderantPearlTest`, `PrototypeX8Test`, `SupremeExemplarTest` (2),
+  `DestroyAllPermanentsEffectHandlerTest` (12), `SacrificePermanentsEffectHandlerTest` (6).
 
 ### Step 2
 

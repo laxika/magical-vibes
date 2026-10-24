@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsEx
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +27,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst, ContinuesAfterDeparture {
 
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -59,14 +58,22 @@ public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements
 
         Permanent self = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (self == null
-                || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, self.getId()))
-                || !permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
+                || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, self.getId()))) {
             return;
         }
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-        gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sourcePermanentId, this);
+    }
 
+    /** "If you do, return those cards to the battlefield under their owner's control." */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (!entry.getResolutionResults().anySacrificed()) {
+            return;
+        }
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
+                .filter(en -> sourcePermanentId.equals(en.sourcePermanentId()))
+                .toList();
         // Return every card exiled with it to the battlefield under its owner's control.
         for (ExiledCardEntry exiledEntry : toReturn) {
             Card card = exiledEntry.card();

@@ -183,10 +183,9 @@ Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
   with `DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER)` as the payload.
 
 **Left for a later step**
-- `SacrificeSelfThenDestroyTargetEffect` (Wasp of the Bitter End) was **not** absorbed: it declares
-  `TargetSpec.harmful(CREATURE)` and no existing destroy effect reproduces that category
-  (`DestroyTargetPermanentEffect` is `harmful(PERMANENT)`), so folding it in would have silently
-  widened the spec. Revisit alongside Step 9.
+- `SacrificeSelfThenDestroyTargetEffect` (Wasp of the Bitter End) was absorbed later (leave-battlefield redesign
+  step 8) as `SacrificeSelfThenEffect(new DestroyTargetPermanentEffect(new PermanentIsCreaturePredicate()))`; the
+  trigger's `TargetFilters.creature()` keeps the creature-only target.
 
 **Deliberate behaviour deltas**
 - Mindstab Thrull / Dauthi Mindripper now set `discardCausedByOpponent = true` (the generic

@@ -2,15 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +18,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
-    private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -71,11 +65,6 @@ public class SacrificeEnchantedCreatureEffectHandler implements NormalEffectHand
             return;
         }
 
-        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchantedCreature)) {
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                    gameData, sacrificingPlayerId, enchantedCreature.getCard());
-            gameLogService.append(gameData, GameLog.cardThen(enchantedCreature.getCard(), " is sacrificed."));
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
+        stepDepartureSupport.sacrifice(gameData, entry, effect, enchantedId);
     }
 }

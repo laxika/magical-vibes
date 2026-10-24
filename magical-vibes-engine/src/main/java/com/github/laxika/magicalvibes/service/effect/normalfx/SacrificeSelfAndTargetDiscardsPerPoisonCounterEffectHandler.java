@@ -9,18 +9,19 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst, ContinuesAfterDeparture {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -51,9 +52,16 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
             return;
         }
 
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, source);
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sourcePermanentId, this);
+    }
 
+    /** "If you do, that player discards a card for each poison counter they have." */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (!entry.getResolutionResults().anySacrificed()) {
+            return;
+        }
         int poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0);
         if (poisonCounters <= 0) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);

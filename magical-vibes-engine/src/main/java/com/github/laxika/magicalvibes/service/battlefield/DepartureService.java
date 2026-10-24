@@ -637,15 +637,16 @@ public class DepartureService {
             UUID permanentId = intent.permanentId();
             DepartureSnapshot snapshot = batch.snapshots().get(permanentId);
             if (snapshot == null) {
-                Zone zone = findOnBattlefield(gameData, permanentId) != null ? Zone.BATTLEFIELD : null;
-                results.add(new DepartureResult(permanentId, zone, null, null, null, null, false, false));
+                boolean stayed = findOnBattlefield(gameData, permanentId) != null;
+                results.add(new DepartureResult(permanentId, stayed ? Zone.BATTLEFIELD : null, null, null, null, null,
+                        false, false, stayed ? gameQueryService.findPermanentController(gameData, permanentId) : null));
                 continue;
             }
             Integer power = snapshot.creature() ? snapshot.permanent().getLastKnownPower() : null;
             Integer toughness = snapshot.creature() ? snapshot.permanent().getLastKnownToughness() : null;
             if (findOnBattlefield(gameData, permanentId) != null) {
                 results.add(new DepartureResult(permanentId, Zone.BATTLEFIELD, null, null, power, toughness,
-                        false, false));
+                        false, false, snapshot.controllerId()));
                 continue;
             }
             Location location = cardIds.getOrDefault(permanentId, List.of()).stream()
@@ -655,7 +656,8 @@ public class DepartureService {
                     .orElse(null);
             results.add(new DepartureResult(permanentId, location == null ? null : location.zone(),
                     location == null ? null : location.ownerId(), location == null ? null : location.cardId(),
-                    power, toughness, intent.cause().isDestruction(), intent.cause() == DepartureCause.SACRIFICE));
+                    power, toughness, intent.cause().isDestruction(), intent.cause() == DepartureCause.SACRIFICE,
+                    snapshot.controllerId()));
         }
         return results;
     }

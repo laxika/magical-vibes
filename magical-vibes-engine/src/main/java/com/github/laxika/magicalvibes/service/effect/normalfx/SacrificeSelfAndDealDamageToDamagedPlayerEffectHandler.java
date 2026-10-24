@@ -1,29 +1,36 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDealDamageToDamagedPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import java.util.UUID;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
+/**
+ * "You may sacrifice it. If you do, it deals N damage to that player" (Furnace Scamp): sacrifices the source as a
+ * resolution step, then the source deals the damage, using its last-known information (CR 608.2h), to the damaged
+ * player held in the entry's target, only if it was sacrificed.
+ */
 @Component
 @RequiredArgsConstructor
-public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst, ContinuesAfterDeparture {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,8 +39,6 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (SacrificeSelfAndDealDamageToDamagedPlayerEffect) effect;
-
         UUID defenderId = entry.getTargetId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
 
@@ -41,7 +46,6 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
             return;
         }
 
-        // Check source creature is still on the battlefield
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
@@ -55,17 +59,17 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
             return;
         }
 
-        // Sacrifice the source creature
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, source);
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sourcePermanentId, this);
+    }
 
-        // Deal damage to the damaged player
-        if (!gameData.playerIds.contains(defenderId)) {
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID defenderId = entry.getTargetId();
+        if (!entry.getResolutionResults().anySacrificed() || !gameData.playerIds.contains(defenderId)) {
             return;
         }
-        int rawDamage = e.damage();
-        damageSupport.dealDamageToPlayer(gameData, entry, defenderId, rawDamage);
+        damageSupport.dealDamageToPlayer(gameData, entry, defenderId,
+                ((SacrificeSelfAndDealDamageToDamagedPlayerEffect) effect).damage());
         gameOutcomeService.checkWinCondition(gameData);
-    
     }
 }

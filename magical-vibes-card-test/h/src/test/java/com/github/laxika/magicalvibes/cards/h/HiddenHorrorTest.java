@@ -134,9 +134,10 @@ class HiddenHorrorTest extends BaseCardTest {
         // Hand is untouched
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
-        // Log confirms the sacrifice
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("does not have enough creature cards to discard")
-                && log.contains("Hidden Horror") && log.contains("sacrificed"));
+        // Log gives the reason, then the sacrifice itself
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("does not have enough creature cards to discard"))
+                .contains("Hidden Horror is sacrificed.");
     }
 
     @Test

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -27,8 +26,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SacrificeUnlessSacrificeOwnPermanentEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -63,12 +62,9 @@ public class SacrificeUnlessSacrificeOwnPermanentEffectHandler implements Normal
 
         if (!hasValidPermanent) {
             if (sourcePermanent != null) {
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sourcePermanent);
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " controls no " + e.description() + " to sacrifice. ")
-                        .card(sourceCard)
-                        .text(" is sacrificed.")
-                        .build());
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " controls no " + e.description() + " to sacrifice."));
+                stepDepartureSupport.sacrifice(gameData, entry, effect, sourcePermanent.getId());
                 log.info("Game {} - {} sacrificed (no {} to sacrifice)", gameData.id, sourceCard.getName(), e.description());
             }
             return;

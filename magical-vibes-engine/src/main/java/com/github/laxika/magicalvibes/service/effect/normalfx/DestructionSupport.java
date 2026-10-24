@@ -1014,11 +1014,10 @@ public class DestructionSupport {
                 || gameQueryService.cantBeSacrificed(gameData, self)) {
             return;
         }
-        if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-            gameLogService.append(gameData, GameLog.isSacrificed(self.getCard()));
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
+        // The fallback effects resolve one after another inside this effect, so the sacrifice can't end the
+        // step; inside the effect's rerun window a CR 616.1 question stops and reruns it instead.
+        departureService.departAsStep(gameData, entry, null,
+                DepartureBatch.of(List.of(DepartureIntent.sacrifice(self.getId()))));
     }
 
     private void tapSourcePermanent(GameData gameData, StackEntry entry) {

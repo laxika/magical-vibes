@@ -47,7 +47,7 @@ class ResolutionScratchpadAmountTest {
 
     private DepartureResult departure(Integer power, Integer toughness, boolean sacrificed) {
         return new DepartureResult(UUID.randomUUID(), Zone.GRAVEYARD, controllerId, UUID.randomUUID(),
-                power, toughness, false, sacrificed);
+                power, toughness, false, sacrificed, controllerId);
     }
 
     private int evaluate(com.github.laxika.magicalvibes.model.amount.DynamicAmount amount) {

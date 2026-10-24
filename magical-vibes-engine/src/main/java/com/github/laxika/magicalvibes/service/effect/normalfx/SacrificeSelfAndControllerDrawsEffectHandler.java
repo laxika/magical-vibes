@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,8 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,13 +23,13 @@ import java.util.UUID;
  */
 @Component
 @RequiredArgsConstructor
-public class SacrificeSelfAndControllerDrawsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class SacrificeSelfAndControllerDrawsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst,
+        ContinuesAfterDeparture {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final PermanentRemovalService permanentRemovalService;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final TriggerCollectionService triggerCollectionService;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,15 +57,17 @@ public class SacrificeSelfAndControllerDrawsEffectHandler implements NormalEffec
             return;
         }
 
-        UUID sourceController = gameQueryService.findPermanentController(gameData, self.getId());
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, self)) {
-            return;
-        }
+        stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, self.getId(), this);
+    }
 
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, sourceController, self.getCard());
-        gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
-        permanentRemovalService.removeOrphanedAuras(gameData);
-
-        playerInteractionSupport.applyDrawCards(gameData, sourceController, e.cards());
+    /** "… then draws": the player who controlled it as it was sacrificed draws, whether or not it left. */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (SacrificeSelfAndControllerDrawsEffect) effect;
+        entry.getResolutionResults().departures().stream()
+                .map(DepartureResult::lastKnownControllerId)
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .ifPresent(controllerId -> playerInteractionSupport.applyDrawCards(gameData, controllerId, e.cards()));
     }
 }
