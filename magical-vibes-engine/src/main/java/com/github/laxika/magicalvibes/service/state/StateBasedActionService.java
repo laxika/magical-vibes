@@ -85,7 +85,7 @@ public class StateBasedActionService {
     private final DepartureService departureService;
 
     private enum DeathReason {
-        ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY, ZERO_DEFENSE
+        ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY, ZERO_DEFENSE, FINAL_CHAPTER, WORLD_RULE, REDUNDANT_ROLE
     }
 
     private record DeathEntry(Permanent permanent, DeathReason reason) {}
@@ -172,15 +172,13 @@ public class StateBasedActionService {
                 return;
             }
 
-            anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            anyPerformed |= performStateBasedDepartures(gameData, processedIds);
             if (graveyardService.hasPendingRegenerationChoice(gameData)) return;
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
-            anyPerformed |= sacrificeCompletedSagas(gameData, processedIds);
             anyPerformed |= sacrificeCreaturesOnSeraphControlLoss(gameData);
             anyPerformed |= putExiledCardsIntoGraveyardOnControlLoss(gameData);
             anyPerformed |= cancelCounters(gameData);
-            anyPerformed |= applyWorldRule(gameData);
 
             // CR 704.5m / 704.5n — illegally attached auras die, illegal equipment unattaches.
             // The departed-host half runs unconditionally: enforceAttachmentLegality deliberately
@@ -192,7 +190,6 @@ public class StateBasedActionService {
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
             anyPerformed |= unpairNonCreatureSoulbondPairs(gameData);
             anyPerformed |= removeNonCreaturesFromCombat(gameData);
-            anyPerformed |= removeRedundantRoles(gameData);
 
             // Debt of Loyalty: a creature that just regenerated off its shield changes controller.
             // Applied here, outside the battlefield iteration in the destroy pass that spent the
@@ -428,7 +425,10 @@ public class StateBasedActionService {
         return found[0];
     }
 
-    private boolean removeRedundantRoles(GameData gameData) {
+    /**
+     * CR 704.5z: each Role a player controls on a permanent that has another Role of theirs with a later timestamp.
+     */
+    private List<Permanent> redundantRoles(GameData gameData) {
         Map<RoleAttachmentKey, List<Permanent>> attachedRoles = new HashMap<>();
         gameData.forEachPermanent((playerId, permanent) -> {
             if (!permanent.isAttached()
@@ -445,29 +445,26 @@ public class StateBasedActionService {
                     .add(permanent);
         });
 
-        boolean changed = false;
+        List<Permanent> redundant = new ArrayList<>();
         for (List<Permanent> roles : attachedRoles.values()) {
             if (roles.size() < 2) {
                 continue;
             }
-            List<Permanent> oldestRoles = roles.stream()
+            roles.stream()
                     .sorted(Comparator.comparingLong(Permanent::getTimestamp).reversed())
                     .skip(1)
-                    .toList();
-            for (Permanent role : oldestRoles) {
-                if (permanentRemovalService.removePermanentToGraveyard(gameData, role)) {
-                    gameLogService.append(gameData, GameLog.cardThen(role.getCard(),
-                            " is put into its owner's graveyard because its controller controls another Role attached to the same permanent."));
-                    log.info("Game {} - redundant Role {} is put into its owner's graveyard",
-                            gameData.id, role.getCard().getName());
-                    changed = true;
-                }
-            }
+                    .forEach(redundant::add);
         }
-        return changed;
+        return redundant;
     }
 
-    private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
+    /**
+     * Performs every state-based action of this check that puts permanents into a graveyard as one departure batch
+     * (CR 704.3: they are performed simultaneously as a single event): 0 toughness, lethal damage and deathtouch,
+     * 0 loyalty, 0 defense, completed Sagas, the world rule and redundant Roles.
+     */
+    private boolean performStateBasedDepartures(GameData gameData, Set<UUID> processedIds) {
+        DepartureService.discardOrphanedStepBatch(gameData);
         DepartureBatch pending = gameData.pendingDepartureBatch;
         if (pending != null) {
             // A question about this check's deaths is open, or was just answered: the check is still
@@ -513,6 +510,25 @@ public class StateBasedActionService {
             }
             return null;
         });
+
+        Set<UUID> dying = new HashSet<>();
+        toDie.forEach(entry -> dying.add(entry.permanent().getId()));
+        lethalDamageCandidates.forEach(entry -> dying.add(entry.permanent().getId()));
+        for (Permanent saga : completedSagas(gameData, processedIds)) {
+            if (dying.add(saga.getId())) {
+                toDie.add(new DeathEntry(saga, DeathReason.FINAL_CHAPTER));
+            }
+        }
+        for (Permanent world : worldRuleLosers(gameData)) {
+            if (!processedIds.contains(world.getId()) && dying.add(world.getId())) {
+                toDie.add(new DeathEntry(world, DeathReason.WORLD_RULE));
+            }
+        }
+        for (Permanent role : redundantRoles(gameData)) {
+            if (!processedIds.contains(role.getId()) && dying.add(role.getId())) {
+                toDie.add(new DeathEntry(role, DeathReason.REDUNDANT_ROLE));
+            }
+        }
 
         List<DepartureIntent> intents = new ArrayList<>();
         Map<UUID, DeathReason> reasons = new HashMap<>();
@@ -567,7 +583,13 @@ public class StateBasedActionService {
             performed = true;
             if (result.left()) {
                 anyLeft = true;
-                logDeath(gameData, permanent.getCard(), deathReasons.get(permanent.getId()));
+                DeathReason reason = deathReasons.get(permanent.getId());
+                logDeath(gameData, permanent.getCard(), reason);
+                if (reason == DeathReason.FINAL_CHAPTER && result.lastKnownControllerId() != null) {
+                    // CR 704.5s: the Saga's controller sacrifices it.
+                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                            gameData, result.lastKnownControllerId(), permanent.getCard());
+                }
             }
         }
 
@@ -589,7 +611,19 @@ public class StateBasedActionService {
         if (gameQueryService.isPlaneswalker(gameData, permanent)) {
             return DeathReason.ZERO_LOYALTY;
         }
-        return gameQueryService.isBattle(gameData, permanent) ? DeathReason.ZERO_DEFENSE : DeathReason.ZERO_TOUGHNESS;
+        if (gameQueryService.isBattle(gameData, permanent)) {
+            return DeathReason.ZERO_DEFENSE;
+        }
+        if (permanent.getCard().isSaga()) {
+            return DeathReason.FINAL_CHAPTER;
+        }
+        if (permanent.getCard().getSupertypes().contains(CardSupertype.WORLD)) {
+            return DeathReason.WORLD_RULE;
+        }
+        if (permanent.getCard().getSubtypes().contains(com.github.laxika.magicalvibes.model.CardSubtype.ROLE)) {
+            return DeathReason.REDUNDANT_ROLE;
+        }
+        return DeathReason.ZERO_TOUGHNESS;
     }
 
     private void logDeath(GameData gameData, Card card, DeathReason reason) {
@@ -610,6 +644,19 @@ public class StateBasedActionService {
             case ZERO_DEFENSE -> {
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no defense counters and is put into the graveyard."));
                 log.info("Game {} - {} dies to state-based actions (0 defense)", gameData.id, name);
+            }
+            case FINAL_CHAPTER -> {
+                gameLogService.append(gameData, GameLog.cardThen(card, " is sacrificed (final chapter reached)."));
+                log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, name);
+            }
+            case WORLD_RULE -> {
+                gameLogService.append(gameData, GameLog.cardThen(card, " is put into the graveyard (world rule)."));
+                log.info("Game {} - {} is put into the graveyard (world rule)", gameData.id, name);
+            }
+            case REDUNDANT_ROLE -> {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is put into its owner's graveyard because its controller controls another Role attached to the same permanent."));
+                log.info("Game {} - redundant Role {} is put into its owner's graveyard", gameData.id, name);
             }
         }
     }
@@ -640,9 +687,11 @@ public class StateBasedActionService {
         return changed;
     }
 
-    // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
-    // (unless it has a chapter ability still on the stack)
-    private boolean sacrificeCompletedSagas(GameData gameData, Set<UUID> processedIds) {
+    /**
+     * CR 704.5s: each Saga whose lore counters reached its final chapter and that isn't the source of a chapter
+     * ability still waiting to resolve.
+     */
+    private List<Permanent> completedSagas(GameData gameData, Set<UUID> processedIds) {
         List<Permanent> sagasToSacrifice = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (processedIds.contains(p.getId())) return;
@@ -664,17 +713,7 @@ public class StateBasedActionService {
             }
         });
 
-        for (Permanent saga : sagasToSacrifice) {
-            processedIds.add(saga.getId());
-            UUID sagaControllerId = gameQueryService.findPermanentController(gameData, saga.getId());
-            boolean sacrificed = permanentRemovalService.removePermanentToGraveyard(gameData, saga);
-            if (sacrificed && sagaControllerId != null) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, sagaControllerId, saga.getCard());
-            }
-            gameLogService.append(gameData, GameLog.cardThen(saga.getCard(), " is sacrificed (final chapter reached)."));
-            log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
-        }
-        return !sagasToSacrifice.isEmpty();
+        return sagasToSacrifice;
     }
 
     /**
@@ -785,29 +824,22 @@ public class StateBasedActionService {
         return anyQueued;
     }
 
-    private boolean applyWorldRule(GameData gameData) {
+    /** CR 704.5k: every world permanent except the one that has been a world for the shortest time. */
+    private List<Permanent> worldRuleLosers(GameData gameData) {
         List<Permanent> worlds = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (p.getCard().getSupertypes().contains(CardSupertype.WORLD)) {
                 worlds.add(p);
             }
         });
-        if (worlds.size() < 2) return false;
+        if (worlds.size() < 2) return List.of();
 
         long newest = worlds.stream().mapToLong(Permanent::getTimestamp).max().orElseThrow();
         boolean uniqueNewest = worlds.stream().filter(p -> p.getTimestamp() == newest).count() == 1;
 
-        List<Permanent> toGraveyard = worlds.stream()
+        return worlds.stream()
                 .filter(p -> !(uniqueNewest && p.getTimestamp() == newest))
                 .toList();
-
-        for (Permanent perm : toGraveyard) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is put into the graveyard (world rule)."));
-            log.info("Game {} - {} is put into the graveyard (world rule)", gameData.id, perm.getCard().getName());
-        }
-        permanentRemovalService.removeOrphanedAuras(gameData);
-        return true;
     }
 
     // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out

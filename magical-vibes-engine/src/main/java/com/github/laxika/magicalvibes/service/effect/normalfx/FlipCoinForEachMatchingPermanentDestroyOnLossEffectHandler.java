@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implements NormalEffectHandlerBean {
 
     private final CoinFlipService coinFlipService;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -68,6 +68,6 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
             }
         }
 
-        destructionSupport.destroyBatchCollecting(gameData, lostPermanents, sourceName, false);
+        stepDepartureSupport.destroy(gameData, entry, effect, lostPermanents, false);
     }
 }

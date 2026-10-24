@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DestroyAllCreaturesExceptChosenTypesEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -42,7 +42,7 @@ public class DestroyAllCreaturesExceptChosenTypesEffectHandler implements Normal
                 .orElse(null);
 
         if (nextPlayer == null) {
-            destroyUnchosenCreatures(gameData, entry);
+            destroyUnchosenCreatures(gameData, entry, effect);
             return;
         }
 
@@ -54,7 +54,7 @@ public class DestroyAllCreaturesExceptChosenTypesEffectHandler implements Normal
                     .findFirst()
                     .orElse(null);
             if (nextPlayer == null) {
-                destroyUnchosenCreatures(gameData, entry);
+                destroyUnchosenCreatures(gameData, entry, effect);
                 return;
             }
         }
@@ -63,7 +63,7 @@ public class DestroyAllCreaturesExceptChosenTypesEffectHandler implements Normal
         playerInputService.beginSpellCreatureTypeChoice(gameData, nextPlayer);
     }
 
-    private void destroyUnchosenCreatures(GameData gameData, StackEntry entry) {
+    private void destroyUnchosenCreatures(GameData gameData, StackEntry entry, CardEffect effect) {
         gameData.rerunCurrentEffectAfterInteraction = false;
         EnumSet<CardSubtype> chosenTypes = entry.getChosenCreatureTypes().values().stream()
                 .collect(() -> EnumSet.noneOf(CardSubtype.class), EnumSet::add, EnumSet::addAll);
@@ -77,7 +77,7 @@ public class DestroyAllCreaturesExceptChosenTypesEffectHandler implements Normal
                 toDestroy.add(permanent);
             }
         }));
-        destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(), true);
+        stepDepartureSupport.destroy(gameData, entry, effect, toDestroy, true);
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

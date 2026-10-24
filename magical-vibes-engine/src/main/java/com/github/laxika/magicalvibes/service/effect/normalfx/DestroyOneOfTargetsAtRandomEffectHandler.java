@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class DestroyOneOfTargetsAtRandomEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -52,7 +52,7 @@ public class DestroyOneOfTargetsAtRandomEffectHandler implements NormalEffectHan
                 UUID chosenId = validTargetIds.get(randomIndex);
                 Permanent chosen = gameQueryService.findPermanentById(gameData, chosenId);
                 if (chosen != null) {
-                    destructionSupport.tryDestroyAndLog(gameData, chosen, entry.getCard().getName(), false);
+                    stepDepartureSupport.destroy(gameData, entry, effect, List.of(chosen), false);
                 }
     }
 }

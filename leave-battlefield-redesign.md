@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | open |
+| 13 | Make the guard strict and remove the fallback | in progress (first part done: the allowlist is empty and 13 more handlers are step departures; the fallback stays until the callers listed in Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1079,6 +1079,86 @@ Steps add notes here for later steps, under their number.
   Zombie test) had 108 failures in 66 classes (Pantlaza, Emeritus of Truce, Printlifter Ooze, Sloppity Bilepiper,
   ...); the same 108 fail at the baseline, none new. `LegacyDepartureWrapperRatchetTest` and `GameSimulatorTest`
   (40/40) pass. `SpellCastingServiceTest` has the same 10 baseline failures.
+
+### Step 13 (first part)
+
+- Done: the ratchet allowlist is **empty**; no engine code calls a legacy wrapper. The wrappers themselves stay public:
+  about 1,460 test files use them to put a permanent into a graveyard directly, and they are one-intent batches through
+  `departNow` like any other caller. The ratchet now checks that the scan saw `StateBasedActionService` (it used to look
+  for one of its wrapper calls).
+- The six non-cost callers:
+  - `StateBasedActionService`: completed Sagas (CR 704.5s), the world rule (CR 704.5k) and redundant Roles (CR 704.5z)
+    are now intents of the check's one state-based departure batch (`performStateBasedDepartures`, formerly
+    `destroyLethalCreaturesAndPlaneswalkers`), so they leave in the same event as that check's other deaths (CR 704.3)
+    and a Saga creature's CR 616.1 question is asked with the others. They use `DepartureCause.STATE_BASED` (as
+    before, through `removePermanentToGraveyard`, the Saga isn't a `SACRIFICE` intent: an all-Saga batch would then not be
+    state-based); the Saga's "whenever you sacrifice" triggers still fire after it left, from the result's
+    `lastKnownControllerId`. Their log lines are unchanged but are now written only for a permanent that left, and a
+    resumed batch recognises them in `deathReason`. A permanent already in the batch for another reason isn't added
+    twice.
+  - `GraveyardService.performUmbraArmorReplacement` / `performSacrificeAuraAndGrantIndestructibleReplacement`: the Aura
+    is a nested one-intent batch through `departNow` (`departAuraForReplacement`, DESTROY with the old indestructible log
+    and orphan sweep, or OTHER as before), with `deathReplacementsCanRerunEffect` closed first: it runs while
+    `DepartureService.perform` applies a destruction replacement, after every answer, so it must never stop and rerun.
+    `DepartureService` is an `@Autowired @Lazy` field, so the hand-built constructors are unchanged.
+  - `PermanentRemovalService.destroyPermanentInEnclosingBatch` calls `departToGraveyard` with
+    `destroyAfterDestructionReplacements` directly, which is exactly the inline path the wrapper took there.
+- Step 7's stale owned batch: `DepartureService.discardOrphanedStepBatch`, called at the top of every state-based
+  departure check, drops an answered batch owned by a resolution step whose entry is neither the parked resolution nor
+  on the stack. A batch with a question still open is kept until it is answered (the next check then drops it).
+- `departAsStep` no longer ends the step while an interaction is already open (a damage replacement prompt the same
+  handler raised): that step is parked to be resolved again for its prompt, and a pending departure would have parked
+  it past itself. It departs at once instead (`departNow`), as before this part.
+- Converted to step departures with the new `StepDepartureSupport.destroy` (a list destroyed as one event; nothing
+  follows), so a CR 616.1 question now ends the step instead of reaching the legacy fallback. Each was unmarked because
+  it changes the game before its destroy (so it couldn't be stopped and rerun); a step departure isn't rerun, so that no
+  longer matters: the chosen-type and chosen-parity wraths (`DestroyAllCreaturesOfChosenType`,
+  `DestroyAllCreaturesExceptChosenType(s)`, `DestroyAllCreaturesOfChosenParity`,
+  `DestroyOtherCreaturesOfChosenManaValueParity`: Extinction, Kindred Dominance, Harsh Mercy, Mutinous Massacre, Thanos),
+  the random destroys (`DestroyOneOfTargetsAtRandom`, `DestroyRandomAttackingCreature`,
+  `DestroyRandomOpponentPermanentWithCounter`: Wild Swing, Capricious Efreet, Metzali, Haphazard Bombardment), the
+  damage-then-destroy handlers (`DealDamageToTargetCreatureThenDestroyIfDamaged`, `DealDamageToAnyTargetThenDestroyIfDamaged`:
+  Silver Bolt, The Black Arrow; the latter's damaged permanents are now one batch), `CounterSpellOrAbilityAndDestroySource`
+  (Ouphe Vandals, Teferi's Response), `FlipCoinForEachMatchingPermanentDestroyOnLoss` (Rakdos the Showstopper) and
+  `AddCounterToEnchantedCreatureThenDestroyAtThreshold` (Consuming Ferocity). Their logs now come from the step hooks
+  ("X is destroyed." only for a permanent that left, "X is indestructible.").
+- **Left for the next run(s)** (why the fallback can't be deleted yet): every departure outside a window still asks after
+  the event. `grep -rlE "sacrificeAndLog|tryDestroyAndLog|destroyBatch|departNow|sacrificeTogether|performSimultaneousSacrifice|departAsStep|sacrificeSource\(" service/effect/normalfx | xargs grep -L "AsksDeathReplacementsFirst\|StepDepartureSupport"`
+  lists the 38 normalfx files left (some only start a choice whose completion already asks in a replay window, e.g.
+  Make an Example, Victimize, Rupture; check each): coin flips and votes (`EachPlayerFlipsCoinAndTailsSacrificesCreature`,
+  `VoteForCreatureThenDestroyMostVoted`, Whims of the Fates), `RemoveAllCountersThenDestroyReferencedPermanentAndDamageController`
+  (destroy, then damage: needs `destroyThenContinue`), `ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom` (its
+  destroy also runs from a choice completion), Living Death, Forbidden Ritual, Bend or Break, Raiding Party, Worms of the
+  Earth, the "sacrifice or ..." / "unless sacrifices" families (`EachPlayerSacrificesPermanentOrDiscards` / `OrLosesLife`,
+  `DrawCardUnlessTargetSacrificesCreatureOrPaysLife`, `EachOpponentCreatesTokenUnlessSacrificesCreature`,
+  `DamageSourceControllerLosesLifeUnlessSacrificesPermanents`, the `AnyOpponentMay…` / `AnyPlayerMay…` supports,
+  `MaySacrificeForCounterSupport`, `TariffSupport`), the upkeep supports (Gargantuan Gorilla, Magmasaur),
+  `EachPlayerChooses…ThenSacrificesRest` (two), `ExchangeControlOfSharedTypeTargetsAndDestroyAuras`,
+  `DestroyUpToOneAttachedPermanent`, `TargetPlayerDiscardsAndDestroysCreaturesOfChosenType`, Eumidian Wastewaker,
+  `PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtype`, `EachTargetPlayerLosesLifeAndSacrificesCreature` and
+  `LifeSupport`. Outside normalfx: `DamagePreventionService` / `DamagePreventionReplacementSupport` (destroys a damage
+  prevention causes), `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s
+  CR 118.6 sacrifice (can't be redone), the multi-choice completions outside `killsBeforeChangingAnything`, and the
+  `performSimultaneousRemovals` groups. Only once each of these asks first (as a step departure, a marked handler or a
+  replay window) can `LegacyDepartureFallback.reached` throw and the `stateBased = false` / "stays and returns `false`"
+  paths in `PermanentRemovalService.removePermanentToGraveyard` and `GraveyardService.tryReplaceDestruction` be deleted.
+  Making `reached` throw before then would crash those games instead of asking late. Entry 34 stays open until then.
+- No `@Disabled("leave-battlefield-redesign …")` marker is left from step 1; all step 1 tests run.
+- Tests: new (both `@FailOnLegacyDepartureFallback`) `ExtinctionTest.asksTheDeathReplacementBeforeAnyCreatureIsDestroyed`
+  (two Gravebane Zombies under Kalitas: both asked after the type is chosen, both still on the battlefield until the
+  answers, one ends in the library and one in exile) and `WildSwingTest.asksTheDeathReplacementBeforeTheRandomTargetIsDestroyed`;
+  `DepartureServiceOrphanedStepBatchTest` (four cases of the orphaned-batch cleanup). Changed:
+  `LegacyDepartureWrapperRatchetTest` (empty allowlist, new scan check) and `StateBasedActionServiceTest`: the Saga tests
+  verify `departToGraveyard` with a state-based intent instead of `removePermanentToGraveyard`, and its setup now injects
+  a mocked `StoriedEffectHandler` (every test of the class failed at HEAD with a `NullPointerException` on that field; 51
+  of them pass now, and the 13 that still fail fail the same way with the old engine code).
+  A sweep of 1,426 card test classes (13,064 tests: every card using a converted effect, a Saga chapter, a Role, Umbra
+  armor or Crackling Emergence's replacement, and every test mentioning Kalitas, Gravebane Zombie, the world rule, a Saga,
+  a Role or the "is destroyed" / "is sacrificed" log lines) had 44 failures in 31 classes (Dauthi Voidwalker, Promise of
+  Loyalty, Phantom Steed, Diminisher Witch, ...); the same 44 fail with the old engine code, none new.
+  `LegacyDepartureWrapperRatchetTest`, `GameSimulatorTest` (40/40), the Kalitas and Gravebane Zombie test classes,
+  `EffectResolutionServiceTest`, `PermanentRemovalServiceTest` and `ResolutionScratchpadAmountTest` show no new failures
+  (the first two of the last three fail at HEAD with the same tests).
 
 ### Step 2
 

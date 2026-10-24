@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DealDamageToTargetCreatureThenDestroyIfDamagedEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -52,7 +53,7 @@ public class DealDamageToTargetCreatureThenDestroyIfDamagedEffectHandler impleme
         }
         int actualDamage = damageSupport.dealCreatureDamage(gameData, entry, target, damage);
         if (actualDamage > 0 && targetMatches) {
-            destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), false);
+            stepDepartureSupport.destroy(gameData, entry, effect, List.of(target), false);
         }
     }
 }

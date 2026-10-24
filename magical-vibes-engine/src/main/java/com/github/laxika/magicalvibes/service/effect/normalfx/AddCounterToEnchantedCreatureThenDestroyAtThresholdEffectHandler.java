@@ -25,7 +25,7 @@ import java.util.UUID;
 public class AddCounterToEnchantedCreatureThenDestroyAtThresholdEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -61,7 +61,7 @@ public class AddCounterToEnchantedCreatureThenDestroyAtThresholdEffectHandler im
         if (controllerId != null) {
             dealPowerDamageToController(gameData, creature, controllerId);
         }
-        destructionSupport.tryDestroyAndLog(gameData, creature, entry.getCard().getName(), true);
+        stepDepartureSupport.destroy(gameData, entry, effect, List.of(creature), true);
     }
 
     /**

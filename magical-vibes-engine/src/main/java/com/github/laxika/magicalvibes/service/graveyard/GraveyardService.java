@@ -73,6 +73,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -95,6 +99,10 @@ public class GraveyardService {
     @Autowired
     @Lazy
     private InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @Autowired
+    @Lazy
+    private DepartureService departureService;
 
     public GraveyardService(GameQueryService gameQueryService,
                             GameLogService gameLogService,
@@ -1425,14 +1433,36 @@ public class GraveyardService {
     private void performUmbraArmorReplacement(GameData gameData, Permanent protectedPermanent, Permanent aura) {
         protectedPermanent.setMarkedDamage(0);
         protectedPermanent.setDamagedByDeathtouch(false);
-        permanentRemovalService.tryDestroyPermanent(gameData, aura);
+        boolean[] destroyed = {false};
+        departAuraForReplacement(gameData, DepartureIntent.destroy(aura.getId(), false),
+                new DepartureService.Hooks(() -> {
+                    if (gameQueryService.hasKeyword(gameData, aura, Keyword.INDESTRUCTIBLE)) {
+                        gameLogService.append(gameData, GameLog.isIndestructible(aura.getCard()));
+                    }
+                }, (intent, permanent, snapshot, removed) -> destroyed[0] = snapshot != null));
+        if (destroyed[0]) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+    }
+
+    /**
+     * Departs the Aura a destruction replacement destroys or sacrifices as a batch of its own. It is part of applying
+     * that replacement, which happens once every question of the destruction is answered, so it is never stopped to
+     * be run again: the window for that is closed first.
+     */
+    private void departAuraForReplacement(GameData gameData, DepartureIntent intent, DepartureService.Hooks hooks) {
+        gameData.deathReplacementsCanRerunEffect = false;
+        departureService.departNow(gameData, DepartureBatch.of(List.of(intent)), hooks);
     }
 
     private boolean performSacrificeAuraAndGrantIndestructibleReplacement(
             GameData gameData, Permanent protectedPermanent, Permanent aura) {
         protectedPermanent.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
         UUID controllerId = gameQueryService.findPermanentController(gameData, aura.getId());
-        boolean sacrificed = permanentRemovalService.removePermanentToGraveyard(gameData, aura);
+        boolean[] removed = {false};
+        departAuraForReplacement(gameData, new DepartureIntent(aura.getId(), DepartureCause.OTHER),
+                DepartureService.Hooks.afterEach((intent, permanent, snapshot, left) -> removed[0] = left));
+        boolean sacrificed = removed[0];
         if (!sacrificed) {
             return false;
         }

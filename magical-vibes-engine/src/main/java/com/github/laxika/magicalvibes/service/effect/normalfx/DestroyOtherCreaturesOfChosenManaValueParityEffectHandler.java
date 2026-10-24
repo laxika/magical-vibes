@@ -26,7 +26,7 @@ public class DestroyOtherCreaturesOfChosenManaValueParityEffectHandler implement
 
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,6 +68,6 @@ public class DestroyOtherCreaturesOfChosenManaValueParityEffectHandler implement
             }
         });
 
-        destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(), false);
+        stepDepartureSupport.destroy(gameData, entry, effect, toDestroy, false);
     }
 }

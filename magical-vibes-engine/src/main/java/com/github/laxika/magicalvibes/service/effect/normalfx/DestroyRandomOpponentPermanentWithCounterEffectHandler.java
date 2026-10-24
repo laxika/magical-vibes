@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class DestroyRandomOpponentPermanentWithCounterEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -70,6 +70,6 @@ public class DestroyRandomOpponentPermanentWithCounterEffectHandler implements N
                 }
                 int randomIndex = ThreadLocalRandom.current().nextInt(destroyable.size());
                 Permanent chosen = destroyable.get(randomIndex);
-                destructionSupport.tryDestroyAndLog(gameData, chosen, entry.getCard().getName(), false);
+                stepDepartureSupport.destroy(gameData, entry, effect, List.of(chosen), false);
     }
 }

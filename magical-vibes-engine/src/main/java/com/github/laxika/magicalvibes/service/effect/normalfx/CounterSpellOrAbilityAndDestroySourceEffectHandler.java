@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +18,7 @@ import java.util.UUID;
 public class CounterSpellOrAbilityAndDestroySourceEffectHandler implements NormalEffectHandlerBean {
 
     private final CounterSupport counterSupport;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -45,7 +46,7 @@ public class CounterSpellOrAbilityAndDestroySourceEffectHandler implements Norma
         }
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (sourcePermanent != null) {
-            destructionSupport.tryDestroyAndLog(gameData, sourcePermanent, entry.getCard().getName(), false);
+            stepDepartureSupport.destroy(gameData, entry, effect, List.of(sourcePermanent), false);
         }
     }
 

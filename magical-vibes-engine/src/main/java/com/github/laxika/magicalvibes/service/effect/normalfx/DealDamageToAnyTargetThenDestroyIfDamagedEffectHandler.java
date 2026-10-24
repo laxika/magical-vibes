@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -23,7 +24,7 @@ import java.util.UUID;
 public class DealDamageToAnyTargetThenDestroyIfDamagedEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
     private final AmountEvaluationService amountEvaluationService;
@@ -59,13 +60,15 @@ public class DealDamageToAnyTargetThenDestroyIfDamagedEffectHandler implements N
                         > damageBefore.getOrDefault(dealtDamage.getKey(), 0))
                 .map(Map.Entry::getKey)
                 .toList();
+        List<Permanent> toDestroy = new ArrayList<>();
         for (UUID damagedPermanentId : damagedPermanentIds) {
             Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, damagedPermanentId);
             if (damagedPermanent != null && predicateEvaluationService.matchesPermanentPredicate(
                     gameData, damagedPermanent, damageEffect.destroyTargetPredicate())) {
-                destructionSupport.tryDestroyAndLog(gameData, damagedPermanent, entry.getCard().getName(), false);
+                toDestroy.add(damagedPermanent);
             }
         }
         gameOutcomeService.checkWinCondition(gameData);
+        stepDepartureSupport.destroy(gameData, entry, effect, toDestroy, false);
     }
 }

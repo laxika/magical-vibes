@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DestroyAllCreaturesOfChosenParityEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -43,6 +43,6 @@ public class DestroyAllCreaturesOfChosenParityEffectHandler implements NormalEff
             }
         });
 
-        destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(), false);
+        stepDepartureSupport.destroy(gameData, entry, effect, toDestroy, false);
     }
 }

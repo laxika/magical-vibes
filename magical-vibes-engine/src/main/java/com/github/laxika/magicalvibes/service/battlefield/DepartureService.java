@@ -216,6 +216,28 @@ public class DepartureService {
     }
 
     /**
+     * Drops an answered batch owned by a resolution step whose stack entry will never resume it: the entry is neither
+     * the parked resolution nor on the stack any more (it was removed while parked, or the resolution was abandoned).
+     * Otherwise the batch would stay pending and hold up every later state-based check. A batch with a question still
+     * open is kept until that question is answered.
+     */
+    public static void discardOrphanedStepBatch(GameData gameData) {
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (pending == null || !pending.isOwnedByResolutionStep() || pending.isAwaitingAnswer()) {
+            return;
+        }
+        UUID ownerId = pending.ownerStackEntryId();
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked != null && ownerId.equals(parked.getTargetableId())) {
+            return;
+        }
+        if (gameData.stack.stream().anyMatch(entry -> ownerId.equals(entry.getTargetableId()))) {
+            return;
+        }
+        gameData.pendingDepartureBatch = null;
+    }
+
+    /**
      * Asks, before a cost is paid, every CR 616.1 question the sacrifices of {@code batch} need (CR 601.2h: the
      * player pays the costs in any order, so the payment can stop here). Nothing has left when this returns. When a
      * question is opened, the batch waits in {@link GameData#pendingDepartureBatch} and the caller must stop before
@@ -262,7 +284,8 @@ public class DepartureService {
      * the entry's resolution scratchpad ({@link StackEntry#recordDepartures}) for the next steps to read.
      *
      * <p>While {@code step} is the resolution step itself ({@link GameData#stepDepartureEffect}: not an effect
-     * another handler dispatches, and only the step's first departure) and no other batch is pending, a CR 616.1
+     * another handler dispatches, and only the step's first departure), no other batch is pending and the step isn't
+     * already waiting on another prompt, a CR 616.1
      * question ends the step: the batch is owned by {@code entry} and left pending, nothing has moved, and
      * {@link Outcome.Pending} is returned. The handler must then return at once; it is not run again.
      * {@code EffectResolutionService} parks the resolution at the next step, and once every answer is in
@@ -277,8 +300,11 @@ public class DepartureService {
      * {@link DepartureResult}s.
      */
     public Outcome departAsStep(GameData gameData, StackEntry entry, CardEffect step, DepartureBatch batch) {
+        // A step already waiting on another prompt (a damage replacement it dealt, say) is parked for that prompt,
+        // so its departure can't end it as well.
         boolean endsStep = step != null && gameData.stepDepartureEffect == step
-                && gameData.pendingDepartureBatch == null;
+                && gameData.pendingDepartureBatch == null
+                && !gameData.interaction.isAwaitingInput();
         gameData.stepDepartureEffect = null;
         if (!endsStep) {
             Outcome.Done done = departNow(gameData, batch, stepHooks(gameData, batch));

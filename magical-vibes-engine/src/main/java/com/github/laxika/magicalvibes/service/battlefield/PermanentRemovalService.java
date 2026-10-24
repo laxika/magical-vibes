@@ -2057,7 +2057,7 @@ public class PermanentRemovalService {
         if (graveyardService.tryReplaceDestruction(gameData, target, !cannotBeRegenerated)) {
             return false;
         }
-        destroyPermanentToGraveyard(gameData, target);
+        departToGraveyard(gameData, target, DepartureIntent.destroyAfterDestructionReplacements(target.getId()), null);
         if (cleanUpAttachments) {
             removeOrphanedAuras(gameData);
         }

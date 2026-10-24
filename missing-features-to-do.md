@@ -11,7 +11,7 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 34. Asking death replacements before the creature leaves, outside state-based actions
 
-**Status:** open (partly done; being replaced by `leave-battlefield-redesign.md`, steps 1–12 done (every sacrifice cost asks before anything leaves; step 13 removes the fallback and the six non-cost allowlist callers) 2026-10-24) · **Found:** 2026-10-18, while implementing CR 616.1 death replacement ordering
+**Status:** open (partly done; being replaced by `leave-battlefield-redesign.md`, steps 1–12 done (every sacrifice cost asks before anything leaves); step 13 in progress: no engine code calls a legacy wrapper any more, but the fallback stays until the unmarked handlers and services listed in that file's step 13 Findings ask first 2026-10-24) · **Found:** 2026-10-18, while implementing CR 616.1 death replacement ordering
 
 **Failing tests:**
 - None yet. Write one per remaining gap, e.g. Kalitas, Traitor of Ghet on one side, Gravebane Zombie

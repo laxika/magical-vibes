@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -52,6 +53,23 @@ public class StepDepartureSupport {
     /** Departs {@code batch} (one event) as {@code step}; nothing follows it. */
     public void depart(GameData gameData, StackEntry entry, CardEffect step, DepartureBatch batch) {
         departureService.departAsStep(gameData, entry, step, batch);
+    }
+
+    /**
+     * Destroys {@code permanents} as {@code step}, all as one event ({@code cantBeRegenerated} as the effect says);
+     * nothing follows it. Does nothing when the list is empty.
+     */
+    public void destroy(GameData gameData, StackEntry entry, CardEffect step, List<Permanent> permanents,
+                        boolean cantBeRegenerated) {
+        List<DepartureIntent> intents = permanents.stream()
+                .map(Permanent::getId)
+                .distinct()
+                .map(permanentId -> DepartureIntent.destroy(permanentId, cantBeRegenerated))
+                .toList();
+        if (intents.isEmpty()) {
+            return;
+        }
+        departureService.departAsStep(gameData, entry, step, DepartureBatch.of(intents));
     }
 
     /**

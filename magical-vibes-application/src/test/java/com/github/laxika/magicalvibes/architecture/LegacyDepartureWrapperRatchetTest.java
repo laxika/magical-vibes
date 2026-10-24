@@ -60,14 +60,11 @@ class LegacyDepartureWrapperRatchetTest {
 
     private static final Pattern LAMBDA = Pattern.compile("lambda\\$(.+)\\$\\d+");
 
-    /** The current callers, as {@code OutermostClass.method} (a lambda counts as the method declaring it). */
-    private static final Set<String> ALLOWED_CALLERS = Set.of(
-            "GraveyardService.performSacrificeAuraAndGrantIndestructibleReplacement",
-            "GraveyardService.performUmbraArmorReplacement",
-            "PermanentRemovalService.destroyPermanentInEnclosingBatch",
-            "StateBasedActionService.applyWorldRule",
-            "StateBasedActionService.removeRedundantRoles",
-            "StateBasedActionService.sacrificeCompletedSagas");
+    /**
+     * The current callers, as {@code OutermostClass.method} (a lambda counts as the method declaring it). Engine code
+     * no longer calls the wrappers; they remain only for tests that put a permanent into a graveyard directly.
+     */
+    private static final Set<String> ALLOWED_CALLERS = Set.of();
 
     @Test
     @DisplayName("Only the frozen callers use the legacy removal wrappers")
@@ -77,11 +74,12 @@ class LegacyDepartureWrapperRatchetTest {
                 .filter(LegacyDepartureWrapperRatchetTest::isProjectMainOutput)
                 .toList();
         Set<String> callers = new TreeSet<>();
-        mainOutputs.forEach(output -> classFiles(output).forEach(bytes -> collectCallers(bytes, callers)));
+        Set<String> scannedClasses = new TreeSet<>();
+        mainOutputs.forEach(output -> classFiles(output).forEach(bytes -> collectCallers(bytes, callers, scannedClasses)));
 
-        assertThat(callers)
+        assertThat(scannedClasses)
                 .as("the engine's main classes are scanned")
-                .anyMatch(caller -> caller.startsWith("StateBasedActionService."));
+                .contains("StateBasedActionService");
         assertThat(callers)
                 .withFailMessage(() -> "The callers of PermanentRemovalService's legacy removal wrappers changed.\n"
                         + "New code must build a DepartureBatch and call DepartureService.depart instead of "
@@ -120,9 +118,10 @@ class LegacyDepartureWrapperRatchetTest {
         }
     }
 
-    private static void collectCallers(byte[] bytes, Set<String> callers) {
+    private static void collectCallers(byte[] bytes, Set<String> callers, Set<String> scannedClasses) {
         ClassModel model = ClassFile.of().parse(bytes);
         String className = model.thisClass().asInternalName();
+        scannedClasses.add(className.substring(className.lastIndexOf('/') + 1));
         for (MethodModel method : model.methods()) {
             String methodName = method.methodName().stringValue();
             if (className.equals(REMOVAL_SERVICE) && WRAPPERS.contains(methodName)) {

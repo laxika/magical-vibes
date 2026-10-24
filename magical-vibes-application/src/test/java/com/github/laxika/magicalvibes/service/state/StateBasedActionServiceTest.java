@@ -48,6 +48,9 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
@@ -86,6 +89,8 @@ class StateBasedActionServiceTest {
     private BattleDefeatSupport battleDefeatSupport;
     @Mock
     private CreatureControlService creatureControlService;
+    @Mock
+    private StoriedEffectHandler storiedEffectHandler;
 
     private StateBasedActionService sut;
 
@@ -100,6 +105,7 @@ class StateBasedActionServiceTest {
                 triggerCollectionService, legendRuleService, battleDefeatSupport,
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
                         triggerCollectionService, gameLogService));
+        ReflectionTestUtils.setField(sut, "storiedEffectHandler", storiedEffectHandler);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -650,7 +656,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("The Eldest Reborn is sacrificed (final chapter reached).")));
         }
 
@@ -664,7 +670,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
         }
 
         @Test
@@ -677,7 +683,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -690,7 +696,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -709,7 +715,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -726,7 +732,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -746,7 +752,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
         }
 
         @Test
@@ -765,7 +771,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
         }
 
         @Test
@@ -782,7 +788,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
 
         @Test
@@ -799,7 +805,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            verify(permanentRemovalService, never()).departToGraveyard(eq(gd), eq(perm), any(), any());
         }
     }
 

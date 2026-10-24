@@ -4,14 +4,22 @@ import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.b.BayouDragonfly;
 import com.github.laxika.magicalvibes.cards.b.BenthicBehemoth;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudTroll;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -137,5 +145,38 @@ class ExtinctionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertNotInGraveyard(player1, "Skyshroud Troll");
         harness.assertInGraveyard(player2, "Skyshroud Troll");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Asks the death replacement after the type is chosen, before any creature is destroyed")
+    void asksTheDeathReplacementBeforeAnyCreatureIsDestroyed() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        Permanent otherZombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+
+        payAndCast(player1);
+        harness.handleListChoice(player1, "ZOMBIE");
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(gravebane, otherZombie);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        List<UUID> library = gd.playerDecks.get(player2.getId()).stream().map(Card::getId).toList();
+        List<Permanent> zombies = List.of(gravebane, otherZombie);
+        assertThat(zombies).filteredOn(zombie -> library.contains(zombie.getCard().getId())).hasSize(1);
+        assertThat(zombies).filteredOn(zombie -> gd.findExiledCard(zombie.getCard().getId()) != null).hasSize(1);
+        harness.assertNotInGraveyard(player2, "Gravebane Zombie");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+        harness.assertInGraveyard(player1, "Extinction");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

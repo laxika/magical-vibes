@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class DestroyRandomAttackingCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final DestructionSupport destructionSupport;
+    private final StepDepartureSupport stepDepartureSupport;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -38,6 +38,6 @@ public class DestroyRandomAttackingCreatureEffectHandler implements NormalEffect
         if (candidates.isEmpty()) return;
 
         Permanent chosen = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-        destructionSupport.tryDestroyAndLog(gameData, chosen, entry.getCard().getName(), false);
+        stepDepartureSupport.destroy(gameData, entry, effect, List.of(chosen), false);
     }
 }
