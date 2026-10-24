@@ -23,7 +23,7 @@ order; each one lists what it depends on.
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | done (Goblin Crash Pilot and Goblin Welder depart at once, not as a step; see Findings) |
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
-| 12 | Costs and mana abilities | open |
+| 12 | Costs and mana abilities | partly done (a permanent's activated-ability sacrifice costs, mana abilities and `ON_SACRIFICE` abilities; spell, graveyard-ability, attack and sequence sacrifice costs remain; see Findings) |
 | 13 | Make the guard strict and remove the fallback | open |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
@@ -848,6 +848,61 @@ Steps add notes here for later steps, under their number.
   `LegacyDepartureWrapperRatchetTest`, `GameSimulatorTest` (35/35), `TurnProgressionServiceTest`, `TurnCleanupServiceTest`,
   `StepTriggerServiceTest`, `ResolutionScratchpadAmountTest`, `EffectResolutionServiceTest`, `PermanentRemovalServiceTest` and
   `BattlefieldPlacementServiceTest` (11,233 tests), had 237 failures in 61 classes; the same 237 fail at the baseline, none new.
+
+### Step 12 (first part)
+
+- Done: every sacrifice a **permanent's activated ability** makes as it is activated asks its CR 616.1 questions before
+  anything of it leaves, with no legacy fallback: the permanents chosen for its sacrifice costs
+  (`pendingActivationCostSacrificeIds`), a `SacrificeSelfCost` source, a `SacrificeSourceEquipmentCost` Equipment and a
+  mana ability's `SacrificeSelfEffect` source. Mana abilities are covered, also when activated during a payment prompt
+  (CR 605.3a). Also `ON_SACRIFICE` abilities (`AbilityActivationService.sacrificePermanent`, Aura of Silence).
+  Off the ratchet allowlist (now 16 callers): `AbilityActivationService.sacrificePermanent`,
+  `ActivatedAbilityExecutionService.completeActivationAfterCosts`, `doResolveManaAbility` and `sacrificeCostPermanents`.
+- How it pauses (a continuation, not "before any payment"): `completeActivationAfterCosts` is the single point every
+  activation reaches once its other costs are chosen and its mana is paid, and the sacrifices come after it starts. At
+  its top, `askCostSacrificesFirst` builds a SACRIFICE batch of everything it will sacrifice and calls the new
+  `DepartureService.askBeforePayment`: the batch's choose stage runs with asking allowed and, when a question opens,
+  stays in `pendingDepartureBatch` (not owned, not state-based); nothing has been tapped or paid by this method yet, so it
+  stores a `GameData.ActivationCostReplay` (the method's arguments, the permanent by id) in
+  `pendingDeathReplacementChoiceReplay` and returns. The answer handlers already call
+  `completeChoiceAgainAfterDeathReplacements` once no answer is outstanding; its new cases take the batch's answers into
+  `chosenDeathReplacementsForRerun` (`DepartureService.takeAnswersForPayment`, which drops the batch), complete the
+  activation again (`completeActivationAfterCostSacrificeAnswers`) and then remove the answers the payment didn't
+  consume. CR 601.2h lets the costs be paid in any order, so paying the mana first and asking at the sacrifice is
+  rules-correct; what matters is that the rest of the payment can't fail, which the activation's validation already
+  ensures. The ability isn't on the stack while the question is open.
+- The sacrifices themselves are now `DepartureBatch`es through `departNow` (`sacrificeCostPermanents` is one batch of
+  the source and the chosen permanents; the Equipment and the mana ability's source are one-intent batches). Outside a
+  window `choose` doesn't ask but consumes `chosenDeathReplacementsForRerun`, so the replay needs no window. Their
+  "whenever you sacrifice" triggers and "P sacrifices X." logs now come from `Hooks.afterEach` and only for a permanent
+  that left (CR 701.21a).
+- Nested prompts: `PermanentRemovalService.openDeathReplacementChoice` now nests a death replacement prompt in front of
+  the active one inside a nested-prompt window (`nestsNewPrompt`), as `AnyColorManaChoiceSupport.beginOrQueueChoice`
+  does. Completing the stopped activation first resumes the suspended payment prompt and reopens the window around the
+  completion, as when the activation began; without that, the completion re-began the payment's may prompt while it was
+  also still suspended, and paying it brought it back a second time.
+- Replays must be data: the AI simulator answers prompts through its own Spring context (`HeadlessSimulationContext`),
+  so a replay holding a lambda over the harness's services fails silently in a copy (`applyAction` swallows
+  exceptions). Spells will need their own replay record for the same reason.
+- **Left for the next run(s)** (still on the allowlist): `SpellCastingService` (all eight callers: `paySingleSacrificeCost`
+  and the other spell sacrifice costs), `AbilityActivationService.sacrificePermanentAsCost` (graveyard abilities, which
+  sacrifice as each permanent is chosen), `AttackSacrificeCostService.sacrificeMatching` and
+  `SequencePermanentSacrificeCostHandler` (`performSimultaneousRemovals` for graveyard sequence costs), plus the six
+  non-cost callers step 11 listed (they belong to step 13). Spells are the hard part: `playCardInternalImpl` (about 4,000
+  lines, 39 parameters) removes the card from hand, pays commander tax and buyback discards *before* its per-type
+  validation, then pays sacrifices between other payments, and has no continuation point like
+  `completeActivationAfterCosts`. A workable plan: compute the cost's sacrifice ids where the request is read (only
+  unambiguous fields: `sacrificePermanentId` means a tap or bounce for some costs), ask with `askBeforePayment` at the
+  very start of `playCardInternal` before anything is paid, and store a data replay of the cast request. The step 1
+  `BoneSplintersTest.sacrificeCostAsksTheDeathReplacementBeforePayment` still passes only through the legacy fallback
+  (it isn't `@FailOnLegacyDepartureFallback`); mark it once spells are done.
+- Tests: new `NantukoHuskTest.sacrificeCostAsksTheDeathReplacementBeforePayment`,
+  `AshnodsAltarTest.sacrificeAsksTheDeathReplacementBeforeAddingMana` and
+  `AshnodsAltarTest.deathReplacementQuestionNestsInsideAPaymentPrompt` (Force Spike's payment prompt), all
+  `@FailOnLegacyDepartureFallback` and all failing at the baseline; `GameSimulatorTest.copyCompletesAnActivationStoppedBeforeItsSacrificeCost`.
+  No existing test changed. A sweep of 2,083 card test classes (18,360 tests: every card using a sacrifice
+  cost effect or `ON_SACRIFICE`, plus every Kalitas and Gravebane Zombie test), with `LegacyDepartureWrapperRatchetTest` and
+  `GameSimulatorTest` (36/36), had 55 failures in 34 classes; the same 55 fail at the baseline, none new.
 
 ### Step 2
 

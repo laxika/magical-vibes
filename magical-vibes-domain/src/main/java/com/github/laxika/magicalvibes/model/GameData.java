@@ -2913,7 +2913,30 @@ public class GameData {
     /** A player's answer to complete again once the death replacements it asked about are chosen. */
     public sealed interface DeathReplacementChoiceReplay
             permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay,
-                    PileChoiceReplay {
+                    PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay {
+    }
+
+    /**
+     * An activation stopped right before it pays its sacrifice costs, so that a permanent it sacrifices could have
+     * its death replacement chosen first (CR 616.1, CR 601.2h): the arguments to complete it with once every answer
+     * is in. Its activated permanent is named by id, so a simulation copy completes it on its own battlefield.
+     */
+    public record ActivationCostReplay(Player player, UUID permanentId, ActivatedAbility ability,
+                                       java.util.List<com.github.laxika.magicalvibes.model.effect.CardEffect> abilityEffects,
+                                       int xValue, UUID targetId, Zone targetZone, boolean nonTargeting,
+                                       java.util.List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+                                       java.util.List<UUID> chosenCostPermanentIds, java.util.List<UUID> sacrificedCardIds,
+                                       Card discardedCardSnapshot, Card exiledCostCardSnapshot,
+                                       java.util.List<UUID> exiledCardIds)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A "sacrifice this permanent" ability (an {@code ON_SACRIFICE} ability) stopped before its sacrifice so that its
+     * death replacement could be chosen first (CR 616.1): who activated it, the permanent and the ability's target.
+     */
+    public record SacrificeAbilityReplay(Player player, UUID permanentId, UUID targetId)
+            implements DeathReplacementChoiceReplay {
     }
 
     /** A pile separation's "which pile" answer whose chosen pile is destroyed or sacrificed. */

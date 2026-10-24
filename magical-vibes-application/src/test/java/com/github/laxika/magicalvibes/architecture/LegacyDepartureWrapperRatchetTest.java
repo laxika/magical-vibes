@@ -62,11 +62,7 @@ class LegacyDepartureWrapperRatchetTest {
 
     /** The current callers, as {@code OutermostClass.method} (a lambda counts as the method declaring it). */
     private static final Set<String> ALLOWED_CALLERS = Set.of(
-            "AbilityActivationService.sacrificePermanent",
             "AbilityActivationService.sacrificePermanentAsCost",
-            "ActivatedAbilityExecutionService.completeActivationAfterCosts",
-            "ActivatedAbilityExecutionService.doResolveManaAbility",
-            "ActivatedAbilityExecutionService.sacrificeCostPermanents",
             "AttackSacrificeCostService.sacrificeMatching",
             "GraveyardService.performSacrificeAuraAndGrantIndestructibleReplacement",
             "GraveyardService.performUmbraArmorReplacement",

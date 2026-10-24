@@ -1,18 +1,22 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -397,6 +401,40 @@ class NantukoHuskTest extends BaseCardTest {
         card.setToughness(1);
         card.setToken(true);
         return card;
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Sacrificing Gravebane Zombie under an opponent's Kalitas asks library-or-Kalitas before the cost is paid")
+    void sacrificeCostAsksTheDeathReplacementBeforePayment() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        addCreatureReady(player1, new NantukoHusk());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, zombie.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getName()).isEqualTo("Nantuko Husk"));
+
+        harness.passBothPriorities();
+
+        Permanent husk = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, husk)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
 

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.l.LivingInferno;
+import com.github.laxika.magicalvibes.cards.n.NantukoHusk;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
@@ -1055,5 +1056,41 @@ class GameSimulatorTest {
         assertThat(gd.pendingDepartureBatch).isNull();
         assertThat(gd.findExiledCard(dreamcatcherCardId)).isNotNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("A copy taken while an activation asks its sacrifice cost's death replacement completes the activation on its own")
+    void copyCompletesAnActivationStoppedBeforeItsSacrificeCost() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent husk = harness.addToBattlefieldAndReturn(player1, new NantukoHusk());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID zombieCardId = zombie.getCard().getId();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, zombie.getId());
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
+        assertThat(gd.stack).isEmpty();
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(),
+                new SimulationAction.ChooseColor("Put it into its owner's library"));
+
+        assertThat(copy.pendingDepartureBatch).isNull();
+        assertThat(copy.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombieCardId);
+        assertThat(copy.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getTargetId()).isEqualTo(husk.getId()));
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.pendingDepartureBatch).isNull();
+        assertThat(gd.findExiledCard(zombieCardId)).isNotNull();
+        assertThat(gd.stack).hasSize(1);
     }
 }

@@ -254,6 +254,7 @@ public class AbilityActivationService {
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
+    private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
     private final TriggerCollectionService triggerCollectionService;
     private final ExileService exileService;
     private final LifeSupport lifeSupport;
@@ -1120,9 +1121,19 @@ public class AbilityActivationService {
             }
         }
 
-        // Sacrifice: remove from battlefield, add to graveyard
+        // CR 616.1, CR 601.2h: the sacrifice is the ability's cost, so its death replacement is chosen before it
+        // leaves; the activation stops here and is activated again with the answer.
+        com.github.laxika.magicalvibes.model.DepartureBatch sacrifice = com.github.laxika.magicalvibes.model.DepartureBatch.of(
+                List.of(com.github.laxika.magicalvibes.model.DepartureIntent.sacrifice(permanent.getId())));
+        if (departureService.askBeforePayment(gameData, sacrifice)) {
+            gameData.pendingDeathReplacementChoiceReplay =
+                    new GameData.SacrificeAbilityReplay(player, permanent.getId(), targetId);
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            return;
+        }
         Card sacrificedCard = permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent);
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent);
+        departureService.departNow(gameData, sacrifice,
+                com.github.laxika.magicalvibes.service.battlefield.DepartureService.Hooks.NONE);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedCard);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
@@ -1149,6 +1160,16 @@ public class AbilityActivationService {
             playerInputService.processNextMayAbility(gameData);
         }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /**
+     * Activates the sacrifice ability {@link #sacrificePermanent} stopped before its sacrifice again, once its
+     * death replacement is chosen; the sacrifice consumes the answer.
+     */
+    public void sacrificePermanentAfterCostSacrificeAnswer(GameData gameData, GameData.SacrificeAbilityReplay replay) {
+        int index = gameData.playerBattlefields.getOrDefault(replay.player().getId(), List.of()).stream()
+                .map(Permanent::getId).toList().indexOf(replay.permanentId());
+        sacrificePermanent(gameData, replay.player(), index, replay.targetId());
     }
 
     /**

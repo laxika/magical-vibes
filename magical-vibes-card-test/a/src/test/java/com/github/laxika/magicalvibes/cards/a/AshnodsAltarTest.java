@@ -1,14 +1,23 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.f.ForceSpike;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -128,4 +137,68 @@ class AshnodsAltarTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Sacrificing Gravebane Zombie under an opponent's Kalitas asks library-or-Kalitas before any mana is added")
+    void sacrificeAsksTheDeathReplacementBeforeAddingMana() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, zombie.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.findExiledCard(zombie.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, ForceSpike.class, LlanowarElves.class, Forest.class})
+    @DisplayName("Activated while paying Force Spike's cost, the death replacement question comes before the payment prompt returns")
+    void deathReplacementQuestionNestsInsideAPaymentPrompt() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addToBattlefield(player1, new Forest());
+        LlanowarElves elves = new LlanowarElves();
+        harness.castFromHand(player1, elves, "{G}");
+        harness.setHand(player2, List.of(new ForceSpike()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elves.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        gs.activateAbility(gd, player1, 0, null, null, null, null);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
 }
+

@@ -160,6 +160,9 @@ public class PermanentChoiceHandlerService {
     private final org.springframework.beans.factory.ObjectProvider<ChoiceHandlerService> choiceHandlerServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<MayAbilityHandlerService>
             mayAbilityHandlerServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<
+            com.github.laxika.magicalvibes.service.ability.ActivatedAbilityExecutionService>
+            activatedAbilityExecutionServiceProvider;
 
     /** Declines a champion choice, so the permanent is sacrificed instead of exiling another one (CR 702.72a). */
     public void handleChampionDeclined(GameData gameData, Player player, boolean accepted) {
@@ -285,6 +288,24 @@ public class PermanentChoiceHandlerService {
             case GameData.ListChoiceReplay listReplay ->
                     choiceHandlerServiceProvider.getObject().completeListChoiceAgainAfterDeathReplacements(
                             gameData, listReplay);
+            case GameData.ActivationCostReplay activationReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> activatedAbilityExecutionServiceProvider.getObject()
+                            .completeActivationAfterCostSacrificeAnswers(gameData, activationReplay));
+            case GameData.SacrificeAbilityReplay sacrificeReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> abilityActivationService.sacrificePermanentAfterCostSacrificeAnswer(gameData, sacrificeReplay));
+        }
+    }
+
+    /**
+     * Pays a cost again that stopped before its sacrifices to ask their death replacements (CR 616.1), with the
+     * answers taken from the answered batch; whatever the payment didn't consume is dropped afterwards.
+     */
+    private static void payAgainAfterDeathReplacements(GameData gameData, Runnable payment) {
+        java.util.Set<UUID> answered = DepartureService.takeAnswersForPayment(gameData);
+        try {
+            payment.run();
+        } finally {
+            answered.forEach(gameData.chosenDeathReplacementsForRerun::remove);
         }
     }
 

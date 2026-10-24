@@ -216,6 +216,48 @@ public class DepartureService {
     }
 
     /**
+     * Asks, before a cost is paid, every CR 616.1 question the sacrifices of {@code batch} need (CR 601.2h: the
+     * player pays the costs in any order, so the payment can stop here). Nothing has left when this returns. When a
+     * question is opened, the batch waits in {@link GameData#pendingDepartureBatch} and the caller must stop before
+     * paying anything else and store a {@link GameData.CostPaymentReplay}; once every answer is in, the replay takes
+     * the answers with {@link #takeAnswersForPayment} and pays again, and the sacrifices consume them. A permanent
+     * whose answer is already waiting for that payment is not asked again.
+     *
+     * @return {@code true} when a question is open
+     */
+    public boolean askBeforePayment(GameData gameData, DepartureBatch batch) {
+        if (gameData.pendingDepartureBatch != null || gameData.pendingDeathReplacementChoiceReplay != null) {
+            return false;
+        }
+        List<DepartureIntent> unanswered = batch.intents().stream()
+                .filter(intent -> !gameData.chosenDeathReplacementsForRerun.containsKey(intent.permanentId()))
+                .toList();
+        if (unanswered.isEmpty()) {
+            return false;
+        }
+        return choose(gameData, DepartureBatch.of(unanswered).withStage(DepartureStage.CHOOSE), true)
+                .isAwaitingAnswer();
+    }
+
+    /**
+     * Moves the answers of the answered batch {@link #askBeforePayment} asked into
+     * {@link GameData#chosenDeathReplacementsForRerun}, for the payment that is made again to consume, and drops the
+     * batch.
+     *
+     * @return the permanents that were answered for
+     */
+    public static Set<UUID> takeAnswersForPayment(GameData gameData) {
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (pending == null || pending.isAwaitingAnswer() || pending.isStateBased()
+                || pending.isOwnedByResolutionStep()) {
+            return Set.of();
+        }
+        gameData.pendingDepartureBatch = null;
+        gameData.chosenDeathReplacementsForRerun.putAll(pending.replacementAnswers());
+        return Set.copyOf(pending.replacementAnswers().keySet());
+    }
+
+    /**
      * Departs {@code batch} as {@code step}, the effect of {@code entry} being resolved, and records its results on
      * the entry's resolution scratchpad ({@link StackEntry#recordDepartures}) for the next steps to read.
      *

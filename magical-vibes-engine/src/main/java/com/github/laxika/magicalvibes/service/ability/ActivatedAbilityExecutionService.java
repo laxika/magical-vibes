@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -181,6 +183,7 @@ public class ActivatedAbilityExecutionService {
 
     private final DrawService drawService;
     private final PermanentRemovalService permanentRemovalService;
+    private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
     private final TriggerCollectionService triggerCollectionService;
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
@@ -245,14 +248,52 @@ public class ActivatedAbilityExecutionService {
      */
     private void sacrificeCostPermanents(GameData gameData, Player player, Permanent source,
                                          boolean sacrificeSource) {
+        List<Permanent> sacrificed = costSacrificePermanents(gameData, player, source, sacrificeSource);
+        gameData.pendingActivationCostSacrificeIds.clear();
+        if (sacrificed.isEmpty()) {
+            return;
+        }
+        UUID sourceId = source.getId();
+        departureService.departNow(gameData,
+                DepartureBatch.of(sacrificed.stream().map(p -> DepartureIntent.sacrifice(p.getId())).toList()),
+                com.github.laxika.magicalvibes.service.battlefield.DepartureService.Hooks.afterEach(
+                        (intent, sacrificedPermanent, snapshot, removed) -> {
+                            if (!removed) {
+                                return;
+                            }
+                            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                                    gameData, player.getId(), snapshot.permanent().getCard());
+                            if (!sacrificeSource || !sacrificedPermanent.getId().equals(sourceId)) {
+                                gameLogService.append(gameData, GameLog.textCardText(
+                                        player.getUsername() + " sacrifices ", sacrificedPermanent.getCard(), "."));
+                            }
+                        }));
+    }
+
+    /**
+     * Sacrifices {@code permanent} as a one-permanent departure batch, consuming the death replacement answered for
+     * it before the payment ({@link #askCostSacrificesFirst}).
+     *
+     * @return whether it left the battlefield
+     */
+    private boolean sacrificeAlone(GameData gameData, Permanent permanent) {
+        departureService.departNow(gameData, DepartureBatch.of(List.of(DepartureIntent.sacrifice(permanent.getId()))),
+                com.github.laxika.magicalvibes.service.battlefield.DepartureService.Hooks.NONE);
+        return gameQueryService.findPermanentById(gameData, permanent.getId()) == null;
+    }
+
+    /**
+     * The source (when the ability has a sacrifice-self cost) followed by the permanents chosen for the ability's
+     * other sacrifice costs that are still on {@code player}'s battlefield.
+     */
+    private List<Permanent> costSacrificePermanents(GameData gameData, Player player, Permanent source,
+                                                    boolean sacrificeSource) {
         List<Permanent> sacrificed = new ArrayList<>();
         if (sacrificeSource) {
             sacrificed.add(source);
         }
-        List<UUID> chosenIds = List.copyOf(gameData.pendingActivationCostSacrificeIds);
-        gameData.pendingActivationCostSacrificeIds.clear();
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
-        for (UUID chosenId : chosenIds) {
+        for (UUID chosenId : List.copyOf(gameData.pendingActivationCostSacrificeIds)) {
             if (sacrificeSource && chosenId.equals(source.getId())) {
                 continue;
             }
@@ -261,24 +302,74 @@ public class ActivatedAbilityExecutionService {
                     .findFirst()
                     .ifPresent(sacrificed::add);
         }
-        if (sacrificed.isEmpty()) {
-            return;
+        return sacrificed;
+    }
+
+    /**
+     * Completes the activation {@link #askCostSacrificesFirst} stopped, once every death replacement it asked about
+     * is chosen; its sacrifices consume the answers. A mana ability activated during a payment prompt asked in
+     * front of that prompt (CR 605.3a), so the prompt is active again while the activation completes, as it was
+     * when the activation began.
+     */
+    public void completeActivationAfterCostSacrificeAnswers(GameData gameData, GameData.ActivationCostReplay replay) {
+        Permanent source = gameQueryService.findPermanentById(gameData, replay.permanentId());
+        if (source == null) {
+            throw new IllegalStateException("The activated permanent left the battlefield");
         }
-        List<Card> sacrificedCards = sacrificed.stream()
-                .map(p -> permanentRemovalService.snapshotEffectivePermanentCard(gameData, p))
-                .toList();
-        permanentRemovalService.performSimultaneousRemovals(gameData, sacrificed, () -> {
-            for (int i = 0; i < sacrificed.size(); i++) {
-                Permanent sacrificedPermanent = sacrificed.get(i);
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sacrificedPermanent);
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                        gameData, player.getId(), sacrificedCards.get(i));
-                if (!sacrificeSource || sacrificedPermanent != source) {
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            player.getUsername() + " sacrifices ", sacrificedPermanent.getCard(), "."));
-                }
+        boolean nested = gameData.interaction.activeInteraction() == null
+                && interactionHandlerRegistry.resumeSuspended(gameData);
+        if (nested) {
+            gameData.interaction.openNestedPromptWindow();
+        }
+        try {
+            completeActivationAfterCosts(gameData, replay.player(), source, replay.ability(), replay.abilityEffects(),
+                    replay.xValue(), replay.targetId(), replay.targetZone(), replay.nonTargeting(),
+                    replay.targetIds(), replay.damageAssignments(), replay.chosenCostPermanentIds(),
+                    replay.sacrificedCardIds(), replay.discardedCardSnapshot(), replay.exiledCostCardSnapshot(),
+                    replay.exiledCardIds());
+        } finally {
+            if (nested) {
+                gameData.interaction.closeNestedPromptWindow();
             }
-        });
+        }
+    }
+
+    /**
+     * CR 616.1 and CR 601.2h: before the activation pays its sacrifice costs, asks the death replacement questions
+     * of every permanent it sacrifices: its source for a sacrifice-self cost, the permanents chosen for its other
+     * sacrifice costs, its granting Equipment, and the source a mana ability sacrifices as it resolves. When one is
+     * asked, the activation stops here, before it taps or pays anything more, and is completed with the same
+     * arguments once every answer is in; its sacrifices then consume the answers.
+     *
+     * @return {@code true} when the activation stopped to ask
+     */
+    private boolean askCostSacrificesFirst(GameData gameData, Player player, Permanent permanent,
+                                           ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                           GameData.ActivationCostReplay replay) {
+        if (gameQueryService.findPermanentById(gameData, permanent.getId()) != permanent) {
+            return false;
+        }
+        boolean sacrificeSource = abilityEffects.stream().anyMatch(SacrificeSelfCost.class::isInstance);
+        List<UUID> sacrificedIds = new ArrayList<>(costSacrificePermanents(gameData, player, permanent, sacrificeSource)
+                .stream().map(Permanent::getId).toList());
+        if (!sacrificeSource && AbilityActivationService.isManaAbility(ability, abilityEffects)
+                && abilityEffects.stream().anyMatch(SacrificeSelfEffect.class::isInstance)
+                && !gameQueryService.cantBeSacrificed(gameData, permanent)) {
+            sacrificedIds.add(permanent.getId());
+        }
+        if (abilityEffects.stream().anyMatch(SacrificeSourceEquipmentCost.class::isInstance)
+                && ability.getGrantSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId()) != null
+                && !sacrificedIds.contains(ability.getGrantSourcePermanentId())) {
+            sacrificedIds.add(ability.getGrantSourcePermanentId());
+        }
+        if (sacrificedIds.isEmpty() || !departureService.askBeforePayment(gameData,
+                DepartureBatch.of(sacrificedIds.stream().map(DepartureIntent::sacrifice).toList()))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = replay;
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        return true;
     }
 
     /**
@@ -480,6 +571,17 @@ public class ActivatedAbilityExecutionService {
                                              List<UUID> sacrificedCardIds,
                                              Card discardedCardSnapshot,
                                              Card exiledCostCardSnapshot, List<UUID> activatedAbilityExiledCardIds) {
+        if (askCostSacrificesFirst(gameData, player, permanent, ability, abilityEffects,
+                new GameData.ActivationCostReplay(player, permanent.getId(), ability, List.copyOf(abilityEffects),
+                        effectiveXValue, targetId, targetZone, markAsNonTargetingForSacCreatureCost,
+                        targetIds == null ? null : List.copyOf(targetIds),
+                        damageAssignments == null ? null : Map.copyOf(damageAssignments),
+                        chosenCostPermanentIds == null ? null : List.copyOf(chosenCostPermanentIds),
+                        sacrificedCardIds == null ? null : List.copyOf(sacrificedCardIds),
+                        discardedCardSnapshot, exiledCostCardSnapshot,
+                        activatedAbilityExiledCardIds == null ? null : List.copyOf(activatedAbilityExiledCardIds)))) {
+            return;
+        }
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -730,7 +832,7 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
                 sacrificedEquipmentCard.setKeywords(equipmentKeywords);
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, equipment);
+                sacrificeAlone(gameData, equipment);
             }
         }
 
@@ -1817,7 +1919,7 @@ public class ActivatedAbilityExecutionService {
                         sacrifice.currentControllerSacrifices(), sacrifice.currentControllersEndStepOnly()));
             } else if (effect instanceof SacrificeSelfEffect
                     && !gameQueryService.cantBeSacrificed(gameData, permanent)
-                    && permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
+                    && sacrificeAlone(gameData, permanent)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
                 permanentRemovalService.removeOrphanedAuras(gameData);

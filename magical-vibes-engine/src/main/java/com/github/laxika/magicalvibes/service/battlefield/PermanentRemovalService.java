@@ -789,12 +789,13 @@ public class PermanentRemovalService {
 
     /**
      * Opens a death replacement prompt, or holds it until the current group of simultaneous deaths
-     * ends so that every group's prompts open in APNAP order (CR 616.1, CR 101.4).
+     * ends so that every group's prompts open in APNAP order (CR 616.1, CR 101.4). One a mana ability
+     * activated during a payment prompt asks for its sacrifice nests in front of that prompt (CR 605.3a).
      */
     private void openDeathReplacementChoice(GameData gameData, PendingInteraction.ColorChoice choice) {
         if (gameData.deathReplacementChoiceBatchDepth > 0) {
             gameData.deferredDeathReplacementChoices.add(choice);
-        } else if (gameData.interaction.isAwaitingInput()) {
+        } else if (gameData.interaction.isAwaitingInput() && !gameData.interaction.nestsNewPrompt()) {
             gameData.queueInteraction(choice);
         } else {
             interactionHandlerRegistry.begin(gameData, choice);
