@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.u.UnbreakableFormation;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,6 +12,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -152,6 +156,37 @@ class CelestialJudgmentTest extends BaseCardTest {
         assertThat(opposingBear.isTapped()).isTrue();
         assertThat(opposingBear.getRegenerationShield()).isZero();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The death replacement is asked after the last choice, before any creature is destroyed")
+    void lastChoiceAsksTheDeathReplacementBeforeAnyCreatureIsDestroyed() {
+        Permanent kalitas = harness.addToBattlefieldAndReturn(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castCelestialJudgment();
+        harness.handlePermanentChosen(player1, ownBear.getId());
+        harness.handlePermanentChosen(player1, kalitas.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingBear);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Gravebane Zombie");
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Zombie");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Celestial Judgment");
     }
 
     private void castCelestialJudgment() {

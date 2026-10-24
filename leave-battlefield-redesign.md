@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; the fallback stays until the callers listed in the fifth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; the fallback stays until the callers listed in the seventh part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1403,6 +1403,44 @@ Steps add notes here for later steps, under their number.
   failing the same way with the old engine code (`PhyrexianDreadnoughtTest.canPayAfterDreadnoughtChangesController`,
   `PredatorDragonTest`'s uncast entry, two `PreyseizerDragonTest` tests). `LegacyDepartureWrapperRatchetTest`,
   `DepartureServiceOrphanedStepBatchTest` and `GameSimulatorTest` pass.
+
+### Step 13 (seventh part: the single-permanent choice completions)
+
+- Re-audited every branch of `PermanentChoiceHandlerService.handlePermanentChosen` outside `killsBeforeChangingAnything`
+  (including the handlers and supports they call). Two removed a permanent outside every window, so a CR 616.1
+  question reached the legacy fallback; both are now in `killsBeforeChangingAnything` and complete through
+  `completeKillingChoice` in the replay window:
+  - `CelestialJudgmentChoice` (Celestial Judgment): each choice only adds to the context's chosen ids, so the last
+    one changes nothing before `performDestroyAllCreaturesExcept`'s batch. Its epilogue moved into the new case. The
+    handler is now `AsksDeathReplacementsFirst` too (its resolve path destroys without a choice when no power group
+    has two choosable creatures, and only opens prompts otherwise).
+  - `ChooseOpponentForPermanentSacrifice` (Demonic Hordes with two or more opponents): the chosen opponent's lone
+    candidate was sacrificed in the completion; with several candidates the completion only opens the next choice,
+    which was already in the list (`OpponentChoosesPermanentToSacrifice`).
+- Checked, no change needed: Tariff's tie-break (its final sacrifice already goes through
+  `answerAskingDeathReplacementsFirst`), Choose-nonland-then-destroy-at-random (`departAfterChoice` after the random
+  pick), the legend rule and every other listed context; the rest only exile, bounce, attach, copy, deal damage (left
+  to state-based actions), gain control, put counters or open further prompts.
+- Noticed, not a permanent choice: The Toymaker's Trap's guess (`ToymakersTrapEffectHandler.completeGuess`, a number
+  choice completed from `ChoiceHandlerService`) sacrifices the source through `SacrificeSelfEffectHandler.resolve`
+  outside any window. The source is an enchantment, so only "put into a graveyard" replacements compete (Wheel of Sun
+  and Moon against Rest in Peace, say). Worth checking with the other number/list-choice completions.
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (parked pending an official ruling; see the third part) and `LifeSupport` (Lich's Duel
+    Mastery's sacrifice inside a life loss replacement).
+  - `DamagePreventionService.replaceNextDamageToTargetWithDestruction` (destroys instead of dealing damage) and
+    `DamagePreventionReplacementSupport.applyDamageToPermanentByRemovingCountersOrSacrificing` (sacrifices instead
+    of being dealt damage): both run inside a damage event that can't pause.
+  - The number/list-choice completions outside `ChoiceHandlerService`'s replay window (The Toymaker's Trap above;
+    not yet audited as a whole).
+- Tests: new (both `@FailOnLegacyDepartureFallback`, both fail with the old engine code)
+  `CelestialJudgmentTest.lastChoiceAsksTheDeathReplacementBeforeAnyCreatureIsDestroyed` (Gravebane Zombie against
+  Kalitas, Kalitas chosen for power 3: the Zombie and the unchosen Bear are still on the battlefield while asked, then
+  the Zombie is on top of its library and no Zombie token) and
+  `DemonicHordesTest.chosenOpponentsLoneLandAsksTheDeathReplacementBeforeItIsSacrificed` (three players; Dryad Arbor
+  under Wheel of Sun and Moon against Kalitas). No existing test changed. `CelestialJudgmentTest` (8),
+  `DemonicHordesTest` (11), `DryadArborTest`, `KalitasTraitorOfGhetTest`, `GravebaneZombieTest`,
+  `WheelOfSunAndMoonTest`, `LegacyDepartureWrapperRatchetTest` and `DepartureServiceOrphanedStepBatchTest` pass.
 
 ### Step 2
 

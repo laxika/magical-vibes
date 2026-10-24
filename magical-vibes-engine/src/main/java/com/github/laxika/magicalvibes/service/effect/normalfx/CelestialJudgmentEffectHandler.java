@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CelestialJudgmentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,9 +18,15 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
+/**
+ * Celestial Judgment: for each different power among creatures, the controller chooses one creature with that power,
+ * then every creature not chosen is destroyed in one batch. The choices only build up the chosen creatures, so
+ * nothing changes before that destruction, whether it happens while resolving or in the last choice's completion
+ * (which completes in the death replacement window, CR 616.1).
+ */
 @Component
 @RequiredArgsConstructor
-public class CelestialJudgmentEffectHandler implements NormalEffectHandlerBean {
+public class CelestialJudgmentEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

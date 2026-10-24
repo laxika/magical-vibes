@@ -417,7 +417,9 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.LandEquilibriumSacrifice
                 || context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature
                 || context instanceof PermanentChoiceContext.FreeCastSacrificeCost freeCast
-                        && paysOnlySacrificeCosts(freeCast.entry());
+                        && paysOnlySacrificeCosts(freeCast.entry())
+                || context instanceof PermanentChoiceContext.CelestialJudgmentChoice
+                || context instanceof PermanentChoiceContext.ChooseOpponentForPermanentSacrifice;
     }
 
     /**
@@ -567,6 +569,14 @@ public class PermanentChoiceHandlerService {
                             sacrificeOrToken);
             case PermanentChoiceContext.FreeCastSacrificeCost freeCastSacrifice ->
                     exileFreeCastQueueSupport.completeSacrificeCost(gameData, permanentId, freeCastSacrifice);
+            case PermanentChoiceContext.CelestialJudgmentChoice celestialJudgmentChoice -> {
+                celestialJudgmentEffectHandler.completeChoice(gameData, permanentId, celestialJudgmentChoice);
+                if (!gameData.interaction.isAwaitingInput()) {
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                }
+            }
+            case PermanentChoiceContext.ChooseOpponentForPermanentSacrifice chooseOpponent ->
+                    battlefieldHandler.handleChooseOpponentForPermanentSacrifice(gameData, permanentId, chooseOpponent);
             default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + choice.context());
         }
     }
@@ -602,11 +612,6 @@ public class PermanentChoiceHandlerService {
         if (context instanceof PermanentChoiceContext.RedirectCreatureDamage redirect) {
             redirectCreatureDamageHandler.completeChoice(gameData, redirect.controllerId(), permanentId);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof PermanentChoiceContext.CelestialJudgmentChoice celestialJudgmentChoice) {
-            celestialJudgmentEffectHandler.completeChoice(gameData, permanentId, celestialJudgmentChoice);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            }
         } else if (context instanceof PermanentChoiceContext.LibraryNinjutsu libraryNinjutsu) {
             libraryChoiceHandlerService.completeLibraryNinjutsuChoice(gameData, player, permanentId, libraryNinjutsu);
         } else if (context instanceof PermanentChoiceContext.GutmornDiscardedCardPlayerChoice gutmornChoice) {
@@ -770,8 +775,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleTapAndChooseOpponentGainsControl(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForSelfFlicker chooseOpponent) {
             battlefieldHandler.handleChooseOpponentForSelfFlicker(gameData, permanentId, chooseOpponent);
-        } else if (context instanceof PermanentChoiceContext.ChooseOpponentForPermanentSacrifice chooseOpponent) {
-            battlefieldHandler.handleChooseOpponentForPermanentSacrifice(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForPermanentExile chooseOpponent) {
             battlefieldHandler.handleChooseOpponentForPermanentExile(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForSubtype chooseOpponent) {
