@@ -22,11 +22,18 @@ public class ForbiddenRitualState {
     public int lifeLoss;
     /** The penalty option the targeted opponent picked, consumed on the next re-entry. */
     public String chosenMode;
+    /**
+     * True once the controller accepted "repeat this process": the parked resolution is resumed at the effect, which
+     * starts the next cycle's sacrifice as the resolution step, so a lone permanent's CR 616.1 question is asked
+     * before it leaves.
+     */
+    public boolean repeatAccepted;
 
     public void reset() {
         active = false;
         controllerSacrificed = false;
         lifeLoss = 0;
         chosenMode = null;
+        repeatAccepted = false;
     }
 }

@@ -1,11 +1,16 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -162,6 +167,36 @@ class InfernalOfferingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Infernal Offering");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The death replacement is asked before either creature is sacrificed, and the draws come after")
+    void asksTheDeathReplacementBeforeTheSacrificesAndDrawsAfter() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island()));
+        castOffering();
+
+        harness.handlePermanentChosen(player1, elves.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elves);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(zombie);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(zombie);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2)
+                .anyMatch(card -> card.getId().equals(zombie.getCard().getId()));
     }
 
     private void returnCreature(Player player) {

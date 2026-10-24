@@ -103,11 +103,9 @@ public class WormsOfTheEarthEffectHandler implements NormalEffectHandlerBean {
                         && playerId.equals(gameQueryService.findPermanentController(gameData, land.getId()))
                         && gameQueryService.isLand(gameData, land))
                 .toList();
-        // CR 616.1: both lands' death replacement choices come before either is sacrificed.
-        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, lands);
-        for (Permanent land : lands) {
-            destructionSupport.sacrificeAndLog(gameData, land, playerId);
-        }
+        // Both lands are sacrificed as one event, so inside the caller's replay window every CR 616.1 question among
+        // them is asked before either leaves.
+        destructionSupport.sacrificeTogether(gameData, lands, playerId);
         destroySource(gameData, sourceCard, effect.sourcePermanentId());
     }
 

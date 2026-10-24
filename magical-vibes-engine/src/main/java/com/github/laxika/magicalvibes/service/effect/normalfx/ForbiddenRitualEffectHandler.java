@@ -32,7 +32,9 @@ import org.springframework.stereotype.Component;
  * sacrifice/discard sub-choices re-run this handler via
  * {@link GameData#rerunCurrentEffectAfterInteraction}. The optional repeat is a
  * {@link PendingInteraction.ForbiddenRitualRepeatChoice} (handled by
- * {@code ForbiddenRitualRepeatChoiceInteractionHandler}).
+ * {@code ForbiddenRitualRepeatChoiceInteractionHandler}); accepting it resumes the parked resolution at this
+ * effect with {@link ForbiddenRitualState#repeatAccepted} set, so every cycle's sacrifice starts as the resolution
+ * step and asks its CR 616.1 questions before the permanent leaves.
  */
 @Slf4j
 @Component
@@ -74,6 +76,13 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (state.repeatAccepted) {
+            // The accepted repeat resumed the parked resolution here, so the next sacrifice is this step's departure.
+            state.repeatAccepted = false;
+            beginControllerSacrifice(gameData, entry, effect, sourceName, controllerId, opponentId, lifeLoss);
+            return;
+        }
+
         if (state.chosenMode != null) {
             String mode = state.chosenMode;
             state.chosenMode = null;
@@ -93,17 +102,8 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * Starts (or restarts after an accepted repeat) the controller's nontoken-permanent sacrifice.
-     * No legal permanent ends the process; a single match is sacrificed without a prompt.
-     */
-    public void beginControllerSacrifice(GameData gameData, StackEntry entry, String sourceName,
-            UUID controllerId, UUID opponentId, int lifeLoss) {
-        beginControllerSacrifice(gameData, entry, null, sourceName, controllerId, opponentId, lifeLoss);
-    }
-
-    /**
-     * @param step the resolving step when this starts the first sacrifice, so a lone sacrifice is a step departure;
-     *             {@code null} for a repeat started from its prompt, which sacrifices at once
+     * Starts (or restarts after an accepted repeat) the controller's nontoken-permanent sacrifice as {@code step}, the
+     * resolution step. No legal permanent ends the process; a single match is sacrificed without a prompt.
      */
     private void beginControllerSacrifice(GameData gameData, StackEntry entry, CardEffect step, String sourceName,
             UUID controllerId, UUID opponentId, int lifeLoss) {
@@ -119,15 +119,11 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
 
         if (nontokenIds.size() == 1) {
             Permanent only = gameQueryService.findPermanentById(gameData, nontokenIds.getFirst());
-            if (only != null && step != null) {
-                // A step departure: a CR 616.1 question ends the step before the permanent leaves, and the effect
-                // is resolved again (as after a chosen sacrifice) to offer the opponent's penalty.
-                if (!stepDepartureSupport.departOrResolveAgain(gameData, entry, step,
-                        DepartureBatch.of(StepDepartureSupport.sacrifices(List.of(only.getId()))))) {
-                    return;
-                }
-            } else if (only != null) {
-                destructionSupport.sacrificeAndLog(gameData, only, controllerId);
+            // A step departure: a CR 616.1 question ends the step before the permanent leaves, and the effect is
+            // resolved again (as after a chosen sacrifice) to offer the opponent's penalty.
+            if (only != null && !stepDepartureSupport.departOrResolveAgain(gameData, entry, step,
+                    DepartureBatch.of(StepDepartureSupport.sacrifices(List.of(only.getId()))))) {
+                return;
             }
             state.controllerSacrificed = true;
             offerOpponentPenalty(gameData, entry, sourceName, controllerId, opponentId, lifeLoss);

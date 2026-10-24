@@ -1,11 +1,16 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GriffinCanyon;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -238,6 +243,38 @@ class ForbiddenRitualTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Python");
         harness.assertInGraveyard(player2, "Griffin Canyon");
         harness.assertInGraveyard(player2, "Python");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("A repeat's lone sacrifice asks for the death replacement before the permanent leaves")
+    void repeatAsksTheDeathReplacementBeforeTheLoneSacrifice() {
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        UUID first = harness.addToBattlefieldAndReturn(player1, new Python()).getId();
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        castAt(player2.getId());
+
+        harness.handlePermanentChosen(player1, first);
+        harness.handleListChoice(player2, "Lose 2 life");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        harness.assertLife(player2, 18);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(zombie);
+        harness.handleListChoice(player2, "Lose 2 life");
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Forbidden Ritual");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

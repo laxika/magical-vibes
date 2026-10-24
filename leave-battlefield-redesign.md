@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; the fallback stays until the callers listed in the third part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; the fallback stays until the callers listed in the fourth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1138,7 +1138,7 @@ Steps add notes here for later steps, under their number.
   `PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtype`, `EachTargetPlayerLosesLifeAndSacrificesCreature` and
   `LifeSupport`. Outside normalfx: `DamagePreventionService` / `DamagePreventionReplacementSupport` (destroys a damage
   prevention causes), `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s
-  CR 118.6 sacrifice (can't be redone), the multi-choice completions outside `killsBeforeChangingAnything`, and the
+  sacrifice of a no-mana-cost "sacrifice it unless you pay" creature (its cost is unpayable, CR 118.6; can't be redone), the multi-choice completions outside `killsBeforeChangingAnything`, and the
   `performSimultaneousRemovals` groups. Only once each of these asks first (as a step departure, a marked handler or a
   replay window) can `LegacyDepartureFallback.reached` throw and the `stateBased = false` / "stays and returns `false`"
   paths in `PermanentRemovalService.removePermanentToGraveyard` and `GraveyardService.tryReplaceDestruction` be deleted.
@@ -1219,7 +1219,7 @@ Steps add notes here for later steps, under their number.
     ahead by `askDeathReplacementsBeforeSacrifice`, so it only matters for a land a question first appears for).
     Infernal Offering still draws for every player who chose a creature, not only those whose sacrifice happened.
   - Outside normalfx, unchanged from the first part: `DamagePreventionService` / `DamagePreventionReplacementSupport`,
-    `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s CR 118.6 sacrifice,
+    `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s no-mana-cost "sacrifice unless you pay" sacrifice (unpayable cost, CR 118.6),
     the multi-choice completions outside `killsBeforeChangingAnything`, and the `performSimultaneousRemovals` groups.
   - A tool that would help the rest: a probe like the one used here (temporary, removed) that a test run can turn on,
     listing the callers that depart while they can't ask.
@@ -1264,8 +1264,8 @@ Steps add notes here for later steps, under their number.
     Mastery's sacrifice inside a life loss replacement). Partly, unchanged: Forbidden Ritual's repeat from
     `ForbiddenRitualRepeatChoiceInteractionHandler`, Worms of the Earth's second land, Infernal Offering's draws.
   - Outside normalfx, unchanged: `DamagePreventionService` / `DamagePreventionReplacementSupport`,
-    `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s CR 118.6
-    sacrifice, the multi-choice completions outside `killsBeforeChangingAnything`, and the `performSimultaneousRemovals`
+    `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s no-mana-cost
+    "sacrifice unless you pay" sacrifice (unpayable cost, CR 118.6), the multi-choice completions outside `killsBeforeChangingAnything`, and the `performSimultaneousRemovals`
     groups.
 - Tests: new (all `@FailOnLegacyDepartureFallback`, using an animated land: Dryad Arbor under Wheel of Sun and Moon,
   with Kalitas on the other side) `DesolationTest.asksTheDeathReplacementBeforeAnyLandIsSacrificed` (resolve path: the
@@ -1277,6 +1277,46 @@ Steps add notes here for later steps, under their number.
   `GravebaneZombieTest`, `TyrantOfDiscordTest`, `DryadArborTest`, `LegacyDepartureWrapperRatchetTest`,
   `DepartureServiceOrphanedStepBatchTest` and `ResolutionScratchpadAmountTest`; `EffectResolutionServiceTest` has the
   same 43 failures as at HEAD.
+
+### Step 13 (fourth part: Forbidden Ritual's repeat, Worms of the Earth, Infernal Offering)
+
+- Done: the three "partly" leftovers of the second and third parts.
+  - Forbidden Ritual: an accepted repeat no longer starts the next sacrifice from
+    `ForbiddenRitualRepeatChoiceInteractionHandler` (where a lone nontoken permanent was sacrificed at once, outside
+    every window, so a CR 616.1 question reached the legacy fallback). The handler sets the new
+    `ForbiddenRitualState.repeatAccepted` (copied in `simulationFrameCopy`) and points `pendingEffectResolutionIndex`
+    back at the effect; the parked resolution resumes there and the handler starts the cycle as the resolution step,
+    so the lone sacrifice is a `departOrResolveAgain` step departure like the first cycle's and a chosen one goes
+    through the `TormentSacrifice` replay window. The public `beginControllerSacrifice` overload and its
+    `sacrificeAndLog` branch are gone. With no parked resolution the accept just ends the process.
+  - Worms of the Earth: the two lands are one `sacrificeTogether` batch instead of an ask-ahead followed by two
+    `sacrificeAndLog` calls, so inside the may answer's / multi-choice completion's replay window every question
+    among them is asked by the batch itself before either leaves, and they leave as one event ("sacrifice two lands"
+    is one instruction). Worms is still destroyed afterwards as a step of its own.
+  - Infernal Offering: the draws are a `ContinueAfterDepartureEffect(InfernalOfferingEffect)` step after the sacrifice
+    step; the handler (`ContinuesAfterDeparture`) draws two for the controller, then the chosen opponent, only if the
+    recorded results show a permanent they sacrificed (`DepartureResult.sacrificed()` and `lastKnownControllerId`),
+    not for every player who chose a creature.
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (parked pending an official ruling on whether a prevention effect tied to the creature still
+    applies to the damage it deals after it left; see the third part) and `LifeSupport` (Lich's Duel Mastery's
+    sacrifice inside a life loss replacement; the Mastery has no death replacements unless it is animated).
+  - Outside normalfx, unchanged: `DamagePreventionService` / `DamagePreventionReplacementSupport`,
+    `TriggerCollectionService`, `LandEquilibriumSupport`, `CombatService`, `CardChoiceHandlerService`'s sacrifice of
+    a "sacrifice it unless you pay its mana cost reduced by {N}" creature that has no mana cost (it just entered, so
+    the completion can't be redone; earlier notes called it "the CR 118.6 sacrifice": CR 118.6 only says why it isn't
+    offered the payment, a mana cost that doesn't exist being unpayable), the multi-choice completions outside
+    `killsBeforeChangingAnything`, and the `performSimultaneousRemovals` groups.
+- Tests: new (all `@FailOnLegacyDepartureFallback`) `ForbiddenRitualTest.repeatAsksTheDeathReplacementBeforeTheLoneSacrifice`
+  (Gravebane Zombie against Kalitas as the repeat's lone nontoken permanent: still on the battlefield and no life lost
+  while asked, then on top of its library; fails with the old handlers),
+  `WormsOfTheEarthTest.bothLandsAreAskedBeforeEitherIsSacrificed` (two Dryad Arbors under Necromancer's Magemarks
+  against Kalitas) and `InfernalOfferingTest.asksTheDeathReplacementBeforeTheSacrificesAndDrawsAfter` (the opponent
+  draws the Zombie it put on top of its library). The last two pass with the old handlers too (the lands were asked
+  ahead, and the draws already followed the sacrifice step); they guard the new shapes. No existing test changed.
+  `ForbiddenRitualTest` (14), `InfernalOfferingTest` (8), `WormsOfTheEarthTest` (12), `KalitasTraitorOfGhetTest`,
+  `GravebaneZombieTest`, `NecromancersMagemarkTest`, `DryadArborTest`, `TormentOfHailfireTest`,
+  `LegacyDepartureWrapperRatchetTest` and `DepartureServiceOrphanedStepBatchTest` pass.
 
 ### Step 2
 

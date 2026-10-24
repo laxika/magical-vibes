@@ -8251,6 +8251,7 @@ public class GameData {
         copy.forbiddenRitual.controllerSacrificed = this.forbiddenRitual.controllerSacrificed;
         copy.forbiddenRitual.lifeLoss = this.forbiddenRitual.lifeLoss;
         copy.forbiddenRitual.chosenMode = this.forbiddenRitual.chosenMode;
+        copy.forbiddenRitual.repeatAccepted = this.forbiddenRitual.repeatAccepted;
         copy.eachPlayerSacrificeOrDiscard.active = this.eachPlayerSacrificeOrDiscard.active;
         copy.eachPlayerSacrificeOrDiscard.remaining.addAll(this.eachPlayerSacrificeOrDiscard.remaining);
         copy.eachPlayerSacrificeOrDiscard.currentPlayerId = this.eachPlayerSacrificeOrDiscard.currentPlayerId;

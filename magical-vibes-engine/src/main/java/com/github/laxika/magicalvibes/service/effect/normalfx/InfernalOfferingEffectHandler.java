@@ -1,35 +1,40 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ContinueAfterDepartureEffect;
 import com.github.laxika.magicalvibes.model.effect.InfernalOfferingEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /** Resolves Infernal Offering's resolution-time opponent and creature choices. */
 @Component
 @RequiredArgsConstructor
-public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean {
+public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean, ContinuesAfterDeparture {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final StepDepartureSupport stepDepartureSupport;
+    private final DrawService drawService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -125,7 +130,7 @@ public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean {
                                          List<UUID> chosenCreatureIds, List<UUID> chosenPlayerIds,
                                          int insertionIndex) {
         if (remainingChooserIds.isEmpty()) {
-            completeSacrifices(gameData, entry, opponentId, chosenCreatureIds, chosenPlayerIds, insertionIndex);
+            completeSacrifices(entry, chosenCreatureIds, insertionIndex);
             return;
         }
 
@@ -155,20 +160,35 @@ public class InfernalOfferingEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard().getName() + " — choose a creature to sacrifice.");
     }
 
-    private void completeSacrifices(GameData gameData, StackEntry entry, UUID opponentId,
-                                    List<UUID> creatureIds, List<UUID> sacrificingPlayerIds,
-                                    int insertionIndex) {
-        List<CardEffect> drawEffects = new ArrayList<>();
-        if (sacrificingPlayerIds.contains(entry.getControllerId())) {
-            drawEffects.add(new DrawCardEffect(2));
-        }
-        if (sacrificingPlayerIds.contains(opponentId)) {
-            drawEffects.add(new DrawCardForTargetPlayerEffect(2));
-        }
+    private void completeSacrifices(StackEntry entry, List<UUID> creatureIds, int insertionIndex) {
         // The sacrifices are the next step, one event, so a CR 616.1 question is asked before either creature leaves
-        // (the opponent may have been chosen and creatures picked already), and the draws follow it.
+        // (the opponent may have been chosen and creatures picked already), and the draws follow it, read from the
+        // departure's results.
+        if (creatureIds.isEmpty()) {
+            return;
+        }
         stepDepartureSupport.departAsStepAt(entry, insertionIndex, StepDepartureSupport.sacrifices(creatureIds),
-                drawEffects);
+                List.of(new ContinueAfterDepartureEffect(new InfernalOfferingEffect(true))));
+    }
+
+    /**
+     * "Each player who sacrificed a creature this way draws two cards": the controller, then the chosen opponent,
+     * each draws two if the departure just recorded shows a creature they sacrificed (by its last-known controller,
+     * CR 608.2h).
+     */
+    @Override
+    public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
+        Set<UUID> sacrificingPlayerIds = new HashSet<>();
+        for (DepartureResult result : entry.getResolutionResults().departures()) {
+            if (result.sacrificed() && result.lastKnownControllerId() != null) {
+                sacrificingPlayerIds.add(result.lastKnownControllerId());
+            }
+        }
+        for (UUID playerId : List.of(entry.getControllerId(), entry.getTargetId())) {
+            if (sacrificingPlayerIds.remove(playerId) && gameData.playerIds.contains(playerId)) {
+                drawService.resolveDrawCards(gameData, playerId, 2);
+            }
+        }
     }
 
     private void queueGraveyardReturns(GameData gameData, UUID controllerId, UUID opponentId) {

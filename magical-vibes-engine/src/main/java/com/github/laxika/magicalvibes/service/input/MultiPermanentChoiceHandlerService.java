@@ -2213,8 +2213,8 @@ public class MultiPermanentChoiceHandlerService {
      * {@link MultiPermanentChoiceContext.SacrificePermanentsOrElse} (Insatiable Appetite, the multi-sacrifice
      * form of "counter unless its controller sacrifices") asks its whole selection before the first
      * sacrifice, and its "if you do" or "otherwise" branch is only queued after the sacrifices.
-     * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} asks both chosen lands before the
-     * first is sacrificed; Worms of the Earth itself is destroyed after.
+     * {@link MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands} sacrifices both chosen lands as one
+     * batch, asking both before either leaves; Worms of the Earth itself is destroyed after, as a step of its own.
      * {@link MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice} (Voter's Dilemma) keeps
      * the votes so far in the immutable context and only prompts the next voter before its
      * {@link DestructionSupport#destroyBatch} batch; the vote is recorded before the completion runs (a

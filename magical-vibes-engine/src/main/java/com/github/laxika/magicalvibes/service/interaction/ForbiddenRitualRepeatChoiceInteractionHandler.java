@@ -55,20 +55,14 @@ public class ForbiddenRitualRepeatChoiceInteractionHandler
         if (accepted) {
             StackEntry entry = gameData.pendingEffectResolutionEntry;
             if (entry != null) {
-                // The repeat prompt parked the resolution past the Forbidden Ritual effect; the
-                // penalty choices this repeat starts must resume at that effect so it re-enters.
+                // The repeat prompt parked the resolution past the Forbidden Ritual effect; resuming at that effect
+                // starts the next sacrifice as the resolution step (asking a lone permanent's CR 616.1 question
+                // before it leaves), and the penalty choices it starts re-enter it from there.
                 gameData.pendingEffectResolutionIndex = entry.getResolvingEffectIndex();
-                int lifeLoss = gameData.forbiddenRitual.lifeLoss > 0
-                        ? gameData.forbiddenRitual.lifeLoss
-                        : 2;
-                forbiddenRitualEffectHandler.beginControllerSacrifice(
-                        gameData, entry, sourceName, controllerId, entry.getTargetId(), lifeLoss);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-                gameData.pendingEffectResolutionIndex = entry.getResolvingEffectIndex() + 1;
+                gameData.forbiddenRitual.repeatAccepted = true;
+            } else {
+                forbiddenRitualEffectHandler.finish(gameData, gameData.forbiddenRitual);
             }
-            forbiddenRitualEffectHandler.finish(gameData, gameData.forbiddenRitual);
         } else {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(

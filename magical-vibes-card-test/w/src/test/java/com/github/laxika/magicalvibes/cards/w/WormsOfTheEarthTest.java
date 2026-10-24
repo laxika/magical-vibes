@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -231,6 +232,37 @@ class WormsOfTheEarthTest extends BaseCardTest {
 
         assertArborReturnedAndWormsDestroyed(arbor);
         assertThat(findPermanents(player1, "Forest")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Both sacrificed lands' death replacements are asked before either leaves, and they leave together")
+    void bothLandsAreAskedBeforeEitherIsSacrificed() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent firstArbor = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(firstArbor.getId());
+        Permanent secondArbor = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(secondArbor.getId());
+        harness.addToBattlefield(player1, new WormsOfTheEarth());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder(MAGEMARK_RETURN, "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstArbor, secondArbor);
+        harness.assertOnBattlefield(player1, "Worms of the Earth");
+
+        harness.handleListChoice(player1, MAGEMARK_RETURN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstArbor.getCard(), secondArbor.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstArbor, secondArbor);
+        harness.assertNotOnBattlefield(player1, "Worms of the Earth");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private static final String MAGEMARK_RETURN = "Return it to its owner's hand (Necromancer's Magemark)";
