@@ -411,27 +411,16 @@ public class LifeSupport {
     /**
      * Replaces a life loss the player would suffer with Lich's Duel Mastery's shield, if the player
      * controls one that applies, or else by sacrificing the Mastery. The sacrifice is a one-permanent departure
-     * batch; it can't stop the life loss in the middle, so it asks CR 616.1 questions only inside a window that can
-     * run its caller again, and the Mastery, a noncreature, has none today.
+     * batch. It can't stop the life loss in the middle, so it asks its CR 616.1 questions only inside a window that
+     * can run its caller again; damage to a player asks them before the damage is dealt
+     * ({@link #lifeLossSacrifice}), and the sacrifice then continues that answered batch.
      *
      * @return true if the life loss was replaced
      */
     public boolean replaceLifeLossWithShield(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-
-        List<Permanent> masters = battlefield.stream()
-                .filter(source -> !source.isFaceDown())
-                .filter(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
-                        .anyMatch(LichDuelMasteryLifeLossReplacementEffect.class::isInstance))
-                .toList();
+        List<Permanent> masters = lifeLossShieldSources(gameData, playerId);
         for (Permanent source : masters) {
-            ExiledCardEntry shield = gameData.exiledCards.stream()
-                    .filter(entry -> source.getId().equals(entry.sourcePermanentId())
-                            && playerId.equals(entry.ownerId())
-                            && entry.faceDown())
-                    .findFirst()
-                    .orElse(null);
+            ExiledCardEntry shield = shieldFor(gameData, source, playerId);
             if (shield != null && gameData.removeFromExile(shield.card().getId())) {
                 gameData.addCardToHand(playerId, shield.card());
                 gameLogService.append(gameData, GameLog.text(
@@ -461,6 +450,41 @@ public class LifeSupport {
             return true;
         }
         return false;
+    }
+
+    /**
+     * The sacrifice {@link #replaceLifeLossWithShield} would perform if {@code playerId} lost life now (no shield is
+     * left to put into their hand), without changing the game, or {@code null}.
+     */
+    public DepartureIntent lifeLossSacrifice(GameData gameData, UUID playerId) {
+        List<Permanent> masters = lifeLossShieldSources(gameData, playerId);
+        if (masters.stream().anyMatch(source -> shieldFor(gameData, source, playerId) != null)) {
+            return null;
+        }
+        return masters.stream()
+                .filter(source -> !gameQueryService.cantBeSacrificed(gameData, source))
+                .findFirst()
+                .map(source -> DepartureIntent.sacrifice(source.getId()))
+                .orElse(null);
+    }
+
+    private List<Permanent> lifeLossShieldSources(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return List.of();
+        return battlefield.stream()
+                .filter(source -> !source.isFaceDown())
+                .filter(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
+                        .anyMatch(LichDuelMasteryLifeLossReplacementEffect.class::isInstance))
+                .toList();
+    }
+
+    private static ExiledCardEntry shieldFor(GameData gameData, Permanent source, UUID playerId) {
+        return gameData.exiledCards.stream()
+                .filter(entry -> source.getId().equals(entry.sourcePermanentId())
+                        && playerId.equals(entry.ownerId())
+                        && entry.faceDown())
+                .findFirst()
+                .orElse(null);
     }
 
     UUID resolveSpellOrAbilityControllerId(GameData gameData) {

@@ -4459,6 +4459,7 @@ public class CombatDamageService {
                 gameLogService.append(gameData, GameLog.text(message));
             }
         }
+        damageSupport.finishLifeLossDeparture(gameData, defenderId);
 
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
         if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {

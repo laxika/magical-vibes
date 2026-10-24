@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; the fallback stays until the callers listed in the ninth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; the fallback stays until the callers listed in the tenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1531,6 +1531,56 @@ Steps add notes here for later steps, under their number.
   `SimulationCopyCompletenessTest`, `InputCompletionServiceTest`, `DepartureServiceOrphanedStepBatchTest`,
   `CombatDamageServiceTest`, `SimultaneousDamageMechanicTest`, `RedirectedDamageRulesTest`, `CombatDamageAssignmentTest`
   and the `service.effect.normalfx.*Damage*` tests have the same 100 failures (of 186) as at HEAD.
+
+### Step 13 (tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes)
+
+- Rules: damage to a player from a source without infect causes that player to lose that much life (CR 120.3a,
+  checked). Lich's Duel Mastery replaces that life loss with putting a shield into its controller's hand, or, if there is
+  none, with sacrificing the Mastery (CR 614.6, checked: the modified event happens instead). CR 616.1f (checked) then
+  applies the replacements that now apply to the sacrifice inside the same process, so an animated Mastery's death
+  replacements (Wheel of Sun and Moon against an opponent's Kalitas) are chosen before anything happens: before the
+  damage is dealt, and before the life total changes. The Mastery has no official rulings (it is a playtest card); none
+  covers this.
+- Done: in `DamageSupport.continueDamage`, once a damage event to a player has every replacement applied (`Completed`)
+  and before it is dealt, `askBeforeLifeLossDeparture` predicts the life loss (`lifeLossOf`, mirroring
+  `finishPlayerDamage` and the combat step: none for infect, damage dealt as infect, a life total that can't change or
+  damage that causes no life loss) and the sacrifice (`LifeSupport.lifeLossSacrifice`: no shield left, a Mastery that can
+  be sacrificed; `replaceLifeLossWithShield` now shares its lookups). It asks through `DepartureService.askBeforeEvent`;
+  when a question opens, the outcome becomes `Suspended`, so the ninth part's machinery takes over (effect damage is
+  journaled as awaiting, combat damage parks its step, `InputCompletionService` checks no state-based action meanwhile).
+  The new `GameData.askedLifeLossDeparture` (`AskedLifeLossDeparture`: player, intent, `suspended`; copied in
+  `simulationFrameCopy`) marks it. Once answered, `resumeDamageAfterDepartureQuestions` resumes the event (`resumed()`
+  keeps the record until the life loss), the damage is dealt (on the effect's rerun, or by the combat step), and
+  `replaceLifeLossWithShield`'s `departNow` continues the answered batch. `DamageSupport.finishLifeLossDeparture`, called
+  after the life loss in `finishPlayerDamage` and `CombatDamageService.applyPlayerDamage`, clears the record and drops the
+  answered batch if the life loss didn't perform it (`DepartureService.discardAnsweredEventBatch`), so it can't hold up
+  later state-based checks.
+- Not covered (still the fallback): life loss that isn't caused by damage (`LifeSupport.applyLifeLoss`,
+  `applySetLifeTotal`, `applyLifePayment`) asks only inside a marked handler's rerun window (`AsksDeathReplacementsFirst`)
+  as before; redirected combat damage (`DamageEvent.redirected`); and, as in the ninth part, nothing is asked while another
+  departure batch or replay window's answers are pending (in a multiplayer combat, a second player's Mastery, or a
+  "destroy it instead" blocker, after the first player's Mastery was asked, falls back).
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (parked pending an official ruling; see the third part) and `LifeSupport` for life loss that
+    isn't damage. That life loss isn't a `ReplacementEvent` and happens inside about 60 handlers, so it can't be suspended
+    the way damage is. Possible shapes: mark the handlers whose first change is the life loss `AsksDeathReplacementsFirst`
+    (closing the rerun window on every life total change, so a drain of several players can't run twice); ask a life
+    payment's sacrifice before the cost is paid (`askBeforePayment`, CR 601.2h); or route life loss through
+    `ReplacementOrderService` as an event of its own.
+- Tests: new (both `@FailOnLegacyDepartureFallback`; both fail with the old code, where the player lost 2 life and the
+  Mastery stayed on the battlefield until a question asked after the event was answered)
+  `LichsDuelMasteryTest.spellDamageAsksTheDeathReplacementBeforeTheSacrifice` (Shock at the Mastery's controller, Opalescence
+  animating a shieldless Mastery, Wheel of Sun and Moon on its controller, Kalitas on the other side: life 20 and Shock
+  still on the stack while asked, then the Mastery on the bottom of its library, life still 20, no Zombie) and
+  `LichsDuelMasteryTest.combatDamageAsksTheDeathReplacementBeforeTheSacrifice` (an unblocked Grizzly Bears; choosing
+  Kalitas exiles the Mastery and makes a Zombie, life still 20). No existing test changed. `LichsDuelMasteryTest` (9),
+  `KillSuitCultistTest`, `KalitasTraitorOfGhetTest`, `KalitasBloodchiefOfGhetTest`, `UnderdarkBeholderTest`,
+  `GravebaneZombieTest`, `WheelOfSunAndMoonTest`, `PhytohydraTest`, `FirestormPhoenixTest`, `OpalescenceTest`,
+  `EnduringAngelTest` and `NefariousLichTest` pass. `GameSimulatorTest` and, in `magical-vibes-application`,
+  `DamagePreventionSpecTest`, `LegacyDepartureWrapperRatchetTest`, `SimulationCopyCompletenessTest`,
+  `InputCompletionServiceTest`, `DepartureServiceOrphanedStepBatchTest`, `CombatDamageServiceTest`,
+  `SimultaneousDamageMechanicTest`, `RedirectedDamageRulesTest`, `CombatDamageAssignmentTest`, `GameDataDeepCopyTest` and
+  the `service.effect.normalfx.*Damage*` / `*Life*` tests have the same 107 failures (of 258) as at HEAD.
 
 ### Step 2
 

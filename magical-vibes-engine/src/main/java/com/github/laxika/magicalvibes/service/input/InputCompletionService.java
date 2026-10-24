@@ -324,12 +324,12 @@ public class InputCompletionService {
 
     /**
      * Continues a damage event that waited for the questions of the departure a replacement performs instead of the
-     * damage (CR 616.1f), once they are answered. While a question is still open, and after combat damage (its step
+     * damage, or instead of the life loss it causes (CR 616.1f), once they are answered. While a question is still open, and after combat damage (its step
      * checks state-based actions once all of its damage is dealt), no state-based action is checked in the middle of
      * the event: the rest of the epilogue runs without them and this returns {@code true}.
      */
     private boolean continueDamageAwaitingDeparture(GameData gameData) {
-        if (damageSupport == null || gameData.suspendedDamageDepartureStep == null) {
+        if (damageSupport == null || !awaitsDamageDeparture(gameData)) {
             return false;
         }
         boolean combat = gameData.suspendedReplacementEvent
@@ -337,11 +337,17 @@ public class InputCompletionService {
         if (!damageSupport.resumeDamageAfterDepartureQuestions(gameData)) {
             return false;
         }
-        if (combat || gameData.suspendedDamageDepartureStep != null) {
+        if (combat || awaitsDamageDeparture(gameData)) {
             processMayAbilitiesThenAutoPass(gameData);
             return true;
         }
         return false;
+    }
+
+    /** Whether a damage event is suspended until the questions of a departure it causes are answered. */
+    private static boolean awaitsDamageDeparture(GameData gameData) {
+        return gameData.suspendedDamageDepartureStep != null
+                || gameData.askedLifeLossDeparture != null && gameData.askedLifeLossDeparture.suspended();
     }
 
     /**

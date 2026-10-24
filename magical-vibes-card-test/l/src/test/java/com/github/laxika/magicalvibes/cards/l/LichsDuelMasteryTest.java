@@ -1,13 +1,20 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -136,5 +143,82 @@ class LichsDuelMasteryTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
         harness.passBothPriorities();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Shock's damage asks library-or-Kalitas for the animated, shieldless Mastery before any life changes")
+    void spellDamageAsksTheDeathReplacementBeforeTheSacrifice() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        Card shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(shock.getId());
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(mastery.getCard().getId());
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(zombieTokens()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Combat damage asks library-or-Kalitas for the animated, shieldless Mastery before any life changes")
+    void combatDamageAsksTheDeathReplacementBeforeTheSacrifice() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.<BlockerAssignment>of());
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.getCardsExiledByPermanent(mastery.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(mastery.getCard().getId());
+        harness.assertLife(player2, 20);
+        assertThat(zombieTokens()).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    /**
+     * Player 2 controls a Mastery without shields that Opalescence makes a creature and that Wheel of Sun and Moon's
+     * enchanted player owns; player 1 controls Kalitas. Sacrificing the Mastery then needs its controller's choice
+     * between the library and Kalitas's exile (CR 616.1).
+     */
+    private Permanent animatedShieldlessMasteryAgainstKalitas() {
+        harness.setLife(player2, 20);
+        Permanent mastery = harness.addToBattlefieldAndReturn(player2, new LichsDuelMastery());
+        harness.addToBattlefield(player2, new Opalescence());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player2.getId());
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        assertThat(gd.getCardsExiledByPermanent(mastery.getId())).isEmpty();
+        return mastery;
+    }
+
+    private long zombieTokens() {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .count();
     }
 }

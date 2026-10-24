@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.AskedLifeLossDeparture;
+import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.service.CreatureDamageStep;
@@ -1211,6 +1213,10 @@ public class DamageSupport {
      * @return whether a damage event was waiting for the departure's answers (it may still be)
      */
     public boolean resumeDamageAfterDepartureQuestions(GameData gameData) {
+        AskedLifeLossDeparture lifeLoss = gameData.askedLifeLossDeparture;
+        if (lifeLoss != null && lifeLoss.suspended()) {
+            return resumeDamageAfterLifeLossDepartureQuestions(gameData, lifeLoss);
+        }
         String family = gameData.suspendedDamageDepartureStep;
         if (family == null) {
             return false;
@@ -1231,13 +1237,96 @@ public class DamageSupport {
         Permanent target = gameQueryService.findPermanentById(gameData, event.recipientPermanentId());
         DamageEvent replaced = target == null ? event : event.withAmount(step.apply().apply(gameData,
                 new CreatureDamageStep.Context(target, event.combat(), event.explicitSource(), true), event.amount()));
-        continueDamage(gameData, replaced, true, current -> replacementOrderService.run(gameData, current));
+        continueDamageAfterDepartureQuestions(gameData, replaced);
+        return true;
+    }
+
+    /**
+     * Asks, before {@code event}'s damage is dealt to a player, every question about the sacrifice a life loss
+     * replacement would perform instead of the life loss that damage causes (Lich's Duel Mastery: CR 120.3a, the
+     * damage causes the loss of life; CR 616.1f, the sacrifice's own replacements are chosen before the modified event
+     * happens). When a question is opened the event must be suspended; {@link #resumeDamageAfterDepartureQuestions}
+     * deals it once every answer is in, and the life loss's sacrifice performs the answered batch.
+     *
+     * @return {@code true} when a question is open
+     */
+    private boolean askBeforeLifeLossDeparture(GameData gameData, DamageEvent event) {
+        if (event.toPermanent() || event.redirected() || gameData.askedLifeLossDeparture != null) {
+            return false;
+        }
+        UUID playerId = event.recipientPlayerId();
+        DepartureIntent sacrifice = playerId == null ? null : lifeSupport.lifeLossSacrifice(gameData, playerId);
+        if (sacrifice == null || lifeLossOf(gameData, event) <= 0
+                || !departureService.getObject().askBeforeEvent(gameData, DepartureBatch.of(List.of(sacrifice)))) {
+            return false;
+        }
+        gameData.askedLifeLossDeparture = new AskedLifeLossDeparture(playerId, sacrifice, true);
+        return true;
+    }
+
+    /**
+     * The damage of {@code event} that would make its player lose life if it were dealt now, mirroring
+     * {@link #finishPlayerDamage} and the combat damage step: damage dealt as infect gives poison counters instead,
+     * and nothing is lost while the player's life total can't change or damage causes no loss of life.
+     */
+    private int lifeLossOf(GameData gameData, DamageEvent event) {
+        UUID playerId = event.recipientPlayerId();
+        if (gameQueryService.damageDoesNotCauseLifeLoss(gameData, playerId)
+                || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
+            return 0;
+        }
+        if (event.combat()) {
+            if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                return 0;
+            }
+            return event.portions().stream()
+                    .filter(portion -> !portion.counterDamage())
+                    .mapToInt(DamagePortion::amount)
+                    .sum();
+        }
+        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)
+                || gameQueryService.sourceHasKeyword(gameData, event.entry(), null, Keyword.INFECT)) {
+            return 0;
+        }
+        return event.amount();
+    }
+
+    private boolean resumeDamageAfterLifeLossDepartureQuestions(GameData gameData, AskedLifeLossDeparture lifeLoss) {
+        if (!(gameData.suspendedReplacementEvent instanceof DamageEvent event)) {
+            gameData.askedLifeLossDeparture = null;
+            DepartureService.discardAnsweredEventBatch(gameData, lifeLoss.intent());
+            return false;
+        }
+        if (departureService.getObject().continueAskingBeforeEvent(gameData)) {
+            return true;
+        }
+        gameData.askedLifeLossDeparture = lifeLoss.resumed();
+        gameData.suspendedReplacementEvent = null;
+        continueDamageAfterDepartureQuestions(gameData, event);
+        return true;
+    }
+
+    /**
+     * Ends what {@link #askBeforeLifeLossDeparture} asked once {@code playerId}'s damage has caused its life loss (or
+     * didn't): the answered sacrifice is performed by then, and a batch it left unperformed is dropped.
+     */
+    public void finishLifeLossDeparture(GameData gameData, UUID playerId) {
+        AskedLifeLossDeparture lifeLoss = gameData.askedLifeLossDeparture;
+        if (lifeLoss == null || lifeLoss.suspended() || !lifeLoss.playerId().equals(playerId)) {
+            return;
+        }
+        gameData.askedLifeLossDeparture = null;
+        DepartureService.discardAnsweredEventBatch(gameData, lifeLoss.intent());
+    }
+
+    /** Runs the rest of a damage event that waited for a departure's answers, then the damage that waited for it. */
+    private void continueDamageAfterDepartureQuestions(GameData gameData, DamageEvent event) {
+        continueDamage(gameData, event, true, current -> replacementOrderService.run(gameData, current));
         if (event.combat()) {
             combatDamageService.getObject().continueCombatDamageAfterDecision(gameData);
         } else {
             drainPendingPlayerDamage(gameData);
         }
-        return true;
     }
 
     /**
@@ -1290,6 +1379,10 @@ public class DamageSupport {
         ReplacementOrderService.Outcome<DamageEvent> outcome;
         try {
             outcome = step.apply(event);
+            if (outcome instanceof ReplacementOrderService.Outcome.Completed<DamageEvent> completed
+                    && askBeforeLifeLossDeparture(gameData, completed.event())) {
+                outcome = new ReplacementOrderService.Outcome.Suspended<>(completed.event());
+            }
             if (outcome instanceof ReplacementOrderService.Outcome.Completed<DamageEvent> completed
                     && !(answered && damageJournalService.ready(gameData, completed.event()))) {
                 dealt = finishDamage(gameData, completed.event());
@@ -1443,6 +1536,7 @@ public class DamageSupport {
                 }
             }
         }
+        finishLifeLossDeparture(gameData, playerId);
 
         if (effectiveDamage > 0) {
             recordRedSourceNoncombatDamage(gameData, source, sourcePermanent, sourceControllerId,

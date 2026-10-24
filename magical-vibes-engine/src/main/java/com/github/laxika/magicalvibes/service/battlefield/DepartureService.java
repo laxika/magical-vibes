@@ -283,6 +283,18 @@ public class DepartureService {
     }
 
     /**
+     * Drops the answered batch {@link #askBeforeEvent} asked for {@code intent} alone when the event it was asked for
+     * didn't perform it (the replacement no longer applied), so it doesn't hold up later state-based checks.
+     */
+    public static void discardAnsweredEventBatch(GameData gameData, DepartureIntent intent) {
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (pending != null && !pending.isAwaitingAnswer() && !pending.isStateBased()
+                && !pending.isOwnedByResolutionStep() && pending.intents().equals(List.of(intent))) {
+            gameData.pendingDepartureBatch = null;
+        }
+    }
+
+    /**
      * Goes on asking the batch {@link #askBeforeEvent} opened once its open questions are answered (a destruction
      * replacement answered in the gather stage can leave a death replacement to choose).
      *

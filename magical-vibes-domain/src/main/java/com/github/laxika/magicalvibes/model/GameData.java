@@ -1843,6 +1843,13 @@ public class GameData {
      * once the pending departure batch is answered.
      */
     public String suspendedDamageDepartureStep;
+    /**
+     * The sacrifice a life loss replacement would perform instead of the life loss of damage being dealt to a player,
+     * whose questions were asked before the damage (CR 616.1f), or null. While it is {@code suspended},
+     * {@link #suspendedReplacementEvent} waits for the answers; afterwards it is kept until the life loss happens, so
+     * an answered batch the life loss didn't perform is dropped then.
+     */
+    public AskedLifeLossDeparture askedLifeLossDeparture;
     /** The damage events of the effect being resolved, while one of them awaits its player's order. */
     public com.github.laxika.magicalvibes.model.replacement.DamageJournal damageJournal;
     /**
@@ -9976,6 +9983,7 @@ public class GameData {
         copy.suspendedReplacementEvent = this.suspendedReplacementEvent == null
                 ? null : this.suspendedReplacementEvent.copyForSimulation();
         copy.suspendedDamageDepartureStep = this.suspendedDamageDepartureStep;
+        copy.askedLifeLossDeparture = this.askedLifeLossDeparture;
         copy.damageJournal = this.damageJournal == null ? null : this.damageJournal.copyForSimulation();
         this.pendingSimultaneousDamage.forEach(pending ->
                 copy.pendingSimultaneousDamage.add(pending.copyForSimulation()));
