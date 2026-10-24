@@ -165,6 +165,8 @@ public class PermanentChoiceHandlerService {
             activatedAbilityExecutionServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<
             com.github.laxika.magicalvibes.service.spell.SpellCastingService> spellCastingServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService>
+            gameServiceProvider;
 
     /** Declines a champion choice, so the permanent is sacrificed instead of exiling another one (CR 702.72a). */
     public void handleChampionDeclined(GameData gameData, Player player, boolean accepted) {
@@ -275,6 +277,11 @@ public class PermanentChoiceHandlerService {
         GameData.DeathReplacementChoiceReplay replay = gameData.pendingDeathReplacementChoiceReplay;
         gameData.pendingDeathReplacementChoiceReplay = null;
         switch (replay) {
+            case GameData.PermanentChoiceReplay choiceReplay
+                    when choiceReplay.choice().context() instanceof PermanentChoiceContext.FreeCastSacrificeCost
+                    && choiceReplay.permanentId() == null ->
+                    payAgainAfterDeathReplacements(gameData, () -> completeAskingDeathReplacementsFirst(
+                            gameData, choiceReplay.choice(), null));
             case GameData.PermanentChoiceReplay choiceReplay ->
                     completeAskingDeathReplacementsFirst(gameData, choiceReplay.choice(), choiceReplay.permanentId());
             case GameData.MultiPermanentChoiceReplay multiReplay ->
@@ -303,6 +310,15 @@ public class PermanentChoiceHandlerService {
             case GameData.SpellCastReplay castReplay -> payAgainAfterDeathReplacements(gameData,
                     () -> spellCastingServiceProvider.getObject()
                             .completeCastAfterCostSacrificeAnswers(gameData, castReplay));
+            case GameData.GraveyardCastReplay castReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> spellCastingServiceProvider.getObject()
+                            .completeGraveyardCastAfterCostSacrificeAnswers(gameData, castReplay));
+            case GameData.LibraryTopCastReplay castReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> spellCastingServiceProvider.getObject()
+                            .completeLibraryTopCastAfterCostSacrificeAnswers(gameData, castReplay));
+            case GameData.TurnFaceUpReplay turnFaceUpReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> gameServiceProvider.getObject()
+                            .completeTurnFaceUpAfterCostSacrificeAnswers(gameData, turnFaceUpReplay));
         }
     }
 
@@ -399,7 +415,25 @@ public class PermanentChoiceHandlerService {
                         && forcedCost.effect().forcedCost() instanceof SacrificePermanentCost
                 || context instanceof PermanentChoiceContext.TormentSacrifice
                 || context instanceof PermanentChoiceContext.LandEquilibriumSacrifice
-                || context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature;
+                || context instanceof PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature
+                || context instanceof PermanentChoiceContext.FreeCastSacrificeCost freeCast
+                        && paysOnlySacrificeCosts(freeCast.entry());
+    }
+
+    /**
+     * Whether every cost still to pay for a prepared free cast is a sacrifice, so paying the chosen permanent
+     * sacrifices it before anything else changes (the same prompt also picks a permanent to return or to put
+     * counters on).
+     */
+    private static boolean paysOnlySacrificeCosts(com.github.laxika.magicalvibes.model.StackEntry entry) {
+        java.util.List<com.github.laxika.magicalvibes.model.effect.CardEffect> costs = entry.getEffectsToResolve().stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.CostEffect.class::isInstance)
+                .toList();
+        return !costs.isEmpty() && costs.stream().allMatch(cost ->
+                cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost
+                        || cost instanceof SacrificePermanentCost
+                        || cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost
+                        || cost instanceof com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost);
     }
 
     private void completeKillingChoice(GameData gameData, PendingInteraction.PermanentChoice choice,
@@ -531,6 +565,8 @@ public class PermanentChoiceHandlerService {
             case PermanentChoiceContext.EachOpponentCreatesTokenUnlessSacrificesCreature sacrificeOrToken ->
                     battlefieldHandler.handleEachOpponentCreatesTokenUnlessSacrificesCreature(gameData, permanentId,
                             sacrificeOrToken);
+            case PermanentChoiceContext.FreeCastSacrificeCost freeCastSacrifice ->
+                    exileFreeCastQueueSupport.completeSacrificeCost(gameData, permanentId, freeCastSacrifice);
             default -> throw new IllegalStateException("Not a sacrifice or destroy choice: " + choice.context());
         }
     }

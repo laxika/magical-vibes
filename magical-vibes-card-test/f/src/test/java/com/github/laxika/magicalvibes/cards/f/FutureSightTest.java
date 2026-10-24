@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Harrow;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -270,5 +276,42 @@ class FutureSightTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({BoneSplinters.class, KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("A spell cast from the top of the library asks its sacrifice's death replacement before anything is paid")
+    void libraryTopSacrificeAsksTheDeathReplacementBeforePayment() {
+        harness.addToBattlefield(player1, new FutureSight());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card splinters = new BoneSplinters();
+        harness.setLibrary(player1, List.of(splinters));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        gs.playCardFromLibraryTop(gd, player1, null, target.getId(), List.of(), List.of(zombie.getId()));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(splinters);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(zombie.getCard().getId());
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(splinters.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

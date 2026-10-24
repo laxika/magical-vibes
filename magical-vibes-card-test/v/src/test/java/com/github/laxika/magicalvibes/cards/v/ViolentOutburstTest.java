@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -172,6 +175,41 @@ class ViolentOutburstTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Hill Giant");
         harness.passBothPriorities();
     }
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Casting Bone Splinters through cascade asks the sacrificed Gravebane Zombie's question before it leaves")
+    void cascadeSacrificeAsksTheDeathReplacementBeforeTheZombieLeaves() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castViolentOutburst();
+        Card splinters = new BoneSplinters();
+        harness.setLibrary(player1, List.of(splinters));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, zombie.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(splinters.getId()));
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(splinters.getId()));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
     private void castViolentOutburst() {
         // Library holds only lands so cascade finds no hit and prompts nothing.
         harness.setLibrary(player1, List.of(new Mountain(), new Forest()));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.StratusDancer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -95,6 +97,35 @@ class GiftOfDoomTest extends BaseCardTest {
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift), List.of(gift.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("required filter");
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    void morphSacrificeAsksTheDeathReplacementBeforeTurningFaceUp() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = addCreatureReady(player1, new GravebaneZombie());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent gift = castFaceDown();
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift),
+                List.of(zombie.getId()));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gift.isFaceDown()).isTrue();
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gift.isFaceDown()).isFalse();
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gift.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
     private Permanent castFaceDown() {

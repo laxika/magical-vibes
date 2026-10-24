@@ -23,7 +23,7 @@ order; each one lists what it depends on.
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | done (Goblin Crash Pilot and Goblin Welder depart at once, not as a step; see Findings) |
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
-| 12 | Costs and mana abilities | partly done (every activated-ability sacrifice cost, including graveyard and hand abilities, mana abilities, `ON_SACRIFICE` abilities, attack sacrifice costs and hand-cast spell sacrifice costs; graveyard, adventure-from-graveyard, exile, library-top, free, morph and commander cast costs remain; see Findings) |
+| 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
 | 13 | Make the guard strict and remove the fallback | open |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
@@ -1013,6 +1013,72 @@ Steps add notes here for later steps, under their number.
   cost) had 31 failures in 15 classes (Despoiler of Souls, Phyrexian Dragon Engine, Geistblast, Resounding Silence,
   Priest of Forgotten Gods, ...); the same 31 fail at the baseline, none new. `LegacyDepartureWrapperRatchetTest` and
   `GameSimulatorTest` (38/38) pass.
+
+### Step 12 (fourth part: the other cast paths)
+
+- Done: the cast paths the second and third parts left ask the CR 616.1 question of every permanent they sacrifice
+  as a cost before any of them leaves. Step 12 is finished; the ratchet allowlist still holds only step 13's six
+  non-cost callers.
+- Reused machinery: `askCastCostSacrificesFirst` (its gate `cannotBeMadeAgain`, the old `notFromHand`) now throws
+  `CastStoppedForCostSacrificeAnswers` from every cast path, and each path's wrapper catches it and stores its own
+  plain-data replay; the shared core `askCostSacrificesFirst` (refused while something resolves, a resolution is
+  parked or a rerun window is open) also serves morph. Sacrifice ids are read with `addCastingCostSacrificeIds`,
+  which takes ids from the selection the way `SacrificePermanentsCost` payments do.
+  - **Graveyard casts**: the 19-argument `playFlashbackSpellFromLocation` is now a wrapper around
+    `playFlashbackSpellFromLocationOnce` and stores `GameData.GraveyardCastReplay` (the card by id in its owner's
+    graveyard); `completeGraveyardCastAfterCostSacrificeAnswers` casts again. The "validated, nothing paid" point is
+    right after `planConvokeContributions`, before `consumeFreeCastFromBattlefield`, convoke taps and the cost
+    payments; `graveyardCastCostSacrificeIds` lists the sacrifice/casualty/any-number additional costs, a forage
+    paid with a Food, the cost-reduction creatures, printed flashback sacrifices (only when the printed flashback
+    branch of `payFlashbackOrGraveyardCastCost` pays them), the card's `GraveyardCast` sacrifices and a filtered
+    permission's sacrifices. The cost-reduction sacrifice (Torgaar through Muldrotha) used to be paid in the middle
+    of the validations; it is now validated there (`validateSacrificeCreaturesForCostReduction`, its expected
+    reduction applied for the checks in between) and paid after the question, so a later failed validation no
+    longer leaves it paid.
+  - **Adventure from a graveyard**: reached through `playFlashbackSpellFromLocation`, so it shares that replay;
+    `playAdventureCardFromGraveyardInternal` takes the cast's `CastStartState` and asks before its mana payment
+    (the direct `playAdventureCardFromGraveyard` passes `null` and has no sacrifice selection).
+  - **Library top**: `playCardFromLibraryTop` (8 arguments) wraps `playCardFromLibraryTopOnce`, asks after the
+    counter-cost validation and stores `GameData.LibraryTopCastReplay` (made again only while the card is still on
+    top).
+  - **Commander casts**: no longer excluded. `SpellCastReplay.commandCastCardId` names the commander, and
+    `completeCastAfterCostSacrificeAnswers` sets `commandCastPlayerId` / `commandCastCardId` around the new cast, as
+    `GameService.castCommander` does. A tax paid with life (Liesa) is paid before validation, so `CastStartState`
+    refuses the stop there and the old fallback applies; no commander with that effect has a sacrifice cost.
+  - **Free casts and casts from exile**: the exile cast path never sacrifices itself; its sacrifice costs, and those
+    of every prepared free cast, are paid by the `FreeCastSacrificeCost` permanent choice completion, which is now in
+    `PermanentChoiceHandlerService.killsBeforeChangingAnything` when the spell's remaining costs are all sacrifices
+    (the same context also picks a permanent to return or to put counters on). An escalate sacrifice goes through
+    `MultiPermanentChoiceContext.FreeCastTapCost` the same way. `ExileFreeCastQueueSupport.completeSacrificeCost` /
+    `completeTapCost` close the window right after the payment, so finishing the cast and casting the next queued
+    spell are never redone. The auto-paid "sacrifice all creatures you control" (Soulblast) asks with
+    `SpellCastingService.askFreeCastSacrificeAllFirst` (`askBeforePayment` directly; the free cast happens during a
+    resolution, so it pauses rather than stops) and pauses the cast like a chosen sacrifice, storing a
+    `PermanentChoiceReplay` of a `FreeCastSacrificeCost` choice with no permanent, which
+    `completeChoiceAgainAfterDeathReplacements` completes through `payAgainAfterDeathReplacements`. Those two
+    replays hold a mutable `StackEntry`, so `GameData.copyDeathReplacementChoiceReplay` copies it for simulations.
+  - **Morph** (CR 702.37e, a special action, CR 116.2b): `GameService.turnFaceUpInternal` asks
+    (`SpellCastingService.askMorphSacrificeCostFirst`) right before the face-up mana payment, after any X choice,
+    and stores `GameData.TurnFaceUpReplay`; `GameService.completeTurnFaceUpAfterCostSacrificeAnswers` turns it face
+    up again (`PermanentChoiceHandlerService` reaches `GameService` through an `ObjectProvider`).
+- Left (no card needs them): a commander tax paid with life together with a sacrifice cost, and the suspend and
+  exile-from-hand-mana-ability tails from the third part. `payMorphSacrificeCost` still sacrifices its permanents one
+  at a time (Skirk Volcanist's two Mountains are two events).
+- Tests: new, all `@FailOnLegacyDepartureFallback` and all failing at the baseline:
+  `CabalTherapyTest.flashbackSacrificeAsksTheDeathReplacementBeforePayment`,
+  `TorgaarFamineIncarnateTest.graveyardCastCostReductionSacrificeAsksTheDeathReplacementBeforePayment` (Muldrotha)
+  and `commanderCastCostReductionSacrificeAsksTheDeathReplacementBeforePayment`,
+  `FutureSightTest.libraryTopSacrificeAsksTheDeathReplacementBeforePayment` (Bone Splinters from the top),
+  `ViolentOutburstTest.cascadeSacrificeAsksTheDeathReplacementBeforeTheZombieLeaves` (cascaded Bone Splinters),
+  `SoulblastTest.freeCastSacrificeAllAsksTheDeathReplacementBeforePayment` (through Sunbird's Invocation) and
+  `GiftOfDoomTest.morphSacrificeAsksTheDeathReplacementBeforeTurningFaceUp`; `GameSimulatorTest`
+  `copyCastsAGraveyardSpellStoppedBeforeItsSacrificeCost` and `copyCompletesAFreeCastStoppedBeforeItsSacrificeCost`.
+  No existing test changed. A sweep of 2,160 card test classes (every card with flashback, escape, a graveyard-cast
+  permission, harmonize, disturb, an Adventure, cascade, discover, foretell, plot, a cast from exile or the library top,
+  morph, disguise, manifest, cloak, a commander or the cost-reduction sacrifice, plus every Kalitas and Gravebane
+  Zombie test) had 108 failures in 66 classes (Pantlaza, Emeritus of Truce, Printlifter Ooze, Sloppity Bilepiper,
+  ...); the same 108 fail at the baseline, none new. `LegacyDepartureWrapperRatchetTest` and `GameSimulatorTest`
+  (40/40) pass. `SpellCastingServiceTest` has the same 10 baseline failures.
 
 ### Step 2
 

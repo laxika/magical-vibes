@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BreakingPoint;
 import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.f.FuneralPyre;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -100,6 +103,41 @@ class CabalTherapyTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Cabal Therapy");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Cabal Therapy"));
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Flashback's sacrifice asks Gravebane Zombie's library-or-Kalitas question before anything is paid")
+    void flashbackSacrificeAsksTheDeathReplacementBeforePayment() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = addCreatureReady(player1, new GravebaneZombie());
+        CabalTherapy therapy = new CabalTherapy();
+        harness.setGraveyard(player1, List.of(therapy));
+        harness.setHand(player2, List.of(new BreakingPoint()));
+
+        harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), zombie.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(therapy);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(therapy.getId());
+        harness.assertNotInGraveyard(player1, "Cabal Therapy");
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Breaking Point");
+
+        harness.assertInGraveyard(player2, "Breaking Point");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
     @Test

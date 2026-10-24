@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.b.BloodthroneVampire;
 import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
+import com.github.laxika.magicalvibes.cards.c.CabalTherapy;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.d.Dreamcatcher;
@@ -19,6 +20,8 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.FlayingTendrils;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
@@ -33,6 +36,7 @@ import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
+import com.github.laxika.magicalvibes.cards.v.ViolentOutburst;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1134,6 +1138,76 @@ class GameSimulatorTest {
         assertThat(gd.pendingDepartureBatch).isNull();
         assertThat(gd.findExiledCard(zombieCardId)).isNotNull();
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A copy taken while a flashback cast asks its sacrifice cost's death replacement casts the spell on its own")
+    void copyCastsAGraveyardSpellStoppedBeforeItsSacrificeCost() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Card therapy = new CabalTherapy();
+        harness.setGraveyard(player1, List.of(therapy));
+        UUID zombieCardId = zombie.getCard().getId();
+        harness.castFlashbackWithSacrifice(player1, 0, player2.getId(), zombie.getId());
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
+        assertThat(gd.pendingDeathReplacementChoiceReplay).isInstanceOf(GameData.GraveyardCastReplay.class);
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(),
+                new SimulationAction.ChooseColor("Put it into its owner's library"));
+
+        assertThat(copy.pendingDepartureBatch).isNull();
+        assertThat(copy.pendingDeathReplacementChoiceReplay).isNull();
+        assertThat(copy.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombieCardId);
+        assertThat(copy.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getId()).isEqualTo(therapy.getId()));
+        assertThat(copy.playerGraveyards.get(player1.getId())).isEmpty();
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(therapy);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A copy taken while a cascaded spell asks its sacrifice cost's death replacement leaves the original's spell unpaid")
+    void copyCompletesAFreeCastStoppedBeforeItsSacrificeCost() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new ViolentOutburst(), "{1}{R}{G}");
+        Card splinters = new BoneSplinters();
+        harness.setLibrary(player1, List.of(splinters));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, zombie.getId());
+        UUID zombieCardId = zombie.getCard().getId();
+
+        assertThat(gd.pendingDepartureBatch.awaitingAnswerIds()).containsExactly(zombie.getId());
+
+        GameData copy = gd.simulationCopy();
+        simulator.applyAction(copy, player1.getId(),
+                new SimulationAction.ChooseColor("Put it into its owner's library"));
+
+        assertThat(copy.pendingDepartureBatch).isNull();
+        assertThat(copy.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombieCardId);
+        assertThat(copy.stack).anyMatch(entry -> entry.getCard().getId().equals(splinters.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(splinters.getId()));
+
+        harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.findExiledCard(zombieCardId)).isNotNull();
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getId().equals(splinters.getId())).hasSize(1);
     }
 
     @Test

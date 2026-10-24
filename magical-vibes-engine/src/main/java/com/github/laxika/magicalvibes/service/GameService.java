@@ -1521,6 +1521,23 @@ public class GameService {
         }
     }
 
+    /**
+     * Turns a face-down permanent face up again after its morph cost stopped to ask the death replacements of the
+     * permanents it sacrifices (CR 616.1); the sacrifices consume the answers.
+     */
+    public void completeTurnFaceUpAfterCostSacrificeAnswers(GameData gameData, GameData.TurnFaceUpReplay replay) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(replay.player().getId());
+        Permanent permanent = gameQueryService.findPermanentById(gameData, replay.permanentId());
+        if (battlefield == null || permanent == null || !battlefield.contains(permanent)) {
+            throw new IllegalStateException("Permanent is no longer controlled by the player");
+        }
+        turnFaceUpInternal(gameData, replay.player(), battlefield.indexOf(permanent), replay.revealedHandCardIndex(),
+                replay.costPermanentIds(), replay.xValue(), true, replay.payMorphCost());
+        if (!gameData.interaction.isAwaitingInput()) {
+            stateBasedActionService.performStateBasedActions(gameData);
+        }
+    }
+
     private void turnFaceUpInternal(GameData gameData, Player player, int permanentIndex,
                                      Integer revealedHandCardIndex, List<UUID> morphAdditionalCostPermanentIds,
                                      Integer xValue,
@@ -1698,6 +1715,15 @@ public class GameService {
                         }
                         throw new IllegalStateException("Not enough mana to turn the permanent face up");
                 }
+                    if (!manifestedOrCloaked && morphSacrificeCost != null
+                            && spellCastingService.askMorphSacrificeCostFirst(
+                            gameData, player, additionalCostPermanentIds)) {
+                        gameData.pendingDeathReplacementChoiceReplay = new GameData.TurnFaceUpReplay(player,
+                                permanent.getId(), revealedHandCardIndex, List.copyOf(additionalCostPermanentIds),
+                                xValue, payMorphCost);
+                        mutationCoordinator.invalidateAllPlayerViews(gameData);
+                        return;
+                    }
                     spellCastingService.payManaCostWithPhyrexianAlternatives(
                             gameData, player.getId(), cost, pool, effectiveXValue);
                 } finally {

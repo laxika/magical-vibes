@@ -1158,6 +1158,12 @@ public class MultiPermanentChoiceHandlerService {
             handleTapPermanentsThenQueueReflexiveAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.NihiloorTapChoice ctx) {
             nihiloorTapAndStealEffectHandler.completeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost
+                && tapCost.entry().getEffectsToResolve().stream()
+                        .filter(com.github.laxika.magicalvibes.model.effect.CostEffect.class::isInstance)
+                        .allMatch(com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost.class::isInstance)) {
+            // An escalate cost paid by sacrificing: its death replacements are asked before anything leaves.
+            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost) {
             exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, tapCost);
         } else if (context instanceof MultiPermanentChoiceContext.MadnessConvoke madnessConvoke) {
@@ -2435,6 +2441,10 @@ public class MultiPermanentChoiceHandlerService {
                         gameData, ctx.sourceCard(), ctx.effect(), permanentIds, ctx.playerId());
                 permanentRemovalService.removeOrphanedAuras(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            case MultiPermanentChoiceContext.FreeCastTapCost ctx -> {
+                exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, ctx);
                 return;
             }
             default -> throw new IllegalStateException("Not a killing choice: " + context);

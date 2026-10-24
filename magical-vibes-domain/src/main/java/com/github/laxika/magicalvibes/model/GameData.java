@@ -2914,7 +2914,50 @@ public class GameData {
     public sealed interface DeathReplacementChoiceReplay
             permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay,
                     PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay, SpellCastReplay,
+                    GraveyardCastReplay, LibraryTopCastReplay, TurnFaceUpReplay,
                     GraveyardAbilityCostReplay, HandAbilityCostReplay {
+    }
+
+    /**
+     * A spell cast from a graveyard (flashback, escape, a graveyard-cast permission, an Adventure, ...) stopped once its
+     * costs were validated and before any of them was paid, so that a permanent it sacrifices as a cost could have its
+     * death replacement chosen first (CR 616.1, CR 601.2h): the cast request to make again once every answer is in.
+     * Plain data: the card by id in {@code graveyardOwnerId}'s graveyard, permanents by id.
+     */
+    public record GraveyardCastReplay(Player player, UUID graveyardOwnerId, UUID castCardId, Integer xValue,
+                                      UUID targetId, java.util.List<UUID> targetIds,
+                                      java.util.List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                      java.util.List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
+                                      UUID sacrificePermanentId, java.util.List<UUID> additionalCostSacrificePermanentIds,
+                                      Map<UUID, Integer> damageAssignments, java.util.List<UUID> beholdPermanentIds,
+                                      java.util.List<Integer> beholdHandCardIndices,
+                                      java.util.List<Integer> discardHandCardIndices,
+                                      java.util.List<UUID> convokeCreatureIds, Integer sharedColorDiscardHandCardIndex)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A spell cast from the top of a library stopped once its costs were validated and before any of them was paid,
+     * so that a permanent it sacrifices as a cost could have its death replacement chosen first (CR 616.1,
+     * CR 601.2h): the cast request to make again once every answer is in, while {@code castCardId} is still the top
+     * card.
+     */
+    public record LibraryTopCastReplay(Player player, Integer xValue, UUID targetId,
+                                       java.util.List<UUID> counterCostPermanentIds,
+                                       java.util.List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
+                                       boolean castAsAdventure, UUID castCardId)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * Turning a face-down permanent face up (a special action, CR 116.2b) stopped once its costs were validated and
+     * before any of them was paid, so that a permanent its morph cost sacrifices could have its death replacement
+     * chosen first (CR 616.1): the request to make again once every answer is in. The face-down permanent and the
+     * cost's permanents are named by id.
+     */
+    public record TurnFaceUpReplay(Player player, UUID permanentId, Integer revealedHandCardIndex,
+                                   java.util.List<UUID> costPermanentIds, Integer xValue, Boolean payMorphCost)
+            implements DeathReplacementChoiceReplay {
     }
 
     /**
@@ -2923,7 +2966,8 @@ public class GameData {
      * cast request to make again once every answer is in. Plain data (permanents and cards by id), so a simulation
      * copy casts it on its own state. {@code opponentChosenTargetPlayerId} is the opponent who chose the spell's
      * target player for an opponent-chosen target spell, stamped on its stack entry after the cast; otherwise
-     * {@code null}.
+     * {@code null}. {@code commandCastCardId} is the commander being cast from the command zone (the cast is made
+     * again from there), or {@code null} for a cast from hand.
      */
     public record SpellCastReplay(Player player, int cardIndex, Integer xValue, UUID targetId,
                                   Map<UUID, Integer> damageAssignments, java.util.List<UUID> targetIds,
@@ -2945,7 +2989,7 @@ public class GameData {
                                   boolean waterbendPaid, Boolean payLifeForAdditionalCost, boolean adventure,
                                   boolean giftPromised, UUID chosenAdditionalCostObjectId,
                                   java.util.List<UUID> casualtyCreatureIds, UUID castCardId,
-                                  UUID opponentChosenTargetPlayerId)
+                                  UUID opponentChosenTargetPlayerId, UUID commandCastCardId)
             implements DeathReplacementChoiceReplay {
 
         /** This replay, stamping {@code playerId} as the opponent who chose the spell's target player. */
@@ -2959,7 +3003,7 @@ public class GameData {
                     spliceCostPermanentIds, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex,
                     beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType,
                     waterbendPaid, payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId,
-                    casualtyCreatureIds, castCardId, playerId);
+                    casualtyCreatureIds, castCardId, playerId, commandCastCardId);
         }
     }
 
@@ -3008,6 +3052,29 @@ public class GameData {
                                         int xValue, UUID targetId, int stackSizeBeforeCosts,
                                         java.util.List<UUID> targetIds, boolean paysSourceCost)
             implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * {@code replay} for a simulation copy: a prepared free cast's spell, which its completion changes as it pays the
+     * cost, is copied; every other replay is plain data and is shared.
+     */
+    private static DeathReplacementChoiceReplay copyDeathReplacementChoiceReplay(DeathReplacementChoiceReplay replay) {
+        if (replay instanceof PermanentChoiceReplay choiceReplay
+                && choiceReplay.choice().context() instanceof PermanentChoiceContext.FreeCastSacrificeCost cost) {
+            PendingInteraction.PermanentChoice choice = choiceReplay.choice();
+            return new PermanentChoiceReplay(new PendingInteraction.PermanentChoice(choice.playerId(),
+                    choice.validPermanentIds(), choice.validPlayerIds(), cost.deepCopy(), choice.prompt()),
+                    choiceReplay.permanentId());
+        }
+        if (replay instanceof MultiPermanentChoiceReplay multiReplay
+                && multiReplay.choice().context() instanceof MultiPermanentChoiceContext.FreeCastTapCost cost) {
+            PendingInteraction.MultiPermanentChoice choice = multiReplay.choice();
+            return new MultiPermanentChoiceReplay(new PendingInteraction.MultiPermanentChoice(choice.playerId(),
+                    choice.validIds(), choice.validPlayerIds(), choice.validCardIds(), choice.maxCount(),
+                    new MultiPermanentChoiceContext.FreeCastTapCost(new StackEntry(cost.entry()),
+                            cost.requiredCount()), choice.prompt()), multiReplay.permanentIds());
+        }
+        return replay;
     }
 
     /** A pile separation's "which pile" answer whose chosen pile is destroyed or sacrificed. */
@@ -9691,7 +9758,8 @@ public class GameData {
         copy.stepDepartureEffect = this.stepDepartureEffect;
         copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
         copy.rerunMayLibraryChoices.addAll(this.rerunMayLibraryChoices);
-        copy.pendingDeathReplacementChoiceReplay = this.pendingDeathReplacementChoiceReplay;
+        copy.pendingDeathReplacementChoiceReplay = copyDeathReplacementChoiceReplay(
+                this.pendingDeathReplacementChoiceReplay);
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->

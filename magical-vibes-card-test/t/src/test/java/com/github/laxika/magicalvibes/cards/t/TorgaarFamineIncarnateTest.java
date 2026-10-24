@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -271,5 +273,83 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Cast from the graveyard with Muldrotha, the cost-reduction sacrifices ask Gravebane Zombie's question before anything is paid")
+    void graveyardCastCostReductionSacrificeAsksTheDeathReplacementBeforePayment() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent scholar = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        Card torgaar = new TorgaarFamineIncarnate();
+        harness.setGraveyard(player1, List.of(torgaar));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromGraveyardWithSacrifices(player1, 0, player2.getId(),
+                List.of(zombie.getId(), scholar.getId()));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertOnBattlefield(player1, "Tolarian Scholar");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(torgaar);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertNotOnBattlefield(player1, "Tolarian Scholar");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getId()).isEqualTo(torgaar.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Cast as a commander, the cost-reduction sacrifices ask Gravebane Zombie's question before anything is paid")
+    void commanderCastCostReductionSacrificeAsksTheDeathReplacementBeforePayment() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent scholar = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        Card torgaar = new TorgaarFamineIncarnate();
+        torgaar.setOwnerId(player1.getId());
+        torgaar.freeze();
+        gd.format = DeckFormat.COMMANDER;
+        gd.makeCommander(player1.getId(), torgaar);
+        gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(torgaar)));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        gs.castCommander(gd, player1, torgaar.getId(), () -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(), List.of(), false, null, null, List.of(zombie.getId(), scholar.getId())));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerCommandZones.get(player1.getId())).containsExactly(torgaar);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        harness.assertNotOnBattlefield(player1, "Tolarian Scholar");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.playerCommandZones.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard().getId()).isEqualTo(torgaar.getId());
+            assertThat(entry.getSourceZone()).isEqualTo(Zone.COMMAND);
+        });
+        assertThat(gd.commanderTaxByCardId.get(torgaar.getId())).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 }

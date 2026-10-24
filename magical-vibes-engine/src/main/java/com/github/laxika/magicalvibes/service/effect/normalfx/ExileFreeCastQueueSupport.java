@@ -801,6 +801,15 @@ public class ExileFreeCastQueueSupport {
             return true;
         }
         if (entry.getEffectsToResolve().stream().anyMatch(SacrificeAllCreaturesYouControlCost.class::isInstance)) {
+            if (spellCastingService.askFreeCastSacrificeAllFirst(gameData, entry)) {
+                // CR 616.1: a creature it sacrifices needs its death replacement chosen first. The cast is paused
+                // like a chosen sacrifice and completed as one, with no permanent chosen, once every answer is in.
+                gameData.pendingDeathReplacementChoiceReplay = new GameData.PermanentChoiceReplay(
+                        new com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice(
+                                entry.getControllerId(), List.of(), List.of(),
+                                new PermanentChoiceContext.FreeCastSacrificeCost(entry), ""), null);
+                return true;
+            }
             spellCastingService.payAdditionalCostsForFreeCast(gameData, entry,
                     AdditionalSpellCostService.CostSelection.none());
             return false;
@@ -1012,6 +1021,8 @@ public class ExileFreeCastQueueSupport {
     public void completeSacrificeCost(GameData gameData, UUID permanentId,
                                       PermanentChoiceContext.FreeCastSacrificeCost context) {
         spellCastingService.paySacrificeCreatureCostForFreeCast(gameData, context.entry(), permanentId);
+        // The sacrifice was asked its death replacements first (CR 616.1); nothing after it is redone.
+        gameData.deathReplacementsCanRerunEffect = false;
         completeCastAfterDiscard(gameData, context.entry());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
     }
@@ -1022,6 +1033,8 @@ public class ExileFreeCastQueueSupport {
                 new AdditionalSpellCostService.CostSelection(null, null, null, null, null,
                         Objects.requireNonNullElse(context.entry().getModalModeCount(), 0), -1,
                         List.copyOf(permanentIds), null, null, List.of(), List.of()));
+        // An escalate sacrifice was asked its death replacements first (CR 616.1); nothing after it is redone.
+        gameData.deathReplacementsCanRerunEffect = false;
         completeCastAfterDiscard(gameData, context.entry());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
     }

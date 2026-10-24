@@ -220,4 +220,43 @@ class SoulblastTest extends BaseCardTest {
 
         harness.assertLife(player2, 15);
     }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({SunbirdsInvocation.class, ShivanDragon.class, KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Cast without paying its mana cost, sacrificing all creatures asks Gravebane Zombie's question before any leaves")
+    void freeCastSacrificeAllAsksTheDeathReplacementBeforePayment() {
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new SunbirdsInvocation());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Card soulblast = new Soulblast();
+        harness.setLibrary(player1, List.of(soulblast));
+        harness.setHand(player1, List.of(new ShivanDragon()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(soulblast.getId()));
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).contains(zombie.getCard().getId());
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(soulblast.getId()));
+
+        harness.passBothPriorities();
+
+        // Gravebane Zombie is a 3/2 and was sacrificed, though it went to its library.
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
 }
