@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -123,11 +124,11 @@ public class SacrificePermanentsThenEffectHandler implements NormalEffectHandler
                 .filter(permanent -> permanent != null
                         && controllerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
                 .toList();
-        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, toSacrifice);
-        for (Permanent permanent : toSacrifice) {
-            destructionSupport.sacrificeAndLog(gameData, permanent, controllerId);
-        }
-        int sacrificed = toSacrifice.size();
+        // Sacrificed at the same time, as one event: every CR 616.1 question is asked before any of them leaves.
+        int sacrificed = (int) destructionSupport.sacrificeTogether(gameData, toSacrifice, controllerId).results()
+                .stream()
+                .filter(DepartureResult::sacrificed)
+                .count();
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (sacrificed != requiredCount) {

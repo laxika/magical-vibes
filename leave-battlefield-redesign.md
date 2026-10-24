@@ -1357,6 +1357,53 @@ Steps add notes here for later steps, under their number.
   `WheelOfSunAndMoonTest`, `DryadArborTest`, `KalitasTraitorOfGhetTest`, `LegacyDepartureWrapperRatchetTest` and
   `DepartureServiceOrphanedStepBatchTest` pass.
 
+### Step 13 (sixth part: the multi-choice completions)
+
+- Done: every `MultiPermanentChoiceHandlerService` completion that removes a permanent now runs in the replay window
+  (`completeAskingDeathReplacementsFirst`), so its CR 616.1 questions are asked before anything leaves. Added to
+  `killsBeforeChangingAnything` (each only reads its picks before one departure batch; whatever follows comes after):
+  - Destroys: `DestroyDamagedPlayerControls`, `DestroyCreaturesOpponentControls` (its chosen creatures are now one
+    `destroyBatch` instead of one destroy after another; no card uses it yet) and `ForcedDestroy` (Burning of Xinye).
+  - Sacrifices: `SacrificeLandsSearchLandsToBattlefieldTapped` (Scapeshift; the search comes after),
+    `SacrificePermanentsDrawPerSacrificed` (Reprocess, God-Eternal Bontu, ...), `SacrificePermanentsThen` (Strefan,
+    Scavenger's Talent, The Aether Flues; its size check moved before the prompt is cleared),
+    `SacrificePermanentsAddManaPerSacrificed` (Mana Seism), `SacrificeAnyNumberAndRecordCount`,
+    `SacrificeCreaturesWithTotalPowerOrSacrificeSource` (Phyrexian Dreadnought, including the declined sacrifice of
+    itself) and `EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice` (Slaughter the Strong, Destined Confrontation).
+  - As-enters sacrifices: `DevourSacrifice` (CR 702.82a), `SacrificeCreaturesSetEnteringPowerToughness`
+    (Dracoplasm), `SacrificePermanentsSetEnteringPowerToughness`, `SacrificeAsEntersForCounters` and
+    `SacrificePermanentsToEnter`. The entering permanent is changed (counters, P/T, devoured creatures) and its
+    entry goes on only after the batch. Devour used to record each devoured creature on the entering permanent
+    before the sacrifice; it now records them after, so a replay doesn't record them twice (Skullmulcher would draw
+    two for one creature). A declined `SacrificePermanentsToEnter` closes the window itself, since nothing leaves.
+- One event instead of one sacrifice after another (CR 101.4 for the simultaneous sacrifice), through
+  `sacrificeTogether`: Mana Seism, the Forest-count P/T sacrifice, `SacrificePermanentsToEnter` and
+  `SacrificePermanentsThenEffectHandler` (both its resolve path and its completion; it used to ask ahead with
+  `askDeathReplacementsBeforeSacrifice` and then sacrifice one by one). Their counts ("for each sacrificed", "if you
+  do") now come from the results' `sacrificed()`.
+- `PlayerDestroysPermanentsEffectHandler` (Burning of Xinye's "destroy four lands" when the player has four or fewer)
+  is now `AsksDeathReplacementsFirst`: it only reads before its `destroyBatch`.
+- Checked, no change needed: the other multi-choice completions only exile, bounce, tap or put permanents into a
+  library, or hand off to a handler that removes nothing (Human Time Lord Meta-Crisis, Cultural Exchange, Nihiloor,
+  ...); costs were done in step 12.
+- **Left** (why the fallback still can't be deleted):
+  - normalfx: Bomb Squad (parked pending an official ruling; see the third part) and `LifeSupport` (Lich's Duel
+    Mastery's sacrifice inside a life loss replacement).
+  - `DamagePreventionService.replaceNextDamageToTargetWithDestruction` (destroys instead of dealing damage) and
+    `DamagePreventionReplacementSupport.applyDamageToPermanentByRemovingCountersOrSacrificing` (sacrifices instead
+    of being dealt damage): both run inside a damage event that can't pause.
+  - Single-permanent choice completions outside `PermanentChoiceHandlerService.killsBeforeChangingAnything` were not
+    re-audited in this part.
+- Tests: new (all `@FailOnLegacyDepartureFallback`, all fail with the old engine code) in `ReprocessTest`,
+  `ScapeshiftTest`, `ManaSeismTest`, `PhyrexianDreadnoughtTest` (the declined self-sacrifice), `SkullmulcherTest`
+  (devoured once: one counter, one card drawn), `SlaughterTheStrongTest` and `BurningOfXinyeTest` (the choice and the
+  automatic destroy), using Gravebane Zombie against Kalitas or Dryad Arbor / Phyrexian Dreadnought under Wheel of Sun
+  and Moon against Kalitas. No existing test changed. A sweep of 73 card test classes (every card using a touched
+  effect or context, plus Kalitas, Gravebane Zombie, Wheel of Sun and Moon and Dryad Arbor) had 4 failures, all
+  failing the same way with the old engine code (`PhyrexianDreadnoughtTest.canPayAfterDreadnoughtChangesController`,
+  `PredatorDragonTest`'s uncast entry, two `PreyseizerDragonTest` tests). `LegacyDepartureWrapperRatchetTest`,
+  `DepartureServiceOrphanedStepBatchTest` and `GameSimulatorTest` pass.
+
 ### Step 2
 
 - Types live in `magical-vibes-domain` `model/`: `DepartureCause`, `DepartureStage`, `DepartureIntent`,

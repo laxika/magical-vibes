@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.r.ResoundingWave;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -118,5 +122,34 @@ class SkullmulcherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInHand(player1, "Cylian Elf");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class, Island.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The devoured creature's death replacement is asked before it is sacrificed, and it is devoured once")
+    void asksTheDeathReplacementBeforeTheDevourSacrifice() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        castSkullmulcher();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(zombie.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(zombie);
+        harness.assertNotOnBattlefield(player2, "Zombie");
+        assertThat(skullmulcher().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.passBothPriorities(); // resolve draw trigger
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .allMatch(card -> card.getId().equals(zombie.getCard().getId()));
     }
 }

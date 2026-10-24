@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerDestroysPermanentsEffec
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PlayerDestroysPermanentsEffectHandler implements NormalEffectHandlerBean {
+public class PlayerDestroysPermanentsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;

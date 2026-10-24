@@ -1,20 +1,25 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.ShuGeneral;
 import com.github.laxika.magicalvibes.cards.t.TheGitrogMonster;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.cards.z.ZodiacDragon;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -242,5 +247,61 @@ class BurningOfXinyeTest extends BaseCardTest {
         assertThat(dragon.getMarkedDamage()).isEqualTo(4);
         harness.assertOnBattlefield(player2, "Zodiac Dragon");
         harness.assertInGraveyard(player1, "Shu General");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class, DryadArbor.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The death replacement is asked before any chosen land is destroyed")
+    void chosenLandsAskTheDeathReplacementBeforeAnyIsDestroyed() {
+        Permanent arbor = setupArborUnderWheelAgainstKalitas();
+        List<Permanent> mountains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            mountains.add(harness.addToBattlefieldAndReturn(player1, new Mountain()));
+        }
+
+        castBurning();
+        harness.handleMultiplePermanentsChosen(player1, List.of(arbor.getId(),
+                mountains.get(0).getId(), mountains.get(1).getId(), mountains.get(2).getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arbor).containsAll(mountains);
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName()).contains("Dryad Arbor");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().hasType(CardType.LAND))
+                .containsExactly(mountains.get(3));
+        harness.assertNotOnBattlefield(player2, "Zombie");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class, DryadArbor.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Four or fewer lands ask the death replacement before any of them is destroyed")
+    void automaticDestructionAsksTheDeathReplacementBeforeAnyLandIsDestroyed() {
+        Permanent arbor = setupArborUnderWheelAgainstKalitas();
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        castBurning();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arbor, mountain);
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName()).contains("Dryad Arbor");
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().hasType(CardType.LAND));
+        harness.assertNotOnBattlefield(player2, "Zombie");
+    }
+
+    private Permanent setupArborUnderWheelAgainstKalitas() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player1.getId());
+        return harness.addToBattlefieldAndReturn(player1, new DryadArbor());
     }
 }

@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.ForbiddenOrchard;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -139,5 +143,34 @@ class ManaSeismTest extends BaseCardTest {
 
     private void castManaSeism() {
         harness.castFromHand(player1, new ManaSeism(), "{1}{R}");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class, DryadArbor.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The death replacement is asked before any chosen land is sacrificed, and the mana comes after")
+    void asksTheDeathReplacementBeforeTheSacrificeAndAddsManaAfter() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player1.getId());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castManaSeism();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(arbor.getId(), forest.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arbor, forest);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arbor, forest);
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName()).contains("Dryad Arbor");
+        harness.assertNotOnBattlefield(player2, "Zombie");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

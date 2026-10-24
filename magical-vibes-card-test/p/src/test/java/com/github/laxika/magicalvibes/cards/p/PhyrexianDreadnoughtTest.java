@@ -2,17 +2,20 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.e.Enfeeblement;
 import com.github.laxika.magicalvibes.cards.j.JungleWurm;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.MorticianBeetle;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.t.TeekasDragon;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.cards.w.WallOfRoots;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -283,5 +286,32 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             harness.handleMayAbilityChosen(player1, false);
         }
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, WheelOfSunAndMoon.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Declining asks Phyrexian Dreadnought's death replacement before it is sacrificed")
+    void decliningAsksTheDeathReplacementBeforeTheSacrifice() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent wheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        wheel.setAttachedTo(player1.getId());
+        harness.addToBattlefield(player1, new ZhalfirinKnight());
+        castDreadnought();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Phyrexian Dreadnought");
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Dreadnought");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .contains("Phyrexian Dreadnought");
+        harness.assertOnBattlefield(player1, "Zhalfirin Knight");
+        harness.assertNotOnBattlefield(player2, "Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

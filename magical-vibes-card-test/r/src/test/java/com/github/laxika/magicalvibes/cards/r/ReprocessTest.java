@@ -2,15 +2,18 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DiscipleOfTheVault;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IvoryCup;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.o.Opposition;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -206,5 +209,34 @@ class ReprocessTest extends BaseCardTest {
 
     private void castReprocess() {
         harness.castFromHand(player1, new Reprocess(), "{2}{B}{B}");
+    }
+
+    @Test
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The death replacement is asked before any chosen permanent is sacrificed, and the draws come after")
+    void asksTheDeathReplacementBeforeTheSacrificeAndDrawsAfter() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        setupLibrary();
+        castReprocess();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(zombie.getId(), land.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie, land);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(zombie, land);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Zombie");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2)
+                .anyMatch(card -> card.getId().equals(zombie.getCard().getId()));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
