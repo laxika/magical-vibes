@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.cards.a.AshiokNightmareWeaver;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -117,5 +121,72 @@ class TymaretTheMurderKingTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(tymaret);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(unrelatedCard);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(unrelatedCard);
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Sacrificing Gravebane Zombie for the graveyard ability under an opponent's Kalitas asks library-or-Kalitas before it leaves")
+    void graveyardAbilitySacrificeAsksTheDeathReplacementBeforeTheZombieLeaves() {
+        TymaretTheMurderKing tymaret = new TymaretTheMurderKing();
+        harness.setGraveyard(player1, List.of(tymaret));
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(tymaret);
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "Put it into its owner's library");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(zombie);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(zombie.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard()).isSameAs(tymaret));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(tymaret);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, GravebaneZombie.class})
+    @DisplayName("Choosing Gravebane Zombie for the graveyard ability's sacrifice asks its death replacement before it leaves")
+    void chosenGraveyardAbilitySacrificeAsksTheDeathReplacementBeforeTheZombieLeaves() {
+        TymaretTheMurderKing tymaret = new TymaretTheMurderKing();
+        harness.setGraveyard(player1, List.of(tymaret));
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new GravebaneZombie());
+        Permanent sable = harness.addToBattlefieldAndReturn(player1, new BronzeSable());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.handlePermanentChosen(player1, zombie.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie, sable);
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "Kalitas, Traitor of Ghet");
+
+        assertThat(gd.findExiledCard(zombie.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(sable);
+        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard()).isSameAs(tymaret));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(tymaret);
     }
 }

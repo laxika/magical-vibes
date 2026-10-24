@@ -11,7 +11,7 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 34. Asking death replacements before the creature leaves, outside state-based actions
 
-**Status:** open (partly done; being replaced by `leave-battlefield-redesign.md`, steps 1–11 done and step 12 partly done (activated-ability costs and hand-cast spell costs) 2026-10-24) · **Found:** 2026-10-18, while implementing CR 616.1 death replacement ordering
+**Status:** open (partly done; being replaced by `leave-battlefield-redesign.md`, steps 1–11 done and step 12 partly done (activated-ability costs including graveyard and hand abilities, attack costs and hand-cast spell costs; other cast paths remain) 2026-10-24) · **Found:** 2026-10-18, while implementing CR 616.1 death replacement ordering
 
 **Failing tests:**
 - None yet. Write one per remaining gap, e.g. Kalitas, Traitor of Ghet on one side, Gravebane Zombie

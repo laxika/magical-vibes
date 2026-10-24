@@ -1357,8 +1357,9 @@ public class AbilityActivationService {
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         boolean promotedAbilityOnlyMana = pool != null && pool.promoteAbilityOnlyMana() > 0;
         try {
-            activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex,
-                    xValue != null ? xValue : 0, targetId, graveyardTargetIds, exileGraveyardCardIds);
+            undoingCostSacrificeChoicesOnFailure(gameData, () -> activateGraveyardAbilityImpl(gameData, player,
+                    graveyardCardIndex, abilityIndex, xValue != null ? xValue : 0, targetId, graveyardTargetIds,
+                    exileGraveyardCardIds));
         } finally {
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -1776,14 +1777,7 @@ public class AbilityActivationService {
                     .map(id -> gameQueryService.findPermanentById(gameData, id))
                     .filter(Objects::nonNull)
                     .toList();
-            Runnable payment = () -> chosenPermanents.forEach(
-                    chosen -> handler.validateAndPay(gameData, player, chosen));
-            if (handler instanceof MultiplePermanentSacrificeCostHandler && chosenPermanents.size() > 1) {
-                // Sacrifices paid together are one event, so their dies triggers see each other leave (CR 603.10a).
-                permanentRemovalService.performSimultaneousRemovals(gameData, chosenPermanents, payment);
-            } else {
-                payment.run();
-            }
+            chosenPermanents.forEach(chosen -> handler.validateAndPay(gameData, player, chosen));
             return false;
         }
         List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
@@ -1855,6 +1849,13 @@ public class AbilityActivationService {
     public void completeGraveyardAbilityCostChoice(GameData gameData, Player player,
                                                     PermanentChoiceContext.GraveyardAbilityCostChoice context,
                                                     UUID chosenPermanentId) {
+        undoingCostSacrificeChoicesOnFailure(gameData,
+                () -> completeGraveyardAbilityCostChoiceOnce(gameData, player, context, chosenPermanentId));
+    }
+
+    private void completeGraveyardAbilityCostChoiceOnce(GameData gameData, Player player,
+                                                        PermanentChoiceContext.GraveyardAbilityCostChoice context,
+                                                        UUID chosenPermanentId) {
         UUID playerId = player.getId();
         Card card = context.graveyardCard();
         int idx = context.abilityIndex() != null ? context.abilityIndex() : 0;
@@ -1912,6 +1913,13 @@ public class AbilityActivationService {
     public void completeHandAbilityCostChoice(GameData gameData, Player player,
                                                PermanentChoiceContext.HandAbilityCostChoice context,
                                                UUID chosenPermanentId) {
+        undoingCostSacrificeChoicesOnFailure(gameData,
+                () -> completeHandAbilityCostChoiceOnce(gameData, player, context, chosenPermanentId));
+    }
+
+    private void completeHandAbilityCostChoiceOnce(GameData gameData, Player player,
+                                                   PermanentChoiceContext.HandAbilityCostChoice context,
+                                                   UUID chosenPermanentId) {
         UUID playerId = player.getId();
         boolean tapBatch = context.costEffect() instanceof TapMultiplePermanentsCost;
         if (tapBatch && gameData.permanentTapTriggerBatchDepth == 0) {
@@ -2013,6 +2021,15 @@ public class AbilityActivationService {
                                                     ActivatedAbility ability, int xValue, UUID targetId,
                                                     List<UUID> graveyardTargetIds) {
         UUID playerId = player.getId();
+        int stackSizeBeforeSacrifices = gameData.stack.size();
+        if (sacrificeChosenCostPermanents(gameData, player, new GameData.GraveyardAbilityCostReplay(player, card,
+                ability, xValue, targetId, graveyardTargetIds == null ? null : List.copyOf(graveyardTargetIds)))) {
+            return;
+        }
+        if (!isManaAbility(ability)) {
+            // Triggered by the cost sacrifices, so put on the stack once the ability is (CR 603.3).
+            deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeSacrifices);
+        }
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof PayLifeCost lifeCost) {
                 lifeSupport.applyLifePayment(gameData, playerId,
@@ -2219,6 +2236,13 @@ public class AbilityActivationService {
 
     public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex,
                                     UUID targetId, Integer xValue, List<UUID> targetIds) {
+        undoingCostSacrificeChoicesOnFailure(gameData, () -> activateHandAbilityChoosingCosts(gameData, player,
+                handCardIndex, abilityIndex, targetId, xValue, targetIds));
+    }
+
+    private void activateHandAbilityChoosingCosts(GameData gameData, Player player, int handCardIndex,
+                                                  Integer abilityIndex, UUID targetId, Integer xValue,
+                                                  List<UUID> targetIds) {
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || handCardIndex < 0 || handCardIndex >= hand.size()) {
@@ -2418,6 +2442,7 @@ public class AbilityActivationService {
             }
         }
         if (ability.isSuspendsSourceFromHand()) {
+            sacrificeChosenCostPermanents(gameData, player, null);
             recordHandAbilityActivationUse(gameData, card, idx);
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
@@ -2443,6 +2468,7 @@ public class AbilityActivationService {
                     : exiled);
             triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, 1);
             if (isManaAbility(ability, abilityEffects)) {
+                sacrificeChosenCostPermanents(gameData, player, null);
                 resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
                 gameData.priorityPassedBy.clear();
                 mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -2502,6 +2528,11 @@ public class AbilityActivationService {
                                                ActivatedAbility ability, int abilityIndex, int xValue, UUID targetId,
                                                int stackSizeBeforeCosts, List<UUID> targetIds) {
         UUID playerId = player.getId();
+        if (sacrificeChosenCostPermanents(gameData, player, new GameData.HandAbilityCostReplay(player, card, ability,
+                abilityIndex, xValue, targetId, stackSizeBeforeCosts,
+                targetIds == null ? null : List.copyOf(targetIds), false))) {
+            return;
+        }
         List<CardEffect> snapshotEffects = new ArrayList<>(ability.getEffects().stream()
                 .filter(effect -> !(effect instanceof CostEffect))
                 .toList());
@@ -2574,6 +2605,11 @@ public class AbilityActivationService {
                                                          UUID targetId, int stackSizeBeforeCosts,
                                                          List<UUID> targetIds) {
         UUID playerId = player.getId();
+        if (sacrificeChosenCostPermanents(gameData, player, new GameData.HandAbilityCostReplay(player, card, ability,
+                abilityIndex, xValue, targetId, stackSizeBeforeCosts,
+                targetIds == null ? null : List.copyOf(targetIds), true))) {
+            return;
+        }
         boolean discarded = false;
         if (ability.isRevealsSourceFromHand()) {
             revealSourceFromHand(gameData, playerId, card);
@@ -5746,10 +5782,8 @@ public class AbilityActivationService {
         if (effect instanceof ForageOrPayManaCost) {
             return forageFoodCostHandler(gameData, sourcePermanentId);
         }
-        // A permanent's activation removes all of its cost sacrifices together once costs are paid.
-        PermanentSacrificeAction sacAction = sourcePermanentId != null
-                ? this::chooseSacrificeAsCost
-                : this::sacrificePermanentAsCost;
+        // Every activation removes all of its cost sacrifices together once its other cost choices are made.
+        PermanentSacrificeAction sacAction = this::chooseSacrificeAsCost;
         PermanentExileAction exileAction = this::exilePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof UnattachEquipmentFromSourceCost cost) {
@@ -5762,8 +5796,7 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction);
         if (effect instanceof SacrificeDistinctNamePermanentsCost c) return new DistinctNamePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar);
         if (effect instanceof SacrificeAllMatchingPermanentsCost c) return new AllMatchingPermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction);
-        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar, sourcePermanentId,
-                sourcePermanentId != null ? null : permanentRemovalService);
+        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -8203,22 +8236,108 @@ public class AbilityActivationService {
         return false;
     }
 
-    private void sacrificePermanentAsCost(GameData gameData, Player player, Permanent sacTarget) {
-        UUID playerId = player.getId();
-        List<Permanent> playerBf = gameData.playerBattlefields.get(playerId);
-        if (playerBf == null || !playerBf.contains(sacTarget)) {
-            throw new IllegalStateException("Must sacrifice a permanent you control");
+    /**
+     * CR 601.2h, CR 602.2b and CR 616.1: sacrifices the permanents chosen for a graveyard or hand card's ability's
+     * sacrifice costs ({@link GameData#pendingActivationCostSacrificeIds}) together as one departure batch, once its
+     * other cost choices are made and before it pays its remaining costs. When one of them needs a death replacement
+     * chosen first, nothing is sacrificed: the question is opened, {@code replay} is stored, and the activation is
+     * completed again with the same arguments once every answer is in, its sacrifices then consuming the answers.
+     * With a {@code null} replay nothing is asked first.
+     *
+     * @return {@code true} when the activation stopped to ask
+     */
+    private boolean sacrificeChosenCostPermanents(GameData gameData, Player player,
+                                                  GameData.DeathReplacementChoiceReplay replay) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
+        List<Permanent> chosen = List.copyOf(gameData.pendingActivationCostSacrificeIds).stream()
+                .map(id -> battlefield.stream().filter(p -> p.getId().equals(id)).findFirst().orElse(null))
+                .filter(Objects::nonNull)
+                .toList();
+        if (chosen.isEmpty()) {
+            gameData.pendingActivationCostSacrificeIds.clear();
+            return false;
         }
-        Card sacrificedSnapshot = permanentRemovalService.snapshotEffectivePermanentCard(gameData, sacTarget);
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, sacTarget);
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedSnapshot);
-        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " sacrifices " , sacTarget.getCard(), "."));
+        com.github.laxika.magicalvibes.model.DepartureBatch sacrifices = com.github.laxika.magicalvibes.model.DepartureBatch.of(
+                chosen.stream().map(p -> com.github.laxika.magicalvibes.model.DepartureIntent.sacrifice(p.getId())).toList());
+        if (replay != null && departureService.askBeforePayment(gameData, sacrifices)) {
+            gameData.pendingDeathReplacementChoiceReplay = replay;
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            return true;
+        }
+        gameData.pendingActivationCostSacrificeIds.clear();
+        departureService.departNow(gameData, sacrifices,
+                com.github.laxika.magicalvibes.service.battlefield.DepartureService.Hooks.afterEach(
+                        (intent, sacrificed, snapshot, removed) -> {
+                            if (!removed) {
+                                return;
+                            }
+                            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                                    gameData, player.getId(), snapshot.permanent().getCard());
+                            gameLogService.append(gameData, GameLog.textCardText(
+                                    player.getUsername() + " sacrifices ", sacrificed.getCard(), "."));
+                        }));
+        return false;
     }
 
     /**
-     * Chooses a permanent to sacrifice for a permanent's activated ability. It stays on the battlefield
-     * until all costs are chosen; {@link ActivatedAbilityExecutionService} then sacrifices every chosen
-     * permanent and the source together, so their dies triggers look back across the whole batch.
+     * Completes the graveyard card's activation {@link #sacrificeChosenCostPermanents} stopped, once every death
+     * replacement it asked about is chosen; its sacrifices consume the answers.
+     */
+    public void completeGraveyardAbilityAfterCostSacrificeAnswers(GameData gameData,
+                                                                  GameData.GraveyardAbilityCostReplay replay) {
+        try {
+            completeGraveyardAbilityActivation(gameData, replay.player(), replay.card(), replay.ability(),
+                    replay.xValue(), replay.targetId(), replay.graveyardTargetIds());
+        } catch (RuntimeException e) {
+            gameData.pendingActivationCostSacrificeIds.clear();
+            throw e;
+        }
+    }
+
+    /**
+     * Completes the hand card's activation {@link #sacrificeChosenCostPermanents} stopped, once every death
+     * replacement it asked about is chosen; its sacrifices consume the answers.
+     */
+    public void completeHandAbilityAfterCostSacrificeAnswers(GameData gameData, GameData.HandAbilityCostReplay replay) {
+        try {
+            if (replay.paysSourceCost()) {
+                completeHandAbilityActivationAfterCosts(gameData, replay.player(), replay.card(), replay.ability(),
+                        replay.abilityIndex(), replay.xValue(), replay.targetId(), replay.stackSizeBeforeCosts(),
+                        replay.targetIds());
+            } else {
+                completeHandAbilityActivation(gameData, replay.player(), replay.card(), replay.ability(),
+                        replay.abilityIndex(), replay.xValue(), replay.targetId(), replay.stackSizeBeforeCosts(),
+                        replay.targetIds());
+            }
+        } catch (RuntimeException e) {
+            gameData.pendingActivationCostSacrificeIds.clear();
+            throw e;
+        }
+    }
+
+    /**
+     * Runs {@code activation}, a step of a graveyard or hand card's activation; when it fails, the permanents it
+     * chose for sacrifice costs are no longer chosen.
+     */
+    private void undoingCostSacrificeChoicesOnFailure(GameData gameData, Runnable activation) {
+        int chosenBefore = gameData.pendingActivationCostSacrificeIds.size();
+        try {
+            activation.run();
+        } catch (RuntimeException e) {
+            List<UUID> pending = gameData.pendingActivationCostSacrificeIds;
+            while (pending.size() > chosenBefore) {
+                pending.removeLast();
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Chooses a permanent to sacrifice for an activated ability. It stays on the battlefield until all costs are
+     * chosen; then every chosen permanent (and the source, for a permanent's sacrifice-self cost) is sacrificed
+     * together, so their dies triggers look back across the whole batch: by
+     * {@link ActivatedAbilityExecutionService} for a permanent's ability, by
+     * {@link #sacrificeChosenCostPermanents} for a graveyard or hand card's ability.
      */
     private void chooseSacrificeAsCost(GameData gameData, Player player, Permanent sacTarget) {
         List<Permanent> playerBf = gameData.playerBattlefields.get(player.getId());

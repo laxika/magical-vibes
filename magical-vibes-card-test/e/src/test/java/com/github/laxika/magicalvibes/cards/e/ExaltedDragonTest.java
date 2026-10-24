@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,6 +44,31 @@ class ExaltedDragonTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(firstForest.getId()));
 
         assertThat(findPermanents(player1, "Forest")).hasSize(1);
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Paying the attack cost with the only land, an enchanted Dryad Arbor, asks its death replacement before it leaves")
+    void forcedAttackCostAsksTheDeathReplacementBeforeTheLandLeaves() {
+        addCreatureReady(player1, new ExaltedDragon());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Return it to its owner's hand (Necromancer's Magemark)",
+                        "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arbor);
+        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices")).isEmpty();
+
+        harness.handleListChoice(player1, "Return it to its owner's hand (Necromancer's Magemark)");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arbor);
+        assertThat(gd.playerHands.get(player1.getId())).contains(arbor.getCard());
+        harness.assertLife(player2, 15);
     }
 
     @Test

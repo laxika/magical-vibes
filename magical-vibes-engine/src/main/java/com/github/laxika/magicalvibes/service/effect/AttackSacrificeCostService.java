@@ -2,25 +2,26 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 /**
@@ -36,10 +37,10 @@ public class AttackSacrificeCostService {
 
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
+    private final ObjectProvider<DestructionSupport> destructionSupportProvider;
 
     /**
      * For each declared attacker carrying a {@link CantAttackUnlessSacrificeEffect}, sacrifices the
@@ -161,30 +162,18 @@ public class AttackSacrificeCostService {
             return;
         }
 
-        String playerName = gameData.playerIdToName.get(playerId);
-        int sacrificed = 0;
-        while (sacrificed < count) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            Permanent toSacrifice = null;
-            if (battlefield != null) {
-                for (Permanent p : battlefield) {
-                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter)) {
-                        toSacrifice = p;
-                        break;
-                    }
-                }
-            }
-            if (toSacrifice == null) {
-                break;
-            }
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, toSacrifice);
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                    gameData, playerId, toSacrifice.getCard());
-            gameLogService.append(gameData,
-                    GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
-            log.info("Game {} - {} sacrifices {} to attack", gameData.id, playerName,
-                    toSacrifice.getCard().getName());
-            sacrificed++;
+        List<Permanent> toSacrifice = candidates.stream().limit(count).toList();
+        if (toSacrifice.isEmpty()) {
+            return;
         }
+        // The forced payment is the same answer as choosing every candidate, so its death replacements are chosen
+        // before any of them leaves (CR 616.1), and the payment is completed again with them.
+        PendingInteraction.MultiPermanentChoice payment = new PendingInteraction.MultiPermanentChoice(playerId,
+                toSacrifice.stream().map(Permanent::getId).toList(), count,
+                new MultiPermanentChoiceContext.SacrificeAttackCost(count), "");
+        permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData, () -> {
+            destructionSupportProvider.getObject().sacrificeTogether(gameData, toSacrifice, playerId);
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }, new GameData.MultiPermanentChoiceReplay(payment, payment.validIds()));
     }
 }

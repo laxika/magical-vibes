@@ -23,7 +23,7 @@ order; each one lists what it depends on.
 | 9 | Convert the "destroy/sacrifice target, then …" handlers | done (Goblin Crash Pilot and Goblin Welder depart at once, not as a step; see Findings) |
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
-| 12 | Costs and mana abilities | partly done (a permanent's activated-ability sacrifice costs, mana abilities, `ON_SACRIFICE` abilities and hand-cast spell sacrifice costs; graveyard, exile, library-top, free and morph cast costs, graveyard-ability, attack and sequence sacrifice costs remain; see Findings) |
+| 12 | Costs and mana abilities | partly done (every activated-ability sacrifice cost, including graveyard and hand abilities, mana abilities, `ON_SACRIFICE` abilities, attack sacrifice costs and hand-cast spell sacrifice costs; graveyard, adventure-from-graveyard, exile, library-top, free, morph and commander cast costs remain; see Findings) |
 | 13 | Make the guard strict and remove the fallback | open |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
@@ -963,6 +963,56 @@ Steps add notes here for later steps, under their number.
   every Kalitas and Gravebane Zombie test) had 40 failures in 24 classes (Aang's Journey, Ana Battlemage, Archangel of
   Wrath, Dusk Rose Reliquary, Psychic Puppetry, Sloppity Bilepiper, ...); the same 40 fail at the baseline, none new.
   `LegacyDepartureWrapperRatchetTest` and `GameSimulatorTest` (37/37) pass.
+
+### Step 12 (third part: graveyard and hand abilities, attack costs)
+
+- Done: a graveyard or hand card's activated ability (Tymaret's return, Necrosavant, Whiteout, Metalwork Colossus,
+  Edge of Autumn's cycling, ...) and the forced payment of an attack sacrifice cost (Exalted Dragon, Leviathan,
+  Flooded Woodlands, Reclamation) ask the CR 616.1 question of every permanent they sacrifice before any of them
+  leaves. Off the ratchet allowlist (now 6 callers, all step 13's non-cost callers):
+  `AbilityActivationService.sacrificePermanentAsCost` (deleted) and `AttackSacrificeCostService.sacrificeMatching`.
+  `SequencePermanentSacrificeCostHandler` no longer removes anything itself (its `performSimultaneousRemovals` path and
+  `PermanentRemovalService` constructor argument are gone).
+- Graveyard and hand abilities now use the "choose all, sacrifice together after" shape of a permanent's ability: every
+  sacrifice cost handler chooses into `pendingActivationCostSacrificeIds` (`chooseSacrificeAsCost`), so a chosen
+  permanent can't be chosen again and stays until the activation's completion. `sacrificeChosenCostPermanents` runs
+  at the top of `completeGraveyardAbilityActivation`, `completeHandAbilityActivation` and
+  `completeHandAbilityActivationAfterCosts` (before the life payment, the discard of a cycled card and the stack
+  entry): it asks with `askBeforePayment`, and when a question opens stores `GameData.GraveyardAbilityCostReplay` /
+  `HandAbilityCostReplay` (plain data; the card and ability by reference, the permanents by id in the pending list)
+  and returns; `completeChoiceAgainAfterDeathReplacements` completes the activation again through
+  `payAgainAfterDeathReplacements`. Otherwise the chosen permanents leave as one SACRIFICE batch, logging
+  "P sacrifices X." and firing "whenever you sacrifice" triggers only for those that left. Mana, energy, mill and
+  graveyard-exile costs are paid before the question (CR 601.2h, CR 602.2b allow any order; the activation's
+  validation makes the rest unfailing), as for a permanent's ability in the first part. The suspend and
+  exile-from-hand-mana-ability tails sacrifice without asking first (no card has a sacrifice cost there). A failing
+  graveyard or hand activation (or cost-choice completion, or replay) drops the permanents it had chosen.
+- Rules fix: a graveyard ability's cost-sacrifice triggers used to go on the stack below the ability; they are now
+  deferred and put on the stack above it (CR 603.3), as hand abilities already did. Several sacrifices for one
+  graveyard ability are now one event (they were, through `performSimultaneousRemovals`, only for an auto-paid
+  `MultiplePermanentSacrificeCostHandler`).
+- Attack costs: the forced path (no more candidates than required) no longer sacrifices one at a time. It runs
+  `DestructionSupport.sacrificeTogether` inside `runAskingDeathReplacementsFirst` with a `MultiPermanentChoiceReplay`
+  of a synthesized `SacrificeAttackCost` choice of those permanents, so a question stops the payment (the declaration
+  is already committed and goes on as when a choice prompt opens) and the answer completes it through the same
+  `handleSacrificeAttackCost` as a chosen payment.
+- **Left for the next run(s)**: the cast paths listed in the second part (graveyard casts via
+  `playFlashbackSpellFromLocation`, `playAdventureCardFromGraveyardInternal`, `playCardFromExileInternal`,
+  `playCardFromLibraryTop`, the free casts, morph's `payMorphSacrificeCost` and commander casts) still sacrifice through
+  `departNow` without asking first, so a death replacement there reaches the legacy fallback. They aren't on the
+  allowlist; finishing them is what remains of step 12. The six non-cost allowlist callers stay for step 13.
+- Tests: new (all `@FailOnLegacyDepartureFallback`)
+  `TymaretTheMurderKingTest.graveyardAbilitySacrificeAsksTheDeathReplacementBeforeTheZombieLeaves` (auto-paid) and
+  `chosenGraveyardAbilitySacrificeAsksTheDeathReplacementBeforeTheZombieLeaves` (chosen from a prompt),
+  `EdgeOfAutumnTest.cyclingAsksTheSacrificedArborsDeathReplacementBeforeItLeaves` (Dryad Arbor with Necromancer's
+  Magemark under an opponent's Kalitas; the card stays in hand until the answer),
+  `ExaltedDragonTest.forcedAttackCostAsksTheDeathReplacementBeforeTheLandLeaves` and
+  `GameSimulatorTest.copyCompletesAGraveyardActivationStoppedBeforeItsSacrificeCost`. No existing test changed.
+  All four card tests fail at the baseline. A sweep of 897 card test classes (every card with a graveyard or hand
+  activated ability, cycling, unearth, scavenge, embalm or eternalize, a sacrifice sequence cost or an attack sacrifice
+  cost) had 31 failures in 15 classes (Despoiler of Souls, Phyrexian Dragon Engine, Geistblast, Resounding Silence,
+  Priest of Forgotten Gods, ...); the same 31 fail at the baseline, none new. `LegacyDepartureWrapperRatchetTest` and
+  `GameSimulatorTest` (38/38) pass.
 
 ### Step 2
 

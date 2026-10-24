@@ -2913,7 +2913,8 @@ public class GameData {
     /** A player's answer to complete again once the death replacements it asked about are chosen. */
     public sealed interface DeathReplacementChoiceReplay
             permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay,
-                    PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay, SpellCastReplay {
+                    PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay, SpellCastReplay,
+                    GraveyardAbilityCostReplay, HandAbilityCostReplay {
     }
 
     /**
@@ -2982,6 +2983,30 @@ public class GameData {
      * death replacement could be chosen first (CR 616.1): who activated it, the permanent and the ability's target.
      */
     public record SacrificeAbilityReplay(Player player, UUID permanentId, UUID targetId)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A graveyard card's activated ability stopped right before it sacrifices the permanents chosen for its costs, so
+     * that one of them could have its death replacement chosen first (CR 616.1, CR 601.2h): the arguments to complete
+     * the activation with once every answer is in. The chosen permanents stay in
+     * {@link #pendingActivationCostSacrificeIds}.
+     */
+    public record GraveyardAbilityCostReplay(Player player, Card card, ActivatedAbility ability, int xValue,
+                                             UUID targetId, java.util.List<UUID> graveyardTargetIds)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A hand card's activated ability stopped right before it sacrifices the permanents chosen for its costs, so that
+     * one of them could have its death replacement chosen first (CR 616.1, CR 601.2h): the arguments to complete the
+     * activation with once every answer is in. {@code paysSourceCost} tells whether the completion still discards or
+     * reveals the card as its cost; otherwise it keeps the card where it is. The chosen permanents stay in
+     * {@link #pendingActivationCostSacrificeIds}.
+     */
+    public record HandAbilityCostReplay(Player player, Card card, ActivatedAbility ability, int abilityIndex,
+                                        int xValue, UUID targetId, int stackSizeBeforeCosts,
+                                        java.util.List<UUID> targetIds, boolean paysSourceCost)
             implements DeathReplacementChoiceReplay {
     }
 

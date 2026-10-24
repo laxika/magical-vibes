@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
 import com.github.laxika.magicalvibes.cards.i.Imperiosaur;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -99,6 +103,40 @@ class EdgeOfAutumnTest extends BaseCardTest {
         harness.assertInHand(player1, "Plains");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactly(drawnCard);
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({KalitasTraitorOfGhet.class, DryadArbor.class, NecromancersMagemark.class})
+    @DisplayName("Cycling by sacrificing an enchanted Dryad Arbor asks its death replacement before it leaves")
+    void cyclingAsksTheSacrificedArborsDeathReplacementBeforeItLeaves() {
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent arbor = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        harness.addToBattlefieldAndReturn(player1, new NecromancersMagemark()).setAttachedTo(arbor.getId());
+        EdgeOfAutumn edge = new EdgeOfAutumn();
+        Card drawnCard = new Imperiosaur();
+        harness.setHand(player1, List.of(edge));
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Return it to its owner's hand (Necromancer's Magemark)",
+                        "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arbor);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(edge);
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "Return it to its owner's hand (Necromancer's Magemark)");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arbor);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(arbor.getCard());
+        harness.assertInGraveyard(player1, "Edge of Autumn");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(arbor.getCard(), drawnCard);
     }
 
     @Test

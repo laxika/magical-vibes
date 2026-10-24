@@ -295,6 +295,11 @@ public class PermanentChoiceHandlerService {
                             .completeActivationAfterCostSacrificeAnswers(gameData, activationReplay));
             case GameData.SacrificeAbilityReplay sacrificeReplay -> payAgainAfterDeathReplacements(gameData,
                     () -> abilityActivationService.sacrificePermanentAfterCostSacrificeAnswer(gameData, sacrificeReplay));
+            case GameData.GraveyardAbilityCostReplay graveyardReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> abilityActivationService.completeGraveyardAbilityAfterCostSacrificeAnswers(
+                            gameData, graveyardReplay));
+            case GameData.HandAbilityCostReplay handReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> abilityActivationService.completeHandAbilityAfterCostSacrificeAnswers(gameData, handReplay));
             case GameData.SpellCastReplay castReplay -> payAgainAfterDeathReplacements(gameData,
                     () -> spellCastingServiceProvider.getObject()
                             .completeCastAfterCostSacrificeAnswers(gameData, castReplay));
